@@ -36,16 +36,23 @@ namespace RiskAI.Editor
                 camera = Camera.main;
                 if (!camera) throw new InvalidOperationException("RiskAI visual preview: no main camera was created.");
                 output = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32);
-                Render(camera, output, "Screenshots/v09-world-overview.png");
+                Render(camera, output, "Screenshots/v10-world-overview.png");
 
                 var focus = MapLayout.Point(-32*MapLayout.Spacing,2*MapLayout.Spacing);
                 camera.orthographicSize = 20;
                 camera.transform.position = focus - camera.transform.forward * (20/Mathf.Tan(camera.fieldOfView*.5f*Mathf.Deg2Rad));
-                Render(camera, output, "Screenshots/v09-world-bastion.png");
+                Render(camera, output, "Screenshots/v10-world-bastion.png");
                 focus=MapLayout.Point(26*MapLayout.Spacing,4*MapLayout.Spacing);
                 camera.transform.position=focus-camera.transform.forward*(25/Mathf.Tan(camera.fieldOfView*.5f*Mathf.Deg2Rad));
-                Render(camera,output,"Screenshots/v09-world-highlands.png");
-                Debug.Log("RISKAI_WORLD_PREVIEW_OK: Screenshots/v09-world-overview.png, Screenshots/v09-world-bastion.png");
+                Render(camera,output,"Screenshots/v10-world-highlands.png");
+                var town=bootstrapObject.GetComponent<BattleSession>().Towns[1];
+                focus=town.Defense.transform.position;
+                camera.transform.position=focus-camera.transform.forward*(10/Mathf.Tan(camera.fieldOfView*.5f*Mathf.Deg2Rad));
+                Render(camera,output,"Screenshots/v10-world-tower.png");
+                focus=MapLayout.Point(33*MapLayout.Spacing,50*MapLayout.Spacing);
+                camera.transform.position=focus-camera.transform.forward*(22/Mathf.Tan(camera.fieldOfView*.5f*Mathf.Deg2Rad));
+                Render(camera,output,"Screenshots/v10-world-estuary.png");
+                Debug.Log("RISKAI_WORLD_PREVIEW_OK: Screenshots/v10-world-overview.png, Screenshots/v10-world-bastion.png");
             }
             catch (Exception error)
             {

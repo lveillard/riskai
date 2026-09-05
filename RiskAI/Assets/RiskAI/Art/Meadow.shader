@@ -99,5 +99,15 @@ Shader "RiskAI/Meadow"
    half4 DepthFrag():SV_Target{return 0;}
    ENDHLSL
   }
+  Pass
+  {
+   Name "DepthNormals" Tags {"LightMode"="DepthNormalsOnly"} ZWrite On
+   HLSLPROGRAM
+   #pragma vertex DepthNormalsVertex
+   #pragma fragment DepthNormalsFragment
+   #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+   #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthNormalsPass.hlsl"
+   ENDHLSL
+  }
  }
 }

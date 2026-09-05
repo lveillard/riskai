@@ -62,7 +62,12 @@ namespace RiskAI.Tests
    for(int i=0;i<TerrainHydrology.Samples.Length-1;i++)
    {
     var a=TerrainHydrology.Samples[i];var b=TerrainHydrology.Samples[i+1];Assert.That(a.y,Is.GreaterThanOrEqualTo(b.y));
-    for(int s=0;s<10;s++){var p=Vector3.Lerp(a,b,s/10f);if(p.z<MapLayout.Coast(p.x))Assert.That(MapLayout.Height(p.x,p.z),Is.LessThan(p.y-.25f));}
+    for(int s=0;s<10;s++)
+    {
+     var p=Vector3.Lerp(a,b,s/10f);if(p.z>=MapLayout.Coast(p.x))continue;
+     float bed=MapLayout.Height(p.x,p.z);Assert.That(bed,Is.LessThan(p.y-.25f));
+     if(p.y>-.2f)Assert.That(bed,Is.GreaterThanOrEqualTo(p.y-.8f),"An inland river must have a shallow bed, not float above a low valley.");
+    }
    }
    foreach(var port in naval.Harbors){Assert.That(MapLayout.IsLand(port.Landing.x,port.Landing.z),Is.True,port.DisplayName);Assert.That(SeaNavigation.HasClearance(port.Berth),Is.True,port.DisplayName);}
    Assert.That(SeaNavigation.TryBuildPath(naval.Harbors[0].Berth,battle.Towns[0].transform.position,out _),Is.False);

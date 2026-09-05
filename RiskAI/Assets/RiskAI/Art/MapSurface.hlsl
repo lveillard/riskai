@@ -15,7 +15,7 @@ float RiskShore(float2 b)
 float RiskRiverDistance(float2 p)
 {
  float d=1000;
- if(p.x<27*_RiskMapScale||p.x>58*_RiskMapScale||p.y<25*_RiskMapScale||p.y>58*_RiskMapScale)return d;
+ if(p.x<21*_RiskMapScale||p.x>58*_RiskMapScale||p.y<25*_RiskMapScale||p.y>65*_RiskMapScale)return d;
  for(int i=0;i<56;i++){float2 a=_RiskRiver[i].xz,e=_RiskRiver[i+1].xz-a;float t=saturate(dot(p-a,e)/max(dot(e,e),.01));d=min(d,length(p-a-e*t)-lerp(_RiskRiver[i].w,_RiskRiver[i+1].w,t));}return d;
 }
 #endif

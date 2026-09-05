@@ -14,9 +14,16 @@ namespace RiskAI
             if(biome<0){WorldArt.Tree(root,p,height,seed);return;}
             var go=new GameObject(biome==2?"Coastal palm":biome==1?"Amber oak":"Green oak");go.transform.SetParent(root,false);go.transform.localPosition=p;
             go.transform.localRotation=Quaternion.Euler(0,seed*137.5f,0);
-            float trunkHeight=biome==2?height*.78f:height*.56f;
+            float trunkHeight=biome==2?height*.78f:height*.63f;
             var trunk=VisualFactory.Shape(go.transform,PrimitiveType.Cylinder,"Bark",Vector3.up*trunkHeight*.5f,new Vector3(biome==2?.3f:.46f,trunkHeight*.5f,biome==2?.3f:.46f),Color.white,true);
             trunk.GetComponent<Renderer>().sharedMaterial=WorldArt.Painted(2,new Color(.85f,.78f,.58f),.6f);
+            if(biome!=2)for(int j=0;j<3;j++)
+            {
+                float a=(j*120+seed*17)*Mathf.Deg2Rad;
+                var from=Vector3.up*height*.36f;var to=new Vector3(Mathf.Cos(a)*.26f,.65f,Mathf.Sin(a)*.26f)*height;
+                var branch=VisualFactory.Shape(go.transform,PrimitiveType.Cylinder,"Forked oak branch",(from+to)*.5f,new Vector3(.18f,(to-from).magnitude*.5f,.18f),Color.white);
+                branch.transform.localRotation=Quaternion.FromToRotation(Vector3.up,to-from);branch.GetComponent<Renderer>().sharedMaterial=trunk.GetComponent<Renderer>().sharedMaterial;
+            }
             WorldArt.GroundShadow(go.transform,new(.3f,.04f,.3f),new(height,height*.85f));
             var crown=new GameObject("Painted foliage crown");crown.transform.SetParent(go.transform,false);crown.transform.localScale=Vector3.one*height;
             crown.AddComponent<MeshFilter>().sharedMesh=Crown(biome,seed%4);crown.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("BiomeFoliage");
@@ -43,12 +50,24 @@ namespace RiskAI
             }
             else
             {
-                for(int tier=0;tier<3;tier++)for(int j=0;j<6;j++)
+                // Offset lobes make a broad, asymmetrical canopy instead of a tiered cone.
+                for(int lobe=0;lobe<10;lobe++)
                 {
-                    float a=(j*60+tier*31+variation*13)*Mathf.Deg2Rad;var dir=new Vector3(Mathf.Cos(a),0,Mathf.Sin(a));var side=new Vector3(-dir.z,0,dir.x)*(.25f-tier*.035f);
-                    var center=dir*(.20f-tier*.06f)+Vector3.up*(.51f+tier*.145f);var up=new Vector3(0,.24f-tier*.02f,0);
-                    Quad(center-side-up,center+side-up,center+side+up-dir*.15f,center-side+up-dir*.15f,.84f+tier*.08f);
-                    if(tier==2)Quad(center-side-dir*.18f,center+side-dir*.18f,center+side+dir*.18f,center-side+dir*.18f,1);
+                    float a=(lobe*137.5f+variation*23)*Mathf.Deg2Rad;
+                    bool top=lobe>=7;
+                    float radius=top?.11f:.29f+.035f*Mathf.Sin(lobe*8+variation);
+                    var center=new Vector3(Mathf.Cos(a)*radius,(top?.83f:.62f)+.04f*Mathf.Sin(lobe*5+variation),Mathf.Sin(a)*radius);
+                    float size=.215f+.022f*Mathf.Sin(lobe*11+variation);
+                    for(int face=0;face<10;face++)
+                    {
+                        float angle=(face*137.5f+variation*19)*Mathf.Deg2Rad;
+                        float y=face<6?.15f:.83f;float r=Mathf.Sqrt(1-y*y);
+                        var normal=new Vector3(Mathf.Cos(angle)*r,y,Mathf.Sin(angle)*r);
+                        var side=Vector3.Cross(Vector3.up,normal).normalized*size;
+                        var up=Vector3.Cross(normal,side).normalized*size*.94f;
+                        var c=center+normal*size*.40f;
+                        Quad(c-side-up,c+side-up,c+side+up,c-side+up,top?.92f:.76f+(lobe%3)*.055f);
+                    }
                 }
             }
             var mesh=new Mesh{name="Original biome crown "+key};mesh.SetVertices(v);mesh.SetUVs(0,uv);mesh.SetColors(colors);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();crowns[key]=mesh;return mesh;

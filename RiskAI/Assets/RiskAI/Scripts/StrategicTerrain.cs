@@ -20,7 +20,7 @@ namespace RiskAI
             var mesh=new Mesh{name="Irregular continental terrain",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32};mesh.vertices=vertices;mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var land=new GameObject("Coastal marches");land.layer=MapLayout.TerrainLayer;land.transform.SetParent(root,false);land.AddComponent<MeshFilter>().sharedMesh=mesh;
             land.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");land.AddComponent<MeshCollider>().sharedMesh=mesh;
-            CreateIslands(root);CreateBackdrop();
+            CreateIslands(root);CreateSeabed(root);CreateBackdrop();
             var sea=VisualFactory.Shape(null,PrimitiveType.Cube,"Northern sea",new Vector3(0,-.3f,0),new Vector3(420,.12f,420),Color.white);
             sea.GetComponent<Renderer>().sharedMaterial=Resources.Load<Material>("RiverWater");
             var trees=new GameObject("Pine forests");trees.transform.SetParent(root,false);
@@ -37,8 +37,8 @@ namespace RiskAI
                 float east=Mathf.Abs(bx-(29+6*Mathf.Sin(bz*.12f)));
                 float south=Mathf.Abs(bz-(-27+5*Mathf.Sin(bx*.09f)));
                 bool island=pz>MapLayout.Coast(px);
-                if(island){float d=Mathf.Max(MapLayout.IslandDistance(px,pz,0),MapLayout.IslandDistance(px,pz,1));if(d<3||bz<55&&Mathf.Abs(bx+47)<4||bz>60&&bz<69&&Mathf.Abs(bx+8)<4)continue;}
-                bool portClear=false;foreach(float portX in new[]{-58f,-32,-7,20,43})if(Mathf.Abs(bx-portX)<4&&Mathf.Abs(pz-MapLayout.Coast(portX*MapLayout.Spacing))<9)portClear=true;
+                if(island){float d=Mathf.Max(MapLayout.IslandDistance(px,pz,0),MapLayout.IslandDistance(px,pz,1));if(d<3||bz<55&&Mathf.Abs(bx+47)<5.5f||bz>60&&bz<69&&Mathf.Abs(bx+8)<5.5f)continue;}
+                bool portClear=false;foreach(float portX in new[]{-58f,-32,-7,20,43})if(Mathf.Abs(bx-portX)<5.8f&&Mathf.Abs(pz-MapLayout.Coast(portX*MapLayout.Spacing))<9)portClear=true;
                 if(portClear)continue;
                 bool edge=Mathf.Abs(bx)>65||bz<-78||Mathf.Abs(pz-MapLayout.Coast(px))<5;
                 bool ribbon=west<3.5f||east<3.1f||south<2.8f;
@@ -80,6 +80,22 @@ namespace RiskAI
                 var go=new GameObject(island==0?"Isla de los Robles":"Isla del Viento");go.layer=MapLayout.TerrainLayer;go.transform.SetParent(root,false);
                 go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");go.AddComponent<MeshCollider>().sharedMesh=mesh;
             }
+        }
+        static void CreateSeabed(Transform root)
+        {
+            // Extend sand under the shoreline; no collider, so this cannot bake walkable ocean.
+            var v=new List<Vector3>();var t=new List<int>();const int columns=360,rows=64;
+            for(int x=0;x<=columns;x++)for(int z=0;z<=rows;z++)
+            {
+                float wx=Mathf.Lerp(-MapLayout.HalfWidth,MapLayout.HalfWidth,x/(float)columns);
+                float wz=Mathf.Lerp(MapLayout.Coast(wx),MapLayout.HalfDepth+16,z/(float)rows);
+                v.Add(new Vector3(wx,MapLayout.Height(wx,wz)-.012f,wz));
+                if(x==columns||z==rows)continue;int i=x*(rows+1)+z,b=i+rows+1;
+                t.Add(i);t.Add(i+1);t.Add(b);t.Add(i+1);t.Add(b+1);t.Add(b);
+            }
+            var mesh=new Mesh{name="Submerged continental and island shelf"};mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+            var go=new GameObject("Sandy sea bed · visual only");go.transform.SetParent(root,false);
+            go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
         }
         static void CreateBackdrop()
         {

@@ -11,7 +11,7 @@ Shader "RiskAI/BiomeFoliage"
  {
   half4 c=SAMPLE_TEXTURE2D(_Atlas,sampler_Atlas,uv);
   clip(min(c.a,max(c.r,c.g))-.012);
-  return c.rgb*half3(.95,1.03,.95);
+  return c.rgb*half3(.76,.94,.78);
  }
  ENDHLSL
  SubShader

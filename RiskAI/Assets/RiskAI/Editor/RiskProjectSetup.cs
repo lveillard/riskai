@@ -23,8 +23,8 @@ namespace RiskAI.Editor
                 EditorSceneManager.SaveScene(scene,ScenePath);
             }
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(ScenePath,true)};
-            PlayerSettings.companyName="RiskAI";PlayerSettings.productName="RiskAI — Las Marcas v0.9";
-            PlayerSettings.bundleVersion="0.9.0";PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
+            PlayerSettings.companyName="RiskAI";PlayerSettings.productName="RiskAI — Las Marcas v0.10";
+            PlayerSettings.bundleVersion="0.10.0";PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
             PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;PlayerSettings.runInBackground=false;
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
             PlayerSettings.colorSpace=ColorSpace.Linear;
@@ -57,11 +57,11 @@ namespace RiskAI.Editor
         [MenuItem("RiskAI/Build Windows prototype")]
         public static void BuildWindows()
         {
-            Prepare();Directory.CreateDirectory("../Builds/Windows-v0.9");
-            var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{ScenePath},locationPathName="../Builds/Windows-v0.9/RiskAI.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None });
+            Prepare();Directory.CreateDirectory("../Builds/Windows-v0.10");
+            var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{ScenePath},locationPathName="../Builds/Windows-v0.10/RiskAI.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None });
             if(report.summary.result!=BuildResult.Succeeded)throw new System.Exception("Build failed: "+report.summary.result);
-            File.Copy("../THIRD_PARTY_NOTICES.md","../Builds/Windows-v0.9/THIRD_PARTY_NOTICES.md",true);
-            File.Copy("Assets/RiskAI/Art/KayKit/LICENSE.txt","../Builds/Windows-v0.9/KayKit-LICENSE.txt",true);
+            File.Copy("../THIRD_PARTY_NOTICES.md","../Builds/Windows-v0.10/THIRD_PARTY_NOTICES.md",true);
+            File.Copy("Assets/RiskAI/Art/KayKit/LICENSE.txt","../Builds/Windows-v0.10/KayKit-LICENSE.txt",true);
             Debug.Log("RISKAI_BUILD_OK: "+report.summary.totalSize+" bytes");
         }
     }

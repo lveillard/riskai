@@ -1,8 +1,8 @@
-# RiskAI · proyecto Unity · v0.9
+# RiskAI · proyecto Unity · v0.10
 
 Abre esta carpeta desde Unity Hub con **6000.3.23f1**. La escena jugable es `Assets/RiskAI/Scenes/LasMarcas.unity`: abre la escena y pulsa Play.
 
-El menú **RiskAI > Prepare playable scene** regenera la configuración de compilación. **RiskAI > Build Windows prototype** crea `../Builds/Windows-v0.9/RiskAI.exe`.
+El menú **RiskAI > Prepare playable scene** regenera la configuración de compilación. **RiskAI > Build Windows prototype** crea `../Builds/Windows-v0.10/RiskAI.exe`.
 
 ## Código
 
@@ -15,7 +15,7 @@ El menú **RiskAI > Prepare playable scene** regenera la configuración de compi
 - `RtsController.cs`: Input System, selección, grupos y órdenes. `RtsCameraRig.cs`: cámara, zoom y arrastre.
 - `BattleHud.cs` y `VisualFactory.cs`: interfaz y gráficos provisionales.
 
-La v0.9 introduce captura inmediata por defensor en `CityClaimZone.cs` (ciudades y puertos insulares), perfiles de combate de Saran en `Core/ReforgedProfiles.cs`, sanadores (`MedicSupport.cs`), IA tranquila y estadísticas visibles. `TerrainHydrology.cs` comparte una curva con el tallado del terreno y el agua. `NavalWorld`, `Harbor`, `Ship` y `SeaNavigation` controlan flotas, puertos, carga y rutas marítimas. Los modos siguen siendo Conquista y Capitales, con reparto aleatorio y economía por países. [Detalles y límites de la adaptación](../docs/ITERATION-v0.9.md).
+El prototipo incluye captura inmediata por defensor en `CityClaimZone.cs` (ciudades y puertos insulares), perfiles de combate de Saran en `Core/ReforgedProfiles.cs`, sanadores (`MedicSupport.cs`), IA tranquila y estadísticas visibles. `TerrainHydrology.cs` comparte una curva con el tallado del terreno y el agua. `NavalWorld`, `Harbor`, `Ship` y `SeaNavigation` controlan flotas, puertos, carga y rutas marítimas. Los modos siguen siendo Conquista y Capitales, con reparto aleatorio y economía por países. [Detalles y límites de la adaptación](../docs/ITERATION-v0.10.md).
 
 Las pruebas de reglas están en `Tests/Editor`; las pruebas que montan y ejecutan una batalla están en `Tests/PlayMode`. Se ejecutan desde Test Runner o con la CLI indicada en el README del repositorio.
 

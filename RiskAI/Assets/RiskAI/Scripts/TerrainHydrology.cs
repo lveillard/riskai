@@ -5,7 +5,7 @@ namespace RiskAI
     // A single smooth course drives erosion, water, vegetation and the bank material.
     public static class TerrainHydrology
     {
-        public static readonly Vector3[] Course={new(54,14.2f,29),new(50,9.2f,33),new(46,6,36),new(43,3.5f,40),new(38,1.4f,43),new(35,.25f,47),new(33,-.24f,50),new(31,-.24f,54)};
+        public static readonly Vector3[] Course={new(54,14.2f,29),new(50,9.2f,33),new(46,6,36),new(43,3.5f,40),new(38,1.4f,43),new(35,.12f,47),new(33,-.24f,51),new(29,-.24f,58)};
         public static readonly Vector3[] Samples=BuildSamples();
         public static Vector3 Point(int i)=>new(Course[i].x*MapLayout.Spacing,Course[i].y,Course[i].z*MapLayout.Spacing);
         static float Tangent(float a,float b)=>a*b<=0?0:2*a*b/(a+b);
@@ -24,11 +24,11 @@ namespace RiskAI
             }
             result[56]=Point(7);return result;
         }
-        public static float Width(float t)=>Mathf.Lerp(.65f,2.15f,Mathf.SmoothStep(0,1,t))*(1+.07f*Mathf.Sin(t*21));
+        public static float Width(float t)=>Mathf.Lerp(.65f,1.9f,Mathf.SmoothStep(0,1,t))+4.2f*Mathf.SmoothStep(0,1,Mathf.InverseLerp(.71f,1,t));
         public static void Sample(float x,float z,out float distance,out float level,out float width)
         {
             distance=float.MaxValue;level=-.24f;width=0;
-            if(x<27*MapLayout.Spacing||x>58*MapLayout.Spacing||z<25*MapLayout.Spacing||z>58*MapLayout.Spacing)return;
+            if(x<21*MapLayout.Spacing||x>58*MapLayout.Spacing||z<25*MapLayout.Spacing||z>65*MapLayout.Spacing)return;
             var p=new Vector2(x,z);
             for(int i=0;i<Samples.Length-1;i++)
             {
@@ -42,10 +42,14 @@ namespace RiskAI
         public static float DistanceToRiver(float x,float z){Sample(x,z,out float d,out _,out _);return d;}
         public static float Carve(float x,float z,float height)
         {
-            Sample(x,z,out float d,out float level,out float width);if(d>width+4)return height;
-            float shoulder=Mathf.SmoothStep(0,1,Mathf.InverseLerp(width*.62f,width+3.6f,d));
+            Sample(x,z,out float d,out float level,out float width);if(d>width+5.5f)return height;
+            // Preserve deep ocean only. Inland, even a low valley needs a bed beneath its river.
+            if(level<=-.23f&&height<level-.65f)return height;
+            // A raised reach needs a containing bank before the water mesh ends.
+            // Blend that bank back to the surrounding land only outside the wet channel.
+            float shoulder=Mathf.SmoothStep(0,1,Mathf.InverseLerp(width*.45f,width+1.5f,d));
             float bed=level-.65f+.23f*Mathf.Clamp01(d/Mathf.Max(width,.1f));
-            float bank=Mathf.Lerp(Mathf.Max(height,level+.45f),height,Mathf.SmoothStep(0,1,Mathf.InverseLerp(width+1,width+4,d)));
+            float bank=level<=-.23f?height:Mathf.Lerp(Mathf.Max(height,level+.45f),height,Mathf.SmoothStep(0,1,Mathf.InverseLerp(width+1.5f,width+5.5f,d)));
             return Mathf.Lerp(bed,bank,shoulder);
         }
         public static void Create(Transform root)
@@ -56,19 +60,21 @@ namespace RiskAI
             {
                 var p=Samples[i];var before=Samples[Mathf.Max(0,i-1)];var after=Samples[Mathf.Min(56,i+1)];var dir=after-before;
                 float slope=Mathf.Abs(dir.y)/Mathf.Max(.1f,new Vector2(dir.x,dir.z).magnitude);dir.y=0;var side=Vector3.Cross(Vector3.up,dir.normalized);
-                float progress=i/56f,width=Width(progress);if(i>0)length+=Vector3.Distance(p,before);
+                // Oversize water meets the actual sloping banks through depth clipping.
+                float progress=i/56f,width=Width(progress)+1.5f;if(i>0)length+=Vector3.Distance(p,before);
                 for(int j=0;j<=across;j++)
                 {
-                    float u=j/(float)across;v.Add(p+side*((u*2-1)*width)+Vector3.up*.025f);uv.Add(new(u,length));flow.Add(new(slope,progress));
-                    if(i==56||j==across)continue;int k=i*(across+1)+j,n=k+across+1;
+                    float u=j/(float)across;v.Add(p+side*((u*2-1)*width)+Vector3.up*.006f);uv.Add(new(u,length));flow.Add(new(slope,progress));
+                    // The ocean plane owns the level estuary. Never stack a river fan over it.
+                    if(i>=47||j==across)continue;int k=i*(across+1)+j,n=k+across+1;
                     triangles.Add(k);triangles.Add(n);triangles.Add(k+1);triangles.Add(k+1);triangles.Add(n);triangles.Add(n+1);
                 }
             }
             var mesh=new Mesh{name="Continuous spring, rapids and estuary"};mesh.SetVertices(v);mesh.SetUVs(0,uv);mesh.SetUVs(1,flow);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var go=new GameObject("Río de la Sierra · cauce erosionado");go.transform.SetParent(root,false);go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Cascade");
-            for(int i=0;i<24;i++)
+            for(int i=0;i<18;i++)
             {
-                int s=2+i*2;var p=Samples[s];var dir=Samples[s+1]-Samples[s];dir.y=0;p+=Vector3.Cross(Vector3.up,dir.normalized)*(i%2==0?1:-1)*(Width(s/56f)+.5f);
+                int s=2+i*2;var p=Samples[s];var dir=Samples[s+1]-Samples[s];dir.y=0;p+=Vector3.Cross(Vector3.up,dir.normalized)*(i%2==0?1:-1)*(Width(s/56f)+1.1f+(i%3)*.4f);
                 if(!MapLayout.IsLand(p.x,p.z))continue;p.y=MapLayout.Height(p.x,p.z)-.13f;WorldArt.Rock(root,p,.42f+(i%4)*.13f,210+i);
             }
         }

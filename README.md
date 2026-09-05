@@ -1,10 +1,16 @@
-# RiskAI — Las Marcas · v0.9
+# RiskAI — Las Marcas · v0.10
 
 Prototipo de conquista territorial en **Unity 6.3 LTS (6000.3.23f1), C# y URP**. Partida local contra una IA sencilla, con soldados controlables y rondas económicas mientras la acción continúa.
 
 ## Jugar
 
-Doble clic en **Play-RiskAI.cmd**. Inicia `Builds/Windows-v0.9/RiskAI.exe` en una ventana de 1600 × 900. No hace falta abrir el editor para jugar.
+Doble clic en **Play-RiskAI.cmd**. Inicia `Builds/Windows-v0.10/RiskAI.exe` en una ventana de 1600 × 900. No hace falta abrir el editor para jugar.
+
+Si acabas de clonar el repositorio, genera primero ese ejecutable con `scripts/Unity.ps1 -Action Build` o con **RiskAI > Build Windows prototype** en Unity. Los ejecutables y las referencias de Warcraft no se incluyen en Git.
+
+**Novedades v0.10:** cursor confinado, desplazamiento por los cuatro bordes, defensa en todas las ciudades y puertos, copas de roble rediseñadas y río/mar con profundidad y materiales compartidos. Escape libera el ratón; clic lo recupera. [Cambios, datos extraídos y límites](docs/ITERATION-v0.10.md).
+
+![Partida de RiskAI: puerto, flota y defensa](docs/images/v0.10-harbor.png)
 
 Para desarrollar, usa **Open-Unity.cmd** o añade la carpeta `RiskAI` a Unity Hub. Abre `Assets/RiskAI/Scenes/LasMarcas.unity` y pulsa Play.
 
@@ -57,7 +63,7 @@ Cada país completo también genera refuerzos gratuitos en cada ronda. Marca del
 
 Reclutar cuesta 20 oro / 3 s para espadachines, 20 / 4 s para ballesteros y 40 / 4 s para sanadores. Nivel II desbloquea guardias (100 / 5,5 s), magos (80 / 6 s) y morteros (60 / 6 s). Cola de cinco; cancelar devuelve el coste. Límite de 100 soldados por bando, incluidos embarcados y compras pendientes.
 
-La torre cuesta 60 oro / 7 s: 550 vida, 51–58 daño perforante cada 1,5 s, armadura fortificada 3, alcance 8,5. El mortero dispara entre 5 y 18 y usa daño de asedio. El sanador cura 15 vida/s a aliados terrestres heridos dentro de 8 con línea de visión. Los ataques tiran dados; el resultado se modifica por tipo de ataque, coraza y armadura numérica. Los perfiles y sus fuentes están en [ITERATION-v0.9](docs/ITERATION-v0.9.md). Mejorar una ciudad cuesta 90 oro / 7 s y añade 6 oro/ronda si controlas el país. Las bajas enemigas dan 2 oro.
+Todas las ciudades y puertos empiezan con torre. Reconstruirla cuesta 60 oro / 7 s: 550 vida, 51–58 daño perforante cada 1,5 s, armadura fortificada 3, alcance 8,5. El mortero dispara entre 5 y 18 y usa daño de asedio. El sanador cura 15 vida/s a aliados terrestres heridos dentro de 8 con línea de visión. Los ataques tiran dados; el resultado se modifica por tipo de ataque, coraza y armadura numérica. Los perfiles y sus fuentes están en [ITERATION-v0.10](docs/ITERATION-v0.10.md). Mejorar una ciudad cuesta 90 oro / 7 s y añade 6 oro/ronda si controlas el país. Las bajas enemigas dan 2 oro.
 
 En **Conquista**, ganas conservando ocho ciudades (60 % redondeado hacia arriba) durante 20 segundos. En **Capitales**, ganas capturando la capital inicial enemiga. En ambos modos también puedes vencer eliminando todas las ciudades y soldados del rival. Elige el modo al iniciar otra partida desde Ayuda. La IA tranquila viene seleccionada: compra como máximo una unidad cada 12 s desde el segundo 30 y organiza ofensivas desde el segundo 120. F1 permite elegir Estándar para la siguiente partida. Ambos bandos tienen los mismos recursos iniciales; tres soldados existentes se sitúan en cada muelle, además de las guarniciones. La barra muestra tu población y la enemiga.
 
@@ -65,7 +71,7 @@ En **Conquista**, ganas conservando ocho ciudades (60 % redondeado hacia arriba)
 
 Cada bando recibe una galera y un transporte. F3 centra el puerto; hay tres soldados junto al muelle preparados para embarcar. Selecciona el transporte, pulsa B y haz clic derecho en un puerto insular para navegar y desembarcar. La infantería toma el punto de control al desembarcar y entrar en él y produce +8 oro por ronda. Estos dos puestos son objetivos económicos adicionales y todavía no cuentan para la victoria por ciudades.
 
-Los astilleros venden galeras (75 oro, 500 vida) y transportes (45 oro, 300 vida, seis plazas). La cola admite tres barcos y reembolsa cancelaciones y encargos de puertos conquistados. Hay un máximo de doce barcos por bando. Las galeras atacan barcos y objetivos costeros con línea de visión; la IA naval patrulla con galeras, pero aún no prepara desembarcos. Las reglas adaptadas y el arte original están en [docs/ITERATION-v0.9.md](docs/ITERATION-v0.9.md).
+Los astilleros venden galeras (75 oro, 500 vida) y transportes (45 oro, 300 vida, seis plazas). La cola admite tres barcos y reembolsa cancelaciones y encargos de puertos conquistados. Hay un máximo de doce barcos por bando. Las galeras atacan barcos y objetivos costeros con línea de visión; la IA naval patrulla con galeras, pero aún no prepara desembarcos. Las reglas adaptadas y el arte original están en [docs/ITERATION-v0.10.md](docs/ITERATION-v0.10.md).
 
 ## Desarrollo y CLI
 
@@ -82,7 +88,9 @@ Con el editor cerrado, desde PowerShell en esta carpeta:
 
 Los informes se escriben en `TestResults/` y los registros en `RiskAI/Logs/`. La estructura de C# está descrita en [RiskAI/README.md](RiskAI/README.md).
 
-## Alcance de esta v0.9
+[Validación v0.10](docs/VALIDATION-v0.10.md): 17 pruebas EditMode y 55 PlayMode distintas aprobadas, con repeticiones dirigidas tras las correcciones, compilación Windows e inspección de diez capturas del ejecutable.
+
+## Alcance de esta v0.10
 
 Los personajes medievales y sus animaciones usan KayKit Adventurers (CC0). El paisaje usa atlas pintados originales, edificios y torres con tejados de facción, abeto de ramas recortadas y terrenos que mezclan pradera, arena, barro, musgo, grava, pizarra y caliza. Hay humo de chimeneas, hogueras, aves, estandartes y molino animados, juncos y un río tallado que baja desde la montaña hasta el mar. La cámara conserva perspectiva con inclinación de 49° y orientación diagonal de 30°. El zoom responde a pasos normalizados de rueda, suaviza la transición y mantiene el punto bajo el cursor también en altura; las órdenes reconocen el terreno elevado. La selección se centra en el área visible por encima del HUD. F1 ofrece velocidad de cámara ajustable y desplazamiento por bordes; salir de la ventana cancela el arrastre central para evitar saltos.
 
@@ -92,7 +100,7 @@ El proyecto activo es `RiskAI/`. El intento web descartado queda archivado en `r
 
 ## Referencias
 
-El archivo extraído es Saran v3; las capturas son de **Risk Reforged: Rome**, otra variante cuyo mapa verificable no se ha obtenido. No se mezclan sus estadísticas como si fueran el mismo juego. [Herencia de unidades y dados](docs/REFORGED-BASE-STATS-v0.9.md) y [captura por defensor](docs/CAPTURE-SOURCE-v0.9.md).
+Los archivos extraídos son Saran v3 y New World v3.0; las capturas de referencia son de **Risk Reforged: Rome**, otra variante cuyo mapa verificable no se ha obtenido. No se mezclan sus estadísticas como si fueran el mismo juego. [Coordenadas y auditoría de mapas](docs/RISK-MAPS-v0.10.md), [herencia de unidades y dados](docs/REFORGED-BASE-STATS-v0.9.md) y [captura por defensor](docs/CAPTURE-SOURCE-v0.9.md).
 
 Risk Reforged / Devolution sirve como referencia de diseño. Se extrajo el script JASS del mapa editable v3.0 para estudiar captura, países, ingresos y refuerzos, sin extraer sus texturas ni modelos. Las reglas están documentadas en [la auditoría de Reforged](docs/RISK-REFORGED-RULES.md), [reparto inicial](docs/REFORGED-ALLOCATION.md) y [unidades y daño](docs/REFORGED-UNIT-STATS.md). Las texturas nuevas y sus prompts constan en [ImageGen v0.8](docs/IMAGEGEN-v0.8.md). Dos cálculos puros de otra implementación, [Risk Europe](docs/RISK-EUROPE-RULES.md), se adaptaron a C# bajo licencia MIT: capacidad de refuerzos y umbral de victoria. Véase [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). La navegación usa Unity; los modos y el equilibrio de esta v0 son una adaptación, no una reproducción completa del mapa.
 

@@ -87,6 +87,7 @@ namespace RiskAI
             if(z>Coast(x))
             {
                 float d=Mathf.Max(IslandDistance(x,z,0),IslandDistance(x,z,1));
+                if(d<0)return SeaFloor(x,z);
                 return Mathf.Lerp(-.24f,1.85f,Mathf.SmoothStep(0,1,Mathf.Clamp01(d/8)))+.22f*Mathf.Sin(x*.12f)*Mathf.Sin(z*.15f)*Mathf.SmoothStep(0,1,Mathf.Clamp01(d/5));
             }
             x/=Spacing;z/=Spacing;
@@ -103,5 +104,12 @@ namespace RiskAI
             return TerrainHydrology.Carve(wx,wz,h);
         }
         public static Vector3 Point(float x,float z)=>new Vector3(x,Height(x,z),z);
+        // Visual bathymetry only: water navigation still uses the explicit land/ocean mask.
+        public static float SeaFloor(float x,float z)
+        {
+            float shore=Mathf.Max(0,Mathf.Min(z-Coast(x),Mathf.Min(-IslandDistance(x,z,0),-IslandDistance(x,z,1))));
+            float depth=.10f*shore*shore;
+            return TerrainHydrology.Carve(x,z,-.24f-Mathf.Min(24,depth));
+        }
     }
 }
