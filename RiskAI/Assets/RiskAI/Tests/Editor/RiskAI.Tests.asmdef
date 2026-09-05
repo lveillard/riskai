@@ -1,0 +1,7 @@
+{
+  "name": "RiskAI.Tests",
+  "references": ["RiskAI.Runtime"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

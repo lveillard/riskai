@@ -1,0 +1,15 @@
+{
+  "roundSeconds": 60,
+  "startingGold": 120,
+  "baseIncome": 12,
+  "settlementIncome": 8,
+  "captureSeconds": 7,
+  "captureRadius": 5.8,
+  "populationLimit": 100,
+  "victorySettlements": 5,
+  "victoryHoldSeconds": 20,
+  "units": {
+    "footman": { "name": "Espadachín", "cost": 20, "health": 100, "damage": 12, "range": 1.7, "cooldown": 0.9, "speed": 5.2, "trainSeconds": 3 },
+    "archer": { "name": "Arquero", "cost": 30, "health": 60, "damage": 10, "range": 8, "cooldown": 1.2, "speed": 5, "trainSeconds": 4 }
+  }
+}

@@ -1,0 +1,17 @@
+/Builds/
+/.tools/
+/references/discarded-web-prototype/
+/references/wc3-risk-system/
+/references/maps/
+/TestResults/
+/references/visual/
+/references/visual-v07/
+/references/*.jpg
+/RiskAI/Screenshots/
+/RiskAI/Screenshots.meta
+*.log
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example

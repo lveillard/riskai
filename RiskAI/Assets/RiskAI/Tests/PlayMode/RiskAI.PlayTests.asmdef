@@ -1,0 +1,6 @@
+{
+  "name": "RiskAI.PlayTests",
+  "references": ["RiskAI.Runtime", "Unity.InputSystem"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

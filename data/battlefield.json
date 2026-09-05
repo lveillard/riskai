@@ -1,0 +1,20 @@
+{
+  "id": "river-marches",
+  "name": "Las Marcas del Río",
+  "width": 96,
+  "height": 72,
+  "river": { "x": 0, "halfWidth": 3.2, "crossings": [-20, 0, 20], "crossingHalfWidth": 4 },
+  "regions": [
+    { "id": "west", "name": "Tierras del Alba", "bonus": 8 },
+    { "id": "center", "name": "Paso del Rey", "bonus": 12 },
+    { "id": "east", "name": "Frontera Carmesí", "bonus": 8 }
+  ],
+  "settlements": [
+    { "id": "dawn", "name": "Bastión del Alba", "x": -31, "z": 20, "owner": 0, "region": "west", "capital": true },
+    { "id": "pine", "name": "Pinar Alto", "x": -28, "z": -18, "owner": -1, "region": "west" },
+    { "id": "mill", "name": "Molino Viejo", "x": -13, "z": 1, "owner": -1, "region": "center" },
+    { "id": "bridge", "name": "Puerta de Piedra", "x": 13, "z": -1, "owner": -1, "region": "center" },
+    { "id": "ruins", "name": "Vigía del Sur", "x": 28, "z": 20, "owner": -1, "region": "east" },
+    { "id": "red", "name": "Fortaleza Carmesí", "x": 31, "z": -20, "owner": 1, "region": "east", "capital": true }
+  ]
+}
