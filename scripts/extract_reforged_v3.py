@@ -5,7 +5,7 @@ import ctypes, hashlib
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "references/maps/Risk_Reforged_v3.0_by_Saran_OPEN_SOURCE.w3x"
 OUT = ROOT / "references/maps/reforged-v3-source"
-ALLOWED = {"war3map.j", "war3map.wts", "war3map.w3i", "war3map.w3e", "war3map.w3r", "war3map.w3u", "war3map.w3t", "war3map.w3a", "war3map.w3b", "war3map.w3h", "war3map.w3q", "war3map.wtg", "war3map.wct", "(listfile)"}
+ALLOWED = {"war3map.j", "war3map.wts", "war3map.w3i", "war3map.w3e", "war3map.w3r", "war3map.w3u", "war3map.w3t", "war3map.w3a", "war3map.w3b", "war3map.w3h", "war3map.w3q", "war3map.wtg", "war3map.wct", "war3map.doo", "war3mapUnits.doo", "(listfile)"}
 
 def main():
     print("sha256", hashlib.sha256(SRC.read_bytes()).hexdigest())
