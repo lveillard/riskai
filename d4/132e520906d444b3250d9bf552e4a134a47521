@@ -1,0 +1,720 @@
+.gitignore
+  s_d75b49dfbafb60::t_9f6c2547d8908e 1-7,10-17
+  s_d75b49dfbafb60::t_fa2b87a9078b1c 8-9
+THIRD_PARTY_NOTICES.md
+  s_d75b49dfbafb60::t_fa2b87a9078b1c 3-8
+  s_d75b49dfbafb60::t_0b6e5e8f13d1a4 1-2
+  s_d75b49dfbafb60::t_9e4a3d210d1b52 9-11
+Open-Unity.cmd
+  s_d75b49dfbafb60::t_f9082f754384ea 1-2
+Play-RiskAI.cmd
+  s_d75b49dfbafb60::t_a3f868a2119d79 1-10
+README.md
+  s_d75b49dfbafb60::t_8d63f2b3b9f29c 1-101
+RiskAI/.gitignore
+  s_d75b49dfbafb60::t_cabcab896e2532 1-17
+RiskAI/.vsconfig
+  s_d75b49dfbafb60::t_0a57772c98e044 1-6
+RiskAI/Assets/InputSystem_Actions.inputactions
+  s_d75b49dfbafb60::t_7506f48b892719 1-1057
+RiskAI/Assets/InputSystem_Actions.inputactions.meta
+  s_d75b49dfbafb60::t_4e009995b50f5e 1-14
+RiskAI/Assets/Readme.asset
+  s_d75b49dfbafb60::t_b3a7893fd2eaa9 1-37
+RiskAI/Assets/Readme.asset.meta
+  s_d75b49dfbafb60::t_76a34a6dd6ec4b 1-8
+RiskAI/Assets/RiskAI.meta
+  s_d75b49dfbafb60::t_f4f1245bab4807 1-8
+RiskAI/Assets/RiskAI/Art.meta
+  s_d75b49dfbafb60::t_73a2c6202ed857 1-8
+RiskAI/Assets/RiskAI/Art/Atmosphere.shader
+  s_01792566e77e96::t_6e9870b2e043db 1-21
+RiskAI/Assets/RiskAI/Art/Atmosphere.shader.meta
+  s_d75b49dfbafb60::t_9880c11f9e7c74 1-9
+RiskAI/Assets/RiskAI/Art/BiomeFoliage.shader
+  s_d75b49dfbafb60::t_d152484ea2570e 1-68
+RiskAI/Assets/RiskAI/Art/BiomeFoliage.shader.meta
+  s_d75b49dfbafb60::t_534fc5dc4fd5d0 1-9
+RiskAI/Assets/RiskAI/Art/Cascade.shader
+  s_d75b49dfbafb60::t_932ec794281474 1-45
+RiskAI/Assets/RiskAI/Art/Cascade.shader.meta
+  s_d75b49dfbafb60::t_5a1e6a75270742 1-9
+RiskAI/Assets/RiskAI/Art/FirFoliage.shader.meta
+  s_d75b49dfbafb60::t_bf9f7833b28f3d 1-9
+RiskAI/Assets/RiskAI/Art/GroundShade.shader
+  s_d75b49dfbafb60::t_1dcb1b5487fa57 1-23
+RiskAI/Assets/RiskAI/Art/GroundShade.shader.meta
+  s_d75b49dfbafb60::t_bd68279e7df2c0 1-9
+RiskAI/Assets/RiskAI/Art/KayKit.meta
+  s_d75b49dfbafb60::t_fe8d969d158f1a 1-8
+RiskAI/Assets/RiskAI/Art/KayKit/Knight.fbx.meta
+  s_d75b49dfbafb60::t_ad8129b7ac08b0 1-111
+RiskAI/Assets/RiskAI/Art/KayKit/Knight.mat
+  s_d75b49dfbafb60::t_a597bd47457531 1-137
+RiskAI/Assets/RiskAI/Art/KayKit/Knight.mat.meta
+  s_d75b49dfbafb60::t_eb7d804db3f54a 1-8
+RiskAI/Assets/RiskAI/Art/KayKit/LICENSE.txt
+  s_d75b49dfbafb60::t_47d088c10396c7 1-33
+RiskAI/Assets/RiskAI/Art/KayKit/LICENSE.txt.meta
+  s_d75b49dfbafb60::t_3a9f405f4b4b29 1-7
+RiskAI/Assets/RiskAI/Art/KayKit/Mage.fbx.meta
+  s_d75b49dfbafb60::t_aa5c0ca6481ed7 1-111
+RiskAI/Assets/RiskAI/Art/KayKit/Mage.mat
+  s_d75b49dfbafb60::t_07cfc3bc3b0b98 1-137
+RiskAI/Assets/RiskAI/Art/KayKit/Mage.mat.meta
+  s_d75b49dfbafb60::t_320aeb86a2a5a5 1-8
+RiskAI/Assets/RiskAI/Art/KayKit/Medic.mat
+  s_d75b49dfbafb60::t_2c92cb4c6c80c7 1-137
+RiskAI/Assets/RiskAI/Art/KayKit/Medic.mat.meta
+  s_d75b49dfbafb60::t_11962136f7f6eb 1-8
+RiskAI/Assets/RiskAI/Art/KayKit/PROVENANCE.md
+  s_d75b49dfbafb60::t_284df320c6b48e 1-9
+RiskAI/Assets/RiskAI/Art/KayKit/PROVENANCE.md.meta
+  s_d75b49dfbafb60::t_e0ecc82730891d 1-7
+RiskAI/Assets/RiskAI/Art/KayKit/RogueHooded.fbx.meta
+  s_d75b49dfbafb60::t_8f9b7d436162f6 1-111
+RiskAI/Assets/RiskAI/Art/KayKit/RogueHooded.mat
+  s_d75b49dfbafb60::t_17cb9960edc491 1-137
+RiskAI/Assets/RiskAI/Art/KayKit/RogueHooded.mat.meta
+  s_d75b49dfbafb60::t_7d640e0c5861dd 1-8
+RiskAI/Assets/RiskAI/Art/KayKit/RoyalGuard.mat
+  s_d75b49dfbafb60::t_98a052226d6d29 1-137
+RiskAI/Assets/RiskAI/Art/KayKit/RoyalGuard.mat.meta
+  s_d75b49dfbafb60::t_e0165dff3939b9 1-8
+RiskAI/Assets/RiskAI/Art/KayKit/crossbow_2handed.fbx.meta
+  s_d75b49dfbafb60::t_5cb15a7ebcf71f 1-111
+RiskAI/Assets/RiskAI/Art/KayKit/knight_texture.png.meta
+  s_d75b49dfbafb60::t_260d3b9a9d9e62 1-117
+RiskAI/Assets/RiskAI/Art/KayKit/mage_texture.png.meta
+  s_d75b49dfbafb60::t_dd4f07fc953d88 1-117
+RiskAI/Assets/RiskAI/Art/KayKit/rogue_texture.png.meta
+  s_d75b49dfbafb60::t_c3d12ea3c1c674 1-117
+RiskAI/Assets/RiskAI/Art/KayKit/shield_badge.fbx.meta
+  s_d75b49dfbafb60::t_99d056819b3e00 1-111
+RiskAI/Assets/RiskAI/Art/KayKit/sword_1handed.fbx.meta
+  s_d75b49dfbafb60::t_d02f09e82d562b 1-111
+RiskAI/Assets/RiskAI/Art/MapSurface.hlsl
+  s_3ffa77ddd2c9d7::t_742e5a9ea0f66a 1-21
+RiskAI/Assets/RiskAI/Art/MapSurface.hlsl.meta
+  s_d75b49dfbafb60::t_8c5583d6184e9c 1-7
+RiskAI/Assets/RiskAI/Art/Meadow.shader
+  s_b0c18949518898::t_57b4332d7144b4 1-103
+RiskAI/Assets/RiskAI/Art/Meadow.shader.meta
+  s_d75b49dfbafb60::t_582f8a200c3795 1-9
+RiskAI/Assets/RiskAI/Art/PaintedSurface.shader
+  s_d75b49dfbafb60::t_8ea99da0e7ee23 1-64
+RiskAI/Assets/RiskAI/Art/PaintedSurface.shader.meta
+  s_d75b49dfbafb60::t_c356b8701d63ee 1-9
+RiskAI/Assets/RiskAI/Art/RiverWater.shader
+  s_d398b7e4ab0877::t_d9b19b2c759b21 1-48
+RiskAI/Assets/RiskAI/Art/RiverWater.shader.meta
+  s_d75b49dfbafb60::t_271c6795830778 1-9
+RiskAI/Assets/RiskAI/Art/UnitTeam.shader
+  s_d75b49dfbafb60::t_6929054a03fd9e 1-123
+RiskAI/Assets/RiskAI/Art/UnitTeam.shader.meta
+  s_d75b49dfbafb60::t_94b20e674ee897 1-9
+RiskAI/Assets/RiskAI/Editor.meta
+  s_d75b49dfbafb60::t_353fff87052292 1-8
+RiskAI/Assets/RiskAI/Editor/RiskArtSetup.cs
+  s_d75b49dfbafb60::t_6d682cebc56856 1-89
+RiskAI/Assets/RiskAI/Editor/RiskArtSetup.cs.meta
+  s_d75b49dfbafb60::t_c8f868085f80d9 1-2
+RiskAI/Assets/RiskAI/Editor/RiskProjectSetup.cs
+  s_d75b49dfbafb60::t_1c89d7387ff7b3 1-69
+RiskAI/Assets/RiskAI/Editor/RiskProjectSetup.cs.meta
+  s_d75b49dfbafb60::t_a91677fdd6b084 1-2
+RiskAI/Assets/RiskAI/Editor/RiskVisualReview.cs
+  s_3ffa77ddd2c9d7::t_c010f182cd1754 1-91
+RiskAI/Assets/RiskAI/Editor/RiskVisualReview.cs.meta
+  s_d75b49dfbafb60::t_6ce23bb64d598e 1-2
+RiskAI/Assets/RiskAI/Editor/RiskWorldArtSetup.cs
+  s_3ffa77ddd2c9d7::t_ba5fef686fbd16 1-45
+RiskAI/Assets/RiskAI/Editor/RiskWorldArtSetup.cs.meta
+  s_d75b49dfbafb60::t_d5787240474626 1-2
+RiskAI/Assets/RiskAI/Editor/RiskWorldPreview.cs
+  s_d75b49dfbafb60::t_f8b149546d1cf0 1-95
+RiskAI/Assets/RiskAI/Editor/RiskWorldPreview.cs.meta
+  s_d75b49dfbafb60::t_88a630c1ce3ad5 1-2
+RiskAI/Assets/RiskAI/Resources.meta
+  s_d75b49dfbafb60::t_3c040d342f0670 1-8
+RiskAI/Assets/RiskAI/Resources/Atmosphere.mat
+  s_d75b49dfbafb60::t_a662bf2db301c4 1-30
+RiskAI/Assets/RiskAI/Resources/Atmosphere.mat.meta
+  s_d75b49dfbafb60::t_470155d91eab32 1-8
+RiskAI/Assets/RiskAI/Resources/BiomeFoliage.mat
+  s_d75b49dfbafb60::t_3482e1ff4983b3 1-34
+RiskAI/Assets/RiskAI/Resources/BiomeFoliage.mat.meta
+  s_d75b49dfbafb60::t_4d60e8091f76db 1-8
+RiskAI/Assets/RiskAI/Resources/Cascade.mat
+  s_d75b49dfbafb60::t_2d22c15fb916e8 1-30
+RiskAI/Assets/RiskAI/Resources/Cascade.mat.meta
+  s_d75b49dfbafb60::t_72b83a5677050d 1-8
+RiskAI/Assets/RiskAI/Resources/FirFoliage.mat
+  s_d75b49dfbafb60::t_c3ae77d5d5f226 1-34
+RiskAI/Assets/RiskAI/Resources/FirFoliage.mat.meta
+  s_d75b49dfbafb60::t_5092f6a6de15d8 1-8
+RiskAI/Assets/RiskAI/Resources/GroundShade.mat
+  s_d75b49dfbafb60::t_8ea93123fe5eaa 1-31
+RiskAI/Assets/RiskAI/Resources/GroundShade.mat.meta
+  s_d75b49dfbafb60::t_702403d346a12f 1-8
+RiskAI/Assets/RiskAI/Resources/Meadow.mat
+  s_d75b49dfbafb60::t_709dd1140abea1 1-44
+RiskAI/Assets/RiskAI/Resources/Meadow.mat.meta
+  s_d75b49dfbafb60::t_b3cdd4c6228ae1 1-8
+RiskAI/Assets/RiskAI/Resources/Painted.meta
+  s_d75b49dfbafb60::t_34ea78f6e8e14b 1-8
+RiskAI/Assets/RiskAI/Resources/Painted/ArchitectureAtlas.png.meta
+  s_d75b49dfbafb60::t_0cbe087b17d411 1-117
+RiskAI/Assets/RiskAI/Resources/Painted/BiomeAtlas-v06.png.meta
+  s_d75b49dfbafb60::t_c28974011ddeae 1-117
+RiskAI/Assets/RiskAI/Resources/Painted/CliffAtlas-v07.png.meta
+  s_d75b49dfbafb60::t_28c6b537c67c1f 1-117
+RiskAI/Assets/RiskAI/Resources/Painted/FirBough-v07.png.meta
+  s_d75b49dfbafb60::t_67c496664d1cfc 1-117
+RiskAI/Assets/RiskAI/Resources/Painted/FirBough-v07b.png.meta
+  s_d75b49dfbafb60::t_e4c9fcb4fc2f5d 1-117
+RiskAI/Assets/RiskAI/Resources/Painted/FoliageAtlas-v08.png.meta
+  s_d75b49dfbafb60::t_a89cb90f3707f8 1-117
+RiskAI/Assets/RiskAI/Resources/Painted/GroundAtlas.png.meta
+  s_d75b49dfbafb60::t_81381984e6ba3a 1-117
+RiskAI/Assets/RiskAI/Resources/Painted/StrategicAtlas.png.meta
+  s_d75b49dfbafb60::t_195d9fbc5c628a 1-117
+RiskAI/Assets/RiskAI/Resources/PaintedSurface.mat
+  s_d75b49dfbafb60::t_47fc510e022087 1-38
+RiskAI/Assets/RiskAI/Resources/PaintedSurface.mat.meta
+  s_d75b49dfbafb60::t_7c253609f0708f 1-8
+RiskAI/Assets/RiskAI/Resources/Portraits.meta
+  s_d75b49dfbafb60::t_9bfbea1c8119fb 1-8
+RiskAI/Assets/RiskAI/Resources/Portraits/Knight.png.meta
+  s_d75b49dfbafb60::t_5ece5f8519c979 1-117
+RiskAI/Assets/RiskAI/Resources/Portraits/Mage.png.meta
+  s_d75b49dfbafb60::t_78e02c955cd9d3 1-117
+RiskAI/Assets/RiskAI/Resources/Portraits/Medic.png.meta
+  s_d75b49dfbafb60::t_608d32692c6c66 1-117
+RiskAI/Assets/RiskAI/Resources/Portraits/Mortar.png.meta
+  s_d75b49dfbafb60::t_a268e76ca54340 1-117
+RiskAI/Assets/RiskAI/Resources/Portraits/RogueHooded.png.meta
+  s_d75b49dfbafb60::t_f18ba6313f5c94 1-117
+RiskAI/Assets/RiskAI/Resources/Portraits/RoyalGuard.png.meta
+  s_d75b49dfbafb60::t_05ce9a81e4a86b 1-117
+RiskAI/Assets/RiskAI/Resources/RiskAILit.mat
+  s_d75b49dfbafb60::t_66e605a9695412 1-137
+RiskAI/Assets/RiskAI/Resources/RiskAILit.mat.meta
+  s_d75b49dfbafb60::t_abb821946f1303 1-8
+RiskAI/Assets/RiskAI/Resources/RiskAIRing.mat
+  s_d75b49dfbafb60::t_6e919a2ddca0a6 1-90
+RiskAI/Assets/RiskAI/Resources/RiskAIRing.mat.meta
+  s_d75b49dfbafb60::t_fddd66602cef07 1-8
+RiskAI/Assets/RiskAI/Resources/RiverWater.mat
+  s_d75b49dfbafb60::t_28441898f1dc65 1-30
+RiskAI/Assets/RiskAI/Resources/RiverWater.mat.meta
+  s_d75b49dfbafb60::t_a76fc6da960d15 1-8
+RiskAI/Assets/RiskAI/Resources/UnitTeam.mat
+  s_d75b49dfbafb60::t_9c5a6960d974b9 1-41
+RiskAI/Assets/RiskAI/Resources/UnitTeam.mat.meta
+  s_d75b49dfbafb60::t_4a37602057d47d 1-8
+RiskAI/Assets/RiskAI/Resources/Units.meta
+  s_d75b49dfbafb60::t_69a234605bcf5c 1-8
+RiskAI/Assets/RiskAI/Resources/Units/Knight.prefab
+  s_d75b49dfbafb60::t_d8c45a2ec67493 1-192
+RiskAI/Assets/RiskAI/Resources/Units/Knight.prefab.meta
+  s_d75b49dfbafb60::t_b7a7158fc59c0c 1-7
+RiskAI/Assets/RiskAI/Resources/Units/Mage.prefab
+  s_d75b49dfbafb60::t_6d738299fb75a9 1-172
+RiskAI/Assets/RiskAI/Resources/Units/Mage.prefab.meta
+  s_d75b49dfbafb60::t_046d9d950aa04d 1-7
+RiskAI/Assets/RiskAI/Resources/Units/Medic.prefab
+  s_d75b49dfbafb60::t_676f1f7cd9befd 1-172
+RiskAI/Assets/RiskAI/Resources/Units/Medic.prefab.meta
+  s_d75b49dfbafb60::t_f83b3cd38600a9 1-7
+RiskAI/Assets/RiskAI/Resources/Units/RogueHooded.prefab
+  s_d75b49dfbafb60::t_3c02094625e17a 1-176
+RiskAI/Assets/RiskAI/Resources/Units/RogueHooded.prefab.meta
+  s_d75b49dfbafb60::t_86e15a908f3b18 1-7
+RiskAI/Assets/RiskAI/Resources/Units/RoyalGuard.prefab
+  s_d75b49dfbafb60::t_d0392921577b61 1-196
+RiskAI/Assets/RiskAI/Resources/Units/RoyalGuard.prefab.meta
+  s_d75b49dfbafb60::t_2cc94f4c48dc14 1-7
+RiskAI/Assets/RiskAI/Scenes.meta
+  s_d75b49dfbafb60::t_1c5c6e45c55f5f 1-8
+RiskAI/Assets/RiskAI/Scenes/LasMarcas.unity
+  s_d75b49dfbafb60::t_ec819d5f5dd524 1-170
+RiskAI/Assets/RiskAI/Scenes/LasMarcas.unity.meta
+  s_d75b49dfbafb60::t_e63f553a6d5239 1-7
+RiskAI/Assets/RiskAI/Scripts.meta
+  s_d75b49dfbafb60::t_e944b12aef9359 1-8
+RiskAI/Assets/RiskAI/Scripts/BattleHud.cs
+  s_d75b49dfbafb60::t_f288a9f4864776 1-402
+RiskAI/Assets/RiskAI/Scripts/BattleHud.cs.meta
+  s_d75b49dfbafb60::t_864fc589ca4b91 1-2
+RiskAI/Assets/RiskAI/Scripts/BattleSession.cs
+  s_d75b49dfbafb60::t_865cc1b8c37193 1-173
+RiskAI/Assets/RiskAI/Scripts/BattleSession.cs.meta
+  s_d75b49dfbafb60::t_e4e8059f60de29 1-2
+RiskAI/Assets/RiskAI/Scripts/BiomeVegetation.cs
+  s_d75b49dfbafb60::t_c9615f961bfc6c 1-57
+RiskAI/Assets/RiskAI/Scripts/BiomeVegetation.cs.meta
+  s_d75b49dfbafb60::t_9f51c2a143cc6e 1-2
+RiskAI/Assets/RiskAI/Scripts/CityClaimZone.cs
+  s_4774984fd94598::t_9508714dec3cf1 1-76
+RiskAI/Assets/RiskAI/Scripts/CityClaimZone.cs.meta
+  s_d75b49dfbafb60::t_89cd307511b372 1-2
+RiskAI/Assets/RiskAI/Scripts/CliffDetails.cs.meta
+  s_d75b49dfbafb60::t_95e20fdabb1650 1-2
+RiskAI/Assets/RiskAI/Scripts/CombatTarget.cs
+  s_3ffa77ddd2c9d7::t_7daa0a879f63b9 1-28
+RiskAI/Assets/RiskAI/Scripts/CombatTarget.cs.meta
+  s_d75b49dfbafb60::t_652fad0d91c5d8 1-2
+RiskAI/Assets/RiskAI/Scripts/Core.meta
+  s_d75b49dfbafb60::t_93d607e477ce83 1-8
+RiskAI/Assets/RiskAI/Scripts/Core/BattleRules.cs
+  s_d75b49dfbafb60::t_b3dc524b1309b9 1-115
+RiskAI/Assets/RiskAI/Scripts/Core/BattleRules.cs.meta
+  s_d75b49dfbafb60::t_ca38f271a68348 1-2
+RiskAI/Assets/RiskAI/Scripts/Core/CombatRules.cs
+  s_d75b49dfbafb60::t_470f0bf1c9584f 1-43
+RiskAI/Assets/RiskAI/Scripts/Core/CombatRules.cs.meta
+  s_d75b49dfbafb60::t_83acb7a974b8fb 1-2
+RiskAI/Assets/RiskAI/Scripts/Core/ReforgedProfiles.cs
+  s_d75b49dfbafb60::t_f40b32d123146b 1-35
+RiskAI/Assets/RiskAI/Scripts/Core/ReforgedProfiles.cs.meta
+  s_d75b49dfbafb60::t_515e321291bcfe 1-2
+RiskAI/Assets/RiskAI/Scripts/Core/RiskReferenceRules.cs.meta
+  s_d75b49dfbafb60::t_0aef6f4cbeaf82 1-2
+RiskAI/Assets/RiskAI/Scripts/Core/StartingAllocation.cs
+  s_d75b49dfbafb60::t_5a9b84c94b46a8 1-174
+RiskAI/Assets/RiskAI/Scripts/Core/StartingAllocation.cs.meta
+  s_d75b49dfbafb60::t_a7a05545c0a51e 1-2
+RiskAI/Assets/RiskAI/Scripts/DefenseTower.cs
+  s_d75b49dfbafb60::t_ebc6620475d473 1-113
+RiskAI/Assets/RiskAI/Scripts/DefenseTower.cs.meta
+  s_d75b49dfbafb60::t_800faef630b198 1-2
+RiskAI/Assets/RiskAI/Scripts/Harbor.cs
+  s_d75b49dfbafb60::t_39ac3fd865eb68 1-83
+RiskAI/Assets/RiskAI/Scripts/Harbor.cs.meta
+  s_d75b49dfbafb60::t_731531cba9e8de 1-2
+RiskAI/Assets/RiskAI/Scripts/MapLayout.cs
+  s_d75b49dfbafb60::t_c5b343d580e621 1-107
+RiskAI/Assets/RiskAI/Scripts/MapLayout.cs.meta
+  s_d75b49dfbafb60::t_8e14059cc4be19 1-2
+RiskAI/Assets/RiskAI/Scripts/MedicSupport.cs.meta
+  s_d75b49dfbafb60::t_c0a0938c4eb5e9 1-2
+RiskAI/Assets/RiskAI/Scripts/NavalArt.cs
+  s_d75b49dfbafb60::t_abcad066558c96 1-96
+RiskAI/Assets/RiskAI/Scripts/NavalArt.cs.meta
+  s_d75b49dfbafb60::t_27d6cb66bcab06 1-2
+RiskAI/Assets/RiskAI/Scripts/NavalWorld.cs
+  s_d75b49dfbafb60::t_3231778e6758d1 1-91
+RiskAI/Assets/RiskAI/Scripts/NavalWorld.cs.meta
+  s_d75b49dfbafb60::t_a9a89e4f1084b9 1-2
+RiskAI/Assets/RiskAI/Scripts/RiskAI.Runtime.asmdef
+  s_b82b0222617d8b::t_a4273efbb8b4b9 1-6
+RiskAI/Assets/RiskAI/Scripts/RiskAI.Runtime.asmdef.meta
+  s_d75b49dfbafb60::t_0dcdc552500aa0 1-7
+RiskAI/Assets/RiskAI/Scripts/RiskBootstrap.cs
+  s_d75b49dfbafb60::t_7c808e56c48b5e 1-65
+RiskAI/Assets/RiskAI/Scripts/RiskBootstrap.cs.meta
+  s_d75b49dfbafb60::t_dbef6f2a68bfa6 1-2
+RiskAI/Assets/RiskAI/Scripts/RtsCameraRig.cs
+  s_d75b49dfbafb60::t_731d97fb4e7ee6 1-76
+RiskAI/Assets/RiskAI/Scripts/RtsCameraRig.cs.meta
+  s_d75b49dfbafb60::t_03ec9d2a961231 1-2
+RiskAI/Assets/RiskAI/Scripts/RtsController.cs
+  s_d75b49dfbafb60::t_3b609e1980722e 1-417
+RiskAI/Assets/RiskAI/Scripts/RtsController.cs.meta
+  s_d75b49dfbafb60::t_4a5c5345de10e0 1-2
+RiskAI/Assets/RiskAI/Scripts/RtsCursor.cs
+  s_d75b49dfbafb60::t_9897c5270a2643 1-28
+RiskAI/Assets/RiskAI/Scripts/RtsCursor.cs.meta
+  s_d75b49dfbafb60::t_45b503d7353159 1-2
+RiskAI/Assets/RiskAI/Scripts/RtsGlyphs.cs
+  s_d75b49dfbafb60::t_a6193c271d6200 1-50
+RiskAI/Assets/RiskAI/Scripts/RtsGlyphs.cs.meta
+  s_d75b49dfbafb60::t_8c6d14d7e257f9 1-2
+RiskAI/Assets/RiskAI/Scripts/RtsPicking.cs
+  s_3ffa77ddd2c9d7::t_09630ceaf37cf8 1-66
+RiskAI/Assets/RiskAI/Scripts/RtsPicking.cs.meta
+  s_d75b49dfbafb60::t_30111fe0fbbf84 1-2
+RiskAI/Assets/RiskAI/Scripts/RtsSkin.cs
+  s_d75b49dfbafb60::t_bada9a1bbff854 1-73
+RiskAI/Assets/RiskAI/Scripts/RtsSkin.cs.meta
+  s_d75b49dfbafb60::t_c97d4e7fdf7cc8 1-2
+RiskAI/Assets/RiskAI/Scripts/RuntimeVisualCapture.cs
+  s_d75b49dfbafb60::t_f6373aaad22309 1-62
+RiskAI/Assets/RiskAI/Scripts/RuntimeVisualCapture.cs.meta
+  s_d75b49dfbafb60::t_6c4ef5b2ec05da 1-2
+RiskAI/Assets/RiskAI/Scripts/SeaNavigation.cs
+  s_d75b49dfbafb60::t_c03893dbec78b0 1-113
+RiskAI/Assets/RiskAI/Scripts/SeaNavigation.cs.meta
+  s_d75b49dfbafb60::t_17ebea7b1e6376 1-2
+RiskAI/Assets/RiskAI/Scripts/Settlement.cs
+  s_d75b49dfbafb60::t_e5e8118254e24d 1-182
+RiskAI/Assets/RiskAI/Scripts/Settlement.cs.meta
+  s_d75b49dfbafb60::t_3ea972964d4cd6 1-2
+RiskAI/Assets/RiskAI/Scripts/Ship.cs
+  s_d75b49dfbafb60::t_897eeb7e0a3aed 1-154
+RiskAI/Assets/RiskAI/Scripts/Ship.cs.meta
+  s_d75b49dfbafb60::t_6d42860ea74c57 1-2
+RiskAI/Assets/RiskAI/Scripts/Soldier.cs
+  s_d75b49dfbafb60::t_b7c066b2571aff 1-252
+RiskAI/Assets/RiskAI/Scripts/Soldier.cs.meta
+  s_d75b49dfbafb60::t_15a06ad94cddb2 1-2
+RiskAI/Assets/RiskAI/Scripts/SoldierAnimator.cs
+  s_d75b49dfbafb60::t_7f065643a0d096 1-36
+RiskAI/Assets/RiskAI/Scripts/SoldierAnimator.cs.meta
+  s_d75b49dfbafb60::t_e6bdf2eb31a2a9 1-2
+RiskAI/Assets/RiskAI/Scripts/StrategicTerrain.cs
+  s_d75b49dfbafb60::t_b2b697a8030cab 1-115
+RiskAI/Assets/RiskAI/Scripts/StrategicTerrain.cs.meta
+  s_d75b49dfbafb60::t_f13d2875d69794 1-2
+RiskAI/Assets/RiskAI/Scripts/TerrainHydrology.cs
+  s_d75b49dfbafb60::t_a36a1aeff20708 1-76
+RiskAI/Assets/RiskAI/Scripts/TerrainHydrology.cs.meta
+  s_d75b49dfbafb60::t_58d7308f67afc1 1-2
+RiskAI/Assets/RiskAI/Scripts/TerritoryMarkers.cs
+  s_3ffa77ddd2c9d7::t_8eefb8e0eea128 1-246
+RiskAI/Assets/RiskAI/Scripts/UnitTeamColor.cs
+  s_d75b49dfbafb60::t_1e1c9a0b03bfff 1-86
+RiskAI/Assets/RiskAI/Scripts/UnitTeamColor.cs.meta
+  s_d75b49dfbafb60::t_73ebb4f2ae241e 1-2
+RiskAI/Assets/RiskAI/Scripts/VisualFactory.cs
+  s_3ffa77ddd2c9d7::t_0fe8c1c38e1f33 1-182
+RiskAI/Assets/RiskAI/Scripts/VisualFactory.cs.meta
+  s_d75b49dfbafb60::t_b1c39831549f03 1-2
+RiskAI/Assets/RiskAI/Scripts/VisualMetrics.cs
+  s_e5f669894dac38::t_1599bb39a2b79d 1-13
+RiskAI/Assets/RiskAI/Scripts/VisualMetrics.cs.meta
+  s_d75b49dfbafb60::t_3cdc7690244c7c 1-2
+RiskAI/Assets/RiskAI/Scripts/WorldArt.cs
+  s_e5f669894dac38::t_568fa28a4c6e64 1-200
+RiskAI/Assets/RiskAI/Scripts/WorldArt.cs.meta
+  s_d75b49dfbafb60::t_43930ccec3f213 1-2
+RiskAI/Assets/RiskAI/Scripts/WorldLife.cs
+  s_d75b49dfbafb60::t_4bb41fe5eb3608 1-150
+RiskAI/Assets/RiskAI/Scripts/WorldLife.cs.meta
+  s_d75b49dfbafb60::t_f6d78e0ccbc7dc 1-2
+RiskAI/Assets/RiskAI/Tests.meta
+  s_d75b49dfbafb60::t_ec2904bd8fac4e 1-8
+RiskAI/Assets/RiskAI/Tests/Editor.meta
+  s_d75b49dfbafb60::t_bb756930310d2b 1-8
+RiskAI/Assets/RiskAI/Tests/Editor/CombatRulesTests.cs
+  s_d75b49dfbafb60::t_c96be7ab0d9c48 1-59
+RiskAI/Assets/RiskAI/Tests/Editor/CombatRulesTests.cs.meta
+  s_d75b49dfbafb60::t_15d4dd4e48e46c 1-2
+RiskAI/Assets/RiskAI/Tests/Editor/EconomyCountryTests.cs
+  s_d75b49dfbafb60::t_e264e470c8c8fa 1-36
+RiskAI/Assets/RiskAI/Tests/Editor/EconomyCountryTests.cs.meta
+  s_d75b49dfbafb60::t_ddd980f18fa789 1-2
+RiskAI/Assets/RiskAI/Tests/Editor/ReforgedCombatTests.cs
+  s_d75b49dfbafb60::t_800088e87f4288 1-30
+RiskAI/Assets/RiskAI/Tests/Editor/ReforgedCombatTests.cs.meta
+  s_d75b49dfbafb60::t_d3a10e9a5eb94a 1-2
+RiskAI/Assets/RiskAI/Tests/Editor/RiskAI.Tests.asmdef
+  s_b82b0222617d8b::t_3dca7ff4fcbb69 1-7
+RiskAI/Assets/RiskAI/Tests/Editor/RiskAI.Tests.asmdef.meta
+  s_d75b49dfbafb60::t_83f383bdfda804 1-7
+RiskAI/Assets/RiskAI/Tests/Editor/RiskReferenceRulesTests.cs.meta
+  s_d75b49dfbafb60::t_f32770efa3bbe4 1-2
+RiskAI/Assets/RiskAI/Tests/Editor/RulesTests.cs
+  s_d75b49dfbafb60::t_35ea318f64e66a 1-29
+RiskAI/Assets/RiskAI/Tests/Editor/RulesTests.cs.meta
+  s_d75b49dfbafb60::t_84d3cd596dc1a8 1-2
+RiskAI/Assets/RiskAI/Tests/Editor/StartingAllocationTests.cs
+  s_b82b0222617d8b::t_629cdb38c79f62 1-65
+RiskAI/Assets/RiskAI/Tests/Editor/StartingAllocationTests.cs.meta
+  s_d75b49dfbafb60::t_17bc65be471a6a 1-2
+RiskAI/Assets/RiskAI/Tests/PlayMode.meta
+  s_d75b49dfbafb60::t_f8c0ca0e5a4718 1-8
+RiskAI/Assets/RiskAI/Tests/PlayMode/AiPacingTests.cs
+  s_4774984fd94598::t_e726c27a6d7e96 1-83
+RiskAI/Assets/RiskAI/Tests/PlayMode/AiPacingTests.cs.meta
+  s_d75b49dfbafb60::t_b9e512645f6428 1-2
+RiskAI/Assets/RiskAI/Tests/PlayMode/BattleIntegrationTests.cs
+  s_d75b49dfbafb60::t_92f625cc19b166 1-287
+RiskAI/Assets/RiskAI/Tests/PlayMode/BattleIntegrationTests.cs.meta
+  s_d75b49dfbafb60::t_180eb28446b2e1 1-2
+RiskAI/Assets/RiskAI/Tests/PlayMode/CameraUsabilityTests.cs
+  s_d75b49dfbafb60::t_a43f3d5dfc970f 1-128
+RiskAI/Assets/RiskAI/Tests/PlayMode/CameraUsabilityTests.cs.meta
+  s_d75b49dfbafb60::t_b3580e2524ea37 1-2
+RiskAI/Assets/RiskAI/Tests/PlayMode/CityClaimTests.cs
+  s_d75b49dfbafb60::t_b0d9a4a3d169aa 1-141
+RiskAI/Assets/RiskAI/Tests/PlayMode/CityClaimTests.cs.meta
+  s_d75b49dfbafb60::t_0c90975a2a6eee 1-2
+RiskAI/Assets/RiskAI/Tests/PlayMode/MedicSupportTests.cs.meta
+  s_d75b49dfbafb60::t_a9b40e8baa0c68 1-2
+RiskAI/Assets/RiskAI/Tests/PlayMode/NavalGameplayTests.cs
+  s_d75b49dfbafb60::t_c88f005faaaac9 1-72
+RiskAI/Assets/RiskAI/Tests/PlayMode/NavalGameplayTests.cs.meta
+  s_d75b49dfbafb60::t_00a32386729c98 1-2
+RiskAI/Assets/RiskAI/Tests/PlayMode/RandomStartTests.cs
+  s_d75b49dfbafb60::t_47684c70aeb50c 1-145
+RiskAI/Assets/RiskAI/Tests/PlayMode/RandomStartTests.cs.meta
+  s_d75b49dfbafb60::t_48898b9ff4eeac 1-2
+RiskAI/Assets/RiskAI/Tests/PlayMode/RiskAI.PlayTests.asmdef
+  s_d75b49dfbafb60::t_87d83313060e27 1-6
+RiskAI/Assets/RiskAI/Tests/PlayMode/RiskAI.PlayTests.asmdef.meta
+  s_d75b49dfbafb60::t_883ac5bf013846 1-7
+RiskAI/Assets/RiskAI/Tests/PlayMode/TowerCombatTests.cs
+  s_d75b49dfbafb60::t_f98eedd4097fc2 1-134
+RiskAI/Assets/RiskAI/Tests/PlayMode/TowerCombatTests.cs.meta
+  s_d75b49dfbafb60::t_c836702c337bf6 1-2
+RiskAI/Assets/Scenes.meta
+  s_d75b49dfbafb60::t_ab1e0ac330419d 1-8
+RiskAI/Assets/Scenes/SampleScene.unity
+  s_d75b49dfbafb60::t_46082bad98028b 1-432
+RiskAI/Assets/Scenes/SampleScene.unity.meta
+  s_d75b49dfbafb60::t_498ee39cf12d40 1-7
+RiskAI/Assets/Settings.meta
+  s_d75b49dfbafb60::t_4d1872bbb0d25f 1-8
+RiskAI/Assets/Settings/DefaultVolumeProfile.asset
+  s_d75b49dfbafb60::t_11d1d3b57beab7 1-986
+RiskAI/Assets/Settings/DefaultVolumeProfile.asset.meta
+  s_d75b49dfbafb60::t_9b6dd8b3895550 1-8
+RiskAI/Assets/Settings/Mobile_RPAsset.asset
+  s_d75b49dfbafb60::t_3012ee0cee94f4 1-138
+RiskAI/Assets/Settings/Mobile_RPAsset.asset.meta
+  s_d75b49dfbafb60::t_0f2f049fe16d50 1-8
+RiskAI/Assets/Settings/Mobile_Renderer.asset
+  s_d75b49dfbafb60::t_65da980002d2c4 1-52
+RiskAI/Assets/Settings/Mobile_Renderer.asset.meta
+  s_d75b49dfbafb60::t_1aa52f970e1f6f 1-8
+RiskAI/Assets/Settings/PC_RPAsset.asset
+  s_d75b49dfbafb60::t_912b62331e0cc3 1-143
+RiskAI/Assets/Settings/PC_RPAsset.asset.meta
+  s_d75b49dfbafb60::t_2d2fac3a9159e8 1-8
+RiskAI/Assets/Settings/PC_Renderer.asset
+  s_d75b49dfbafb60::t_9fe582a6baf4af 1-95
+RiskAI/Assets/Settings/PC_Renderer.asset.meta
+  s_d75b49dfbafb60::t_b4336cc75a4bca 1-8
+RiskAI/Assets/Settings/SampleSceneProfile.asset
+  s_d75b49dfbafb60::t_92162de5aa3f30 1-159
+RiskAI/Assets/Settings/SampleSceneProfile.asset.meta
+  s_d75b49dfbafb60::t_d38666b43d6b93 1-8
+RiskAI/Assets/Settings/UniversalRenderPipelineGlobalSettings.asset
+  s_d75b49dfbafb60::t_6b4c55ac3dd05f 1-450
+RiskAI/Assets/Settings/UniversalRenderPipelineGlobalSettings.asset.meta
+  s_d75b49dfbafb60::t_5ea4d9f029b798 1-8
+RiskAI/Assets/TutorialInfo.meta
+  s_d75b49dfbafb60::t_8d0eca8c039cd4 1-8
+RiskAI/Assets/TutorialInfo/Editor.meta
+  s_d75b49dfbafb60::t_2db4936bda61ad 1-9
+RiskAI/Assets/TutorialInfo/Editor/ReadmeEditor.cs
+  s_d75b49dfbafb60::t_521ca6a1f8cefd 1-128
+RiskAI/Assets/TutorialInfo/Editor/ReadmeEditor.cs.meta
+  s_d75b49dfbafb60::t_4344fe8887feb6 1-12
+RiskAI/Assets/TutorialInfo/Icons.meta
+  s_d75b49dfbafb60::t_cac2b1610f5293 1-9
+RiskAI/Assets/TutorialInfo/Icons/URP.png.meta
+  s_d75b49dfbafb60::t_cc5e3d1a46d0c5 1-134
+RiskAI/Assets/TutorialInfo/Layout.wlt
+  s_d75b49dfbafb60::t_a4ceb5b5e85c15 1-654
+RiskAI/Assets/TutorialInfo/Layout.wlt.meta
+  s_d75b49dfbafb60::t_482c97a082fd56 1-8
+RiskAI/Assets/TutorialInfo/Readme.cs
+  s_d75b49dfbafb60::t_6c9f5d228c0af7 1-20
+RiskAI/Assets/TutorialInfo/Readme.cs.meta
+  s_d75b49dfbafb60::t_672e2a2758709d 1-12
+RiskAI/Assets/TutorialInfo/StyleSheets.meta
+  s_d75b49dfbafb60::t_4ba434951eea4a 1-9
+RiskAI/Assets/TutorialInfo/StyleSheets/ReadmeEditor.uss
+  s_d75b49dfbafb60::t_45d0fbb6477b07 1-75
+RiskAI/Assets/TutorialInfo/StyleSheets/ReadmeEditor.uss.meta
+  s_d75b49dfbafb60::t_41cb83a6f6f223 1-11
+RiskAI/Assets/TutorialInfo/StyleSheets/ReadmeEditorDark.uss
+  s_d75b49dfbafb60::t_d56cf4ae825aa5 1-3
+RiskAI/Assets/TutorialInfo/StyleSheets/ReadmeEditorDark.uss.meta
+  s_d75b49dfbafb60::t_0745f0aaf5e4c9 1-11
+RiskAI/Assets/TutorialInfo/StyleSheets/ReadmeEditorLight.uss
+  s_d75b49dfbafb60::t_8aec389469ced0 1-3
+RiskAI/Assets/TutorialInfo/StyleSheets/ReadmeEditorLight.uss.meta
+  s_d75b49dfbafb60::t_770cf94440f2c6 1-11
+RiskAI/Packages/manifest.json
+  s_d75b49dfbafb60::t_fa2e9aa8cf1e35 1-15
+RiskAI/Packages/packages-lock.json
+  s_d75b49dfbafb60::t_674b09d85119ed 1-305
+RiskAI/ProjectSettings/AudioManager.asset
+  s_d75b49dfbafb60::t_32514b03efe4ee 1-19
+RiskAI/ProjectSettings/ClusterInputManager.asset
+  s_d75b49dfbafb60::t_52e8b50a308411 1-6
+RiskAI/ProjectSettings/DynamicsManager.asset
+  s_d75b49dfbafb60::t_f5628e5bdd6c4a 1-36
+RiskAI/ProjectSettings/EditorBuildSettings.asset
+  s_d75b49dfbafb60::t_25768beca8f797 1-13
+RiskAI/ProjectSettings/EditorSettings.asset
+  s_d75b49dfbafb60::t_24663d2259074c 1-31
+RiskAI/ProjectSettings/GraphicsSettings.asset
+  s_d75b49dfbafb60::t_04e9a4e2945919 1-69
+RiskAI/ProjectSettings/InputManager.asset
+  s_d75b49dfbafb60::t_576a37a6c85d24 1-487
+RiskAI/ProjectSettings/MemorySettings.asset
+  s_d75b49dfbafb60::t_a07e8542db01c9 1-35
+RiskAI/ProjectSettings/MultiplayerManager.asset
+  s_d75b49dfbafb60::t_5bcee0a191827f 1-7
+RiskAI/ProjectSettings/NavMeshAreas.asset
+  s_d75b49dfbafb60::t_8900f67bdff25a 1-91
+RiskAI/ProjectSettings/PackageManagerSettings.asset
+  s_d75b49dfbafb60::t_a966d71babbe82 1-43
+RiskAI/ProjectSettings/Physics2DSettings.asset
+  s_d75b49dfbafb60::t_2c5d844cb6d515 1-56
+RiskAI/ProjectSettings/PresetManager.asset
+  s_d75b49dfbafb60::t_e6a898860fdbeb 1-7
+RiskAI/ProjectSettings/ProjectSettings.asset
+  s_d75b49dfbafb60::t_d7d085a716fe63 1-950
+RiskAI/ProjectSettings/ProjectVersion.txt
+  s_d75b49dfbafb60::t_3a225d22146ade 1-2
+RiskAI/ProjectSettings/QualitySettings.asset
+  s_d75b49dfbafb60::t_7ffd5dd12c2d4f 1-137
+RiskAI/ProjectSettings/SceneTemplateSettings.json
+  s_d75b49dfbafb60::t_b4b6b7000b9774 1-121
+RiskAI/ProjectSettings/ShaderGraphSettings.asset
+  s_d75b49dfbafb60::t_dec626948e7734 1-19
+RiskAI/ProjectSettings/TagManager.asset
+  s_d75b49dfbafb60::t_f759b91275dce8 1-76
+RiskAI/ProjectSettings/TimeManager.asset
+  s_d75b49dfbafb60::t_d30f8bb6ee3a06 1-9
+RiskAI/ProjectSettings/URPProjectSettings.asset
+  s_d75b49dfbafb60::t_b5f037baf4acb9 1-15
+RiskAI/ProjectSettings/UnityConnectSettings.asset
+  s_d75b49dfbafb60::t_fa931e113a1c59 1-40
+RiskAI/ProjectSettings/VFXManager.asset
+  s_d75b49dfbafb60::t_7ff8be4eb30f0d 1-12
+RiskAI/ProjectSettings/VersionControlSettings.asset
+  s_d75b49dfbafb60::t_673b6b70bf7323 1-8
+RiskAI/ProjectSettings/XRSettings.asset
+  s_d75b49dfbafb60::t_467e218c19d845 1-10
+RiskAI/README.md
+  s_d75b49dfbafb60::t_1ced993fb7e074 1-23
+data/battlefield.json
+  s_3ffa77ddd2c9d7::t_d9357ed32f4479 1-20
+data/rules.json
+  s_3ffa77ddd2c9d7::t_d0b9b7c230cda2 1-15
+docs/ART-v0.4.md
+  s_3ffa77ddd2c9d7::t_2467ba685f9ecb 1-13
+docs/ART-v0.5.md
+  s_d75b49dfbafb60::t_a4ac9c2d10bcee 1-13
+docs/ART-v0.6.md
+  s_d75b49dfbafb60::t_32b4aa3f3437ce 1-11
+docs/ART-v0.7.md
+  s_d75b49dfbafb60::t_2f9649ef8e4c0a 1-13
+docs/CAPTURE-SOURCE-v0.9.md
+  s_4774984fd94598::t_1e49cd3418d3e0 1-149
+docs/IMAGEGEN-v0.4.md
+  s_d75b49dfbafb60::t_8024921a906e5b 1-20
+docs/IMAGEGEN-v0.5.md
+  s_d75b49dfbafb60::t_dbf2f544ade1e6 1-12
+docs/IMAGEGEN-v0.6.md
+  s_d75b49dfbafb60::t_f9323ef8e7e362 1-12
+docs/IMAGEGEN-v0.7.md
+  s_d75b49dfbafb60::t_defae731cb20e2 1-26
+docs/ITERATION-v0.8.md
+  s_d75b49dfbafb60::t_ff267d7ac8afde 1-36
+docs/ITERATION-v0.9.md
+  s_d75b49dfbafb60::t_81c72e53502101 1-53
+docs/REFORGED-ALLOCATION.md
+  s_b0c18949518898::t_6c44918834c4aa 1-39
+docs/REFORGED-NAVAL.md
+  s_3ffa77ddd2c9d7::t_9306d0a5e87838 1-106
+docs/REFORGED-UNIT-STATS.md
+  s_d75b49dfbafb60::t_798b7f41aa9116 1-105
+docs/RISK-EUROPE-RULES.md
+  s_01792566e77e96::t_1af66294d92869 1-70
+docs/RISK-REFORGED-RULES.md
+  s_d75b49dfbafb60::t_4ddef7f7541203 1-52
+docs/RTS_BEHAVIOR.md
+  s_d75b49dfbafb60::t_2c37b8207d823a 1-29
+docs/VALIDATION-v0.3.md
+  s_d75b49dfbafb60::t_42a223c467965a 1-11
+docs/VALIDATION-v0.4.md
+  s_d75b49dfbafb60::t_7d4054efa43d18 1-22
+docs/VALIDATION-v0.5.md
+  s_d75b49dfbafb60::t_5ac5502bb04f47 1-22
+docs/VALIDATION-v0.7.md
+  s_d75b49dfbafb60::t_1ec87ecdb4e118 1-26
+docs/VALIDATION-v0.8.md
+  s_d75b49dfbafb60::t_12139d740bad79 1-16
+docs/VALIDATION-v0.9.md
+  s_d75b49dfbafb60::t_02c597446876d8 1-24
+references/ENGINE_RESEARCH.md
+  s_d75b49dfbafb60::t_8631c3b4025e7e 1-37
+references/SOURCES.md
+  s_d75b49dfbafb60::t_91e4bb892068b8 1-36
+scripts/Unity.ps1
+  s_d75b49dfbafb60::t_e578d0859858be 1-15
+scripts/audit_reforged_units.py
+  s_e5f669894dac38::t_aa7e7bd52ee2a6 1-612
+scripts/extract_reforged_v3.py
+  s_d75b49dfbafb60::t_8168e4edde0380 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "d4132e520906d444b3250d9bf552e4a134a47521",
+  "prompts": {},
+  "sessions": {
+    "s_01792566e77e96": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07125-a260-7b61-b513-30c8b9163db3",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_3ffa77ddd2c9d7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ba185143-bd67-4d27-8159-c2ac1eda7157",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_4774984fd94598": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "664481c1-4cb3-48dd-882c-d099ce3d9c8b",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_b0c18949518898": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4bb05238-e53e-466b-a317-b5c7a140b2e6",
+        "model": "unknown"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_b82b0222617d8b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06e84-6f6e-7d11-a74f-756fa7c588e6",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_d398b7e4ab0877": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "53364543-26a7-48fc-ade2-612ca1b24c7e",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_d75b49dfbafb60": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06f0f-278e-7ae1-8117-3f140f998561",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_e5f669894dac38": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9a313234-6cdc-481a-a0b0-d5aabe87d6bf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    }
+  }
+}
