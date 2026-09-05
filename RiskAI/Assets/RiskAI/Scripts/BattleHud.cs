@@ -45,7 +45,7 @@ namespace RiskAI
             DrawWorld();
             RtsSkin.Frame(new Rect(0, 0, width, 48));
             Label(22, 7, 270, "RISKAI · LAS MARCAS", RtsSkin.Title);
-            Label(23, 30, 235, "V0.9 · F3 PUERTO · N FLOTA", RtsSkin.Tiny);
+            Label(23, 30, 235, "V0.10 · F3 PUERTO · N FLOTA", RtsSkin.Tiny);
             Label(270, 13, 180, session.Economy.Gold[0] + " ORO  +" + session.Economy.Income(0) + "/RONDA", RtsSkin.Small);
             Label(455, 13, 150, session.Population(0) + " TROPAS / IA " + session.Population(1), RtsSkin.Small);
             Label(610, 13, 155, "RONDA " + session.Economy.Round + " · " + Mathf.CeilToInt(60 - session.Economy.ElapsedInRound) + " s", RtsSkin.Small);
@@ -114,8 +114,12 @@ namespace RiskAI
             if(Button(new Rect(x,bottom+51,220,62),"[Q] Galera · 75 oro","500 vida · asedio 20 · alcance 17 · armadura 2 · 4 s"))controller.BuyShip(ShipKind.Galley);
             if(Button(new Rect(x+231,bottom+51,220,62),"[W] Transporte · 45 oro","300 vida · 6 soldados · sin ataque · armadura 1 · 6 s"))controller.BuyShip(ShipKind.Transport);
             GUI.enabled=enabled;
-            if(Button(new Rect(x,bottom+126,220,44),"[N] Seleccionar flota"))controller.SelectFleet();
-            if(Button(new Rect(x+231,bottom+126,220,44),"[F3] Mi puerto"))controller.FocusHarbor();
+            GUI.enabled=enabled&&harbor.Owner==0&&!session.Paused&&!harbor.Defense.IsAlive&&!harbor.BuildingTower&&session.Economy.Gold[0]>=BattleRules.TowerCost;
+            string defense=harbor.BuildingTower?"Reconstruyendo torre…":harbor.Defense.IsAlive?"Torre · "+Mathf.CeilToInt(harbor.Defense.Health)+" / 550 vida":"[T] Torre · 60 oro · 7 s";
+            if(Button(new Rect(x,bottom+126,220,44),defense,"Todos los puertos tienen defensa. Destruye la torre rival antes de desembarcar."))controller.BuildTower();
+            GUI.enabled=enabled;
+            if(harbor.BuildingTower)RtsSkin.Bar(new Rect(x,bottom+174,220,5),harbor.Defense.BuildProgress,RtsSkin.Gold);
+            if(Button(new Rect(x+231,bottom+126,220,44),"[N] Seleccionar flota"))controller.SelectFleet();
             Label(x,bottom+182,590,"Clic derecho en un muelle: navegar y desembarcar",RtsSkin.Tiny);
         }
         void FleetDetails(float x)
@@ -365,7 +369,7 @@ namespace RiskAI
         {
             RtsSkin.Fill(new Rect(0,64,width,height-64),new Color(0,0,0,.7f));var r=new Rect(width/2-410,height/2-339,820,678);RtsSkin.Frame(r,RtsSkin.Gold);
             Label(r.x+26,r.y+21,760,"CONQUISTA · RECLUTA · FORTIFICA",RtsSkin.Title);
-            string[] lines={"Clic/caja selecciona. Shift añade. Doble clic elige el mismo tipo en pantalla.","Clic derecho ataca enemigos, sigue aliados o mueve al terreno. A + suelo avanza combatiendo.","S detiene y reacciona. H mantiene posición. P + destino patrulla. E selecciona tu ejército.","En ciudades azules: Q espadachín, W ballestero, D guardia, F mago, R mortero; C sanador.","U mejora a nivel II: +6 oro/ronda si controlas el país; cuesta 90 oro.","Captura: derrota al defensor y entra en el pequeño círculo. T: torre por 60 oro.","La cola muestra hasta 5 compras; pulsa un encargo para cancelarlo y recuperar el oro.","Cada 60 s: base 12 + ciudades de países completos + bonus por regiones completas.","Cada país completo da refuerzos gratis, hasta 5 oleadas vivas; las bajas reponen el cupo.","Conquista: controla " + session.VictoryTarget + " ciudades durante 20 s. Capitales: captura la capital enemiga.","Rueda: zoom suave. Botón central/flechas: cámara. Retroceso: vista inicial. Espacio: centrar.","Ctrl+1–9 guarda grupos; doble pulsación 1–9 centra. Alt muestra vidas. F10 pausa."};
+            string[] lines={"Clic/caja selecciona. Shift añade. Doble clic elige el mismo tipo en pantalla.","Clic derecho ataca enemigos, sigue aliados o mueve al terreno. A + suelo avanza combatiendo.","S detiene y reacciona. H mantiene posición. P + destino patrulla. E selecciona tu ejército.","En ciudades azules: Q espadachín, W ballestero, D guardia, F mago, R mortero; C sanador.","U mejora a nivel II: +6 oro/ronda si controlas el país; cuesta 90 oro.","Captura: derrota al defensor y entra en el pequeño círculo. T: torre por 60 oro.","La cola muestra hasta 5 compras; pulsa un encargo para cancelarlo y recuperar el oro.","Cada 60 s: base 12 + ciudades de países completos + bonus por regiones completas.","Cada país completo da refuerzos gratis, hasta 5 oleadas vivas; las bajas reponen el cupo.","Conquista: controla " + session.VictoryTarget + " ciudades durante 20 s. Capitales: captura la capital enemiga.","Bordes/flechas/central: cámara. Rueda: zoom. Esc libera el ratón; clic lo confina.","Ctrl+1–9 guarda grupos; doble pulsación 1–9 centra. Alt muestra vidas. F10 pausa."};
             for(int i=0;i<lines.Length;i++)Label(r.x+26,r.y+66+i*25,775,lines[i],RtsSkin.Small);
             Label(r.x+26,r.y+378,300,"VELOCIDAD DE CÁMARA",RtsSkin.Small);
             controller.CameraRig.PanSpeed=GUI.HorizontalSlider(new Rect(r.x+239,r.y+388,210,20),controller.CameraRig.PanSpeed,.5f,2.2f);

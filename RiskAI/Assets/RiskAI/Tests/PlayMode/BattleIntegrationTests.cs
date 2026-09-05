@@ -146,7 +146,7 @@ namespace RiskAI.Tests
                 // Batch mode has no focused Game view. Process the real queued device state,
                 // then run the same controller handler used by the player.
                 InputSystem.Update();testMouse.MakeCurrent();testKeyboard.MakeCurrent();
-                Object.FindFirstObjectByType<RtsController>().SendMessage("Update");
+                var controller=Object.FindFirstObjectByType<RtsController>();controller.SendMessage("OnApplicationFocus",true);controller.SendMessage("Update");
                 Assert.That(rig.TargetZoom,Is.LessThan(34*.85f),"One normalized wheel unit must produce a meaningful zoom step.");
                 yield return new WaitForSecondsRealtime(.7f);
                 Assert.That(Vector3.Distance(anchor,rig.Ground(cursor)),Is.LessThan(.15f),"A wheel zoom must stay anchored under the cursor.");

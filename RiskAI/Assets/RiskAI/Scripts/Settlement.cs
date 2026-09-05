@@ -51,7 +51,7 @@ namespace RiskAI
             var towerObject = new GameObject("Torre de " + displayName);
             towerObject.transform.SetParent(transform, false);
             towerObject.transform.localPosition = new Vector3(transform.position.x < 0 ? 3.8f : -3.8f, 0, 0);
-            Defense = towerObject.AddComponent<DefenseTower>(); Defense.Initialize(session, this, capital);
+            Defense = towerObject.AddComponent<DefenseTower>(); Defense.Initialize(session, this, true);
             var rallyObject = new GameObject("Punto de reunión"); rallyObject.transform.SetParent(transform, false);
             rallyRing = VisualFactory.Ring(rallyObject.transform, .6f, .09f, new Color(.8f, 1, .5f));
             rallyObject.transform.position = Rally; rallyRing.enabled = false;

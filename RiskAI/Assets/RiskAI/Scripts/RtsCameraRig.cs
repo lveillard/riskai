@@ -30,7 +30,10 @@ namespace RiskAI
             direction.Normalize();
             var right=Vector3.ProjectOnPlane(cam.transform.right,Vector3.up).normalized;
             var forward=Vector3.ProjectOnPlane(cam.transform.forward,Vector3.up).normalized;
-            targetFocus=Clamp(targetFocus+(right*direction.x+forward*direction.z)*cam.orthographicSize*.9f*PanSpeed*dt);anchorZoom=false;
+            // Normalize after projecting the camera basis so diagonals do not move faster.
+            Vector3 planar=right*direction.x+forward*direction.z;
+            if(planar.sqrMagnitude>.001f)planar.Normalize();
+            targetFocus=Clamp(targetFocus+planar*TargetZoom*.9f*PanSpeed*dt);anchorZoom=false;
         }
         public void Drag(Vector2 previous,Vector2 current)
         {

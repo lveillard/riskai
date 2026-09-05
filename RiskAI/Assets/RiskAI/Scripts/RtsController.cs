@@ -23,6 +23,7 @@ namespace RiskAI
         public bool EdgePan=true;
         public bool Dragging { get; private set; }
         public bool CameraDragging { get; private set; }
+        public bool CursorCaptured { get; private set; }
         public Vector2 DragStart { get; private set; }
         public Vector2 Pointer => Mouse.current == null ? Vector2.zero : Mouse.current.position.ReadValue();
         public Rect SelectionRect => Rect.MinMaxRect(Mathf.Min(DragStart.x,Pointer.x),Screen.height-Mathf.Max(DragStart.y,Pointer.y),Mathf.Max(DragStart.x,Pointer.x),Screen.height-Mathf.Min(DragStart.y,Pointer.y));
@@ -31,12 +32,34 @@ namespace RiskAI
         BattleSession session;Camera cam;Vector2 previousMouse;
         public RtsCameraRig CameraRig { get; private set; }
         bool pressedWorld;
-        float edgePanDwell;
+        bool cursorCaptureRequested;
+        bool gameplayFocus;
         float lastSelectTime,lastGroupTime;int lastGroup=-1;UnitKind lastSelectKind;
         LineRenderer hoverRing;
         readonly List<Soldier> pendingBoarders=new();Ship pendingBoardingTransport;Vector3 pendingBoardingLanding;
         Harbor pendingUnloadHarbor;
-        public void Initialize(BattleSession battle,Camera camera) { session=battle;cam=camera;CameraRig=gameObject.AddComponent<RtsCameraRig>();CameraRig.Initialize(camera);var home=session.Towns.FirstOrDefault(t=>t.State.Owner==0&&t.IsCapital);if(home)CameraRig.SetHome(home.transform.position);previousMouse=Pointer; }
+        public void Initialize(BattleSession battle,Camera camera) { session=battle;cam=camera;gameplayFocus=true;CameraRig=gameObject.AddComponent<RtsCameraRig>();CameraRig.Initialize(camera);var home=session.Towns.FirstOrDefault(t=>t.State.Owner==0&&t.IsCapital);if(home)CameraRig.SetHome(home.transform.position);previousMouse=Pointer;RequestCursorCapture(); }
+        bool EffectiveFocus => gameplayFocus&&(Application.isEditor||Application.isFocused);
+        bool ConfinedCursorSupported => RtsCameraPolicy.SupportsConfinedCursor(Application.isEditor,Application.platform);
+        void ApplyCursorCapture()
+        {
+            bool gameplayActive=session&&isActiveAndEnabled&&!session.Paused&&session.Winner<0&&!HelpVisible;
+            if(!RtsCameraPolicy.ShouldCaptureCursor(Application.isEditor,ConfinedCursorSupported,Application.isFocused,gameplayActive,cursorCaptureRequested))
+            {
+                CursorCaptured=false;
+                if(ConfinedCursorSupported) { Cursor.lockState=CursorLockMode.None;Cursor.visible=true; }
+                return;
+            }
+            Cursor.visible=true;Cursor.lockState=CursorLockMode.Confined;CursorCaptured=Cursor.lockState==CursorLockMode.Confined;
+        }
+        void RequestCursorCapture()
+        {
+            cursorCaptureRequested=true;ApplyCursorCapture();
+        }
+        void ReleaseCursor()
+        {
+            cursorCaptureRequested=false;CursorCaptured=false;Cursor.lockState=CursorLockMode.None;Cursor.visible=true;
+        }
         public bool OverHud(Vector2 screen) => screen.y<BattleHud.BottomPixels || screen.y>Screen.height-BattleHud.TopPixels || HelpVisible || session.Winner>=0;
         bool Shift => Keyboard.current!=null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
         public void Clear()
@@ -97,13 +120,18 @@ namespace RiskAI
             if(error!=null)session.Message(error);
             else { if(!SelectedTown)SelectTown(town);session.Message(BattleRules.Name(kind)+" en la cola de "+town.DisplayName+"."); }
         }
-        public void BuildTower() { if(SelectedTown)Feedback(SelectedTown.BuildTower());else session.Message("Selecciona una ciudad tuya para construir."); }
+        public void BuildTower() { if(SelectedHarbor)Feedback(SelectedHarbor.BuildTower());else if(SelectedTown)Feedback(SelectedTown.BuildTower());else session.Message("Selecciona una ciudad o un puerto tuyo para reconstruir su torre."); }
         public void UpgradeTown() { if(SelectedTown)Feedback(SelectedTown.Upgrade());else session.Message("Selecciona una ciudad tuya para mejorarla."); }
         public void Feedback(string error) { if(error!=null)session.Message(error); }
         void OnApplicationFocus(bool hasFocus)
         {
+            gameplayFocus=hasFocus;
+            if(!hasFocus)
+            {
+                cursorCaptureRequested=false;ReleaseCursor();
+            }
             if(hasFocus)return;
-            CameraDragging=false;Dragging=false;pressedWorld=false;edgePanDwell=0;previousMouse=Pointer;
+            CameraDragging=false;Dragging=false;pressedWorld=false;previousMouse=Pointer;
             CancelPendingBoarding();pendingUnloadHarbor=null;
             if(CameraRig!=null)CameraRig.CancelMotion();
         }
@@ -231,47 +259,53 @@ namespace RiskAI
         bool TryEdgePan(Vector2 point,out Vector3 direction)
         {
             direction=Vector3.zero;
-            bool inside=point.x>=0&&point.x<=Screen.width&&point.y>=0&&point.y<=Screen.height;
-            bool blocked=!EdgePan||!Application.isFocused||!inside||session.Winner>=0||HelpVisible||Dragging||pressedWorld||CameraDragging;
+            bool runtimeCursorReleased=RtsCameraPolicy.SupportsConfinedCursor(Application.isEditor,Application.platform)&&!cursorCaptureRequested;
+            bool blocked=!EdgePan||!EffectiveFocus||runtimeCursorReleased||session.Paused||session.Winner>=0||HelpVisible||Dragging||pressedWorld||CameraDragging;
             var mouse=Mouse.current;
             if(mouse!=null&&mouse.middleButton.isPressed)blocked=true;
             if(mouse!=null&&mouse.leftButton.isPressed)blocked=true;
-            if(blocked){edgePanDwell=0;return false;}
-            bool playAreaY=point.y>BattleHud.BottomPixels&&point.y<Screen.height-BattleHud.TopPixels;
-            if(playAreaY)
-            {
-                if(point.x<=10)direction.x=-1;
-                else if(point.x>=Screen.width-10)direction.x=1;
-            }
-            if(point.y<=10)direction.z=-1;
-            else if(point.y>=Screen.height-10)direction.z=1;
-            if(direction.sqrMagnitude<.001f){edgePanDwell=0;return false;}
-            edgePanDwell+=Mathf.Min(Time.unscaledDeltaTime,.05f);
-            return edgePanDwell>=.14f;
+            if(blocked)return false;
+            Vector2 edge=RtsCameraPolicy.EdgePanDirection(point,new Vector2(Screen.width,Screen.height));
+            if(edge.sqrMagnitude<.001f)return false;
+            direction=new Vector3(edge.x,0,edge.y);
+            return true;
         }
         static bool InsideScreen(Vector2 point) => point.x>=0&&point.x<=Screen.width&&point.y>=0&&point.y<=Screen.height;
         void Update()
         {
+            if(!EffectiveFocus)
+            {
+                ReleaseCursor();CameraDragging=false;Dragging=false;pressedWorld=false;previousMouse=Pointer;
+                if(CameraRig!=null)CameraRig.CancelMotion();
+                return;
+            }
+            if(session.Paused||session.Winner>=0)ReleaseCursor();
+            else ApplyCursorCapture();
             var mouse=Mouse.current;var key=Keyboard.current;if(mouse==null||key==null)return;
             Selection.RemoveAll(u=>!IsSelectableSoldier(u));
             Fleet.RemoveAll(s=>!IsSelectableShip(s));
             ProcessPendingBoarding();ProcessPendingUnload();
             if(key.f1Key.wasPressedThisFrame)HelpVisible=!HelpVisible;
-            if(key.f10Key.wasPressedThisFrame)session.TogglePause();
+            if(key.f1Key.wasPressedThisFrame&&HelpVisible)ReleaseCursor();
+            if(key.f10Key.wasPressedThisFrame)
+            {
+                session.TogglePause();
+                if(session.Paused)ReleaseCursor();
+            }
             if(key.escapeKey.wasPressedThisFrame&&HelpVisible)
             {
-                HelpVisible=false;CameraDragging=false;Dragging=false;pressedWorld=false;edgePanDwell=0;previousMouse=Pointer;
+                HelpVisible=false;ReleaseCursor();CameraDragging=false;Dragging=false;pressedWorld=false;previousMouse=Pointer;
                 if(CameraRig!=null)CameraRig.CancelMotion();
                 return;
             }
             if(HelpVisible)
             {
-                CameraDragging=false;Dragging=false;pressedWorld=false;edgePanDwell=0;previousMouse=Pointer;Hovered=null;
+                ReleaseCursor();CameraDragging=false;Dragging=false;pressedWorld=false;previousMouse=Pointer;Hovered=null;
                 if(CameraRig!=null)CameraRig.CancelMotion();
                 return;
             }
             if(key.f2Key.wasPressedThisFrame)FocusHome();
-            if(key.escapeKey.wasPressedThisFrame) { if(OrderCursor)CancelCursor();else Clear(); }
+            if(key.escapeKey.wasPressedThisFrame) { ReleaseCursor();if(OrderCursor)CancelCursor();else Clear();return; }
             if(key.backspaceKey.wasPressedThisFrame)CameraRig.ResetView();
             if(key.eKey.wasPressedThisFrame)SelectAll();
             if(key.aKey.wasPressedThisFrame)ArmAttack();
@@ -304,6 +338,7 @@ namespace RiskAI
             }
             var point=Pointer;
             bool insideScreen=InsideScreen(point);
+            if(insideScreen&&(mouse.leftButton.wasPressedThisFrame||mouse.rightButton.wasPressedThisFrame||mouse.middleButton.wasPressedThisFrame))RequestCursorCapture();
             Hovered=!insideScreen||OverHud(point)?null:RtsPicking.Target(session,cam,point);
             RtsCursor.SetAttack(insideScreen&&!OverHud(point)&&(AttackCursor||(Hovered&&Hovered.Team!=0&&HasSelection)));
             if(!hoverRing)hoverRing=VisualFactory.Ring(new GameObject("Mouse target highlight").transform,1,.08f,Color.white);
@@ -318,20 +353,19 @@ namespace RiskAI
             float panMultiplier=1;
             if(pan.sqrMagnitude>.001f)
             {
-                edgePanDwell=0;
                 pan=pan.normalized;panMultiplier=Shift?1.7f:1;
             }
-            else if(TryEdgePan(point,out var edgeDirection)){pan=edgeDirection.normalized;panMultiplier=.8f;}
+            else if(TryEdgePan(point,out var edgeDirection)){pan=edgeDirection.normalized;panMultiplier=1;}
             if(mouse.middleButton.wasPressedThisFrame&&insideScreen&&!OverHud(point))
             {
-                CameraDragging=true;previousMouse=point;edgePanDwell=0;
+                CameraDragging=true;previousMouse=point;
             }
             if(CameraDragging)
             {
                 if(!insideScreen)
                 {
                     // Do not apply the large delta produced when the pointer re-enters the window.
-                    CameraDragging=false;edgePanDwell=0;previousMouse=point;
+                    CameraDragging=false;previousMouse=point;
                 }
                 else if(mouse.middleButton.isPressed)
                 {
@@ -340,7 +374,7 @@ namespace RiskAI
                 }
                 else
                 {
-                    CameraDragging=false;edgePanDwell=0;previousMouse=point;
+                    CameraDragging=false;previousMouse=point;
                 }
             }
             if(!CameraDragging)
@@ -382,7 +416,7 @@ namespace RiskAI
                     }
                     else if(ship&&ship.Team==0)SelectShip(ship,Shift);
                     else if(ship){Clear();InspectedTarget=ship;}
-                    else if(picked is DefenseTower tower){if(tower.Team==0)SelectTown(tower.Town);else{Clear();InspectedTarget=tower;}}
+                    else if(picked is DefenseTower tower){if(tower.Team==0){if(tower.Harbor)SelectHarbor(tower.Harbor);else SelectTown(tower.Town);}else{Clear();InspectedTarget=tower;}}
                     else if(unit) { Clear();InspectedTarget=unit; }
                     else if(town)SelectTown(town);
                     else if(harbor)SelectHarbor(harbor);
@@ -411,7 +445,9 @@ namespace RiskAI
         }
         bool InSelection(Soldier unit,Rect rect) { var p=cam.WorldToScreenPoint(unit.transform.position+Vector3.up);return p.z>0&&rect.Contains(new Vector2(p.x,Screen.height-p.y)); }
         bool InSelection(Ship ship,Rect rect) { var p=cam.WorldToScreenPoint(ship.transform.position+Vector3.up*2.4f);return p.z>0&&rect.Contains(new Vector2(p.x,Screen.height-p.y)); }
-        void OnDestroy() { RtsCursor.SetAttack(false); }
+        void OnEnable() { gameplayFocus=true; }
+        void OnDisable() { ReleaseCursor(); }
+        void OnDestroy() { ReleaseCursor();RtsCursor.SetAttack(false); }
         bool OnScreen(Soldier unit) { var p=cam.WorldToViewportPoint(unit.transform.position);return p.z>0&&p.x>=0&&p.x<=1&&p.y>=.2f&&p.y<=.92f; }
     }
 }

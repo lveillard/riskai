@@ -1,0 +1,7 @@
+# Camera input v0.10
+
+The Windows standalone player keeps the RTS pointer visible and confines it to the game window after gameplay starts or the player clicks in the window. The cursor is never locked to the centre. Escape releases confinement and keeps the existing order/selection cancellation behavior; the next in-window click captures it again. F1 help, pause/menu state, focus loss, controller disable, and destruction release confinement. Returning from Alt+Tab does not capture automatically. The Unity Editor does not trap its mouse.
+
+Edge panning reads the actual outer 20 screen pixels on every side, including the HUD corners. A direction is evaluated immediately with no dwell timer. Corner directions are normalized before they reach the camera, so diagonal motion has the same speed as cardinal motion and scales consistently with the current zoom. Edge panning stops while a menu/help view, drag, middle-mouse grab, focus loss, or released cursor is active. Arrow panning, middle-mouse ground dragging, cursor-anchored wheel zoom, and world selection/order picking keep their existing behavior.
+
+The policy rules are pure and covered by camera usability tests for all four edges, all corners, outside-viewport positions, normalized diagonals, Windows capture authorization, focus loss, and Editor behavior. Cursor confinement follows Unity's `CursorLockMode.Confined` contract for Windows standalone players; `CursorLockMode.Locked` is not used.

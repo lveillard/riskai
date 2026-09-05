@@ -22,10 +22,23 @@ namespace RiskAI
         {
             Session=session;Current=this;nextAi=session.AiFirstNavalOffensiveTime;
             int[] mainland={-58,-32,-7,20,43};
+            var linkedTowns=mainland.Select(x=>Session.Towns.OrderBy(t=>FlatDistance(t.transform.position,new Vector3(x*MapLayout.Spacing,0,MapLayout.Coast(x*MapLayout.Spacing)))).FirstOrDefault()).ToArray();
+            // Guarantee a starting port using the authored, well-spaced harbor sites.
+            // Extra docks beside neutral towers used to trigger combat before the AI grace period.
+            for(int team=0;team<2;team++)
+            {
+                if(linkedTowns.Any(t=>t&&t.State.Owner==team))continue;
+                var home=Session.Towns.Where(t=>t.State.Owner==team).OrderBy(t=>MapLayout.Coast(t.transform.position.x)-t.transform.position.z).FirstOrDefault();
+                if(!home)continue;
+                int index=Enumerable.Range(0,mainland.Length)
+                    .Where(i=>!linkedTowns[i]||linkedTowns[i].State.Owner<0||linkedTowns.Count(t=>t&&t.State.Owner==linkedTowns[i].State.Owner)>1)
+                    .OrderBy(i=>Mathf.Abs(mainland[i]*MapLayout.Spacing-home.transform.position.x)).First();
+                linkedTowns[index]=home;
+            }
             for(int i=0;i<mainland.Length;i++)
             {
                 float x=mainland[i]*MapLayout.Spacing,z=MapLayout.Coast(x);
-                var linked=session.Towns.OrderBy(t=>FlatDistance(t.transform.position,new Vector3(x,0,z))).FirstOrDefault();
+                var linked=linkedTowns[i];
                 AddHarbor("Puerto "+(linked?linked.DisplayName:"continental"),linked,null,LandPoint(x,z-4),new Vector3(x,-.24f,z+4));
             }
             AddIslandHarbor("Isla del Norte",-47,53,12,8);
@@ -33,13 +46,7 @@ namespace RiskAI
             for(int team=0;team<2;team++)
             {
                 var port=Harbors.FirstOrDefault(h=>h.Owner==team);
-                if(!port)
-                {
-                    var town=session.Towns.Where(t=>t.State.Owner==team).OrderBy(t=>MapLayout.Coast(t.transform.position.x)-t.transform.position.z).FirstOrDefault();
-                    if(!town)continue;float x=town.transform.position.x;
-                    for(int attempt=0;attempt<12&&Harbors.Any(h=>Mathf.Abs(h.Berth.x-x)<8);attempt++)x=Mathf.Clamp(x+9,-MapLayout.HalfWidth+7,MapLayout.HalfWidth-7);
-                    float z=MapLayout.Coast(x);AddHarbor("Puerto de "+town.DisplayName,town,null,LandPoint(x,z-4),new Vector3(x,-.24f,z+4));port=Harbors.Last();
-                }
+                if(!port)continue;
                 Spawn(team,ShipKind.Transport,port.Berth);
                 var outward=port.Berth-port.Landing;outward.y=0;
                 if(SeaNavigation.TryNearestOcean(port.Berth+outward.normalized*5+Vector3.right*4,6,out var sea))Spawn(team,ShipKind.Galley,sea);

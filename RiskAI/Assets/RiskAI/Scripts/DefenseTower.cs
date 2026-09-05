@@ -7,6 +7,9 @@ namespace RiskAI
     public sealed class DefenseTower : CombatTarget
     {
         public Settlement Town { get; private set; }
+        public Harbor Harbor { get; private set; }
+        public int HostOwner => Town ? Town.State.Owner : Harbor ? Harbor.Owner : -1;
+        public string HostName => Town ? Town.DisplayName : Harbor ? Harbor.DisplayName : "torre";
         public override float MaxHealth => BattleRules.TowerHealth;
         public override Vector3 AimPoint => transform.position + Vector3.up * 2.8f;
         public override AttackKind AttackType => AttackKind.Piercing;
@@ -25,12 +28,26 @@ namespace RiskAI
 
         public void Initialize(BattleSession battle, Settlement town, bool built)
         {
-            session = battle; Town = town; Team = town.State.Owner;
+            session = battle; Town = town; Harbor = null; Team = CombatTeam(town.State.Owner);
             VisualFactory.Tower(transform, Team, out upper, out scaffolding, out banner);
             // The permanent stone foundation defines this slot's NavMesh footprint.
             var targetCollider = gameObject.AddComponent<BoxCollider>();
             targetCollider.center = Vector3.up * 1.6f; targetCollider.size = new Vector3(1.8f, 3.3f, 1.8f);
             targetCollider.isTrigger = true;
+            session.Towers.Add(this);
+            if (built) CompleteBuild(); else RefreshVisuals();
+        }
+
+        public void Initialize(BattleSession battle, Harbor harbor, bool built)
+        {
+            session = battle; Town = null; Harbor = harbor; Team = CombatTeam(harbor.Owner);
+            VisualFactory.Tower(transform, Team, out upper, out scaffolding, out banner);
+            var targetCollider = gameObject.AddComponent<BoxCollider>();
+            targetCollider.center = Vector3.up * 1.6f; targetCollider.size = new Vector3(1.8f, 3.3f, 1.8f);
+            targetCollider.isTrigger = true;
+            var obstacle = gameObject.AddComponent<NavMeshObstacle>();
+            obstacle.shape = NavMeshObstacleShape.Box; obstacle.center = Vector3.up * .4f; obstacle.size = new Vector3(2.8f, .8f, 2.8f);
+            obstacle.carving = true; obstacle.carveOnlyStationary = true;
             session.Towers.Add(this);
             if (built) CompleteBuild(); else RefreshVisuals();
         }
@@ -47,18 +64,18 @@ namespace RiskAI
 
         public void BeginBuild()
         {
-            Team = Town.State.Owner; UnderConstruction = true; BuildProgress = 0; CurrentTarget=null; RefreshVisuals();
+            Team = CombatTeam(HostOwner); UnderConstruction = true; BuildProgress = 0; CurrentTarget=null; RefreshVisuals();
         }
         public void SetBuildProgress(float progress) { BuildProgress = progress; }
         public void CancelBuild() { UnderConstruction = false; BuildProgress = 0; RefreshVisuals(); }
         public void CompleteBuild()
         {
-            Team = Town.State.Owner; Health = MaxHealth; UnderConstruction = false; BuildProgress = 1;
+            Team = CombatTeam(HostOwner); Health = MaxHealth; UnderConstruction = false; BuildProgress = 1;
             CurrentTarget=null;nextShot=0;
             if (!session.Targets.Contains(this)) session.Targets.Add(this);
             RefreshVisuals();
         }
-        public void ChangeOwner() { if(!IsAlive)Team = Town.State.Owner; CurrentTarget=null; nextShot=0; RefreshVisuals(); }
+        public void ChangeOwner() { if(!IsAlive)Team = CombatTeam(HostOwner); CurrentTarget=null; nextShot=0; RefreshVisuals(); }
         void RefreshVisuals()
         {
             upper.SetActive(IsAlive); scaffolding.SetActive(UnderConstruction);
@@ -107,7 +124,9 @@ namespace RiskAI
             CurrentTarget=null;
             session.Targets.Remove(this); RefreshVisuals();
             VisualFactory.Impact(AimPoint, new Color(.9f, .65f, .3f), 1.1f);
-            session.Message("Ha caído la torre de " + Town.DisplayName + ".");
+            session.Message("Ha caído la torre de " + HostName + ".");
         }
+
+        static int CombatTeam(int owner) => owner >= 0 && owner <= 1 ? owner : 2;
     }
 }

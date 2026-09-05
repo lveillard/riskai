@@ -53,6 +53,7 @@ namespace RiskAI.Tests
         public IEnumerator EntryClaimsInstantlyAndPreservesUnitIdentityAndHealth()
         {
             var town = battle.Towns.First(t => t.State.Owner < 0);
+            DisableAllTowers();
             var neutralDefender = town.Defender;
             neutralDefender.TakeDamage(10000, 0);
             var attacker = battle.Units.First(unit => unit && unit.Team == 0);
@@ -62,6 +63,15 @@ namespace RiskAI.Tests
             Assert.That(town.State.Owner, Is.EqualTo(0));
             Assert.That(town.Defender, Is.SameAs(attacker));
             Assert.That(attacker.Health, Is.EqualTo(health));
+        }
+
+        void DisableAllTowers()
+        {
+            foreach (var tower in battle.Towers.ToArray())
+            {
+                tower.enabled = false;
+                battle.Targets.Remove(tower);
+            }
         }
 
         [UnityTest]

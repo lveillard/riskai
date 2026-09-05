@@ -20,6 +20,7 @@ namespace RiskAI.Tests
   [UnityTest] public IEnumerator TransportActuallySailsAndDisembarkedTroopsCaptureIsland()
   {
    var home=naval.Harbors.First(h=>h.Owner==0);var island=naval.Harbors.First(h=>h.IsIsland);
+   island.Defense.TakeDamage(10000,0);Assert.That(island.Defense.IsAlive,Is.False,"The transport fixture destroys the island tower so capture remains a landing test.");
    var ship=naval.Ships.First(s=>s.Team==0&&s.Kind==ShipKind.Transport);
    var soldiers=battle.Units.Where(u=>u.Team==0).OrderBy(u=>Vector3.Distance(u.transform.position,home.Landing)).Take(3).ToArray();
    int population=battle.Population(0);float health=soldiers[0].Health;
