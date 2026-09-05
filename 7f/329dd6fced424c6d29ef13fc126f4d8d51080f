@@ -1,0 +1,93 @@
+RiskAI/Assets/RiskAI/Scripts/DefenseTower.cs
+  s_d75b49dfbafb60::t_97fd7695cdd5d1 48-50
+  s_d75b49dfbafb60::t_92217abff80726 10-12,31,41-43,54,67,73,78,127,129-130
+  s_b82b0222617d8b::t_ffec3c2d6324ec 44-47,51-53
+docs/CAMERA-v0.10.md
+  s_d75b49dfbafb60::t_15ee38638739e7 1-7
+RiskAI/Assets/RiskAI/Tests/PlayMode/CityClaimTests.cs
+  s_d75b49dfbafb60::t_a01a01b3fa5121 56,68-74
+  s_d75b49dfbafb60::t_977f2fe8187774 75-76
+RiskAI/Assets/RiskAI/Scripts/RtsCameraPolicy.cs.meta
+  s_d75b49dfbafb60::t_15ee38638739e7 1-3
+RiskAI/Assets/RiskAI/Scripts/RtsCameraRig.cs
+  s_d75b49dfbafb60::t_2d114bb7606850 33-36
+RiskAI/Assets/RiskAI/Scripts/RtsCameraPolicy.cs
+  s_d75b49dfbafb60::t_5472167723885d 1-25,31-38,44-46
+  s_d75b49dfbafb60::t_1fad68f1db0c46 26-30,39-43
+RiskAI/Assets/RiskAI/Tests/PlayMode/TowerDefenseTests.cs.meta
+  s_d75b49dfbafb60::t_cbb70554cbe593 1-2
+RiskAI/Assets/RiskAI/Tests/PlayMode/CameraUsabilityTests.cs
+  s_d75b49dfbafb60::t_bf62a17444ca5d 113-115,119-121,135,141-142,152-154,158-160,169,175-176
+  s_d75b49dfbafb60::t_1b4f2b9c46ace1 86,123,162,197
+  s_d75b49dfbafb60::t_7c7b0fb995d40d 127-129,131-133
+  s_d75b49dfbafb60::t_f133993ba04d32 109-112,117-118,124-126,130,134,136-139,143-151,156-157,163-165,170-173,177-180
+  s_d75b49dfbafb60::t_48e44fd981400b 166-168,174
+  s_d75b49dfbafb60::t_15ee38638739e7 16-42
+  s_b0c18949518898::t_cc4ee3d134741a 116,122,140,155,161,181
+RiskAI/Assets/RiskAI/Scripts/RtsController.cs
+  s_d75b49dfbafb60::t_5472167723885d 26,35,129-131,262,267-271
+  s_d75b49dfbafb60::t_21f21a4bc75783 282-283
+  s_d75b49dfbafb60::t_f133993ba04d32 36,123,128,277-281,358,419
+  s_d75b49dfbafb60::t_3e4ac0e561ec67 43-62,132,134,289-294,297,303,308,341,361,368,377,450
+  s_d75b49dfbafb60::t_2fa215fcabf138 449
+  s_d75b49dfbafb60::t_f667ba960d415f 41-42,263,276,448
+RiskAI/Assets/RiskAI/Scripts/Settlement.cs
+  s_d75b49dfbafb60::t_ca792a8e0180c5 54
+RiskAI/Assets/RiskAI/Tests/PlayMode/TowerDefenseTests.cs
+  s_d75b49dfbafb60::t_f759bcb974971b 4
+  s_d75b49dfbafb60::t_af1c1a1cbcf5a9 39-40
+  s_d75b49dfbafb60::t_81dedcbfbc86dc 52,73,81-90
+  s_d75b49dfbafb60::t_2f1cb3f371ab8a 1-3,5-38,41-51,53-72,74-80,91-127
+RiskAI/Assets/RiskAI/Scripts/Harbor.cs
+  s_d75b49dfbafb60::t_5b84b8cffa6940 15,26-27,34-35,39-40,66-77,83,92-96,104-110
+  s_d75b49dfbafb60::t_5a23312e7cb102 36-38
+RiskAI/Assets/RiskAI/Scripts/BattleHud.cs
+  s_d75b49dfbafb60::t_ae4475d7493118 48,117-122
+  s_d75b49dfbafb60::t_b101cf2a174cc8 372
+RiskAI/Assets/RiskAI/Tests/PlayMode/NavalGameplayTests.cs
+  s_d75b49dfbafb60::t_d1c881e9a1c89c 23
+RiskAI/Assets/RiskAI/Scripts/NavalWorld.cs
+  s_62dd9caeb5a020::t_810d25410c3e08 25-37,41,49
+RiskAI/Assets/RiskAI/Tests/PlayMode/BattleIntegrationTests.cs
+  s_d75b49dfbafb60::t_2d20edb658a807 149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "7f329dd6fced424c6d29ef13fc126f4d8d51080f",
+  "prompts": {},
+  "sessions": {
+    "s_62dd9caeb5a020": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "aa9cc757-2223-40f1-a44a-8abb8a1554fe",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_b0c18949518898": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4bb05238-e53e-466b-a317-b5c7a140b2e6",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_b82b0222617d8b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06e84-6f6e-7d11-a74f-756fa7c588e6",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    },
+    "s_d75b49dfbafb60": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06f0f-278e-7ae1-8117-3f140f998561",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Loic Veillard <l.veillard@gmail.com>"
+    }
+  }
+}
