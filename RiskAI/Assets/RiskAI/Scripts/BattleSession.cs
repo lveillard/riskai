@@ -46,6 +46,7 @@ namespace RiskAI
         public BattleWorld World { get; private set; }
         public CombatWorld Combat { get; private set; }
         public SpatialTargetIndex Spatial { get; } = new SpatialTargetIndex();
+        public CanopyOcclusion Canopies { get; } = new CanopyOcclusion();
         public SoldierPool SoldierPool { get; private set; }
         public ICommander Commander { get; private set; }
         public IReadOnlyList<SkirmishCommander> Commanders { get; private set; }
@@ -53,6 +54,10 @@ namespace RiskAI
         public CountryRecruitment Reinforcements { get; private set; }
         public NavalWorld Naval { get; internal set; }
         readonly Dictionary<int, CombatTarget> entities = new Dictionary<int, CombatTarget>(256);
+        // Rebuilt once before the ordered victory pass.  Keeping these buffers avoids
+        // rescanning every entity for every potential winner on every simulation tick.
+        int[] ownedTownCounts;
+        bool[] playerPresence;
         int nextEntityId;
         System.Action<float> tickWorld;
         public int Winner { get; private set; } = -1;
@@ -70,6 +75,7 @@ namespace RiskAI
             Current = this; Mode = ModeForNewMatch; Layout = LayoutForNewMatch; Difficulty = DifficultyForNewMatch; Seed = SeedForNewMatch;
             PlayerCount = Mathf.Clamp(PlayerCountForNewMatch, 2, Mathf.Min(PlayerRules.MaxPlayers, Mathf.Max(2, MapLayout.Towns.Length)));
             Economy = new Economy(PlayerCount); Kills = new int[PlayerCount]; VictoryProgress = new float[PlayerCount];
+            ownedTownCounts = new int[PlayerCount]; playerPresence = new bool[PlayerCount];
             combatRandom = new System.Random(Seed ^ 0x2945);
             Clock = new SimClock();
             Combat = new CombatWorld(this);
@@ -145,9 +151,10 @@ namespace RiskAI
             if (Paused || Winner >= 0) return;
             if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro"); CountryReinforcements(); }
             Reinforcements.Tick(delta);
+            BuildVictorySnapshot();
             for (int team = 0; team < PlayerCount; team++)
             {
-                VictoryProgress[team] = Mode == VictoryMode.Conquest && Towns.Count(t => t.State.Owner == team) >= VictoryTarget
+                VictoryProgress[team] = Mode == VictoryMode.Conquest && ownedTownCounts[team] >= VictoryTarget
                     ? VictoryProgress[team] + delta : 0;
                 if (VictoryProgress[team] >= BattleRules.VictoryHoldSeconds || OtherPlayersEliminated(team))
                 {
@@ -157,13 +164,45 @@ namespace RiskAI
                 }
             }
         }
+        void BuildVictorySnapshot()
+        {
+            System.Array.Clear(ownedTownCounts, 0, ownedTownCounts.Length);
+            System.Array.Clear(playerPresence, 0, playerPresence.Length);
+            for (int i = 0; i < Towns.Count; i++)
+            {
+                var town = Towns[i];
+                if (!town) continue;
+                int owner = town.State.Owner;
+                if (owner < 0 || owner >= PlayerCount) continue;
+                ownedTownCounts[owner]++;
+                playerPresence[owner] = true;
+            }
+            for (int i = 0; i < Units.Count; i++)
+            {
+                var unit = Units[i];
+                if (!unit || !unit.IsAlive || unit.Team < 0 || unit.Team >= PlayerCount) continue;
+                playerPresence[unit.Team] = true;
+            }
+            if (!Naval) return;
+            for (int i = 0; i < Naval.Ships.Count; i++)
+            {
+                var ship = Naval.Ships[i];
+                if (!ship || !ship.IsAlive || ship.Team < 0 || ship.Team >= PlayerCount) continue;
+                playerPresence[ship.Team] = true;
+            }
+            for (int i = 0; i < Naval.Harbors.Count; i++)
+            {
+                var harbor = Naval.Harbors[i];
+                if (!harbor || harbor.Owner < 0 || harbor.Owner >= PlayerCount) continue;
+                playerPresence[harbor.Owner] = true;
+            }
+        }
         bool OtherPlayersEliminated(int winner)
         {
             for(int player=0;player<PlayerCount;player++)
             {
                 if(player==winner)continue;
-                if(Towns.Any(t=>t&&t.State.Owner==player)||Units.Any(u=>u&&u.IsAlive&&u.Team==player))return false;
-                if(Naval&&(Naval.Ships.Any(ship=>ship&&ship.IsAlive&&ship.Team==player)||Naval.Harbors.Any(harbor=>harbor&&harbor.Owner==player)))return false;
+                if (playerPresence[player]) return false;
             }
             return true;
         }

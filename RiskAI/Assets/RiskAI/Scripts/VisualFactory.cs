@@ -93,12 +93,7 @@ namespace RiskAI
 
         internal static void ConfigureProjectile(ArrowFlight flight, AttackKind attack)
         {
-            var renderer = flight.GetComponent<Renderer>();
-            if (!renderer) return;
-            bool magic = attack == AttackKind.Magic;
-            bool mortar = attack == AttackKind.Siege;
-            renderer.sharedMaterial = Mat(magic ? new Color(.48f, .66f, 1f) : mortar ? new Color(.72f, .68f, .54f) : new Color(.97f, .84f, .45f));
-            flight.transform.localScale = magic ? Vector3.one * .2f : mortar ? Vector3.one * .16f : new Vector3(.04f, .04f, .5f);
+            if (flight) flight.ConfigureAppearance(attack);
         }
 
         internal static void Release(ArrowFlight flight)
@@ -400,6 +395,50 @@ namespace RiskAI
         bool pooled;
         bool poolOwned;
         AttackKind configuredAttack;
+        bool appearanceConfigured;
+        Transform piercingView, magicView, siegeView;
+
+        static Renderer Part(Transform parent, PrimitiveType type, string name, Vector3 position, Vector3 scale, Color color)
+        {
+            var part=GameObject.CreatePrimitive(type);part.name=name;part.transform.SetParent(parent,false);
+            part.transform.localPosition=position;part.transform.localScale=scale;
+            var collider=part.GetComponent<Collider>();if(collider){collider.enabled=false;Object.Destroy(collider);}
+            var renderer=part.GetComponent<Renderer>();renderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;renderer.receiveShadows=false;renderer.sharedMaterial=VisualFactory.Mat(color);
+            return renderer;
+        }
+        static Transform Group(Transform parent,string name)
+        {
+            var group=new GameObject(name).transform;group.SetParent(parent,false);return group;
+        }
+        void EnsureAppearance()
+        {
+            if(piercingView)return;
+            var rootRenderer=GetComponent<Renderer>();if(rootRenderer)rootRenderer.enabled=false;
+            Color wood=new Color(.30f,.16f,.065f),metal=new Color(.72f,.76f,.79f),feather=new Color(.84f,.73f,.46f);
+            piercingView=Group(transform,"Piercing projectile");
+            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",Vector3.zero,new Vector3(.035f,.035f,.48f),wood);
+            var tip=Part(piercingView,PrimitiveType.Capsule,"Bolt metal point",new Vector3(0,0,.30f),new Vector3(.07f,.13f,.07f),metal);tip.transform.localRotation=Quaternion.Euler(90,0,0);
+            Part(piercingView,PrimitiveType.Cube,"Bolt fletching top",new Vector3(0,.045f,-.22f),new Vector3(.10f,.018f,.10f),feather);
+            Part(piercingView,PrimitiveType.Cube,"Bolt fletching side",new Vector3(.045f,0,-.22f),new Vector3(.018f,.10f,.10f),feather);
+
+            magicView=Group(transform,"Magic projectile");
+            Part(magicView,PrimitiveType.Sphere,"Arcane orb",Vector3.zero,Vector3.one*.22f,new Color(.42f,.55f,1f));
+            Part(magicView,PrimitiveType.Sphere,"Arcane core",Vector3.zero,Vector3.one*.11f,new Color(.72f,.48f,1f));
+
+            siegeView=Group(transform,"Siege projectile");
+            Part(siegeView,PrimitiveType.Sphere,"Mortar shell",Vector3.zero,Vector3.one*.18f,new Color(.16f,.17f,.16f));
+            Part(siegeView,PrimitiveType.Cube,"Mortar ember trail",new Vector3(0,0,-.23f),new Vector3(.045f,.045f,.30f),new Color(1f,.39f,.12f));
+            piercingView.gameObject.SetActive(false);magicView.gameObject.SetActive(false);siegeView.gameObject.SetActive(false);
+        }
+        internal void ConfigureAppearance(AttackKind kind)
+        {
+            EnsureAppearance();
+            if(appearanceConfigured&&configuredAttack==kind)return;
+            appearanceConfigured=true;configuredAttack=kind;transform.localScale=Vector3.one;
+            piercingView.gameObject.SetActive(kind!=AttackKind.Magic&&kind!=AttackKind.Siege);
+            magicView.gameObject.SetActive(kind==AttackKind.Magic);
+            siegeView.gameObject.SetActive(kind==AttackKind.Siege);
+        }
 
         internal bool IsPooled => pooled;
         internal bool PoolOwned => poolOwned;
@@ -424,7 +463,6 @@ namespace RiskAI
             duration = Mathf.Max(.01f, travelDuration);
             elapsed = 0;
             attack = kind;
-            configuredAttack = kind;
             legacy = false;
             pooled = false;
             VisualFactory.ConfigureProjectile(this, attack);
@@ -447,7 +485,6 @@ namespace RiskAI
             duration = Mathf.Clamp(Vector3.Distance(a, b) / 25f, .15f, .6f);
             elapsed = 0;
             attack = kind;
-            configuredAttack = kind;
             legacy = true;
             pooled = false;
             VisualFactory.ConfigureProjectile(this, attack);
@@ -472,7 +509,6 @@ namespace RiskAI
                 attack = state.Attack;
                 if (attack != configuredAttack)
                 {
-                    configuredAttack = attack;
                     VisualFactory.ConfigureProjectile(this, attack);
                 }
                 SetPosition(state.Progress);
@@ -492,15 +528,21 @@ namespace RiskAI
             float t = Mathf.Clamp01(progress);
             float arc = attack == AttackKind.Siege ? 2f : .5f;
             transform.position = Vector3.Lerp(from, to, t) + Vector3.up * Mathf.Sin(t * Mathf.PI) * arc;
-            var direction = to - from;
+            var direction = to - from + Vector3.up * Mathf.Cos(t * Mathf.PI) * Mathf.PI * arc;
             if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);
         }
     }
     public sealed class ImpactPulse : MonoBehaviour
     {
+        enum Profile { Piercing, Magic, Siege }
+        const float Lifetime = .22f;
         BattleSession session;
         float remaining;
         bool pooled;
+        Profile profile;
+        Vector3 baseScale;
+        Transform ring;
+        Renderer ringRenderer;
         internal bool IsPooled => pooled;
         internal void MarkRented() { pooled = false; }
         internal void PrepareForPool()
@@ -511,14 +553,29 @@ namespace RiskAI
             gameObject.SetActive(false);
         }
 
+        void EnsureAppearance()
+        {
+            if(ring)return;
+            var go=GameObject.CreatePrimitive(PrimitiveType.Cylinder);go.name="Impact shock ring";go.transform.SetParent(transform,false);
+            go.transform.localPosition=Vector3.zero;go.transform.localScale=new Vector3(1f,.045f,1f);
+            var collider=go.GetComponent<Collider>();if(collider){collider.enabled=false;Object.Destroy(collider);}
+            ringRenderer=go.GetComponent<Renderer>();ringRenderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;ringRenderer.receiveShadows=false;
+            ring=go.transform;ring.gameObject.SetActive(false);
+        }
+
         internal void Init(BattleSession owner, Vector3 point, Color color, float size)
         {
+            EnsureAppearance();
             session = owner;
-            remaining = .22f;
+            remaining = Lifetime;
             transform.position = point;
-            transform.localScale = Vector3.one * size;
+            profile=color.b>color.r?Profile.Magic:size>=.6f?Profile.Siege:Profile.Piercing;
+            baseScale=Vector3.one*size;transform.localScale=baseScale;
             var renderer = GetComponent<Renderer>();
             if (renderer) renderer.sharedMaterial = VisualFactory.Mat(color);
+            if(ringRenderer)ringRenderer.sharedMaterial=VisualFactory.Mat(color);
+            ring.gameObject.SetActive(profile!=Profile.Piercing);
+            if(ring)ring.localScale=profile==Profile.Siege?new Vector3(.65f,.045f,.65f):new Vector3(.42f,.025f,.42f);
             pooled = false;
             gameObject.SetActive(true);
         }
@@ -528,7 +585,13 @@ namespace RiskAI
             if (session && (session.Paused || session.Winner >= 0)) return;
             float delta = Time.unscaledDeltaTime;
             remaining -= delta;
-            transform.localScale *= Mathf.Exp(-delta * 6f);
+            float t=Mathf.Clamp01(1-remaining/Lifetime);
+            transform.localScale=baseScale*Mathf.Lerp(1f,.24f,t);
+            if(ring&&ring.gameObject.activeSelf)
+            {
+                float radius=profile==Profile.Siege?Mathf.Lerp(.65f,2f,t):Mathf.Lerp(.42f,1.2f,t);
+                ring.localScale=new Vector3(radius,profile==Profile.Siege?.045f:.025f,radius);
+            }
             if (remaining <= 0) VisualFactory.Release(this);
         }
 

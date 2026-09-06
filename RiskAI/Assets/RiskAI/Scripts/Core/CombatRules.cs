@@ -7,7 +7,9 @@ namespace RiskAI.Core
 
     public static class CombatRules
     {
-        // The source table is ordered Light, Medium, Heavy, Fortified, Unarmored.
+        // Warcraft stores Light, Medium, Large, Fortified, Normal, Hero, Divine, None.
+        // This five-column adapter projects source indices [0, 1, 2, 3, 7]:
+        // Heavy is source Large; Unarmored is source None.
         static readonly float[,] DamageBonuses =
         {
             { 1f, 1.5f, 1f, .7f, 1f },

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using RiskAI.Core;
 using UnityEngine;
 
 namespace RiskAI
@@ -6,6 +6,8 @@ namespace RiskAI
     public static class RtsSkin
     {
         public static GUIStyle Text, Small, Title, Center, Button, Tiny;
+        public static GUIStyle WrappedText, CardLabel, CommandLabel, VictoryTitle;
+        static readonly GUIStyle[] townLabels = new GUIStyle[PlayerRules.MaxPlayers + 1];
         public static readonly Color Gold = new Color(1, .94f, .4f), Muted = new Color(.89f,.88f,.77f);
         static Texture2D stone, card, hover, pressed, paintedStone;
         static bool ready;
@@ -20,12 +22,20 @@ namespace RiskAI
             Tiny=new GUIStyle(Small){fontSize=12};
             Title=new GUIStyle(Text){font=Font.CreateDynamicFontFromOSFont(new[]{"Georgia","Times New Roman"},20),fontSize=20,fontStyle=FontStyle.Bold,normal={textColor=Gold}};
             Center=new GUIStyle(Text){alignment=TextAnchor.MiddleCenter,fontStyle=FontStyle.Bold};
+            WrappedText=new GUIStyle(Text){wordWrap=true};
+            CardLabel=new GUIStyle(Small){alignment=TextAnchor.MiddleCenter,fontSize=12};
+            CommandLabel=new GUIStyle(Center){fontSize=10};
+            VictoryTitle=new GUIStyle(Center){fontSize=34};
+            for(int team=0;team<townLabels.Length;team++)
+                townLabels[team]=new GUIStyle(Center){fontSize=12,normal={textColor=Color.Lerp(VisualFactory.TeamColor(team),Color.white,.55f)}};
             Button=new GUIStyle(GUI.skin.button){fontSize=13,alignment=TextAnchor.MiddleLeft,padding=new RectOffset(9,6,4,4),border=new RectOffset(1,1,1,1)};
             Button.normal.background=card;Button.hover.background=hover;Button.active.background=pressed;
             Button.normal.textColor=Button.hover.textColor=Button.active.textColor=new Color(.95f,.94f,.83f);
             Button.onNormal.background=pressed;Button.onHover.background=hover;Button.onActive.background=pressed;
             Button.onNormal.textColor=Button.onHover.textColor=Button.onActive.textColor=Gold;
         }
+        public static GUIStyle TownLabelFor(int owner) => townLabels[
+            owner>=0 && owner<PlayerRules.MaxPlayers ? owner : PlayerRules.MaxPlayers];
         static Texture2D Texture(Color color,bool grain)
         {
             var texture=new Texture2D(64,64,TextureFormat.RGBA32,false);
@@ -54,8 +64,9 @@ namespace RiskAI
                     GUI.DrawTextureWithTexCoords(new Rect(x,r.yMax-10,w,10),paintedStone,new Rect(.03f,.23f,.25f,.04f));
                     Fill(new Rect(x,rail.yMax-2,w,2),new Color(.025f,.02f,.015f));
                 }
-                if(r.height>100)foreach(float x in new[]{r.x+4,r.x+230,r.xMax-667,r.xMax-12})
+                if(r.height>100)for(int post=0;post<4;post++)
                 {
+                    float x=post==0?r.x+4:post==1?r.x+230:post==2?r.xMax-667:r.xMax-12;
                     GUI.DrawTextureWithTexCoords(new Rect(x,r.y,9,r.height),paintedStone,new Rect(.035f,.025f,.038f,.43f));
                     var cap=new Rect(x-6,r.y-7,21,22);Fill(cap,new Color(.11f,.12f,.12f));
                     Fill(new Rect(cap.x,cap.y,cap.width,2),new Color(.43f,.45f,.44f));
@@ -65,7 +76,10 @@ namespace RiskAI
             }
             Fill(new Rect(r.x,r.y,r.width,2),edge);Fill(new Rect(r.x,r.y,2,r.height),edge);
             Fill(new Rect(r.x,r.yMax-2,r.width,2),new Color(.025f,.03f,.025f));Fill(new Rect(r.xMax-2,r.y,2,r.height),new Color(.025f,.03f,.025f));
-            foreach(float x in new[]{r.x+5,r.xMax-8})foreach(float y in new[]{r.y+5,r.yMax-8})Fill(new Rect(x,y,3,3),edge);
+            Fill(new Rect(r.x+5,r.y+5,3,3),edge);
+            Fill(new Rect(r.x+5,r.yMax-8,3,3),edge);
+            Fill(new Rect(r.xMax-8,r.y+5,3,3),edge);
+            Fill(new Rect(r.xMax-8,r.yMax-8,3,3),edge);
         }
         public static void Bar(Rect r,float amount,Color color)
         { Fill(r,new Color(.025f,.03f,.025f));Fill(new Rect(r.x+1,r.y+1,(r.width-2)*Mathf.Clamp01(amount),r.height-2),color); }

@@ -19,6 +19,8 @@ namespace RiskAI
         Texture2D minimapTexture;
         float width, height, bottom;
         readonly HudSnapshot hud = new HudSnapshot();
+        readonly HashSet<int> canopyOccludedUnits = new HashSet<int>();
+        float nextCanopyCheck;
         long lastHudTick = -1;
         bool hudDirty = true;
         int countryPage;
@@ -33,6 +35,18 @@ namespace RiskAI
         void LateUpdate()
         {
             if (!session || session.Clock == null) return;
+            if (Time.unscaledTime >= nextCanopyCheck)
+            {
+                nextCanopyCheck = Time.unscaledTime + .1f;
+                canopyOccludedUnits.Clear();
+                foreach (var unit in session.Units)
+                {
+                    if (!unit || !unit.IsAlive || !unit.isActiveAndEnabled) continue;
+                    var viewport = cam.WorldToViewportPoint(unit.AimPoint);
+                    if (viewport.z <= 0 || viewport.x < 0 || viewport.x > 1 || viewport.y < 0 || viewport.y > 1) continue;
+                    if (session.Canopies.Obscures(cam.transform.position, unit.AimPoint)) canopyOccludedUnits.Add(unit.EntityId);
+                }
+            }
             if (!hudDirty && lastHudTick / 2 == session.Clock.TickCount / 2) return;
             RefreshHudSnapshot();
         }
@@ -115,7 +129,7 @@ namespace RiskAI
             if (tooltip != null)
             {
                 var r = new Rect(width - 575, bottom - 105, 560, 88); RtsSkin.Frame(r, RtsSkin.Gold);
-                Text(new Rect(r.x + 15, r.y + 12, r.width - 30, r.height - 20), tooltip, new GUIStyle(RtsSkin.Text) { wordWrap = true });
+                Text(new Rect(r.x + 15, r.y + 12, r.width - 30, r.height - 20), tooltip, RtsSkin.WrappedText);
             }
             if (session.Paused) Text(new Rect(width / 2 - 210, 80, 420, 32), "PAUSA · F10 PARA CONTINUAR", RtsSkin.Center);
             for (int team = 0; team < session.PlayerCount; team++) if (session.VictoryProgress[team] > 0)
@@ -131,12 +145,17 @@ namespace RiskAI
             Label(253,bottom+50,620,"PUERTO · "+VisualFactory.TeamName(harbor.Owner).ToUpperInvariant(),RtsSkin.Small);
             Label(253,bottom+80,625,harbor.IsImportedPort?"Ciudad portuaria · cuenta para su grupo, ingresos y conquista.":harbor.IsIsland?"Puerto insular: desembarca y ocupa su círculo.":"Puerto independiente · producción naval y punto de desembarco.",RtsSkin.Small);
             Label(253,bottom+103,650,ClaimText(harbor.State,harbor.Defender),RtsSkin.Tiny);
-            Label(253,bottom+123,610,"Cola naval: "+harbor.QueueCount+" / 3 · pulsa un encargo para cancelarlo",RtsSkin.Tiny);
-            for(int i=0;i<harbor.QueueCount;i++)
+            Label(253,bottom+123,610,"COLA NAVAL · "+harbor.QueueCount+" / "+Harbor.QueueCapacity+" · PULSA UN ENCARGO PARA CANCELAR",RtsSkin.Tiny);
+            for(int i=0;i<Harbor.QueueCapacity;i++)
             {
-                var r=new Rect(254+i*125,bottom+148,118,42);if(Button(r,harbor.QueuedKind(i)==ShipKind.Galley?"Fragata":"Transporte"))controller.Feedback(harbor.CancelTraining(i));
+                var r=new Rect(254+i*58,bottom+148,50,36);RtsSkin.Frame(r);
+                if(i>=harbor.QueueCount)continue;
+                int index=i;ShipQueueIcon(r,harbor.QueuedKind(index),index==0?RtsSkin.Gold:new Color(.5f,.5f,.4f));
+                if(GUI.Button(r,GUIContent.none,GUIStyle.none))controller.Feedback(harbor.CancelTraining(index));
+                if(r.Contains(MousePoint))tooltip="Cancelar "+Harbor.Profile(harbor.QueuedKind(index)).Name+" · devuelve "+Harbor.Cost(harbor.QueuedKind(index))+" de oro.";
                 if(i==0)RtsSkin.Bar(new Rect(r.x,r.yMax+3,r.width,5),harbor.TrainingProgress,RtsSkin.Gold);
             }
+            if(harbor.QueueCount>0)Label(565,bottom+182,80,Harbor.Profile(harbor.QueuedKind(0)).Name+" · "+Mathf.CeilToInt((1-harbor.TrainingProgress)*Harbor.TrainTime(harbor.QueuedKind(0)))+" s",RtsSkin.Tiny);
             Label(x,bottom+16,590,"ASTILLERO E INFANTERÍA DE MARINA",RtsSkin.Small);
             bool enabled=GUI.enabled;GUI.enabled=harbor.Owner==0&&!session.Paused;
             ShipProfile galley=Harbor.Profile(ShipKind.Galley),transport=Harbor.Profile(ShipKind.Transport);
@@ -192,6 +211,23 @@ namespace RiskAI
             RtsSkin.Frame(r, border);
             if (portraits.TryGetValue(kind, out var image) && image) GUI.DrawTexture(new Rect(r.x + 3, r.y + 3, r.width - 6, r.height - 6), image, ScaleMode.ScaleToFit);
         }
+        static void ShipQueueIcon(Rect r, ShipKind kind, Color border)
+        {
+            RtsSkin.Frame(r,border);
+            Color hull=new Color(.31f,.18f,.09f),sail=new Color(.9f,.83f,.62f),cargo=new Color(.68f,.48f,.23f);
+            RtsSkin.Fill(new Rect(r.x+7,r.y+25,r.width-14,5),hull);
+            RtsSkin.Fill(new Rect(r.x+12,r.y+30,r.width-24,3),new Color(.12f,.09f,.06f));
+            if(kind==ShipKind.Galley)
+            {
+                RtsSkin.Fill(new Rect(r.x+18,r.y+7,2,19),hull);RtsSkin.Fill(new Rect(r.x+30,r.y+9,2,17),hull);
+                RtsSkin.Fill(new Rect(r.x+20,r.y+10,9,10),sail);RtsSkin.Fill(new Rect(r.x+32,r.y+12,7,8),sail);
+            }
+            else
+            {
+                RtsSkin.Fill(new Rect(r.x+24,r.y+8,2,17),hull);RtsSkin.Fill(new Rect(r.x+26,r.y+11,10,9),sail);
+                RtsSkin.Fill(new Rect(r.x+11,r.y+20,8,5),cargo);RtsSkin.Fill(new Rect(r.x+31,r.y+20,8,5),cargo);
+            }
+        }
         void TownDetails(Settlement town)
         {
             string owner = VisualFactory.TeamName(town.State.Owner).ToUpperInvariant();
@@ -239,7 +275,7 @@ namespace RiskAI
             Portrait(new Rect(r.x + 5, r.y + 5, 44, 45), kind, available ? RtsSkin.Gold : Color.gray);
             Label(r.x + 54, r.y + 5, 48, BattleRules.Cost(kind) + " oro", RtsSkin.Small);
             Label(r.x + 54, r.y + 27, 48, available ? "[" + BattleRules.Hotkey(kind) + "]" : "Niv. II", RtsSkin.Tiny);
-            Text(new Rect(r.x+3,r.y+51,r.width-6,20),BattleRules.Name(kind),new GUIStyle(RtsSkin.Small){alignment=TextAnchor.MiddleCenter,fontSize=12});
+            Text(new Rect(r.x+3,r.y+51,r.width-6,20),BattleRules.Name(kind),RtsSkin.CardLabel);
             if (!available) RtsSkin.Fill(new Rect(r.x + 5, r.y + 5, 44, 45), new Color(0,0,0,.5f));
             if (r.Contains(MousePoint)) tooltip = BattleRules.Name(kind) + " · " + BattleRules.Role(kind) + "\n" + BattleRules.Health(kind) + " vida · " + BattleRules.DamageRange(kind) + " daño · alcance " + BattleRules.Range(kind) + (kind == UnitKind.Mage ? "\nSus proyectiles dañan también a enemigos cercanos." : "\n" + (!available ? "Necesita una ciudad tuya de nivel II." : affordable ? "Pulsa para añadir a la cola de reclutamiento." : "Necesitas más oro para comprar esta unidad."));
         }
@@ -298,7 +334,7 @@ namespace RiskAI
                 var r = new Rect(x + (i % 3) * 79, bottom + 35 + (i / 3) * 55, 73, 50);
                 bool clicked = GUI.Button(r, GUIContent.none, RtsSkin.Button);
                 GUI.DrawTexture(new Rect(r.x + 22, r.y + 3, 29, 29), RtsGlyphs.Get(i));
-                Text(new Rect(r.x + 2, r.y + 30, r.width - 4, 18), names[i], new GUIStyle(RtsSkin.Center) { fontSize = 10 });
+                Text(new Rect(r.x + 2, r.y + 30, r.width - 4, 18), names[i], RtsSkin.CommandLabel);
                 Text(new Rect(r.x + 4, r.y + 2, 28, 15), keys[i], RtsSkin.Tiny);
                 if (r.Contains(MousePoint)) tooltip = tips[i];
                 if (!clicked) continue;
@@ -360,7 +396,7 @@ namespace RiskAI
                 float y = height - p.y; if (p.z <= 0 || y < 69 || y > bottom - 20) continue;
                 if (!visible) continue;
                 var r = new Rect(p.x - 88, y - 3, 176, 25); RtsSkin.Fill(r, new Color(.025f,.035f,.025f,.86f));
-                Text(r, town.DisplayName, new GUIStyle(RtsSkin.Center){fontSize=12,normal={textColor=Color.Lerp(VisualFactory.TeamColor(town.State.Owner),Color.white,.55f)}});
+                Text(r, town.DisplayName, RtsSkin.TownLabelFor(town.State.Owner));
                 // Succession is immediate; nearby enemies or a bound guard are not a progress bar.
                 if (town.State.Capture > 0 && town.State.Capture < 1 && town.State.Capturing >= 0)
                 {
@@ -372,7 +408,7 @@ namespace RiskAI
             {
                 if (target is DefenseTower) continue; // Permanent buildings have no destructible health bar.
                 bool selected = target is Soldier soldier && soldier.Selected || target is Ship ship && ship.Selected;
-                if (!target.IsAlive || (!controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth)) continue;
+                if (!target.IsAlive || !target.isActiveAndEnabled || (!controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth && !canopyOccludedUnits.Contains(target.EntityId))) continue;
                 float healthHeight=target is Soldier person?VisualMetrics.HeightFor(person.Kind)+.15f:4.8f;
                 var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * healthHeight) / Scale;
                 float y = height - p.y; if(p.z<=0||y<66||y>bottom-8)continue;
@@ -510,7 +546,7 @@ namespace RiskAI
         void Result()
         {
             RtsSkin.Fill(new Rect(0,0,width,height),new Color(0,0,0,.7f));var r=new Rect(width/2-270,height/2-135,540,270);RtsSkin.Frame(r,RtsSkin.Gold);
-            Text(new Rect(r.x+20,r.y+30,500,55),session.Winner==0?"VICTORIA":"DERROTA",new GUIStyle(RtsSkin.Center){fontSize=34});
+            Text(new Rect(r.x+20,r.y+30,500,55),session.Winner==0?"VICTORIA":"DERROTA",RtsSkin.VictoryTitle);
             Text(new Rect(r.x+20,r.y+104,500,35),VisualFactory.TeamName(session.Winner)+" controla "+MapLayout.MapName,RtsSkin.Center);
             if(Button(new Rect(r.x+165,r.y+177,210,48),"Nueva partida")){BattleSession.ModeForNewMatch=session.Mode;BattleSession.NewSeed();SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);}
         }

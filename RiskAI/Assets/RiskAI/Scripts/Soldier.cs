@@ -34,6 +34,13 @@ namespace RiskAI
         OrderMode mode;
         Vector3 destination, anchor, pursuitOrigin, patrolOrigin, garrisonAnchor;
         float nextSense, nextPath, nextAttack, strikeAt = -1, attackFlash, stalled;
+        // These fields are observational only: direct player moves are timed from accepted command submit to first observed velocity.
+        double humanMoveSubmittedAt = -1;
+        double humanMovePausedSecondsAtSubmit;
+        Vector3 humanMoveDestination;
+        bool humanMoveRouteResolved;
+        float pathPendingSince = -1;
+        int forestCellX=int.MinValue,forestCellZ=int.MinValue,forestRevision=-1;
         bool wasFighting, simulationPaused, stoppedBeforePause;
         float simDelta;
         MedicSupport medic;
@@ -48,6 +55,7 @@ namespace RiskAI
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
             mode=OrderMode.Idle; target=strikeTarget=followTarget=null; orders.Clear();
             nextPath=nextAttack=attackFlash=stalled=0; strikeAt=-1; wasFighting=false;
+            humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
             bool first=!Agent;
             Agent=GetComponent<NavMeshAgent>(); Agent.enabled=true;
             // SourceGeometry holds verified W3U/SLK collision sizes. Height is
@@ -56,6 +64,8 @@ namespace RiskAI
             Agent.acceleration=32; Agent.angularSpeed=540; Agent.stoppingDistance=.15f; Agent.autoBraking=true;
             Agent.updatePosition=true; Agent.updateRotation=true;
             Agent.obstacleAvoidanceType=ObstacleAvoidanceType.LowQualityObstacleAvoidance;
+            forestCellX=forestCellZ=int.MinValue;forestRevision=-1;
+            UpdateTerrainSpeed();
             session.RegisterTarget(this);
             Agent.avoidancePriority=25+EntityId%32;
             if(Agent.isOnNavMesh){Agent.Warp(transform.position);Agent.ResetPath();Agent.isStopped=false;}
@@ -122,6 +132,28 @@ namespace RiskAI
 
         public void Select(bool value) { Selected = value; if (ring) ring.enabled = value; }
         public string LastMoveError { get; private set; }
+        internal bool PathPendingForTelemetry => Agent && Agent.enabled && Agent.isOnNavMesh && Agent.pathPending;
+        internal float PathPendingAgeForTelemetry => pathPendingSince >= 0 && session != null ? Mathf.Max(0, session.BattleTime-pathPendingSince) : 0;
+        // Only orders issued while the agent is fully stationary are eligible. This
+        // avoids reporting old velocity as the response to a redirected movement.
+        internal bool CanBeginHumanMoveTelemetry => Agent && Agent.enabled && Agent.isOnNavMesh &&
+            !Agent.pathPending && !Agent.hasPath && Agent.velocity.sqrMagnitude < .0025f;
+        internal void BeginHumanMoveTelemetry(double submittedAt, double pausedSecondsAtSubmit, bool eligible, Vector3 fallbackDestination)
+        {
+            ClearHumanMoveTelemetry(true);
+            if (!eligible) return;
+            humanMoveSubmittedAt = submittedAt;
+            humanMovePausedSecondsAtSubmit = pausedSecondsAtSubmit;
+            humanMoveDestination = Agent && Agent.enabled ? Agent.destination : fallbackDestination;
+            humanMoveRouteResolved = false;
+            session.Commands.RecordHumanFirstMoveEligible();
+        }
+        void ClearHumanMoveTelemetry(bool cancelled)
+        {
+            if (humanMoveSubmittedAt >= 0 && cancelled && session != null) session.Commands.RecordHumanFirstMoveCancelled();
+            humanMoveSubmittedAt = -1;
+            humanMoveRouteResolved = false;
+        }
         public void MoveTo(Vector3 point, bool attackMove, bool append) => TryMoveTo(point,attackMove,append);
         public bool TryMoveTo(Vector3 point,bool attackMove,bool append) => Issue(point,attackMove?OrderMode.AttackMove:OrderMode.Move,append);
         public bool Patrol(Vector3 point, bool append) => Issue(point, OrderMode.Patrol, append);
@@ -138,6 +170,7 @@ namespace RiskAI
         }
         void Apply(Order order)
         {
+            ClearHumanMoveTelemetry(true);
             CancelStrike(); mode = order.Mode; destination = order.Point; patrolOrigin = anchor = transform.position;
             target = null; followTarget = order.Target; stalled = 0; nextSense = 0; wasFighting = false;
             ResumePath();
@@ -149,22 +182,33 @@ namespace RiskAI
             {if(!Agent.SetDestination(destination))LastMoveError="No se ha podido calcular la ruta a ese destino.";}
             else Agent.ResetPath();
         }
+        // Autonomous behaviors run frequently.  Never discard an in-flight path for one of
+        // their small destination adjustments, and retain a route that already reaches it.
+        // Explicit player orders still go through ResumePath and intentionally pre-empt here.
+        bool RequestAutonomousPath(Vector3 point)
+        {
+            if (!Agent || !Agent.enabled || !Agent.isOnNavMesh || Agent.pathPending) return false;
+            var delta = Agent.destination - point;
+            delta.y = 0;
+            if (Agent.hasPath && delta.sqrMagnitude <= .1225f) return true;
+            return Agent.SetDestination(point);
+        }
         public void Attack(CombatTarget enemy)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !enemy || enemy.Team == Team || !Agent.enabled || !Agent.isOnNavMesh) return;
-            orders.Clear(); CancelStrike(); mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false;
+            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false;
         }
         public void Follow(Soldier ally)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !ally || ally == this || ally.Team != Team) return;
-            orders.Clear(); Apply(new Order { Mode = OrderMode.Follow, Target = ally });
+            orders.Clear(); ClearHumanMoveTelemetry(true); Apply(new Order { Mode = OrderMode.Follow, Target = ally });
         }
         public void Stop() => Stand(OrderMode.Idle);
         public void HoldPosition() => Stand(OrderMode.Hold);
         void Stand(OrderMode orderMode)
         {
             if(IsGarrison)return;
-            orders.Clear(); CancelStrike(); target = followTarget = null; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false;
+            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = followTarget = null; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false;
             if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); Agent.isStopped = false; }
         }
         void Complete(bool failed=false)
@@ -215,6 +259,12 @@ namespace RiskAI
         {
             simDelta=delta;
             if (!session || session.Paused || session.Winner >= 0 || !IsAlive || !Agent || !Agent.enabled || !Agent.isOnNavMesh) return;
+            UpdateTerrainSpeed();
+            if (Agent.pathPending)
+            {
+                if (pathPendingSince < 0) pathPendingSince = session.BattleTime;
+            }
+            else pathPendingSince = -1;
             if (strikeAt >= 0 && session.BattleTime >= strikeAt)
             {
                 if (strikeTarget && strikeTarget.Health > 0 && Vector3.Distance(transform.position, strikeTarget.ApproachPoint(transform.position)) <= BattleRules.Range(Kind) + .55f && Vector3.Distance(transform.position,strikeTarget.ApproachPoint(transform.position))>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
@@ -232,14 +282,39 @@ namespace RiskAI
                 {
                     CancelStrike();
                     if (mode == OrderMode.Attack) Complete(); else ResumePath();
-                    if (mode == OrderMode.Idle && Vector3.Distance(transform.position, anchor) > 1.5f) Agent.SetDestination(anchor);
+                    if (mode == OrderMode.Idle && Vector3.Distance(transform.position, anchor) > 1.5f) RequestAutonomousPath(anchor);
                 }
             }
             if (!target && session.BattleTime >= nextSense) { nextSense = session.BattleTime + .2f; Acquire(); }
             if (target) Fight(); else Travel();
             wasFighting = target != null;
             if(IsGarrison)Agent.isStopped=true;
+            if (humanMoveSubmittedAt >= 0)
+            {
+                if (!Agent.pathPending) humanMoveRouteResolved = true;
+                Vector3 toward = humanMoveDestination - transform.position;
+                toward.y = 0;
+                Vector3 velocity = Agent.velocity;
+                velocity.y = 0;
+                if (humanMoveRouteResolved && velocity.sqrMagnitude > .04f &&
+                    (toward.sqrMagnitude < .25f || Vector3.Dot(velocity, toward) > 0))
+                {
+                    session.Commands.RecordHumanFirstMotion(humanMoveSubmittedAt, humanMovePausedSecondsAtSubmit);
+                    ClearHumanMoveTelemetry(false);
+                }
+            }
             if(medic)medic.SimTick(delta);
+        }
+        void UpdateTerrainSpeed()
+        {
+            if(!session||!Agent||!Agent.enabled)return;
+            var canopies=session.Canopies;
+            var cell=canopies.MovementCellAt(transform.position);
+            if(cell.x==forestCellX&&cell.y==forestCellZ&&forestRevision==canopies.MovementRevision)return;
+            forestCellX=cell.x;forestCellZ=cell.y;forestRevision=canopies.MovementRevision;
+            // Forest drag is an own terrain adaptation. BattleRules.Speed remains
+            // the source-derived base speed and guards retain their anchored state.
+            Agent.speed=BattleRules.Speed(Kind)*canopies.MovementMultiplier(cell);
         }
         void LateUpdate()
         {
@@ -263,7 +338,7 @@ namespace RiskAI
                     nextPath=session.BattleTime+.4f;var away=transform.position-target.transform.position;away.y=0;
                     if(away.sqrMagnitude<.01f)away=transform.forward;
                     var retreat=transform.position+away.normalized*(BattleRules.MinimumRange(Kind)+1.5f-distance);
-                    if(NavMesh.SamplePosition(retreat,out var spot,3,NavMesh.AllAreas)){Agent.isStopped=false;Agent.stoppingDistance=.15f;Agent.SetDestination(spot.position);}
+                    if(NavMesh.SamplePosition(retreat,out var spot,3,NavMesh.AllAreas)){Agent.isStopped=false;Agent.stoppingDistance=.15f;RequestAutonomousPath(spot.position);}
                 }
                 return;
             }
@@ -299,7 +374,7 @@ namespace RiskAI
                             1 << MapLayout.TerrainLayer, QueryTriggerInteraction.Ignore))
                     {
                         Agent.stoppingDistance = .05f;
-                        Agent.SetDestination(firing.position);
+                        RequestAutonomousPath(firing.position);
                         return;
                     }
                 }
@@ -307,7 +382,7 @@ namespace RiskAI
                 // target's path to find a reachable point with line of sight.
                 Agent.stoppingDistance = Mathf.Max(.15f, BattleRules.Ranged(Kind) && visible
                     ? BattleRules.Range(Kind) - .12f : BattleRules.Range(Kind) * .76f);
-                Agent.SetDestination(approach);
+                RequestAutonomousPath(approach);
             }
         }
         void Travel()
@@ -317,7 +392,7 @@ namespace RiskAI
             if (mode == OrderMode.Follow)
             {
                 if (!followTarget) { Complete(); return; }
-                if (session.BattleTime >= nextPath) { nextPath = session.BattleTime + .2f; Agent.stoppingDistance = 2; Agent.SetDestination(followTarget.transform.position); }
+                if (session.BattleTime >= nextPath) { nextPath = session.BattleTime + .2f; Agent.stoppingDistance = 2; RequestAutonomousPath(followTarget.transform.position); }
                 if (followTarget.CurrentTarget && Vector3.Distance(transform.position, followTarget.CurrentTarget.transform.position) < 9) SetTarget(followTarget.CurrentTarget);
                 return;
             }
@@ -349,7 +424,7 @@ namespace RiskAI
         }
         public void DestroyEmbarked(int attacker)
         {
-            if(Health<=0)return;Health=0;
+            if(Health<=0)return;ClearHumanMoveTelemetry(true);Health=0;
             if(PlayerRules.IsPlayer(attacker)&&attacker<session.PlayerCount){session.Kills[attacker]++;session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind));}
             Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);
             session.SoldierPool.Retire(this,0);
@@ -361,6 +436,7 @@ namespace RiskAI
             Health = Mathf.Max(0, Health - damage);
             if (Health <= 0)
             {
+                ClearHumanMoveTelemetry(true);
                 if (PlayerRules.IsPlayer(attacker) && attacker < session.PlayerCount) { session.Kills[attacker]++; session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind)); }
                 Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);Select(false);Agent.enabled=false;GetComponent<Collider>().enabled=false;enabled=false;
                 if(visualAnimator)visualAnimator.Die();
@@ -379,4 +455,3 @@ namespace RiskAI
         }
     }
 }
-

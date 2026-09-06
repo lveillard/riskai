@@ -22,6 +22,10 @@ namespace RiskAI
         static void CreateChunk(Transform root,ImportedTerrainResources resources,ImportedMapData data,int sx,int sz,int nx,int nz,Material ground,Material water)
         {
             var vertices=new Vector3[(nx+1)*(nz+1)];var colors=new Color[vertices.Length];
+            // This is a static material-only shore band.  It preserves the W3E
+            // mesh, collision and land flags while avoiding a hard tile tint at
+            // a one-cell water boundary.
+            var shoreBand=new Vector2[vertices.Length];
             var triangles=new List<int>(nx*nz*6);var walkable=new List<int>(nx*nz*6);
             var seaVertices=new List<Vector3>();var seaColors=new List<Color>();var seaTriangles=new List<int>();
             for(int z=0;z<=nz;z++)for(int x=0;x<=nx;x++)
@@ -31,6 +35,7 @@ namespace RiskAI
                 vertices[index]=new Vector3(wx,data.heightSamples[source],wz);
                 colors[index]=GroundTint(data.tileSamples[source],wx,wz);
                 colors[index].a=ImportedLandscapeAugment.Enabled?ImportedLandscapeAugment.RockSnowWeightAt(data,wx,wz):0;
+                shoreBand[index]=new Vector2(ShoreBand(data,ix,iz),0);
                 if(x==nx||z==nz)continue;
                 int b=index+nx+1;
                 AddQuad(triangles,index,b,index+1,b+1);
@@ -48,7 +53,7 @@ namespace RiskAI
                     AddQuad(seaTriangles,n,n+1,n+2,n+3);
                 }
             }
-            var mesh=new Mesh{name="Imported land chunk"};mesh.vertices=vertices;mesh.colors=colors;mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();resources.Meshes.Add(mesh);
+            var mesh=new Mesh{name="Imported land chunk"};mesh.vertices=vertices;mesh.colors=colors;mesh.SetUVs(1,shoreBand);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();resources.Meshes.Add(mesh);
             var go=new GameObject("Terrain "+sx+","+sz);go.layer=MapLayout.TerrainLayer;go.transform.SetParent(root,false);
             go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=ground;
             if(walkable.Count>0){var collision=new Mesh{name="Imported navigation chunk"};collision.vertices=vertices;collision.SetTriangles(walkable,0);collision.RecalculateBounds();resources.Meshes.Add(collision);go.AddComponent<MeshCollider>().sharedMesh=collision;}
@@ -58,6 +63,20 @@ namespace RiskAI
             var renderer=surface.AddComponent<MeshRenderer>();renderer.sharedMaterial=water;renderer.shadowCastingMode=ShadowCastingMode.Off;
         }
         static void AddQuad(List<int> target,int a,int b,int c,int d){target.Add(a);target.Add(b);target.Add(c);target.Add(c);target.Add(b);target.Add(d);}
+        static float ShoreBand(ImportedMapData data,int x,int z)
+        {
+            int index=z*data.width+x;
+            if(data.landSamples[index]==0)return 0;
+            // A direct (including diagonal) water neighbour gives one source
+            // cell of blended bank.  It does not infer or move a coastline.
+            for(int dz=-1;dz<=1;dz++)for(int dx=-1;dx<=1;dx++)
+            {
+                if(dx==0&&dz==0)continue;
+                int nx=x+dx,nz=z+dz;
+                if(nx>=0&&nx<data.width&&nz>=0&&nz<data.height&&data.landSamples[nz*data.width+nx]==0)return 1;
+            }
+            return 0;
+        }
         static Color GroundTint(int tile,float x,float z)
         {
             Color tint=GroundColors[Mathf.Min(ImportedMapData.GroundTileIndex(tile),GroundColors.Length-1)];

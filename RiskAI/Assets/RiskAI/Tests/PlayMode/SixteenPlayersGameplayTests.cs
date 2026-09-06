@@ -87,8 +87,18 @@ namespace RiskAI.Tests
             AdvanceTo(56f);
             Assert.That(battle.Winner, Is.EqualTo(-1), "Eliminating one rival cannot end a 16-player match while fourteen rivals remain.");
 
-            foreach (var town in battle.Towns) { town.State.Owner = 0; town.enabled = false; }
-            AdvanceTo(56f + BattleRules.VictoryHoldSeconds + 1);
+            int heldCities = battle.VictoryTarget - 1;
+            for (int city = 0; city < battle.Towns.Count; city++)
+            {
+                battle.Towns[city].State.Owner = city < heldCities ? 0 : PlayerRules.NeutralOwner;
+                battle.Towns[city].enabled = false;
+            }
+            AdvanceTo(56f + .25f);
+            Assert.That(battle.VictoryProgress[0], Is.Zero,
+                "Losing one city below the conquest target must reset the current hold immediately.");
+
+            foreach (var town in battle.Towns) town.State.Owner = 0;
+            AdvanceTo(56f + .25f + BattleRules.VictoryHoldSeconds + 1);
             Assert.That(battle.Winner, Is.EqualTo(0), "Holding the conquest target must win even while other armies remain alive.");
 
             yield return UnloadScenario();

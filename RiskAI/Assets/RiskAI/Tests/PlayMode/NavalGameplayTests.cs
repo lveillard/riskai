@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using RiskAI.Core;
 using UnityEngine;
@@ -79,6 +81,32 @@ namespace RiskAI.Tests
    Assert.That(naval.Ships[0].Team,Is.EqualTo(1));
    Assert.That(naval.Ships[0].Kind,Is.EqualTo(ShipKind.Galley));
    Assert.That(naval.PendingShips(1),Is.Zero);
+  }
+  [UnityTest] public IEnumerator AiFleetPassKeepsAnExistingRouteInsteadOfRebuildingIt()
+  {
+   var home=naval.Harbors.First(h=>h.Owner==1);var ship=BattleTestScenario.Ship(naval,1,ShipKind.Galley,home.Berth);
+   var target=naval.Harbors.Where(h=>PlayerRules.IsPlayer(h.Owner)&&h.Owner!=1&&h.CanLaunch).OrderBy(h=>(h.Berth-ship.transform.position).sqrMagnitude).First();
+   while(battle.BattleTime<battle.AiFirstNavalOffensiveTime+.1f)battle.Clock.Advance(.4,false,_=>{});
+   ship.MoveTo(target.Berth,true);Assert.That(ship.IsAtOrRoutingTo(target.Berth),Is.True);
+   long revision=ship.RouteRevision;battle.AiEnabled=true;
+   naval.SimTick(.05f);
+   Assert.That(ship.RouteRevision,Is.EqualTo(revision),"The staggered fleet pass must retain an active route to its chosen rally.");
+   Assert.That(ship.IsAtOrRoutingTo(target.Berth),Is.True);yield return null;
+  }
+  [UnityTest] public IEnumerator StalledActiveRouteBecomesEligibleForAiReissue()
+  {
+   var home=naval.Harbors.First(h=>h.Owner==0&&!h.IsIsland);var ship=BattleTestScenario.Ship(naval,0,ShipKind.Galley,home.Berth);
+   var target=naval.Harbors.First(h=>h!=home&&h.CanLaunch);
+   const BindingFlags hidden=BindingFlags.Instance|BindingFlags.NonPublic;var type=typeof(Ship);
+   var route=(List<Vector3>)type.GetField("route",hidden).GetValue(ship);
+   // This represents a route whose ocean clearance disappeared after it was accepted.
+   route.Clear();route.Add(home.Landing);type.GetField("routeIndex",hidden).SetValue(ship,0);
+   type.GetField("routeGoal",hidden).SetValue(ship,target.Berth);type.GetField("hasRouteGoal",hidden).SetValue(ship,true);
+   type.GetField("lastRouteProgressAt",hidden).SetValue(ship,battle.BattleTime);
+   Assert.That(ship.IsAtOrRoutingTo(target.Berth),Is.True,"An active route initially suppresses duplicate AI orders.");
+   float stalledUntil=battle.BattleTime+6.2f;while(battle.BattleTime<stalledUntil)battle.Clock.Advance(.1,false,battle.World.Tick);
+   Assert.That(ship.IsAtOrRoutingTo(target.Berth),Is.False,"A blocked route must become eligible for a fresh AI order after the bounded progress grace.");
+   yield return null;
   }
   [UnityTest] public IEnumerator GalleyFiresAndTransportDestructionRemovesCargo()
   {

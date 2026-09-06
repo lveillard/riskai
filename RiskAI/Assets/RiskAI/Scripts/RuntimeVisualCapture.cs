@@ -35,99 +35,119 @@ namespace RiskAI
             for(int player=0;player<battle.PlayerCount;player++)
                 Debug.Log("RISKAI_PLAYER: id="+player+" troops="+battle.Population(player)+" gold="+battle.Economy.Gold[player]);
             if(hurt>0||shots>0)Debug.LogError("RISKAI_INITIAL_CROSSFIRE: independent starting posts must not attack each other.");
-            if(MapLayout.IsImported){yield return CaptureImported(battle,input);Application.Quit();yield break;}
+            if(MapLayout.IsImported){yield return CaptureImported(battle,input);yield return CaptureTraining(battle,input);Application.Quit();yield break;}
             for(int i=0;i<10;i++)yield return null;
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-overview.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-overview.png"));
             yield return new WaitForSecondsRealtime(.6f);
             input.CameraRig.ZoomAt(2,new Vector2(Screen.width*.5f,Screen.height*.5f));
             yield return new WaitForSecondsRealtime(.7f);
             input.FocusHome();
             yield return new WaitForSecondsRealtime(1);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-city.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-city.png"));
             yield return new WaitForSecondsRealtime(.7f);
             input.CameraRig.Focus(MapLayout.Point(26*MapLayout.Spacing,3*MapLayout.Spacing));input.SelectAll();
             yield return new WaitForSecondsRealtime(1);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-highlands.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-highlands.png"));
             yield return new WaitForSecondsRealtime(.7f);
-            if(!MapLayout.IsExpanded){input.CameraRig.Focus(MapLayout.Point(-40*MapLayout.Spacing,-72*MapLayout.Spacing));yield return new WaitForSecondsRealtime(1.5f);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-southwest.png"));yield return new WaitForSecondsRealtime(.7f);}
+            if(!MapLayout.IsExpanded){input.CameraRig.Focus(MapLayout.Point(-40*MapLayout.Spacing,-72*MapLayout.Spacing));yield return new WaitForSecondsRealtime(1.5f);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-southwest.png"));yield return new WaitForSecondsRealtime(.7f);}
             input.FocusHarbor();
-            yield return new WaitForSecondsRealtime(1);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-harbor.png"));
+            yield return new WaitForSecondsRealtime(1);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-harbor.png"));
             yield return new WaitForSecondsRealtime(.7f);
             input.SelectFleet();input.FocusFleet();
-            yield return new WaitForSecondsRealtime(1);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-fleet.png"));
+            yield return new WaitForSecondsRealtime(1);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-fleet.png"));
             yield return new WaitForSecondsRealtime(.7f);input.Clear();
             input.CameraRig.Focus(MapLayout.IsExpanded?TerrainHydrology.Samples[28]:MapLayout.Point(44*MapLayout.Spacing,39*MapLayout.Spacing));
-            yield return new WaitForSecondsRealtime(3);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-river.png"));
+            yield return new WaitForSecondsRealtime(3);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-river.png"));
             yield return new WaitForSecondsRealtime(.7f);input.CameraRig.Focus(MapLayout.IsExpanded?TerrainHydrology.Samples[55]:MapLayout.Point(33*MapLayout.Spacing,50*MapLayout.Spacing));
-            yield return new WaitForSecondsRealtime(2);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-estuary.png"));
+            yield return new WaitForSecondsRealtime(2);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-estuary.png"));
             yield return new WaitForSecondsRealtime(.7f);input.CameraRig.Focus(MapLayout.Point(MapLayout.Islands[0].x*MapLayout.Spacing,MapLayout.Islands[0].y*MapLayout.Spacing));
-            yield return new WaitForSecondsRealtime(2);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-oaks.png"));
+            yield return new WaitForSecondsRealtime(2);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-oaks.png"));
             yield return new WaitForSecondsRealtime(.7f);input.CameraRig.Focus(MapLayout.Point(MapLayout.Islands[1].x*MapLayout.Spacing,MapLayout.Islands[1].y*MapLayout.Spacing));
-            yield return new WaitForSecondsRealtime(3);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-island.png"));
+            yield return new WaitForSecondsRealtime(3);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-island.png"));
             yield return new WaitForSecondsRealtime(.7f);
             if(battle.Camps.Count>0&&battle.Camps[0])
             {
                 input.SelectCamp(battle.Camps[0]);input.CameraRig.Focus(battle.Camps[0].SpawnPoint);
                 yield return new WaitForSecondsRealtime(4f);
-                ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-camp.png"));
+                ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-camp.png"));
                 yield return new WaitForSecondsRealtime(.7f);
             }
             input.Clear();
             input.CameraRig.ZoomAt(-4,new Vector2(Screen.width*.5f,Screen.height*.5f));
-            yield return new WaitForSecondsRealtime(1);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-zoomout.png"));
+            yield return new WaitForSecondsRealtime(1);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-zoomout.png"));
             yield return new WaitForSecondsRealtime(.7f);input.CameraRig.Pan(Vector3.forward,1);
-            yield return new WaitForSecondsRealtime(1);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-zoomout-pan.png"));
+            yield return new WaitForSecondsRealtime(1);ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-zoomout-pan.png"));
             yield return new WaitForSecondsRealtime(.7f);input.HelpVisible=true;
             for(int i=0;i<3;i++)yield return null;
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-help.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-help.png"));
             yield return new WaitForSecondsRealtime(.7f);
-            bool captured=true;foreach(string name in new[]{"overview","city","highlands","harbor","fleet","river","estuary","oaks","island","camp","zoomout","zoomout-pan","help"})captured&=File.GetLastWriteTimeUtc(Path.Combine(directory,"v16-player-"+name+".png"))>=started;
+            bool captured=true;foreach(string name in new[]{"overview","city","highlands","harbor","fleet","river","estuary","oaks","island","camp","zoomout","zoomout-pan","help"})captured&=File.GetLastWriteTimeUtc(Path.Combine(directory,"v17-player-"+name+".png"))>=started;
             if(captured)
                 Debug.Log("RISKAI_PLAYER_CAPTURE_OK: "+directory);
             else Debug.LogError("RISKAI_PLAYER_CAPTURE_FAILED: player window must be visible.");
+            yield return CaptureTraining(battle,input);
             Application.Quit();
+        }
+        IEnumerator CaptureTraining(BattleSession battle,RtsController input)
+        {
+            Harbor port=null;
+            foreach(var candidate in battle.Naval.Harbors)
+                if(candidate.Owner==0 && candidate.CanLaunch){port=candidate;break;}
+            if(!port)yield break;
+            input.HelpVisible=false;input.SelectHarbor(port);
+            input.CameraRig.ResetView();input.CameraRig.Focus(port.Landing);
+            battle.Economy.Grant(0,100);
+            if(battle.Paused)battle.TogglePause();
+            for(int i=0;i<Harbor.QueueCapacity;i++)port.Buy(i%2==0?ShipKind.Galley:ShipKind.Transport);
+            port.RecruitLand(RiskAI.Core.UnitKind.MarinePrivate);
+            yield return new WaitForSecondsRealtime(.4f);
+            if(!battle.Paused)battle.TogglePause();
+            yield return new WaitForSecondsRealtime(2);
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-training.png"));
+            yield return new WaitForSecondsRealtime(.7f);
+            Debug.Log("RISKAI_TRAINING_CAPTURE: queued="+port.QueueCount+" capacity="+Harbor.QueueCapacity+" land="+port.LandQueueCount);
         }
         IEnumerator CaptureImported(BattleSession battle,RtsController input)
         {
             yield return new WaitForSecondsRealtime(1);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-city.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-city.png"));
             yield return new WaitForSecondsRealtime(.7f);
             input.CameraRig.FrameMap();input.Clear();
             yield return new WaitForSecondsRealtime(5);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-geography.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-geography.png"));
             yield return new WaitForSecondsRealtime(.7f);
             input.CameraRig.ResetView();input.FocusHarbor();
             yield return new WaitForSecondsRealtime(3);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-harbor.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-harbor.png"));
             yield return new WaitForSecondsRealtime(.7f);
             foreach(var camp in battle.Camps)if(camp){input.SelectCamp(camp);input.CameraRig.Focus(camp.SpawnPoint);break;}
             yield return new WaitForSecondsRealtime(3);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-camp.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-camp.png"));
             yield return new WaitForSecondsRealtime(.7f);
             input.Clear();input.CameraRig.ResetView();
             float sourceOffset=MapLayout.Scenario==ScenarioMap.NewWorld?163.84f:0;
             input.CameraRig.Focus(MapLayout.Point(-90+sourceOffset,-90));
             yield return new WaitForSecondsRealtime(3);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-alps.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-alps.png"));
             yield return new WaitForSecondsRealtime(.7f);
             input.CameraRig.Focus(MapLayout.Point(-100+sourceOffset,-30));
             yield return new WaitForSecondsRealtime(3);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-rhine.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-rhine.png"));
             yield return new WaitForSecondsRealtime(.7f);
             input.HelpVisible=true;
             yield return new WaitForSecondsRealtime(.5f);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-help.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-help.png"));
             yield return new WaitForSecondsRealtime(1);
             FindFirstObjectByType<BattleHud>().ShowPlayers();
             yield return new WaitForSecondsRealtime(.5f);
-            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-players.png"));
+            ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-players.png"));
             yield return new WaitForSecondsRealtime(.7f);
             input.HelpVisible=false;
             if(UnityEngine.InputSystem.Keyboard.current!=null)
             {
                 UnityEngine.InputSystem.InputSystem.QueueStateEvent(UnityEngine.InputSystem.Keyboard.current,new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.Tab));
                 yield return null;yield return null;
-                ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-scores.png"));
+                ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-scores.png"));
                 yield return new WaitForSecondsRealtime(.7f);
                 UnityEngine.InputSystem.InputSystem.QueueStateEvent(UnityEngine.InputSystem.Keyboard.current,new UnityEngine.InputSystem.LowLevel.KeyboardState());
                 yield return null;
@@ -144,7 +164,7 @@ namespace RiskAI
                     yield return new WaitForSecondsRealtime(2);
                     input.CameraRig.ZoomAt(3,new Vector2(Screen.width*.5f,Screen.height*.5f));
                     yield return new WaitForSecondsRealtime(3);
-                    ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-knight.png"));
+                    ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-knight.png"));
                     yield return new WaitForSecondsRealtime(.7f);
                 }
             }
@@ -158,11 +178,11 @@ namespace RiskAI
                 yield return new WaitForSecondsRealtime(2);
                 input.CameraRig.ZoomAt(1,new Vector2(Screen.width*.5f,Screen.height*.5f));
                 yield return new WaitForSecondsRealtime(3);
-                ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v16-player-naval.png"));
+                ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v17-player-naval.png"));
                 yield return new WaitForSecondsRealtime(.7f);
             }
             bool complete=true;
-            foreach(string name in new[]{"city","geography","harbor","camp","alps","rhine","help","players"})complete&=File.Exists(Path.Combine(directory,"v16-player-"+name+".png"));
+            foreach(string name in new[]{"city","geography","harbor","camp","alps","rhine","help","players"})complete&=File.Exists(Path.Combine(directory,"v17-player-"+name+".png"));
             if(complete)Debug.Log("RISKAI_PLAYER_CAPTURE_OK: "+directory);else Debug.LogError("RISKAI_PLAYER_CAPTURE_FAILED: "+directory);
         }
 

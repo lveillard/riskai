@@ -2,6 +2,29 @@
 
 Feedback del 6 de septiembre de 2026. Las reglas verificadas y las adaptaciones se distinguen en [la auditoría de Risk](docs/RISK-RULES-v0.12.md). Esta lista conserva también las propuestas que todavía no están implementadas.
 
+## Revisión v0.17 — respuesta, legibilidad y bosque
+
+- [x] Observar una partida abierta sin cerrarla: lector pasivo `scripts/observe_runtime.py`, con ventanas y rechazos. [Datos v0.16 y límites del diagnóstico](docs/audits/LIVE-CONTROLS-v0.16.md).
+- [x] Instrumentar la siguiente build con fases de tick, máximos de cola, tiempo desde Submit hasta aplicación/primer movimiento elegible y rutas pendientes; separar foco/pausa de frames de juego. No equivale a medir el clic físico.
+- [x] Eliminar arrays temporales del picking y de marcos del HUD, reutilizar estilos y contar presencia/ciudades una vez por tick para victoria.
+- [x] Precalcular aristas y componentes de navegación naval durante carga; no repetir órdenes de la IA al mismo destino y distribuir sus decisiones por bando.
+- [x] Resolver el rodeo marítimo entre puntos que caen en la misma celda cuando el segmento directo está bloqueado por costa.
+- [x] Agrupar peticiones terrestres autónomas mientras hay ruta pendiente; las órdenes explícitas conservan prioridad. Presupuesto de NavMesh explícito para escritorio, pendiente de medición en tablet.
+- [x] Cola naval de cinco con iconos; ocultar anillo grande de embarque cuando no se selecciona el puerto, conservar círculo de guardia.
+- [x] Entrada y reunión inicial próximas a la puerta, independientes del color del propietario; conservar el punto elegido por el jugador.
+- [x] Cámara de 55 grados también en mapas importados; confirmación de órdenes con pulso reutilizable.
+- [x] Indicador animado de reclutamiento por edificio; pausa y reutilización. Puerto importado comparte la vista de su ciudad.
+- [x] Mostrar barra de vida aunque esté llena cuando una copa puede ocultar la unidad. Índice estático, comprobación a 10 Hz, sin colisionadores ni pase de render adicional.
+- [x] Bosque denso reduce velocidad un 18 % y permite el paso; árboles originales e importados decorativos. Es una adaptación local, no una cifra extraída de Risk. El planificador todavía no prefiere rutas por coste de bosque.
+- [x] Banda visual de orilla precalculada con variación del material. Conserva geometría y navegación fuente.
+- [x] Saeta, orbe y proyectil de mortero diferenciados en pools; orientación del arco e impactos distintos. Daño sigue en simulación.
+- [x] Verificar matriz de counters en ambos W3X: mismo miembro `war3mapMisc.txt`; documentar proyección de columnas y unidades locales. [Auditoría](docs/audits/COUNTERS-v0.17.md).
+- [x] Dos rondas reales adicionales de Grok 4.6; corregir falsa confirmación de embarque, margen de descarga y recuperación de rutas abandonadas. [Revisión v0.17](docs/audits/GROK-v0.17.md).
+- [x] Validar respuesta tras 20 minutos simulados y medir 90 s a velocidad normal en Europe con 16 bandos: máximo de 40,03 ms, sin frames >50 ms; cinco identidades seguidas responden. [Datos y límites](docs/VALIDATION-v0.17.md).
+- [ ] Suavizar la silueta geométrica escalonada de la costa sin hacer que el dibujo contradiga puertos, islas y pasos navegables.
+- [ ] Revisar retroceso/animaciones específicas de mortero y Marines; las animaciones de ataque existentes siguen siendo parte de la presentación.
+- [ ] Llevar gesto/orden/cámara al adaptador Input Actions y táctil descrito abajo, con trazabilidad desde evento hasta intención. No introducir dependencia del dispositivo en la simulación.
+
 ## Implementado en v0.12
 
 - [x] Edificios y torres permanentes; el objetivo de combate es su guarnición. Cambio de dueño conjunto.
@@ -38,6 +61,7 @@ Intenciones compartidas con ratón, sin mutar directamente salud, propiedad u or
 - [ ] Servidor autoritativo con conexión autenticada, validación de órdenes y snapshots. La identidad del jugador la decide el servidor.
 - [ ] Incorporar compras, barcos, embarque y desembarque al protocolo de comandos; actualmente la cola por ID cubre infantería.
 - [ ] Separar vistas y arranque de arte para Dedicated Server; navegación autoritativa sin exigir que NavMesh coincida entre clientes.
+- [ ] Hornear el campo de coste del bosque como dato de mapa compartido: hoy se genera desde las cotas de las copas de la escena, y un servidor sin arte necesita el mismo campo numérico.
 - [ ] Transporte compatible con navegador, reconexión, latencia, visión por jugador y niebla de guerra.
 - [ ] Build Web y Android, medir memoria/descarga/renderizado e input en dispositivos. No hay validación de esas plataformas todavía.
 

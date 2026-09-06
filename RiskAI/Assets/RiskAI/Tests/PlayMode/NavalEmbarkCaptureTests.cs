@@ -35,6 +35,10 @@ namespace RiskAI.Tests
             Assert.That(transport.CargoCount, Is.EqualTo(1));
             Assert.That(transport.SailToShore(home.Berth), Is.Not.Null, "Open water is not a valid unload cursor target.");
             Assert.That(transport.SailToShore(home.Landing), Is.Null);
+            const BindingFlags privateInstance=BindingFlags.Instance|BindingFlags.NonPublic;
+            var shoreBerth=(Vector3)typeof(Ship).GetField("routeGoal",privateInstance).GetValue(transport);
+            Assert.That(Vector3.Distance(new Vector3(shoreBerth.x,0,shoreBerth.z),new Vector3(home.Landing.x,0,home.Landing.z)),
+                Is.LessThanOrEqualTo(Ship.LoadRadius-.45f), "The completed .4 m arrival margin must remain inside unload range.");
             transport.Select(false); // Pending shore work belongs to the ship, not UI selection.
             for(int tick=0;tick<240&&transport.CargoCount>0;tick++)transport.SimTick(.1f);
             Assert.That(transport.CargoCount, Is.Zero, "A valid queued beach unload completes after selection changes.");
@@ -83,6 +87,24 @@ namespace RiskAI.Tests
             battle.TogglePause();
             typeof(RtsController).GetMethod("Update",hidden).Invoke(controller,null);
             Assert.That(transport.CargoCount,Is.EqualTo(1),"The issued mission progresses independently of selection and application focus.");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator FailedShipRouteDoesNotIssueTheSoldiersEmbarkOrder()
+        {
+            var home=naval.Harbors.First(h=>h.Owner==0);
+            var transport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,home.Berth);
+            var soldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,home.Landing);
+            transport.transform.position=home.Landing; // Valid transport, deliberately not in navigable water.
+            Vector3 before=soldier.Agent.destination;
+
+            string embark=naval.OrderEmbark(transport,soldier);
+            Assert.That(embark,Is.EqualTo("No hay una ruta marítima hasta ese destino."));
+            Assert.That(soldier.Agent.destination,Is.EqualTo(before),"A rejected ship route must leave the soldier without a new land order.");
+
+            string disembark=naval.OrderDisembark(transport,home);
+            Assert.That(disembark,Is.EqualTo("No hay una ruta marítima hasta ese destino."));
             yield return null;
         }
 

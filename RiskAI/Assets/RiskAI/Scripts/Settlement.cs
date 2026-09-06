@@ -19,6 +19,9 @@ namespace RiskAI
         public CityClaimZone ClaimZone { get; private set; }
         public Soldier Defender => ClaimZone != null ? ClaimZone.Defender : null;
         public Vector3 ClaimPoint { get; private set; }
+        // Town architecture faces south; this is beyond its entrance steps and
+        // outside the solid hall, independent of the owning team.
+        public Vector3 DefaultLandEntry => transform.position + Vector3.back * 4f;
         public int QueueCount => queue.Count;
         public float TrainingProgress => queue.Count == 0 ? 0 : 1 - queue[0].Remaining / BattleRules.TrainTime(queue[0].Kind);
         public UnitKind TrainingKind => queue.Count == 0 ? UnitKind.Footman : queue[0].Kind;
@@ -36,6 +39,8 @@ namespace RiskAI
         int projectOwner;
         BuildingProject project;
         LineRenderer rallyRing;
+        BuildingTrainingView trainingView;
+        bool portNavalTraining;
         public LineRenderer SelectionRing { get; private set; }
         enum BuildingProject { None, Tower, Upgrade }
         sealed class Training { public int Team; public UnitKind Kind; public float Remaining; }
@@ -43,7 +48,7 @@ namespace RiskAI
         public void Initialize(BattleSession battle, string id, string displayName, int owner, int region, bool capital, int country = -1, Vector3? sourceClaim = null, bool isPort = false)
         {
             session = battle; State = new TownState(id, owner, region, country); DisplayName = displayName; IsCapital = capital; FoundingTeam = owner;IsPort=isPort;
-            Rally = transform.position + new Vector3(0, 0, owner == 0 ? -6 : 6);
+            Rally = DefaultLandEntry;
             Vector3 claimProbe = transform.position + new Vector3(0, 0, -4.2f);
             ClaimPoint = sourceClaim ?? MapLayout.Point(claimProbe.x, claimProbe.z);
             ClaimZone = new CityClaimZone(ClaimPoint);
@@ -60,6 +65,7 @@ namespace RiskAI
             var rallyObject = new GameObject("Punto de reunión"); rallyObject.transform.SetParent(transform, false);
             rallyRing = VisualFactory.Ring(rallyObject.transform, .6f, .09f, new Color(.8f, 1, .5f));
             rallyObject.transform.position = Rally; rallyRing.enabled = false;
+            trainingView=BuildingTrainingView.Create(transform,DefaultLandEntry,Vector3.back);
         }
 
         Vector3 ImportedTowerPoint()
@@ -138,6 +144,19 @@ namespace RiskAI
             if (!NavMesh.SamplePosition(target, out var hit, 8, NavMesh.AllAreas)) return;
             Rally = hit.position; rallyRing.transform.parent.position = Rally;
         }
+        internal void SetPortNavalTraining(bool active)
+        {
+            portNavalTraining=active;
+            RefreshTrainingView();
+        }
+        internal void BindImportedPortEntry(Vector3 landEntry, Vector3 outward)
+        {
+            if(trainingView)trainingView.Reposition(landEntry,outward);
+        }
+        void RefreshTrainingView()
+        {
+            if(trainingView)trainingView.SetActivity(queue.Count>0,portNavalTraining,session.BattleTime);
+        }
 
         public bool InitializeGarrison(IEnumerable<Soldier> soldiers, ISet<Soldier> assigned)
         {
@@ -203,14 +222,15 @@ namespace RiskAI
                     project = BuildingProject.None;
                 }
             }
-            if (queue.Count == 0) return;
+            if (queue.Count == 0) { RefreshTrainingView(); return; }
             var first = queue[0]; first.Remaining -= delta;
             if (first.Remaining <= 0 && session.RecruitmentPopulation(first.Team) < BattleRules.PopulationLimit)
             {
-                Vector3 spawn = IsPort && Port ? Port.Landing : transform.position + new Vector3(0, 0, State.Owner == 0 ? -4 : 4);
+                Vector3 spawn = IsPort && Port ? Port.LandEntry : DefaultLandEntry;
                 var unit = session.Spawn(first.Team, first.Kind, spawn);
                 if (unit) { queue.RemoveAt(0); unit.MoveTo(Rally, true, false); }
             }
+            RefreshTrainingView();
         }
     }
 }

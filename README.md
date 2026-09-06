@@ -1,14 +1,16 @@
-# RiskAI · v0.16
+# RiskAI · v0.17
 
 Prototipo RTS de conquista por ciudades, inspirado en los mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP, partida local contra IA y arte propio/CC0.
 
 Abre **Play-RiskAI.cmd** para jugar la compilación local. El menú permite elegir escenario, 2–16 jugadores, reparto, semilla y dificultad antes de empezar. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`. Las compilaciones y las referencias de Warcraft quedan fuera de Git.
 
-Esta versión permite **un jugador y hasta 15 IA independientes**. Europe (212 ciudades) y New World (293) conservan distancias y coordenadas fuente con una conversión común de unidades, límites W3I y árboles DOO. Ballestero, caballero, sanador y mortero usan colisiones verificadas y alturas de espera calibradas contra medidas numéricas de los modelos originales. Sus siluetas son distintas y el tamaño de los edificios propios aún no está calibrado. [Escala y límites](docs/MAP-SCALE-v0.15.md) · [Cambios](docs/ITERATION-v0.16.md) · [Validación](docs/VALIDATION-v0.16.md) · [Pendientes](TODO.md).
+Esta versión permite **un jugador y hasta 15 IA independientes**. Europe (212 ciudades) y New World (293) conservan distancias y coordenadas fuente con una conversión común de unidades, límites W3I y árboles DOO. Ballestero, caballero, sanador y mortero usan colisiones verificadas y alturas de espera calibradas contra medidas numéricas de los modelos originales. Sus siluetas son distintas y el tamaño de los edificios propios aún no está calibrado. [Escala y límites](docs/MAP-SCALE-v0.15.md) · [Cambios](docs/ITERATION-v0.17.md) · [Validación](docs/VALIDATION-v0.17.md) · [Pendientes](TODO.md).
 
-![v0.16: río, terreno y vegetación en Cuatro Riberas](docs/images/v0.16-riverlands.png)
+La v0.17 añade colas navales de cinco, indicadores de entrenamiento, barras para tropas ocultas por copas, bosque transitable que ralentiza y proyectiles distintos. Reutiliza las rutas navales y permite observar tiempos de simulación y respuesta sin cerrar la partida. [Diagnóstico en vivo](docs/OBSERVABILITY.md) · [Counters verificados](docs/audits/COUNTERS-v0.17.md).
 
-[Europe](docs/images/v0.16-europe.png) · [New World](docs/images/v0.16-newworld.png) · [Caballero](docs/images/v0.16-knight.png) · [Naval](docs/images/v0.16-naval.png) · [Marcadores con Tab](docs/images/v0.16-scores.png) · [Dos revisiones Grok 4.6](docs/audits/GROK-v0.16.md)
+![v0.17: ciudad, cámara y vegetación en Europe](docs/images/v0.17-city.png)
+
+[Puerto y cola naval v0.17](docs/images/v0.17-training.png) · [Cuatro Riberas v0.16](docs/images/v0.16-riverlands.png) · [New World v0.16](docs/images/v0.16-newworld.png) · [Caballero v0.16](docs/images/v0.16-knight.png) · [Marcadores con Tab v0.16](docs/images/v0.16-scores.png) · [Revisiones Grok 4.6](docs/audits/GROK-v0.17.md)
 
 ## Escenarios
 
@@ -47,7 +49,7 @@ Cada 60 s, si conservas alguna ciudad, recibes **4 de base + 1 por cada ciudad p
 | Marine Major | 5 | 650 | Infantería pesada del puerto |
 | Marine General | 10 | 800 | Infantería veterana del puerto |
 
-Los seis tipos generales se ofrecen en ciudades y los tres Marines en puertos. Fragatas y transportes se compran también en puertos. Casa y torre seleccionan el mismo puesto, rodeado por un anillo completo al seleccionarlo. Las ciudades tienen cola de cinco; los puertos tienen cinco encargos terrestres y tres navales. Cancelar devuelve el precio. Tope por bando: 100 soldados, incluidos embarcados y compras pendientes, y 12 barcos. En Europe y New World las guarniciones quedan fuera del tope de 100 para permitir reclutar con más de cien defensores iniciales. En esos mapas los puertos forman parte de las ciudades, grupos, ingresos y victoria, y comparten su defensor y torre. En Las Marcas y Cuatro Riberas siguen siendo puestos navales independientes que no cuentan como ciudades. El reparto naval y los tiempos de producción siguen siendo adaptaciones del prototipo.
+Los seis tipos generales se ofrecen en ciudades y los tres Marines en puertos. Fragatas y transportes se compran también en puertos. Casa y torre seleccionan el mismo puesto, rodeado por un anillo completo al seleccionarlo. Las ciudades tienen cola de cinco; los puertos tienen cinco encargos terrestres y cinco navales. Cancelar devuelve el precio. Tope por bando: 100 soldados, incluidos embarcados y compras pendientes, y 12 barcos. En Europe y New World las guarniciones quedan fuera del tope de 100 para permitir reclutar con más de cien defensores iniciales. En esos mapas los puertos forman parte de las ciudades, grupos, ingresos y victoria, y comparten su defensor y torre. En Las Marcas y Cuatro Riberas siguen siendo puestos navales independientes que no cuentan como ciudades. El reparto naval y los tiempos de producción siguen siendo adaptaciones del prototipo.
 
 Ganas conservando el 60 % de las ciudades durante 20 s: 11 en Las Marcas, 12 en Cuatro Riberas, 128 en Europe o 176 en New World. También vence el último jugador con puestos o tropas: eliminar a una sola IA no termina una partida con más rivales. La IA relajada retrasa su ofensiva, pero ambas dificultades reaccionan para defender bases amenazadas. Todavía no hay niebla de guerra; la IA conoce el mapa completo y no prepara desembarcos.
 
@@ -87,7 +89,7 @@ Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. Escena: `Assets/RiskAI/S
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
 .\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
-.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.16/RiskAI.exe
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.17/RiskAI.exe
 ```
 
 Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map classic`, `riverlands`, `europe` o `newworld`. [Estructura del código](RiskAI/README.md).

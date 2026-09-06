@@ -24,7 +24,7 @@ namespace RiskAI
             if(form==ImportedTreeForm.Fir){WorldArt.Tree(root,p,height,seed,false);return;}
             CreateBroadleaf(root,p,height,seed,form==ImportedTreeForm.DryOak?3:(seed%5==0?1:0),false);
         }
-        static void CreateBroadleaf(Transform root,Vector3 p,float height,int seed,int biome,bool solid=true)
+        static void CreateBroadleaf(Transform root,Vector3 p,float height,int seed,int biome,bool solid=false)
         {
             var go=new GameObject(biome==2?"Coastal palm":biome==3?"Dry olive":biome==1?"Amber oak":"Green oak");go.transform.SetParent(root,false);go.transform.localPosition=p;
             go.transform.localRotation=Quaternion.Euler(0,seed*137.5f,0);
@@ -35,7 +35,7 @@ namespace RiskAI
             {
                 float a=(j*120+seed*17)*Mathf.Deg2Rad;
                 var from=Vector3.up*height*.36f;var to=new Vector3(Mathf.Cos(a)*.26f,.65f,Mathf.Sin(a)*.26f)*height;
-                var branch=VisualFactory.Shape(go.transform,PrimitiveType.Cylinder,"Forked oak branch",(from+to)*.5f,new Vector3(.18f,(to-from).magnitude*.5f,.18f),Color.white);
+                var branch=VisualFactory.Shape(go.transform,PrimitiveType.Cylinder,"Forked oak branch",(from+to)*.5f,new Vector3(.18f,(to-from).magnitude*.5f,.18f),Color.white,solid);
                 branch.transform.localRotation=Quaternion.FromToRotation(Vector3.up,to-from);branch.GetComponent<Renderer>().sharedMaterial=trunk.GetComponent<Renderer>().sharedMaterial;
             }
             WorldArt.GroundShadow(go.transform,new(.3f,.04f,.3f),new(height,height*.85f));

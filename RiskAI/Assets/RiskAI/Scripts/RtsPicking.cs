@@ -15,8 +15,8 @@ namespace RiskAI
                 if (relation == 1 && candidate.Team != 0 || relation == -1 && candidate.Team == 0) continue;
                 Rect bounds = Bounds(camera, candidate);
                 if (bounds.width <= 0) continue;
-                float dx = Mathf.Max(bounds.xMin - pointer.x, 0, pointer.x - bounds.xMax);
-                float dy = Mathf.Max(bounds.yMin - pointer.y, 0, pointer.y - bounds.yMax);
+                float dx = Mathf.Max(0f, Mathf.Max(bounds.xMin - pointer.x, pointer.x - bounds.xMax));
+                float dy = Mathf.Max(0f, Mathf.Max(bounds.yMin - pointer.y, pointer.y - bounds.yMax));
                 float outside = Mathf.Sqrt(dx * dx + dy * dy);
                 if (outside > 9) continue;
                 float score = outside * 8 + Vector2.Distance(pointer, bounds.center) * .2f;

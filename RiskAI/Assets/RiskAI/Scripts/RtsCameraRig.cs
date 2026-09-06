@@ -5,7 +5,9 @@ namespace RiskAI
     public sealed class RtsCameraRig : MonoBehaviour
     {
         public const float DefaultZoom=34;
-        public static Quaternion DefaultRotation => Quaternion.Euler(MapLayout.IsImported ? 70 : 55, 0, 0);
+        // Use the same oblique tactical view on every map; imported coordinates
+        // should not turn the camera into a nearly overhead map view.
+        public static Quaternion DefaultRotation => Quaternion.Euler(55, 0, 0);
         float InitialZoom => MapLayout.IsImported ? 80 * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad) : DefaultZoom;
         float MinimumZoom => MapLayout.IsImported ? 18 * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad) : 17;
         public float TargetZoom { get; private set; }=DefaultZoom;
@@ -95,9 +97,9 @@ namespace RiskAI
                 float x = Vector3.Dot(point, cam.transform.right);
                 float y = Vector3.Dot(point, cam.transform.up);
                 float depth = Vector3.Dot(point, cam.transform.forward) * tangent;
-                zoom = Mathf.Max(zoom, Mathf.Abs(x) / cam.aspect - depth,
-                    (y - top * depth) / Mathf.Max(.1f, top - offset),
-                    (-y + bottom * depth) / Mathf.Max(.1f, offset - bottom));
+                zoom = Mathf.Max(zoom, Mathf.Abs(x) / cam.aspect - depth);
+                zoom = Mathf.Max(zoom, (y - top * depth) / Mathf.Max(.1f, top - offset));
+                zoom = Mathf.Max(zoom, (-y + bottom * depth) / Mathf.Max(.1f, offset - bottom));
             }
             return zoom * 1.025f;
         }

@@ -14,6 +14,8 @@ namespace RiskAI
         public readonly List<NavalEmbarkZone> EmbarkZones=new List<NavalEmbarkZone>();
         public BattleSession Session { get; private set; }
         float nextAi;
+        const float AiDecisionInterval = 18f;
+        float[] nextAiByTeam;
 
         public static NavalWorld Create(BattleSession session,Transform root)
         {
@@ -23,6 +25,9 @@ namespace RiskAI
         void Initialize(BattleSession session)
         {
             Session=session;session.Naval=this;Current=this;nextAi=session.AiFirstNavalOffensiveTime;
+            // Static W3E clearance, edge validation and disconnected-ocean labels
+            // are paid once at setup rather than during every 18-second AI fleet pass.
+            SeaNavigation.Prepare();
             if(MapLayout.IsImported)
             {
                 foreach(var town in Session.Towns)if(town&&town.IsPort)AddImportedHarbor(town);
@@ -116,7 +121,9 @@ namespace RiskAI
         {
             var selected=new List<Soldier>{soldier};
             if(!TryPlanEmbark(ship,selected,out var landing,out var berth,out var error))return error;
-            ship.MoveTo(berth);soldier.MoveTo(landing,false,false);
+            ship.MoveTo(berth);
+            if(!string.IsNullOrEmpty(ship.LastActionError))return ship.LastActionError;
+            if(!soldier.TryMoveTo(landing,false,false))return string.IsNullOrEmpty(soldier.LastMoveError)?"La tropa no puede llegar al embarque marcado.":soldier.LastMoveError;
             return "El transporte se acerca al muelle de embarque.";
         }
         /// <summary>Plans one common visible shore for a controller-owned boarding queue.</summary>
@@ -145,7 +152,8 @@ namespace RiskAI
         {
             if(!ship||ship.Kind!=ShipKind.Transport)return "Selecciona un transporte.";
             if(!harbor)return "Elige una playa o muelle de desembarco marcado.";
-            ship.SailToHarbor(harbor);return "El transporte navega al desembarco marcado.";
+            ship.SailToHarbor(harbor);
+            return string.IsNullOrEmpty(ship.LastActionError)?"El transporte navega al desembarco marcado.":ship.LastActionError;
         }
         public int PendingShips(int team)
         {
@@ -164,21 +172,47 @@ namespace RiskAI
         public void Message(string message){if(Session)Session.Message(message);}
         public void SimTick(float delta)
         {
-            if(!Session||Session.Paused||Session.Winner>=0||!Session.AiEnabled||Session.BattleTime<nextAi)return;nextAi=Session.BattleTime+18;
-            for (int team = 1; team < Session.PlayerCount; team++)
+            if(!Session||Session.Paused||Session.Winner>=0||!Session.AiEnabled)return;
+            EnsureAiSchedule();
+            int team=NextDueAiTeam();if(team<0)return;
+            while(nextAiByTeam[team]<=Session.BattleTime)nextAiByTeam[team]+=AiDecisionInterval;
+            RunAiDecision(team);
+        }
+        void EnsureAiSchedule()
+        {
+            if(nextAiByTeam!=null&&nextAiByTeam.Length==Session.PlayerCount)return;
+            nextAiByTeam=new float[Session.PlayerCount];
+            int aiCount=Mathf.Max(1,Session.PlayerCount-1);
+            for(int team=1;team<Session.PlayerCount;team++)
+                nextAiByTeam[team]=Session.AiFirstNavalOffensiveTime+(team-1)*AiDecisionInterval/aiCount;
+        }
+        int NextDueAiTeam()
+        {
+            int selected=-1;float earliest=float.MaxValue;
+            for(int team=1;team<Session.PlayerCount;team++)
+                if(nextAiByTeam[team]<=Session.BattleTime&&(nextAiByTeam[team]<earliest||Mathf.Approximately(nextAiByTeam[team],earliest)&&team<selected))
+                {selected=team;earliest=nextAiByTeam[team];}
+            return selected;
+        }
+        void RunAiDecision(int team)
+        {
+            int fleet=PendingShips(team);
+            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team)fleet++;
+            // Each AI still receives one decision every 18 simulation seconds, but
+            // their phase is staggered to avoid rebuilding every fleet route together.
+            if(fleet<2&&Session.Economy.Gold[team]>=Harbor.Cost(ShipKind.Galley))
+                foreach(var harbor in Harbors)
+                    if(harbor.Owner==team&&harbor.QueueCount==0&&harbor.Buy(ShipKind.Galley,team)==null)break;
+            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Galley&&!ship.CurrentTarget)
             {
-                int fleet = PendingShips(team);
-                foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == team) fleet++;
-                // Each AI uses its own gold and one of its own queues.
-                if (fleet < 2 && Session.Economy.Gold[team] >= Harbor.Cost(ShipKind.Galley))
-                    foreach (var harbor in Harbors)
-                        if (harbor.Owner == team && harbor.QueueCount == 0 && harbor.Buy(ShipKind.Galley, team) == null) break;
-                foreach(var ship in Ships)if(ship&&ship.Team==team&&ship.Kind==ShipKind.Galley&&!ship.CurrentTarget)
+                Harbor target=null;float distance=float.MaxValue;
+                foreach(var harbor in Harbors)
                 {
-                    var target=Harbors.Where(h=>PlayerRules.IsPlayer(h.Owner)&&h.Owner!=team&&h.CanLaunch)
-                        .OrderBy(h=>FlatDistance(h.Berth,ship.transform.position)).FirstOrDefault();
-                    if(target)ship.MoveTo(target.Berth,true);
+                    if(!harbor||!PlayerRules.IsPlayer(harbor.Owner)||harbor.Owner==team||!harbor.CanLaunch)continue;
+                    float next=FlatDistance(harbor.Berth,ship.transform.position);
+                    if(next<distance){distance=next;target=harbor;}
                 }
+                if(target&&!ship.IsAtOrRoutingTo(target.Berth))ship.MoveTo(target.Berth,true);
             }
         }
         void OnDestroy(){if(Current==this)Current=null;}

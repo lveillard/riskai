@@ -26,10 +26,23 @@ namespace RiskAI
         public Soldier Defender=>claimZone?.Defender;
         public Vector3 Landing { get; private set; }
         public Vector3 Berth { get; private set; }
+        // The house and dock face the berth. Recruits use the landward threshold
+        // instead of appearing at sea or walking through the building.
+        public Vector3 LandEntry
+        {
+            get
+            {
+                var landward=Landing-Berth;landward.y=0;
+                if(landward.sqrMagnitude<.01f)landward=Vector3.back;
+                else landward.Normalize();
+                return Landing+landward*2.5f;
+            }
+        }
         public string DisplayName { get; private set; }
         public int Owner => state!=null?state.Owner:-1;
         public float CaptureProgress => state==null?0:state.Capture;
         public int QueueCount=>queue.Count;
+        public const int QueueCapacity = 5;
         public int LandQueueCount=>sharesTown&&LinkedTown?LinkedTown.QueueCount:landQueue.Count;
         public UnitKind QueuedLandKind(int index)=>sharesTown&&LinkedTown?LinkedTown.QueuedKind(index):landQueue[index].Kind;
         public float LandTrainingProgress=>sharesTown&&LinkedTown?LinkedTown.TrainingProgress:landQueue.Count==0?0:1-landQueue[0].Remaining/BattleRules.TrainTime(landQueue[0].Kind);
@@ -40,12 +53,15 @@ namespace RiskAI
         public ShipKind QueuedKind(int index)=>queue[index].Kind;
         public bool BuildingTower=>Defense&&Defense.UnderConstruction;
         int towerBuilder=-1;float towerBuildRemaining;
+        bool embarkIndicatorSynced,embarkIndicatorVisible;
+        BuildingTrainingView trainingView;
 
         public void Initialize(NavalWorld naval,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth)
         {
             sharesTown=false;canLaunch=SeaNavigation.HasClearance(berth);launchBlockReason=canLaunch?null:"El puerto no tiene una salida marítima segura.";
             world=naval;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;lastOwner=Owner;
             NavalArt.CreateHarbor(this);
+            trainingView=BuildingTrainingView.Create(transform,LandEntry,Landing-Berth);
             claimZone=new CityClaimZone(Landing);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));claimRing.transform.position=Landing;
             var towerObject=new GameObject("Torre de "+name);towerObject.transform.SetParent(transform,false);
             Vector3 direction=Berth-Landing;direction.y=0;direction=direction.sqrMagnitude>.001f?direction.normalized:Vector3.forward;
@@ -63,6 +79,9 @@ namespace RiskAI
             canLaunch=string.IsNullOrEmpty(unavailableReason)&&SeaNavigation.HasClearance(berth);
             launchBlockReason=canLaunch?null:unavailableReason??"El puerto no tiene una salida marítima segura.";
             town.Port=this;
+            // Initialization only: later player rally commands remain unchanged.
+            town.SetRally(LandEntry);
+            town.BindImportedPortEntry(LandEntry,Landing-Berth);
         }
         internal bool InitializeGarrison()
         {
@@ -100,6 +119,26 @@ namespace RiskAI
             Selected=selected;
             if(selectionRing)selectionRing.enabled=selected;
             if(claimRing)claimRing.widthMultiplier=selected ? .11f : .065f;
+            SyncEmbarkIndicator();
+        }
+        void Update()
+        {
+            // City-sized claim/guard circles stay present. The larger loading-area
+            // indicator is an interaction aid, so it appears only when selected.
+            SyncEmbarkIndicator();
+        }
+        void SyncEmbarkIndicator()
+        {
+            if(!world)return;
+            bool found=false;
+            foreach(var zone in world.EmbarkZones)
+            {
+                if(!zone||zone.Harbor!=this)continue;
+                found=true;
+                if(embarkIndicatorSynced&&embarkIndicatorVisible==Selected)break;
+                foreach(var ring in zone.GetComponentsInChildren<LineRenderer>(true))ring.enabled=Selected;
+            }
+            if(found){embarkIndicatorSynced=true;embarkIndicatorVisible=Selected;}
         }
         /// <summary>Called after land claim resolution; a live land defender always wins.</summary>
         public int ResolveNavalOwner(int previousOwner)
@@ -124,7 +163,7 @@ namespace RiskAI
             if(world.Session.Winner>=0)return "La batalla ha terminado.";
             if(world.Session.Paused)return "Reanuda la partida para comprar barcos.";
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
-            if(queue.Count>=3)return "La cola naval está llena.";
+            if(queue.Count>=QueueCapacity)return "La cola naval está llena.";
             if(world.Ships.Count(s=>s&&s.IsAlive&&s.Team==team)+world.PendingShips(team)>=12)return "Límite naval de 12 barcos alcanzado.";
             int cost=Cost(kind);if(!world.Session.Economy.Spend(team,cost))return "Oro insuficiente para comprar este barco.";
             queue.Add(new Order{Kind=kind,Team=team,Remaining=TrainTime(kind)});return null;
@@ -210,6 +249,7 @@ namespace RiskAI
                 if(queue[0].Remaining<=0){var item=queue[0];queue.RemoveAt(0);var ship=CanLaunch?world.Spawn(item.Team,item.Kind,Berth):null;if(!ship)world.Session.Economy.Refund(item.Team,Cost(item.Kind));}
             }
             TickLandQueue(delta);
+            RefreshTrainingView();
         }
         void Captured()
         {
@@ -223,14 +263,18 @@ namespace RiskAI
         }
         void RefundQueue(){foreach(var item in queue)world.Session.Economy.Refund(item.Team,Cost(item.Kind));queue.Clear();}
         void RefundLandQueue(){foreach(var item in landQueue)world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));landQueue.Clear();}
+        void RefreshTrainingView()
+        {
+            if(sharesTown&&LinkedTown){LinkedTown.SetPortNavalTraining(queue.Count>0);return;}
+            if(trainingView)trainingView.SetActivity(landQueue.Count>0,queue.Count>0,world.Session.BattleTime);
+        }
         void TickLandQueue(float delta)
         {
             if(sharesTown||landQueue.Count==0)return;
             landQueue[0].Remaining-=delta;if(landQueue[0].Remaining>0)return;
             var item=landQueue[0];if(world.Session.RecruitmentPopulation(item.Team)>=BattleRules.PopulationLimit)return;landQueue.RemoveAt(0);
-            Vector3 away=Landing-Berth;away.y=0;if(away.sqrMagnitude<.01f)away=Vector3.back;else away.Normalize();
-            var unit=world.Session.Spawn(item.Team,item.Kind,Landing);
-            if(unit)unit.MoveTo(Landing+away*5,true,false);else world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));
+            var unit=world.Session.Spawn(item.Team,item.Kind,LandEntry);
+            if(unit)unit.MoveTo(LandEntry,true,false);else world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
     }

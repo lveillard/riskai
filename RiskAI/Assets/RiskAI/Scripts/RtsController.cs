@@ -248,12 +248,28 @@ namespace RiskAI
         }
         LineRenderer orderMarker;
         float orderMarkerUntil;
+        Color orderMarkerColor;
         void ShowOrder(Vector3 point,bool attack)
         {
             if(!orderMarker)orderMarker=VisualFactory.Ring(transform,.9f,.1f,Color.white);
             orderMarker.transform.position=point;orderMarker.enabled=true;
-            orderMarker.startColor=orderMarker.endColor=attack?new Color(1,.35f,.22f):new Color(.55f,1,.65f);
+            orderMarkerColor=attack?new Color(1,.35f,.22f):new Color(.55f,1,.65f);
+            orderMarker.startColor=orderMarker.endColor=orderMarkerColor;
+            orderMarker.transform.localScale=Vector3.one*1.6f;
             orderMarkerUntil=Time.unscaledTime+.7f;
+        }
+        void AnimateOrderMarker()
+        {
+            if(!orderMarker || !orderMarker.enabled)return;
+            float remaining=orderMarkerUntil-Time.unscaledTime;
+            if(remaining<=0){orderMarker.enabled=false;return;}
+            float progress=1-remaining/.7f;
+            // Reuse one marker: a fast inward pulse confirms the destination,
+            // followed by a short fade. No spawned effects or extra materials.
+            float pulse=1-Mathf.Pow(1-progress,3);
+            orderMarker.transform.localScale=Vector3.one*Mathf.Lerp(1.6f,.55f,pulse);
+            var color=orderMarkerColor;color.a=Mathf.Clamp01(remaining/.3f);
+            orderMarker.startColor=orderMarker.endColor=color;
         }
         void MoveFleetToHarbor(Harbor harbor)
         {
@@ -318,7 +334,7 @@ namespace RiskAI
         void Update()
         {
             if(session&&!session.Paused&&session.Winner<0)ProcessPendingBoarding();
-            if(orderMarker && Time.unscaledTime>=orderMarkerUntil)orderMarker.enabled=false;
+            AnimateOrderMarker();
             if(!EffectiveFocus)
             {
                 ReleaseCursor();CameraDragging=false;Dragging=false;pressedWorld=false;previousMouse=Pointer;

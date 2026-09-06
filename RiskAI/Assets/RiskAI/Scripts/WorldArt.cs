@@ -149,7 +149,7 @@ namespace RiskAI
             Shader.SetGlobalVectorArray("_RiskCities",cities);
             Shader.SetGlobalInt("_RiskCityCount",count);
         }
-        public static void Tree(Transform root,Vector3 position,float height,int seed,bool solid=true)
+        public static void Tree(Transform root,Vector3 position,float height,int seed,bool solid=false)
         {
             var tree=new GameObject("Silver fir");tree.transform.SetParent(root,false);tree.transform.localPosition=position;
             GroundShadow(tree.transform,new Vector3(.45f,.04f,.6f),new Vector2(height*.95f,height*.85f));

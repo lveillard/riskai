@@ -80,6 +80,34 @@ namespace RiskAI.Tests
             Assert.That(VisualFactory.ImpactPoolCreatedCount, Is.EqualTo(created), "A completed impact burst should be served by the existing pool.");
         }
 
+        [UnityTest]
+        public IEnumerator ProjectileProfilesArePooledVisualsAndDoNotNeedTargetsForSimulation()
+        {
+            StopBackgroundCombat(null, null);
+            yield return new WaitForSecondsRealtime(1f);
+            Assert.That(VisualFactory.ActiveProjectileViewCount, Is.Zero);
+
+            Vector3 from=new Vector3(280,2,280),to=new Vector3(290,2,280);
+            battle.Combat.FireProjectile(from,to,null,0,0,null,AttackKind.Piercing);
+            battle.Combat.FireProjectile(from,to,null,0,0,null,AttackKind.Magic);
+            battle.Combat.FireProjectile(from,to,null,0,0,null,AttackKind.Siege);
+            yield return null;
+
+            var views=Object.FindObjectsOfType<ArrowFlight>();
+            Assert.That(views.Any(view=>view.transform.Find("Piercing projectile").gameObject.activeSelf),Is.True);
+            Assert.That(views.Any(view=>view.transform.Find("Magic projectile").gameObject.activeSelf),Is.True);
+            Assert.That(views.Any(view=>view.transform.Find("Siege projectile").gameObject.activeSelf),Is.True);
+            int created=VisualFactory.ProjectilePoolCreatedCount;
+            Assert.That(created,Is.GreaterThanOrEqualTo(3));
+
+            yield return new WaitForSecondsRealtime(.85f);
+            Assert.That(battle.Combat.ActiveProjectileCount,Is.Zero);
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.Zero);
+            battle.Combat.FireProjectile(from,to,null,0,0,null,AttackKind.Siege);
+            yield return null;
+            Assert.That(VisualFactory.ProjectilePoolCreatedCount,Is.EqualTo(created));
+        }
+
         void StopBackgroundCombat(CombatTarget keepA, CombatTarget keepB)
         {
             foreach (var tower in battle.Towers.ToArray())

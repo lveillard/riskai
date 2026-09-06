@@ -21,7 +21,7 @@ namespace RiskAI.Tests
                 var rig=go.AddComponent<RtsCameraRig>();rig.Initialize(camera);
                 rig.SetHome(MapLayout.PlayableCenter);
                 Assert.That(Vector3.Dot(rig.FocusPoint-camera.transform.position,camera.transform.forward),Is.EqualTo(80).Within(.001f));
-                Assert.That(camera.transform.eulerAngles.x,Is.EqualTo(70).Within(.001f));
+                Assert.That(camera.transform.eulerAngles.x,Is.EqualTo(55).Within(.001f));
                 Assert.That(camera.transform.eulerAngles.y,Is.EqualTo(0).Within(.001f));
                 rig.FrameMap();
                 camera.orthographicSize=rig.TargetZoom;

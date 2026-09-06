@@ -17,6 +17,12 @@ namespace RiskAI
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-seed" && int.TryParse(args[a+1],out int seed))BattleSession.SeedForNewMatch=seed;
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-players" && int.TryParse(args[a+1],out int players))BattleSession.PlayerCountForNewMatch=Mathf.Clamp(players,2,PlayerRules.MaxPlayers);
         }
+        void Start()
+        {
+            // Apply after scene navigation settings and the generated NavMesh are
+            // loaded: scene initialization can overwrite an earlier Awake value.
+            NavMesh.pathfindingIterationsPerFrame = 500;
+        }
         void Awake()
         {
             MapLayout.Configure(BattleSession.MapForNewMatch);
@@ -55,6 +61,7 @@ namespace RiskAI
             TerritoryMarkers.Create(session,terrain.transform);
             NavalWorld.Create(session,terrain.transform);
             GroundCover.Create(session,terrain.transform);
+            session.Canopies.Build(terrain.transform);
             var cameraObject=new GameObject("RTS Camera");var camera=cameraObject.AddComponent<Camera>();cameraObject.tag="MainCamera";
             camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=MapLayout.IsImported?(MapLayout.HalfWidth+MapLayout.HalfDepth)*5:440;
             camera.transform.rotation=RtsCameraRig.DefaultRotation;
