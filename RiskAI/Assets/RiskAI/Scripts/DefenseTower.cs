@@ -11,6 +11,8 @@ namespace RiskAI
         public int HostOwner => Town ? Town.State.Owner : Harbor ? Harbor.Owner : -1;
         public string HostName => Town ? Town.DisplayName : Harbor ? Harbor.DisplayName : "torre";
         public override float MaxHealth => BattleRules.TowerHealth;
+        public override bool CanBeAttacked => false;
+        public Soldier Defender => Town ? Town.Defender : Harbor ? Harbor.Defender : null;
         public override Vector3 AimPoint => transform.position + Vector3.up * 2.8f;
         public override AttackKind AttackType => AttackKind.Piercing;
         public override ArmorKind ArmorType => ArmorKind.Fortified;
@@ -24,8 +26,8 @@ namespace RiskAI
         Renderer banner;
         float nextShot;
         readonly System.Collections.Generic.List<CombatTarget> nearby = new System.Collections.Generic.List<CombatTarget>(48);
-        float AttackCooldown=>ReforgedProfiles.Tower.Cooldown;
-        float AttackRange=>ReforgedProfiles.Tower.Range;
+        float AttackCooldown=>ReforgedProfiles.CapturableTower.Cooldown;
+        float AttackRange=>ReforgedProfiles.CapturableTower.Range;
 
         public void Initialize(BattleSession battle, Settlement town, bool built)
         {
@@ -86,12 +88,12 @@ namespace RiskAI
 
         public void SimTick(float delta)
         {
-            if (!IsAlive || UnderConstruction) { CurrentTarget=null; return; }
+            if (!IsAlive || UnderConstruction || !Defender || !Defender.IsAlive) { CurrentTarget=null; return; }
             if (session.Paused || session.Winner >= 0) return;
             if (!IsValidTarget(CurrentTarget)) CurrentTarget=FindTarget();
             if (!CurrentTarget || session.BattleTime < nextShot) return;
             nextShot = session.BattleTime + AttackCooldown; ShotsFired++;
-            session.Combat.FireProjectile(AimPoint + Vector3.up, CurrentTarget.AimPoint, CurrentTarget, session.RollDamage(ReforgedProfiles.Tower), Team, this, AttackType);
+            session.Combat.FireProjectile(AimPoint + Vector3.up, CurrentTarget.AimPoint, CurrentTarget, session.RollDamage(ReforgedProfiles.CapturableTower), Team, this, AttackType);
         }
 
         CombatTarget FindTarget()
@@ -108,7 +110,7 @@ namespace RiskAI
         }
         bool IsValidTarget(CombatTarget candidate)
         {
-            if(!candidate||!candidate.IsAlive||candidate.Team==Team||candidate.Team<0)return false;
+            if(!candidate||!candidate.CanBeAttacked||candidate.Team==Team||candidate.Team<0)return false;
             if(DistanceXZ(transform.position,candidate.transform.position)>AttackRange)return false;
             Vector3 from=AimPoint,to=candidate.AimPoint,delta=to-from;
             return delta.sqrMagnitude<.001f||!Physics.Raycast(from,delta.normalized,delta.magnitude,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore);
@@ -120,13 +122,7 @@ namespace RiskAI
 
         public override void TakeDamage(float damage, int attacker, CombatTarget source = null)
         {
-            if (!IsAlive || damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage) || attacker == Team) return;
-            Health = Mathf.Max(0, Health - damage);
-            if (IsAlive) return;
-            CurrentTarget=null;
-            session.UnregisterTarget(this); RefreshVisuals();
-            VisualFactory.Impact(AimPoint, new Color(.9f, .65f, .3f), 1.1f);
-            session.Message("Ha caído la torre de " + HostName + ".");
+            // Permanent capturable structure: attack the soldier in its circle.
         }
 
         static int CombatTeam(int owner) => owner >= 0 && owner <= 1 ? owner : 2;

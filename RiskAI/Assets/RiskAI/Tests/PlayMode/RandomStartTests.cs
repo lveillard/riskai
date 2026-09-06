@@ -77,23 +77,18 @@ namespace RiskAI.Tests
 
             yield return LoadLayout(BattleSession.StartLayout.RandomCities, 4040);
             var town = battle.Towns.First(t => t.State.Owner == 0);
-            battle.Economy.Gold[0] = 200;
+            int mortarCost = BattleRules.Cost(UnitKind.Mortar);
+            battle.Economy.Gold[0] = mortarCost;
             controller.SelectTown(town);
             controller.Recruit(UnitKind.Mortar);
-            Assert.That(town.QueueCount, Is.Zero, "Mortars require a level II town.");
-            Assert.That(battle.Economy.Gold[0], Is.EqualTo(200));
-
-            town.State.Level = 2;
-            controller.Recruit(UnitKind.Mortar);
-            Assert.That(town.QueueCount, Is.EqualTo(1));
+            Assert.That(town.QueueCount, Is.EqualTo(1), "Mortars are available at the declared profile level.");
             Assert.That(town.QueuedKind(0), Is.EqualTo(UnitKind.Mortar));
-            Assert.That(battle.Economy.Gold[0], Is.EqualTo(140), "The mortar purchase must spend exactly 60 gold once.");
-
+            Assert.That(battle.Economy.Gold[0], Is.EqualTo(0));
             Assert.That(town.CancelTraining(0), Is.Null);
             Assert.That(town.QueueCount, Is.Zero);
-            Assert.That(battle.Economy.Gold[0], Is.EqualTo(200), "Cancelling must refund the mortar exactly once.");
+            Assert.That(battle.Economy.Gold[0], Is.EqualTo(mortarCost), "Cancelling must refund the mortar exactly once.");
             Assert.That(town.CancelTraining(0), Is.Not.Null);
-            Assert.That(battle.Economy.Gold[0], Is.EqualTo(200));
+            Assert.That(battle.Economy.Gold[0], Is.EqualTo(mortarCost));
             yield return UnloadLayout();
         }
 

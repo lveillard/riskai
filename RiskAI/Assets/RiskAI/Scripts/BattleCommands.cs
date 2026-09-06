@@ -26,7 +26,7 @@ namespace RiskAI
             if(command.Kind!=UnitCommandKind.Attack && command.Kind!=UnitCommandKind.Follow)return true;
             var target=session.FindTarget(command.TargetId);
             if(!target || !target.IsAlive)return false;
-            return command.Kind==UnitCommandKind.Attack ? target.Team!=unit.Team : target is Soldier && target.Team==unit.Team && target!=unit;
+            return command.Kind==UnitCommandKind.Attack ? target.CanBeAttacked && target.Team!=unit.Team : target is Soldier && target.Team==unit.Team && target!=unit;
         }
         static bool Finite(float value)=>!float.IsNaN(value)&&!float.IsInfinity(value);
         public void Tick()

@@ -20,7 +20,7 @@ namespace RiskAI.Tests
   [UnityTest] public IEnumerator TransportActuallySailsAndDisembarkedTroopsCaptureIsland()
   {
    var home=naval.Harbors.First(h=>h.State.Owner==0);var island=naval.Harbors.First(h=>h.IsIsland);
-   island.Defense.TakeDamage(10000,0);Assert.That(island.Defense.IsAlive,Is.False,"The transport fixture destroys the island tower so capture remains a landing test.");
+   Assert.That(island.Defender,Is.Null,"An unoccupied island tower must not fire before a defender arrives.");
    var ship=naval.Ships.First(s=>s.Team==0&&s.Kind==ShipKind.Transport);
    var soldiers=battle.Units.Where(u=>u.Team==0&&!u.IsGarrison).OrderBy(u=>Vector3.Distance(u.transform.position,home.Landing)).Take(3).ToArray();
    int population=battle.Population(0);float health=soldiers[0].Health;
@@ -35,18 +35,18 @@ namespace RiskAI.Tests
    yield return new WaitForSeconds(1);Assert.That(island.Owner,Is.EqualTo(-1));Assert.That(island.CaptureProgress,Is.Zero,"Embarked units cannot occupy an island.");
    Assert.That(ship.Unload(island),Is.True);Assert.That(soldiers.All(u=>u.IsAlive&&u.Agent.isOnNavMesh),Is.True);Assert.That(soldiers[0].Health,Is.EqualTo(health));
    yield return new WaitForSeconds(8);Assert.That(island.Owner,Is.Zero);Assert.That(ship.CargoCount,Is.Zero);Assert.That(battle.Population(0),Is.EqualTo(population));
-   Assert.That(battle.Economy.Towns.Contains(island.State),Is.True);
+   Assert.That(battle.Economy.Towns.Contains(island.State),Is.False,"Island staging harbors do not create an independent economy payout source.");
   }
   [UnityTest] public IEnumerator NavalPurchasesCancelRefundAndCompleteExactlyOnce()
   {
-   var port=naval.Harbors.First(h=>h.State.Owner==0);battle.Economy.Gold[0]=300;
-   Assert.That(port.Buy(ShipKind.Galley),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(225));
-   Assert.That(port.CancelTraining(0),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(300));
-   Assert.That(port.Buy(ShipKind.Transport),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(255));
+   var port=naval.Harbors.First(h=>h.State.Owner==0);const int budget=300;int galleyCost=Harbor.Cost(ShipKind.Galley),transportCost=Harbor.Cost(ShipKind.Transport);battle.Economy.Gold[0]=budget;
+   Assert.That(port.Buy(ShipKind.Galley),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-galleyCost));
+   Assert.That(port.CancelTraining(0),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget));
+   Assert.That(port.Buy(ShipKind.Transport),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-transportCost));
    Assert.That(port.LinkedTown,Is.Not.Null);int linkedOwner=port.LinkedTown.State.Owner;
    long tick=battle.Clock.TickCount;float deadline=Time.realtimeSinceStartup+2;
    port.State.Owner=1;while(battle.Clock.TickCount==tick&&Time.realtimeSinceStartup<deadline)yield return null;
-   Assert.That(port.QueueCount,Is.Zero);Assert.That(battle.Economy.Gold[0],Is.EqualTo(300));Assert.That(port.LinkedTown.State.Owner,Is.EqualTo(linkedOwner));
+   Assert.That(port.QueueCount,Is.Zero);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget));Assert.That(port.LinkedTown.State.Owner,Is.EqualTo(linkedOwner));
    tick=battle.Clock.TickCount;deadline=Time.realtimeSinceStartup+2;
    port.State.Owner=0;while(battle.Clock.TickCount==tick&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(battle.Clock.TickCount,Is.GreaterThan(tick));int count=naval.Ships.Count;
@@ -54,7 +54,7 @@ namespace RiskAI.Tests
    float finishAt=battle.BattleTime+Harbor.TrainTime(ShipKind.Galley)+.2f;
    deadline=Time.realtimeSinceStartup+10;
    while(naval.Ships.Count==count&&battle.BattleTime<finishAt&&Time.realtimeSinceStartup<deadline)yield return null;
-   Assert.That(naval.Ships.Count,Is.EqualTo(count+1));Assert.That(port.QueueCount,Is.Zero);Assert.That(battle.Economy.Gold[0],Is.EqualTo(225));
+   Assert.That(naval.Ships.Count,Is.EqualTo(count+1));Assert.That(port.QueueCount,Is.Zero);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-galleyCost));
   }
   [UnityTest] public IEnumerator GalleyFiresAndTransportDestructionRemovesCargo()
   {

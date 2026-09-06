@@ -149,7 +149,7 @@ namespace RiskAI
         }
         bool ValidTarget()
         {
-            if (!target || !target.IsAlive || target.Team == Team) return false;
+            if (!target || !target.CanBeAttacked || target.Team == Team) return false;
             if (mode == OrderMode.Attack) return true;
             float leash = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == 2 ? 7 : 11;
             var origin = mode == OrderMode.Idle || mode == OrderMode.Hold ? anchor : pursuitOrigin;
@@ -163,7 +163,7 @@ namespace RiskAI
             session.Spatial.Query(transform.position,radius+3,nearby);
             foreach (var enemy in nearby)
             {
-                if (!enemy || enemy.Team == Team || !enemy.IsAlive) continue;
+                if (!enemy || enemy.Team == Team || !enemy.CanBeAttacked) continue;
                 float distance = Vector3.Distance(transform.position, enemy.ApproachPoint(transform.position));
                 if (distance > radius || !Visible(enemy)) continue;
                 if ((mode == OrderMode.Idle || Team == 2) && Vector3.Distance(anchor, enemy.transform.position) > (BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == 2 ? 7 : 11)) continue;
@@ -275,7 +275,7 @@ namespace RiskAI
         public void DestroyEmbarked(int attacker)
         {
             if(Health<=0)return;Health=0;
-            if(attacker>=0&&attacker<2){session.Kills[attacker]++;session.Economy.Grant(attacker,2);}
+            if(attacker>=0&&attacker<2){session.Kills[attacker]++;session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind));}
             Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);
             session.SoldierPool.Retire(this,0);
         }
@@ -286,7 +286,7 @@ namespace RiskAI
             Health = Mathf.Max(0, Health - damage);
             if (Health <= 0)
             {
-                if (attacker >= 0 && attacker < 2) { session.Kills[attacker]++; session.Economy.Grant(attacker,2); }
+                if (attacker >= 0 && attacker < 2) { session.Kills[attacker]++; session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind)); }
                 Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);Select(false);Agent.enabled=false;GetComponent<Collider>().enabled=false;enabled=false;
                 if(visualAnimator)visualAnimator.Die();
                 session.SoldierPool.Retire(this,visualAnimator?1.4f:0);

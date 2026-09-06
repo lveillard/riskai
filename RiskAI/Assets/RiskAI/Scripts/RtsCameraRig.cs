@@ -44,7 +44,7 @@ namespace RiskAI
         {
             if(Mathf.Abs(wheelSteps)<.001f)return;
             zoomAnchor=Ground(screen);anchorScreen=screen;anchorZoom=true;
-            TargetZoom=Mathf.Clamp(TargetZoom*Mathf.Exp(-Mathf.Clamp(wheelSteps,-4,4)*.24f),17,44);
+            TargetZoom=Mathf.Clamp(TargetZoom*Mathf.Exp(-Mathf.Clamp(wheelSteps,-4,4)*.24f),17,MapLayout.IsExpanded?60:44);
         }
         public void CancelMotion() { targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;zoomVelocity=0;if(cam)TargetZoom=cam.orthographicSize; }
         void LateUpdate()

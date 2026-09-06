@@ -8,7 +8,8 @@ namespace RiskAI
 {
     public sealed class BattleSession : MonoBehaviour
     {
-        public enum VictoryMode { Conquest, Capitals }
+        public enum VictoryMode { Conquest }
+        public static bool ExpandedMapForNewMatch;
         public static VictoryMode ModeForNewMatch = VictoryMode.Conquest;
         public enum StartLayout { RandomCities, RandomCountries, Fixed }
         public static StartLayout LayoutForNewMatch = StartLayout.RandomCities;
@@ -32,6 +33,7 @@ namespace RiskAI
         public readonly List<CombatTarget> Targets = new List<CombatTarget>();
         public readonly List<DefenseTower> Towers = new List<DefenseTower>();
         public readonly List<Settlement> Towns = new List<Settlement>();
+        public readonly List<CountryCamp> Camps = new List<CountryCamp>();
         public readonly List<string> Messages = new List<string>();
         public readonly int[] Kills = new int[2];
         public readonly float[] VictoryProgress = new float[2];
@@ -52,6 +54,7 @@ namespace RiskAI
         public bool AiEnabled = true;
         System.Random combatRandom;
         public float RollDamage(UnitProfile profile)=>profile.RollDamage(combatRandom);
+        public bool RollMiss(float probability)=>probability>0 && combatRandom.NextDouble()<probability;
 
         void Awake() => Initialize();
         public void Initialize()
@@ -111,13 +114,6 @@ namespace RiskAI
             if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro"); CountryReinforcements(); }
             for (int team = 0; team < 2; team++)
             {
-                bool capitalWon = Mode == VictoryMode.Capitals && Towns.Any(t => t.IsCapital && t.State.Owner == team && t.FoundingTeam >= 0 && t.FoundingTeam != team);
-                if (capitalWon)
-                {
-                    Winner = team; SuspendMovement(true);
-                    Message(team == 0 ? "¡Victoria! Las Marcas son tuyas." : "La Frontera Carmesí controla las Marcas.");
-                    break;
-                }
                 VictoryProgress[team] = Mode == VictoryMode.Conquest && Towns.Count(t => t.State.Owner == team) >= VictoryTarget
                     ? VictoryProgress[team] + delta : 0;
                 int opponent = 1 - team;
@@ -148,13 +144,15 @@ namespace RiskAI
                 if (Economy.CountryOwner(country) != team) continue;
                 var cities=Towns.Where(t=>t.State.Country==country && t.State.Owner==team).ToList();
                 int pending = Towns.Where(t => t.State.Owner == team).Sum(t => t.QueueCount);
-                int current = Units.Count(u => u && u.Team == team && u.OriginCountry == country);
-                int amount = RiskReferenceRules.ComputeSpawnAmount(current, config.PerTurn * 5, config.PerTurn);
+                int current = 0; foreach(var unit in Units)if(unit && unit.Team==team && unit.OriginCountry==country)current+=BattleRules.PointValue(unit.Kind);
+                int pointCap=cities.Count*5;
+                int amount=Mathf.Min(config.PerTurn,Mathf.Max(0,pointCap-current)/Mathf.Max(1,BattleRules.PointValue(config.Reinforcement)));
                 amount = Mathf.Min(amount, Mathf.Max(0, BattleRules.PopulationLimit - Population(team) - pending));
                 if(cities.Count==0 || amount<=0) continue;
                 for (int i=0; i<amount; i++)
                 {
-                    var unit=Spawn(team,config.Reinforcement,cities[0].Rally,country);
+                    var point=country<Camps.Count && Camps[country] ? Camps[country].SpawnPoint : cities[0].Rally;
+                    var unit=Spawn(team,config.Reinforcement,point+new Vector3(i%3*1.2f,0,i/3*1.2f),country);
                     if(unit) unit.MoveTo(cities[0].Rally,true,false);
                 }
             }

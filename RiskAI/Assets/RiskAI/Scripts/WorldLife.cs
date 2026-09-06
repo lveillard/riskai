@@ -16,7 +16,7 @@ namespace RiskAI
             {
                 if (!town) continue;
                 AddSmoke(town.transform);
-                if (town.IsCapital) AddCampfire(root, town.transform.position);
+
                 AddBannerMotion(town.transform);
             }
             AddBirds(root);
@@ -61,7 +61,7 @@ namespace RiskAI
             var size=ps.sizeOverLifetime;size.enabled=true;size.size=new ParticleSystem.MinMaxCurve(1,AnimationCurve.Linear(0,.7f,1,2.2f));
         }
 
-        static void AddCampfire(Transform root, Vector3 townPosition)
+        public static void AddCampfire(Transform root, Vector3 townPosition)
         {
             var basePoint = townPosition + new Vector3(-2.5f, 0, -3.3f);
             basePoint.y = MapLayout.Height(basePoint.x, basePoint.z) + .12f;
@@ -70,9 +70,9 @@ namespace RiskAI
                 var log = VisualFactory.Shape(root, PrimitiveType.Cylinder, "Campfire log", basePoint + Vector3.up * (.16f + i * .03f), new Vector3(.16f, 1.05f, .16f), new Color(.28f, .12f, .055f));
                 log.transform.localRotation = Quaternion.Euler(0, i * 60f, 68f);
             }
-            var flame = new GameObject("Capital campfire flame"); flame.transform.SetParent(root, false); flame.transform.position = basePoint + Vector3.up * .55f;
+            var flame = new GameObject("Country campfire flame"); flame.transform.SetParent(root, false); flame.transform.position = basePoint + Vector3.up * .55f;
             var ps = flame.AddComponent<ParticleSystem>();
-            ConfigureParticles(ps, 6, new Vector2(.45f, .9f), new Vector2(.5f, .8f), new Vector2(.12f, .28f), Flame);
+            ConfigureParticles(ps, 12, new Vector2(.6f, 1.1f), new Vector2(.3f, .65f), new Vector2(.45f, .8f), Flame);
             var velocity = ps.velocityOverLifetime; velocity.enabled = true; velocity.y = new ParticleSystem.MinMaxCurve(.25f);
             var light = flame.AddComponent<Light>(); light.type = LightType.Point; light.color = new Color(1f, .48f, .16f); light.intensity = .45f; light.range = 3f; light.shadows = LightShadows.None;
         }

@@ -22,7 +22,7 @@ half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow
  float small=WaterNoise(p*3.2-drift*.6+_Time.y*.15);
  float3 normal=normalize(surfaceNormal+float3(a*.09+(small-.5)*.065,0,b*.075));
  float3 view=GetWorldSpaceNormalizeViewDir(world);
- Light sun=GetMainLight(TransformWorldToShadowCoord(world));
+ Light sun=GetMainLight(TransformWorldToShadowCoord(world),world,half4(1,1,1,1));
  float fresnel=pow(1-saturate(dot(normal,view)),4);
  // A continuous geographical tint also covers the far sea beyond the rendered bed.
  // Actual scene depth still controls transmission, contact foam and water/land intersections.
@@ -31,11 +31,17 @@ half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow
  float opticalDepth=.4+max(coast*.65,channel*.50);
  half3 tint=lerp(half3(.024,.235,.225),half3(.012,.073,.19),1-exp(-opticalDepth*.24));
  half3 bottom=SampleSceneColor(uv);
- half3 c=lerp(bottom,tint,1-exp(-depth*2.3));
+ // Limit deep transmission so independently tessellated river/sea beds cannot
+ // print a lighting seam through their shared surface. Shallows stay transparent.
+ half3 c=lerp(bottom,tint,1-exp(-depth*4.8));
  c=lerp(c,half3(.22,.38,.48),fresnel*.45);
  c+=(a*b*.5+.5)*half3(.003,.009,.014);
  c+=pow(saturate((a+b)*.5),7)*exp(-depth*.8)*half3(.065,.095,.058);
- c*=.76+.24*sun.shadowAttenuation;
+ // A second, broad world-space ripple keeps the water alive at map scale while
+ // avoiding geometry, tessellation, or an additional render pass.
+ float broadRipple=.5+.5*sin(dot(p,float2(.11,.07))-_Time.y*.45+WaterNoise(p*.16)*1.7);
+ c+=(broadRipple-.5)*half3(.003,.008,.009);
+ c*=.82+.18*saturate(sun.shadowAttenuation);
  c+=sun.color*pow(saturate(dot(normal,normalize(view+sun.direction))),155)*.085;
  float broken=WaterNoise(p*2.1+_Time.y*.17);
  float wave=.5+.5*sin(depth*13-_Time.y*1.8+WaterNoise(p*.8)*2.4);

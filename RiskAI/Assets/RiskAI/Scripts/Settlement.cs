@@ -91,9 +91,7 @@ namespace RiskAI
         }
         public string Upgrade(int team = 0)
         {
-            string error = CanManage(team); if (error != null) return error;
-            if (State.Level >= 2) return "La ciudad ya es de nivel II.";
-            return BeginProject(BuildingProject.Upgrade, team, BattleRules.UpgradeCost);
+            return "Las ciudades conservan su nivel: compra las unidades directamente.";
         }
         string BeginProject(BuildingProject next, int team, int cost)
         {
@@ -139,7 +137,7 @@ namespace RiskAI
             }
             flag.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamColor(State.Owner)); Defense.ChangeOwner();
             foreach(var roof in GetComponentsInChildren<Renderer>())if(roof.name=="Faction roof"&&!roof.GetComponentInParent<DefenseTower>())roof.sharedMaterial=WorldArt.RoofMaterial(State.Owner);
-            session.Message((State.Owner == 0 ? "Has conquistado " : "El enemigo ha conquistado ") + DisplayName);
+            session.Message((State.Owner < 0 ? "Queda neutral " : State.Owner == 0 ? "Has conquistado " : "El enemigo ha conquistado ") + DisplayName);
             if (State.Country >= 0 && session.Economy.CountryOwner(State.Country) == State.Owner)
                 session.Message((State.Owner==0?"País completado: ":"El enemigo completa ") + MapLayout.Countries[State.Country].Name + ". Ingresos y refuerzos activos.");
         }

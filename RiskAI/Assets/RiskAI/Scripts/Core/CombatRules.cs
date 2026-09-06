@@ -16,6 +16,9 @@ namespace RiskAI.Core
             { 1.5f, .75f, 2f, .35f, 1f }
         };
 
+        // Only physical missiles; small sculpted undulations do not count as a cliff.
+        public static float UphillMissChance(AttackKind attack,float heightGain) => attack==AttackKind.Piercing && heightGain>=2.5f ? .25f : 0;
+
         public static float DamageMultiplier(AttackKind attack, ArmorKind armor)
         {
             int column = armor == ArmorKind.Light ? 0 : armor == ArmorKind.Medium ? 1 : armor == ArmorKind.Heavy ? 2 : armor == ArmorKind.Fortified ? 3 : 4;

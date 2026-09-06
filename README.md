@@ -1,109 +1,88 @@
-# RiskAI — Las Marcas · v0.11
+# RiskAI · v0.12
 
-Prototipo de conquista territorial en **Unity 6.3 LTS (6000.3.23f1), C# y URP**. Partida local contra una IA sencilla, con soldados controlables y rondas económicas mientras la acción continúa.
+Prototipo RTS de conquista por ciudades, inspirado en los mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP, partida local contra IA y arte propio/CC0.
 
-## Jugar
+Abre **Play-RiskAI.cmd** para jugar la compilación local. El menú permite elegir escenario, reparto, semilla y dificultad antes de empezar. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`. Las compilaciones y las referencias de Warcraft quedan fuera de Git.
 
-Doble clic en **Play-RiskAI.cmd**. Inicia `Builds/Windows-v0.11/RiskAI.exe` en una ventana de 1600 × 900. No hace falta abrir el editor para jugar.
+Esta versión añade **Cuatro Riberas**, hogueras seleccionables, edificios permanentes, sucesión de guarniciones, defensa reactiva de la IA y economía en la escala de Saran v3. [Cambios y límites](docs/ITERATION-v0.12.md) · [Fuentes de las reglas](docs/RISK-RULES-v0.12.md) · [Validación: 97 pruebas](docs/VALIDATION-v0.12.md) · [Pendientes](TODO.md).
 
-Si acabas de clonar el repositorio, genera primero ese ejecutable con `scripts/Unity.ps1 -Action Build` o con **RiskAI > Build Windows prototype** en Unity. Los ejecutables y las referencias de Warcraft no se incluyen en Git.
+![Cuatro Riberas: río central, puente y fronteras con postes](docs/images/v0.12-river.png)
 
-**Novedades v0.11:** simulación a 20 Hz, proyectiles independientes del efecto visual, guarniciones retenidas, captura breve con protección cercana y torres que cambian con el edificio. Pools de soldados/efectos y consultas espaciales. [Cambios, revisión de arquitectura y límites](docs/ITERATION-v0.11.md).
+## Escenarios
 
-![RiskAI v0.11: ciudad, guarnición y reclutamiento](docs/images/v0.11-city.png)
+| Mapa | Ciudades y grupos | Terreno |
+| --- | --- | --- |
+| Las Marcas | 12 ciudades, 6 grupos de 2 | Dos mesetas con rampas, costas, río de montaña y dos islas con puertos. |
+| Cuatro Riberas | 20 ciudades: 4 grupos continentales y un archipiélago; 4 ciudades por grupo | Más espacio, río largo desde la montaña meridional, dos cruces y tres islas. |
 
-Para desarrollar, usa **Open-Unity.cmd** o añade la carpeta `RiskAI` a Unity Hub. Abre `Assets/RiskAI/Scenes/LasMarcas.unity` y pulsa Play.
+Los postes indican fronteras y propietario. Selecciona una **hoguera** para mostrar su área y las ciudades que incluye. Los refuerzos de ese grupo aparecen en la hoguera. Los biomas y el relieve mantienen sus colores; la superposición territorial desaparece al cambiar la selección.
+
+## Primera partida y reglas
+
+**Ciudades al azar** reparte la mitad de las ciudades a cada bando mediante una semilla. Ambos reciben 4 de oro, una fragata y un transporte. Hay 24 soldados por bando en Las Marcas y 32 en Cuatro Riberas, contando guarniciones. La cantidad móvil depende de los puestos ocupados. También puedes empezar por grupos completos o posiciones fijas. La base inicial solo sirve de referencia para la cámara y despliegue.
+
+Cada ciudad y puerto tiene un círculo con un defensor retenido. Conserva su tipo, salud y capacidad de ataque; no puede marcharse ni embarcar. Al morir, el aliado elegible más próximo dentro de 4,43 unidades asume la defensa; si no hay aliado, lo hace el enemigo más próximo dentro de 6. Sin candidato, el edificio queda neutral. Se excluyen tropas de otra guarnición y de otra altura. El círculo mide 1,55 de radio; la sucesión se resuelve en el siguiente tick, sin espera adicional.
+
+Las **torres son permanentes** y cambian con el edificio. Para tomar una posición, elimina al defensor y sus relevos cercanos. Una torre ocupada dispara 81–88 de daño perforante cada 0,9 s, con alcance 13. Es un ajuste local de defensa; el búnker original de Saran tiene otros valores, conservados y documentados por separado. Daño final según tipo de ataque, coraza y armadura. Los proyectiles perforantes tienen 25 % de fallo al subir al menos 2,5 unidades; este umbral local evita penalizar pequeñas ondulaciones.
+
+Cada 60 s recibes **4 de base + 1 por ciudad de un grupo totalmente controlado**. Los grupos fragmentados no aportan ingreso de ciudades. Los grupos completos generan su tanda de refuerzos, limitada a cinco puntos de unidades vivas por ciudad del grupo. Perder una ciudad suspende nuevas tandas e ingresos; las bajas liberan capacidad. Las recompensas de combate acumulan un cuarto del valor de puntos de la víctima, conservando fracciones hasta completar oro.
+
+| Unidad | Oro | Vida | Función |
+| --- | ---: | ---: | --- |
+| Espadachín | 1 | 200 | Primera línea |
+| Ballestero | 1 | 200 | Daño perforante a distancia |
+| Guardia real | 5 | 650 | Infantería pesada |
+| Mago | 4 | 250 | Daño mágico de área |
+| Mortero | 3 | 350 | Asedio a larga distancia, alcance mínimo 5 |
+| Sanador | 2 | 250 | Cura aliados con línea de visión |
+| Fragata | 5 | 400 | Combate naval y costero |
+| Transporte | 2 | 300 | Seis plazas, sin ataque |
+
+Todas están disponibles directamente en su ciudad o puerto. Las ciudades tienen cola de cinco y los puertos de tres; cancelar devuelve el precio. Tope por bando: 100 soldados, incluidos embarcados y compras pendientes, y 12 barcos. Los puertos se conquistan por separado y producen barcos; no añaden un ingreso propio ni cuentan como ciudades para la victoria. El reparto naval y los tiempos de producción siguen siendo adaptaciones del prototipo.
+
+Ganas conservando el 60 % de las ciudades durante 20 s: 8 en Las Marcas o 12 en Cuatro Riberas. También vence quien deja al rival sin ciudades ni soldados. La IA relajada retrasa su ofensiva, pero ambas dificultades reaccionan para defender bases amenazadas. Todavía no hay niebla de guerra; la IA conoce el mapa completo y no prepara desembarcos.
 
 ## Controles
 
 | Acción | Control |
 | --- | --- |
-| Seleccionar soldados | Clic izquierdo o arrastrar una caja |
-| Añadir a la selección | Shift + selección |
-| Mover / atacar enemigo | Clic derecho |
-| Avanzar atacando | A, después clic izquierdo |
-| Conquistar | Clic derecho sobre una ciudad enemiga o neutral |
-| Detener / mantener posición | S / H |
-| Patrullar / seguir aliado | P + clic / clic derecho en aliado |
-| Seleccionar todo tu ejército | E |
-| Puerto / flota | F3 / N |
-| Comprar galera / transporte en puerto | Q / W |
-| Embarcar / desembarcar | B / D, con transporte seleccionado |
-| Navegar y desembarcar al llegar | Clic derecho sobre un muelle |
-| Reclutar espadachín / ballestero | Q / W, o botones de la ciudad |
-| Reclutar guardia real / mago / mortero | D / F / R; requieren ciudad de nivel II |
-| Reclutar sanador | C; disponible desde nivel I |
-| Construir torre / mejorar ciudad | T / U, o botones de la ciudad |
-| Guardar / recuperar grupo | Ctrl + 1…9 / 1…9 |
-| Encolar destinos | Shift + orden |
-| Mover cámara | Flechas, bordes de pantalla o arrastrar con botón central |
+| Seleccionar / añadir | Clic izquierdo o caja / Shift |
+| Mover, atacar o seguir | Clic derecho y soltar |
+| Mover cámara | Arrastrar con botón derecho o central; flechas o bordes |
 | Zoom / centrar selección | Rueda / Espacio |
-| Volver a tu capital y abrir compras | F2 |
-| Minimap | Clic centra cámara; clic derecho da una orden |
-| Pausa / ayuda | F10 / F1 |
-| Restablecer cámara / ver vidas | Retroceso / mantener Alt |
-| Reiniciar / elegir modo | Ayuda > reparto y semilla > Empezar Conquista / Capitales |
+| Avanzar atacando / patrulla | A + clic / P + clic |
+| Detener / mantener | S / H |
+| Ejército / flota | E / N |
+| Base inicial / puerto | F2 / F3 |
+| Comprar unidades en ciudad | Q, W, D, F, R, C; o botones |
+| Comprar fragata / transporte | Q / W en un puerto |
+| Embarcar / desembarcar | B / D con transporte seleccionado |
+| Navegar y desembarcar al llegar | Clic derecho sobre un muelle |
+| Guardar / recuperar grupo | Ctrl + 1…9 / 1…9 |
+| Encolar órdenes | Shift + orden |
+| Ver grupo territorial | Clic en su hoguera |
+| Pausa / menú | F10 / F1 |
+| Liberar cursor / restablecer cámara | Esc / Retroceso |
 | Salir | Alt + F4 |
 
-Selecciona una ciudad propia y haz clic derecho en el terreno para cambiar su punto de reunión. Sin ciudad seleccionada, Q/W usan la primera que poseas.
+Arrastrar con botón derecho cancela su orden al soltar. El zoom conserva el punto bajo el cursor. El minimapa permite centrar con clic izquierdo y ordenar con el derecho. Una ciudad seleccionada usa clic derecho sobre terreno para fijar su reunión.
 
-Al seleccionar soldados, la cuadrícula de iconos de la derecha muestra las órdenes. El panel de países indica ciudades controladas e ingresos potenciales; pulsa un país para localizar una ciudad pendiente. Su descripción muestra el tipo de refuerzo y su límite.
+## Desarrollo
 
-## Primera partida
-
-El inicio principal **Reparto Risk** distribuye las doce ciudades al azar: seis por bando, con una capital y 24 soldados cada uno. Empiezas en azul con 120 de oro. F1 permite cambiar la semilla y repetir el reparto, elegir Conquista o Capitales, o empezar con **Países iniciales**: un país completo por bando y ocho ciudades neutrales. **Práctica** conserva las posiciones fijas anteriores.
-
-Las doce ciudades forman seis países y tres regiones. Completar países importa aunque empieces con varias ciudades dispersas. El mundo mide aproximadamente 202 × 235 unidades, con más mar al norte y dos islas. Los postes delimitan territorios con el color del propietario de cada ciudad vecina; el terreno se pinta por bioma y relieve. No hay grandes nombres sobre el terreno. Hay costa arenosa, pradera, barro, musgo, grava, afloramientos de caliza y dos mesetas con rampas. Los acantilados impiden caminar directamente entre alturas.
-
-Cada ciudad y puerto tiene un círculo de ocupación de radio 1,1. Su defensor queda retenido como guarnición, conserva tipo y salud y combate sin abandonar el puesto. Cuando cae, los soldados del propietario a menos de 2,8 siguen bloqueando la captura. El mismo atacante debe permanecer 1,25 s en el círculo sin oposición para conquistar; salir o volver a quedar disputado reinicia la transición. La torre cambia con el edificio conservando su vida. La guarnición no puede recibir órdenes de marcha ni embarcar.
-
-Cada 60 segundos cobras 12 de base más los ingresos de tus países completos: cada una de sus ciudades aporta 8 de oro, más 6 si es de nivel II. Una ciudad aislada no aporta ingresos hasta completar su país. Controlar toda una región añade su bonus: Alba +8, Paso del Rey +12, Frontera Carmesí +8. En Reparto Risk, el ingreso inicial depende de los países que te haya dado el reparto; la base garantizada es 12.
-
-Cada país completo también genera refuerzos gratuitos en cada ronda. Marca del Alba, Paso del Rey y Ceniza dan dos espadachines; Valdeluz un ballestero; Ribera Gris un mago; Las Atalayas un guardia real. Cada país permite mantener vivas cinco tandas de sus refuerzos (10 espadachines o 5 unidades del otro tipo). Las bajas liberan capacidad; la reposición continúa después de la quinta ronda. Perder una ciudad interrumpe sus ingresos y nuevos refuerzos, sin borrar las tropas ya creadas.
-
-Reclutar cuesta 20 oro / 3 s para espadachines, 20 / 4 s para ballesteros y 40 / 4 s para sanadores. Nivel II desbloquea guardias (100 / 5,5 s), magos (80 / 6 s) y morteros (60 / 6 s). Cola de cinco; cancelar devuelve el coste. Límite de 100 soldados por bando, incluidos embarcados y compras pendientes.
-
-Todas las ciudades y puertos empiezan con torre. Reconstruirla cuesta 60 oro / 7 s: 550 vida, 51–58 daño perforante cada 1,5 s, armadura fortificada 3, alcance 8,5. El mortero dispara entre 5 y 18 y usa daño de asedio. El sanador cura 15 vida/s a aliados terrestres heridos dentro de 8 con línea de visión. Los ataques tiran dados; el resultado se modifica por tipo de ataque, coraza y armadura numérica. Los perfiles y sus fuentes están en [ITERATION-v0.10](docs/ITERATION-v0.10.md). Mejorar una ciudad cuesta 90 oro / 7 s y añade 6 oro/ronda si controlas el país. Las bajas enemigas dan 2 oro.
-
-En **Conquista**, ganas conservando ocho ciudades (60 % redondeado hacia arriba) durante 20 segundos. En **Capitales**, ganas capturando la capital inicial enemiga. En ambos modos también puedes vencer eliminando todas las ciudades y soldados del rival. Elige el modo al iniciar otra partida desde Ayuda. La IA tranquila viene seleccionada: compra como máximo una unidad cada 12 s desde el segundo 30 y organiza ofensivas desde el segundo 120. F1 permite elegir Estándar para la siguiente partida. Ambos bandos tienen los mismos recursos iniciales; tres soldados existentes se sitúan en cada muelle, además de las guarniciones de ciudades y puertos. Las guarniciones usan población existente y reducen el ejército móvil. La barra muestra tu población y la enemiga.
-
-## Islas y barcos
-
-Cada bando recibe una galera y un transporte. F3 centra el puerto; hay tres soldados junto al muelle preparados para embarcar. Selecciona el transporte, pulsa B y haz clic derecho en un puerto insular para navegar y desembarcar. La infantería ocupa el círculo insular durante 1,25 s sin oposición, deja una guarnición y produce +8 oro por ronda. Los puertos continentales también se capturan por separado de su ciudad asociada. Estos dos puestos son objetivos económicos adicionales y todavía no cuentan para la victoria por ciudades.
-
-Los astilleros venden galeras (75 oro, 500 vida) y transportes (45 oro, 300 vida, seis plazas). La cola admite tres barcos y reembolsa cancelaciones y encargos de puertos conquistados. Hay un máximo de doce barcos por bando. Las galeras atacan barcos y objetivos costeros con línea de visión; la IA naval patrulla con galeras, pero aún no prepara desembarcos. Las reglas adaptadas y el arte original están en [docs/ITERATION-v0.10.md](docs/ITERATION-v0.10.md).
-
-## Desarrollo y CLI
-
-La CLI instalada está en `C:\Program Files\Unity Hub\resources\cli\unity.exe`. El editor está registrado en Hub y el proyecto incluye Unity Pipeline para automatizar el editor.
-
-Con el editor cerrado, desde PowerShell en esta carpeta:
+Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. Escena: `Assets/RiskAI/Scenes/LasMarcas.unity`. Con el editor cerrado:
 
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
-.\scripts\Unity.ps1 -Action PlayTests  # Navegación, reclutamiento y combate reales
-.\scripts\Unity.ps1 -Action Build      # Ejecutable Windows
-.\scripts\Unity.ps1 -Action Open       # Abrir editor
+.\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.12/RiskAI.exe
 ```
 
-Los informes se escriben en `TestResults/` y los registros en `RiskAI/Logs/`. La estructura de C# está descrita en [RiskAI/README.md](RiskAI/README.md).
+Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map riverlands` (o `classic`). [Estructura del código](RiskAI/README.md).
 
-[Validación v0.11](docs/VALIDATION-v0.11.md): pruebas de reglas, simulación, captura, navegación, cámara y aislamiento de presentación, más compilación e inspección del ejecutable.
+`RiskAI.Core` no depende de Unity. `BattleWorld` ordena ticks a 20 Hz; `CombatWorld` resuelve proyectiles sin depender de su vista; hay consultas espaciales y pools. NavMesh y actores aún usan Unity: no se garantiza replay determinista. Los comandos por ID cubren infantería; faltan compras y naval antes de un servidor autoritativo. El HUD sigue usando IMGUI. Touch, Web, Android, multijugador, niebla, guardado y diplomacia siguen pendientes en [TODO.md](TODO.md). No hay un benchmark que acredite cientos o miles de unidades.
 
-## Alcance de esta v0.11
+## Referencias y arte
 
-Los personajes medievales y sus animaciones usan KayKit Adventurers (CC0). El paisaje usa atlas pintados originales, edificios y torres con tejados de facción, abeto de ramas recortadas y terrenos que mezclan pradera, arena, barro, musgo, grava, pizarra y caliza. Hay humo de chimeneas, hogueras, aves, estandartes y molino animados, juncos y un río tallado que baja desde la montaña hasta el mar. La cámara conserva perspectiva con inclinación de 49° y orientación diagonal de 30°. El zoom responde a pasos normalizados de rueda, suaviza la transición y mantiene el punto bajo el cursor también en altura; las órdenes reconocen el terreno elevado. La selección se centra en el área visible por encima del HUD. F1 ofrece velocidad de cámara ajustable y desplazamiento por bordes; salir de la ventana cancela el arrastre central para evitar saltos.
+Saran Reforged v3 es la referencia de reglas principal; New World es otra variante, y las capturas de Rome no equivalen a disponer de su código. Los escenarios actuales son originales: no son una importación de sus coordenadas. [Auditoría v0.12](docs/RISK-RULES-v0.12.md), [mapas y posiciones](docs/RISK-MAPS-v0.10.md), [datos heredados](docs/REFORGED-BASE-STATS-v0.9.md) y [lecciones de World Editor para el terreno](docs/WORLD-EDITOR-TERRAIN.md).
 
-La simulación usa un tick fijo, comandos de infantería por ID y reglas en un ensamblado sin Unity. NavMesh y los actores todavía usan Unity; no se garantiza replay determinista. Esta entrega permite comprobar control, rutas, ritmo y conquista; la economía está adaptada a este escenario pequeño y requiere feedback. Todavía faltan arte definitivo, audio, niebla de guerra, guardado, multijugador, diplomacia y trabajo de rendimiento a gran escala. No se ha medido una capacidad de cientos o miles de unidades.
-
-El proyecto activo es `RiskAI/`. El intento web descartado queda archivado en `references/discarded-web-prototype/` y no forma parte del juego. Los JSON de `data/` son bocetos de diseño; las reglas efectivas de esta v0 están en `BattleRules.cs`, `Core/ReforgedProfiles.cs`, `CityClaimZone.cs` y la distribución en `MapLayout.cs`, el terreno en `StrategicTerrain.cs` y el arranque en `RiskBootstrap.cs`.
-
-## Referencias
-
-Los archivos extraídos son Saran v3 y New World v3.0; las capturas de referencia son de **Risk Reforged: Rome**, otra variante cuyo mapa verificable no se ha obtenido. No se mezclan sus estadísticas como si fueran el mismo juego. [Coordenadas y auditoría de mapas](docs/RISK-MAPS-v0.10.md), [herencia de unidades y dados](docs/REFORGED-BASE-STATS-v0.9.md) y [captura por defensor](docs/CAPTURE-SOURCE-v0.9.md).
-
-Risk Reforged / Devolution sirve como referencia de diseño. Se extrajo el script JASS del mapa editable v3.0 para estudiar captura, países, ingresos y refuerzos, sin extraer sus texturas ni modelos. Las reglas están documentadas en [la auditoría de Reforged](docs/RISK-REFORGED-RULES.md), [reparto inicial](docs/REFORGED-ALLOCATION.md) y [unidades y daño](docs/REFORGED-UNIT-STATS.md). Las texturas nuevas y sus prompts constan en [ImageGen v0.7](docs/IMAGEGEN-v0.7.md). Dos cálculos puros de otra implementación, [Risk Europe](docs/RISK-EUROPE-RULES.md), se adaptaron a C# bajo licencia MIT: capacidad de refuerzos y umbral de victoria. Véase [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). La navegación usa Unity; los modos y el equilibrio de esta v0 son una adaptación, no una reproducción completa del mapa.
-
-[Procedencia de las referencias](references/SOURCES.md) · [Investigación inicial y elección de motor](references/ENGINE_RESEARCH.md).
-
-
+El juego distribuye arte propio y KayKit CC0. No incluye modelos, texturas, sonidos, discos ni claves de Warcraft. [Créditos y licencias](THIRD_PARTY_NOTICES.md). El prototipo web descartado y los mapas de investigación están en referencias locales ignoradas; `data/` contiene bocetos, mientras los perfiles efectivos siguen en C#.

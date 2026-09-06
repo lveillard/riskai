@@ -105,7 +105,7 @@ Shader "RiskAI/UnitTeam"
                 half4 source=SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,input.uv)*_BaseColor;
                 half3 albedo=TeamSurface(source.rgb,input.bodyHeight);
                 half3 normal=normalize(input.normalWS);
-                Light mainLight=GetMainLight(input.shadowCoord);
+                Light mainLight=GetMainLight(input.shadowCoord,input.positionWS,half4(1,1,1,1));
                 half ndl=saturate(dot(normal,mainLight.direction));
                 half3 lighting=SampleSH(normal)+mainLight.color*(ndl*mainLight.distanceAttenuation*mainLight.shadowAttenuation);
                 half3 color=albedo*(lighting+.18);

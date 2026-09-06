@@ -20,7 +20,8 @@ Shader "RiskAI/Cascade"
    {
     float inland=1-smoothstep(.70,.87,i.flow.y);
     half4 c=RiskWater(i.w,i.p,normalize(lerp(float3(0,1,0),i.n,inland)),float2(-.65,.8)*inland*(.8+i.flow.x*2),smoothstep(.18,.55,i.flow.x));
-    c.a*=smoothstep(0,.02,i.flow.y)*(1-smoothstep(.74,.835,i.flow.y));
+    // Merge into the ocean by actual water elevation, independently of river length.
+    c.a*=smoothstep(0,.02,i.flow.y)*smoothstep(-.238,-.12,i.w.y);
     c.rgb=MixFog(c.rgb,i.fog);return c;
    }
    ENDHLSL

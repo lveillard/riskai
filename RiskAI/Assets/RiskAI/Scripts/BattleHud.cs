@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace RiskAI
 {
-    public sealed class BattleHud : MonoBehaviour
+    public sealed partial class BattleHud : MonoBehaviour
     {
         public static float Scale => Mathf.Min(1, Screen.width / 1600f);
         public static float BottomPixels => 208 * Scale;
@@ -27,7 +27,7 @@ namespace RiskAI
             session = battle; controller = input; cam = camera;
             seedText=session.Seed.ToString();
             foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind))) portraits[kind] = Resources.Load<Texture2D>("Portraits/" + BattleRules.Model(kind));
-            RefreshHudSnapshot();
+            RefreshHudSnapshot();OpenInitialMenu();
         }
         void LateUpdate()
         {
@@ -43,6 +43,10 @@ namespace RiskAI
             hudDirty = false;
         }
         void MarkHudDirty() { hudDirty = true; }
+        void OnDestroy()
+        {
+            if(minimapTexture)Destroy(minimapTexture);
+        }
         static void Text(Rect r, string text, GUIStyle style = null) => GUI.Label(r, text, style ?? RtsSkin.Text);
         static void Label(float x, float y, float w, string text, GUIStyle style = null) => Text(new Rect(x, y, w, 26), text, style);
         bool Button(Rect rect, string text, string hint = null)
@@ -63,29 +67,30 @@ namespace RiskAI
         {
             DrawWorld();
             RtsSkin.Frame(new Rect(0, 0, width, 48));
-            Label(22, 7, 270, "RISKAI · LAS MARCAS", RtsSkin.Title);
-            Label(23, 30, 235, "V0.11 · F3 PUERTO · N FLOTA", RtsSkin.Tiny);
+            Label(22, 7, 270, "RISKAI · DOMINIOS", RtsSkin.Title);
+            Label(23, 30, 235, "V0.12 · "+MapLayout.MapName.ToUpperInvariant(), RtsSkin.Tiny);
             Label(270, 13, 180, hud.Gold + " ORO  +" + hud.Income + "/RONDA", RtsSkin.Small);
             Label(455, 13, 150, hud.Population0 + " TROPAS / IA " + hud.Population1, RtsSkin.Small);
             Label(610, 13, 155, "RONDA " + hud.Round + " · " + Mathf.CeilToInt(BattleRules.RoundSeconds - hud.RoundElapsed) + " s", RtsSkin.Small);
             Label(770, 13, 245, hud.OwnedTowns + " / " + MapLayout.Towns.Length + " CIUDADES", RtsSkin.Small);
             Label(1030,13,330,"IA "+session.DifficultyName+(session.BattleTime<session.AiFirstOffensiveTime?" / prepara tus defensas":""),RtsSkin.Small);
             if (Button(new Rect(width - 195, 13, 86, 35), session.Paused ? "Continuar" : "Pausa", "F10 · pausar o continuar")) session.TogglePause();
-            if (Button(new Rect(width - 101, 13, 81, 35), "Ayuda", "F1 · controles y reglas")) controller.HelpVisible = !controller.HelpVisible;
+            if (Button(new Rect(width - 101, 13, 81, 35), "Menú", "F1 · partida, controles y ajustes")) controller.HelpVisible = !controller.HelpVisible;
             RtsSkin.Frame(new Rect(0, bottom, width, 208));
             DrawMinimap(new Rect(16, bottom + 23, 208, 156));
             Label(20, bottom + 181, 205, "CLIC: CÁMARA · DER.: ORDEN", RtsSkin.Tiny);
             float actions = width - 660;
-            if (controller.SelectedHarbor) HarborDetails(controller.SelectedHarbor,actions);
+            if(controller.SelectedCamp)CampDetails(controller.SelectedCamp,actions);
+            else if (controller.SelectedHarbor) HarborDetails(controller.SelectedHarbor,actions);
             else if(controller.Fleet.Count>0)FleetDetails(actions);
             else if (controller.SelectedTown) { TownDetails(controller.SelectedTown); Shop(controller.SelectedTown, actions); }
             else if (controller.Selection.Count > 0) { ArmyDetails(actions); Orders(actions); }
             else if (controller.InspectedTarget) { TargetDetails(controller.InspectedTarget); Orders(actions); }
             else
             {
-                Label(255, bottom + 23, 650, "LAS MARCAS ESPERAN TU ESTANDARTE", RtsSkin.Title);
+                Label(255, bottom + 23, 650, "ELIGE UNA CIUDAD O UNA HOGUERA", RtsSkin.Title);
                 Label(255, bottom + 62, 650, "Selecciona tus soldados con una caja o pulsa E para elegir tu ejército.");
-                Label(255, bottom + 91, 650, "Selecciona una ciudad azul para comprar tropas, construir y mejorar.", RtsSkin.Small);
+                Label(255, bottom + 91, 650, "Selecciona una ciudad azul para comprar tropas; una hoguera muestra su grupo.", RtsSkin.Small);
                 Label(255, bottom + 121, 650, "A + clic avanza combatiendo · clic derecho mueve o ataca al enemigo.", RtsSkin.Small);
                 Orders(actions);
             }
@@ -120,13 +125,13 @@ namespace RiskAI
         void HarborDetails(Harbor harbor,float x)
         {
             Label(253,bottom+18,650,harbor.DisplayName,RtsSkin.Title);
-            Label(253,bottom+50,620,harbor.Owner==0?"PUERTO ALIADO":harbor.Owner==1?"PUERTO ENEMIGO":"PUESTO INSULAR NEUTRAL",RtsSkin.Small);
-            Label(253,bottom+80,625,harbor.IsIsland?"Desembarca infantería para capturar. +8 oro por ronda.":"Puerto continental independiente · referencia: "+(harbor.LinkedTown?harbor.LinkedTown.DisplayName:harbor.DisplayName)+".",RtsSkin.Small);
+            Label(253,bottom+50,620,harbor.Owner==0?"PUERTO ALIADO":harbor.Owner==1?"PUERTO ENEMIGO":"PUERTO NEUTRAL",RtsSkin.Small);
+            Label(253,bottom+80,625,harbor.IsIsland?"Puerto insular: desembarca y ocupa su círculo.":"Puerto independiente · producción naval y punto de desembarco.",RtsSkin.Small);
             Label(253,bottom+103,650,ClaimText(harbor.State,harbor.Defender),RtsSkin.Tiny);
             Label(253,bottom+123,610,"Cola naval: "+harbor.QueueCount+" / 3 · pulsa un encargo para cancelarlo",RtsSkin.Tiny);
             for(int i=0;i<harbor.QueueCount;i++)
             {
-                var r=new Rect(254+i*125,bottom+148,118,42);if(Button(r,harbor.QueuedKind(i)==ShipKind.Galley?"Galera":"Transporte"))controller.Feedback(harbor.CancelTraining(i));
+                var r=new Rect(254+i*125,bottom+148,118,42);if(Button(r,harbor.QueuedKind(i)==ShipKind.Galley?"Fragata":"Transporte"))controller.Feedback(harbor.CancelTraining(i));
                 if(i==0)RtsSkin.Bar(new Rect(r.x,r.yMax+3,r.width,5),harbor.TrainingProgress,RtsSkin.Gold);
             }
             Label(x,bottom+16,590,"ASTILLERO",RtsSkin.Title);
@@ -135,11 +140,8 @@ namespace RiskAI
             if(Button(new Rect(x,bottom+51,220,62),"[Q] "+galley.Name+" · "+galley.Cost+" oro",galley.Health+" vida · "+AttackName(galley.Attack).ToLowerInvariant()+" "+galley.Damage+" · alcance "+galley.Range+" · armadura "+galley.Armor+" · "+galley.TrainSeconds+" s"))controller.BuyShip(ShipKind.Galley);
             if(Button(new Rect(x+231,bottom+51,220,62),"[W] "+transport.Name+" · "+transport.Cost+" oro",transport.Health+" vida · "+transport.Capacity+" soldados · sin ataque · armadura "+transport.Armor+" · "+transport.TrainSeconds+" s"))controller.BuyShip(ShipKind.Transport);
             GUI.enabled=enabled;
-            GUI.enabled=enabled&&harbor.Owner==0&&!session.Paused&&!harbor.Defense.IsAlive&&!harbor.BuildingTower&&hud.Gold>=BattleRules.TowerCost;
-            string defense=harbor.BuildingTower?"Reconstruyendo torre…":harbor.Defense.IsAlive?"Torre · "+Mathf.CeilToInt(harbor.Defense.Health)+" / "+harbor.Defense.MaxHealth+" vida":"[T] Torre · "+BattleRules.TowerCost+" oro · "+BattleRules.ConstructionSeconds+" s";
-            if(Button(new Rect(x,bottom+126,220,44),defense,"Todos los puertos tienen defensa. Destruye la torre rival antes de desembarcar."))controller.BuildTower();
-            GUI.enabled=enabled;
-            if(harbor.BuildingTower)RtsSkin.Bar(new Rect(x,bottom+174,220,5),harbor.Defense.BuildProgress,RtsSkin.Gold);
+            Label(x,bottom+133,225,"TORRE PERMANENTE",RtsSkin.Small);
+            Label(x,bottom+155,225,"Protege a su guarnición",RtsSkin.Tiny);
             if(Button(new Rect(x+231,bottom+126,220,44),"[N] Seleccionar flota"))controller.SelectFleet();
             Label(x,bottom+182,590,"Clic derecho en un muelle: navegar y desembarcar",RtsSkin.Tiny);
         }
@@ -157,7 +159,7 @@ namespace RiskAI
             Label(253,bottom+50,620,Mathf.CeilToInt(ship.Health)+" / "+ship.MaxHealth+" VIDA · "+ship.OrderLabel,RtsSkin.Small);
             RtsSkin.Bar(new Rect(254,bottom+83,255,8),ship.Health/ship.MaxHealth,new Color(.4f,.8f,.4f));
             ShipProfile profile=ship.Profile;
-            Label(253,bottom+105,650,capacity>0?"TROPAS EMBARCADAS · "+cargo+" / "+capacity:profile.Damage+" DAÑO DE ASEDIO · "+profile.Range+" ALCANCE · "+profile.Armor+" ARMADURA",RtsSkin.Small);
+            Label(253,bottom+105,650,capacity>0?"TROPAS EMBARCADAS · "+cargo+" / "+capacity:profile.Damage+" DAÑO "+AttackName(profile.Attack).ToUpperInvariant()+" · "+profile.Range+" ALCANCE · "+profile.Armor+" ARMADURA",RtsSkin.Small);
             Label(253,bottom+137,630,"B: embarca tropas junto al muelle. D: desembarca cerca del puerto.",RtsSkin.Small);
             Label(253,bottom+171,650,"Clic derecho en un puerto: navegar y desembarcar allí.",RtsSkin.Tiny);
             if(Button(new Rect(x,bottom+28,190,52),"[M] Navegar"))controller.ArmMove();
@@ -166,7 +168,7 @@ namespace RiskAI
             if(Button(new Rect(x,bottom+94,190,52),"[B] Embarcar"))controller.BoardNearby();
             if(Button(new Rect(x+200,bottom+94,190,52),"[D] Desembarcar"))controller.UnloadFleet();
             if(Button(new Rect(x+400,bottom+94,190,52),"[F3] Puerto"))controller.FocusHarbor();
-            Label(x,bottom+176,590,"Galera: combate naval y costa · Transporte: conquistar islas",RtsSkin.Tiny);
+            Label(x,bottom+176,590,"Fragata: combate naval y costa · Transporte: conquistar islas",RtsSkin.Tiny);
         }
         void Portrait(Rect r, UnitKind kind, Color border)
         {
@@ -176,23 +178,18 @@ namespace RiskAI
         void TownDetails(Settlement town)
         {
             string owner = town.State.Owner == 0 ? "ALIANZA DEL ALBA" : town.State.Owner == 1 ? "FRONTERA CARMESÍ" : "CIUDAD NEUTRAL";
-            Label(252, bottom + 15, 670, town.DisplayName + "  ·  " + (town.State.Level == 1 ? "NIVEL I" : "NIVEL II"), RtsSkin.Title);
+            Label(252, bottom + 15, 670, town.DisplayName, RtsSkin.Title);
             Label(253, bottom + 45, 640, owner + "   /   +" + hud.IncomeFor(town) + " ORO POR RONDA", RtsSkin.Small);
             var country = town.State.Country >= 0 && town.State.Country < MapLayout.Countries.Length ? MapLayout.Countries[town.State.Country] : default(MapLayout.Country);
             CountrySnapshot countrySnapshot = town.State.Country >= 0 && town.State.Country < hud.Countries.Length ? hud.Countries[town.State.Country] : null;
-            string countryLine = countrySnapshot != null ? country.Name + "  ·  " + countrySnapshot.Owned + "/" + countrySnapshot.CityCount + "  ·  " + (countrySnapshot.Owner == 0 ? "+" + countrySnapshot.PotentialIncome + " oro/ronda · " + country.PerTurn + " " + BattleRules.Name(country.Reinforcement) + "/60 s (máx " + country.PerTurn * 5 + ")" : "Completa el país para cobrar") : "Completa el país para cobrar";
+            string countryLine = countrySnapshot != null ? country.Name + "  ·  " + countrySnapshot.Owned + "/" + countrySnapshot.CityCount + "  ·  " + (countrySnapshot.Owner == 0 ? "+" + countrySnapshot.PotentialIncome + " oro/ronda · " + country.PerTurn + " " + BattleRules.Name(country.Reinforcement) + "/60 s (máx " + countrySnapshot.CityCount * 5 + " puntos)" : "Completa el país para cobrar") : "Completa el país para cobrar";
             Label(253, bottom + 73, 680, countryLine, RtsSkin.Small);
             Label(253, bottom + 97, 650, ClaimText(town.State, town.Defender), RtsSkin.Tiny);
-            if (town.Defense.IsAlive)
-            {
-                Label(253, bottom + 121, 300, "TORRE " + Mathf.CeilToInt(town.Defense.Health) + " / " + town.Defense.MaxHealth, RtsSkin.Tiny);
-                RtsSkin.Bar(new Rect(460, bottom + 128, 170, 8), town.Defense.Health / town.Defense.MaxHealth, new Color(.62f,.75f,.44f));
-            }
-            else Label(253, bottom + 121, 390, "Sin torre · ciudad expuesta", RtsSkin.Tiny);
+            Label(253,bottom+121,640,"TORRE PERMANENTE · protege a su defensor",RtsSkin.Tiny);
             Label(253, bottom + 149, 490, town.QueueCount > 0 ? "RECLUTANDO · PULSA UN ENCARGO PARA CANCELAR" : "COLA DE RECLUTAMIENTO VACÍA", RtsSkin.Tiny);
             for (int i = 0; i < 5; i++)
             {
-                var rect = new Rect(254 + i * 58, bottom + 169, 50, 46); RtsSkin.Frame(rect);
+                var rect = new Rect(254 + i * 58, bottom + 164, 50, 36); RtsSkin.Frame(rect);
                 if (i >= town.QueueCount) continue;
                 UnitKind kind = town.QueuedKind(i); Portrait(rect, kind, i == 0 ? RtsSkin.Gold : new Color(.5f,.5f,.4f));
                 if (GUI.Button(rect, GUIContent.none, GUIStyle.none)) { MarkHudDirty(); controller.Feedback(town.CancelTraining(i)); }
@@ -205,24 +202,16 @@ namespace RiskAI
         {
             Label(x, bottom + 15, 320, "RECLUTAR UNIDADES", RtsSkin.Small);
             for (int i = 0; i < 6; i++) UnitCard(new Rect(x + (i % 3) * 108, bottom + 43 + (i / 3) * 78, 102, 72), (UnitKind)i, town);
-            float buildX = x + 335;
-            Label(buildX, bottom + 15, 300, "FORTIFICACIONES", RtsSkin.Small);
-            string tower = town.Defense.IsAlive ? (town.Defense.Team==town.State.Owner?"TORRE ACTIVA":"TORRE ENEMIGA")+"\nDefiende hasta 8,5 m" : "[T] TORRE DE GUARDIA\n60 oro · 7 s";
-            bool enabled = GUI.enabled;
-            bool canBuild = town.State.Owner == 0 && !town.Building && !session.Paused && session.Winner < 0;
-            GUI.enabled = enabled && canBuild && !town.Defense.IsAlive && hud.Gold >= BattleRules.TowerCost;
-            if (Button(new Rect(buildX, bottom + 43, 306, 61), tower, "Torre de guardia\n550 vida · 51–58 daño perforante / 1,5 s · armadura fortificada 3 · alcance 8,5. Los morteros son eficaces contra ella.")) controller.BuildTower();
-            bool countryControlled = town.State.Country >= 0 && town.State.Country < hud.Countries.Length && hud.Countries[town.State.Country].Owner == 0;
-            string upgrade = town.State.Level == 2 ? "CIUDAD DE NIVEL II\nGuardias, magos y morteros" : "[U] MEJORAR A NIVEL II\n90 oro · 7 s" + (countryControlled ? " · +6 oro por ronda" : "");
-            GUI.enabled = enabled && canBuild && town.State.Level < 2 && hud.Gold >= BattleRules.UpgradeCost;
-            if (Button(new Rect(buildX, bottom + 114, 306, 62), upgrade, "Mejora de ciudad\nDesbloquea guardias reales, magos y morteros" + (countryControlled ? "; añade +6 de oro por ronda." : ". Completa el país para cobrar sus ingresos."))) controller.UpgradeTown();
-            GUI.enabled = enabled;
-            if (town.Building)
-            {
-                RtsSkin.Bar(new Rect(buildX, bottom + 183, 306, 7), town.ProjectProgress, RtsSkin.Gold);
-                Text(new Rect(buildX, bottom + 191, 306, 15), town.ProjectName + " en construcción", RtsSkin.Tiny);
-            }
+            float buildX=x+335;
+            var fort=ReforgedProfiles.CapturableTower;
+            Label(buildX,bottom+15,300,"DEFENSA DEL EDIFICIO",RtsSkin.Small);
+            Label(buildX,bottom+52,305,town.Defender?"TORRE PROTEGIDA":"TORRE SIN GUARNICIÓN",RtsSkin.Small);
+            Label(buildX,bottom+80,305,fort.MinimumDamage+"–"+fort.MaximumDamage+" daño / "+fort.Cooldown+" s · alcance "+fort.Range,RtsSkin.Tiny);
+            Label(buildX,bottom+107,305,"Permanente · cambia con su defensor",RtsSkin.Tiny);
+            if(town.State.Country>=0&&town.State.Country<session.Camps.Count&&Button(new Rect(buildX,bottom+137,306,48),"VER GRUPO Y HOGUERA"))
+            {var camp=session.Camps[town.State.Country];controller.SelectCamp(camp);if(camp)controller.Focus(camp.SpawnPoint);}
         }
+
         void UnitCard(Rect r, UnitKind kind, Settlement town)
         {
             bool available = town.State.Owner == 0 && town.State.Level >= BattleRules.RequiredLevel(kind);
@@ -256,7 +245,7 @@ namespace RiskAI
                 ShipProfile profile=ship.Profile;
                 Label(253,bottom+23,590,ship.DisplayName+" · FLOTA ENEMIGA",RtsSkin.Title);
                 Label(253,bottom+61,590,Mathf.CeilToInt(ship.Health)+" / "+profile.Health+" vida · armadura "+profile.Armor,RtsSkin.Small);
-                Label(253,bottom+95,590,ship.Kind==ShipKind.Galley?profile.Damage+" daño de asedio cada "+profile.Cooldown+" s · alcance "+profile.Range:"Transporte · "+profile.Capacity+" plazas · sin ataque",RtsSkin.Small);return;
+                Label(253,bottom+95,590,ship.Kind==ShipKind.Galley?profile.Damage+" daño normal cada "+profile.Cooldown+" s · alcance "+profile.Range:"Transporte · "+profile.Capacity+" plazas · sin ataque",RtsSkin.Small);return;
             }
             if(target is DefenseTower tower)
             {
@@ -283,7 +272,7 @@ namespace RiskAI
             Countries(x);
             x = width - 252;
             Label(x, bottom + 11, 236, "ÓRDENES", RtsSkin.Small);
-            string[] names = { "Mover", "Detener", "Atacar", "Mantener", "Patrullar", "Ejército", "Centrar", "Vista", "Capital" };
+            string[] names = { "Mover", "Detener", "Atacar", "Mantener", "Patrullar", "Ejército", "Centrar", "Vista", "Base inicial" };
             string[] keys = { "M", "S", "A", "H", "P", "E", "ESP", "←", "F2" };
             string[] tips = { "M · Mover al destino, útil para retirarse.", "S · Detenerse y reaccionar a enemigos cercanos.", "A · Elige un enemigo; o terreno para avanzar combatiendo.", "H · Atacar dentro de alcance sin perseguir.", "P · Recorrer dos puntos combatiendo por el camino.", "E · Seleccionar todo tu ejército.", "Espacio · Centrar la cámara en tu selección.", "Retroceso · Restablecer la cámara.", "F2 · Seleccionar una ciudad tuya y centrar la cámara." };
             for (int i = 0; i < 9; i++)
@@ -321,7 +310,7 @@ namespace RiskAI
                 string status = owner == 0 ? "+" + potential + " oro" : owner == 1 ? "enemigo +" + potential : "potencial +" + potential;
                 Label(x + 204, r.y + 1, 120, status, RtsSkin.Tiny);
                 for (int c = 0; c < snapshot.CityCount; c++) RtsSkin.Fill(new Rect(r.xMax - 35 + c * 16, r.y + 5, 11, 11), VisualFactory.TeamColor(snapshot.Cities[c].State.Owner));
-                if (r.Contains(MousePoint)) tooltip = country.Name + "\n" + (owner == 0 ? "+" + potential + " oro por ronda" : "Potencial: +" + potential + " oro por ronda") + ". Al completarlo: +" + country.PerTurn + " " + BattleRules.Name(country.Reinforcement) + " cada 60 s (máx " + country.PerTurn * 5 + " vivos); las bajas reponen el cupo. La región completa añade +" + session.Economy.RegionBonuses[country.Region] + " oro por ronda.";
+                if (r.Contains(MousePoint)) tooltip = country.Name + "\n" + (owner == 0 ? "+" + potential + " oro por ronda" : "Potencial: +" + potential + " oro por ronda") + ". Al completarlo: +" + country.PerTurn + " " + BattleRules.Name(country.Reinforcement) + " cada 60 s (máx " + snapshot.CityCount * 5 + " puntos vivos); las bajas liberan capacidad para nuevos refuerzos.";
             }
             Label(x, bottom + 181, 390, "SHIFT: ENCOLAR · CTRL + 1–9: GRUPOS", RtsSkin.Tiny);
         }
@@ -402,42 +391,13 @@ namespace RiskAI
         }
         static Vector2 MapPoint(Vector3 p,Rect r)=>new Vector2(r.x+(p.x+MapLayout.HalfWidth)/(MapLayout.HalfWidth*2)*r.width,r.y+(MapLayout.HalfDepth-p.z)/(MapLayout.HalfDepth*2)*r.height);
         static void Outline(Rect r,Color c) {RtsSkin.Fill(new Rect(r.x,r.y,r.width,1),c);RtsSkin.Fill(new Rect(r.x,r.yMax,r.width,1),c);RtsSkin.Fill(new Rect(r.x,r.y,1,r.height),c);RtsSkin.Fill(new Rect(r.xMax,r.y,1,r.height),c);}
-        void Help()
-        {
-            RtsSkin.Fill(new Rect(0,64,width,height-64),new Color(0,0,0,.7f));var r=new Rect(width/2-410,height/2-339,820,678);RtsSkin.Frame(r,RtsSkin.Gold);
-            Label(r.x+26,r.y+21,760,"CONQUISTA · RECLUTA · FORTIFICA",RtsSkin.Title);
-            string[] lines={"Clic/caja selecciona. Shift añade. Doble clic elige el mismo tipo en pantalla.","Clic derecho ataca enemigos, sigue aliados o mueve al terreno. A + suelo avanza combatiendo.","S detiene y reacciona. H mantiene posición. P + destino patrulla. E selecciona tu ejército.","En ciudades azules: Q espadachín, W ballestero, D guardia, F mago, R mortero; C sanador.","U mejora a nivel II: +6 oro/ronda si controlas el país; cuesta 90 oro.","Captura: círculo 1,1 m. Dueño a 2,8 m bloquea; conversión tras 1,25 s sin oposición.","Guarnición bloqueada: no mover ni embarcar. La torre cambia con el edificio. Puerto continental independiente.","La cola muestra hasta 5 compras; pulsa un encargo para cancelarlo y recuperar el oro.","Cada 60 s: base 12 + ciudades de países completos + bonus por regiones completas.","Cada país completo da refuerzos gratis, hasta 5 oleadas vivas; las bajas reponen el cupo.","Conquista: controla " + session.VictoryTarget + " ciudades durante 20 s. Capitales: captura la capital enemiga.","Cámara: bordes/flechas/central; rueda zoom; Esc libera. Ctrl+1–9 grupos; F10 pausa."};
-            for(int i=0;i<lines.Length;i++)Label(r.x+26,r.y+66+i*25,775,lines[i],RtsSkin.Small);
-            Label(r.x+26,r.y+378,300,"VELOCIDAD DE CÁMARA",RtsSkin.Small);
-            controller.CameraRig.PanSpeed=GUI.HorizontalSlider(new Rect(r.x+239,r.y+388,210,20),controller.CameraRig.PanSpeed,.5f,2.2f);
-            controller.EdgePan=GUI.Toggle(new Rect(r.x+490,r.y+381,290,27),controller.EdgePan,"Cámara por los bordes");
-            Label(r.x+26,r.y+421,195,"IA SIGUIENTE PARTIDA",RtsSkin.Small);
-            BattleSession.DifficultyForNewMatch=(BattleSession.AiDifficulty)GUI.SelectionGrid(new Rect(r.x+228,r.y+418,558,33),(int)BattleSession.DifficultyForNewMatch,new[]{"Tranquila / ataque tras 2 min","Estándar"},2,RtsSkin.Button);
-            Label(r.x+26,r.y+469,200,"SIGUIENTE PARTIDA",RtsSkin.Small);
-            BattleSession.LayoutForNewMatch=(BattleSession.StartLayout)GUI.SelectionGrid(new Rect(r.x+228,r.y+466,558,33),(int)BattleSession.LayoutForNewMatch,new[]{"Reparto Risk","Países iniciales","Práctica"},3,RtsSkin.Button);
-            Label(r.x+26,r.y+513,90,"Semilla",RtsSkin.Small);
-            seedText=GUI.TextField(new Rect(r.x+100,r.y+511,170,30),seedText,11);
-            if(Button(new Rect(r.x+282,r.y+509,130,34),"Otra semilla")){BattleSession.NewSeed();seedText=BattleSession.SeedForNewMatch.ToString();}
-            Text(new Rect(r.x+432,r.y+509,356,45),"Reparto Risk: ciudades al azar. Países iniciales: un país por bando y el resto neutral.",new GUIStyle(RtsSkin.Small){wordWrap=true});
-            Label(r.x+26,r.y+556,760,"Partida actual: "+session.LayoutName+" · semilla "+session.Seed,RtsSkin.Tiny);
-            Label(r.x+26,r.y+579,775,"NAVAL · F3 puerto · Q/W barcos · N flota · B embarcar · D desembarcar · isla: +8 oro/ronda",RtsSkin.Tiny);
-            if(Button(new Rect(r.x+26,r.y+602,160,44),"Volver"))controller.HelpVisible=false;
-            if(Button(new Rect(r.x+199,r.y+602,220,44),"Empezar Conquista"))StartMatch(BattleSession.VictoryMode.Conquest);
-            if(Button(new Rect(r.x+432,r.y+602,220,44),"Empezar Capitales"))StartMatch(BattleSession.VictoryMode.Capitals);
-        }
-        void StartMatch(BattleSession.VictoryMode mode)
-        {
-            if(!int.TryParse(seedText,out int seed)){session.Message("Escribe una semilla numérica válida.");return;}
-            BattleSession.SeedForNewMatch=seed;BattleSession.ModeForNewMatch=mode;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }
         static string ClaimText(TownState state, Soldier defender)
         {
             if (state == null) return "";
-            if (state.Contested) return "CAPTURA BLOQUEADA · defensor o dueño a 2,8 m";
-            if (state.Capture > 0) return "CONVERSIÓN " + Mathf.RoundToInt(state.Capture * 100) + "% · 1,25 s sin oposición";
-            if (defender) return defender.IsGarrison ? "GUARNICIÓN BLOQUEADA · no mover / no embarcar" : "DEFENSOR EN CÍRCULO 1,1 m";
-            return "CÍRCULO 1,1 m · dueño cercano a 2,8 m bloquea";
+            if (state.Contested) return "GUARNICIÓN EN COMBATE · el aliado cercano tiene prioridad";
+
+            if (defender) return defender.IsGarrison ? "GUARNICIÓN BLOQUEADA · no mover / no embarcar" : "DEFENSOR EN CÍRCULO 1,55 m";
+            return "CÍRCULO 1,55 m · relevo aliado a 4,43 m tiene prioridad";
         }
         sealed class HudSnapshot
         {
@@ -508,7 +468,7 @@ namespace RiskAI
         {
             RtsSkin.Fill(new Rect(0,0,width,height),new Color(0,0,0,.7f));var r=new Rect(width/2-270,height/2-135,540,270);RtsSkin.Frame(r,RtsSkin.Gold);
             Text(new Rect(r.x+20,r.y+30,500,55),session.Winner==0?"VICTORIA":"DERROTA",new GUIStyle(RtsSkin.Center){fontSize=34});
-            Text(new Rect(r.x+20,r.y+104,500,35),"Las Marcas tienen un nuevo estandarte.",RtsSkin.Center);
+            Text(new Rect(r.x+20,r.y+104,500,35),MapLayout.MapName + " tiene un nuevo estandarte.",RtsSkin.Center);
             if(Button(new Rect(r.x+165,r.y+177,210,48),"Nueva partida")){BattleSession.ModeForNewMatch=session.Mode;BattleSession.NewSeed();SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);}
         }
     }

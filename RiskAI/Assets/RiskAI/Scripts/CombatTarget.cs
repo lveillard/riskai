@@ -11,6 +11,7 @@ namespace RiskAI
         public float Health { get; protected set; }
         public abstract float MaxHealth { get; }
         public bool IsAlive => Health > 0 && gameObject.activeInHierarchy;
+        public virtual bool CanBeAttacked => IsAlive;
         public virtual Vector3 AimPoint => transform.position + Vector3.up * 1.5f;
         public virtual Vector3 ApproachPoint(Vector3 from) => transform.position;
         public virtual AttackKind AttackType => AttackKind.Normal;

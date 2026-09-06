@@ -50,7 +50,7 @@ namespace RiskAI
         public void SailToHarbor(Harbor harbor){if(!harbor)return;MoveTo(harbor.Berth);if(route.Count>0)unloadDestination=harbor;}
         public void Attack(CombatTarget enemy)
         {
-            if(!IsAlive||Kind!=ShipKind.Galley||!enemy||enemy.Team==Team||!enemy.IsAlive)return;
+            if(!IsAlive||Kind!=ShipKind.Galley||!enemy||enemy.Team==Team||!enemy.CanBeAttacked)return;
             var next=new List<Vector3>();
             float distance=DistanceXZ(transform.position,enemy.transform.position);
             if(distance>AttackRange)
@@ -90,7 +90,7 @@ namespace RiskAI
             simDelta=delta;
             if(!IsAlive||!world||world.Session.Paused||world.Session.Winner>=0)return;
             if(unloadDestination&&DistanceXZ(transform.position,unloadDestination.Berth)<4){Unload(unloadDestination);if(CargoCount==0)unloadDestination=null;}
-            if(target&&!target.IsAlive||target&&target.Team==Team){target=null;route.Clear();routeIndex=0;}
+            if(target&&!target.CanBeAttacked||target&&target.Team==Team){target=null;route.Clear();routeIndex=0;}
             if(!target&&Kind==ShipKind.Galley&&world.Session.BattleTime>=nextSense&&(attackMoveOrder||routeIndex>=route.Count)){nextSense=world.Session.BattleTime+.2f;target=FindNearbyEnemy();}
             if(target&&DistanceXZ(transform.position,target.transform.position)<=AttackRange&&Visible(target))
             {
@@ -114,7 +114,7 @@ namespace RiskAI
             world.Session.Spatial.Query(transform.position,AttackRange,nearby);
             foreach(var ship in nearby)
             {
-                if(!ship||ship==this||!ship.IsAlive||ship.Team==Team)continue;
+                if(!ship||ship==this||!ship.CanBeAttacked||ship.Team==Team)continue;
                 float distance=DistanceXZ(transform.position,ship.transform.position);if(distance<=AttackRange&&distance<score&&Visible(ship)){best=ship;score=distance;}
             }
             return best;
@@ -152,7 +152,7 @@ namespace RiskAI
             foreach(var soldier in cargo.ToArray())if(soldier)soldier.DestroyEmbarked(attacker);
             cargo.Clear();route.Clear();routeIndex=0;target=null;
             world.Ships.Remove(this);world.Session.UnregisterTarget(this);
-            if(attacker>=0&&attacker<2){world.Session.Kills[attacker]++;world.Session.Economy.Grant(attacker,2);}
+            if(attacker>=0&&attacker<2){world.Session.Kills[attacker]++;world.Session.Economy.GrantBounty(attacker,Profile.PointValue);}
             VisualFactory.Impact(AimPoint,new Color(.72f,.78f,.86f),.75f);Destroy(gameObject);
         }
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}

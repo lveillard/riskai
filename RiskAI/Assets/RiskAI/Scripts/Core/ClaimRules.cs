@@ -3,26 +3,41 @@ namespace RiskAI.Core
 {
     public static class ClaimRules
     {
-        public const float CircleRadius = 1.1f;
-        public const float ProtectionRadius = 2.8f;
-        public const float ConversionSeconds = 1.25f;
-    }
-    /// <summary>Continuous, uncontested occupation by the same entity is required.</summary>
-    public sealed class ClaimTransition
-    {
-        public int CandidateId { get; private set; }
-        public int CandidateTeam { get; private set; } = -1;
-        public float Elapsed { get; private set; }
-        public float Progress => Math.Min(1, Elapsed / ClaimRules.ConversionSeconds);
-        public bool Advance(int entityId, int team, bool blocked, float delta)
+        public const float CircleRadius = 1.55f;
+        public const float ProtectionRadius = 4.43f;
+        public const float TakeoverRadius = 6f;
+
+        /// <summary>
+        /// Compares two possible post-defender successors without depending on Unity objects.
+        /// A living unit owned by the current town owner always wins over an opposing unit;
+        /// within the same tier, the nearest unit wins and EntityId makes ties deterministic.
+        /// An EntityId of zero means that no candidate has been selected yet.
+        /// </summary>
+        public static bool BetterCandidate(
+            int ownerTeam,
+            int candidateTeam,
+            float candidateDistanceSquared,
+            int candidateEntityId,
+            int bestTeam,
+            float bestDistanceSquared,
+            int bestEntityId)
         {
-            if (delta < 0 || float.IsNaN(delta) || float.IsInfinity(delta)) throw new ArgumentOutOfRangeException(nameof(delta));
-            if (blocked || entityId <= 0 || team < 0) { Reset(); return false; }
-            if (CandidateId != entityId || CandidateTeam != team)
-            { Reset(); CandidateId = entityId; CandidateTeam = team; }
-            Elapsed += delta;
-            return Elapsed + .00001f >= ClaimRules.ConversionSeconds;
+            if (candidateEntityId <= 0 || float.IsNaN(candidateDistanceSquared) || float.IsInfinity(candidateDistanceSquared))
+                return false;
+            if (bestEntityId <= 0 || float.IsNaN(bestDistanceSquared) || float.IsInfinity(bestDistanceSquared))
+                return true;
+
+            bool candidateIsOwner = ownerTeam >= 0 && candidateTeam == ownerTeam;
+            bool bestIsOwner = ownerTeam >= 0 && bestTeam == ownerTeam;
+            if (candidateIsOwner != bestIsOwner)
+                return candidateIsOwner;
+
+            const float DistanceTolerance = 0.00001f;
+            if (candidateDistanceSquared < bestDistanceSquared - DistanceTolerance)
+                return true;
+            if (candidateDistanceSquared > bestDistanceSquared + DistanceTolerance)
+                return false;
+            return candidateEntityId < bestEntityId;
         }
-        public void Reset() { CandidateId = 0; CandidateTeam = -1; Elapsed = 0; }
     }
 }

@@ -22,6 +22,7 @@ namespace RiskAI
             public Vector3 From, To;
             public float Elapsed, Duration, Damage;
             public AttackKind Attack;
+            public bool Miss;
         }
         readonly BattleSession session;
         readonly List<Projectile> projectiles = new List<Projectile>(256);
@@ -41,6 +42,7 @@ namespace RiskAI
             {
                 Id = ++nextId, TargetId = target ? target.EntityId : 0, SourceId = source ? source.EntityId : 0,
                 Team = team, From = from, To = to, Damage = damage, Attack = attack,
+                Miss=source && target && session.RollMiss(CombatRules.UphillMissChance(attack,target.transform.position.y-source.transform.position.y)),
                 Duration = Mathf.Clamp(Vector3.Distance(from, to) / 25, .15f, .6f)
             };
             projectileIndices.Add(shot.Id, projectiles.Count);
@@ -74,7 +76,7 @@ namespace RiskAI
                 projectileIndices.Remove(shot.Id);
                 for (int j = i; j < projectiles.Count; j++) projectileIndices[projectiles[j].Id] = j;
                 var source = session.FindTarget(shot.SourceId);
-                if (target && target.IsAlive) target.ReceiveAttack(shot.Damage, shot.Attack, shot.Team, source);
+                if (!shot.Miss && target && target.CanBeAttacked) target.ReceiveAttack(shot.Damage, shot.Attack, shot.Team, source);
                 float radius = shot.Attack == AttackKind.Magic ? 2.4f : shot.Attack == AttackKind.Siege ? 1.5f : 0;
                 if (radius > 0)
                 {

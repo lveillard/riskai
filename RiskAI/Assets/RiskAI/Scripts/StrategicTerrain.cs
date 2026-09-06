@@ -9,23 +9,33 @@ namespace RiskAI
             // Sub-metre sampling keeps the bevel and river banks continuous with the walkable surface.
             const int nx=360,nz=400;
             var vertices=new Vector3[(nx+1)*(nz+1)];var triangles=new List<int>(nx*nz*6);
+            var walkableTriangles=new List<int>(nx*nz*6);
             for(int x=0;x<=nx;x++)for(int z=0;z<=nz;z++)
             {
                 float wx=Mathf.Lerp(-MapLayout.HalfWidth,MapLayout.HalfWidth,x/(float)nx),top=Mathf.Min(MapLayout.HalfDepth,MapLayout.Coast(wx));
                 float wz=Mathf.Lerp(-MapLayout.HalfDepth,top,z/(float)nz);int i=x*(nz+1)+z;
                 vertices[i]=new Vector3(wx,MapLayout.Height(wx,wz),wz);
-                if(x==nx||z==nz||MapLayout.IsPond(wx+.4f,wz+.4f))continue;int b=i+nz+1;
+                float quadX=Mathf.Lerp(-MapLayout.HalfWidth,MapLayout.HalfWidth,(x+.5f)/nx),quadZ=Mathf.Lerp(-MapLayout.HalfDepth,top,(z+.5f)/nz);
+                if(x==nx||z==nz)continue;int b=i+nz+1;
                 triangles.Add(i);triangles.Add(i+1);triangles.Add(b);triangles.Add(i+1);triangles.Add(b+1);triangles.Add(b);
+                // Water needs a continuous visible bed. Only navigation excludes the channel.
+                if(MapLayout.IsPond(wx+.4f,wz+.4f)||TerrainHydrology.IsChannel(quadX,quadZ))continue;
+                walkableTriangles.Add(i);walkableTriangles.Add(i+1);walkableTriangles.Add(b);
+                walkableTriangles.Add(i+1);walkableTriangles.Add(b+1);walkableTriangles.Add(b);
             }
             var mesh=new Mesh{name="Irregular continental terrain",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32};mesh.vertices=vertices;mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var land=new GameObject("Coastal marches");land.layer=MapLayout.TerrainLayer;land.transform.SetParent(root,false);land.AddComponent<MeshFilter>().sharedMesh=mesh;
-            land.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");land.AddComponent<MeshCollider>().sharedMesh=mesh;
+            land.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
+            var collisionMesh=new Mesh{name="Walkable land excluding water",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32};
+            collisionMesh.vertices=vertices;collisionMesh.SetTriangles(walkableTriangles,0);collisionMesh.RecalculateBounds();
+            land.AddComponent<MeshCollider>().sharedMesh=collisionMesh;
             CreateIslands(root);CreateSeabed(root);CreateBackdrop();
             var sea=VisualFactory.Shape(null,PrimitiveType.Cube,"Northern sea",new Vector3(0,-.3f,0),new Vector3(420,.12f,420),Color.white);
             sea.GetComponent<Renderer>().sharedMaterial=Resources.Load<Material>("RiverWater");
             var trees=new GameObject("Pine forests");trees.transform.SetParent(root,false);
             var random=new System.Random(4019);int seed=0;
-            for(float x=-70;x<71;x+=1.9f)for(float z=-82;z<82;z+=1.9f)
+            float mapX=MapLayout.HalfWidth/MapLayout.Spacing,mapZ=MapLayout.HalfDepth/MapLayout.Spacing;
+            for(float x=-mapX+2;x<mapX-1;x+=1.9f)for(float z=-mapZ+2;z<mapZ-1;z+=1.9f)
             {
                 float px=(x+(float)random.NextDouble()*1.5f)*MapLayout.Spacing,pz=(z+(float)random.NextDouble()*1.5f)*MapLayout.Spacing;
                 if(!MapLayout.IsLand(px,pz)||TerrainHydrology.DistanceToRiver(px,pz)<4)continue;
@@ -37,14 +47,12 @@ namespace RiskAI
                 float east=Mathf.Abs(bx-(29+6*Mathf.Sin(bz*.12f)));
                 float south=Mathf.Abs(bz-(-27+5*Mathf.Sin(bx*.09f)));
                 bool island=pz>MapLayout.Coast(px);
-                if(island){float d=Mathf.Max(MapLayout.IslandDistance(px,pz,0),MapLayout.IslandDistance(px,pz,1));if(d<3||bz<55&&Mathf.Abs(bx+47)<5.5f||bz>60&&bz<69&&Mathf.Abs(bx+8)<5.5f)continue;}
-                bool portClear=false;foreach(float portX in new[]{-58f,-32,-7,20,43})if(Mathf.Abs(bx-portX)<5.8f&&Mathf.Abs(pz-MapLayout.Coast(portX*MapLayout.Spacing))<9)portClear=true;
-                if(portClear)continue;
-                bool edge=Mathf.Abs(bx)>65||bz<-78||Mathf.Abs(pz-MapLayout.Coast(px))<5;
+                if(island){float d=-1;for(int islandIndex=0;islandIndex<MapLayout.Islands.Length;islandIndex++)d=Mathf.Max(d,MapLayout.IslandDistance(px,pz,islandIndex));if(d<3)continue;}
+                bool edge=Mathf.Abs(bx)>mapX-5||bz<-mapZ+6||Mathf.Abs(pz-MapLayout.Coast(px))<5;
                 bool ribbon=west<3.5f||east<3.1f||south<2.8f;
                 bool grove=Mathf.PerlinNoise(px*.046f+14,pz*.046f+8)>.64f;
                 if(!(edge||ribbon||grove||island)||random.NextDouble()<(island?.38:.12))continue;
-                bool rampPass=(Mathf.Abs(bx+32)<5.5f&&bz>-14&&bz<7)||(Mathf.Abs(bx-34)<5.5f&&bz>-16&&bz<8)
+                bool rampPass=MapLayout.IsExpanded ? TerrainHydrology.IsChannel(px,pz) : (Mathf.Abs(bx+32)<5.5f&&bz>-14&&bz<7)||(Mathf.Abs(bx-34)<5.5f&&bz>-16&&bz<8)
                     ||(Mathf.Abs(bz-12)<5&&bx>-21&&bx<6)||(Mathf.Abs(bz-13)<5&&bx>44);
                 if(!edge&&(Mathf.Abs(bz-2)<3.2f||Mathf.Abs(bz-22)<3||rampPass))continue;
                 if(Mathf.Abs(MapLayout.Height(px+1,pz)-point.y)>1||Mathf.Abs(MapLayout.Height(px,pz+1)-point.y)>1)continue;
@@ -59,8 +67,9 @@ namespace RiskAI
             }
             for(int i=0;i<55;i++)
             {
-                float x=(44+(float)random.NextDouble()*25)*MapLayout.Spacing,z=(-53+(float)random.NextDouble()*28)*MapLayout.Spacing;
-                if(Vector2.Distance(new Vector2(x,z)/MapLayout.Spacing,new Vector2(57,-40))>17)continue;
+                float mountainX=MapLayout.IsExpanded?8:57,mountainZ=MapLayout.IsExpanded?-85:-40;
+                float x=(mountainX-13+(float)random.NextDouble()*26)*MapLayout.Spacing,z=(mountainZ-13+(float)random.NextDouble()*26)*MapLayout.Spacing;
+                if(Vector2.Distance(new Vector2(x,z)/MapLayout.Spacing,new Vector2(mountainX,mountainZ))>17)continue;
                 WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z),z),.6f+(float)random.NextDouble()*1.6f,i+80);
             }
         }
@@ -105,7 +114,7 @@ namespace RiskAI
             var vertices=new List<Vector3>();var triangles=new List<int>();
             for(float bx=-140;bx<140;bx+=2)for(float bz=-140;bz<100;bz+=2)
             {
-                if(bx>=-72&&bx<72&&bz>=-84&&bz<84)continue;
+                if(bx>=-MapLayout.HalfWidth/MapLayout.Spacing&&bx<MapLayout.HalfWidth/MapLayout.Spacing&&bz>=-MapLayout.HalfDepth/MapLayout.Spacing&&bz<MapLayout.HalfDepth/MapLayout.Spacing)continue;
                 float x=bx*MapLayout.Spacing,z=bz*MapLayout.Spacing,step=2*MapLayout.Spacing;
                 float coastA=MapLayout.Coast(x),coastB=MapLayout.Coast(x+step);
                 if(z>=Mathf.Max(coastA,coastB))continue;

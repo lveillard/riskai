@@ -42,20 +42,21 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator UnitsOutsideClaimCircleDoNotChangeOwner()
+        public IEnumerator EnemyOutsideTakeoverRadiusDoesNotChangeOwner()
         {
             var town = battle.Towns.First(t => t.State.Owner < 0);
             var attacker = battle.Units.First(unit => unit && unit.Team == 0 && unit != town.Defender);
+            DisableAllTowers();
             town.Defender.TakeDamage(10000, 0);
-            Move(attacker, town.ClaimPoint + Vector3.right + Vector3.forward);
+            Move(attacker, OutsideTakeoverPoint(town.ClaimPoint));
             MoveOtherTeamUnitsOutsideProtection(town, attacker);
-            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, ClaimRules.ConversionSeconds), Is.EqualTo(-1));
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(-1));
             Assert.That(town.ClaimZone.Defender, Is.Not.SameAs(attacker));
             yield return null;
         }
 
         [UnityTest]
-        public IEnumerator EntryRequiresContinuousOccupationAndPreservesUnitIdentityAndHealth()
+        public IEnumerator EntryBindsNearestEnemyAndPreservesUnitIdentityAndHealth()
         {
             var town = battle.Towns.First(t => t.State.Owner < 0);
             DisableAllTowers();
@@ -67,12 +68,7 @@ namespace RiskAI.Tests
             MoveOtherTeamUnitsOutsideProtection(town, attacker);
             IsolateClaimCombat(attacker);
             yield return null;
-            Assert.That(town.State.Owner, Is.EqualTo(-1));
-            Move(attacker, town.ClaimPoint + Vector3.right * 4f);
             yield return null;
-            Assert.That(town.State.Owner, Is.EqualTo(-1));
-            Move(attacker, town.ClaimPoint);
-            yield return new WaitForSecondsRealtime(1.4f);
             Assert.That(town.State.Owner, Is.EqualTo(0));
             Assert.That(town.Defender, Is.SameAs(attacker));
             Assert.That(attacker.Health, Is.EqualTo(health));
@@ -93,14 +89,15 @@ namespace RiskAI.Tests
             var town = battle.Towns.First(t => t.State.Owner == 0);
             var defender = town.Defender;
             var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != defender);
+            DisableAllTowers();
             Move(attacker, town.ClaimPoint);
             MoveOtherTeamUnitsOutsideProtection(town, attacker);
             Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(0));
             Assert.That(town.ClaimZone.Contested, Is.True);
             defender.TakeDamage(10000, 1);
             MoveOwnerUnitsOutsideProtection(town, 0);
-            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .6f), Is.EqualTo(0));
-            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .65f), Is.EqualTo(1));
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(1));
+            Assert.That(town.ClaimZone.Defender, Is.SameAs(attacker));
             yield return null;
         }
 
@@ -111,16 +108,20 @@ namespace RiskAI.Tests
             var defender = town.Defender;
             var ally = battle.Units.First(unit => unit && unit.Team == 0 && unit != defender);
             var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != defender);
+            DisableAllTowers();
             defender.TakeDamage(10000, 1);
             MoveOwnerUnitsOutsideProtection(town, 0);
             Move(ally, town.ClaimPoint + Vector3.right * 2f);
             Move(attacker, town.ClaimPoint);
             MoveOtherTeamUnitsOutsideProtection(town, attacker);
             Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .9f), Is.EqualTo(0));
+            // Binding the nearest allied unit clears the transient contested flag;
+            // the next sampling tick observes the enemy against that defender.
+            Assert.That(town.ClaimZone.Defender, Is.SameAs(ally));
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .9f), Is.EqualTo(0));
             Assert.That(town.ClaimZone.Contested, Is.True);
             Move(ally, town.ClaimPoint + Vector3.right * 5f);
-            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .9f), Is.EqualTo(0));
-            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .4f), Is.EqualTo(1));
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(1));
             Assert.That(town.ClaimZone.Defender, Is.SameAs(attacker));
             yield return null;
         }
@@ -130,7 +131,7 @@ namespace RiskAI.Tests
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
             var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != town.Defender);
-            Move(attacker, town.ClaimPoint + Vector3.right * 5f);
+            Move(attacker, town.ClaimPoint + Vector3.right * 7f);
             Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(0));
             Assert.That(town.ClaimZone.Contested, Is.False);
             yield return null;
@@ -242,6 +243,25 @@ namespace RiskAI.Tests
             Assert.That(NavMesh.SamplePosition(point, out var hit, .9f, NavMesh.AllAreas), Is.True);
             unit.Agent.Warp(hit.position);
             unit.Stop();
+        }
+
+        static Vector3 OutsideTakeoverPoint(Vector3 center)
+        {
+            float minimum = ClaimRules.TakeoverRadius + .15f;
+            for (int ring = 0; ring < 4; ring++)
+            {
+                float radius = minimum + ring * 1.5f;
+                for (int i = 0; i < 32; i++)
+                {
+                    float angle = i * Mathf.PI * 2f / 32f;
+                    var candidate = center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * radius;
+                    if (!NavMesh.SamplePosition(candidate, out var hit, 2.5f, NavMesh.AllAreas)) continue;
+                    var offset = hit.position - center; offset.y = 0;
+                    if (offset.sqrMagnitude > minimum * minimum) return hit.position;
+                }
+            }
+            Assert.Fail("Could not find a walkable point outside the takeover radius.");
+            return center;
         }
 
         [UnityTearDown]

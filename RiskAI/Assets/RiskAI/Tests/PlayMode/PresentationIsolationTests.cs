@@ -80,7 +80,8 @@ namespace RiskAI.Tests
             foreach (var tower in battle.Towers.ToArray())
             {
                 if (!tower) continue;
-                if (tower.IsAlive) tower.TakeDamage(10000, tower.Team == 0 ? 1 : 0);
+                // Towers are permanent capturable structures and intentionally
+                // ignore TakeDamage; disable them before isolating the fixture.
                 if (tower) tower.enabled = false;
             }
             foreach (var unit in battle.Units.ToArray())

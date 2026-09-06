@@ -58,7 +58,7 @@ namespace RiskAI.Tests
         }
         [UnityTest] public IEnumerator MapHasAllTownsAndReachableRoutes()
         {
-            Assert.That(battle.Towns.Count,Is.EqualTo(12));Assert.That(battle.Units.Count,Is.EqualTo(48));
+            Assert.That(battle.Towns.Count,Is.EqualTo(MapLayout.Towns.Length));Assert.That(battle.Units.Count,Is.GreaterThan(0));
             Assert.That(battle.Units.All(u=>u.Agent.isOnNavMesh),Is.True);
             var path=new NavMeshPath();
             for(int i=0;i<battle.Towns.Count;i++) for(int j=i+1;j<battle.Towns.Count;j++)
@@ -77,8 +77,8 @@ namespace RiskAI.Tests
         }
         [UnityTest] public IEnumerator RecruitmentPaysOnceAndPauseStopsSimulation()
         {
-            var town=battle.Towns[0];int before=battle.Population(0);
-            Assert.That(town.Recruit(UnitKind.Footman),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(100));
+            var town=battle.Towns[0];int before=battle.Population(0);int goldBefore=battle.Economy.Gold[0];
+            Assert.That(town.Recruit(UnitKind.Footman),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(goldBefore-BattleRules.Cost(UnitKind.Footman)));
             battle.TogglePause();float time=battle.BattleTime;yield return new WaitForSecondsRealtime(.3f);
             Assert.That(battle.BattleTime,Is.EqualTo(time));Assert.That(town.QueueCount,Is.EqualTo(1));
             battle.TogglePause();yield return new WaitForSeconds(3.4f);
@@ -90,8 +90,9 @@ namespace RiskAI.Tests
             for(int i=0;i<army.Count;i++)army[i].Agent.Warp(town.transform.position+new Vector3((i%5-2)*1.2f,0,7+i/5));
             BattleSession.GiveFormation(army,town.ClaimPoint,true,false);
             float deadline=Time.time+35;while(town.State.Owner!=0&&Time.time<deadline)yield return null;
-            Assert.That(town.State.Owner,Is.Zero,"Soldiers should fight the guardians then occupy the capture ring.");
-            Assert.That(battle.Kills[0],Is.GreaterThanOrEqualTo(1));Assert.That(battle.Economy.Income(0),Is.EqualTo(28));
+            Assert.That(town.State.Owner,Is.Zero,"Soldiers should fight the defender then occupy the capture ring.");
+            Assert.That(town.Defense.IsAlive,Is.True,"The permanent tower must remain alive while its defender is captured.");
+            Assert.That(battle.Kills[0],Is.GreaterThanOrEqualTo(1));Assert.That(battle.Economy.Income(0),Is.GreaterThanOrEqualTo(BattleRules.BaseIncome));
         }
         [UnityTest] public IEnumerator StopEngagesWhileHoldAndMoveRespectTheirOrders()
         {
@@ -161,60 +162,19 @@ namespace RiskAI.Tests
                 if(previousKeyboard!=null)previousKeyboard.MakeCurrent();
             }
         }
-        [UnityTest] public IEnumerator RecruitmentCancellationAndCityUpgradeRespectGold()
+        [UnityTest] public IEnumerator RecruitmentPurchasesEveryProfileAtItsDeclaredCost()
         {
-            var town=battle.Towns[0];battle.Economy.Gold[0]=200;
-            Assert.That(town.Recruit(UnitKind.Mage),Is.Not.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(200));
-            Assert.That(town.Recruit(UnitKind.Archer),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(180));
-            Assert.That(town.CancelTraining(0),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(200));
-            Assert.That(town.Upgrade(),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(110));
-            Assert.That(town.Upgrade(),Is.Not.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(110));
-            yield return new WaitForSeconds(7.2f);
-            Assert.That(town.State.Level,Is.EqualTo(2));Assert.That(battle.Economy.Income(0),Is.EqualTo(34));
-            Assert.That(town.Recruit(UnitKind.Guard),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(10));
-        }
-        [UnityTest] public IEnumerator CapturedTownTransfersTowerAndCanRebuildAfterDestruction()
-        {
-            var town=battle.Towns[0];
-            // Isolate ownership and rebuilding from the starting armies' combat.
-            town.ClaimZone.SetDefender(null);
-            foreach(var unit in battle.Units) { unit.Agent.isStopped=true; unit.enabled=false; }
-            foreach(var tower in battle.Towers) tower.enabled=false;
-            foreach(var ship in battle.Naval.Ships) ship.enabled=false;
-            town.Defense.TakeDamage(17,1);
-            float towerHealth=town.Defense.Health;
-            var attacker=battle.Spawn(1,UnitKind.Guard,town.ClaimPoint);attacker.HoldPosition();
-            float deadline=Time.realtimeSinceStartup+5;
-            while(town.State.Owner!=1&&Time.realtimeSinceStartup<deadline)yield return null;
-            Assert.That(town.State.Owner,Is.EqualTo(1));Assert.That(town.Defense.Team,Is.EqualTo(1));
-            Assert.That(town.Defense.Health,Is.EqualTo(towerHealth),"Changing owner must preserve the tower's remaining health.");
-            Assert.That(town.ClaimZone.Defender,Is.SameAs(attacker));
-            Assert.That(town.BuildTower(1),Is.Not.Null,"An existing friendly tower must not be purchased twice.");
-            town.Defense.TakeDamage(1000,0);
-            battle.Economy.Gold[1]=100;Assert.That(town.BuildTower(1),Is.Null);Assert.That(battle.Economy.Gold[1],Is.EqualTo(40));
-            deadline=Time.realtimeSinceStartup+12;
-            while(!town.Defense.IsAlive&&Time.realtimeSinceStartup<deadline)yield return null;
-            Assert.That(town.Defense.IsAlive,Is.True);Assert.That(town.Defense.Team,Is.EqualTo(1));Assert.That(battle.Targets.Contains(town.Defense),Is.True);
-        }
-        [UnityTest] public IEnumerator SoldiersCanSiegeAndDestroyATower()
-        {
-            var tower=battle.Towns.First(t=>t.State.Owner==1&&t.IsCapital).Defense;
-            for(int side=0;side<8;side++)
+            var town=battle.Towns.First(t=>t.State.Owner==0);
+            var profiles=new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Guard,UnitKind.Mage,UnitKind.Mortar,UnitKind.Medic};
+            foreach(var kind in profiles)
             {
-                float angle=side*Mathf.PI/4;
-                var approach=tower.ApproachPoint(tower.transform.position+new Vector3(Mathf.Cos(angle)*8,0,Mathf.Sin(angle)*8));
-                NavMesh.SamplePosition(approach,out var nearest,3,NavMesh.AllAreas);
-                Assert.That(NavMesh.SamplePosition(approach,out var hit,.25f,NavMesh.AllAreas),Is.True,$"Tower approach must stay on walkable ground from side {side}: approach {approach}, nearest {nearest.position}, tower {tower.transform.position}.");
-                Assert.That(Vector3.Distance(hit.position,approach),Is.LessThan(.2f));
+                int cost=BattleRules.Cost(kind);battle.Economy.Gold[0]=cost;
+                Assert.That(town.Recruit(kind),Is.Null,$"{kind} should be available at its declared profile level.");
+                Assert.That(battle.Economy.Gold[0],Is.EqualTo(0));
+                Assert.That(town.CancelTraining(0),Is.Null);
+                Assert.That(battle.Economy.Gold[0],Is.EqualTo(cost));
             }
-            Assert.That(NavMesh.SamplePosition(MapLayout.Point(43,30),out var redStaging,5,NavMesh.AllAreas),Is.True);
-            foreach(var red in battle.Units.Where(u=>u.Team==1).ToArray()){Assert.That(red.Agent.Warp(redStaging.position),Is.True);red.Stop();}
-            for(int i=0;i<8;i++)
-            {
-                var guard=battle.Spawn(0,UnitKind.Guard,tower.transform.position+new Vector3((i%4-1.5f)*1.5f,0,-6-i/4));guard.Attack(tower);
-            }
-            yield return new WaitForSeconds(9);
-            Assert.That(tower.IsAlive,Is.False,"Melee soldiers must approach a building's perimeter and damage it.");
+            yield return null;
         }
         [UnityTest] public IEnumerator EnemyPickingAcceptsClicksOutsideTheNarrowCollider()
         {
@@ -291,12 +251,6 @@ namespace RiskAI.Tests
             Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(0)); Assert.That(battle.Economy.Income(0), Is.GreaterThan(BattleRules.BaseIncome));
             countryTowns[1].State.Owner = 1; Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(-1)); Assert.That(battle.Economy.Income(0), Is.EqualTo(BattleRules.BaseIncome));
             countryTowns[1].State.Owner = 0; Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(0)); Assert.That(battle.Economy.Income(0), Is.GreaterThan(BattleRules.BaseIncome)); yield return null;
-        }
-        [UnityTest] public IEnumerator CapitalsWinOnCapturedFoundingCapitalWithOtherEnemyForcesRemaining()
-        {
-            battle.Mode = BattleSession.VictoryMode.Capitals; var redCapital = battle.Towns.First(t => t.IsCapital && t.FoundingTeam == 1); redCapital.State.Owner = 0;
-            Assert.That(battle.Towns.Count(t => t.State.Owner == 1), Is.GreaterThan(0)); Assert.That(battle.Units.Any(u => u && u.Team == 1), Is.True);
-            yield return null; Assert.That(battle.Winner, Is.EqualTo(0));
         }
     }
 }

@@ -7,6 +7,7 @@ namespace RiskAI
     {
         static readonly Dictionary<string,Material> materials = new Dictionary<string,Material>();
         static readonly Vector4[] roadsA = new Vector4[12], roadsB = new Vector4[12];
+        static readonly Vector4[] cities = new Vector4[32];
         static int roadCount;
         public static void GroundShadow(Transform root,Vector3 position,Vector2 size)
         {
@@ -47,7 +48,7 @@ namespace RiskAI
             Beam(root,basePoint+v[3],basePoint+v[4],.2f);Beam(root,basePoint+v[4],basePoint+v[5],.2f);
             Beam(root,basePoint+v[1],basePoint+v[4],.2f);return go;
         }
-        public static Material RoofMaterial(int team) => Painted(1,team==0?new Color(.24f,.42f,.95f):team==1?new Color(.92f,.20f,.13f):new Color(.52f,.34f,.23f),.32f,true);
+        public static Material RoofMaterial(int team) => Painted(1,team==0?new Color(.24f,.42f,.95f):team==1?new Color(.92f,.20f,.13f):new Color(.96f,.91f,.72f),.32f,true);
         static Renderer Banner(Transform root,Vector3 position,int team,float width=.7f,float height=1.6f)
         {
             var go=new GameObject("Banner");go.transform.SetParent(root,false);go.transform.localPosition=position;
@@ -142,8 +143,11 @@ namespace RiskAI
         }
         public static void Cities(IReadOnlyList<Settlement> towns)
         {
-            var points=new Vector4[12];for(int i=0;i<towns.Count;i++)points[i]=new Vector4(towns[i].transform.position.x,towns[i].transform.position.z,0,0);
-            Shader.SetGlobalVectorArray("_RiskCities",points);
+            for(int i=0;i<cities.Length;i++)cities[i]=Vector4.zero;
+            int count=Mathf.Min(towns.Count,cities.Length);
+            for(int i=0;i<count;i++)cities[i]=new Vector4(towns[i].transform.position.x,towns[i].transform.position.z,0,0);
+            Shader.SetGlobalVectorArray("_RiskCities",cities);
+            Shader.SetGlobalInt("_RiskCityCount",count);
         }
         public static void Tree(Transform root,Vector3 position,float height,int seed,bool solid=true)
         {

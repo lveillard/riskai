@@ -31,13 +31,9 @@ Shader "RiskAI/BiomeFoliage"
    half4 Frag(V i):SV_Target
    {
     half3 c=Bough(i.uv)*i.color.rgb;
-    float4 sc=TransformWorldToShadowCoord(i.w);
-    #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
-    sc=ComputeScreenPos(TransformWorldToHClip(i.w));
-    #endif
-    Light sun=GetMainLight(sc);
+    Light sun=GetMainLight(TransformWorldToShadowCoord(i.w),i.w,half4(1,1,1,1));
     half diffuse=.6+.4*abs(dot(normalize(i.n),sun.direction));
-    c*=half3(.38,.45,.46)+sun.color*diffuse*lerp(.14,1,sun.shadowAttenuation)*.8;
+    c*=half3(.38,.45,.46)+sun.color*diffuse*lerp(.28,1,saturate(sun.shadowAttenuation))*.8;
     return half4(MixFog(c,i.fog),1);
    }
    ENDHLSL

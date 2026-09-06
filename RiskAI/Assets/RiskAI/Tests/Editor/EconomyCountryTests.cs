@@ -16,7 +16,7 @@ namespace RiskAI.Tests
             Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome));
             second.Owner = 0;
             Assert.That(economy.CountryOwner(3), Is.EqualTo(0));
-            Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome + BattleRules.TownIncome * 2 + economy.RegionBonuses[0]));
+            Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome + BattleRules.TownIncome * 2));
             second.Owner = 1;
             Assert.That(economy.CountryOwner(3), Is.EqualTo(-1));
             Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome));
@@ -68,6 +68,57 @@ namespace RiskAI.Tests
             Assert.That(economy.Refund(-1, 1), Is.False);
             Assert.That(economy.Grant(0, -1), Is.False);
             Assert.That(economy.Gold[0], Is.EqualTo(BattleRules.StartingGold + 40));
+        }
+
+        [Test]
+        public void BountyRetainsQuarterPointFractionsUntilWholeGold()
+        {
+            var economy = new Economy();
+
+            Assert.That(economy.GrantBounty(0, 1), Is.True);
+            Assert.That(economy.Gold[0], Is.EqualTo(BattleRules.StartingGold));
+            Assert.That(economy.GrantBounty(0, 1), Is.True);
+            Assert.That(economy.GrantBounty(0, 1), Is.True);
+            Assert.That(economy.Gold[0], Is.EqualTo(BattleRules.StartingGold));
+            Assert.That(economy.GrantBounty(0, 1), Is.True);
+            Assert.That(economy.Gold[0], Is.EqualTo(BattleRules.StartingGold + 1));
+            Assert.That(economy.GrantBounty(0, 3), Is.True);
+            Assert.That(economy.Gold[0], Is.EqualTo(BattleRules.StartingGold + 1));
+            Assert.That(economy.GrantBounty(0, 1), Is.True);
+            Assert.That(economy.Gold[0], Is.EqualTo(BattleRules.StartingGold + 2));
+            Assert.That(economy.GrantBounty(2, 1), Is.False);
+            Assert.That(economy.GrantBounty(0, -1), Is.False);
+        }
+
+        [Test]
+        public void BountyUsesPointValueIndependentlyOfPurchasePrice()
+        {
+            var profile = new UnitProfile(200, 17, 1, 4, 1, 1, 5, 2,
+                AttackKind.Normal, ArmorKind.Heavy, 12, 1, "Independent price fixture", 2);
+            var economy = new Economy();
+            economy.GrantBounty(0, profile.PointValue);
+            economy.GrantBounty(0, profile.PointValue);
+            Assert.That(economy.Gold[0], Is.EqualTo(BattleRules.StartingGold + 1));
+            Assert.That(profile.Cost, Is.EqualTo(12));
+        }
+
+        [Test]
+        public void SourceGoldCostsAndNavalProfilesAreNotScaledByPrototypeMultiplier()
+        {
+            var economy = new Economy();
+            Assert.That(BattleRules.Cost(UnitKind.Footman), Is.EqualTo(1));
+            Assert.That(BattleRules.Cost(UnitKind.Archer), Is.EqualTo(1));
+            Assert.That(BattleRules.Cost(UnitKind.Guard), Is.EqualTo(5));
+            Assert.That(BattleRules.Cost(UnitKind.Mage), Is.EqualTo(4));
+            Assert.That(BattleRules.Cost(UnitKind.Mortar), Is.EqualTo(3));
+            Assert.That(BattleRules.Cost(UnitKind.Medic), Is.EqualTo(2));
+            Assert.That(economy.RegionBonuses, Is.EqualTo(new[] { 0, 0, 0 }));
+            Assert.That(ReforgedProfiles.Tower.Health, Is.EqualTo(550));
+            Assert.That(ReforgedProfiles.CapturableTower.BaseDamage, Is.EqualTo(80));
+            Assert.That(ReforgedProfiles.CapturableTower.Cooldown, Is.EqualTo(.9f));
+            Assert.That(NavalProfiles.Galley.Health, Is.EqualTo(400));
+            Assert.That(NavalProfiles.Transport.Cost, Is.EqualTo(2));
+            Assert.That(NavalProfiles.Transport.Capacity, Is.EqualTo(6));
         }
     }
 }

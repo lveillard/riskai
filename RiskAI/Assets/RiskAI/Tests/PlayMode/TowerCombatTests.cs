@@ -3,6 +3,7 @@ using System.Linq;
 using NUnit.Framework;
 using RiskAI.Core;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
@@ -60,49 +61,60 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator MortarCanHoldOutsideTowerRangeAndSiegeTheFortification()
+        public IEnumerator MortarAttacksLivingDefenderOutsideTowerRange()
         {
-            var tower=battle.Towns.First(t=>t.State.Owner==1&&t.IsCapital).Defense;
+            var town=battle.Towns.First(t=>t.State.Owner==1&&t.IsCapital&&t.Defender);
+            var tower=town.Defense;
+            var defender=town.Defender;
             Soldier mortar=null;
-            for(int i=0;i<8&&mortar==null;i++)
+            for(int i=0;i<32&&mortar==null;i++)
             {
-                float angle=i*Mathf.PI*.25f;
-                mortar=battle.Spawn(0,UnitKind.Mortar,tower.transform.position+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*12.5f);
+                float angle=i*Mathf.PI/16;
+                var candidate=tower.transform.position+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*15f;
+                if(NavMesh.SamplePosition(candidate,out var hit,.8f,NavMesh.AllAreas) &&
+                   Vector3.Distance(hit.position,tower.transform.position)>ReforgedProfiles.CapturableTower.Range+.5f &&
+                   Vector3.Distance(hit.position,defender.transform.position)<=BattleRules.Range(UnitKind.Mortar) &&
+                   !Physics.Linecast(hit.position+Vector3.up,defender.AimPoint,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))
+                    mortar=battle.Spawn(0,UnitKind.Mortar,hit.position);
             }
             Assert.That(mortar,Is.Not.Null,"A mortar test position must be on the baked practice NavMesh.");
-            KeepOnly(mortar);
+            KeepOnly(mortar,defender);
             mortar.HoldPosition();
-            float mortarHealth=mortar.Health,towerHealth=tower.Health;
+            float mortarHealth=mortar.Health,defenderHealth=defender.Health,towerHealth=tower.Health;
             yield return new WaitForSecondsRealtime(6f);
-            Assert.That(Vector3.Distance(mortar.transform.position,tower.transform.position),Is.GreaterThanOrEqualTo(11f));
-            Assert.That(tower.Health,Is.LessThan(towerHealth),"The mortar must damage the enemy tower from its hold position.");
+            Assert.That(Vector3.Distance(mortar.transform.position,tower.transform.position),Is.GreaterThan(ReforgedProfiles.CapturableTower.Range));
+            Assert.That(defender.Health,Is.LessThan(defenderHealth),"The mortar must attack the living tower defender from outside tower range.");
+            Assert.That(tower.Health,Is.EqualTo(towerHealth),"Permanent towers are not damageable targets.");
             Assert.That(mortar.Health,Is.EqualTo(mortarHealth),"A mortar outside tower range must not be hit in return.");
         }
 
         [UnityTest]
         public IEnumerator SiegeProjectileKeepsItsTypeAfterItsSourceDiesAndHitsOnce()
         {
-            var tower=battle.Towns.First(t=>t.State.Owner==1&&t.IsCapital).Defense;
-            tower.enabled=false;
-            var source=battle.Units.First(u=>u.Team==0); source.enabled=false; if(source.Agent)source.Agent.enabled=false;
-            foreach(var unit in battle.Units.ToArray())if(unit!=source){unit.enabled=false;if(unit.Agent)unit.Agent.enabled=false;}
-            float before=tower.Health;
-            VisualFactory.Arrow(source.AimPoint,tower.AimPoint,tower,32,source.Team,source,AttackKind.Siege);
+            var source=battle.Units.First(u=>u.Team==0);
+            var target=battle.Units.First(u=>u.Team==1);
+            foreach(var unit in battle.Units.ToArray())if(unit!=source&&unit!=target){unit.enabled=false;if(unit.Agent)unit.Agent.enabled=false;}
+            source.enabled=false; if(source.Agent)source.Agent.enabled=false;
+            target.enabled=false; if(target.Agent)target.Agent.enabled=false;
+            float before=target.Health;
+            VisualFactory.Arrow(source.AimPoint,target.AimPoint,target,32,source.Team,source,AttackKind.Siege);
             Object.Destroy(source.gameObject);
             yield return new WaitForSecondsRealtime(.8f);
-            float expected=CombatRules.ResolveDamage(32,AttackKind.Siege,ArmorKind.Fortified,3);
-            Assert.That(tower.Health,Is.EqualTo(before-expected).Within(.001f));
+            float expected=CombatRules.ResolveDamage(32,AttackKind.Siege,target.ArmorType,target.Armor);
+            Assert.That(target.Health,Is.EqualTo(before-expected).Within(.001f));
             yield return new WaitForSecondsRealtime(.8f);
-            Assert.That(tower.Health,Is.EqualTo(before-expected).Within(.001f),"One projectile must resolve one hit.");
+            Assert.That(target.Health,Is.EqualTo(before-expected).Within(.001f),"One projectile must resolve one hit after its source is destroyed.");
         }
 
         [UnityTest]
         public IEnumerator TerrainBlocksTowerLineOfSightUntilRemoved()
         {
-            var tower=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital).Defense;
+            var town=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital&&t.Defender);
+            var tower=town.Defense;
+            var defender=town.Defender;
             var enemy=battle.Units.First(u=>u.Team==1);
             Assert.That(enemy.Agent.Warp(tower.transform.position+Vector3.forward*7),Is.True);
-            KeepOnly(enemy); enemy.enabled=false; if(enemy.Agent)enemy.Agent.enabled=false;
+            KeepOnly(enemy,defender); enemy.enabled=false; if(enemy.Agent)enemy.Agent.enabled=false;
             var wall=GameObject.CreatePrimitive(PrimitiveType.Cube);wall.name="LOS terrain wall";wall.layer=MapLayout.TerrainLayer;
             wall.transform.position=tower.transform.position+Vector3.forward*3.5f+Vector3.up*2;wall.transform.localScale=new Vector3(4,4,.5f);
             Physics.SyncTransforms();
@@ -111,14 +123,14 @@ namespace RiskAI.Tests
             Assert.That(tower.ShotsFired,Is.Zero,"Terrain must block tower fire.");
             Assert.That(enemy.Health,Is.EqualTo(before));
             Object.Destroy(wall);
-            yield return new WaitForSecondsRealtime(1.4f);
+            yield return new WaitForSecondsRealtime(1.8f);
             Assert.That(tower.ShotsFired,Is.GreaterThan(0));
             Assert.That(enemy.Health,Is.LessThan(before));
         }
 
-        void KeepOnly(Soldier survivor)
+        void KeepOnly(params Soldier[] survivors)
         {
-            foreach(var unit in battle.Units.ToArray())if(unit!=survivor)
+            foreach(var unit in battle.Units.ToArray())if(!survivors.Contains(unit))
             {
                 unit.enabled=false;if(unit.Agent)unit.Agent.enabled=false;
                 battle.Units.Remove(unit);battle.Targets.Remove(unit);

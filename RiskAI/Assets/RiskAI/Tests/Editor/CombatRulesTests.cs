@@ -40,9 +40,20 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void MortarUsesSiegeProfileAndLevelTwoQueueRules()
+        public void UphillMissChanceOnlyAppliesToPiercingAtTheThreshold()
         {
-            Assert.That(BattleRules.Cost(UnitKind.Mortar),Is.EqualTo(60));
+            Assert.That(CombatRules.UphillMissChance(AttackKind.Piercing, 2.49f), Is.Zero);
+            Assert.That(CombatRules.UphillMissChance(AttackKind.Piercing, 2.5f), Is.EqualTo(.25f));
+            Assert.That(CombatRules.UphillMissChance(AttackKind.Piercing, 9f), Is.EqualTo(.25f));
+            Assert.That(CombatRules.UphillMissChance(AttackKind.Normal, 9f), Is.Zero);
+            Assert.That(CombatRules.UphillMissChance(AttackKind.Siege, 9f), Is.Zero);
+            Assert.That(CombatRules.UphillMissChance(AttackKind.Magic, 9f), Is.Zero);
+        }
+
+        [Test]
+        public void MortarUsesSiegeProfileAndCanRecruitWithoutUpgrade()
+        {
+            Assert.That(BattleRules.Cost(UnitKind.Mortar),Is.EqualTo(3));
             Assert.That(BattleRules.TrainTime(UnitKind.Mortar),Is.EqualTo(6f));
             Assert.That(BattleRules.Health(UnitKind.Mortar),Is.EqualTo(350f));
             Assert.That(BattleRules.Speed(UnitKind.Mortar),Is.EqualTo(4.6f));
@@ -50,8 +61,7 @@ namespace RiskAI.Tests
             Assert.That(BattleRules.AttackInterval(UnitKind.Mortar),Is.EqualTo(3.5f));
             Assert.That(BattleRules.Range(UnitKind.Mortar),Is.EqualTo(18f));
             Assert.That(BattleRules.Ranged(UnitKind.Mortar),Is.True);
-            Assert.That(BattleRules.RequiredLevel(UnitKind.Mortar),Is.EqualTo(2));
-            Assert.That(BattleRules.Role(UnitKind.Mortar),Is.EqualTo("Asedio · contra fortificaciones"));
+            Assert.That(BattleRules.RequiredLevel(UnitKind.Mortar),Is.EqualTo(1));
             Assert.That(BattleRules.Hotkey(UnitKind.Mortar),Is.EqualTo("R"));
             Assert.That(BattleRules.Model(UnitKind.Mortar),Is.EqualTo("Mortar"));
         }

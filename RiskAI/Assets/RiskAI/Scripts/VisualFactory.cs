@@ -14,6 +14,19 @@ namespace RiskAI
         static ProjectilePool projectilePool;
         static ImpactPool impactPool;
         static Material ringMaterial;
+        static readonly AnimationCurve ringWidthProfile = BuildRingWidthProfile();
+
+        static AnimationCurve BuildRingWidthProfile()
+        {
+            var curve = new AnimationCurve();
+            for (int i = 0; i <= 16; i++)
+            {
+                float t = i / 16f;
+                float width = (i & 1) == 0 ? .76f : 1.08f;
+                curve.AddKey(new Keyframe(t, width, 0, 0));
+            }
+            return curve;
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetRuntimeState()
@@ -111,7 +124,7 @@ namespace RiskAI
         {
             if (impactPool != null) impactPool.Forget(pulse);
         }
-        public static Color TeamColor(int team) => team == 0 ? new Color(.17f,.55f,.95f) : team == 1 ? new Color(.85f,.22f,.19f) : new Color(.74f,.65f,.43f);
+        public static Color TeamColor(int team) => team == 0 ? new Color(.17f,.55f,.95f) : team == 1 ? new Color(.85f,.22f,.19f) : new Color(.96f,.91f,.72f);
         public static Material Mat(Color color)
         {
             if (Materials.TryGetValue(color, out var found) && found) return found;
@@ -130,6 +143,8 @@ namespace RiskAI
         {
             var go = new GameObject("Selection ring"); go.transform.SetParent(parent, false);
             var line = go.AddComponent<LineRenderer>(); line.useWorldSpace = false; line.loop = true; line.positionCount = 64;
+            line.numCornerVertices = 2; line.numCapVertices = 2; line.widthCurve = ringWidthProfile;
+            line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; line.receiveShadows = false;
             var template = Resources.Load<Material>("RiskAIRing");
             if (!ringMaterial)
                 ringMaterial = template ? template : new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Sprites/Default"));

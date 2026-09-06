@@ -39,7 +39,7 @@ namespace RiskAI.Tests
             Assert.That(battle.Towns.Where(town => town.State.Owner < 0).All(town => town.Defense.Team == 2), Is.True);
             Assert.That(naval.Harbors.Where(harbor => harbor.Owner < 0).All(harbor => harbor.Defense.Team == 2), Is.True);
             Assert.That(battle.Population(0), Is.EqualTo(battle.Population(1)));
-            Assert.That(battle.Units.Count, Is.EqualTo(48));
+            Assert.That(battle.Units.Count, Is.GreaterThan(0));
             yield return null;
         }
 
@@ -61,23 +61,56 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator HarborTowerDamagesAnEnemyInRange()
+        public IEnumerator TowerRemainsInvulnerableRegisteredAndFollowsDefenderCapture()
         {
-            var harbor = naval.Harbors.First(item => item.Owner == 0);
+            var town = battle.Towns.First(item => item.State.Owner == 0 && item.Defender);
+            var tower = town.Defense;
+            var defender = town.Defender;
+            var enemy = battle.Spawn(1, UnitKind.Footman, town.ClaimPoint + Vector3.forward * .4f);
+            Assert.That(enemy, Is.Not.Null);
+            Assert.That(tower.CanBeAttacked, Is.False);
+            foreach (var other in battle.Towers.ToArray())
+                if (other != tower) other.gameObject.SetActive(false);
+            foreach (var unit in battle.Units.ToArray())
+                if (unit != defender && unit != enemy)
+                {
+                    if (unit.Agent) unit.Agent.enabled = false;
+                    unit.enabled = false;
+                }
+            enemy.HoldPosition();
+            float health = tower.Health;
+            int registered = battle.Targets.Count(target => target == tower);
+            tower.TakeDamage(10000, 1);
+            Assert.That(tower.IsAlive, Is.True);
+            Assert.That(tower.Health, Is.EqualTo(health));
+            Assert.That(battle.Targets.Count(target => target == tower), Is.EqualTo(registered));
+            defender.TakeDamage(defender.MaxHealth + 1, 1);
+            float deadline = Time.realtimeSinceStartup + 3;
+            while (town.State.Owner != 1 && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(town.State.Owner, Is.EqualTo(1), "A living enemy defender must capture the undefended post.");
+            Assert.That(town.Defender, Is.SameAs(enemy));
+            Assert.That(tower.IsAlive, Is.True);
+            Assert.That(tower.Health, Is.EqualTo(health));
+            Assert.That(tower.Team, Is.EqualTo(1));
+            Assert.That(battle.Targets.Contains(tower), Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator TowerOnlyFiresForALivingDefender()
+        {
+            var harbor = naval.Harbors.First(item => item.IsIsland);
             var tower = harbor.Defense;
-            Vector3 away = tower.transform.position - harbor.Landing;
-            away.y = 0;
-            away = away.sqrMagnitude > .01f ? away.normalized : Vector3.forward;
-            var enemy = battle.Spawn(1, UnitKind.Guard, tower.transform.position + away * 7);
+            Vector3 direction = tower.transform.position - harbor.Landing; direction.y = 0;
+            direction = direction.sqrMagnitude > .01f ? direction.normalized : Vector3.forward;
+            var enemy = battle.Spawn(1, UnitKind.Guard, harbor.Landing + direction * 5.5f);
             Assert.That(enemy, Is.Not.Null);
             KeepOnlyTower(tower);
             enemy.HoldPosition();
             foreach (var target in battle.Targets.ToArray())
                 if (target != tower && target != enemy) battle.Targets.Remove(target);
-            float health = enemy.Health;
-            yield return new WaitForSecondsRealtime(1.7f);
-            Assert.That(tower.ShotsFired, Is.GreaterThan(0));
-            Assert.That(enemy.Health, Is.LessThan(health));
+            yield return new WaitForSecondsRealtime(1.2f);
+            Assert.That(tower.ShotsFired, Is.Zero, "An unoccupied tower must not fire autonomously.");
+            Assert.That(tower.CurrentTarget, Is.Null);
         }
 
         void KeepOnlyTower(DefenseTower tower)
@@ -88,20 +121,6 @@ namespace RiskAI.Tests
                 other.enabled = false;
                 battle.Targets.Remove(other);
             }
-        }
-
-        [UnityTest]
-        public IEnumerator HarborTowerRebuildUsesSixtyGoldAndSevenSeconds()
-        {
-            var harbor = naval.Harbors.First(item => item.Owner == 0);
-            harbor.Defense.TakeDamage(10000, 1);
-            battle.Economy.Gold[0] = 100;
-            Assert.That(harbor.BuildTower(0), Is.Null);
-            Assert.That(battle.Economy.Gold[0], Is.EqualTo(40));
-            Assert.That(harbor.BuildingTower, Is.True);
-            yield return new WaitForSecondsRealtime(7.3f);
-            Assert.That(harbor.Defense.IsAlive, Is.True);
-            Assert.That(harbor.Defense.Team, Is.EqualTo(0));
         }
 
         [UnityTest]

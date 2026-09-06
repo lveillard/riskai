@@ -1,25 +1,24 @@
-# RiskAI · proyecto Unity · v0.11
+# RiskAI · proyecto Unity · v0.12
 
-Abre esta carpeta desde Unity Hub con **6000.3.23f1**. La escena jugable es `Assets/RiskAI/Scenes/LasMarcas.unity`: abre la escena y pulsa Play.
+Unity **6000.3.23f1**. Escena: `Assets/RiskAI/Scenes/LasMarcas.unity`. **RiskAI > Build Windows prototype** genera `../Builds/Windows-v0.12/RiskAI.exe`; `Prepare playable scene` conserva configuración y materiales.
 
-El menú **RiskAI > Prepare playable scene** regenera la configuración de compilación. **RiskAI > Build Windows prototype** crea `../Builds/Windows-v0.11/RiskAI.exe`.
+## Límites del código
 
-## Código
+| Capa | Responsabilidad |
+| --- | --- |
+| `Scripts/Core/`, `RiskAI.Core.asmdef` | Reglas, perfiles, economía, RNG por semilla, reloj, comandos, clasificación de sucesores y reconocimiento de clic/arrastre. Sin UnityEngine. |
+| `BattleWorld`, `CombatWorld`, `BattleCommands` | Tick de 20 Hz, impactos por ID independientes de la vista y validación/aplicación de órdenes de infantería. |
+| `BattleSession`, `SkirmishCommander` | Ciclo de partida, registro, economía y política de IA separada. Defensa por amenazas y ofensivas con dificultad configurable. |
+| `Soldier`, `Settlement`, `CityClaimZone`, `DefenseTower` | Adaptadores Unity de unidades, colas y guarniciones. Torres permanentes vinculadas al propietario del puesto. |
+| `NavalWorld`, `Harbor`, `Ship`, `SeaNavigation` | Puertos independientes, flotas, carga, desembarcos y navegación marítima. Perfiles navales comunes con el HUD. |
+| `SpatialTargetIndex`, `SoldierPool`, efectos | Cuadrícula espacial y reutilización de soldados/proyectiles/impactos. |
+| `MapLayout`, `StrategicTerrain`, `TerrainHydrology` | Dos topologías, relieve, islas y río que comparte geometría con el tallado y los materiales. Cruces construidos antes del bake. |
+| `CountryCamp`, `TerritoryMarkers` | Hogueras de refuerzo, overlay de grupo bajo demanda y postes de propiedad. |
+| `RtsController`, `RtsCameraRig` | Input, selección y comandos; cámara con zoom anclado y arrastre independiente del dispositivo. |
+| `BattleHud`, `BattleMenu`, `WorldArt`, `VisualFactory` | Presentación. El HUD mantiene snapshot; menú en parcial separado. IMGUI sigue pendiente de migración. |
 
-- `Assets/RiskAI/Scripts/Core/BattleRules.cs`: reglas y economía en C# sin dependencia del motor. Perfiles de unidades en Core/ReforgedProfiles.cs; aquí se ajustan rondas y condiciones de victoria.
-- `MapLayout.cs`: alturas, países y 12 ciudades. `StrategicTerrain.cs`: mallas, costa, lagunas y bosques. `WorldLife.cs`: detalles ambientales. `RiskBootstrap.cs`: población inicial y construcción del NavMesh de Unity.
-- `BattleSession.cs`: partida, ingresos y victoria. `SkirmishCommander.cs`: decisiones de la IA; `Core/StartingAllocation.cs`: reparto determinista por semilla; `Core/CombatRules.cs`: ataques y armaduras según las columnas aplicables de Reforged.
-- `TerritoryMarkers.cs`: postes de países. `CliffDetails.cs`: afloramientos angulares; `Art/FirFoliage.shader`: ramas recortadas de abeto.
-- `Soldier.cs`: órdenes y combate; el desplazamiento y evitación usan `NavMeshAgent`.
-- `Settlement.cs`: captura y cola de reclutamiento.
-- `RtsController.cs`: Input System, selección, grupos y órdenes. `RtsCameraRig.cs`: cámara, zoom y arrastre.
-- `BattleHud.cs` y `VisualFactory.cs`: interfaz y gráficos provisionales.
+El bootstrap configura el mapa antes de generar sus superficies y hornear NavMesh. Cambiar mapa requiere iniciar otra partida. Los mapas aún se generan en runtime. `MapLayout.Configure` es global y asume una sola batalla activa.
 
-El prototipo incluye captura temporizada por guarnición y protección cercana en `CityClaimZone.cs` (ciudades y todos los puertos, incluidos los continentales), perfiles de combate de Saran en `Core/ReforgedProfiles.cs` y barcos en `Core/NavalProfiles.cs`, sanadores (`MedicSupport.cs`), IA tranquila y estadísticas visibles. `TerrainHydrology.cs` comparte una curva con el tallado del terreno y el agua. `NavalWorld`, `Harbor`, `Ship` y `SeaNavigation` controlan flotas, puertos, carga y rutas marítimas. Los modos siguen siendo Conquista y Capitales, con reparto aleatorio y economía por países. [Detalles y límites de la adaptación](../docs/ITERATION-v0.11.md).
+Pruebas puras en `Tests/Editor`; pruebas de escena real en `Tests/PlayMode`. CLI y controles en el [README principal](../README.md).
 
-Las pruebas de reglas están en `Tests/Editor`; las pruebas que montan y ejecutan una batalla están en `Tests/PlayMode`. Se ejecutan desde Test Runner o con la CLI indicada en el README del repositorio.
-
-Es una v0 local contra IA. El estado de simulación entra por `BattleWorld.Tick` a 20 Hz y las reglas puras viven en `RiskAI.Core`; los actores y el NavMesh siguen siendo adaptadores Unity, por lo que no se garantiza replay determinista. Antes de añadir multijugador habrá que definir autoridad y replicación de órdenes/estado. El mapa se genera al entrar en Play; la escena de edición contiene el componente de arranque.
-
-
-La entrada de simulación es `BattleWorld.Tick` (20 Hz). `Core/` tiene `RiskAI.Core.asmdef` sin referencias a Unity; los proyectos Runtime, Editor y tests lo referencian de forma explícita. `BattleCommands` recibe intenciones de infantería por ID; `CombatWorld` conserva los impactos aunque se elimine su vista. `SoldierPool`, `SpatialTargetIndex` y el snapshot del HUD evitan recrear objetos y agregados en las rutas principales. Los actores y NavMesh siguen siendo adaptadores Unity: [alcance real y siguientes cortes](../docs/ITERATION-v0.11.md).
+Tick fijo y RNG sembrado no garantizan replay determinista: `NavMeshAgent` sigue integrando movimiento por frame. La siguiente etapa de servidor autoritativo debe incorporar compras/naval al protocolo, separar el arranque de arte y replicar estado. Gestos táctiles y plataformas Web/Android aún no implementados. [Decisiones v0.12](../docs/ITERATION-v0.12.md) · [TODO](../TODO.md).

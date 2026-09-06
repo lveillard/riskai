@@ -31,12 +31,9 @@ Shader "RiskAI/PaintedSurface"
     float3 n=normalize(i.n);float3 weights=pow(abs(n),8);weights/=max(dot(weights,float3(1,1,1)),.0001);
     half3 c=Tile(i.w.zy*_Scale)*weights.x+Tile(i.w.xz*_Scale)*weights.y+Tile(i.w.xy*_Scale)*weights.z;
     c=lerp(c*_Tint.rgb,dot(c,half3(.2126,.7152,.0722))*_Tint.rgb*2.7,_Recolor);
-    float4 shadowCoord=TransformWorldToShadowCoord(i.w);
-    #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
-    shadowCoord=ComputeScreenPos(TransformWorldToHClip(i.w));
-    #endif
-    Light sun=GetMainLight(shadowCoord);
-    c*=half3(.40,.45,.48)+sun.color*saturate(dot(n,sun.direction))*lerp(.27,1,sun.shadowAttenuation)*.65;
+    Light sun=GetMainLight(TransformWorldToShadowCoord(i.w),i.w,half4(1,1,1,1));
+    float paintedShadow=lerp(.34,1,saturate(sun.shadowAttenuation));
+    c*=half3(.40,.45,.48)+sun.color*saturate(dot(n,sun.direction))*paintedShadow*.65;
     return half4(MixFog(c,i.fog),1);
    }
    ENDHLSL

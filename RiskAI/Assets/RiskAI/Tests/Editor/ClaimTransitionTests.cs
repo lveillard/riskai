@@ -3,43 +3,37 @@ using RiskAI.Core;
 
 namespace RiskAI.Tests
 {
-    public sealed class ClaimTransitionTests
+    public sealed class ClaimRulesTests
     {
         [Test]
-        public void ABlockedCandidateLosesAllProgress()
+        public void LivingOwnerUnitBeatsCloserEnemy()
         {
-            var transition = new ClaimTransition();
-
-            Assert.That(transition.Advance(7, 1, false, .9f), Is.False);
-            Assert.That(transition.Elapsed, Is.EqualTo(.9f).Within(.0001f));
-            Assert.That(transition.Advance(7, 1, true, .1f), Is.False);
-            Assert.That(transition.Elapsed, Is.Zero);
-            Assert.That(transition.CandidateId, Is.Zero);
-            Assert.That(transition.CandidateTeam, Is.EqualTo(-1));
-            Assert.That(transition.Advance(7, 1, false, ClaimRules.ConversionSeconds), Is.True);
+            Assert.That(
+                ClaimRules.BetterCandidate(0, 0, 16f, 12, 1, 1f, 3),
+                Is.True,
+                "A surviving owner unit protects the town before an opposing unit can replace it.");
         }
 
         [Test]
-        public void ReplacingTheCandidateRestartsTheTimer()
+        public void NearestEnemyWinsWhenNoOwnerUnitExists()
         {
-            var transition = new ClaimTransition();
-
-            Assert.That(transition.Advance(7, 1, false, .9f), Is.False);
-            Assert.That(transition.Advance(9, 1, false, .4f), Is.False);
-            Assert.That(transition.CandidateId, Is.EqualTo(9));
-            Assert.That(transition.Elapsed, Is.EqualTo(.4f).Within(.0001f));
-            Assert.That(transition.Advance(9, 1, false, .85f), Is.True);
+            Assert.That(ClaimRules.BetterCandidate(0, 1, 4f, 8, 1, 9f, 4), Is.True);
+            Assert.That(ClaimRules.BetterCandidate(0, 1, 10f, 8, 1, 9f, 4), Is.False);
         }
 
         [Test]
-        public void TheSameEligibleCandidateConvertsAtTheConfiguredDuration()
+        public void EqualDistanceUsesEntityIdForDeterministicSelection()
         {
-            var transition = new ClaimTransition();
+            Assert.That(ClaimRules.BetterCandidate(0, 1, 9f, 7, 1, 9f, 11), Is.True);
+            Assert.That(ClaimRules.BetterCandidate(0, 1, 9f, 13, 1, 9f, 11), Is.False);
+        }
 
-            Assert.That(transition.Advance(4, 0, false, ClaimRules.ConversionSeconds - .01f), Is.False);
-            Assert.That(transition.Progress, Is.LessThan(1));
-            Assert.That(transition.Advance(4, 0, false, .01f), Is.True);
-            Assert.That(transition.Progress, Is.EqualTo(1).Within(.0001f));
+        [Test]
+        public void EmptyOrInvalidCandidateCannotDisplaceAValidCandidate()
+        {
+            Assert.That(ClaimRules.BetterCandidate(0, 1, 1f, 0, 1, 2f, 5), Is.False);
+            Assert.That(ClaimRules.BetterCandidate(0, 1, float.NaN, 9, 1, 2f, 5), Is.False);
+            Assert.That(ClaimRules.BetterCandidate(0, 1, 2f, 5, 1, 2f, 0), Is.True);
         }
     }
 }

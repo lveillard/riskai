@@ -13,10 +13,12 @@ namespace RiskAI
         {
             // Read launch arguments once, so F1 can choose a different seed on a scene restart.
             var args=System.Environment.GetCommandLineArgs();
+            for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-map")BattleSession.ExpandedMapForNewMatch=args[a+1]=="riverlands";
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-seed" && int.TryParse(args[a+1],out int seed))BattleSession.SeedForNewMatch=seed;
         }
         void Awake()
         {
+            MapLayout.Configure(BattleSession.ExpandedMapForNewMatch);
             Application.targetFrameRate=120;WorldArt.ResetRoads();Shader.SetGlobalFloat("_RiskMapScale",MapLayout.Spacing);
             UnityEngine.InputSystem.InputSystem.settings.scrollDeltaBehavior=UnityEngine.InputSystem.InputSettings.ScrollDeltaBehavior.UniformAcrossAllPlatforms;
             var session=gameObject.AddComponent<BattleSession>();session.Initialize();var owners=session.StartingOwners();var capitals=new int[]{-1,-1};
@@ -30,6 +32,7 @@ namespace RiskAI
                 go.AddComponent<Settlement>().Initialize(session,city.Id,city.Name,owner,city.Region,capital,city.Country);
             }
             WorldArt.Cities(session.Towns);
+            TerrainHydrology.CreateCrossings(terrain.transform);
             var nav=terrain.AddComponent<NavMeshSurface>();nav.collectObjects=CollectObjects.Children;
             nav.useGeometry=NavMeshCollectGeometry.PhysicsColliders;nav.overrideVoxelSize=true;nav.voxelSize=.15f;nav.BuildNavMesh();
             foreach(var town in session.Towns)
@@ -43,12 +46,13 @@ namespace RiskAI
                 else for(int i=0;i<(town.IsCapital?14:2);i++)session.Spawn(town.State.Owner,i%4==0?UnitKind.Archer:UnitKind.Footman,town.transform.position+new Vector3((i%5-2)*.9f,0,(town.State.Owner==0?-1:1)*(6+(i/5)*.9f)));
             }
             WorldLife.Create(session,terrain.transform);
+            for(int c=0;c<MapLayout.Countries.Length;c++)session.Camps.Add(CountryCamp.Create(session,c,terrain.transform));
             TerritoryMarkers.Create(session,terrain.transform);
             var assignedGarrisons = new HashSet<Soldier>();
             foreach (var town in session.Towns) town.InitializeGarrison(session.Units, assignedGarrisons);
             NavalWorld.Create(session,terrain.transform);
             var cameraObject=new GameObject("RTS Camera");var camera=cameraObject.AddComponent<Camera>();cameraObject.tag="MainCamera";
-            camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=320;
+            camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=440;
             camera.transform.rotation=Quaternion.Euler(49,30,0);
             camera.backgroundColor=new Color(.035f,.075f,.13f);camera.clearFlags=CameraClearFlags.SolidColor;
             cameraObject.AddComponent<AudioListener>();
@@ -56,7 +60,7 @@ namespace RiskAI
             sun.transform.rotation=Quaternion.Euler(53,-38,0);sun.shadows=LightShadows.Soft;sun.shadowStrength=.95f;sun.shadowBias=.025f;sun.shadowNormalBias=.1f;
             RenderSettings.ambientMode=AmbientMode.Trilight;RenderSettings.ambientSkyColor=new Color(.43f,.53f,.68f);
             RenderSettings.ambientEquatorColor=new Color(.3f,.37f,.36f);RenderSettings.ambientGroundColor=new Color(.18f,.24f,.23f);
-            RenderSettings.fog=true;RenderSettings.fogColor=camera.backgroundColor;RenderSettings.fogMode=FogMode.Linear;RenderSettings.fogStartDistance=155;RenderSettings.fogEndDistance=280;
+            RenderSettings.fog=true;RenderSettings.fogColor=camera.backgroundColor;RenderSettings.fogMode=FogMode.Linear;RenderSettings.fogStartDistance=260;RenderSettings.fogEndDistance=420;
             var controller=gameObject.AddComponent<RtsController>();controller.Initialize(session,camera);controller.FocusHome();
             gameObject.AddComponent<BattleHud>().Initialize(session,controller,camera);
             session.Message(session.LayoutName+" · semilla "+session.Seed+". Completa países para cobrar y recibir refuerzos.");

@@ -39,10 +39,9 @@ namespace RiskAI
             {
                 float x=mainland[i]*MapLayout.Spacing,z=MapLayout.Coast(x);
                 var linked=linkedTowns[i];
-                AddHarbor("Puerto "+(linked?linked.DisplayName:"continental"),linked,null,LandPoint(x,z-4),new Vector3(x,-.24f,z+4));
+                AddHarbor(new[]{"Muelle del Oeste","Puerto del Pinar","Puerto del Paso","Dársena del Roble","Muelle del Este"}[i],linked,null,LandPoint(x,z-4),new Vector3(x,-.24f,z+4));
             }
-            AddIslandHarbor("Isla del Norte",-47,53,12,8);
-            AddIslandHarbor("Isla del Sur",-8,69,13,9);
+            for(int island=0;island<MapLayout.Islands.Length;island++){var c=MapLayout.Islands[island];AddIslandHarbor("Muelle insular "+(island+1),c.x,c.y,c.z,c.w);}
             foreach(var harbor in Harbors)if(!harbor.IsIsland)harbor.InitializeGarrison();
             for(int team=0;team<2;team++)
             {
@@ -58,7 +57,7 @@ namespace RiskAI
         void AddIslandHarbor(string name,float centerX,float centerZ,float radiusX,float radiusZ)
         {
             float x=centerX*MapLayout.Spacing,z=(centerZ-radiusZ)*MapLayout.Spacing;
-            var state=new TownState(name,-1,-1,-1);Session.Economy.Towns.Add(state);
+            var state=new TownState(name,-1,-1,-1);
             AddHarbor(name,null,state,LandPoint(x,z+4),new Vector3(x,-.24f,z-4));
         }
         void AddHarbor(string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)

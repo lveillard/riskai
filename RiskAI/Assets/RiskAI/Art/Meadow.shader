@@ -20,7 +20,8 @@ Shader "RiskAI/Meadow"
    TEXTURE2D(_Atlas); SAMPLER(sampler_Atlas);
    TEXTURE2D(_Biomes); SAMPLER(sampler_Biomes);
    TEXTURE2D(_Cliffs); SAMPLER(sampler_Cliffs);
-   float4 _RiskCities[12];
+   float4 _RiskCities[32];
+   int _RiskCityCount;
    #include "MapSurface.hlsl"
    struct A {float4 p:POSITION;float3 n:NORMAL;};
    struct V {float4 p:SV_POSITION;float3 w:TEXCOORD0;half fog:TEXCOORD1;float3 n:TEXCOORD2;float river:TEXCOORD3;};
@@ -35,7 +36,10 @@ Shader "RiskAI/Meadow"
     float2 p=i.w.xz,b=p/max(1,_RiskMapScale);float3 n=normalize(i.n);
     float noise=Noise(p*.42);
     half3 grass=Tile(p*.26,float2(0,.5))*half3(1.20,1.95,.98);
-    grass*=lerp(.91,1.16,Noise(p*.055));
+    // Keep the variation in world space so it stays anchored while the camera pans.
+    float meadowMacro=Noise(p*.055);
+    grass*=lerp(.91,1.16,meadowMacro);
+    grass*=lerp(.978,1.022,.5+.5*sin(p.x*.023+p.y*.031));
     half3 dry=Biome(p*.21,float2(0,0))*half3(.74,.89,.59);
     float meadow=smoothstep(.59,.8,Noise(b*.061+13))*.42;
     half3 color=lerp(grass,dry,meadow);
@@ -51,7 +55,8 @@ Shader "RiskAI/Meadow"
     color=lerp(color,dirt,wet*.82);
     color=lerp(color,RockTile(p*.25,float2(.5,0))*half3(.78,1.02,.70),woodland*.64);
     float court=0;
-    for(int c=0;c<12;c++){float d=length((p-_RiskCities[c].xy)*float2(1,.94));court=max(court,1-smoothstep(2.0,4.6,d+(noise-.5)*1.6));}
+    int cityCount=_RiskCityCount>0?min(_RiskCityCount,32):12;
+    for(int c=0;c<32;c++){if(c>=cityCount)break;float d=length((p-_RiskCities[c].xy)*float2(1,.94));court=max(court,1-smoothstep(2.0,4.6,d+(noise-.5)*1.6));}
     color=lerp(color,dirt,court*.75);
     float highland=smoothstep(2.9,6,i.w.y)*smoothstep(5,25,b.x);
     float bare=highland*smoothstep(.41,.7,Noise(b*.09+22));
@@ -70,12 +75,11 @@ Shader "RiskAI/Meadow"
     float2 weights=pow(abs(n.xz),4);weights/=max(weights.x+weights.y,.001);
     half3 wall=RockTile(i.w.zy*.13,float2(0,.5))*weights.x+RockTile(i.w.xy*.13,float2(0,.5))*weights.y;
     color=lerp(color,wall*half3(.93,.98,1.02),cliff);
-    float4 shadowCoord=TransformWorldToShadowCoord(i.w);
-    #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
-    shadowCoord=ComputeScreenPos(TransformWorldToHClip(i.w));
-    #endif
-    Light sun=GetMainLight(shadowCoord);
-    color*=half3(.36,.41,.43)+sun.color*saturate(dot(n,sun.direction))*lerp(.13,1,sun.shadowAttenuation)*.78;
+    // Let the installed URP helper select the screen/cascade representation so
+    // terrain receivers use the same coordinate path as the shadow pass.
+    Light sun=GetMainLight(TransformWorldToShadowCoord(i.w),i.w,half4(1,1,1,1));
+    float terrainShadow=lerp(.24,1,saturate(sun.shadowAttenuation));
+    color*=half3(.36,.41,.43)+sun.color*saturate(dot(n,sun.direction))*terrainShadow*.78;
     return half4(MixFog(color,i.fog),1);
    }
    ENDHLSL
