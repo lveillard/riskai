@@ -11,7 +11,9 @@ namespace RiskAI
         public static float HalfDepth { get; private set; }
         public static bool IsExpanded { get; private set; }
         public static string MapName => IsExpanded ? "Cuatro Riberas" : "Las Marcas";
-        public static readonly int[] MainlandHarborX = { -58, -32, -7, 20, 43 };
+        static readonly int[] ClassicMainlandHarborX = { -58, -37, -3, 20, 43 };
+        static readonly int[] ExpandedMainlandHarborX = { -58, -32, -7, 20, 43 };
+        public static int[] MainlandHarborX => IsExpanded ? ExpandedMainlandHarborX : ClassicMainlandHarborX;
 
         // Shared by port placement and vegetation, before the ports exist in the scene.
         public static Vector3 MainlandHarborLanding(int index)
@@ -44,9 +46,9 @@ namespace RiskAI
         public static City[] Towns { get; private set; }
 
         static readonly Country[] ClassicCountries = {
-            new Country("Marca del Alba",0,UnitKind.Footman,2), new Country("Valdeluz",0,UnitKind.Archer,1),
-            new Country("Paso del Rey",1,UnitKind.Footman,2), new Country("Ribera Gris",1,UnitKind.Mage,1),
-            new Country("Las Atalayas",2,UnitKind.Guard,1), new Country("Ceniza",2,UnitKind.Footman,2)
+            new Country("Marca del Alba",0,UnitKind.Archer,1), new Country("Valdeluz",0,UnitKind.Archer,1),
+            new Country("Paso del Rey",1,UnitKind.Archer,1), new Country("Ribera Gris",1,UnitKind.Archer,1),
+            new Country("Las Atalayas",2,UnitKind.Archer,1), new Country("Ceniza",2,UnitKind.Archer,1)
         };
         static readonly Vector2[] ClassicPads = { new(-38,-12),new(-47,12),new(-21,5),new(-23,30),new(-2,24),new(8,3),new(1,-18),new(28,30),new(43,9),new(38,-25),new(20,-39),new(-24,-34) };
         static readonly Vector4[] ClassicIslands = { new(-47,53,12,8),new(-8,69,13,9) };
@@ -58,17 +60,19 @@ namespace RiskAI
         static readonly Vector2[] ExpandedPads = {
             new(-54,-58),new(-52,-25),new(-50,10),new(-46,42), new(-26,-58),new(-25,-24),new(-24,10),new(-20,45),
             new(18,-60),new(20,-26),new(19,11),new(23,45), new(48,-55),new(46,-20),new(45,15),new(42,45),
-            new(-50,84),new(-21,90),new(-3,90),new(30,91)
+            new(-50,92),new(-21,98),new(-3,98),new(30,99)
         };
-        static readonly Vector4[] ExpandedIslands = { new(-50,83,10,7),new(-12,90,18,10),new(30,90,10,7) };
+        // Extend islands northward, retaining the south coast/berths. Independent
+        // city and port garrisons must not start inside each other's tower range.
+        static readonly Vector4[] ExpandedIslands = { new(-50,87,10,11),new(-12,96,18,16),new(30,94,10,11) };
         static readonly Vector2[][] ExpandedCliffs = {
             new[]{new Vector2(-61,8),new Vector2(-55,-4),new Vector2(-42,-8),new Vector2(-32,-2),new Vector2(-28,10),new Vector2(-32,25),new Vector2(-43,32),new Vector2(-56,28)},
             new[]{new Vector2(29,7),new Vector2(34,-4),new Vector2(48,-7),new Vector2(61,2),new Vector2(59,20),new Vector2(51,32),new Vector2(36,28),new Vector2(27,17)}
         };
         static readonly Country[] ExpandedCountries = {
-            new Country("Marca Occidental",0,UnitKind.Footman,2,new Vector3(-54 * Spacing,0,-58 * Spacing)), new Country("Cuenca del Río",1,UnitKind.Archer,1,new Vector3(-25 * Spacing,0,-24 * Spacing)),
-            new Country("Altos Centrales",2,UnitKind.Guard,1,new Vector3(20 * Spacing,0,-26 * Spacing)), new Country("Frontera Oriental",3,UnitKind.Mage,1,new Vector3(46 * Spacing,0,-20 * Spacing)),
-            new Country("Archipiélago Norte",4,UnitKind.Footman,2,new Vector3(-16 * Spacing,0,90 * Spacing))
+            new Country("Marca Occidental",0,UnitKind.Archer,2,new Vector3(-54 * Spacing,0,-58 * Spacing)), new Country("Cuenca del Río",1,UnitKind.Archer,2,new Vector3(-25 * Spacing,0,-24 * Spacing)),
+            new Country("Altos Centrales",2,UnitKind.Archer,2,new Vector3(20 * Spacing,0,-26 * Spacing)), new Country("Frontera Oriental",3,UnitKind.Archer,2,new Vector3(46 * Spacing,0,-20 * Spacing)),
+            new Country("Archipiélago Norte",4,UnitKind.Archer,2,new Vector3(-16 * Spacing,0,90 * Spacing))
         };
 
         static MapLayout() { Configure(false); }
@@ -109,7 +113,7 @@ namespace RiskAI
                 new City("river-01","Puerta del Río",-26,-58,0,1,1),new City("river-02","Molino del Río",-25,-24,0,1,1),new City("river-03","Vado del Río",-24,10,1,1,1),new City("river-04","Ribera Alta",-20,45,1,1,1),
                 new City("high-01","Bastión Central",18,-60,0,2,2),new City("high-02","Loma Central",20,-26,0,2,2),new City("high-03","Paso Central",19,11,1,2,2),new City("high-04","Atalaya Central",23,45,1,2,2),
                 new City("east-01","Puerta Oriental",48,-55,0,3,3),new City("east-02","Cantera Oriental",46,-20,0,3,3),new City("east-03","Vigía Oriental",45,15,1,3,3),new City("east-04","Cresta Oriental",42,45,1,3,3),
-                new City("isle-01","Isla del Roble",-50,84,0,4,4),new City("isle-02","Isla del Viento",-21,90,0,4,4),new City("isle-03","Isla del Faro",-3,90,1,4,4),new City("isle-04","Isla del Alba",30,91,1,4,4)
+                new City("isle-01","Isla del Roble",-50,92,0,4,4),new City("isle-02","Isla del Viento",-21,98,0,4,4),new City("isle-03","Isla del Faro",-3,98,1,4,4),new City("isle-04","Isla del Alba",30,99,1,4,4)
             };
         }
         public static float Coast(float x)

@@ -31,13 +31,24 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator StartingGarrisonsUseExistingUnitsOncePerTown()
+        public IEnumerator StartingPostsHaveOneUniqueArcherGarrison()
         {
-            Assert.That(battle.Units.Count, Is.EqualTo(48));
-            Assert.That(battle.Towns.All(town => town.Defender), Is.True, string.Join(", ",battle.Towns.Where(t=>!t.Defender).Select(t=>t.DisplayName+" @ "+t.ClaimPoint)));
-            Assert.That(battle.Towns.Select(town => town.Defender).Distinct().Count(), Is.EqualTo(battle.Towns.Count));
             var naval = NavalWorld.Current;
-            Assert.That(naval.Harbors.Where(harbor => harbor.IsIsland).All(harbor => harbor.Defender == null), Is.True);
+            var posts = battle.Towns.Select(town => new { Name = town.DisplayName, Owner = town.State.Owner, Defender = town.Defender })
+                .Concat(naval.Harbors.Select(harbor => new { Name = harbor.DisplayName, Owner = harbor.Owner, Defender = harbor.Defender }))
+                .ToArray();
+            Assert.That(posts.Length, Is.EqualTo(19));
+            Assert.That(battle.Units.Count, Is.EqualTo(posts.Length));
+            Assert.That(posts.All(post => post.Defender), Is.True, string.Join(", ", posts.Where(post => !post.Defender).Select(post => post.Name)));
+            Assert.That(posts.Select(post => post.Defender).Distinct().Count(), Is.EqualTo(posts.Length));
+            foreach (var post in posts)
+            {
+                Assert.That(post.Defender.Kind, Is.EqualTo(UnitKind.Archer));
+                Assert.That(post.Defender.IsGarrison, Is.True);
+                Assert.That(post.Defender.Team, Is.EqualTo(post.Owner >= 0 ? post.Owner : 2));
+            }
+            Assert.That(naval.Ships, Is.Empty);
+            Assert.That(battle.Units.All(unit => unit.IsGarrison), Is.True);
             yield return null;
         }
 
@@ -45,7 +56,7 @@ namespace RiskAI.Tests
         public IEnumerator EnemyOutsideTakeoverRadiusDoesNotChangeOwner()
         {
             var town = battle.Towns.First(t => t.State.Owner < 0);
-            var attacker = battle.Units.First(unit => unit && unit.Team == 0 && unit != town.Defender);
+            var attacker = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, battle.Towns.First(t => t.State.Owner == 0).Rally);
             DisableAllTowers();
             town.Defender.TakeDamage(10000, 0);
             Move(attacker, OutsideTakeoverPoint(town.ClaimPoint));
@@ -62,13 +73,15 @@ namespace RiskAI.Tests
             DisableAllTowers();
             var neutralDefender = town.Defender;
             neutralDefender.TakeDamage(10000, 0);
-            var attacker = battle.Units.First(unit => unit && unit.Team == 0);
+            var attacker = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, battle.Towns.First(t => t.State.Owner == 0).Rally);
             float health = attacker.Health;
             Move(attacker, town.ClaimPoint);
             MoveOtherTeamUnitsOutsideProtection(town, attacker);
             IsolateClaimCombat(attacker);
-            yield return null;
-            yield return null;
+            long tick = battle.Clock.TickCount;
+            float deadline = Time.realtimeSinceStartup + 2;
+            while (battle.Clock.TickCount == tick && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(battle.Clock.TickCount, Is.GreaterThan(tick), "Capture is applied on a simulation tick, not after an arbitrary two rendered frames.");
             Assert.That(town.State.Owner, Is.EqualTo(0));
             Assert.That(town.Defender, Is.SameAs(attacker));
             Assert.That(attacker.Health, Is.EqualTo(health));
@@ -88,7 +101,7 @@ namespace RiskAI.Tests
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
             var defender = town.Defender;
-            var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != defender);
+            var attacker = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, battle.Towns.First(t => t.State.Owner == 1).Rally);
             DisableAllTowers();
             Move(attacker, town.ClaimPoint);
             MoveOtherTeamUnitsOutsideProtection(town, attacker);
@@ -106,8 +119,8 @@ namespace RiskAI.Tests
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
             var defender = town.Defender;
-            var ally = battle.Units.First(unit => unit && unit.Team == 0 && unit != defender);
-            var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != defender);
+            var ally = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, town.Rally);
+            var attacker = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, battle.Towns.First(t => t.State.Owner == 1).Rally);
             DisableAllTowers();
             defender.TakeDamage(10000, 1);
             MoveOwnerUnitsOutsideProtection(town, 0);
@@ -130,7 +143,7 @@ namespace RiskAI.Tests
         public IEnumerator EnemyOutsideProtectionRadiusDoesNotContestLivingDefender()
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
-            var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != town.Defender);
+            var attacker = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, battle.Towns.First(t => t.State.Owner == 1).Rally);
             Move(attacker, town.ClaimPoint + Vector3.right * 7f);
             Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(0));
             Assert.That(town.ClaimZone.Contested, Is.False);
@@ -141,7 +154,7 @@ namespace RiskAI.Tests
         public IEnumerator EnemyOutsideClaimCircleWithinProtectionHeightContestsLivingDefender()
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
-            var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != town.Defender);
+            var attacker = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, battle.Towns.First(t => t.State.Owner == 1).Rally);
             Move(attacker, town.ClaimPoint + Vector3.right * 2f);
             MoveOtherTeamUnitsOutsideProtection(town, attacker);
             attacker.transform.position += Vector3.up;
@@ -158,8 +171,8 @@ namespace RiskAI.Tests
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
             var defender = town.Defender;
-            var ally = battle.Units.First(unit => unit && unit.Team == 0 && unit != defender);
-            var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != defender);
+            var ally = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, town.Rally);
+            var attacker = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, battle.Towns.First(t => t.State.Owner == 1).Rally);
             DisableAllTowers();
             town.Defense.CompleteBuild();
             float towerHealth = town.Defense.Health;
@@ -184,12 +197,13 @@ namespace RiskAI.Tests
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
             var defender = town.Defender;
-            var ally = battle.Units.First(unit => unit && unit.Team == defender.Team && unit != defender);
+            var ally = BattleTestScenario.Mobile(battle, defender.Team, UnitKind.Footman, town.Rally);
             var position = defender.transform.position;
             defender.MoveTo(position + Vector3.right * 5f, false, false);
             defender.Stop();
             defender.Follow(ally);
-            var transport = NavalWorld.Current.Ships.First(ship => ship.Team == defender.Team && ship.Kind == ShipKind.Transport);
+            var harbor = NavalWorld.Current.Harbors.First(port => port.Owner == defender.Team);
+            var transport = BattleTestScenario.Ship(NavalWorld.Current, defender.Team, ShipKind.Transport, harbor.Berth);
             Assert.That(transport.TryEmbark(defender), Is.False);
             Assert.That(defender.IsGarrison, Is.True);
             Assert.That(defender.transform.position, Is.EqualTo(position));

@@ -47,7 +47,7 @@ namespace RiskAI.Tests
         public IEnumerator NeutralTowerDoesNotFireAtNeutralSoldiers()
         {
             var tower = battle.Towns.First(town => town.State.Owner < 0).Defense;
-            var neutral = battle.Units.First(unit => unit && unit.Team == 2);
+            var neutral = BattleTestScenario.Mobile(battle, 2, UnitKind.Footman, tower.transform.position + Vector3.forward * 6);
             Assert.That(tower.Team, Is.EqualTo(2));
             KeepOnlyTower(tower);
             Assert.That(NavMesh.SamplePosition(tower.transform.position + Vector3.forward * 6, out var hit, 10, NavMesh.AllAreas), Is.True);
@@ -66,8 +66,7 @@ namespace RiskAI.Tests
             var town = battle.Towns.First(item => item.State.Owner == 0 && item.Defender);
             var tower = town.Defense;
             var defender = town.Defender;
-            var enemy = battle.Spawn(1, UnitKind.Footman, town.ClaimPoint + Vector3.forward * .4f);
-            Assert.That(enemy, Is.Not.Null);
+            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, town.ClaimPoint + Vector3.forward * .4f);
             Assert.That(tower.CanBeAttacked, Is.False);
             foreach (var other in battle.Towers.ToArray())
                 if (other != tower) other.gameObject.SetActive(false);
@@ -100,10 +99,11 @@ namespace RiskAI.Tests
         {
             var harbor = naval.Harbors.First(item => item.IsIsland);
             var tower = harbor.Defense;
+            harbor.ClaimZone.SetDefender(null);
+            harbor.State.Owner = -1;
             Vector3 direction = tower.transform.position - harbor.Landing; direction.y = 0;
             direction = direction.sqrMagnitude > .01f ? direction.normalized : Vector3.forward;
-            var enemy = battle.Spawn(1, UnitKind.Guard, harbor.Landing + direction * 5.5f);
-            Assert.That(enemy, Is.Not.Null);
+            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Guard, harbor.Landing + direction * 5.5f);
             KeepOnlyTower(tower);
             enemy.HoldPosition();
             foreach (var target in battle.Targets.ToArray())

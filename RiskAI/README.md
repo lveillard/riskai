@@ -1,6 +1,6 @@
-# RiskAI · proyecto Unity · v0.12
+# RiskAI · proyecto Unity · v0.13
 
-Unity **6000.3.23f1**. Escena: `Assets/RiskAI/Scenes/LasMarcas.unity`. **RiskAI > Build Windows prototype** genera `../Builds/Windows-v0.12/RiskAI.exe`; `Prepare playable scene` conserva configuración y materiales.
+Unity **6000.3.23f1**. Escena: `Assets/RiskAI/Scenes/LasMarcas.unity`. **RiskAI > Build Windows prototype** genera `../Builds/Windows-v0.13/RiskAI.exe`; `Prepare playable scene` conserva configuración y materiales.
 
 ## Límites del código
 
@@ -21,4 +21,4 @@ El bootstrap configura el mapa antes de generar sus superficies y hornear NavMes
 
 Pruebas puras en `Tests/Editor`; pruebas de escena real en `Tests/PlayMode`. CLI y controles en el [README principal](../README.md).
 
-Tick fijo y RNG sembrado no garantizan replay determinista: `NavMeshAgent` sigue integrando movimiento por frame. La siguiente etapa de servidor autoritativo debe incorporar compras/naval al protocolo, separar el arranque de arte y replicar estado. Gestos táctiles y plataformas Web/Android aún no implementados. [Decisiones v0.12](../docs/ITERATION-v0.12.md) · [TODO](../TODO.md).
+Tick fijo y RNG sembrado no garantizan replay determinista: `NavMeshAgent` sigue integrando movimiento por frame. La siguiente etapa de servidor autoritativo debe incorporar compras/naval al protocolo, separar el arranque de arte y replicar estado. Gestos táctiles y plataformas Web/Android aún no implementados. [Decisiones v0.13](../docs/ITERATION-v0.13.md) · [TODO](../TODO.md).

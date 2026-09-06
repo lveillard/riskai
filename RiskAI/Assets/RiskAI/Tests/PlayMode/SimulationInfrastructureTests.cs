@@ -38,8 +38,8 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator PauseFreezesSimulationWithoutChangingTimeScale()
         {
-            var mover = battle.Units.First(u => u && u.Team == 0 && !u.IsGarrison);
-            var victim = battle.Units.First(u => u && u.Team == 2);
+            var mover = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, new Vector3(-30, 0, -16));
+            var victim = BattleTestScenario.Mobile(battle, 2, UnitKind.Footman, new Vector3(-24, 0, -16));
             StopBackgroundUnits(mover, victim);
             victim.enabled = false;
             mover.MoveTo(mover.transform.position + mover.transform.forward * 8, false, false);
@@ -77,7 +77,7 @@ namespace RiskAI.Tests
         public IEnumerator SoldierPoolReusesIdentityWithFreshStateAndRejectsOldProjectileTarget()
         {
             battle.Combat.PresentationEnabled = false;
-            var victim = battle.Units.First(u => u && u.Team == 0 && !u.IsGarrison);
+            var victim = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, new Vector3(-30, 0, -16));
             StopBackgroundUnits(victim, null);
             int oldEntityId = victim.EntityId;
             GameObject oldObject = victim.gameObject;
@@ -110,8 +110,8 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator BattleCommandsValidateOwnershipFiniteValuesGarrisonsDeferredAndStaleIds()
         {
-            var unit = battle.Units.First(u => u && u.Team == 0 && !u.IsGarrison);
-            var stale = battle.Units.First(u => u && u.Team == 0 && !u.IsGarrison && u != unit);
+            var unit = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, new Vector3(-30, 0, -16));
+            var stale = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, new Vector3(-29, 0, -16));
             var garrison = battle.Units.FirstOrDefault(u => u && u.Team == 0 && u.IsGarrison);
             Assert.That(garrison, Is.Not.Null);
             StopBackgroundUnits(unit, stale);
@@ -164,9 +164,8 @@ namespace RiskAI.Tests
             Assert.That(candidates.Count, Is.EqualTo(index.LastCandidateCount));
             Assert.That(nearby.IsSubsetOf(candidates), Is.True, "Every precise nearby target must be in the broadphase candidate set.");
 
-            var enemy = battle.Units.First(u => u && u.Team == 1 && !u.IsGarrison);
-            var attackers = battle.Units.Where(u => u && u.Team == 0 && !u.IsGarrison).Take(3).ToArray();
-            Assert.That(attackers.Length, Is.GreaterThan(0));
+            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, center + Vector3.forward * 2);
+            var attackers = BattleTestScenario.MobileArmy(battle, 0, UnitKind.Archer, 3, center + Vector3.back * 2);
             for (int i = 0; i < attackers.Length; i++) attackers[i].Attack(enemy);
             foreach (var unit in battle.Units)
                 if (unit && unit != enemy && !attackers.Contains(unit)) unit.enabled = false;

@@ -29,8 +29,8 @@ namespace RiskAI
                 Label(r.x+30,r.y+388,200,"SEMILLA",RtsSkin.Small);
                 seedText=GUI.TextField(new Rect(r.x+255,r.y+382,280,35),seedText,11);
                 if(Button(new Rect(r.x+551,r.y+382,150,35),"Otra semilla")){BattleSession.NewSeed();seedText=BattleSession.SeedForNewMatch.ToString();}
-                Label(r.x+30,r.y+443,820,"CONQUISTA · controla el 60 % de las ciudades. Sin victoria por capital.",RtsSkin.Small);
-                Label(r.x+30,r.y+477,820,"Sucesión: aliado cercano, enemigo más próximo o edificio neutral.",RtsSkin.Small);
+                Label(r.x+30,r.y+443,820,"CONQUISTA · controla el 60 % de las ciudades.",RtsSkin.Small);
+                Label(r.x+30,r.y+477,820,"Empiezas con 4 de oro y un defensor por puesto. Compra tu primera tropa en una ciudad.",RtsSkin.Small);
                 Label(r.x+30,r.y+511,820,"Pulsa una hoguera para ver su grupo y dónde aparecen sus refuerzos.",RtsSkin.Small);
                 if(Button(new Rect(r.x+590,r.y+595,300,54),"EMPEZAR PARTIDA"))StartMatch();
             }

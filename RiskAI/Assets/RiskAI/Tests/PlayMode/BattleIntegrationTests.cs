@@ -69,11 +69,10 @@ namespace RiskAI.Tests
             }
             var coastPoint=new Vector3(0,0,MapLayout.Coast(0)+4);
             Assert.That(NavMesh.SamplePosition(coastPoint,out _,.5f,NavMesh.AllAreas),Is.False,"The coast test point must remain off the walkable NavMesh.");
-            var blueHome=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital);var army=battle.Units.Where(u=>u.Team==0&&Vector3.Distance(u.transform.position,blueHome.transform.position)<8).Take(14).ToList();
+            var blueHome=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital);var army=BattleTestScenario.MobileArmy(battle,0,UnitKind.Footman,8,blueHome.Rally).ToList();
             var field=blueHome.transform.position+Vector3.back*10;BattleSession.GiveFormation(army,field,false,false);
             yield return new WaitForSeconds(4);
-            Assert.That(army.Count,Is.GreaterThanOrEqualTo(8),"The local starting force remains usable after allocating garrisons and three dock troops.");
-            Assert.That(army.Count(u=>Vector3.Distance(u.transform.position,field)<6),Is.GreaterThanOrEqualTo(army.Count-1),"The selected local formation must reach the destination; only one crowd-avoidance straggler is allowed.");
+            Assert.That(army.Count(u=>Vector3.Distance(u.transform.position,field)<6),Is.GreaterThanOrEqualTo(army.Count-1),"The explicit test formation must reach the destination; only one crowd-avoidance straggler is allowed.");
         }
         [UnityTest] public IEnumerator RecruitmentPaysOnceAndPauseStopsSimulation()
         {
@@ -86,7 +85,7 @@ namespace RiskAI.Tests
         }
         [UnityTest] public IEnumerator ArmyDefeatsGuardsAndCapturesNeutralTown()
         {
-            var town=battle.Towns.First(t=>t.State.Owner<0);var army=battle.Units.Where(u=>u.Team==0).ToList();
+            var town=battle.Towns.First(t=>t.State.Owner<0);var army=BattleTestScenario.MobileArmy(battle,0,UnitKind.Footman,10,battle.Towns.First(t=>t.State.Owner==0).Rally).ToList();
             for(int i=0;i<army.Count;i++)army[i].Agent.Warp(town.transform.position+new Vector3((i%5-2)*1.2f,0,7+i/5));
             BattleSession.GiveFormation(army,town.ClaimPoint,true,false);
             float deadline=Time.time+35;while(town.State.Owner!=0&&Time.time<deadline)yield return null;
@@ -96,8 +95,8 @@ namespace RiskAI.Tests
         }
         [UnityTest] public IEnumerator StopEngagesWhileHoldAndMoveRespectTheirOrders()
         {
-            var foot=battle.Units.First(u=>u.Team==0&&u.Kind==UnitKind.Footman);
-            var enemy=battle.Units.First(u=>u.Team==1&&u.Kind==UnitKind.Footman);
+            var foot=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,new Vector3(-30,0,-16));
+            var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,new Vector3(-25,0,-16));
             Assert.That(foot.Agent.Warp(new Vector3(-30,0,-16)),Is.True);Assert.That(enemy.Agent.Warp(new Vector3(-25,0,-16)),Is.True);enemy.HoldPosition();
             Assert.That(NavMesh.Raycast(foot.transform.position,enemy.transform.position,out _,NavMesh.AllAreas),Is.False,"Test opponents must have a clear line across the town clearing.");
             foot.HoldPosition();yield return new WaitForSeconds(.5f);
@@ -109,8 +108,8 @@ namespace RiskAI.Tests
         }
         [UnityTest] public IEnumerator AttackMoveResumesAfterKillingItsTarget()
         {
-            var archer=battle.Units.First(u=>u.Team==0&&u.Kind==UnitKind.Archer&&!u.IsGarrison);
-            var enemy=battle.Units.First(u=>u.Team==1&&u.Kind==UnitKind.Footman&&!u.IsGarrison);
+            var archer=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,new Vector3(-30,0,-16));
+            var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,new Vector3(-29,0,-21));
             archer.Agent.Warp(new Vector3(-30,0,-16));enemy.Agent.Warp(new Vector3(-29,0,-21));enemy.HoldPosition();enemy.TakeDamage(enemy.MaxHealth-5,0);
             archer.MoveTo(new Vector3(-30,0,-30),true,false);
             yield return new WaitForSeconds(5.5f);
@@ -178,7 +177,7 @@ namespace RiskAI.Tests
         }
         [UnityTest] public IEnumerator EnemyPickingAcceptsClicksOutsideTheNarrowCollider()
         {
-            var target=battle.Units.First(u=>u.Team==1);target.Agent.Warp(new Vector3(-20,0,-5));target.HoldPosition();
+            var target=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,new Vector3(-20,0,-5));target.Agent.Warp(new Vector3(-20,0,-5));target.HoldPosition();
             yield return null;var bounds=RtsPicking.Bounds(Camera.main,target);
             var pointer=new Vector2(bounds.xMin-7,bounds.center.y);
             Assert.That(RtsPicking.Target(battle,Camera.main,pointer,-1),Is.EqualTo(target),"Clicks near the visible silhouette should acquire the enemy.");
@@ -203,18 +202,20 @@ namespace RiskAI.Tests
         }
         [UnityTest] public IEnumerator FormationPlacesMeleeBeforeRanged()
         {
-            var spawnedGuard=battle.Spawn(0,UnitKind.Guard,new Vector3(-20,0,-12));
-            Assert.That(spawnedGuard,Is.Not.Null);
-            var units=battle.Units.Where(u=>u.Team==0&&!u.IsGarrison).GroupBy(u=>u.Kind).Select(g=>g.First()).ToArray();
+            var spawnedArcher=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,new Vector3(-20,0,-12));
+            var spawnedGuard=BattleTestScenario.Mobile(battle,0,UnitKind.Guard,new Vector3(-18.8f,0,-12));
+            var units=new[]{spawnedArcher,spawnedGuard};
             Assert.That(units.Select(u=>u.Kind),Does.Contain(UnitKind.Archer));
             Assert.That(units.Select(u=>u.Kind),Does.Contain(UnitKind.Guard));
             for(int i=0;i<units.Length;i++){Assert.That(units[i].Agent.Warp(new Vector3(-20+i*1.2f,0,-12)),Is.True);units[i].Stop();}
+            var forward = new Vector3(-20,0,0) - (units[0].transform.position+units[1].transform.position)*.5f;
+            forward.y=0;forward.Normalize();
             BattleSession.GiveFormation(units,new Vector3(-20,0,0),false,false);
             float deadline=Time.realtimeSinceStartup+2;
             while(battle.Commands.PendingCount>0&&Time.realtimeSinceStartup<deadline)yield return null;
             Assert.That(battle.Commands.PendingCount,Is.Zero,"Formation commands must be applied by the next simulation tick.");
             var archer=units.First(u=>u.Kind==UnitKind.Archer);var guard=units.First(u=>u.Kind==UnitKind.Guard);
-            Assert.That(guard.Agent.destination.z,Is.GreaterThan(archer.Agent.destination.z),"Melee must occupy the leading formation row.");
+            Assert.That(Vector3.Dot(guard.Agent.destination-archer.Agent.destination,forward),Is.GreaterThan(.75f),"Even a two-unit squad needs melee ahead of ranged along its travel direction.");
             yield return null;
         }
         [UnityTest] public IEnumerator SettingRallyLeavesSettlementPositionUnchanged()
@@ -228,14 +229,16 @@ namespace RiskAI.Tests
             Assert.That(rallyObject.position,Is.EqualTo(hit.position));
             yield return null;
         }
-        [UnityTest] public IEnumerator CountryReinforcementsUseLivingFiveWaveCapAndReplenishAfterRoundSix()
+        [UnityTest] public IEnumerator CountryReinforcementsUseArcherWavesAndReplenishToTheTenPointCapAfterRoundSix()
         {
             var countryTowns = battle.Towns.Where(t => t.State.Country == 0).ToArray();
             Assert.That(countryTowns.Length, Is.EqualTo(2));
             foreach (var town in countryTowns) town.State.Owner = 0;
             battle.SendMessage("CountryReinforcements"); yield return null;
-            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.EqualTo(2));
-            for (int wave = 0; wave < 4; wave++) battle.SendMessage("CountryReinforcements");
+            var firstWave = battle.Units.Where(u => u && u.Team == 0 && u.OriginCountry == 0).ToArray();
+            Assert.That(firstWave.Length, Is.EqualTo(1));
+            Assert.That(firstWave.All(unit => unit.Kind == UnitKind.Archer), Is.True);
+            for (int wave = 0; wave < 9; wave++) battle.SendMessage("CountryReinforcements");
             Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.EqualTo(10));
             battle.Economy.Advance(BattleRules.RoundSeconds * 7);
             Assert.That(battle.Economy.Round, Is.GreaterThan(6));

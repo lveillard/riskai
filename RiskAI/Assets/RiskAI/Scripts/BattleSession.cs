@@ -167,9 +167,19 @@ namespace RiskAI
             Vector3 forward=point-center;forward.y=0;forward=forward.sqrMagnitude>.01f?forward.normalized:Vector3.forward;
             Vector3 right=new Vector3(forward.z,0,-forward.x);
             int columns = Mathf.CeilToInt(Mathf.Sqrt(count));
+            int meleeCount = 0;
+            foreach (var unit in remaining) if (!BattleRules.Ranged(unit.Kind)) meleeCount++;
+            int meleeRows = Mathf.CeilToInt((float)meleeCount / columns);
+            int rows = meleeRows + Mathf.CeilToInt((float)(count - meleeCount) / columns);
             for (int i = 0; i < count; i++)
             {
-                var offset = right*(i % columns - (columns - 1) * .5f)*1.4f + forward*((Mathf.CeilToInt((float)count / columns)-1)*.5f-i/columns)*1.4f;
+                // Keep a separate front and rear row even for a two-unit squad.
+                // Filling one shared row put melee beside ranged, not ahead.
+                int groupIndex = i < meleeCount ? i : i - meleeCount;
+                int groupCount = i < meleeCount ? meleeCount : count - meleeCount;
+                int row = groupIndex / columns + (i < meleeCount ? 0 : meleeRows);
+                int rowWidth = Mathf.Min(columns, groupCount - groupIndex / columns * columns);
+                var offset = right*(groupIndex % columns - (rowWidth - 1) * .5f)*1.4f + forward*((rows-1)*.5f-row)*1.4f;
                 var slot=point+offset;
                 int best=0;
                 for(int j=1;j<remaining.Count;j++)

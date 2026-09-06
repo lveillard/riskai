@@ -39,7 +39,8 @@ namespace RiskAI.Tests
             battle.AiEnabled = true;
             var defended = battle.Towns.First(t => t.State.Owner == 1 && !t.IsCapital);
             var neutral = battle.Towns.First(t => t.State.Owner < 0);
-            var marching = battle.Units.Where(u => u && u.Team == 1 && !u.IsGarrison).Take(2).ToArray();
+            var mobileForce = BattleTestScenario.MobileArmy(battle, 1, UnitKind.Footman, 4, defended.Rally);
+            var marching = mobileForce.Take(2).ToArray();
             Assert.That(marching.Length, Is.EqualTo(2));
 
             Vector3 far = Sample(defended.transform.position + Vector3.forward * 24);
@@ -55,9 +56,9 @@ namespace RiskAI.Tests
                 unit.MoveTo(neutral.ClaimPoint, true, false);
             }
 
-            var raider = battle.Spawn(0, UnitKind.Footman, Sample(defended.ClaimPoint + Vector3.forward * 8));
-            Assert.That(raider, Is.Not.Null);
-            raider.HoldPosition();
+            var raiders = BattleTestScenario.MobileArmy(battle, 0, UnitKind.Footman, 5,
+                Sample(defended.ClaimPoint + Vector3.forward * 3));
+            foreach (var raider in raiders) raider.HoldPosition();
             long commandsBefore = battle.Commands.AppliedCount;
 
             float deadline = Time.realtimeSinceStartup + 3;

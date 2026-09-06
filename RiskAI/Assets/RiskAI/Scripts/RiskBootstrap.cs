@@ -35,21 +35,17 @@ namespace RiskAI
             TerrainHydrology.CreateCrossings(terrain.transform);
             var nav=terrain.AddComponent<NavMeshSurface>();nav.collectObjects=CollectObjects.Children;
             nav.useGeometry=NavMeshCollectGeometry.PhysicsColliders;nav.overrideVoxelSize=true;nav.voxelSize=.15f;nav.BuildNavMesh();
+            var assignedGarrisons = new HashSet<Soldier>();
             foreach(var town in session.Towns)
             {
                 town.SetRally(MapLayout.Point(town.Rally.x,town.Rally.z));
-                if(town.State.Owner<0)
-                {
-                    session.Spawn(2,UnitKind.Footman,town.transform.position+new Vector3(-1.9f,0,2.5f));
-                    session.Spawn(2,UnitKind.Archer,town.transform.position+new Vector3(1.9f,0,2.5f));
-                }
-                else for(int i=0;i<(town.IsCapital?14:2);i++)session.Spawn(town.State.Owner,i%4==0?UnitKind.Archer:UnitKind.Footman,town.transform.position+new Vector3((i%5-2)*.9f,0,(town.State.Owner==0?-1:1)*(6+(i/5)*.9f)));
+                // Saran creates one h00B at each circle, including neutral posts.
+                session.Spawn(town.State.Owner>=0?town.State.Owner:2,UnitKind.Archer,town.ClaimPoint);
+                town.InitializeGarrison(session.Units,assignedGarrisons);
             }
             WorldLife.Create(session,terrain.transform);
             for(int c=0;c<MapLayout.Countries.Length;c++)session.Camps.Add(CountryCamp.Create(session,c,terrain.transform));
             TerritoryMarkers.Create(session,terrain.transform);
-            var assignedGarrisons = new HashSet<Soldier>();
-            foreach (var town in session.Towns) town.InitializeGarrison(session.Units, assignedGarrisons);
             NavalWorld.Create(session,terrain.transform);
             var cameraObject=new GameObject("RTS Camera");var camera=cameraObject.AddComponent<Camera>();cameraObject.tag="MainCamera";
             camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=440;
@@ -64,6 +60,7 @@ namespace RiskAI
             var controller=gameObject.AddComponent<RtsController>();controller.Initialize(session,camera);controller.FocusHome();
             gameObject.AddComponent<BattleHud>().Initialize(session,controller,camera);
             session.Message(session.LayoutName+" · semilla "+session.Seed+". Completa países para cobrar y recibir refuerzos.");
+            session.Message("Un ballestero por puesto. Recluta tu primera tropa en una ciudad aliada.");
         }
     }
 }

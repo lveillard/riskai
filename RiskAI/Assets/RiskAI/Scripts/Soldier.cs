@@ -215,6 +215,7 @@ namespace RiskAI
         void Fight()
         {
             float distance = Vector3.Distance(transform.position, target.ApproachPoint(transform.position));
+            bool visible = Visible(target);
             if(distance<BattleRules.MinimumRange(Kind))
             {
                 if(mode==OrderMode.Hold){target=null;Agent.isStopped=false;return;}
@@ -227,7 +228,7 @@ namespace RiskAI
                 }
                 return;
             }
-            if (distance <= BattleRules.Range(Kind) && Visible(target))
+            if (distance <= BattleRules.Range(Kind) && visible)
             {
                 Agent.isStopped = true;
                 Vector3 direction = target.transform.position - transform.position; direction.y = 0;
@@ -243,8 +244,31 @@ namespace RiskAI
             else if (strikeAt < 0 && session.BattleTime >= nextPath)
             {
                 nextPath = session.BattleTime + .16f; Agent.isStopped = false;
-                Agent.stoppingDistance = Mathf.Max(.15f, BattleRules.Range(Kind) * .76f);
-                Agent.SetDestination(target.ApproachPoint(transform.position));
+                // End a clear ranged approach at the firing position itself.
+                // A large stoppingDistance around the enemy is only a braking
+                // radius: long NavMesh frames can still carry us deep inside it.
+                var approach = target.ApproachPoint(transform.position);
+                if (BattleRules.Ranged(Kind) && visible)
+                {
+                    float range = BattleRules.Range(Kind);
+                    var probe = approach + (transform.position - approach).normalized * (range - .2f);
+                    if (NavMesh.SamplePosition(probe, out var firing, .75f, NavMesh.AllAreas) &&
+                        Vector3.Distance(firing.position, approach) <= range &&
+                        Vector3.Distance(firing.position, approach) >= BattleRules.MinimumRange(Kind) &&
+                        !NavMesh.Raycast(transform.position, firing.position, out _, NavMesh.AllAreas) &&
+                        !Physics.Linecast(firing.position + Vector3.up * 1.05f, target.AimPoint,
+                            1 << MapLayout.TerrainLayer, QueryTriggerInteraction.Ignore))
+                    {
+                        Agent.stoppingDistance = .05f;
+                        Agent.SetDestination(firing.position);
+                        return;
+                    }
+                }
+                // An obstructed firing position still requires following the
+                // target's path to find a reachable point with line of sight.
+                Agent.stoppingDistance = Mathf.Max(.15f, BattleRules.Ranged(Kind) && visible
+                    ? BattleRules.Range(Kind) - .12f : BattleRules.Range(Kind) * .76f);
+                Agent.SetDestination(approach);
             }
         }
         void Travel()

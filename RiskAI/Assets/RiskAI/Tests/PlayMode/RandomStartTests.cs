@@ -10,6 +10,31 @@ namespace RiskAI.Tests
 {
     public sealed class RandomStartTests
     {
+        [UnityTest]
+        public IEnumerator ClassicStartingGuardsCannotShootOtherStartingPosts()
+        {
+            yield return LoadLayout(BattleSession.StartLayout.RandomCities, 701);
+            Assert.That(MapLayout.IsExpanded, Is.False);
+            var guards = battle.Units.ToArray();
+            Assert.That(guards.Length, Is.EqualTo(19));
+            foreach (var tower in battle.Towers)
+                foreach (var guard in guards)
+                {
+                    bool ownGuard = battle.Towns.Any(t => t.Defense == tower && t.Defender == guard) ||
+                        battle.Naval.Harbors.Any(h => h.Defense == tower && h.Defender == guard);
+                    if (ownGuard) continue;
+                    Assert.That(Vector3.Distance(tower.transform.position, guard.transform.position),
+                        Is.GreaterThan(ReforgedProfiles.CapturableTower.Range), tower.HostName);
+                }
+            foreach (var guard in guards)
+                foreach (var other in guards)
+                    if (guard != other)
+                        Assert.That(Vector3.Distance(guard.transform.position, other.transform.position),
+                            Is.GreaterThan(BattleRules.Range(UnitKind.Archer)));
+            yield return new WaitForSecondsRealtime(3);
+            Assert.That(guards.All(g => g && g.IsAlive && g.Health == g.MaxHealth), Is.True);
+            Assert.That(battle.Towers.All(t => t.ShotsFired == 0), Is.True);
+        }
         Scene previous, active;
         BattleSession battle;
         RtsController controller;
@@ -36,7 +61,16 @@ namespace RiskAI.Tests
                 Assert.That(battle.Towns.Count(t => t.State.Owner < 0), Is.EqualTo(expectedNeutral));
                 Assert.That(battle.StartingOwners(), Is.EqualTo(battle.Towns.Select(t => t.State.Owner).ToArray()));
 
-                Assert.That(battle.Units.Count, Is.EqualTo(48));
+                var posts = battle.Towns.Select(town => new { Owner = town.State.Owner, Defender = town.Defender })
+                    .Concat(NavalWorld.Current.Harbors.Select(harbor => new { Owner = harbor.Owner, Defender = harbor.Defender }))
+                    .ToArray();
+                Assert.That(posts.Length, Is.EqualTo(19));
+                Assert.That(battle.Units.Count, Is.EqualTo(posts.Length));
+                Assert.That(posts.All(post => post.Defender && post.Defender.Kind == UnitKind.Archer && post.Defender.IsGarrison), Is.True);
+                Assert.That(posts.All(post => post.Defender.Team == (post.Owner >= 0 ? post.Owner : 2)), Is.True);
+                Assert.That(posts.Select(post => post.Defender).Distinct().Count(), Is.EqualTo(posts.Length));
+                Assert.That(battle.Units.All(unit => unit.IsGarrison), Is.True);
+                Assert.That(NavalWorld.Current.Ships, Is.Empty);
                 Assert.That(battle.Units.All(u => u != null && u.Agent != null && u.Agent.isOnNavMesh), Is.True,
                     "Every bootstrap unit must be placed on the gameplay NavMesh.");
 
@@ -94,6 +128,7 @@ namespace RiskAI.Tests
 
         IEnumerator LoadLayout(BattleSession.StartLayout layout, int seed)
         {
+            BattleSession.ExpandedMapForNewMatch = false;
             BattleSession.ModeForNewMatch = BattleSession.VictoryMode.Conquest;
             BattleSession.LayoutForNewMatch = layout;
             BattleSession.SeedForNewMatch = seed;

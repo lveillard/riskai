@@ -1,12 +1,12 @@
-# RiskAI · v0.12
+# RiskAI · v0.13
 
 Prototipo RTS de conquista por ciudades, inspirado en los mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP, partida local contra IA y arte propio/CC0.
 
 Abre **Play-RiskAI.cmd** para jugar la compilación local. El menú permite elegir escenario, reparto, semilla y dificultad antes de empezar. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`. Las compilaciones y las referencias de Warcraft quedan fuera de Git.
 
-Esta versión añade **Cuatro Riberas**, hogueras seleccionables, edificios permanentes, sucesión de guarniciones, defensa reactiva de la IA y economía en la escala de Saran v3. [Cambios y límites](docs/ITERATION-v0.12.md) · [Fuentes de las reglas](docs/RISK-RULES-v0.12.md) · [Validación: 97 pruebas](docs/VALIDATION-v0.12.md) · [Pendientes](TODO.md).
+Esta versión alinea la apertura con Saran v3: **un ballestero por puesto, sin ejércitos ni barcos gratuitos**. La IA recluta desde esa misma economía y los grupos completos refuerzan con ballesteros. [Cambios y límites](docs/ITERATION-v0.13.md) · [Fuentes de las reglas](docs/RISK-RULES-v0.12.md) · [Validación](docs/VALIDATION-v0.13.md) · [Pendientes](TODO.md).
 
-![Cuatro Riberas: río central, puente y fronteras con postes](docs/images/v0.12-river.png)
+![Cuatro Riberas v0.13: un defensor por círculo y reclutamiento desde la ciudad](docs/images/v0.13-city.png)
 
 ## Escenarios
 
@@ -19,13 +19,15 @@ Los postes indican fronteras y propietario. Selecciona una **hoguera** para most
 
 ## Primera partida y reglas
 
-**Ciudades al azar** reparte la mitad de las ciudades a cada bando mediante una semilla. Ambos reciben 4 de oro, una fragata y un transporte. Hay 24 soldados por bando en Las Marcas y 32 en Cuatro Riberas, contando guarniciones. La cantidad móvil depende de los puestos ocupados. También puedes empezar por grupos completos o posiciones fijas. La base inicial solo sirve de referencia para la cámara y despliegue.
+**Ciudades al azar** reparte la mitad de las ciudades a cada bando mediante una semilla. Los puertos tienen su propio reparto equilibrado; un puesto sobrante queda neutral. Cada ciudad y puerto, también los neutrales, empieza con **un ballestero retenido en su círculo**. No hay tropas móviles ni barcos gratuitos. Las Marcas tiene 19 puestos: 9 defensores por bando y 1 neutral con este reparto; Cuatro Riberas tiene 28: 14 por bando. Ambos jugadores reciben 4 de oro.
+
+Para empezar, selecciona una ciudad azul (**F2**) y compra un ballestero (**W**) o espadachín (**Q**). La tropa entrenada puede salir a conquistar; **E** selecciona las tropas móviles. Los barcos se compran en un puerto azul (**F3**). También puedes elegir grupos completos o posiciones fijas; en esos modos habrá más ciudades neutrales. La base inicial sirve de referencia para la cámara y el despliegue.
 
 Cada ciudad y puerto tiene un círculo con un defensor retenido. Conserva su tipo, salud y capacidad de ataque; no puede marcharse ni embarcar. Al morir, el aliado elegible más próximo dentro de 4,43 unidades asume la defensa; si no hay aliado, lo hace el enemigo más próximo dentro de 6. Sin candidato, el edificio queda neutral. Se excluyen tropas de otra guarnición y de otra altura. El círculo mide 1,55 de radio; la sucesión se resuelve en el siguiente tick, sin espera adicional.
 
 Las **torres son permanentes** y cambian con el edificio. Para tomar una posición, elimina al defensor y sus relevos cercanos. Una torre ocupada dispara 81–88 de daño perforante cada 0,9 s, con alcance 13. Es un ajuste local de defensa; el búnker original de Saran tiene otros valores, conservados y documentados por separado. Daño final según tipo de ataque, coraza y armadura. Los proyectiles perforantes tienen 25 % de fallo al subir al menos 2,5 unidades; este umbral local evita penalizar pequeñas ondulaciones.
 
-Cada 60 s recibes **4 de base + 1 por ciudad de un grupo totalmente controlado**. Los grupos fragmentados no aportan ingreso de ciudades. Los grupos completos generan su tanda de refuerzos, limitada a cinco puntos de unidades vivas por ciudad del grupo. Perder una ciudad suspende nuevas tandas e ingresos; las bajas liberan capacidad. Las recompensas de combate acumulan un cuarto del valor de puntos de la víctima, conservando fracciones hasta completar oro.
+Cada 60 s recibes **4 de base + 1 por ciudad de un grupo totalmente controlado**. Los grupos fragmentados no aportan ingreso de ciudades. Los grupos completos generan ballesteros: uno por ronda en los grupos de dos ciudades de Las Marcas, dos en los de cuatro de Cuatro Riberas. La cantidad sigue `ceil(ciudades / 2)`; está limitada a cinco puntos de unidades vivas por ciudad del grupo. La tanda aparece de una vez: el goteo del script original sigue pendiente. Perder una ciudad suspende nuevas tandas e ingresos; las bajas liberan capacidad. Las recompensas de combate acumulan un cuarto del valor de puntos de la víctima, conservando fracciones hasta completar oro.
 
 | Unidad | Oro | Vida | Función |
 | --- | ---: | ---: | --- |
@@ -74,7 +76,7 @@ Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. Escena: `Assets/RiskAI/S
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
 .\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
-.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.12/RiskAI.exe
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.13/RiskAI.exe
 ```
 
 Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map riverlands` (o `classic`). [Estructura del código](RiskAI/README.md).
@@ -85,4 +87,4 @@ Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; lo
 
 Saran Reforged v3 es la referencia de reglas principal; New World es otra variante, y las capturas de Rome no equivalen a disponer de su código. Los escenarios actuales son originales: no son una importación de sus coordenadas. [Auditoría v0.12](docs/RISK-RULES-v0.12.md), [mapas y posiciones](docs/RISK-MAPS-v0.10.md), [datos heredados](docs/REFORGED-BASE-STATS-v0.9.md) y [lecciones de World Editor para el terreno](docs/WORLD-EDITOR-TERRAIN.md).
 
-El juego distribuye arte propio y KayKit CC0. No incluye modelos, texturas, sonidos, discos ni claves de Warcraft. [Créditos y licencias](THIRD_PARTY_NOTICES.md). El prototipo web descartado y los mapas de investigación están en referencias locales ignoradas; `data/` contiene bocetos, mientras los perfiles efectivos siguen en C#.
+El juego distribuye arte propio y KayKit CC0. No incluye modelos, texturas, sonidos, discos ni claves de Warcraft. [Créditos y licencias](THIRD_PARTY_NOTICES.md). El prototipo web descartado y los mapas de investigación están en referencias locales ignoradas; `data/derived/` contiene coordenadas y procedencia para futuras importaciones; los perfiles efectivos siguen en C#. El antiguo `data/rules.json` está retirado y remite a esas fuentes, sin duplicar estadísticas.

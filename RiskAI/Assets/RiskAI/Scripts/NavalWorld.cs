@@ -23,42 +23,30 @@ namespace RiskAI
             Session=session;session.Naval=this;Current=this;nextAi=session.AiFirstNavalOffensiveTime;
             int[] mainland=MapLayout.MainlandHarborX;
             var linkedTowns=mainland.Select(x=>Session.Towns.OrderBy(t=>FlatDistance(t.transform.position,new Vector3(x*MapLayout.Spacing,0,MapLayout.Coast(x*MapLayout.Spacing)))).FirstOrDefault()).ToArray();
-            // Guarantee a starting port using the authored, well-spaced harbor sites.
-            // Extra docks beside neutral towers used to trigger combat before the AI grace period.
-            for(int team=0;team<2;team++)
-            {
-                if(linkedTowns.Any(t=>t&&t.State.Owner==team))continue;
-                var home=Session.Towns.Where(t=>t.State.Owner==team).OrderBy(t=>MapLayout.Coast(t.transform.position.x)-t.transform.position.z).FirstOrDefault();
-                if(!home)continue;
-                int index=Enumerable.Range(0,mainland.Length)
-                    .Where(i=>!linkedTowns[i]||linkedTowns[i].State.Owner<0||linkedTowns.Count(t=>t&&t.State.Owner==linkedTowns[i].State.Owner)>1)
-                    .OrderBy(i=>Mathf.Abs(mainland[i]*MapLayout.Spacing-home.transform.position.x)).First();
-                linkedTowns[index]=home;
-            }
+            // Ports are independent posts. Give each side the same number and leave
+            // an odd remainder neutral, without compensating with free mobile troops.
+            int[] portOwners=StartingAllocation.Generate(session.Seed^0x504f5254,
+                new int[mainland.Length+MapLayout.Islands.Length],2,StartingAllocationMode.IndividualCities).CityOwners;
             for(int i=0;i<mainland.Length;i++)
             {
                 float x=mainland[i]*MapLayout.Spacing,z=MapLayout.Coast(x);
                 var linked=linkedTowns[i];
-                AddHarbor(new[]{"Muelle del Oeste","Puerto del Pinar","Puerto del Paso","Dársena del Roble","Muelle del Este"}[i],linked,null,MapLayout.MainlandHarborLanding(i),new Vector3(x,-.24f,z+4));
+                string name=new[]{"Muelle del Oeste","Puerto del Pinar","Puerto del Paso","Dársena del Roble","Muelle del Este"}[i];
+                AddHarbor(name,linked,new TownState(name,portOwners[i],-1,-1),MapLayout.MainlandHarborLanding(i),new Vector3(x,-.24f,z+4));
             }
-            for(int island=0;island<MapLayout.Islands.Length;island++)AddIslandHarbor("Muelle insular "+(island+1),island);
-            foreach(var harbor in Harbors)if(!harbor.IsIsland)harbor.InitializeGarrison();
-            for(int team=0;team<2;team++)
+            for(int island=0;island<MapLayout.Islands.Length;island++)
+                AddIslandHarbor("Muelle insular "+(island+1),island,portOwners[mainland.Length+island]);
+            foreach(var harbor in Harbors)
             {
-                var port=Harbors.FirstOrDefault(h=>h.Owner==team);
-                if(!port)continue;
-                Spawn(team,ShipKind.Transport,port.Berth);
-                var outward=port.Berth-port.Landing;outward.y=0;
-                if(SeaNavigation.TryNearestOcean(port.Berth+outward.normalized*5+Vector3.right*4,6,out var sea))Spawn(team,ShipKind.Galley,sea);
-                int i=0;foreach(var unit in session.Units.Where(u=>u.Team==team&&!u.IsGarrison).OrderBy(u=>FlatDistance(u.transform.position,port.Landing)).Take(3))
-                {if(UnityEngine.AI.NavMesh.SamplePosition(port.Landing+new Vector3(i++-1,0,-1),out var hit,5,UnityEngine.AI.NavMesh.AllAreas)){unit.Agent.Warp(hit.position);unit.Stop();}}
+                session.Spawn(harbor.Owner>=0?harbor.Owner:2,UnitKind.Archer,harbor.Landing);
+                harbor.InitializeGarrison();
             }
         }
-        void AddIslandHarbor(string name,int island)
+        void AddIslandHarbor(string name,int island,int owner)
         {
             var site=MapLayout.Islands[island];
             float x=site.x*MapLayout.Spacing,z=(site.y-site.w)*MapLayout.Spacing;
-            var state=new TownState(name,-1,-1,-1);
+            var state=new TownState(name,owner,-1,-1);
             AddHarbor(name,null,state,MapLayout.IslandHarborLanding(island),new Vector3(x,-.24f,z-4));
         }
         void AddHarbor(string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
@@ -83,10 +71,26 @@ namespace RiskAI
         {
             int count=0;foreach(var harbor in Harbors)count+=harbor.PendingCount(team);return count;
         }
+        public int AiSavingsTarget
+        {
+            get
+            {
+                if (!Session || Session.BattleTime < Session.AiFirstNavalOffensiveTime || PendingShips(1) > 0) return 0;
+                foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == 1) return 0;
+                foreach (var harbor in Harbors) if (harbor.Owner == 1) return Harbor.Cost(ShipKind.Galley);
+                return 0;
+            }
+        }
         public void Message(string message){if(Session)Session.Message(message);}
         public void SimTick(float delta)
         {
             if(!Session||Session.Paused||Session.Winner>=0||!Session.AiEnabled||Session.BattleTime<nextAi)return;nextAi=Session.BattleTime+18;
+            int fleet = PendingShips(1);
+            foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == 1) fleet++;
+            // No free starting fleet: pay through the same port queue as the player.
+            if (fleet < 2 && Session.Economy.Gold[1] >= Harbor.Cost(ShipKind.Galley))
+                foreach (var harbor in Harbors)
+                    if (harbor.Owner == 1 && harbor.QueueCount == 0 && harbor.Buy(ShipKind.Galley, 1) == null) break;
             foreach(var ship in Ships)if(ship&&ship.Team==1&&ship.Kind==ShipKind.Galley&&!ship.CurrentTarget)
             {
                 var target=Harbors.Where(h=>h.Owner==0).OrderBy(h=>FlatDistance(h.Berth,ship.transform.position)).FirstOrDefault();

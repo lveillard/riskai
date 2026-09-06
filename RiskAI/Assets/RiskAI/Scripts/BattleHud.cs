@@ -68,7 +68,7 @@ namespace RiskAI
             DrawWorld();
             RtsSkin.Frame(new Rect(0, 0, width, 48));
             Label(22, 7, 270, "RISKAI · DOMINIOS", RtsSkin.Title);
-            Label(23, 30, 235, "V0.12 · "+MapLayout.MapName.ToUpperInvariant(), RtsSkin.Tiny);
+            Label(23, 30, 235, "V"+Application.version+" · "+MapLayout.MapName.ToUpperInvariant(), RtsSkin.Tiny);
             Label(270, 13, 180, hud.Gold + " ORO  +" + hud.Income + "/RONDA", RtsSkin.Small);
             Label(455, 13, 150, hud.Population0 + " TROPAS / IA " + hud.Population1, RtsSkin.Small);
             Label(610, 13, 155, "RONDA " + hud.Round + " · " + Mathf.CeilToInt(BattleRules.RoundSeconds - hud.RoundElapsed) + " s", RtsSkin.Small);
@@ -249,10 +249,11 @@ namespace RiskAI
             }
             if(target is DefenseTower tower)
             {
+                var profile = ReforgedProfiles.CapturableTower;
                 Label(253,bottom+23,590,"TORRE DE GUARDIA",RtsSkin.Title);
-                Label(253,bottom+61,590,Mathf.CeilToInt(tower.Health)+" / 550 vida · fortificada · armadura 3",RtsSkin.Small);
-                Label(253,bottom+95,590,"51–58 daño perforante cada 1,5 s · alcance 8,5",RtsSkin.Small);
-                Label(253,bottom+129,590,"Vulnerable al asedio. El mortero dispara desde más lejos.",RtsSkin.Small);
+                Label(253,bottom+61,590,"Permanente · cambia de bando con su guarnición",RtsSkin.Small);
+                Label(253,bottom+95,590,profile.MinimumDamage+"–"+profile.MaximumDamage+" daño perforante cada "+profile.Cooldown+" s · alcance "+profile.Range,RtsSkin.Small);
+                Label(253,bottom+129,590,"Ataca al defensor del círculo para conquistar el edificio.",RtsSkin.Small);
                 return;
             }
             if (!(target is Soldier unit)) return;

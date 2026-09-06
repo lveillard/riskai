@@ -62,6 +62,11 @@ namespace RiskAI.Tests
         public IEnumerator ImpactViewsReuseTheirBoundedPool()
         {
             StopBackgroundCombat(null, null);
+            // Existing simulation projectiles can still resolve after their owners are
+            // disabled. Let those unscaled presentation views drain before measuring
+            // this pool's allocation count.
+            yield return new WaitForSecondsRealtime(1f);
+            Assert.That(VisualFactory.ActiveImpactViewCount, Is.Zero);
             Color color = new Color(.52f, .71f, .96f);
             for (int i = 0; i < 24; i++) VisualFactory.Impact(new Vector3(300 + i, 0, 300), color, .2f);
             yield return null;

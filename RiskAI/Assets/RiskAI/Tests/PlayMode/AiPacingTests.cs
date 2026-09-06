@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
+using RiskAI.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -29,7 +30,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator RelaxedDelaysRecruitmentAndKeepsStartingResourcesAndRosterEqual()
+        public IEnumerator RelaxedDelaysRecruitmentAndKeepsTheOneArcherPerPostStart()
         {
             battle.AiEnabled = true;
             int startingGold = battle.Economy.Gold[1];
@@ -37,8 +38,16 @@ namespace RiskAI.Tests
             Assert.That(battle.Difficulty, Is.EqualTo(BattleSession.AiDifficulty.Relaxed));
             Assert.That(battle.Economy.Gold[0], Is.EqualTo(battle.Economy.Gold[1]));
             Assert.That(battle.Population(0), Is.EqualTo(battle.Population(1)));
-            Assert.That(battle.Units.Count, Is.EqualTo(48));
-            Assert.That(NavalWorld.Current.Ships.Count(s => s && s.Team == 0), Is.EqualTo(NavalWorld.Current.Ships.Count(s => s && s.Team == 1)));
+            var posts = battle.Towns.Select(town => new { Owner = town.State.Owner, Defender = town.Defender })
+                .Concat(NavalWorld.Current.Harbors.Select(harbor => new { Owner = harbor.Owner, Defender = harbor.Defender }))
+                .ToArray();
+            Assert.That(posts.Length, Is.EqualTo(19));
+            Assert.That(battle.Units.Count, Is.EqualTo(posts.Length));
+            Assert.That(posts.All(post => post.Defender && post.Defender.Kind == UnitKind.Archer && post.Defender.IsGarrison), Is.True);
+            Assert.That(posts.All(post => post.Defender.Team == (post.Owner >= 0 ? post.Owner : 2)), Is.True);
+            Assert.That(posts.Select(post => post.Defender).Distinct().Count(), Is.EqualTo(posts.Length));
+            Assert.That(battle.Units.All(unit => unit.IsGarrison), Is.True);
+            Assert.That(NavalWorld.Current.Ships, Is.Empty);
 
             Time.timeScale = 10;
             yield return ReachBattleTime(29);
@@ -58,11 +67,8 @@ namespace RiskAI.Tests
             yield return ReachBattleTime(30.2f); // Just after the first 30-second AI tick.
             int queued = battle.Towns.Sum(t => t.QueueCount);
             int trained = battle.Population(1) - startingPopulation;
-            // The extracted v0.12 unit costs are raw gold values. The first relaxed
-            // choice is a Guard (cost 5), while the scenario starts with 4 gold, so
-            // this tick legitimately leaves both the balance and roster unchanged.
-            Assert.That(startingGold - battle.Economy.Gold[1], Is.EqualTo(0));
-            Assert.That(queued + trained, Is.EqualTo(0));
+            Assert.That(startingGold - battle.Economy.Gold[1], Is.EqualTo(1));
+            Assert.That(queued + trained, Is.EqualTo(1));
             Assert.That(battle.Towns.Count(t => t.QueueCount > 0), Is.LessThanOrEqualTo(1));
         }
 

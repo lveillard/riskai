@@ -19,6 +19,11 @@ namespace RiskAI
         readonly List<int> staleAssignments = new List<int>(16);
         float nextDecision;
         float nextDefenseDecision;
+        int recruitsOrdered;
+        static readonly UnitKind[] RecruitmentCycle = {
+            UnitKind.Archer, UnitKind.Archer, UnitKind.Footman,
+            UnitKind.Archer, UnitKind.Guard, UnitKind.Mortar, UnitKind.Mage
+        };
         public SkirmishCommander(BattleSession battle) { session=battle; nextDecision=battle.AiFirstRecruitmentTime; nextDefenseDecision=0; }
         public void Tick(float delta)
         {
@@ -138,27 +143,29 @@ namespace RiskAI
         void Decide()
         {
             bool relaxed = session.Difficulty == BattleSession.AiDifficulty.Relaxed;
-            bool recruited = false;
-            foreach (var town in session.Towns.Where(t => t.State.Owner == 1))
+            int mobile = 0;
+            foreach (var unit in session.Units) if (IsMobileDefender(unit)) mobile++;
+            int navalBudget = threats.Count == 0 && mobile >= 2 && session.Naval ? session.Naval.AiSavingsTarget : 0;
+            int purchases = relaxed ? 1 : 2;
+            for (int i = 0; i < purchases && session.Population(1) < 45; i++)
             {
-                if (relaxed && recruited) continue;
-                if (town.QueueCount < 2 && session.Population(1) < 45)
-                {
-                    var kind = (UnitKind)(Mathf.FloorToInt(session.BattleTime/session.AiInterval)%6);
-                    if (town.Recruit(kind,1) == null) recruited = true;
-                }
+                var town = RecruitmentSite();
+                if (!town) break;
+                var kind = RecruitmentCycle[recruitsOrdered % RecruitmentCycle.Length];
+                // Four starting gold must produce a mobile opening, even when
+                // the next preferred specialist is temporarily unaffordable.
+                if (BattleRules.Cost(kind) > session.Economy.Gold[1]) kind = UnitKind.Archer;
+                if (session.Economy.Gold[1] - BattleRules.Cost(kind) < navalBudget) break;
+                if (town.Recruit(kind, 1) != null) break;
+                recruitsOrdered++;
             }
             if (session.BattleTime < session.AiFirstOffensiveTime) return;
-            var active = session.Units.Where(u => u && u.Team == 1 && u.IsAlive && u.isActiveAndEnabled && u.Agent && u.Agent.enabled && u.IsIdle && !defenseAssignments.ContainsKey(u.EntityId)).ToList();
-            if (active.Count < 5) return;
-            var available = active;
-            if (relaxed)
-            {
-                var infantry = active.Where(IsInfantry).Take(6).ToList();
-                if (infantry.Count < 6) return;
-                available = active.Where(u => !infantry.Contains(u)).Take(10).ToList();
-                if (available.Count == 0) return;
-            }
+            var active = session.Units.Where(u => IsMobileDefender(u) && u.IsIdle && !defenseAssignments.ContainsKey(u.EntityId)).ToList();
+            if (active.Count < (relaxed ? 2 : 3)) return;
+            // The old six-infantry reserve assumed a free starting army. Keep
+            // one reserve only when an actual mobile force has been recruited.
+            int reserve = active.Count >= 4 ? 1 : 0;
+            var available = active.Take(Mathf.Min(active.Count - reserve, relaxed ? 8 : 12)).ToList();
             Vector3 center = available.Aggregate(Vector3.zero, (sum, u) => sum + u.transform.position) / available.Count;
             bool neutralsRemain=session.Towns.Any(t=>t.State.Owner<0);
             var target = session.Towns.Where(t => t.State.Owner != 1 && (session.BattleTime > 100 || t.State.Owner < 0 || !neutralsRemain))
@@ -166,6 +173,25 @@ namespace RiskAI
                 .ThenBy(t => Vector3.SqrMagnitude(t.transform.position - center)).FirstOrDefault();
             if (target) BattleSession.GiveFormation(available, target.ClaimPoint, true, false);
         }
-        static bool IsInfantry(Soldier unit) => unit.Kind == UnitKind.Footman || unit.Kind == UnitKind.Guard;
+        Settlement RecruitmentSite()
+        {
+            Settlement best = null;
+            float bestScore = float.PositiveInfinity;
+            foreach (var town in session.Towns)
+            {
+                if (!town || town.State.Owner != 1 || town.QueueCount >= 2) continue;
+                float frontierDistance = 10000;
+                foreach (var other in session.Towns)
+                {
+                    if (!other || other.State.Owner == 1) continue;
+                    frontierDistance = Mathf.Min(frontierDistance, Vector3.Distance(town.ClaimPoint, other.ClaimPoint));
+                }
+                // Replenish threatened posts first, then the closest frontier.
+                // Stable town order breaks ties without consuming combat RNG.
+                float score = frontierDistance + town.QueueCount * 20 - (HasThreat(town.Defense.EntityId) ? 1000 : 0);
+                if (score < bestScore) { best = town; bestScore = score; }
+            }
+            return best;
+        }
     }
 }

@@ -101,7 +101,11 @@ namespace RiskAI
             if(SelectedTown)SelectedTown.Selected=false;SelectedTown=null;SelectedHarbor=null;InspectedTarget=null;
             foreach(var ship in ships)if(IsSelectableShip(ship)&&!Fleet.Contains(ship)){Fleet.Add(ship);ship.Select(true);}
         }
-        public void SelectAll()=>SelectUnits(session.Units.Where(IsSelectableSoldier));
+        public void SelectAll()
+        {
+            SelectUnits(session.Units.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison));
+            if(Selection.Count==0)session.Message("Recluta tropas móviles en una ciudad aliada. Los defensores mantienen sus círculos.");
+        }
         public void SelectOnly(Soldier unit) => SelectUnits(new[]{unit});
         public void SelectFleet()
         {

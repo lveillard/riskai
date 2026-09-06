@@ -56,3 +56,39 @@ La [investigación de World Editor](docs/WORLD-EDITOR-TERRAIN.md) orienta el sig
 - [ ] Añadir más biomas y variación local de tiles sin perder legibilidad de unidades y fronteras.
 - [ ] Migrar menú/HUD a UI Toolkit, perfiles a datos, mapas/NavMesh a horneado en editor y carga de arte a un sistema adecuado cuando se mida su necesidad.
 - [ ] Medir CPU y GC a 100/200 unidades antes de Jobs/Burst o ECS. El tick fijo no hace determinista por sí solo la navegación.
+
+## Apertura y siguiente revisión (v0.13)
+
+- [x] Un ballestero por ciudad y puerto, también neutral; sin ejércitos o flotas regalados.
+- [x] Primer recluta asequible para la IA; priorizar refuerzo de ciudades amenazadas y frontera. Reserva compatible con una apertura sin ejército móvil; ahorro y compra de la primera fragata por cola.
+- [x] Ampliar las islas al norte y recolocar dos puertos clásicos para separar puestos y evitar fuego entre guarniciones al empezar.
+- [x] Ballesteros de hoguera en proporción `ceil(ciudades / 2)`, conservando límite de puntos vivos.
+- [x] Reservar claros de bosque considerando la copa proyectada ante la cámara; barras solo durante captura real.
+- [x] Frenada de unidades a distancia cerca de su alcance útil, para evitar sobrepasarlo entre ticks.
+- [x] Prueba táctica del ballestero que se aproxima por el lado opuesto a la torre, mata una guarnición cuerpo a cuerpo y ocupa su círculo.
+- [x] Regresión de aproximación a distancia con fotogramas largos (10 FPS, velocidad ×4); ruta hasta la posición de tiro. Suite final: 101 casos aprobados, 32 EditMode + 69 PlayMode.
+- [ ] Emitir los refuerzos de país de uno en uno según el temporizador de reclutamiento del JASS; ahora salen juntos al cambiar de ronda.
+- [ ] Completar adquisición, alcance mínimo y activación de armas heredados desde las tablas apropiadas; no presentar ajustes locales de torre como estadísticas exactas del mapa.
+- [ ] Sustituir las suposiciones de IA sobre navegación y visión por consultas de ruta/visión. Mejorar concentración de expediciones y desembarcos.
+
+## Importación de Europe y World
+
+- [ ] Importar primero Saran Europe/Mediterráneo: 212 ciudades y 69 grupos, conservando XY de ciudad, círculo y punto de refuerzo. Las dos arenas actuales siguen siendo mapas originales.
+- [ ] Mantener puerto como una clase de ciudad del mapa importado, incluida en reparto, grupos, ingresos y victoria; los puertos adicionales actuales aún tienen reglas separadas.
+- [ ] Importar después la variante World que se elija. Ya existen coordenadas de **New World v3.0**, 293 ciudades y 100 grupos; no equivale a haber identificado la versión histórica más popular ni a todo el planeta.
+- [ ] Leer altura, rampas, agua, pasos, biomas y límites desde datos propios de autoría; reconstruir el arte con materiales/modelos originales. Verificar rutas, distancia al círculo y ángulos de tiro por ciudad.
+- [ ] Antes de escalar a 212/293 puestos, resolver el tope de población: no bloquear todas las compras porque las guarniciones iniciales ya superen 100. Separar presupuesto de ejército móvil y ocupantes o definir un límite por mapa.
+- [ ] Generalizar PlayerId, alianzas y asignación a 6–12 jugadores; el runtime actual sigue siendo 0/1 y neutral.
+
+## Héroes y bucle de partida — fase posterior
+
+- [ ] Selección previa de héroe, aparición en una ciudad aliada y progresión de niveles durante la partida, como ha propuesto el usuario. Diseñar muerte/reaparición y reparto de experiencia antes de implementarlo.
+- [ ] Mantener la conquista por soldados, territorios y hogueras como núcleo: los héroes deben abrir decisiones, no reemplazar la guarnición o volver irrelevante el control del mapa.
+- [ ] Auditar las decisiones que sostienen Risk (frentes, completar grupos, ventanas de ingreso, alianzas, riesgo de extenderse) y las útiles de DotA/LoL (identidad de rol, progresión, respuesta al rival). Distinguir ideas de reglas extraídas.
+- [ ] Validar con partidas cortas: tiempo hasta primera conquista, posibilidad de remontar, claridad del siguiente objetivo y diferencias entre mapas. No inferir diversión o popularidad del código por sí solo.
+
+## Revisiones asistidas
+
+- [x] Medir Qwen3.8 por Grok CLI en tandas de 3 a 10: 51/52 respuestas completas en tareas pequeñas. [Medición y límites](docs/audits/QWEN-CONCURRENCY-v0.13.md). Una respuesta completa no implica que el hallazgo sea correcto.
+- [ ] Dar paquetes pequeños por tema; contrastar contra código y tests antes de aplicar sugerencias. Terra/Luna pueden preparar pruebas y verificar hallazgos; decisiones de diseño e integración a cargo del agente principal.
+- [ ] Revisión adversarial Grok4.6 sobre cambios concretos, con evidencias y limitaciones.

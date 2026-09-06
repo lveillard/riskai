@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
+using RiskAI.Core;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
@@ -36,6 +37,12 @@ namespace RiskAI.Tests
             Assert.That(MapLayout.Towns.Length, Is.EqualTo(20));
             Assert.That(MapLayout.Countries.Length, Is.EqualTo(5));
             Assert.That(MapLayout.Islands.Length, Is.EqualTo(3));
+            Assert.That(NavalWorld.Current.Harbors.Count, Is.EqualTo(8));
+            Assert.That(battle.Units.Count, Is.EqualTo(28));
+            Assert.That(battle.Towns.All(town => town.Defender && town.Defender.Kind == UnitKind.Archer && town.Defender.IsGarrison), Is.True);
+            Assert.That(NavalWorld.Current.Harbors.All(harbor => harbor.Defender && harbor.Defender.Kind == UnitKind.Archer && harbor.Defender.IsGarrison), Is.True);
+            Assert.That(battle.Units.All(unit => unit.IsGarrison), Is.True);
+            Assert.That(NavalWorld.Current.Ships, Is.Empty);
             Assert.That(MapLayout.HalfDepth, Is.EqualTo(112 * MapLayout.Spacing).Within(.001f));
             Assert.That(MapLayout.Coast(0), Is.EqualTo(70 * MapLayout.Spacing).Within(8 * MapLayout.Spacing));
             Assert.That(MapLayout.Towns.Count(t => t.Owner == 0), Is.EqualTo(10));
@@ -73,6 +80,27 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator IndependentStartingPostsStayOutsideEachOthersWeapons()
+        {
+            var guards = battle.Units.ToArray();
+            Assert.That(guards.Length, Is.EqualTo(28));
+            foreach (var tower in battle.Towers)
+                foreach (var guard in guards)
+                {
+                    var ownGuard = battle.Towns.Any(t => t.Defense == tower && t.Defender == guard) ||
+                        battle.Naval.Harbors.Any(h => h.Defense == tower && h.Defender == guard);
+                    if (ownGuard) continue;
+                    Assert.That(Vector3.Distance(tower.transform.position, guard.transform.position),
+                        Is.GreaterThan(ReforgedProfiles.CapturableTower.Range),
+                        tower.HostName + " must not shoot another starting post after random allocation.");
+                }
+            yield return new WaitForSecondsRealtime(3);
+            Assert.That(guards.All(g => g && g.IsAlive && g.Health == g.MaxHealth), Is.True,
+                "An idle opening must not lose guards before either player recruits.");
+            Assert.That(battle.Towers.All(t => t.ShotsFired == 0), Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator SelectingCampHighlightsItsCitiesAndReinforcementsSpawnThere()
         {
             Assert.That(battle.Camps.Count, Is.EqualTo(5));
@@ -93,6 +121,7 @@ namespace RiskAI.Tests
             battle.SendMessage("CountryReinforcements");
             var reinforcements = battle.Units.Where(u => u && u.OriginCountry == 0).ToArray();
             Assert.That(reinforcements.Length, Is.EqualTo(MapLayout.Countries[0].PerTurn));
+            Assert.That(reinforcements.All(unit => unit.Kind == UnitKind.Archer), Is.True);
             foreach (var unit in reinforcements)
                 Assert.That(Vector3.Distance(unit.transform.position, selected.SpawnPoint), Is.LessThan(4));
             controller.Clear();

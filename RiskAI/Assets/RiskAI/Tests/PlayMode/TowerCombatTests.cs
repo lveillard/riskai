@@ -13,10 +13,12 @@ namespace RiskAI.Tests
     {
         Scene scene, previous;
         BattleSession battle;
+        int previousFrameRate, previousVSync;
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            previousFrameRate=Application.targetFrameRate;previousVSync=QualitySettings.vSyncCount;
             BattleSession.ModeForNewMatch=BattleSession.VictoryMode.Conquest;
             BattleSession.LayoutForNewMatch=BattleSession.StartLayout.Fixed;
             previous=SceneManager.GetActiveScene(); scene=SceneManager.CreateScene("Tower combat"); SceneManager.SetActiveScene(scene);
@@ -52,12 +54,66 @@ namespace RiskAI.Tests
         public IEnumerator TowerFiresAtNeutralUnitsInRange()
         {
             var tower=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital).Defense;
-            var neutral=battle.Units.First(u=>u.Team==2);
-            Assert.That(neutral.Agent.Warp(tower.transform.position+Vector3.forward*7),Is.True);
+            var neutral=BattleTestScenario.Mobile(battle,2,UnitKind.Footman,tower.transform.position+Vector3.forward*7);
             float before=neutral.Health;
             yield return new WaitForSecondsRealtime(1.5f);
             Assert.That(tower.ShotsFired,Is.GreaterThan(0));
             Assert.That(neutral.Health,Is.LessThan(before));
+        }
+
+        [UnityTest]
+        public IEnumerator LoneArcherCanApproachFromFarSideKillGuardAndClaimWithoutTowerFire()
+        {
+            Settlement town=null;Vector3 start=default;
+            foreach(var candidate in battle.Towns.Where(t=>t.State.Owner==1&&t.Defender))
+            {
+                var away=candidate.ClaimPoint-candidate.Defense.transform.position;away.y=0;away.Normalize();
+                var probe=candidate.ClaimPoint+away*(BattleRules.Range(UnitKind.Archer)+2);
+                probe=MapLayout.Point(probe.x,probe.z);
+                if(!NavMesh.SamplePosition(probe,out var hit,.8f,NavMesh.AllAreas))continue;
+                var firing=candidate.ClaimPoint+away*(BattleRules.Range(UnitKind.Archer)-.15f);
+                firing=MapLayout.Point(firing.x,firing.z);
+                if(!NavMesh.SamplePosition(firing,out var fireHit,.4f,NavMesh.AllAreas))continue;
+                if(Vector3.Distance(fireHit.position,candidate.ClaimPoint)>BattleRules.Range(UnitKind.Archer))continue;
+                var path=new NavMeshPath();
+                if(!NavMesh.CalculatePath(hit.position,fireHit.position,NavMesh.AllAreas,path)||path.status!=NavMeshPathStatus.PathComplete)continue;
+                town=candidate;start=hit.position;break;
+            }
+            Assert.That(town,Is.Not.Null,"A city must have a walkable far-side approach for this tactic.");
+            var tower=town.Defense;
+            var guard=battle.Spawn(1,UnitKind.Footman,town.ClaimPoint);
+            town.ClaimZone.SetDefender(guard);
+            var archer=battle.Spawn(0,UnitKind.Archer,start);
+            Assert.That(archer,Is.Not.Null);
+            var otherEnemy=battle.Towns.First(t=>t!=town&&t.State.Owner==1&&t.Defender).Defender;
+            var otherAlly=battle.Towns.First(t=>t.State.Owner==0&&t.Defender).Defender;
+            KeepOnly(archer,guard,otherEnemy,otherAlly); // Keep the match alive after this guard dies.
+            int shots=tower.ShotsFired;float health=archer.Health;
+            QualitySettings.vSyncCount=0;Application.targetFrameRate=10;
+            Time.timeScale=4; // Exercise long movement frames between the 20 Hz combat ticks.
+            archer.Attack(guard);
+            float deadline=Time.realtimeSinceStartup+40;
+            while(guard.IsAlive&&Time.realtimeSinceStartup<deadline)
+            {
+                Assert.That(tower.ShotsFired,Is.EqualTo(shots),
+                    $"Far-side approach: town={town.DisplayName}, expanded={MapLayout.IsExpanded}, " +
+                    $"start={start}, archer={archer.transform.position}, guard={guard.transform.position}, tower={tower.transform.position}, " +
+                    $"towerTarget={(tower.CurrentTarget ? tower.CurrentTarget.name : "none")}, " +
+                    $"range={Vector3.Distance(archer.transform.position,guard.transform.position)}, stop={archer.Agent.stoppingDistance}, " +
+                    $"remaining={archer.Agent.remainingDistance}, velocity={archer.Agent.velocity}, path={archer.Agent.pathStatus}.");
+                yield return null;
+            }
+            Assert.That(guard.IsAlive,Is.False,"One archer must be able to defeat an isolated melee garrison.");
+            Assert.That(archer.Health,Is.EqualTo(health));
+            Assert.That(tower.ShotsFired,Is.EqualTo(shots));
+            Time.timeScale=1;
+            archer.MoveTo(town.ClaimPoint,false,false);
+            deadline=Time.realtimeSinceStartup+5;
+            while(town.State.Owner!=0&&Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.That(town.State.Owner,Is.Zero);
+            Assert.That(town.Defender,Is.SameAs(archer));
+            Assert.That(tower.Team,Is.Zero);
+            Assert.That(archer.Health,Is.EqualTo(health),"The same surviving archer must take the circle.");
         }
 
         [UnityTest]
@@ -112,8 +168,7 @@ namespace RiskAI.Tests
             var town=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital&&t.Defender);
             var tower=town.Defense;
             var defender=town.Defender;
-            var enemy=battle.Units.First(u=>u.Team==1);
-            Assert.That(enemy.Agent.Warp(tower.transform.position+Vector3.forward*7),Is.True);
+            var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,tower.transform.position+Vector3.forward*7);
             KeepOnly(enemy,defender); enemy.enabled=false; if(enemy.Agent)enemy.Agent.enabled=false;
             var wall=GameObject.CreatePrimitive(PrimitiveType.Cube);wall.name="LOS terrain wall";wall.layer=MapLayout.TerrainLayer;
             wall.transform.position=tower.transform.position+Vector3.forward*3.5f+Vector3.up*2;wall.transform.localScale=new Vector3(4,4,.5f);
@@ -140,6 +195,7 @@ namespace RiskAI.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
+            Application.targetFrameRate=previousFrameRate;QualitySettings.vSyncCount=previousVSync;
             Time.timeScale=1;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.RandomCities; SceneManager.SetActiveScene(previous); yield return SceneManager.UnloadSceneAsync(scene);
         }
     }

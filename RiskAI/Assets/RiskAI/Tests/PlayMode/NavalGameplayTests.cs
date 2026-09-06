@@ -20,11 +20,12 @@ namespace RiskAI.Tests
   [UnityTest] public IEnumerator TransportActuallySailsAndDisembarkedTroopsCaptureIsland()
   {
    var home=naval.Harbors.First(h=>h.State.Owner==0);var island=naval.Harbors.First(h=>h.IsIsland);
-   Assert.That(island.Defender,Is.Null,"An unoccupied island tower must not fire before a defender arrives.");
-   var ship=naval.Ships.First(s=>s.Team==0&&s.Kind==ShipKind.Transport);
-   var soldiers=battle.Units.Where(u=>u.Team==0&&!u.IsGarrison).OrderBy(u=>Vector3.Distance(u.transform.position,home.Landing)).Take(3).ToArray();
+   var islandGuard=island.Defender;island.ClaimZone.SetDefender(null);islandGuard.gameObject.SetActive(false);island.State.Owner=-1;island.Defense.enabled=false;
+   Assert.That(island.Defender,Is.Null,"This transport fixture deliberately uses an unguarded neutral island.");
+   var ship=BattleTestScenario.Ship(naval,0,ShipKind.Transport,home.Berth);
+   var soldiers=BattleTestScenario.MobileArmy(battle,0,UnitKind.Footman,3,home.Landing);
    int population=battle.Population(0);float health=soldiers[0].Health;
-   foreach(var u in soldiers)Assert.That(ship.TryEmbark(u),Is.True,"Starter dock troops must embark without teleporting.");
+   foreach(var u in soldiers)Assert.That(ship.TryEmbark(u),Is.True,"The explicit transport fixture must embark without teleporting.");
    Assert.That(ship.CargoCount,Is.EqualTo(3));Assert.That(battle.Population(0),Is.EqualTo(population));Assert.That(soldiers.All(u=>!u.IsAlive),Is.True);
    var input=Object.FindFirstObjectByType<RtsController>();input.SelectAll();Assert.That(input.Selection.All(u=>u.Team==0&&u.IsAlive),Is.True);Assert.That(input.Selection.Intersect(soldiers).Count(),Is.Zero);
    Assert.That(SeaNavigation.TryBuildPath(ship.transform.position,island.Berth,out var route),Is.True);
@@ -56,10 +57,33 @@ namespace RiskAI.Tests
    while(naval.Ships.Count==count&&battle.BattleTime<finishAt&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(naval.Ships.Count,Is.EqualTo(count+1));Assert.That(port.QueueCount,Is.Zero);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-galleyCost));
   }
+  [UnityTest] public IEnumerator AiSavesForAndBuysItsFirstGalleyThroughThePortQueue()
+  {
+   var city=battle.Towns.First(t=>t.State.Owner==1);
+   BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,city.Rally);
+   battle.Economy.Gold[1]=Harbor.Cost(ShipKind.Galley);
+   battle.AiEnabled=true;
+   naval.SimTick(.05f);
+   Assert.That(naval.PendingShips(1),Is.Zero,"The naval grace period must still apply.");
+   while(battle.BattleTime<battle.AiFirstNavalOffensiveTime+.1f)battle.Clock.Advance(.4,false,_=>{});
+   battle.Commander.Tick(.05f);
+   Assert.That(battle.Economy.Gold[1],Is.EqualTo(Harbor.Cost(ShipKind.Galley)),"The army must leave savings for the first purchased ship.");
+   naval.SimTick(.05f);
+   Assert.That(naval.PendingShips(1),Is.EqualTo(1));
+   Assert.That(naval.Ships,Is.Empty,"Buying a ship must not bypass its training queue.");
+   Assert.That(battle.Economy.Gold[1],Is.Zero);
+   battle.AiEnabled=false;
+   float deadline=Time.realtimeSinceStartup+Harbor.TrainTime(ShipKind.Galley)+3;
+   while(naval.Ships.Count==0&&Time.realtimeSinceStartup<deadline)yield return null;
+   Assert.That(naval.Ships.Count,Is.EqualTo(1));
+   Assert.That(naval.Ships[0].Team,Is.EqualTo(1));
+   Assert.That(naval.Ships[0].Kind,Is.EqualTo(ShipKind.Galley));
+   Assert.That(naval.PendingShips(1),Is.Zero);
+  }
   [UnityTest] public IEnumerator GalleyFiresAndTransportDestructionRemovesCargo()
   {
-   var port=naval.Harbors.First(h=>h.State.Owner==0);var transport=naval.Ships.First(s=>s.Team==0&&s.Kind==ShipKind.Transport);
-   var soldier=battle.Units.Where(u=>u.Team==0&&!u.IsGarrison).OrderBy(u=>Vector3.Distance(u.transform.position,port.Landing)).First();Assert.That(transport.TryEmbark(soldier),Is.True);
+   var port=naval.Harbors.First(h=>h.State.Owner==0);var transport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,port.Berth);
+   var soldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.Landing);Assert.That(transport.TryEmbark(soldier),Is.True);
    int before=battle.Population(0);Assert.That(SeaNavigation.TryNearestOcean(transport.transform.position+Vector3.forward*9,8,out var spot),Is.True);
    var enemy=naval.Spawn(1,ShipKind.Galley,spot);Assert.That(enemy,Is.Not.Null);float health=transport.Health;enemy.Attack(transport);
    yield return new WaitForSeconds(1.3f);Assert.That(transport.Health,Is.LessThan(health),"A galley must fire a projectile which resolves damage.");
@@ -68,11 +92,11 @@ namespace RiskAI.Tests
   [UnityTest] public IEnumerator GalleyAutoTargetsCoastalSoldierAtMainlandHarbor()
   {
    var port=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
-   var galley=naval.Ships.First(s=>s.Team==0&&s.Kind==ShipKind.Galley);
+   var galley=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
    galley.Stop();galley.transform.position=port.Berth;
    foreach(var tower in battle.Towers.ToArray())if(tower)tower.gameObject.SetActive(false);
    foreach(var ship in naval.Ships.ToArray())if(ship&&ship!=galley)ship.gameObject.SetActive(false);
-   var coastal=battle.Spawn(1,UnitKind.Footman,port.Landing);Assert.That(coastal,Is.Not.Null);
+   var coastal=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,port.Landing);
    coastal.HoldPosition();
    foreach(var unit in battle.Units.ToArray())if(unit&&unit!=coastal)unit.gameObject.SetActive(false);
    float before=coastal.Health;
