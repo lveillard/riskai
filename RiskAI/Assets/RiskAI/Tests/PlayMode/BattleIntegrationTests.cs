@@ -13,9 +13,10 @@ namespace RiskAI.Tests
 {
     public sealed class BattleIntegrationTests
     {
-        Scene scene,previous;BattleSession battle;
+        Scene scene,previous;BattleSession battle;ScenarioMap previousMap;
         [UnitySetUp] public IEnumerator SetUp()
         {
+            previousMap=BattleSession.MapForNewMatch;BattleSession.MapForNewMatch=ScenarioMap.Classic;
             BattleSession.ModeForNewMatch=BattleSession.VictoryMode.Conquest;
             BattleSession.LayoutForNewMatch=BattleSession.StartLayout.Fixed;
             previous=SceneManager.GetActiveScene();scene=SceneManager.CreateScene("Battle integration");SceneManager.SetActiveScene(scene);
@@ -54,7 +55,7 @@ namespace RiskAI.Tests
         }
         [UnityTearDown] public IEnumerator TearDown()
         {
-            Time.timeScale=1;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.RandomCities;SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);
+            Time.timeScale=1;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.RandomCities;BattleSession.MapForNewMatch=previousMap;SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);
         }
         [UnityTest] public IEnumerator MapHasAllTownsAndReachableRoutes()
         {
@@ -64,8 +65,9 @@ namespace RiskAI.Tests
             for(int i=0;i<battle.Towns.Count;i++) for(int j=i+1;j<battle.Towns.Count;j++)
             {
                 var from=battle.Towns[i].Rally;var to=battle.Towns[j].Rally;
+                if (Landmass(from) != Landmass(to)) continue; // Ocean separates authored islands from the mainland.
                 Assert.That(NavMesh.CalculatePath(from,to,NavMesh.AllAreas,path),Is.True,$"Path calculation failed from town {i}.");
-                Assert.That(path.status,Is.EqualTo(NavMeshPathStatus.PathComplete),$"Town route {i} must be complete.");
+                Assert.That(path.status,Is.EqualTo(NavMeshPathStatus.PathComplete),$"Town route {i} must be complete within its landmass.");
             }
             var coastPoint=new Vector3(0,0,MapLayout.Coast(0)+4);
             Assert.That(NavMesh.SamplePosition(coastPoint,out _,.5f,NavMesh.AllAreas),Is.False,"The coast test point must remain off the walkable NavMesh.");
@@ -74,14 +76,21 @@ namespace RiskAI.Tests
             yield return new WaitForSeconds(4);
             Assert.That(army.Count(u=>Vector3.Distance(u.transform.position,field)<6),Is.GreaterThanOrEqualTo(army.Count-1),"The explicit test formation must reach the destination; only one crowd-avoidance straggler is allowed.");
         }
+        static int Landmass(Vector3 point)
+        {
+            for (int island = 0; island < MapLayout.Islands.Length; island++)
+                if (MapLayout.IslandDistance(point.x, point.z, island) >= 0) return island + 1;
+            return 0;
+        }
+
         [UnityTest] public IEnumerator RecruitmentPaysOnceAndPauseStopsSimulation()
         {
-            var town=battle.Towns[0];int before=battle.Population(0);int goldBefore=battle.Economy.Gold[0];
+            var town=battle.Towns[0];int before=battle.RecruitmentPopulation(0);int goldBefore=battle.Economy.Gold[0];
             Assert.That(town.Recruit(UnitKind.Footman),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(goldBefore-BattleRules.Cost(UnitKind.Footman)));
             battle.TogglePause();float time=battle.BattleTime;yield return new WaitForSecondsRealtime(.3f);
             Assert.That(battle.BattleTime,Is.EqualTo(time));Assert.That(town.QueueCount,Is.EqualTo(1));
             battle.TogglePause();yield return new WaitForSeconds(3.4f);
-            Assert.That(battle.Population(0),Is.EqualTo(before+1));Assert.That(town.QueueCount,Is.Zero);
+            Assert.That(battle.RecruitmentPopulation(0),Is.EqualTo(before+1));Assert.That(town.QueueCount,Is.Zero);
         }
         [UnityTest] public IEnumerator ArmyDefeatsGuardsAndCapturesNeutralTown()
         {
@@ -265,34 +274,38 @@ namespace RiskAI.Tests
         [UnityTest] public IEnumerator CountryReinforcementsCreditThenSpawnOnePerHalfSecondToTheTenPointCap()
         {
             var recruits=new CountryRecruitment(battle); // Isolate the 500 ms timer from setup frames.
-            var countryTowns = battle.Towns.Where(t => t.State.Country == 0).ToArray();
-            Assert.That(countryTowns.Length, Is.EqualTo(2));
+            const int country = 0;
+            var countryTowns = battle.Towns.Where(t => t.State.Country == country).ToArray();
+            int points = BattleRules.CountryReinforcementPointsPerRound(countryTowns.Length);
+            Assert.That(MapLayout.Countries[country].PerTurn, Is.EqualTo(points));
             foreach (var town in countryTowns) town.State.Owner = 0;
             recruits.CreditRound();
-            Assert.That(recruits.Pending(0), Is.EqualTo(1));
-            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.Zero, "Credit must not create an immediate wave.");
+            Assert.That(recruits.Pending(country), Is.EqualTo(points));
+            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == country), Is.Zero, "Credit must not create an immediate wave.");
             recruits.Tick(.49f);
-            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.Zero);
+            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == country), Is.Zero);
             recruits.Tick(.01f);
-            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.EqualTo(1));
+            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == country), Is.EqualTo(1));
             for (int round = 0; round < 9; round++) { recruits.CreditRound(); recruits.Tick(.5f); }
-            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.EqualTo(10));
-            var casualty = battle.Units.First(u => u && u.Team == 0 && u.OriginCountry == 0);
+            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == country), Is.EqualTo(10));
+            var casualty = battle.Units.First(u => u && u.Team == 0 && u.OriginCountry == country);
             casualty.TakeDamage(casualty.MaxHealth + 1, 1); yield return null;
             recruits.CreditRound(); recruits.Tick(.5f);
-            Assert.That(battle.Units.Count(u => u && u.IsAlive && u.Team == 0 && u.OriginCountry == 0), Is.EqualTo(10));
+            Assert.That(battle.Units.Count(u => u && u.IsAlive && u.Team == 0 && u.OriginCountry == country), Is.EqualTo(10));
         }
         [UnityTest] public IEnumerator CountryIncomeLosesOnlyTheCapturedCityAndReturnsAfterRecapture()
         {
-            var countryTowns = battle.Towns.Where(t => t.State.Country == 0).ToArray(); Assert.That(countryTowns.Length, Is.EqualTo(2));
+            const int country = 0;
+            var countryTowns = battle.Towns.Where(t => t.State.Country == country).ToArray();
+            Assert.That(countryTowns.Length, Is.GreaterThanOrEqualTo(2));
             foreach (var town in countryTowns) town.State.Owner = 0;
-            Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(0));
+            Assert.That(battle.Economy.CountryOwner(country), Is.EqualTo(0));
             int completeIncome = battle.Economy.Income(0);
             countryTowns[1].State.Owner = 1;
-            Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(-1));
+            Assert.That(battle.Economy.CountryOwner(country), Is.EqualTo(-1));
             Assert.That(battle.Economy.Income(0), Is.EqualTo(completeIncome - BattleRules.TownIncome));
             countryTowns[1].State.Owner = 0;
-            Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(0));
+            Assert.That(battle.Economy.CountryOwner(country), Is.EqualTo(0));
             Assert.That(battle.Economy.Income(0), Is.EqualTo(completeIncome)); yield return null;
         }
     }

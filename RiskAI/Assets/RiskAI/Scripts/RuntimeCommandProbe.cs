@@ -19,6 +19,7 @@ namespace RiskAI
         const string WarmupFlag = "--riskai-probe-warmup";
         const string DurationFlag = "--riskai-probe-seconds";
         const string WarmupCommanderFlag = "--riskai-probe-warmup-commander";
+        const string RecruitsFlag = "--riskai-probe-recruits";
         const float DefaultDurationSeconds = 70f;
         const float CommandIntervalSeconds = 2f;
         const float HoldTimeoutSeconds = 1.5f;
@@ -31,6 +32,7 @@ namespace RiskAI
             public float WarmupSimulationSeconds;
             public float MeasurementRealtimeSeconds;
             public bool WarmupBlueCommander;
+            public int RecruitsPerPlayer;
         }
 
         struct FrameSampler
@@ -91,15 +93,9 @@ namespace RiskAI
                 yield break;
             }
 
-            // Let bootstrap construct terrain, NavMesh, session, and UI first.
-            yield return null;
-            yield return null;
+            // The front-end owns no session. This persistent probe waits through its async scene transition.
+            while (!BattleSession.Current) yield return null;
             var session = BattleSession.Current;
-            if (!session)
-            {
-                Finish(false, "phase=bootstrap valid=false reason=session-unavailable simSecondsDelta=0.00 applied=0 rejected=0 queued=0 movedUnits=0/0 maxDisplacement=0.00");
-                yield break;
-            }
 
             Application.runInBackground = true;
             if (session.Paused) session.TogglePause();
@@ -152,11 +148,22 @@ namespace RiskAI
 
             // Spawn only after warmup/stabilization, so tracked player units do not
             // alter the advanced-state simulation that the warmup intends to create.
-            var tracked = SpawnPlayerArchers(session);
+            var tracked = SpawnPlayerArchers(session,options.RecruitsPerPlayer);
             if (tracked.Count == 0)
             {
                 Finish(false, $"phase=fixture valid=false reason=no-player-zero-mobile-cohort map={BattleSession.MapForNewMatch} seed={session.Seed} warmupCompletedSimSeconds={warmupCompleted:F1}");
                 yield break;
+            }
+            // Let the scene and the synthetic cohort render before sampling. Without
+            // this, the first unscaledDeltaTime still contains map creation (seconds),
+            // even though the reported measurement starts after loading.
+            Debug.Log($"RISKAI_PROBE_PHASE phase=fixture-stabilize realSeconds={StabilizeSeconds:F1} fixtureRecruitsPerPlayer={options.RecruitsPerPlayer}");
+            yield return new WaitForSecondsRealtime(StabilizeSeconds);
+            tracked.RemoveAll(unit=>!unit.CanMove);
+            foreach(var unit in tracked){unit.Start=unit.Soldier.transform.position;unit.MaxDisplacement=0;}
+            if(tracked.Count==0)
+            {
+                Finish(false,"phase=fixture valid=false reason=cohort-lost-during-stabilization");yield break;
             }
             int unitsInitial = session.Units.Count;
             long appliedAtStart = session.Commands.AppliedCount;
@@ -250,7 +257,7 @@ namespace RiskAI
             Finish(passed,
                 $"phase=measurement valid={completedMeasurement} winner={session.Winner} map={BattleSession.MapForNewMatch} seed={session.Seed} " +
                 $"warmupRequestedSimSeconds={options.WarmupSimulationSeconds:F1} warmupCompletedSimSeconds={warmupCompleted:F1} " +
-                $"measurementRequestedRealSeconds={options.MeasurementRealtimeSeconds:F1} simSecondsDelta={simulationDelta:F2} " +
+                $"measurementRequestedRealSeconds={options.MeasurementRealtimeSeconds:F1} simSecondsDelta={simulationDelta:F2} fixtureRecruitsPerPlayer={options.RecruitsPerPlayer} " +
                 $"applied={applied} rejected={rejected} queued={session.Commands.PendingCount} unitsInitial={unitsInitial} unitsFinal={session.Units.Count} " +
                 $"probeMovesSubmitted={submittedMoves} probeDestinationsUnavailable={unavailableDestinations} " +
                 $"movedUnits={moved}/{tracked.Count} survivingMovables={survivingMovables} unmovedSurvivors={unmovedSurvivors} unmovedIds={(unmoved.Length > 0 ? unmoved.ToString() : "none")} " +
@@ -264,9 +271,12 @@ namespace RiskAI
             float warmup, duration;
             if (!TryReadNonNegativeFloat(WarmupFlag, 0, out warmup, out error)) return false;
             if (!TryReadNonNegativeFloat(DurationFlag, DefaultDurationSeconds, out duration, out error)) return false;
+            if (!TryReadNonNegativeFloat(RecruitsFlag, 6, out var recruits, out error)) return false;
+            if(recruits<1 || recruits>100 || recruits!=Mathf.Floor(recruits)){error=RecruitsFlag+"-requires-integer-1-to-100";return false;}
             options.WarmupSimulationSeconds = warmup;
             options.MeasurementRealtimeSeconds = duration;
             options.WarmupBlueCommander = HasExactFlag(WarmupCommanderFlag);
+            options.RecruitsPerPlayer = (int)recruits;
             return true;
         }
 
@@ -303,7 +313,7 @@ namespace RiskAI
             return true;
         }
 
-        static List<TrackedUnit> SpawnPlayerArchers(BattleSession session)
+        static List<TrackedUnit> SpawnPlayerArchers(BattleSession session,int recruitsPerPlayer)
         {
             var result = new List<TrackedUnit>(6);
             var directions = new[] { Vector3.right, Vector3.forward, Vector3.left, Vector3.back };
@@ -312,13 +322,13 @@ namespace RiskAI
             {
                 ownedTowns.Clear();
                 foreach(var town in session.Towns)if(town&&town.State.Owner==player)ownedTowns.Add(town);
-                for(int index=0;index<6&&ownedTowns.Count>0;index++)
+                for(int index=0;index<recruitsPerPlayer&&ownedTowns.Count>0;index++)
                 {
                     var town=ownedTowns[index%ownedTowns.Count];
                     if(!TryFindLandNavMeshPoint(town.Rally,out var spawn))continue;
                     var soldier=session.Spawn(player,UnitKind.Archer,spawn);
                     if(!soldier||soldier.IsGarrison)continue;
-                    if(player==0)result.Add(new TrackedUnit{Soldier=soldier,EntityId=soldier.EntityId,Start=soldier.transform.position,Direction=directions[index%directions.Length]});
+                    if(player==0&&result.Count<6)result.Add(new TrackedUnit{Soldier=soldier,EntityId=soldier.EntityId,Start=soldier.transform.position,Direction=directions[index%directions.Length]});
                 }
             }
             return result;

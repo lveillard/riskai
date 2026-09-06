@@ -10,6 +10,7 @@ namespace RiskAI
         readonly List<Transform> legs=new();
         readonly List<Mesh> ownedMeshes=new();
         Transform lance;
+        Vector3 lanceRestPosition;
         static Mesh oval;
 
         public static GameObject Create(Soldier owner) => Create(owner.transform,owner.Team,owner);
@@ -62,6 +63,7 @@ namespace RiskAI
             tail.localRotation=Quaternion.Euler(-25,0,0);
             view.lance=new GameObject("Lance pivot").transform;view.lance.SetParent(root,false);
             view.lance.localPosition=new Vector3(.50f,2.06f,.18f);
+            view.lanceRestPosition=view.lance.localPosition;
             VisualFactory.Shape(view.lance,PrimitiveType.Cylinder,"Lance shaft",new Vector3(0,0,.63f),new Vector3(.065f,.79f,.065f),gold).transform.localRotation=Quaternion.Euler(90,0,0);
             VisualFactory.Cone(view.lance,"Steel lance tip",new Vector3(0,0,1.4f),.105f,.35f,steel,6).transform.localRotation=Quaternion.Euler(90,0,0);
             view.CombineStatic(view.lance);view.CombineStatic(root);
@@ -118,7 +120,11 @@ namespace RiskAI
             if(!soldier||!soldier.IsAlive||!soldier.Agent||!soldier.Agent.enabled||!battle||battle.Paused||battle.Winner>=0)return;
             float speed=soldier.Agent.velocity.magnitude;
             for(int i=0;i<legs.Count;i++)legs[i].localRotation=Quaternion.Euler(speed>.1f?Mathf.Sin(battle.BattleTime*10+(i==0||i==3?0:Mathf.PI))*25:0,0,0);
-            lance.localRotation=Quaternion.Euler(soldier.CurrentTarget?Mathf.Sin(battle.BattleTime*4.6f)*10:-18,0,0);
+            bool engaged=soldier.CurrentTarget&&Vector3.Distance(soldier.transform.position,soldier.CurrentTarget.ApproachPoint(soldier.transform.position))<=Core.BattleRules.Range(Core.UnitKind.Guard)+.55f;
+            float phase=Mathf.Repeat((battle.BattleTime+soldier.EntityId*.173f)*1.45f,1f);
+            float thrust=engaged?Mathf.SmoothStep(0,1,Mathf.Clamp01(1f-Mathf.Abs(phase-.34f)/.19f)):0;
+            lance.localPosition=lanceRestPosition+Vector3.forward*(thrust*.42f);
+            lance.localRotation=Quaternion.Euler(-18f+thrust*17f,0,0);
         }
     }
 }

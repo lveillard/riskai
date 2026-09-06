@@ -26,9 +26,9 @@ namespace RiskAI.Tests
    Assert.That(island.Defender,Is.Null,"This transport fixture deliberately uses an unguarded neutral island.");
    var ship=BattleTestScenario.Ship(naval,0,ShipKind.Transport,home.Berth);
    var soldiers=BattleTestScenario.MobileArmy(battle,0,UnitKind.Footman,3,home.Landing);
-   int population=battle.Population(0);float health=soldiers[0].Health;
+   int population=battle.RecruitmentPopulation(0);float health=soldiers[0].Health;
    foreach(var u in soldiers)Assert.That(ship.TryEmbark(u),Is.True,"The explicit transport fixture must embark without teleporting.");
-   Assert.That(ship.CargoCount,Is.EqualTo(3));Assert.That(battle.Population(0),Is.EqualTo(population));Assert.That(soldiers.All(u=>!u.IsAlive),Is.True);
+   Assert.That(ship.CargoCount,Is.EqualTo(3));Assert.That(battle.RecruitmentPopulation(0),Is.EqualTo(population));Assert.That(soldiers.All(u=>!u.IsAlive),Is.True);
    var input=Object.FindFirstObjectByType<RtsController>();input.SelectAll();Assert.That(input.Selection.All(u=>u.Team==0&&u.IsAlive),Is.True);Assert.That(input.Selection.Intersect(soldiers).Count(),Is.Zero);
    Assert.That(SeaNavigation.TryBuildPath(ship.transform.position,island.Berth,out var route),Is.True);
    var anchor=ship.transform.position;foreach(var p in route){Assert.That(SeaNavigation.ClearSegment(anchor,p),Is.True);anchor=p;}
@@ -37,7 +37,9 @@ namespace RiskAI.Tests
    Assert.That(Vector3.Distance(ship.transform.position,island.Berth),Is.LessThan(1),"Ship must reach the island through the ocean.");
    yield return new WaitForSeconds(1);Assert.That(island.Owner,Is.EqualTo(-1));Assert.That(island.CaptureProgress,Is.Zero,"Embarked units cannot occupy an island.");
    Assert.That(ship.Unload(island),Is.True);Assert.That(soldiers.All(u=>u.IsAlive&&u.Agent.isOnNavMesh),Is.True);Assert.That(soldiers[0].Health,Is.EqualTo(health));
-   yield return new WaitForSeconds(8);Assert.That(island.Owner,Is.Zero);Assert.That(ship.CargoCount,Is.Zero);Assert.That(battle.Population(0),Is.EqualTo(population));
+   yield return new WaitForSeconds(8);Assert.That(island.Owner,Is.Zero);Assert.That(ship.CargoCount,Is.Zero);
+   Assert.That(island.Defender,Is.Not.Null);Assert.That(soldiers,Does.Contain(island.Defender),"The captured harbor anchors one landed soldier as its garrison.");
+   Assert.That(battle.RecruitmentPopulation(0),Is.EqualTo(population-1),"A harbor garrison is excluded from the mobile recruitment budget.");
    Assert.That(battle.Economy.Towns.Contains(island.State),Is.False,"Island staging harbors do not create an independent economy payout source.");
   }
   [UnityTest] public IEnumerator NavalPurchasesCancelRefundAndCompleteExactlyOnce()

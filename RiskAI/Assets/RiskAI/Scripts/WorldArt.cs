@@ -79,6 +79,9 @@ namespace RiskAI
             Beam(root,new Vector3(-1.8f,2.62f,-1.68f),new Vector3(1.8f,2.62f,-1.68f),.17f);
             Block(root,"Gate surround",new Vector3(0,1.05f,-1.7f),new Vector3(1.34f,2.1f,.32f));
             Block(root,"Heavy oak gates",new Vector3(0,.93f,-1.89f),new Vector3(.95f,1.7f,.12f),2);
+            // The existing oak gates are the visual entrance; consumers use this scaled art anchor,
+            // while gameplay continues to use Settlement.DefaultLandEntry outside the stairs.
+            BuildingEntranceAnchor.Create(root,"Town gate entrance anchor",new Vector3(0,0,-1.89f),Vector3.back);
             for(int i=0;i<3;i++)Block(root,"Entrance stair",new Vector3(0,.09f+i*.07f,-2.25f+i*.15f),new Vector3(1.55f,.18f+i*.14f,.8f-i*.15f));
             Roof(root,new Vector3(0,2.0f,-1.87f),1.75f,1.25f,.68f,team);
             if(capital)

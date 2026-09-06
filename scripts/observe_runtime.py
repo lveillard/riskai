@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_LOG = ROOT / "RiskAI" / "Logs" / "v17-opened.log"
+DEFAULT_LOG = ROOT / "RiskAI" / "Logs" / "v18-opened.log"
 MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024
 MAX_POLL_BYTES = 1024 * 1024
 MAX_PARTIAL_BYTES = 64 * 1024

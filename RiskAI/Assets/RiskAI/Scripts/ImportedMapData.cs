@@ -44,11 +44,30 @@ namespace RiskAI
         public float PlayableMaxZ => HasPlayableBounds ? playableMaxZ : originZ + (height - 1) * cellSize;
         public Vector4 PlayableBounds => new Vector4(PlayableMinX, PlayableMinZ, PlayableMaxX, PlayableMaxZ);
 
+        [Serializable] sealed class CensusCity { public bool port; }
+        [Serializable] sealed class Census { public CensusCity[] cities; public Country[] countries; }
+        static readonly string[] censusDescriptions=new string[4];
+        // Read only the source metadata once. Setup does not instantiate or sculpt terrain.
+        public static string ScenarioDetail(ScenarioMap scenario)
+        {
+            int index=(int)scenario;
+            if(censusDescriptions[index]!=null)return censusDescriptions[index];
+            var census=JsonUtility.FromJson<Census>(LoadSource(scenario).text);
+            int ports=0;foreach(var city in census.cities)if(city.port)ports++;
+            return censusDescriptions[index]=census.cities.Length+" ciudades · "+census.countries.Length+" grupos · "+ports+" puertos";
+        }
+
+        static TextAsset LoadSource(ScenarioMap scenario)
+        {
+            string resource=scenario==ScenarioMap.Europe?"Europe":"NewWorld";
+            var source=Resources.Load<TextAsset>("Maps/"+resource);
+            if(!source)throw new InvalidOperationException("Missing imported map: "+resource);
+            return source;
+        }
+
         public static ImportedMapData Load(ScenarioMap scenario)
         {
-            string resource = scenario == ScenarioMap.Europe ? "Europe" : "NewWorld";
-            var source = Resources.Load<TextAsset>("Maps/" + resource);
-            if (!source) throw new InvalidOperationException("Missing imported map: " + resource);
+            var source = LoadSource(scenario);
             var data = JsonUtility.FromJson<ImportedMapData>(source.text);
             data.Validate();
             ImportedLandscapeAugment.Apply(data);

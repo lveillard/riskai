@@ -111,7 +111,6 @@ namespace RiskAI
         }
         public int RecruitmentPopulation(int team)
         {
-            if(!MapLayout.IsImported)return Population(team);
             int count=0;foreach(var unit in Units)if(unit&&unit.Team==team&&!unit.IsGarrison)count++;
             return count;
         }

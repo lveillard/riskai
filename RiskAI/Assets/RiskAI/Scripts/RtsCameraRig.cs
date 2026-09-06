@@ -5,15 +5,17 @@ namespace RiskAI
     public sealed class RtsCameraRig : MonoBehaviour
     {
         public const float DefaultZoom=34;
+        // Keep source-map extremes clear of the HUD and screen edge in FrameMap.
+        public const float MapFramePaddingPixels=16;
         // Use the same oblique tactical view on every map; imported coordinates
         // should not turn the camera into a nearly overhead map view.
         public static Quaternion DefaultRotation => Quaternion.Euler(55, 0, 0);
-        float InitialZoom => MapLayout.IsImported ? 80 * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad) : DefaultZoom;
-        float MinimumZoom => MapLayout.IsImported ? 18 * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad) : 17;
+        float InitialZoom => DefaultZoom;
+        float MinimumZoom => 18 * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad);
         public float TargetZoom { get; private set; }=DefaultZoom;
         [Range(.1f,3f)] public float PanSpeed=1.35f;
         public Vector3 FocusPoint => focus;
-        public float MaximumZoom => MapLayout.IsImported ? MapFrameZoom() : MapLayout.IsExpanded ? 60 : 44;
+        public float MaximumZoom => MapFrameZoom();
         float FocusSpeedCap => MapLayout.IsImported?Mathf.Max(120,MapLayout.HalfDepth*1.25f):120;
         Camera cam;Vector3 focus,targetFocus,panVelocity,zoomAnchor,homePoint=new Vector3(-26,0,-17);Vector2 anchorScreen;
         float zoomVelocity;bool anchorZoom;
@@ -25,7 +27,7 @@ namespace RiskAI
         public Vector3 Ground(Vector2 screen)
         {
             var ray=cam.ScreenPointToRay(screen);
-            if(Physics.Raycast(ray,out var hit,MapLayout.IsImported?2300:500,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))return hit.point;
+            if(Physics.Raycast(ray,out var hit,cam.farClipPlane,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))return hit.point;
             new Plane(Vector3.up,Vector3.zero).Raycast(ray,out float distance);return ray.GetPoint(distance);
         }
         public void Focus(Vector3 point) { targetFocus=Clamp(point,TargetZoom);anchorZoom=false; }
@@ -83,25 +85,31 @@ namespace RiskAI
         float MapFrameZoom()
         {
             if (!cam) return Mathf.Max(180, MapLayout.HalfDepth);
-            // Solve the perspective frustum for the W3I rectangle and the space
-            // left by the HUD. This also handles New World's wider, off-centre map.
-            float tangent = Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad);
-            float top = 1 - 2 * BattleHud.TopPixels / Screen.height;
-            float bottom = -1 + 2 * BattleHud.BottomPixels / Screen.height;
-            float offset = (BattleHud.BottomPixels - BattleHud.TopPixels) / Screen.height;
-            Vector2 min = MapLayout.PlayableMin, max = MapLayout.PlayableMax;
-            float zoom = 180;
-            for (int corner = 0; corner < 4; corner++)
+            // Solve the perspective frustum against the actual unobscured viewport.
+            // Apply still centres the raw HUD gap; equal padding at both sides keeps
+            // that centre while leaving a visible buffer for borders and terrain skirts.
+            float width=Mathf.Max(1,Screen.width),height=Mathf.Max(1,Screen.height);
+            float horizontalPadding=Mathf.Min(MapFramePaddingPixels,width*.25f);
+            float verticalPadding=Mathf.Min(MapFramePaddingPixels,height*.25f);
+            float left=-1+2*horizontalPadding/width,right=1-2*horizontalPadding/width;
+            float top=1-2*(BattleHud.TopPixels+verticalPadding)/height;
+            float bottom=-1+2*(BattleHud.BottomPixels+verticalPadding)/height;
+            float offset=(BattleHud.BottomPixels-BattleHud.TopPixels)/height;
+            float tangent=Mathf.Tan(cam.fieldOfView*.5f*Mathf.Deg2Rad);
+            float horizontal=Mathf.Max(.05f,Mathf.Min(right,-left));
+            Vector2 min=MapLayout.PlayableMin,max=MapLayout.PlayableMax;
+            float zoom=InitialZoom;
+            for(int corner=0;corner<4;corner++)
             {
-                var point = new Vector3((corner & 1) == 0 ? min.x : max.x, 0, (corner & 2) == 0 ? min.y : max.y) - MapLayout.PlayableCenter;
-                float x = Vector3.Dot(point, cam.transform.right);
-                float y = Vector3.Dot(point, cam.transform.up);
-                float depth = Vector3.Dot(point, cam.transform.forward) * tangent;
-                zoom = Mathf.Max(zoom, Mathf.Abs(x) / cam.aspect - depth);
-                zoom = Mathf.Max(zoom, (y - top * depth) / Mathf.Max(.1f, top - offset));
-                zoom = Mathf.Max(zoom, (-y + bottom * depth) / Mathf.Max(.1f, offset - bottom));
+                var point=new Vector3((corner&1)==0?min.x:max.x,0,(corner&2)==0?min.y:max.y)-MapLayout.PlayableCenter;
+                float x=Vector3.Dot(point,cam.transform.right);
+                float y=Vector3.Dot(point,cam.transform.up);
+                float depth=Vector3.Dot(point,cam.transform.forward)*tangent;
+                zoom=Mathf.Max(zoom,Mathf.Abs(x)/(cam.aspect*horizontal)-depth);
+                zoom=Mathf.Max(zoom,(y-top*depth)/Mathf.Max(.05f,top-offset));
+                zoom=Mathf.Max(zoom,(-y+bottom*depth)/Mathf.Max(.05f,offset-bottom));
             }
-            return zoom * 1.025f;
+            return zoom*1.005f;
         }
 
         void Apply()

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -52,6 +52,23 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest] public IEnumerator StrategicZoomHasHysteresisAndOnlyChangesRendering()
+        {
+            var view=StrategicMapView.Current;var camera=Camera.main;
+            var unit=battle.Units[0];int mask=camera.cullingMask;
+            camera.orthographicSize=view.EnterZoom+1;view.SendMessage("LateUpdate");
+            Assert.That(view.IsStrategic,Is.True);
+            Assert.That(camera.cullingMask,Is.EqualTo(1<<StrategicMapView.StrategicLayer));
+            Assert.That(unit.isActiveAndEnabled,Is.True);
+            Assert.That(unit.Agent.enabled,Is.True);
+            camera.orthographicSize=view.EnterZoom*.94f;view.SendMessage("LateUpdate");
+            Assert.That(view.IsStrategic,Is.True,"Small wheel reversals must not flicker between modes.");
+            camera.orthographicSize=view.EnterZoom*.80f;view.SendMessage("LateUpdate");
+            Assert.That(view.IsStrategic,Is.False);
+            Assert.That(camera.cullingMask,Is.EqualTo(mask));
+            yield return null;
+        }
+
         [UnityTest] public IEnumerator FocusPointProjectsToPlayableAreaCenter()
         {
             var rig=Object.FindFirstObjectByType<RtsCameraRig>();
@@ -61,6 +78,20 @@ namespace RiskAI.Tests
             float playableCenterY=(BattleHud.BottomPixels+Screen.height-BattleHud.TopPixels)*.5f;
             Assert.That(projected.x,Is.EqualTo(Screen.width*.5f).Within(2f));
             Assert.That(projected.y,Is.EqualTo(playableCenterY).Within(2f));
+        }
+
+        [UnityTest] public IEnumerator DisablingStrategicViewRestoresCameraWithoutDisablingActors()
+        {
+            var view=StrategicMapView.Current;var camera=Camera.main;
+            int mask=camera.cullingMask;var background=camera.backgroundColor;
+            view.SetStrategic(true);view.enabled=false;
+            Assert.That(view.IsStrategic,Is.False);
+            Assert.That(camera.cullingMask,Is.EqualTo(mask));
+            Assert.That(camera.backgroundColor,Is.EqualTo(background));
+            Assert.That(battle.Units[0].isActiveAndEnabled,Is.True);
+            view.enabled=true;camera.orthographicSize=view.EnterZoom+1;view.SendMessage("LateUpdate");
+            Assert.That(view.IsStrategic,Is.True,"Re-enabling the component must recover the current camera mode.");
+            yield return null;
         }
 
         [UnityTest] public IEnumerator ZoomAtKeepsGroundAnchorUnderCursor()

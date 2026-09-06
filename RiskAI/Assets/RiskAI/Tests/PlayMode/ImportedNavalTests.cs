@@ -62,10 +62,16 @@ namespace RiskAI.Tests
             Assert.That(routeFound, Is.True, "At least one pair of imported port berths must have a traversable coastal route.");
             int buildsBeforeRepeat=SeaNavigation.GridBuildCount;
             Assert.That(SeaNavigation.TryBuildPath(routeFrom,routeTo,out var repeated),Is.True);
+            var repeatedSnapshot=repeated.ToArray();
+            Assert.That(SeaNavigation.TryBuildPath(routeTo,routeFrom,out var reverse),Is.True);
+            Assert.That(repeated,Is.EqualTo(repeatedSnapshot),"A later search must not overwrite a ship's retained route.");
             Assert.That(SeaNavigation.TryBuildPath(routeFrom,routeTo,out var repeatedAgain),Is.True);
             Assert.That(SeaNavigation.GridBuildCount,Is.EqualTo(buildsBeforeRepeat),"Repeated fleet paths must not rescan water clearance or edges.");
-            if(repeated!=null)foreach(var point in repeated)Assert.That(SeaNavigation.HasClearance(point),Is.True);
-            if(repeatedAgain!=null)foreach(var point in repeatedAgain)Assert.That(SeaNavigation.HasClearance(point),Is.True);
+            foreach(var point in repeated)Assert.That(SeaNavigation.HasClearance(point),Is.True);
+            foreach(var point in reverse)Assert.That(SeaNavigation.HasClearance(point),Is.True);
+            foreach(var point in repeatedAgain)Assert.That(SeaNavigation.HasClearance(point),Is.True);
+            Vector3 reversePrevious=routeTo;
+            foreach(var point in reverse){Assert.That(SeaNavigation.ClearSegment(reversePrevious,point),Is.True);reversePrevious=point;}
         }
 
         [Test]
@@ -101,6 +107,12 @@ namespace RiskAI.Tests
                 Assert.That(route.Count,Is.EqualTo(2));
                 Assert.That(SeaNavigation.ClearSegment(from,route[0]),Is.True);
                 Assert.That(SeaNavigation.ClearSegment(route[0],route[1]),Is.True);
+                var routeSnapshot=route.ToArray();
+                Assert.That(SeaNavigation.TryBuildPath(to,from,out var reverseRoute),Is.True);
+                Assert.That(SeaNavigation.LastSearchUsedDirectSegment,Is.False);
+                Assert.That(route,Is.EqualTo(routeSnapshot),"A second A* search must not overwrite a route retained by its ship.");
+                Vector3 reversePrevious=to;
+                foreach(var point in reverseRoute){Assert.That(SeaNavigation.ClearSegment(reversePrevious,point),Is.True);reversePrevious=point;}
             }
             finally { imported.SetValue(null,previous); }
         }

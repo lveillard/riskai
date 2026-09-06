@@ -13,11 +13,25 @@ namespace RiskAI
         static readonly int[] Dx={-1,0,1,-1,1,-1,0,1};
         static readonly int[] Dz={-1,-1,-1,0,0,1,1,1};
         static readonly float[] StepCost={1.4142135f,1,1.4142135f,1,1,1.4142135f,1,1.4142135f};
+        const int SmoothingLookaheadCells=32;
+        static readonly Vector3[] ClearanceDirections=BuildClearanceDirections();
+
+        static Vector3[] BuildClearanceDirections()
+        {
+            var directions=new Vector3[8];
+            for(int i=0;i<directions.Length;i++)
+            {
+                float angle=i*Mathf.PI*.25f;
+                directions[i]=new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle));
+            }
+            return directions;
+        }
 
         sealed class Grid
         {
             public readonly int Width,Height; public readonly float CellSize; public readonly Vector2 Origin;
             readonly bool[] ocean; readonly byte[] edges; readonly int[] components,queue;
+            public readonly SearchScratch Search=new SearchScratch();
             public int ComponentCount { get; private set; }
             public Grid(int width,int height,Vector2 origin,float cellSize)
             {
@@ -76,10 +90,23 @@ namespace RiskAI
             }
         }
         struct SearchNode { public float Cost; public int Came; public bool Closed; }
+        sealed class SearchScratch
+        {
+            public readonly MinHeap Open=new MinHeap();
+            public readonly Dictionary<int,SearchNode> Nodes=new Dictionary<int,SearchNode>(2048);
+            public readonly List<int> Cells=new List<int>(1024);
+            public readonly List<Vector3> RawPath=new List<Vector3>(1024);
+
+            public void Reset()
+            {
+                Open.Clear();Nodes.Clear();Cells.Clear();RawPath.Clear();
+            }
+        }
         sealed class MinHeap
         {
             struct Item { public int Index; public float Score; }
             readonly List<Item> items=new List<Item>(1024); public int Count=>items.Count;
+            public void Clear()=>items.Clear();
             public void Push(int index,float score)
             {
                 items.Add(new Item{Index=index,Score=score});int child=items.Count-1;
@@ -119,7 +146,7 @@ namespace RiskAI
         public static bool HasClearance(Vector3 point,float clearance=HullClearance)
         {
             if(!IsOcean(point))return false;
-            for(int i=0;i<8;i++){float a=i*Mathf.PI*.25f;var offset=new Vector3(Mathf.Cos(a),0,Mathf.Sin(a))*clearance;if(!IsOcean(point+offset))return false;}
+            for(int i=0;i<ClearanceDirections.Length;i++)if(!IsOcean(point+ClearanceDirections[i]*clearance))return false;
             return true;
         }
         /// <summary>Builds static clearance edges and ocean components during map setup.</summary>
@@ -154,7 +181,10 @@ namespace RiskAI
             // Equal snapped cells do not prove the two exact endpoints have line
             // of sight. Let the normal reconstruction retain from→cell→to when
             // the direct fast path above was blocked by a small coast feature.
-            var open=new MinHeap();var nodes=new Dictionary<int,SearchNode>(2048);nodes[start]=new SearchNode{Cost=0,Came=-1};open.Push(start,Heuristic(start,goal,grid.Width));int found=-1;
+            // This scratch state belongs to the cached grid. Its backing storage
+            // stays allocated between searches; the returned route never aliases it.
+            var scratch=grid.Search;scratch.Reset();var open=scratch.Open;var nodes=scratch.Nodes;
+            nodes[start]=new SearchNode{Cost=0,Came=-1};open.Push(start,Heuristic(start,goal,grid.Width));int found=-1;
             while(open.Count>0)
             {
                 int current=open.Pop();if(!nodes.TryGetValue(current,out var currentNode)||currentNode.Closed)continue;LastSearchExpanded++;
@@ -167,9 +197,19 @@ namespace RiskAI
                 }
             }
             if(found<0)return false;
-            var cells=new List<int>();for(int current=found;current>=0;current=nodes[current].Came)cells.Add(current);cells.Reverse();path=new List<Vector3>(cells.Count+1);for(int i=0;i<cells.Count;i++)path.Add(grid.Point(cells[i]));path.Add(to);
-            Vector3 previous=from;for(int i=0;i<path.Count;i++){if(!HasClearance(path[i])||!ClearSegment(previous,path[i])){path=null;return false;}previous=path[i];}
-            var smooth=new List<Vector3>();Vector3 anchor=from;int cursor=0;while(cursor<path.Count){int far=cursor;for(int n=path.Count-1;n>cursor;n--)if(ClearSegment(anchor,path[n])){far=n;break;}smooth.Add(path[far]);anchor=path[far];cursor=far+1;}path=smooth;return true;
+            var cells=scratch.Cells;for(int current=found;current>=0;current=nodes[current].Came)cells.Add(current);cells.Reverse();
+            var rawPath=scratch.RawPath;for(int i=0;i<cells.Count;i++)rawPath.Add(grid.Point(cells[i]));rawPath.Add(to);
+            Vector3 previous=from;for(int i=0;i<rawPath.Count;i++){if(!HasClearance(rawPath[i])||!ClearSegment(previous,rawPath[i]))return false;previous=rawPath[i];}
+            // A bounded lookahead avoids quadratic rechecking on long routes. Every
+            // selected segment remains validated against exact hull clearance.
+            path=new List<Vector3>(rawPath.Count);Vector3 anchor=from;int cursor=0;
+            while(cursor<rawPath.Count)
+            {
+                int far=cursor,limit=Mathf.Min(rawPath.Count-1,cursor+SmoothingLookaheadCells);
+                for(int n=limit;n>cursor;n--)if(ClearSegment(anchor,rawPath[n])){far=n;break;}
+                path.Add(rawPath[far]);anchor=rawPath[far];cursor=far+1;
+            }
+            return true;
         }
         public static bool TryNearestOcean(Vector3 point,float radius,out Vector3 result)
         {

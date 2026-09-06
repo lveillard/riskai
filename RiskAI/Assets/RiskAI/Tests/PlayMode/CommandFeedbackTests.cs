@@ -78,7 +78,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator OffNavMeshDestinationRejectsWhenTheQueuedCommandIsApplied()
+        public IEnumerator OffNavMeshDestinationRejectsBeforeQueueing()
         {
             var home = battle.Towns.First(town => town.State.Owner == 0);
             var unit = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Rally);
@@ -87,9 +87,7 @@ namespace RiskAI.Tests
             var outside = home.Rally + new Vector3(10000, 0, 10000);
 
             Assert.That(battle.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Move,
-                outside.x, outside.y, outside.z)), Is.True);
-
-            Step();
+                outside.x, outside.y, outside.z)), Is.False);
 
             Assert.That(battle.Commands.PendingCount, Is.Zero);
             Assert.That(battle.Commands.AppliedCount, Is.EqualTo(applied));
@@ -99,7 +97,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator PatrolToOffNavMeshDestinationIsRejectedInsteadOfCountedAsApplied()
+        public IEnumerator PatrolToOffNavMeshDestinationRejectsBeforeQueueing()
         {
             var home = battle.Towns.First(town => town.State.Owner == 0);
             var unit = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Rally);
@@ -108,9 +106,7 @@ namespace RiskAI.Tests
             var outside = home.Rally + new Vector3(10000, 0, 10000);
 
             Assert.That(battle.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Patrol,
-                outside.x, outside.y, outside.z)), Is.True);
-
-            Step();
+                outside.x, outside.y, outside.z)), Is.False);
 
             Assert.That(battle.Commands.PendingCount, Is.Zero);
             Assert.That(battle.Commands.AppliedCount, Is.EqualTo(applied));
@@ -140,6 +136,66 @@ namespace RiskAI.Tests
             Assert.That(mobile.IsIdle, Is.False);
             Assert.That(Vector3.Distance(mobile.Agent.destination, destination), Is.LessThan(.15f));
             Assert.That(Vector3.Distance(garrison.transform.position, garrisonPosition), Is.LessThan(.01f));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ControllerOrderAtReleasesAGuardOnlyWhenItsCircleHasRelief()
+        {
+            var controller = Object.FindFirstObjectByType<RtsController>();
+            var town = battle.Towns.First(t => t.State.Owner == 0);
+            var defender = town.Defender;
+            var destination = ClearDestination(town.Rally);
+            controller.SelectOnly(defender);
+            controller.OrderAt(destination);
+            Assert.That(battle.Commands.PendingCount, Is.Zero, "A lone guard must retain the post.");
+            Assert.That(battle.Commands.LastRejection, Is.EqualTo("El defensor necesita un relevo aliado dentro del círculo."));
+            Assert.That(town.Defender, Is.SameAs(defender));
+
+            var relief = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, town.ClaimZone.Center);
+            controller.SelectOnly(defender);
+            long applied = battle.Commands.AppliedCount;
+            controller.OrderAt(destination);
+            Assert.That(battle.Commands.PendingCount, Is.EqualTo(1), "The controller must submit the same atomic guard command as a direct order.");
+            Step();
+
+            Assert.That(battle.Commands.AppliedCount, Is.EqualTo(applied + 1));
+            Assert.That(town.Defender, Is.SameAs(relief));
+            Assert.That(defender.IsGarrison, Is.False);
+            Assert.That(Vector3.Distance(defender.Agent.destination, destination), Is.LessThan(.15f));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator InvalidDestinationCannotReleaseAGuardThatHasRelief()
+        {
+            var town = battle.Towns.First(t => t.State.Owner == 0);
+            var defender = town.Defender;
+            var relief = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, town.ClaimZone.Center);
+            var outside = town.Rally + new Vector3(10000, 0, 10000);
+
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, defender.EntityId, UnitCommandKind.Move,
+                outside.x, outside.y, outside.z)), Is.False);
+            Assert.That(battle.Commands.PendingCount, Is.Zero);
+            Assert.That(town.Defender, Is.SameAs(defender));
+            Assert.That(relief.IsGarrison, Is.False);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ControllerOrderAtSetsTownAndStandaloneHarborLandRallies()
+        {
+            var controller = Object.FindFirstObjectByType<RtsController>();
+            var town = battle.Towns.First(t => t.State.Owner == 0);
+            var harbor = NavalWorld.Current.Harbors.First(h => h.Owner == 0 && !h.IsImportedPort);
+            var rally = ClearDestination(town.Rally);
+            controller.SelectTown(town);
+            controller.SelectHarbor(harbor, true);
+
+            controller.OrderAt(rally);
+
+            Assert.That(Vector3.Distance(town.Rally, rally), Is.LessThan(.15f));
+            Assert.That(Vector3.Distance(harbor.LandRally, rally), Is.LessThan(.15f));
             yield return null;
         }
 

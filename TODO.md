@@ -2,6 +2,26 @@
 
 Feedback del 6 de septiembre de 2026. Las reglas verificadas y las adaptaciones se distinguen en [la auditoría de Risk](docs/RISK-RULES-v0.12.md). Esta lista conserva también las propuestas que todavía no están implementadas.
 
+## Revisión v0.18 — territorios, controles y reglas compartidas
+
+- [x] Vista estratégica al alejar: superficies de terreno con color de dueño, sin árboles, modelos tácticos ni barras; histéresis y simulación intacta.
+- [x] Atlas único para propiedad e inspección de países, con costa y puertos; neutral blanco.
+- [x] Caja izquierda selecciona edificios cuando no contiene tropas; Shift, doble clic en ciudades propias y una identidad para casa/torre/puerto.
+- [x] Colas múltiples visibles y una compra total a la cola compatible más corta; salidas de ciudades, puertos y hogueras.
+- [x] Relevo voluntario atómico dentro del círculo; las fragatas conservan el ancla marítima y la misma política de sucesión.
+- [x] Menú inicial separado de la escena de batalla; ranking por ciudades y ayuda reorganizada.
+- [x] Puerta existente iluminada al entrenar, lance del caballero, artillero de cañón corto y efectos por tipo de impacto.
+- [x] Verificar cadencia y preparación de ataques contra W3U/SLK; documentar el soldado local y campos heredados todavía no resueltos.
+- [x] Las Marcas 33 ciudades; Cuatro Riberas 44. Refuerzos, población móvil, perfiles y cámara compartidos. [Auditoría SSOT](docs/audits/MAP-SSOT-v0.18.md).
+- [x] Reutilizar buffers A* navales y acotar suavizado conservando validación de costa y rutas independientes.
+- [x] Tres revisiones Grok 4.6, pruebas de partida avanzada y carga controlada; resultados y límites en [Validación](docs/VALIDATION-v0.18.md).
+- [ ] Reducir y explicar las esperas de navegación hasta el primer movimiento: la sonda avanzada v0.18 tiene 0 órdenes pendientes/rechazadas, pero registra un máximo elegible de 945,55 ms. Medir eventos físicos y esperas de ruta por orden antes de atribuir todo a cantidad de unidades.
+- [ ] Catálogo de producción común para HUD e IA, incluyendo Marines; impedir que un adaptador de puerto permita compras que otro no ofrece.
+
+La fase 2 de navegador, tablet, móvil y lápiz está autorizada después de cerrar
+esta validación. Se trabajará con un objetivo explícito y un solo proyecto de
+Unity; el servidor autoritativo sigue siendo una etapa posterior.
+
 ## Revisión v0.17 — respuesta, legibilidad y bosque
 
 - [x] Observar una partida abierta sin cerrarla: lector pasivo `scripts/observe_runtime.py`, con ventanas y rechazos. [Datos v0.16 y límites del diagnóstico](docs/audits/LIVE-CONTROLS-v0.16.md).

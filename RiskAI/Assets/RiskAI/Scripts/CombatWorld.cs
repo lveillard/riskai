@@ -94,7 +94,7 @@ namespace RiskAI
                 }
                 ResolvedProjectiles++;
                 if (PresentationEnabled)
-                    VisualFactory.Impact(shot.To, shot.Attack == AttackKind.Magic ? new Color(.55f, .7f, 1) : new Color(1, .72f, .35f), radius > 0 ? .75f : .32f);
+                    VisualFactory.Impact(shot.To, shot.Attack, radius > 0 ? .75f : .32f);
             }
         }
         sealed class EntityOrder : IComparer<CombatTarget>

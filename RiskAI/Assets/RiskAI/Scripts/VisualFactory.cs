@@ -8,6 +8,8 @@ namespace RiskAI
     public static class VisualFactory
     {
         static readonly Dictionary<Color, Material> Materials = new Dictionary<Color, Material>();
+        static readonly Dictionary<Color, Material> EmissiveMaterials = new Dictionary<Color, Material>();
+        static Mesh trainingDoorMesh;
         const int MaxProjectileViews = 128;
         const int MaxImpactViews = 192;
         static Transform fxRoot;
@@ -32,6 +34,8 @@ namespace RiskAI
         static void ResetRuntimeState()
         {
             Materials.Clear();
+            EmissiveMaterials.Clear();
+            trainingDoorMesh = null;
             fxRoot = null;
             projectilePool = null;
             impactPool = null;
@@ -126,7 +130,7 @@ namespace RiskAI
             new Color(.75f,.58f,.94f), new Color(.98f,.64f,.45f), new Color(.58f,.62f,.13f), new Color(.39f,.85f,.96f)
         };
         static readonly string[] PlayerColorNames = {"Azul","Carmesí","Turquesa","Violeta","Oro","Naranja","Verde","Rosa","Acero","Cobre","Bosque","Índigo","Lavanda","Coral","Oliva","Celeste"};
-        public static Color TeamColor(int team) => PlayerRules.IsPlayer(team)?PlayerColors[team]:new Color(.96f,.91f,.72f);
+        public static Color TeamColor(int team) => PlayerRules.IsPlayer(team)?PlayerColors[team]:Color.white;
         public static string TeamName(int team) => !PlayerRules.IsPlayer(team)?"Neutral":(team==0?"Tú":"IA "+team)+" · "+PlayerColorNames[team];
         public static Material Mat(Color color)
         {
@@ -135,6 +139,45 @@ namespace RiskAI
             var mat = template ? new Material(template) : new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
             mat.color = color; mat.SetFloat("_Smoothness", .12f); Materials[color] = mat; return mat;
         }
+        public static Material EmissiveMat(Color color, float intensity)
+        {
+            Color key = color * (1f + intensity);
+            if (EmissiveMaterials.TryGetValue(key, out var found) && found) return found;
+            var mat = new Material(Mat(color));
+            if (mat.HasProperty("_EmissionColor"))
+            {
+                mat.EnableKeyword("_EMISSION");
+                mat.SetColor("_EmissionColor", color * intensity);
+            }
+            EmissiveMaterials[key] = mat;
+            return mat;
+        }
+        public static GameObject TrapezoidQuad(Transform parent, string name, Vector3 position, float bottomWidth, float topWidth, float height, float thickness, Color color)
+        {
+            var go = new GameObject(name); go.transform.SetParent(parent, false);
+            go.transform.localPosition = position;
+            var filter = go.AddComponent<MeshFilter>();
+            if (!trainingDoorMesh) trainingDoorMesh = CreateTrapezoidMesh(bottomWidth, topWidth, height, thickness);
+            filter.sharedMesh = trainingDoorMesh;
+            go.AddComponent<MeshRenderer>().sharedMaterial = Mat(color);
+            return go;
+        }
+        static Mesh CreateTrapezoidMesh(float bottomWidth, float topWidth, float height, float thickness)
+        {
+            var mesh = new Mesh { name = "Training doorway trapezoid" };
+            float z = thickness * .5f;
+            mesh.SetVertices(new[]
+            {
+                new Vector3(-bottomWidth*.5f, 0, -z), new Vector3(bottomWidth*.5f, 0, -z),
+                new Vector3(topWidth*.5f, height, -z), new Vector3(-topWidth*.5f, height, -z),
+                new Vector3(-bottomWidth*.5f, 0, z), new Vector3(bottomWidth*.5f, 0, z),
+                new Vector3(topWidth*.5f, height, z), new Vector3(-topWidth*.5f, height, z)
+            });
+            mesh.SetTriangles(new[] { 0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7 }, 0);
+            mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            return mesh;
+        }
+
         public static GameObject Shape(Transform parent, PrimitiveType type, string name, Vector3 pos, Vector3 scale, Color color, bool solid = false)
         {
             var go = GameObject.CreatePrimitive(type); go.name = name; go.transform.SetParent(parent, false);
@@ -190,6 +233,12 @@ namespace RiskAI
                 MountedKnightView.Create(soldier);
                 Ring(root,.74f,.025f,team);return;
             }
+            if(soldier.Kind==UnitKind.Mortar)
+            {
+                var model=new GameObject("Mortar model");model.transform.SetParent(root,false);
+                MortarModel(model.transform,team,soldier);ModelMetrics.MatchStandingHeight(model,soldier.Kind);Ring(root,.70f,.025f,team);
+                return;
+            }
             var prefab=Resources.Load<GameObject>("Units/"+BattleRules.Model(soldier.Kind));
             if(prefab)
             {
@@ -199,12 +248,6 @@ namespace RiskAI
                 UnitTeamColor.Apply(model,soldier.Kind,soldier.Team);
                 soldier.gameObject.AddComponent<SoldierAnimator>().Initialize(soldier,model);
                 Ring(root,Mathf.Max(.33f,SourceGeometry.AgentRadius(soldier.Kind)*1.1f),.022f,team);return;
-            }
-            if(soldier.Kind==UnitKind.Mortar)
-            {
-                var model=new GameObject("Mortar model");model.transform.SetParent(root,false);
-                MortarModel(model.transform,team);ModelMetrics.MatchStandingHeight(model,soldier.Kind);Ring(root,.70f,.025f,team);
-                return;
             }
             Color metal=new Color(.71f,.75f,.77f), leather=new Color(.25f,.18f,.13f), skin=new Color(.83f,.63f,.43f);
             Shape(root,PrimitiveType.Capsule,"Tunic",new Vector3(0,1.15f,0),new Vector3(.67f,.47f,.45f),team);
@@ -234,22 +277,30 @@ namespace RiskAI
                 Shape(root,PrimitiveType.Cube,"Quiver",new Vector3(.15f,1.35f,-.31f),new Vector3(.24f,.75f,.22f),leather);
             }
         }
-        public static void MortarModel(Transform root,Color team)
+        public static void MortarModel(Transform root,Color team) => MortarModel(root,team,null);
+        public static void MortarModel(Transform root,Color team,Soldier soldier)
         {
-            Color metal=new Color(.52f,.56f,.61f),wood=new Color(.32f,.19f,.09f);
-            Shape(root,PrimitiveType.Cube,"Oak carriage",new Vector3(0,.42f,0),new Vector3(.86f,.24f,.94f),wood);
-            Shape(root,PrimitiveType.Cube,"Faction panel",new Vector3(0,.56f,-.28f),new Vector3(.78f,.16f,.16f),team);
+            // A human gunner reads at unit scale; the short, flared hand-cannon is not a carriage.
+            Color brass=new Color(.57f,.38f,.14f), steel=new Color(.34f,.37f,.38f), leather=new Color(.20f,.115f,.055f), skin=new Color(.80f,.57f,.36f);
+            Shape(root,PrimitiveType.Capsule,"Mortar gunner coat",new Vector3(0,1.13f,0),new Vector3(.68f,.48f,.43f),team*.82f);
+            Shape(root,PrimitiveType.Cube,"Mortar gunner team cloth",new Vector3(0,1.14f,.25f),new Vector3(.48f,.60f,.055f),team);
+            Shape(root,PrimitiveType.Sphere,"Mortar gunner head",new Vector3(0,1.78f,.035f),new Vector3(.43f,.46f,.42f),skin);
+            Shape(root,PrimitiveType.Cylinder,"Mortar gunner helmet",new Vector3(0,2.00f,.01f),new Vector3(.47f,.18f,.47f),steel);
             for(int side=-1;side<=1;side+=2)
             {
-                var wheel=Shape(root,PrimitiveType.Cylinder,"Iron bound wheel",new Vector3(side*.52f,.34f,0),new Vector3(.64f,.09f,.64f),wood);
-                wheel.transform.localRotation=Quaternion.Euler(0,0,90);
-                var hub=Shape(root,PrimitiveType.Cylinder,"Iron wheel hub",new Vector3(side*.63f,.34f,0),new Vector3(.18f,.025f,.18f),metal);
-                hub.transform.localRotation=Quaternion.Euler(0,0,90);
+                var leg=new GameObject("Mortar leg pivot");leg.transform.SetParent(root,false);leg.transform.localPosition=new Vector3(side*.18f,.78f,-.03f);
+                Shape(leg.transform,PrimitiveType.Capsule,"Mortar gunner boot",new Vector3(0,-.34f,.03f),new Vector3(.25f,.37f,.28f),leather);
+                if(soldier){if(side<0)soldier.LeftLeg=leg.transform;else soldier.RightLeg=leg.transform;}
+                Shape(root,PrimitiveType.Capsule,"Mortar gunner arm",new Vector3(side*.36f,1.28f,.18f),new Vector3(.19f,.32f,.21f),team*.76f);
             }
-            var pivot=new GameObject("Mortar barrel");pivot.transform.SetParent(root,false);pivot.transform.localPosition=new Vector3(0,.54f,.03f);pivot.transform.localRotation=Quaternion.Euler(43,0,0);
-            Shape(pivot.transform,PrimitiveType.Cylinder,"Cast iron tube",new Vector3(0,.35f,0),new Vector3(.36f,.43f,.36f),metal);
-            Shape(pivot.transform,PrimitiveType.Cylinder,"Brass muzzle rim",new Vector3(0,.75f,0),new Vector3(.44f,.065f,.44f),new Color(.57f,.43f,.21f));
-            Shape(pivot.transform,PrimitiveType.Cylinder,"Bore",new Vector3(0,.818f,0),new Vector3(.31f,.003f,.31f),new Color(.025f,.026f,.023f));
+            var cannon=new GameObject("Hand cannon pivot");cannon.transform.SetParent(root,false);cannon.transform.localPosition=new Vector3(.18f,1.34f,.26f);cannon.transform.localRotation=Quaternion.Euler(76,0,0);
+            Shape(cannon.transform,PrimitiveType.Cylinder,"Bronze hand cannon",new Vector3(0,.28f,0),new Vector3(.19f,.38f,.19f),brass);
+            Shape(cannon.transform,PrimitiveType.Cylinder,"Flared hand cannon muzzle",new Vector3(0,.62f,0),new Vector3(.29f,.16f,.29f),brass);
+            Shape(cannon.transform,PrimitiveType.Cylinder,"Hand cannon bore",new Vector3(0,.705f,0),new Vector3(.20f,.008f,.20f),new Color(.018f,.015f,.01f));
+            Shape(cannon.transform,PrimitiveType.Cube,"Hand cannon stock",new Vector3(0,-.13f,0),new Vector3(.13f,.31f,.13f),leather);
+            Shape(root,PrimitiveType.Sphere,"Gunner forward hand",new Vector3(.25f,1.42f,.26f),new Vector3(.18f,.16f,.18f),skin);
+            Shape(root,PrimitiveType.Sphere,"Gunner rear hand",new Vector3(.09f,1.27f,.18f),new Vector3(.18f,.16f,.18f),skin);
+            if(soldier)soldier.Weapon=cannon.transform;
         }
         public static void Arrow(Vector3 from, Vector3 to, CombatTarget target=null, float damage=0, int team=0, CombatTarget source=null, AttackKind attack=AttackKind.Piercing)
         {
@@ -262,11 +313,17 @@ namespace RiskAI
         {
             Arrow(from,to,target,damage,team,source,magic?AttackKind.Magic:AttackKind.Piercing);
         }
-        public static void Impact(Vector3 point, Color color, float size)
+        public static void Impact(Vector3 point, Color color, float size) => Impact(point, color, size, AttackKind.Piercing);
+        public static void Impact(Vector3 point, AttackKind attack, float size)
+        {
+            Color color = attack == AttackKind.Magic ? new Color(.55f, .70f, 1f) : attack == AttackKind.Siege ? new Color(1f, .42f, .12f) : new Color(1f, .72f, .35f);
+            Impact(point, color, size, attack);
+        }
+        static void Impact(Vector3 point, Color color, float size, AttackKind attack)
         {
             if (!fxRoot || impactPool == null) FxRoot();
             var pulse = impactPool.Rent();
-            if (pulse) pulse.Init(BattleSession.Current, point, color, size);
+            if (pulse) pulse.Init(BattleSession.Current, point, color, size, attack);
         }
 
         public static void ProjectileView(BattleSession session, int projectileId, Vector3 from, Vector3 to, float duration, AttackKind attack)
@@ -526,7 +583,7 @@ namespace RiskAI
         void SetPosition(float progress)
         {
             float t = Mathf.Clamp01(progress);
-            float arc = attack == AttackKind.Siege ? 2f : .5f;
+            float arc = attack == AttackKind.Siege ? Mathf.Lerp(1.6f, 3.4f, Mathf.Clamp01(Vector3.Distance(from, to) / 18f)) : .5f;
             transform.position = Vector3.Lerp(from, to, t) + Vector3.up * Mathf.Sin(t * Mathf.PI) * arc;
             var direction = to - from + Vector3.up * Mathf.Cos(t * Mathf.PI) * Mathf.PI * arc;
             if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);
@@ -541,8 +598,8 @@ namespace RiskAI
         bool pooled;
         Profile profile;
         Vector3 baseScale;
-        Transform ring;
-        Renderer ringRenderer;
+        Transform ring, sparks, runes;
+        Renderer coreRenderer, ringRenderer;
         internal bool IsPooled => pooled;
         internal void MarkRented() { pooled = false; }
         internal void PrepareForPool()
@@ -553,29 +610,51 @@ namespace RiskAI
             gameObject.SetActive(false);
         }
 
+        static Transform Part(Transform parent, PrimitiveType type, string name, Vector3 position, Vector3 scale)
+        {
+            var go = GameObject.CreatePrimitive(type); go.name = name; go.transform.SetParent(parent, false);
+            go.transform.localPosition = position; go.transform.localScale = scale;
+            var collider = go.GetComponent<Collider>(); if (collider) { collider.enabled = false; Object.Destroy(collider); }
+            var renderer = go.GetComponent<Renderer>(); renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; renderer.receiveShadows = false;
+            return go.transform;
+        }
         void EnsureAppearance()
         {
-            if(ring)return;
-            var go=GameObject.CreatePrimitive(PrimitiveType.Cylinder);go.name="Impact shock ring";go.transform.SetParent(transform,false);
-            go.transform.localPosition=Vector3.zero;go.transform.localScale=new Vector3(1f,.045f,1f);
-            var collider=go.GetComponent<Collider>();if(collider){collider.enabled=false;Object.Destroy(collider);}
-            ringRenderer=go.GetComponent<Renderer>();ringRenderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;ringRenderer.receiveShadows=false;
-            ring=go.transform;ring.gameObject.SetActive(false);
+            if (ring) return;
+            coreRenderer = GetComponent<Renderer>();
+            if (coreRenderer) { coreRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; coreRenderer.receiveShadows = false; }
+            ring = Part(transform, PrimitiveType.Cylinder, "Impact shock ring", Vector3.zero, new Vector3(1f, .045f, 1f));
+            ringRenderer = ring.GetComponent<Renderer>();
+            sparks = new GameObject("Impact sparks").transform; sparks.SetParent(transform, false);
+            Part(sparks, PrimitiveType.Cube, "Impact spark east", new Vector3(.28f, .09f, .04f), new Vector3(.52f, .035f, .04f));
+            Part(sparks, PrimitiveType.Cube, "Impact spark west", new Vector3(-.18f, .15f, -.06f), new Vector3(.035f, .42f, .035f));
+            runes = new GameObject("Mage rune shockwave").transform; runes.SetParent(transform, false);
+            for (int i = 0; i < 4; i++)
+            {
+                float angle = i * Mathf.PI * .5f;
+                var rune = Part(runes, PrimitiveType.Cube, "Arcane rune", new Vector3(Mathf.Cos(angle) * .38f, .025f, Mathf.Sin(angle) * .38f), new Vector3(.13f, .018f, .31f));
+                rune.localRotation = Quaternion.Euler(0, -i * 90, 0);
+            }
+            ring.gameObject.SetActive(false); sparks.gameObject.SetActive(false); runes.gameObject.SetActive(false);
         }
 
-        internal void Init(BattleSession owner, Vector3 point, Color color, float size)
+        internal void Init(BattleSession owner, Vector3 point, Color color, float size, AttackKind attack)
         {
             EnsureAppearance();
             session = owner;
             remaining = Lifetime;
             transform.position = point;
-            profile=color.b>color.r?Profile.Magic:size>=.6f?Profile.Siege:Profile.Piercing;
-            baseScale=Vector3.one*size;transform.localScale=baseScale;
-            var renderer = GetComponent<Renderer>();
-            if (renderer) renderer.sharedMaterial = VisualFactory.Mat(color);
-            if(ringRenderer)ringRenderer.sharedMaterial=VisualFactory.Mat(color);
-            ring.gameObject.SetActive(profile!=Profile.Piercing);
-            if(ring)ring.localScale=profile==Profile.Siege?new Vector3(.65f,.045f,.65f):new Vector3(.42f,.025f,.42f);
+            profile = attack == AttackKind.Magic ? Profile.Magic : attack == AttackKind.Siege ? Profile.Siege : Profile.Piercing;
+            baseScale = Vector3.one * size; transform.localScale = baseScale;
+            var material = VisualFactory.Mat(color);
+            if (coreRenderer) coreRenderer.sharedMaterial = material;
+            if (ringRenderer) ringRenderer.sharedMaterial = material;
+            foreach (var renderer in sparks.GetComponentsInChildren<Renderer>()) renderer.sharedMaterial = material;
+            foreach (var renderer in runes.GetComponentsInChildren<Renderer>()) renderer.sharedMaterial = material;
+            ring.gameObject.SetActive(profile != Profile.Piercing);
+            sparks.gameObject.SetActive(profile != Profile.Magic);
+            runes.gameObject.SetActive(profile == Profile.Magic);
+            ring.localScale = profile == Profile.Siege ? new Vector3(.65f, .045f, .65f) : new Vector3(.42f, .025f, .42f);
             pooled = false;
             gameObject.SetActive(true);
         }
@@ -585,12 +664,22 @@ namespace RiskAI
             if (session && (session.Paused || session.Winner >= 0)) return;
             float delta = Time.unscaledDeltaTime;
             remaining -= delta;
-            float t=Mathf.Clamp01(1-remaining/Lifetime);
-            transform.localScale=baseScale*Mathf.Lerp(1f,.24f,t);
-            if(ring&&ring.gameObject.activeSelf)
+            float t = Mathf.Clamp01(1 - remaining / Lifetime);
+            transform.localScale = baseScale * Mathf.Lerp(1f, .24f, t);
+            if (ring && ring.gameObject.activeSelf)
             {
-                float radius=profile==Profile.Siege?Mathf.Lerp(.65f,2f,t):Mathf.Lerp(.42f,1.2f,t);
-                ring.localScale=new Vector3(radius,profile==Profile.Siege?.045f:.025f,radius);
+                float radius = profile == Profile.Siege ? Mathf.Lerp(.65f, 2f, t) : Mathf.Lerp(.42f, 1.28f, t);
+                ring.localScale = new Vector3(radius, profile == Profile.Siege ? .045f : .025f, radius);
+            }
+            if (sparks && sparks.gameObject.activeSelf)
+            {
+                sparks.localScale = Vector3.one * Mathf.Lerp(1f, .1f, t);
+                sparks.localRotation = Quaternion.Euler(0, t * 130f, 0);
+            }
+            if (runes && runes.gameObject.activeSelf)
+            {
+                runes.localScale = Vector3.one * Mathf.Lerp(.7f, 2.1f, t);
+                runes.localRotation = Quaternion.Euler(0, t * 145f, 0);
             }
             if (remaining <= 0) VisualFactory.Release(this);
         }

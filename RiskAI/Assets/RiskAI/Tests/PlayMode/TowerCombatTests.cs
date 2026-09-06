@@ -128,17 +128,24 @@ namespace RiskAI.Tests
                 float angle=i*Mathf.PI/16;
                 var candidate=tower.transform.position+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*15f;
                 if(NavMesh.SamplePosition(candidate,out var hit,.8f,NavMesh.AllAreas) &&
-                   Vector3.Distance(hit.position,tower.transform.position)>ReforgedProfiles.CapturableTower.Range+.5f &&
+                   Vector2.Distance(new Vector2(hit.position.x,hit.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z))>ReforgedProfiles.CapturableTower.Range+.5f &&
+                   Vector3.Distance(hit.position,defender.transform.position)>BattleRules.Range(defender.Kind)+.5f &&
                    Vector3.Distance(hit.position,defender.transform.position)<=BattleRules.Range(UnitKind.Mortar) &&
                    !Physics.Linecast(hit.position+Vector3.up,defender.AimPoint,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))
                     mortar=battle.Spawn(0,UnitKind.Mortar,hit.position);
             }
             Assert.That(mortar,Is.Not.Null,"A mortar test position must be on the baked practice NavMesh.");
             KeepOnly(mortar,defender);
+            // The unit fixture does not remove tower components. Deactivate every
+            // unrelated tower so the health assertion measures this tower's planar
+            // range rather than fire from another red post.
+            foreach(var otherTower in battle.Towers)if(otherTower&&otherTower!=tower)otherTower.gameObject.SetActive(false);
             mortar.HoldPosition();
             float mortarHealth=mortar.Health,defenderHealth=defender.Health,towerHealth=tower.Health;
+            int towerShots=tower.ShotsFired;
             yield return new WaitForSecondsRealtime(6f);
-            Assert.That(Vector3.Distance(mortar.transform.position,tower.transform.position),Is.GreaterThan(ReforgedProfiles.CapturableTower.Range));
+            Assert.That(Vector2.Distance(new Vector2(mortar.transform.position.x,mortar.transform.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z)),Is.GreaterThan(ReforgedProfiles.CapturableTower.Range));
+            Assert.That(tower.ShotsFired,Is.EqualTo(towerShots),"This fixture isolates the tower from the rifleman defender and uses its planar range.");
             Assert.That(defender.Health,Is.LessThan(defenderHealth),"The mortar must attack the living tower defender from outside tower range.");
             Assert.That(tower.Health,Is.EqualTo(towerHealth),"Permanent towers are not damageable targets.");
             Assert.That(mortar.Health,Is.EqualTo(mortarHealth),"A mortar outside tower range must not be hit in return.");

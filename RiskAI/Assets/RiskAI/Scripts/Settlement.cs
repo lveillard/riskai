@@ -26,6 +26,7 @@ namespace RiskAI
         public float TrainingProgress => queue.Count == 0 ? 0 : 1 - queue[0].Remaining / BattleRules.TrainTime(queue[0].Kind);
         public UnitKind TrainingKind => queue.Count == 0 ? UnitKind.Footman : queue[0].Kind;
         public LineRenderer Ring { get; private set; }
+        bool navalClaimVisual;
         public bool Selected;
         public bool Building => project != BuildingProject.None;
         public string ProjectName => project == BuildingProject.Tower ? "Torre de guardia" : "Mejora de ciudad";
@@ -65,7 +66,7 @@ namespace RiskAI
             var rallyObject = new GameObject("Punto de reunión"); rallyObject.transform.SetParent(transform, false);
             rallyRing = VisualFactory.Ring(rallyObject.transform, .6f, .09f, new Color(.8f, 1, .5f));
             rallyObject.transform.position = Rally; rallyRing.enabled = false;
-            trainingView=BuildingTrainingView.Create(transform,DefaultLandEntry,Vector3.back);
+            trainingView=BuildingTrainingView.Create(transform,BuildingEntranceAnchor.Find(transform));
         }
 
         Vector3 ImportedTowerPoint()
@@ -99,7 +100,7 @@ namespace RiskAI
             string error = CanManage(team); if (error != null) return error;
             if (State.Level < BattleRules.RequiredLevel(kind)) return "Mejora la ciudad a nivel II para reclutar esta unidad.";
             if (queue.Count >= 5) return "La cola está llena. Pulsa un encargo para cancelarlo.";
-            if (session.RecruitmentReservations(team) >= BattleRules.PopulationLimit) return MapLayout.IsImported?"Límite de 100 soldados móviles alcanzado.":"Límite de 100 soldados alcanzado.";
+            if (session.RecruitmentReservations(team) >= BattleRules.PopulationLimit) return "Límite de 100 soldados móviles alcanzado.";
             if (!session.Economy.Spend(team, BattleRules.Cost(kind))) return "Oro insuficiente. Recibirás ingresos al terminar la ronda.";
             queue.Add(new Training { Team = team, Kind = kind, Remaining = BattleRules.TrainTime(kind) });
             return null;
@@ -144,6 +145,7 @@ namespace RiskAI
             if (!NavMesh.SamplePosition(target, out var hit, 8, NavMesh.AllAreas)) return;
             Rally = hit.position; rallyRing.transform.parent.position = Rally;
         }
+        internal void SetNavalClaimVisual(bool active) => navalClaimVisual=active;
         internal void SetPortNavalTraining(bool active)
         {
             portNavalTraining=active;
@@ -151,7 +153,7 @@ namespace RiskAI
         }
         internal void BindImportedPortEntry(Vector3 landEntry, Vector3 outward)
         {
-            if(trainingView)trainingView.Reposition(landEntry,outward);
+            // Port entry remains a gameplay spawn/rally coordinate. The cue stays on the town art entrance.
         }
         void RefreshTrainingView()
         {
@@ -196,7 +198,7 @@ namespace RiskAI
         {
             SelectionRing.enabled=Selected;
             rallyRing.enabled = Selected && State.Owner == 0;
-            Ring.enabled = true;
+            Ring.enabled = !navalClaimVisual;
             Ring.startColor = Ring.endColor = State.Contested ? new Color(1,.7f,.15f) : Color.Lerp(VisualFactory.TeamColor(State.Owner),Color.white,State.Capture*.65f);
             Ring.widthMultiplier = Selected ? .10f : .065f;
         }
@@ -234,4 +236,3 @@ namespace RiskAI
         }
     }
 }
-

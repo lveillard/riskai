@@ -1,59 +1,41 @@
-# RiskAI · v0.17
+# RiskAI · v0.18
 
-Prototipo RTS de conquista por ciudades, inspirado en los mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP, partida local contra IA y arte propio/CC0.
+Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP y arte propio/CC0. Abre **Play-RiskAI.cmd** para jugar la compilación local. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`.
 
-Abre **Play-RiskAI.cmd** para jugar la compilación local. El menú permite elegir escenario, 2–16 jugadores, reparto, semilla y dificultad antes de empezar. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`. Las compilaciones y las referencias de Warcraft quedan fuera de Git.
+La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
-Esta versión permite **un jugador y hasta 15 IA independientes**. Europe (212 ciudades) y New World (293) conservan distancias y coordenadas fuente con una conversión común de unidades, límites W3I y árboles DOO. Ballestero, caballero, sanador y mortero usan colisiones verificadas y alturas de espera calibradas contra medidas numéricas de los modelos originales. Sus siluetas son distintas y el tamaño de los edificios propios aún no está calibrado. [Escala y límites](docs/MAP-SCALE-v0.15.md) · [Cambios](docs/ITERATION-v0.17.md) · [Validación](docs/VALIDATION-v0.17.md) · [Pendientes](TODO.md).
+![v0.18: menú previo](docs/images/v0.18-menu.png)
 
-La v0.17 añade colas navales de cinco, indicadores de entrenamiento, barras para tropas ocultas por copas, bosque transitable que ralentiza y proyectiles distintos. Reutiliza las rutas navales y permite observar tiempos de simulación y respuesta sin cerrar la partida. [Diagnóstico en vivo](docs/OBSERVABILITY.md) · [Counters verificados](docs/audits/COUNTERS-v0.17.md).
-
-![v0.17: ciudad, cámara y vegetación en Europe](docs/images/v0.17-city.png)
-
-[Puerto y cola naval v0.17](docs/images/v0.17-training.png) · [Cuatro Riberas v0.16](docs/images/v0.16-riverlands.png) · [New World v0.16](docs/images/v0.16-newworld.png) · [Caballero v0.16](docs/images/v0.16-knight.png) · [Marcadores con Tab v0.16](docs/images/v0.16-scores.png) · [Revisiones Grok 4.6](docs/audits/GROK-v0.17.md)
-
-## Escenarios
+## Escenarios y reglas comunes
 
 | Mapa | Ciudades y grupos | Terreno |
 | --- | --- | --- |
-| Las Marcas | 18 ciudades, 9 grupos de 2 | Dos mesetas, costas, río, dos islas y nuevo secano al suroeste. |
-| Cuatro Riberas | 20 ciudades: 4 grupos continentales y un archipiélago; 4 ciudades por grupo | Más espacio, río largo desde la montaña meridional, dos cruces y tres islas. |
-| Europe · Saran | 212 ciudades, 69 grupos; 44 ciudades portuarias incluidas | Geografía europea y mediterránea extraída de Risk Reforged v3 de Saran. |
-| New World | 293 ciudades, 100 grupos; 59 ciudades portuarias incluidas | Europa y América, según Risk New World v3; no cubre todo el planeta. |
+| Las Marcas | 33 ciudades, 11 grupos | Mesetas, costa, río, islas y secano al suroeste. |
+| Cuatro Riberas | 44 ciudades, 11 grupos | Río largo, cruces, islas y claros irregulares. |
+| Europe · Saran | 212 ciudades, 69 grupos; 44 ciudades portuarias incluidas | Geografía europea y mediterránea de datos importados. |
+| New World | 293 ciudades, 100 grupos; 59 ciudades portuarias incluidas | Europa y América de datos importados. |
 
-Los postes indican fronteras y propietario. Selecciona una **hoguera** para mostrar su área y las ciudades que incluye. Los refuerzos de ese grupo aparecen en la hoguera. Los biomas y el relieve mantienen sus colores; la superposición territorial desaparece al cambiar la selección.
+Los cuatro mapas comparten ángulo, zoom inicial, mínimo, sensibilidad, cámara estratégica y sus reglas de partida. El encuadre máximo depende de la extensión geográfica y del espacio disponible bajo el HUD. La vista estratégica oculta detalle táctico y proyecta territorios y puertos sobre el suelo existente; la simulación, navegación y colisiones siguen activas. La transición tiene histéresis para que la rueda no alterne junto al umbral.
 
-## Primera partida y reglas
+![v0.18: vista estratégica](docs/images/v0.18-strategic.png)
 
-**Ciudades al azar** asigna el mismo número de ciudades a cada jugador mediante una semilla; el resto queda neutral. Con 16 jugadores, Europe da 13 ciudades por bando y deja 4 neutrales; New World da 18 y deja 5. En los dos escenarios originales, los puertos adicionales se reparten por separado entre jugadores elegidos por semilla. Cada ciudad y puerto, también los neutrales, empieza con **un ballestero retenido en su círculo**. Todos reciben **4 de oro**, sin tropas móviles ni barcos gratuitos. El menú permite reducir el número de jugadores para los mapas pequeños.
+Cada jugador empieza con 4 de oro. Las ciudades al azar reparten el mismo número por equipo y dejan el resto neutral. Cada ciudad y puesto tiene un defensor retenido. Una guarnición sólo puede salir si un aliado elegible dentro de su círculo toma el relevo; una orden inválida conserva al defensor. Los barcos mantienen su propia prioridad de sucesión en el atraque marítimo.
 
-Para empezar, selecciona una ciudad azul (**F2**) y compra un ballestero (**W**) o espadachín (**Q**). La tropa entrenada puede salir a conquistar; **E** selecciona las tropas móviles. Los barcos se compran en un puerto azul (**F3**). También puedes elegir grupos completos o posiciones fijas; el número de puestos neutrales depende del mapa y del modo. La base inicial sirve de referencia para la cámara y el despliegue.
+El límite es uniforme: **100 tropas móviles por equipo**, excluidas las guarniciones, en todos los escenarios. Los encargos pendientes cuentan para ese límite. La victoria exige mantener `ceil(ciudades × 0,60)` durante 20 s: 20 ciudades en Las Marcas, 27 en Cuatro Riberas, 128 en Europe y 176 en New World. El último jugador con puestos o tropas también vence; eliminar a una IA no concluye una partida con más rivales.
 
-Cada ciudad y puerto tiene un círculo con un defensor retenido. Conserva su tipo, salud y capacidad de ataque; no puede marcharse ni embarcar. Al morir, el aliado elegible más próximo dentro de 4,43 unidades asume la defensa; si no hay aliado, lo hace el enemigo más próximo dentro de 6. Sin candidato, el edificio queda neutral. Se excluyen tropas de otra guarnición y de otra altura. El círculo mide 1,55 de radio; la sucesión se resuelve en el siguiente tick, sin espera adicional.
+Los países completos reciben créditos de refuerzo y sus unidades aparecen en la hoguera. Sin salida asignada, esperan allí; clic derecho en terreno fija el punto de salida. Los puestos de frontera muestran propietario y la inspección de una hoguera dibuja su territorio y los puertos miembros.
 
-Las **torres son permanentes** y cambian con el edificio. Para tomar una posición, elimina al defensor y sus relevos cercanos. Una torre ocupada dispara 46–50 de daño perforante cada 0,9 s, con alcance 13: los campos del puesto h00N/h00O. El búnker independiente o000 tiene otro perfil. Con el tipo Light del ballestero, la torre suele derrotarlo en tres impactos acertados; dos tiradas máximas consecutivas bastan para hacerlo en dos. Daño final según tipo de ataque, coraza y armadura. Los proyectiles perforantes tienen 25 % de fallo al subir al menos 2,5 unidades; este umbral local evita penalizar pequeñas ondulaciones.
+Cada 60 segundos, conservar al menos una ciudad concede 4 de oro base más 1 por ciudad propia. Cada país completo recibe `ceil(ciudades / 2)` créditos de ballesteros; emite uno cada 0,5 segundos, con un máximo de cinco puntos vivos por ciudad del país. Las torres permanentes del puesto usan 46–50 de daño perforante, 0,9 segundos de cadencia y alcance 13. [Reglas y costes](docs/RISK-RULES-v0.16.md) · [Counters](docs/audits/COUNTERS-v0.17.md) · [Escala y procedencia de mapas](docs/MAP-SCALE-v0.15.md).
 
-Cada 60 s, si conservas alguna ciudad, recibes **4 de base + 1 por cada ciudad propia**, aunque su país esté dividido. Sin ciudades, no hay ingreso de ronda. Los países completos reciben créditos de refuerzo: `ceil(ciudades / 2)` ballesteros por ronda, emitidos de uno en uno cada **0,5 s**, con un máximo de cinco puntos de unidades vivas por ciudad del país. El saldo de créditos persiste; perder el grupo suspende su emisión. Las tropas esperan junto a la hoguera salvo que le asignes un punto de salida con clic derecho. Las recompensas de combate acumulan un cuarto del valor de puntos de la víctima. [Reglas y procedencia v0.16](docs/RISK-RULES-v0.16.md).
+## Selección, colas y estrategia
 
-| Unidad | Oro | Vida | Función |
-| --- | ---: | ---: | --- |
-| Espadachín | 1 | 200 | Primera línea |
-| Ballestero | 1 | 200 | Daño perforante a distancia |
-| Caballero | 5 | 650 | Caballería montada |
-| Mago | 4 | 250 | Daño mágico de área |
-| Mortero | 3 | 350 | Asedio a larga distancia, alcance mínimo 5 |
-| Sanador | 2 | 250 | Cura aliados con línea de visión |
-| Fragata | 5 | 400 | Combate naval y costero |
-| Transporte | 2 | 300 | Seis plazas locales, sin ataque |
-| Marine Private | 1 | 200 | Infantería a distancia del puerto |
-| Marine Major | 5 | 650 | Infantería pesada del puerto |
-| Marine General | 10 | 800 | Infantería veterana del puerto |
+La caja de selección prioriza tropas móviles y, cuando no las contiene, permite seleccionar edificios. Shift añade. Un doble clic en una ciudad propia agrupa ciudades propias cercanas y visibles. Casa y torre remiten al mismo puesto y el anillo de selección cubre su huella. Los puertos importados conservan una única identidad de selección.
 
-Los seis tipos generales se ofrecen en ciudades y los tres Marines en puertos. Fragatas y transportes se compran también en puertos. Casa y torre seleccionan el mismo puesto, rodeado por un anillo completo al seleccionarlo. Las ciudades tienen cola de cinco; los puertos tienen cinco encargos terrestres y cinco navales. Cancelar devuelve el precio. Tope por bando: 100 soldados, incluidos embarcados y compras pendientes, y 12 barcos. En Europe y New World las guarniciones quedan fuera del tope de 100 para permitir reclutar con más de cien defensores iniciales. En esos mapas los puertos forman parte de las ciudades, grupos, ingresos y victoria, y comparten su defensor y torre. En Las Marcas y Cuatro Riberas siguen siendo puestos navales independientes que no cuentan como ciudades. El reparto naval y los tiempos de producción siguen siendo adaptaciones del prototipo.
+La selección múltiple muestra las colas de cada edificio y permite cancelar encargos concretos. Una compra añade una unidad total a la cola compatible más corta; no multiplica coste ni unidades por los edificios seleccionados. Las ciudades y los puertos mantienen colas independientes de tierra y mar.
 
-Ganas conservando el 60 % de las ciudades durante 20 s: 11 en Las Marcas, 12 en Cuatro Riberas, 128 en Europe o 176 en New World. También vence el último jugador con puestos o tropas: eliminar a una sola IA no termina una partida con más rivales. La IA relajada retrasa su ofensiva, pero ambas dificultades reaccionan para defender bases amenazadas. Todavía no hay niebla de guerra; la IA conoce el mapa completo y no prepara desembarcos.
+![v0.18: ciudad y selección](docs/images/v0.18-city.png)
 
-## Controles
+![v0.18: colas múltiples](docs/images/v0.18-queues.png)
 
 | Acción | Control |
 | --- | --- |
@@ -68,36 +50,35 @@ Ganas conservando el 60 % de las ciudades durante 20 s: 11 en Las Marcas, 12 en 
 | Comprar unidades en ciudad | Q, W, D, F, R, C; o botones |
 | Comprar fragata / transporte | Q / W en un puerto |
 | Embarcar / desembarcar | B / D con transporte seleccionado |
-| Navegar y desembarcar al llegar | Clic derecho sobre un muelle |
 | Guardar / recuperar grupo | Ctrl + 1…9 / 1…9 |
-| Encolar órdenes | Shift + orden |
-| Ver grupo territorial / fijar salida | Clic en su hoguera / clic derecho en terreno |
-| Marina del puerto | V / B / C |
+| Ver grupo territorial / fijar salida | Clic en hoguera / clic derecho en terreno |
 | Marcadores | Mantener Tab |
 | Pausa / menú | F10 / F1 |
-| Liberar cursor / restablecer cámara | Esc / Retroceso |
-| Salir | Alt + F4 |
 
-Arrastrar con botón derecho cancela su orden al soltar. El zoom conserva el punto bajo el cursor. El minimapa permite centrar con clic izquierdo y ordenar con el derecho. Una ciudad u hoguera seleccionada usa clic derecho sobre terreno para fijar su reunión. Caja y doble clic agrupan tropas móviles; un defensor retenido seleccionado individualmente explica por qué no puede moverse.
+## Perfiles, arte y mapas
 
-Para embarcar, selecciona tropas y haz clic derecho en un transporte: ambos se reúnen en una costa accesible. B en el transporte carga tropas cercanas, según el radio fuente de 10,24 unidades. D permite elegir una playa transitable para navegar y desembarcar. Cambiar de selección conserva la operación. Los marcadores azules de muelle facilitan encontrar puntos de embarque; los scripts originales no exigen un puerto, y el adaptador acepta otras playas bajas con NavMesh. Una fragata puede ocupar un puerto sin defensor terrestre mientras permanece junto al embarcadero; si se marcha sin dejar otra defensa, queda neutral.
+Los perfiles compartidos incluyen los tiempos de preparación de ataque comprobados en las fuentes locales; el backswing queda como metadato y no crea un bloqueo de movimiento inventado. El soldado local no se presenta como una unidad extraída de Europe. La evidencia y los campos aún no resueltos están en la [auditoría de combate v0.18](docs/audits/v0.18-combat-source.md).
+
+La actividad de entrenamiento ilumina la entrada existente de cada edificio. El caballero usa una embestida de lanza; el mortero es un artillero a pie con cañón corto y proyectil arqueado; los impactos distinguen perforación, magia y asedio mediante efectos reutilizados y acotados. Las Marcas y Cuatro Riberas son escenarios originales; Europe y New World conservan sus coordenadas y cantidades importadas. No se distribuyen assets de Warcraft.
+
+![v0.18: Cuatro Riberas](docs/images/v0.18-riverlands.png)
 
 ## Desarrollo
 
-Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. Escena: `Assets/RiskAI/Scenes/LasMarcas.unity`. Con el editor cerrado:
+Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. La batalla está en `Assets/RiskAI/Scenes/LasMarcas.unity`; la escena de inicio se prepara como índice 0. Con el editor cerrado:
 
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
 .\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
-.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.17/RiskAI.exe
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.18/RiskAI.exe
 ```
 
-Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map classic`, `riverlands`, `europe` o `newworld`. [Estructura del código](RiskAI/README.md).
+Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map classic`, `riverlands`, `europe` o `newworld`.
 
-`RiskAI.Core` no depende de Unity. `BattleWorld` ordena ticks a 20 Hz; `CombatWorld` resuelve proyectiles sin depender de su vista; hay consultas espaciales y pools. NavMesh y actores aún usan Unity: no se garantiza replay determinista. Los comandos por ID cubren infantería; faltan compras y naval antes de un servidor autoritativo. El HUD sigue usando IMGUI. Touch, Web, Android, multijugador, niebla, guardado y diplomacia siguen pendientes en [TODO.md](TODO.md). El diagnóstico del ejecutable registra cada 30 s tiempos de fotograma, cambios de heap, recolecciones y órdenes aplicadas/rechazadas. No hay todavía un benchmark que acredite miles de unidades.
+La v0.18 tiene build Windows, 171 casos Unity aprobados y 7 pruebas Python. Las sondas incluyen una partida avanzada de 16 jugadores y una carga de hasta 660 unidades; registran respuesta a órdenes, tiempos de fotograma y coste naval. Persisten esperas de navegación y picos: [mediciones y límites](docs/VALIDATION-v0.18.md). [Cambios v0.18](docs/ITERATION-v0.18.md) · [Estructura del código](RiskAI/README.md) · [Diagnóstico en vivo](docs/OBSERVABILITY.md) · [Pendientes](TODO.md).
 
-## Referencias y arte
+## Referencias y licencias
 
-Saran Reforged v3 es la referencia de reglas principal; New World es otra variante, y las capturas de Rome no equivalen a disponer de su código. Las Marcas y Cuatro Riberas son escenarios originales. La v0.16 rompe las columnas regulares de Cuatro Riberas y usa manchas de bosque y mezclas de suelo/agua menos repetitivas. Europe y New World importan datos numéricos de geografía y colocación; el arte y las adaptaciones de navegación son propios. [Auditoría v0.12](docs/RISK-RULES-v0.12.md), [mapas y posiciones](docs/RISK-MAPS-v0.10.md), [datos heredados](docs/REFORGED-BASE-STATS-v0.9.md) y [lecciones de World Editor para el terreno](docs/WORLD-EDITOR-TERRAIN.md).
+`RiskAI.Core` no depende de Unity. `BattleWorld` ordena ticks a 20 Hz; `CombatWorld` resuelve impactos sin depender de la vista; NavMesh y actores aún usan Unity y no garantizan replay determinista. Touch, Web, Android, multijugador, niebla, guardado y diplomacia siguen pendientes.
 
-El juego distribuye arte propio y KayKit CC0. No incluye modelos, texturas, sonidos, discos ni claves de Warcraft. [Créditos y licencias](THIRD_PARTY_NOTICES.md). El prototipo web descartado y los mapas de investigación están en referencias locales ignoradas; `Resources/Maps/` contiene las dos geografías jugables y su procedencia; `data/derived/` conserva los informes de extracción; los perfiles efectivos siguen en C#. El antiguo `data/rules.json` está retirado y remite a esas fuentes, sin duplicar estadísticas.
+El juego distribuye arte propio y KayKit CC0. No incluye modelos, texturas, sonidos, discos ni claves de Warcraft. [Créditos y licencias](THIRD_PARTY_NOTICES.md). Las referencias de investigación y compilaciones quedan fuera de Git.

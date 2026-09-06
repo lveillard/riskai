@@ -96,6 +96,42 @@ namespace RiskAI.Tests
             Assert.That(Vector3.Distance(replacement.transform.position, anchor), Is.LessThan(.002f));
         }
 
+        [UnityTest]
+        public IEnumerator DefenderMoveNeedsAnInCircleReliefAndHandoffsBeforeTheOrder()
+        {
+            var town = battle.Towns.First(t => t.State.Owner == 0 && t.Defender && !t.IsPort);
+            var defender = town.Defender;
+            var target = town.Rally + Vector3.right * 3;
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, defender.EntityId, UnitCommandKind.Move, target.x, target.y, target.z)), Is.False);
+            Assert.That(town.Defender, Is.SameAs(defender), "A defender cannot leave its circle without a nearby allied relief.");
+
+            var relief = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, town.ClaimZone.Center);
+            Assert.That(Vector3.Distance(relief.transform.position, town.ClaimZone.Center), Is.LessThan(ClaimRules.CircleRadius));
+            Vector3 anchor = defender.transform.position;
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, defender.EntityId, UnitCommandKind.Move, target.x, target.y, target.z)), Is.True);
+            battle.Commands.Tick();
+
+            Assert.That(town.Defender, Is.SameAs(relief));
+            Assert.That(relief.IsGarrison, Is.True);
+            Assert.That(defender.IsGarrison, Is.False);
+            Assert.That(Vector3.Distance(defender.transform.position, anchor), Is.LessThan(.01f), "The released defender begins its order from the guard anchor without a position jump.");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PausedDefenderOrderReportsPauseBeforeReliefRequirement()
+        {
+            var town = battle.Towns.First(t => t.State.Owner == 0 && t.Defender);
+            var defender = town.Defender;
+            battle.TogglePause();
+            var point = town.Rally;
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, defender.EntityId, UnitCommandKind.Move, point.x, point.y, point.z)), Is.False);
+            Assert.That(battle.Commands.LastRejection, Is.EqualTo("La partida está detenida."));
+            Assert.That(town.Defender, Is.SameAs(defender));
+            battle.TogglePause();
+            yield return null;
+        }
+
         static float FlatDistance(Vector3 a, Vector3 b)
         {
             a.y = b.y = 0;

@@ -17,8 +17,14 @@ namespace RiskAI
         public static Vector2 PlayableMax => IsImported ? new Vector2(Imported.PlayableMaxX, Imported.PlayableMaxZ) : new Vector2(HalfWidth, HalfDepth);
         public static Vector3 PlayableCenter => new Vector3((PlayableMin.x + PlayableMax.x) * .5f, 0, (PlayableMin.y + PlayableMax.y) * .5f);
         public static string MapName => IsImported ? Imported.name : IsExpanded ? "Cuatro Riberas" : "Las Marcas";
-        static readonly int[] ClassicMainlandHarborX = { -58, -37, -3, 20, 43 };
-        static readonly int[] ExpandedMainlandHarborX = { -58, -32, -7, 20, 43 };
+        public static string ScenarioDetail(ScenarioMap scenario)
+        {
+            if (scenario == ScenarioMap.Classic) return ClassicPads.Length + " ciudades · " + ClassicCountries.Length + " grupos";
+            if (scenario == ScenarioMap.Riverlands) return ExpandedPads.Length + " ciudades · " + ExpandedCountries.Length + " grupos";
+            return ImportedMapData.ScenarioDetail(scenario);
+        }
+        static readonly int[] ClassicMainlandHarborX = { -58, -37, -3, 22, 43 };
+        static readonly int[] ExpandedMainlandHarborX = { -54, -41, -19, 20, 43 };
         public static int[] MainlandHarborX => IsExpanded ? ExpandedMainlandHarborX : ClassicMainlandHarborX;
 
         // Shared by port placement and vegetation, before the ports exist in the scene.
@@ -56,42 +62,51 @@ namespace RiskAI
         public static City[] Towns { get; private set; }
 
         static readonly Country[] ClassicCountries = {
-            new Country("Marca del Alba",0,UnitKind.Archer,1), new Country("Valdeluz",0,UnitKind.Archer,1),
-            new Country("Paso del Rey",1,UnitKind.Archer,1), new Country("Ribera Gris",1,UnitKind.Archer,1),
-            new Country("Las Atalayas",2,UnitKind.Archer,1), new Country("Ceniza",2,UnitKind.Archer,1),
-            // The south-west is deliberately split into small, claimable pairs so
-            // its long approach is active without changing either original home.
-            new Country("Dehesa de Poniente",3,UnitKind.Archer,1), new Country("Campos del Secano",4,UnitKind.Archer,1),
-            new Country("Lomas de Azafrán",5,UnitKind.Archer,1)
+            new Country("Marca del Alba",0,UnitKind.Archer,1), new Country("Valle de los Pinos",1,UnitKind.Archer,1),
+            new Country("Escarpa de Poniente",2,UnitKind.Archer,1), new Country("Cuenca del Fresno",3,UnitKind.Archer,1),
+            new Country("Puertas de Oriente",4,UnitKind.Archer,1), new Country("Sierra Carmesí",5,UnitKind.Archer,1),
+            new Country("Dehesa de Poniente",6,UnitKind.Archer,1), new Country("Campos del Secano",7,UnitKind.Archer,1),
+            new Country("Lomas de Azafrán",8,UnitKind.Archer,1), new Country("Costa de Sal",9,UnitKind.Archer,1),
+            new Country("Islas del Norte",10,UnitKind.Archer,1)
         };
+        // Each authored pad is a deliberately clear, level site: away from ponds,
+        // the river and cliff edges, with larger country groups where the land opens up.
         static readonly Vector2[] ClassicPads = {
-            new(-38,-12),new(-47,12),new(-21,5),new(-23,30),new(-2,24),new(8,3),new(1,-18),new(28,30),new(43,9),new(38,-25),new(20,-39),new(-24,-34),
-            // Southern clearings: each column is 25 authored metres apart and each
-            // pair is 17 apart, leaving ample room for the 13-unit tower circles.
-            new(-56,-65),new(-56,-82),new(-31,-65),new(-31,-82),new(-6,-65),new(-6,-82)
+            new(-38,-12),new(-47,12),new(-60,-8), new(-21,5),new(-23,30),new(-37,-47),
+            new(-60,-30),new(-54,-47), new(-2,24),new(8,3),new(1,-18),new(-24,-34),
+            new(28,30),new(43,9),new(65,15),new(15,45), new(38,-25),new(20,-39),new(57,-25),
+            new(-56,-65),new(-52,-83), new(-30,-66),new(-35,-83),new(-7,-47),
+            new(-5,-67),new(-1,-84),new(17,-65), new(37,-65),new(58,-58),
+            new(-47,57),new(-70,-78),new(-8,74),new(49,-82)
         };
-        static readonly Vector4[] ClassicIslands = { new(-47,53,12,8),new(-8,69,13,9) };
+        static readonly Vector4[] ClassicIslands = { new(-47,53,12,12),new(-8,69,13,11) };
         static readonly Vector2[][] ClassicCliffs = {
             new[]{new Vector2(-58,3),new Vector2(-53,-4),new Vector2(-40,-6),new Vector2(-32,-3),new Vector2(-24,-7),new Vector2(-17,-1),new Vector2(-17,9),new Vector2(-10,14),new Vector2(-13,21),new Vector2(-18,24),new Vector2(-18,33),new Vector2(-29,34),new Vector2(-34,27),new Vector2(-45,26),new Vector2(-52,22),new Vector2(-59,16)},
             new[]{new Vector2(16,8),new Vector2(19,0),new Vector2(27,-4),new Vector2(35,-5),new Vector2(43,-1),new Vector2(45,6),new Vector2(56,8),new Vector2(59,15),new Vector2(54,19),new Vector2(56,30),new Vector2(46,36),new Vector2(34,36),new Vector2(30,40),new Vector2(23,34),new Vector2(18,26),new Vector2(21,18)}
         };
         static City[] ClassicTowns;
         static readonly Vector2[] ExpandedPads = {
-            new(-55,-59),new(-50,-27),new(-53,8),new(-44,44), new(-28,-59),new(-23,-22),new(-27,12),new(-19,43),
-            new(17,-58),new(22,-28),new(18,9),new(26,46), new(49,-57),new(44,-18),new(48,17),new(40,43),
-            new(-51,91),new(-20,100),new(-5,96),new(31,101)
+            new(-55,-59),new(-50,-27),new(-53,8),new(-44,44),new(-28,-59),new(-23,-22),new(-27,12),new(-19,43),
+            new(17,-58),new(22,-28),new(18,9),new(26,46),new(49,-57),new(44,-18),new(48,17),new(51,47),
+            new(-67,-82),new(-43,-83),new(-20,-86),new(-66,-44),new(-39,-45),new(-65,-10),new(-42,-5),new(-14,-5),
+            new(-64,24),new(-40,25),new(-12,22),new(-63,55),new(-31,58),new(-7,59),
+            new(42,-85),new(67,-75),new(35,-43),new(68,-40),new(32,-3),new(66,-4),new(31,28),new(65,31),new(18,63),
+            new(-54,94),new(-12,104),new(-60,-95),new(34,103),new(70,50)
         };
-        // Extend islands northward, retaining the south coast/berths. Independent
-        // city and port garrisons must not start inside each other's tower range.
-        static readonly Vector4[] ExpandedIslands = { new(-50,87,10,11),new(-12,96,18,16),new(30,94,10,11) };
+        // Independent island settlements are kept on their original navigable land,
+        // while mainland groups follow river banks, crossings, hills and coasts.
+        static readonly Vector4[] ExpandedIslands = { new(-50,87,12,14),new(-12,96,18,16),new(30,94,11,13) };
         static readonly Vector2[][] ExpandedCliffs = {
             new[]{new Vector2(-61,8),new Vector2(-55,-4),new Vector2(-42,-8),new Vector2(-32,-2),new Vector2(-28,10),new Vector2(-32,25),new Vector2(-43,32),new Vector2(-56,28)},
             new[]{new Vector2(29,7),new Vector2(34,-4),new Vector2(48,-7),new Vector2(61,2),new Vector2(59,20),new Vector2(51,32),new Vector2(36,28),new Vector2(27,17)}
         };
         static readonly Country[] ExpandedCountries = {
-            new Country("Marca Occidental",0,UnitKind.Archer,2,new Vector3(-55 * Spacing,0,-59 * Spacing)), new Country("Cuenca del Río",1,UnitKind.Archer,2,new Vector3(-23 * Spacing,0,-22 * Spacing)),
-            new Country("Altos Centrales",2,UnitKind.Archer,2,new Vector3(22 * Spacing,0,-28 * Spacing)), new Country("Frontera Oriental",3,UnitKind.Archer,2,new Vector3(44 * Spacing,0,-18 * Spacing)),
-            new Country("Archipiélago Norte",4,UnitKind.Archer,2,new Vector3(-16 * Spacing,0,90 * Spacing))
+            new Country("Marca Occidental",0,UnitKind.Archer,2), new Country("Bosques de Poniente",1,UnitKind.Archer,2),
+            new Country("Cuenca del Río",2,UnitKind.Archer,2), new Country("Costa Occidental",3,UnitKind.Archer,2),
+            new Country("Colinas Occidentales",4,UnitKind.Archer,2), new Country("Ribera Alta",5,UnitKind.Archer,2),
+            new Country("Altos Centrales",6,UnitKind.Archer,2), new Country("Frontera Oriental",7,UnitKind.Archer,2),
+            new Country("Llanuras de Levante",8,UnitKind.Archer,2), new Country("Puertas del Estuario",9,UnitKind.Archer,2),
+            new Country("Archipiélago Norte",10,UnitKind.Archer,2)
         };
 
         static MapLayout() { Configure(false); }
@@ -105,28 +120,49 @@ namespace RiskAI
                 Imported=ImportedMapData.Load(scenario);HalfWidth=Imported.HalfWidth;HalfDepth=Imported.HalfDepth;
                 Islands=System.Array.Empty<Vector4>();Cliffs=System.Array.Empty<Vector2[]>();Pads=new Vector2[Imported.cities.Length];
                 Countries=new Country[Imported.countries.Length];Towns=new City[Imported.cities.Length];
-                for(int i=0;i<Countries.Length;i++){var c=Imported.countries[i];Countries[i]=new Country(c.name,i,UnitKind.Archer,Mathf.CeilToInt(c.count*.5f),Point(c.x,c.z));}
+                for(int i=0;i<Countries.Length;i++){var c=Imported.countries[i];Countries[i]=new Country(c.name,i,UnitKind.Archer,0,Point(c.x,c.z));}
                 for(int i=0;i<Towns.Length;i++){Towns[i]=new City(Imported.cities[i]);Pads[i]=new Vector2(Towns[i].Position.x/Spacing,Towns[i].Position.z/Spacing);}
+                Countries=ApplySharedReinforcementFormula(Countries,Towns);
                 TerrainHydrology.Configure(false);UploadShaderGlobals();return;
             }
             HalfWidth = 72 * Spacing; HalfDepth = (expanded ? 112 : 90) * Spacing;
             Pads = expanded ? ExpandedPads : ClassicPads; Islands = expanded ? ExpandedIslands : ClassicIslands; Cliffs = expanded ? ExpandedCliffs : ClassicCliffs;
-            Countries = expanded ? ExpandedCountries : ClassicCountries; TerrainHydrology.Configure(expanded); Towns = expanded ? BuildExpandedTowns() : BuildClassicTowns();
+            TerrainHydrology.Configure(expanded); Towns = expanded ? BuildExpandedTowns() : BuildClassicTowns();
+            Countries = ApplySharedReinforcementFormula(expanded ? ExpandedCountries : ClassicCountries,Towns);
             UploadShaderGlobals();
         }
+        // Saran's FFA trigger awards ceil(cityCount / 2) reinforcement points per
+        // completed region.  Derive every authored and imported country from its
+        // actual roster so map density cannot quietly create a second economy rule.
+        static Country[] ApplySharedReinforcementFormula(Country[] source,City[] towns)
+        {
+            var counts=new int[source.Length];
+            foreach(var town in towns) if(town.Country>=0&&town.Country<counts.Length) counts[town.Country]++;
+            var result=new Country[source.Length];
+            for(int i=0;i<source.Length;i++)
+            {
+                var country=source[i];
+                result[i]=new Country(country.Name,country.Region,country.Reinforcement,
+                    BattleRules.CountryReinforcementPointsPerRound(counts[i]),country.CampPoint);
+            }
+            return result;
+        }
+
         static City[] BuildClassicTowns()
         {
             if (ClassicTowns != null) return ClassicTowns;
             ClassicTowns = new[] {
-                new City("dawn","Bastión del Alba",-38,-12,0,0,0,true),new City("pine","Pinar Alto",-47,12,0,0,0),
-                new City("mill","Molino Viejo",-21,5,-1,0,1),new City("meadow","Valdeluz",-23,30,-1,0,1),
-                new City("gate","Puerta de Piedra",-2,24,-1,1,2),new City("ford","Valle del Fresno",8,3,-1,1,2),
-                new City("stone","Piedra Vieja",1,-18,-1,1,3),new City("ash","Torre del Roble",28,30,-1,2,4),
-                new City("watch","Vigía del Este",43,9,-1,2,4),new City("red","Fortaleza Carmesí",38,-25,1,2,5,true),
-                new City("highland","Altos de Ceniza",20,-39,1,2,5),new City("west","Marca del Sur",-24,-34,-1,1,3),
-                new City("dehesa","Dehesa de Poniente",-56,-65,-1,3,6),new City("encina","Encinar Bajo",-56,-82,-1,3,6),
-                new City("secano","Campos del Secano",-31,-65,-1,4,7),new City("trigal","Trigal Dorado",-31,-82,-1,4,7),
-                new City("azafran","Lomas de Azafrán",-6,-65,-1,5,8),new City("olivar","Olivar de la Marca",-6,-82,-1,5,8)
+                new City("dawn","Bastión del Alba",-38,-12,0,0,0,true),new City("pine","Pinar Alto",-47,12,0,0,0),new City("cordillera-norte","Cordillera del Alba",-60,-8,-1,0,0),
+                new City("mill","Molino Viejo",-21,5,-1,1,1),new City("meadow","Valdeluz",-23,30,-1,1,1),new City("encinar-centro","Encinar Central",-37,-47,-1,1,1),
+                new City("crest-west","Cresta de Poniente",-60,-30,-1,2,2),new City("dehesa-norte","Dehesa Norte",-54,-47,-1,2,2),
+                new City("gate","Puerta de Piedra",-2,24,-1,3,3),new City("ford","Valle del Fresno",8,3,-1,3,3),new City("stone","Piedra Vieja",1,-18,-1,3,3),new City("west","Marca del Sur",-24,-34,-1,3,3),
+                new City("ash","Torre del Roble",28,30,-1,4,4),new City("watch","Vigía del Este",43,9,-1,4,4),new City("senda-orient","Senda Oriental",65,15,-1,4,4),new City("torre-norte","Torre del Norte",15,45,-1,4,4),
+                new City("red","Fortaleza Carmesí",38,-25,1,5,5,true),new City("highland","Altos de Ceniza",20,-39,1,5,5),new City("guardia-oriental","Guardia Oriental",57,-25,-1,5,5),
+                new City("dehesa","Dehesa de Poniente",-56,-65,-1,6,6),new City("encina","Encinar Bajo",-52,-83,-1,6,6),
+                new City("secano","Campos del Secano",-30,-66,-1,7,7),new City("trigal","Trigal Dorado",-35,-83,-1,7,7),new City("azafran-norte","Azafrán del Norte",-7,-47,-1,7,7),
+                new City("azafran","Lomas de Azafrán",-5,-67,-1,8,8),new City("olivar","Olivar de la Marca",-1,-84,-1,8,8),new City("loma-sur","Loma del Sur",17,-65,-1,8,8),
+                new City("costa-sur","Costa del Sur",37,-65,-1,9,9),new City("vigia-sal","Vigía de la Sal",58,-58,-1,9,9),
+                new City("isla-bruma","Isla de la Bruma",-47,57,-1,10,10),new City("isla-roble","Dehesa de la Frontera",-70,-78,-1,6,6),new City("isla-viento","Isla del Viento",-8,74,-1,10,10),new City("isla-faro","Torre de la Sal",49,-82,-1,9,9)
             };
             return ClassicTowns;
         }
@@ -143,11 +179,17 @@ namespace RiskAI
         static City[] BuildExpandedTowns()
         {
             return new[] {
-                new City("west-01","Bastión Occidental",-55,-59,0,0,0,true),new City("west-02","Pinar Occidental",-50,-27,0,0,0),new City("west-03","Marjal Occidental",-53,8,1,0,0),new City("west-04","Cresta Occidental",-44,44,1,0,0),
-                new City("river-01","Puerta del Río",-28,-59,0,1,1),new City("river-02","Molino del Río",-23,-22,0,1,1),new City("river-03","Vado del Río",-27,12,1,1,1),new City("river-04","Ribera Alta",-19,43,1,1,1),
-                new City("high-01","Bastión Central",17,-58,0,2,2),new City("high-02","Loma Central",22,-28,0,2,2),new City("high-03","Paso Central",18,9,1,2,2),new City("high-04","Atalaya Central",26,46,1,2,2),
-                new City("east-01","Puerta Oriental",49,-57,0,3,3),new City("east-02","Cantera Oriental",44,-18,0,3,3),new City("east-03","Vigía Oriental",48,17,1,3,3),new City("east-04","Cresta Oriental",40,43,1,3,3),
-                new City("isle-01","Isla del Roble",-51,91,0,4,4),new City("isle-02","Isla del Viento",-20,100,0,4,4),new City("isle-03","Isla del Faro",-5,96,1,4,4),new City("isle-04","Isla del Alba",31,101,1,4,4)
+                new City("west-01","Bastión Occidental",-55,-59,0,0,0,true),new City("west-05","Marca del Sur",-67,-82,-1,0,0),new City("west-06","Bosque Bajo",-43,-83,-1,0,0),new City("west-07","Paso de Poniente",-66,-44,-1,0,0),
+                new City("west-02","Pinar Occidental",-50,-27,0,1,1),new City("west-08","Loma del Roble",-39,-45,-1,1,1),new City("west-09","Marjal Occidental",-65,-10,-1,1,1),new City("west-10","Cresta del Bosque",-42,-5,-1,1,1),
+                new City("river-01","Puerta del Río",-28,-59,0,2,2),new City("river-05","Vega del Sur",-20,-86,-1,2,2),new City("river-02","Molino del Río",-23,-22,0,2,2),new City("river-06","Vado Bajo",-14,-5,-1,2,2),new City("river-03","Ribera del Río",-27,12,1,2,2),
+                new City("west-03","Linde Occidental",-53,8,1,3,3),new City("west-11","Peña del Mar",-64,24,-1,3,3),new City("west-04","Cresta Occidental",-44,44,1,3,3),new City("west-13","Puerto Alto",-63,55,-1,3,3),
+                new City("west-12","Colina del Vado",-40,25,-1,4,4),new City("west-14","Senda del Norte",-31,58,-1,4,4),
+                new City("river-04","Ribera Alta",-19,43,1,5,5),new City("river-07","Paso de los Sauces",-12,22,-1,5,5),new City("river-08","Estuario Verde",-7,59,-1,5,5),
+                new City("high-01","Bastión Central",17,-58,0,6,6),new City("high-05","Altos del Sur",42,-85,-1,6,6),new City("high-02","Loma Central",22,-28,0,6,6),new City("high-06","Cerro de Piedra",35,-43,-1,6,6),
+                new City("east-01","Puerta Oriental",49,-57,0,7,7),new City("east-05","Frontera del Sur",67,-75,-1,7,7),new City("east-02","Cantera Oriental",44,-18,0,7,7),new City("east-06","Paso de Levante",68,-40,-1,7,7),new City("high-07","Mirador del Río",32,-3,-1,7,7),new City("east-07","Fuerte del Este",66,-4,-1,7,7),
+                new City("high-03","Paso Central",18,9,1,8,8),new City("east-03","Vigía Oriental",48,17,1,8,8),new City("high-08","Atalaya del Llano",31,28,-1,8,8),new City("east-08","Costa de Levante",65,31,-1,8,8),new City("east-04","Cresta Oriental",51,47,1,8,8),
+                new City("high-04","Altos del Estuario",26,46,1,9,9),new City("high-09","Puerta del Estuario",18,63,-1,9,9),
+                new City("isle-01","Isla del Roble",-54,94,0,10,10),new City("isle-02","Isla del Viento",-12,104,0,10,10),new City("isle-03","Vega del Confín",-60,-95,1,0,0),new City("isle-04","Isla del Alba",34,103,1,10,10),new City("isle-05","Vigía de Levante",70,50,-1,8,8)
             };
         }
         public static float Coast(float x)

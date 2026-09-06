@@ -38,6 +38,7 @@ namespace RiskAI.Tests
         {
             var camp=battle.Camps[0];
             Assert.That(camp,Is.Not.Null);
+            Assert.That(battle.RecruitmentPopulation(0),Is.Zero,"Starting guards cannot consume the shared mobile cap on authored maps.");
             var unit=battle.Spawn(0,UnitKind.Archer,camp.SpawnPoint);
             Assert.That(unit,Is.Not.Null);
 
@@ -57,11 +58,18 @@ namespace RiskAI.Tests
             Assert.That(unit.Agent.hasPath,Is.False);
 
             var memberPort=battle.Naval.Harbors.First(h=>h.LinkedTown&&h.LinkedTown.State.Country==camp.Country);
-            var own=new System.Collections.Generic.List<Vector3>();var other=new System.Collections.Generic.List<Vector3>();
-            typeof(CountryCamp).GetMethod("CollectTerritoryPoints",BindingFlags.Instance|BindingFlags.NonPublic)
-                .Invoke(camp,new object[]{own,other});
-            Assert.That(own.Any(point=>Vector3.Distance(point,memberPort.Landing)<.01f),Is.True,
-                "The camp overlay must use its member port as a real territory seed.");
+            var atlas=StrategicMapView.Current.Atlas;
+            Assert.That(atlas.Sites.Any(site=>site.Port==memberPort&&site.Country==camp.Country&&Vector2.Distance(site.Point,new Vector2(memberPort.Landing.x,memberPort.Landing.z))<.01f),Is.True,
+                "The shared surface must include every country's member port.");
+            camp.Select(true);
+            Assert.That(StrategicMapView.Current.SelectedCountry,Is.EqualTo(camp.Country));
+            var guard=battle.Towns[0].Defender;
+            StrategicMapView.Current.SetStrategic(true);
+            Assert.That(guard.gameObject.activeInHierarchy,Is.True,"Overview must not suspend simulation actors.");
+            Assert.That(Camera.main.cullingMask,Is.EqualTo(1<<StrategicMapView.StrategicLayer));
+            Assert.That(StrategicMapView.Current.SurfaceCount,Is.GreaterThan(0));
+            StrategicMapView.Current.SetStrategic(false);
+            Assert.That(Camera.main.cullingMask&(1<<MapLayout.TerrainLayer),Is.Not.Zero);
             yield return null;
         }
 

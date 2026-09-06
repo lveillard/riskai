@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using RiskAI.Core;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace RiskAI
 {
@@ -51,10 +52,13 @@ namespace RiskAI
 
         public bool Submit(UnitCommand command)
         {
-            if(session.Paused || session.Winner>=0 || queue.Count>=1024 || !Valid(command))
+            if(session.Paused){Reject(command,"La partida está detenida.");return false;}
+            if(session.Winner>=0){Reject(command,"La batalla ha terminado.");return false;}
+            if(queue.Count>=1024){Reject(command,"La cola de órdenes está llena.");return false;}
+            if(!Valid(command))
             {
                 var unit=session.FindTarget(command.UnitId) as Soldier;
-                Reject(command,unit&&unit.IsGarrison?"Defensor retenido: recluta una tropa móvil para dar órdenes.":"La orden ya no es válida para esa unidad o su objetivo.");return false;
+                Reject(command,unit&&unit.IsGarrison?"El defensor necesita un relevo aliado dentro del círculo.":"La orden ya no es válida para esa unidad o su objetivo.");return false;
             }
             double submittedAt = Time.realtimeSinceStartupAsDouble;
             queue.Enqueue(new QueuedCommand(command, submittedAt, ObservedPausedSeconds()));
@@ -62,16 +66,29 @@ namespace RiskAI
             if (command.PlayerId == 0) telemetry.HumanSubmitted++; else telemetry.AiSubmitted++;
             return true;
         }
-        bool Valid(UnitCommand command)
+        bool Valid(UnitCommand command, bool releaseGarrison = false)
         {
             if(!PlayerRules.IsPlayer(command.PlayerId) || command.PlayerId>=session.PlayerCount || !Finite(command.X) || !Finite(command.Y) || !Finite(command.Z))return false;
             if(command.Kind<UnitCommandKind.Move || command.Kind>UnitCommandKind.Follow)return false;
             var unit=session.FindTarget(command.UnitId) as Soldier;
-            if(!unit || !unit.IsAlive || unit.Team!=command.PlayerId || unit.IsGarrison)return false;
-            if(command.Kind!=UnitCommandKind.Attack && command.Kind!=UnitCommandKind.Follow)return true;
-            var target=session.FindTarget(command.TargetId);
-            if(!target || !target.IsAlive)return false;
-            return command.Kind==UnitCommandKind.Attack ? target.CanBeAttacked && target.Team!=unit.Team : target is Soldier && target.Team==unit.Team && target!=unit;
+            if(!unit || !unit.IsAlive || unit.Team!=command.PlayerId)return false;
+            if(command.Kind==UnitCommandKind.Attack || command.Kind==UnitCommandKind.Follow)
+            {
+                var target=session.FindTarget(command.TargetId);
+                if(!target || !target.IsAlive)return false;
+                if(command.Kind==UnitCommandKind.Attack && (!target.CanBeAttacked || target.Team==unit.Team))return false;
+                if(command.Kind==UnitCommandKind.Follow && (!(target is Soldier) || target.Team!=unit.Team || target==unit))return false;
+            }
+            if(command.Kind==UnitCommandKind.Move||command.Kind==UnitCommandKind.AttackMove||command.Kind==UnitCommandKind.Patrol)
+            {
+                var point=new Vector3(command.X,command.Y,command.Z);
+                if(!NavMesh.SamplePosition(point,out _,8,NavMesh.AllAreas))return false;
+            }
+            if(!unit.IsGarrison)return true;
+            // Stop and Hold do not displace an anchored guard, so they never need relief.
+            if(command.Kind==UnitCommandKind.Stop || command.Kind==UnitCommandKind.Hold)return true;
+            var zone=unit.Garrison;
+            return zone != null && (releaseGarrison ? zone.TryReleaseDefenderForOrder(session,unit) : zone.CanReleaseDefenderForOrder(session,unit));
         }
         static bool Finite(float value)=>!float.IsNaN(value)&&!float.IsInfinity(value);
         void Reject(UnitCommand command,string reason)
@@ -90,7 +107,7 @@ namespace RiskAI
             {
                 var queued=queue.Dequeue();
                 var command=queued.Command;
-                if(!Valid(command)){Reject(command,"La unidad o el objetivo cambió antes de aplicar la orden.");continue;}
+                if(!Valid(command,true)){Reject(command,"La unidad, el relevo o el objetivo cambió antes de aplicar la orden.");continue;}
                 var unit=(Soldier)session.FindTarget(command.UnitId);
                 bool directHumanMove = command.PlayerId == 0 && !command.Append &&
                     (command.Kind == UnitCommandKind.Move || command.Kind == UnitCommandKind.AttackMove);

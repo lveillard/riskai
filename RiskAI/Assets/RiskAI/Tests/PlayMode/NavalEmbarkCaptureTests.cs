@@ -91,6 +91,39 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator NavalGuardNeedsReliefAndAnchorsAtTheWaterBerth()
+        {
+            var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
+            var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
+            var guard=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            port.SimTick(.1f);
+            Assert.That(port.NavalDefender,Is.SameAs(guard));
+            Assert.That(Vector3.Distance(guard.transform.position,port.Berth),Is.LessThan(.001f),"A naval defender uses the water berth, never the land claim center.");
+            yield return null;
+            Assert.That(port.NavalClaimRing,Is.Not.Null);
+            Assert.That(port.NavalClaimRing.enabled,Is.True);
+            Assert.That(Vector3.Distance(port.NavalClaimRing.transform.position,port.Berth),Is.LessThan(.001f),"The visible naval claim circle must share the berth anchor.");
+
+            var destination=naval.Harbors.First(h=>h!=port&&h.CanLaunch).Berth;
+            guard.MoveTo(destination);
+            Assert.That(guard.LastActionError,Is.Not.Null);
+            Assert.That(port.NavalDefender,Is.SameAs(guard),"A lone guard ship cannot abandon its harbor.");
+
+            var shipRelief=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            guard.MoveTo(destination);
+            Assert.That(guard.LastActionError,Is.Null);
+            Assert.That(port.NavalDefender,Is.SameAs(shipRelief));
+            Assert.That(port.Owner,Is.EqualTo(0),"A same-team berth relief preserves port ownership.");
+
+            var landRelief=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.ClaimZone.Center);
+            shipRelief.MoveTo(destination);
+            Assert.That(port.Defender,Is.SameAs(landRelief),"A land relief takes priority over another naval hold.");
+            Assert.That(port.NavalDefender,Is.Null);
+            yield return null;
+            Assert.That(port.NavalClaimRing.enabled,Is.False,"The water circle hides as soon as land defense resumes.");
+        }
+
+        [UnityTest]
         public IEnumerator FailedShipRouteDoesNotIssueTheSoldiersEmbarkOrder()
         {
             var home=naval.Harbors.First(h=>h.Owner==0);

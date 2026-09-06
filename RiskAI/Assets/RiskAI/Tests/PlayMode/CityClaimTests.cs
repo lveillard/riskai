@@ -37,13 +37,12 @@ namespace RiskAI.Tests
             var posts = battle.Towns.Select(town => new { Name = town.DisplayName, Owner = town.State.Owner, Defender = town.Defender })
                 .Concat(naval.Harbors.Select(harbor => new { Name = harbor.DisplayName, Owner = harbor.Owner, Defender = harbor.Defender }))
                 .ToArray();
-            Assert.That(MapLayout.Towns.Length, Is.EqualTo(18));
-            Assert.That(MapLayout.Countries.Length, Is.EqualTo(9));
+            Assert.That(MapLayout.Towns.Length, Is.EqualTo(33));
+            Assert.That(MapLayout.Countries.Length, Is.EqualTo(11));
             Assert.That(battle.Towns.Count(town => town.State.Owner == 0), Is.EqualTo(2));
             Assert.That(battle.Towns.Count(town => town.State.Owner == 1), Is.EqualTo(2));
-            Assert.That(battle.Towns.Count(town => town.State.Owner < 0), Is.EqualTo(14));
+            Assert.That(battle.Towns.Count(town => town.State.Owner < 0), Is.EqualTo(MapLayout.Towns.Length - 4));
             Assert.That(posts.Length, Is.EqualTo(MapLayout.Towns.Length + naval.Harbors.Count));
-            Assert.That(posts.Length, Is.EqualTo(25));
             Assert.That(battle.Units.Count, Is.EqualTo(posts.Length));
             Assert.That(posts.All(post => post.Defender), Is.True, string.Join(", ", posts.Where(post => !post.Defender).Select(post => post.Name)));
             Assert.That(posts.Select(post => post.Defender).Distinct().Count(), Is.EqualTo(posts.Length));

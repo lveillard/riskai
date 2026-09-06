@@ -53,15 +53,47 @@ namespace RiskAI.Tests
 
             harbor.SimTick(.1f);
             Assert.That(view.Active,Is.True);
-            var hammer=view.GetComponentsInChildren<Transform>(true).First(item=>item.name=="Training hammer pivot");
-            Quaternion beforePause=hammer.localRotation;battle.TogglePause();harbor.SimTick(.2f);
-            Assert.That(hammer.localRotation,Is.EqualTo(beforePause),"Presentation advances only through unpaused simulation ticks.");
+            var doorway=view.GetComponentsInChildren<Transform>(true).First(item=>item.name=="Training door pivot");
+            Assert.That(view.GetComponentsInChildren<Transform>(true).Any(item=>item.name=="Training gate glow"),Is.True);
+            Assert.That(view.GetComponentsInChildren<Transform>(true).Any(item=>item.name.Contains("hammer")||item.name.Contains("pennant")||item.name.Contains("illuminated door")),Is.False,
+                "Training illuminates the existing entrance rather than adding a free-standing tool, banner, or duplicate door.");
+            Quaternion beforePause=doorway.localRotation;battle.TogglePause();harbor.SimTick(.2f);
+            Assert.That(doorway.localRotation,Is.EqualTo(beforePause),"Presentation advances only through unpaused simulation ticks.");
             battle.TogglePause();
 
             harbor.State.Owner=1;harbor.SimTick(.1f);
             Assert.That(harbor.QueueCount,Is.Zero);
             Assert.That(battle.Economy.Gold[0],Is.EqualTo(cost*(Harbor.QueueCapacity+1)),"Capture refunds every accepted naval order exactly once.");
             Assert.That(view.Active,Is.False);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator TrainingCuesUseAuthoredScaledEntrancesWithoutMovingSpawnEntries()
+        {
+            var town=battle.Towns.First(item=>item.State.Owner==0);
+            var townAnchor=town.GetComponentInChildren<BuildingEntranceAnchor>(true);
+            var townArt=town.GetComponentsInChildren<Transform>(true).First(item=>item.name.StartsWith(town.name+" ")&&item.name.EndsWith("architecture"));
+            var townCue=town.GetComponentInChildren<BuildingTrainingView>(true);
+            Assert.That(townAnchor,Is.Not.Null);Assert.That(townCue,Is.Not.Null);
+            var townLocal=townArt.InverseTransformPoint(townAnchor.Position);
+            Assert.That(townLocal.x,Is.EqualTo(0).Within(.001f));
+            Assert.That(townLocal.z,Is.EqualTo(-1.89f).Within(.001f));
+            Assert.That(Vector3.Dot(townAnchor.Outward,townArt.TransformDirection(Vector3.back).normalized),Is.GreaterThan(.999f));
+            Assert.That(Vector3.Distance(townCue.transform.position,townAnchor.Position),Is.LessThan(.001f));
+            Assert.That(Vector3.Distance(town.DefaultLandEntry,townAnchor.Position),Is.GreaterThan(2f),"The art anchor must not redefine the gameplay spawn entry.");
+
+            var harbor=naval.Harbors.First(item=>item.Owner==0&&!item.IsImportedPort);
+            var harborAnchor=harbor.GetComponentInChildren<BuildingEntranceAnchor>(true);
+            var harborArt=harbor.GetComponentsInChildren<Transform>(true).First(item=>item.name=="Harbor architecture");
+            var harborCue=harbor.GetComponentInChildren<BuildingTrainingView>(true);
+            Assert.That(harborAnchor,Is.Not.Null);Assert.That(harborCue,Is.Not.Null);
+            var harborLocal=harborArt.InverseTransformPoint(harborAnchor.Position);
+            Assert.That(harborLocal.x,Is.EqualTo(-3f).Within(.001f));
+            Assert.That(harborLocal.z,Is.EqualTo(-1.55f).Within(.001f));
+            Assert.That(Vector3.Dot(harborAnchor.Outward,harborArt.TransformDirection(Vector3.back).normalized),Is.GreaterThan(.999f));
+            Assert.That(Vector3.Distance(harborCue.transform.position,harborAnchor.Position),Is.LessThan(.001f));
+            Assert.That(Vector3.Distance(harbor.LandEntry,harborAnchor.Position),Is.GreaterThan(2f),"The harbor cue must not move its land spawn entry.");
             yield return null;
         }
 

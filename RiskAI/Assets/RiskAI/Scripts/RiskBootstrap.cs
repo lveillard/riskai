@@ -63,7 +63,7 @@ namespace RiskAI
             GroundCover.Create(session,terrain.transform);
             session.Canopies.Build(terrain.transform);
             var cameraObject=new GameObject("RTS Camera");var camera=cameraObject.AddComponent<Camera>();cameraObject.tag="MainCamera";
-            camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=MapLayout.IsImported?(MapLayout.HalfWidth+MapLayout.HalfDepth)*5:440;
+            camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=Mathf.Max(440,(MapLayout.HalfWidth+MapLayout.HalfDepth)*5);
             camera.transform.rotation=RtsCameraRig.DefaultRotation;
             camera.backgroundColor=new Color(.035f,.075f,.13f);camera.clearFlags=CameraClearFlags.SolidColor;
             cameraObject.AddComponent<AudioListener>();
@@ -73,6 +73,7 @@ namespace RiskAI
             RenderSettings.ambientEquatorColor=new Color(.3f,.37f,.36f);RenderSettings.ambientGroundColor=new Color(.18f,.24f,.23f);
             RenderSettings.fog=!MapLayout.IsImported;RenderSettings.fogColor=camera.backgroundColor;RenderSettings.fogMode=FogMode.Linear;RenderSettings.fogStartDistance=MapLayout.IsImported?1500:260;RenderSettings.fogEndDistance=MapLayout.IsImported?2100:420;
             var controller=gameObject.AddComponent<RtsController>();controller.Initialize(session,camera);controller.FocusHome();
+            gameObject.AddComponent<StrategicMapView>().Initialize(session,camera,terrain.transform);
             gameObject.AddComponent<BattleHud>().Initialize(session,controller,camera);
             session.Message(session.LayoutName+" · semilla "+session.Seed+". Cada ciudad aporta oro; completa países para recibir refuerzos.");
             session.Message("Un ballestero por puesto. Recluta tu primera tropa en una ciudad aliada.");

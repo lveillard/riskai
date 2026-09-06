@@ -12,11 +12,14 @@ namespace RiskAI.Tests
     {
         Scene previous, scene;
         BattleSession battle;
+        ScenarioMap previousMap;
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
             previous = SceneManager.GetActiveScene();
+            previousMap = BattleSession.MapForNewMatch;
+            BattleSession.MapForNewMatch = ScenarioMap.Classic;
             BattleSession.ModeForNewMatch = BattleSession.VictoryMode.Conquest;
             BattleSession.LayoutForNewMatch = BattleSession.StartLayout.Fixed;
             BattleSession.DifficultyForNewMatch = BattleSession.AiDifficulty.Relaxed;
@@ -38,16 +41,15 @@ namespace RiskAI.Tests
             Assert.That(battle.Difficulty, Is.EqualTo(BattleSession.AiDifficulty.Relaxed));
             Assert.That(battle.Economy.Gold[0], Is.EqualTo(battle.Economy.Gold[1]));
             Assert.That(battle.Population(0), Is.EqualTo(battle.Population(1)));
-            Assert.That(MapLayout.Towns.Length, Is.EqualTo(18));
-            Assert.That(MapLayout.Countries.Length, Is.EqualTo(9));
+            Assert.That(MapLayout.Towns.Length, Is.EqualTo(33));
+            Assert.That(MapLayout.Countries.Length, Is.EqualTo(11));
             Assert.That(battle.Towns.Count(town => town.State.Owner == 0), Is.EqualTo(2));
             Assert.That(battle.Towns.Count(town => town.State.Owner == 1), Is.EqualTo(2));
-            Assert.That(battle.Towns.Count(town => town.State.Owner < 0), Is.EqualTo(14));
+            Assert.That(battle.Towns.Count(town => town.State.Owner < 0), Is.EqualTo(MapLayout.Towns.Length - 4));
             var posts = battle.Towns.Select(town => new { Owner = town.State.Owner, Defender = town.Defender })
                 .Concat(NavalWorld.Current.Harbors.Select(harbor => new { Owner = harbor.Owner, Defender = harbor.Defender }))
                 .ToArray();
             Assert.That(posts.Length, Is.EqualTo(MapLayout.Towns.Length + NavalWorld.Current.Harbors.Count));
-            Assert.That(posts.Length, Is.EqualTo(25));
             Assert.That(battle.Units.Count, Is.EqualTo(posts.Length));
             Assert.That(posts.All(post => post.Defender && post.Defender.Kind == UnitKind.Archer && post.Defender.IsGarrison), Is.True);
             Assert.That(posts.All(post => post.Defender.Team == (post.Owner >= 0 ? post.Owner : PlayerRules.NeutralTeam)), Is.True);
@@ -99,7 +101,10 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator CommanderMobilizesItsWaitingCountryReinforcements()
         {
-            var camp=battle.Camps.First(c=>c&&battle.Economy.CountryOwner(c.Country)==1);
+            int country = battle.Towns.First(t => t.State.Owner == 1).State.Country;
+            foreach (var town in battle.Towns.Where(t => t.State.Country == country)) town.State.Owner = 1;
+            var camp=battle.Camps.Single(c=>c&&c.Country==country);
+            Assert.That(battle.Economy.CountryOwner(country), Is.EqualTo(1));
             var reserves=new Soldier[3];
             for(int i=0;i<reserves.Length;i++)
             {
@@ -127,6 +132,7 @@ namespace RiskAI.Tests
             Time.timeScale = 1;
             BattleSession.DifficultyForNewMatch = BattleSession.AiDifficulty.Relaxed;
             BattleSession.LayoutForNewMatch = BattleSession.StartLayout.RandomCities;
+            BattleSession.MapForNewMatch = previousMap;
             SceneManager.SetActiveScene(previous);
             if (scene.IsValid() && scene.isLoaded) yield return SceneManager.UnloadSceneAsync(scene);
         }

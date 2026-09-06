@@ -123,7 +123,9 @@ namespace RiskAI.Tests
 
             Assert.That(battle.Commands.Submit(new UnitCommand(1, unit.EntityId, UnitCommandKind.Stop)), Is.False, "A command from the other player must be rejected.");
             Assert.That(battle.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Move, float.NaN, 0, 0)), Is.False, "Non-finite command coordinates must be rejected.");
-            Assert.That(battle.Commands.Submit(new UnitCommand(0, garrison.EntityId, UnitCommandKind.Stop)), Is.False, "Garrisoned units must not accept board commands.");
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, garrison.EntityId, UnitCommandKind.Stop)), Is.True, "Stop is harmless for a garrison and must not demand a relief.");
+            battle.Commands.Tick();
+            Assert.That(garrison.IsGarrison, Is.True);
 
             unit.HoldPosition();
             Vector3 destination = battle.Towns.First(t => t.State.Owner == 0).Rally;

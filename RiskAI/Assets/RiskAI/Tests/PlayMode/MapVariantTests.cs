@@ -34,11 +34,11 @@ namespace RiskAI.Tests
         {
             Assert.That(MapLayout.IsExpanded, Is.True);
             Assert.That(MapLayout.MapName, Is.EqualTo("Cuatro Riberas"));
-            Assert.That(MapLayout.Towns.Length, Is.EqualTo(20));
-            Assert.That(MapLayout.Countries.Length, Is.EqualTo(5));
+            Assert.That(MapLayout.Towns.Length, Is.EqualTo(44));
+            Assert.That(MapLayout.Countries.Length, Is.EqualTo(11));
             Assert.That(MapLayout.Islands.Length, Is.EqualTo(3));
             Assert.That(NavalWorld.Current.Harbors.Count, Is.EqualTo(8));
-            Assert.That(battle.Units.Count, Is.EqualTo(28));
+            Assert.That(battle.Units.Count, Is.EqualTo(MapLayout.Towns.Length + NavalWorld.Current.Harbors.Count));
             Assert.That(battle.Towns.All(town => town.Defender && town.Defender.Kind == UnitKind.Archer && town.Defender.IsGarrison), Is.True);
             Assert.That(NavalWorld.Current.Harbors.All(harbor => harbor.Defender && harbor.Defender.Kind == UnitKind.Archer && harbor.Defender.IsGarrison), Is.True);
             Assert.That(battle.Units.All(unit => unit.IsGarrison), Is.True);
@@ -50,7 +50,7 @@ namespace RiskAI.Tests
             for (int country = 0; country < MapLayout.Countries.Length; country++)
             {
                 var cities = MapLayout.Towns.Where(t => t.Country == country).ToArray();
-                Assert.That(cities.Length, Is.EqualTo(4), "Each expanded country group has four cities.");
+                Assert.That(cities.Length, Is.InRange(2, 6), "Each geographic country must retain its authored city group.");
                 Assert.That(cities.All(t => t.Region == country), Is.True, "Expanded country and region indices must match.");
                 for (int city = 1; city < cities.Length; city++)
                 {
@@ -83,16 +83,17 @@ namespace RiskAI.Tests
         public IEnumerator IndependentStartingPostsStayOutsideEachOthersWeapons()
         {
             var guards = battle.Units.ToArray();
-            Assert.That(guards.Length, Is.EqualTo(28));
+            Assert.That(guards.Length, Is.EqualTo(MapLayout.Towns.Length + NavalWorld.Current.Harbors.Count));
             foreach (var tower in battle.Towers)
                 foreach (var guard in guards)
                 {
                     var ownGuard = battle.Towns.Any(t => t.Defense == tower && t.Defender == guard) ||
                         battle.Naval.Harbors.Any(h => h.Defense == tower && h.Defender == guard);
                     if (ownGuard) continue;
-                    Assert.That(Vector3.Distance(tower.transform.position, guard.transform.position),
-                        Is.GreaterThan(ReforgedProfiles.CapturableTower.Range),
-                        tower.HostName + " must not shoot another starting post after random allocation.");
+                    float distance=Vector3.Distance(tower.transform.position, guard.transform.position);
+                    Assert.That(distance, Is.GreaterThan(ReforgedProfiles.CapturableTower.Range),
+                        tower.HostName + " at " + tower.transform.position + " can shoot " + guard.name + " at " + guard.transform.position +
+                        " (" + distance.ToString("F3") + "); independent posts must start outside weapon range.");
                 }
             yield return new WaitForSecondsRealtime(3);
             Assert.That(guards.All(g => g && g.IsAlive && g.Health == g.MaxHealth), Is.True,
@@ -103,7 +104,7 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator SelectingCampHighlightsItsCitiesAndReinforcementsSpawnThere()
         {
-            Assert.That(battle.Camps.Count, Is.EqualTo(5));
+            Assert.That(battle.Camps.Count, Is.EqualTo(MapLayout.Countries.Length));
             foreach (var camp in battle.Camps)
             {
                 Assert.That(camp, Is.Not.Null);
@@ -112,11 +113,9 @@ namespace RiskAI.Tests
             var selected = battle.Camps[0];
             var controller = Object.FindFirstObjectByType<RtsController>();
             controller.SelectCamp(selected);
-            var overlay = selected.transform.Find("Territorio seleccionado");
-            Assert.That(overlay, Is.Not.Null);
-            Assert.That(overlay.gameObject.activeSelf, Is.True);
-            Assert.That(overlay.GetComponent<MeshFilter>().sharedMesh.vertexCount, Is.GreaterThan(0));
-            Assert.That(overlay.GetComponentsInChildren<LineRenderer>().Length, Is.EqualTo(4));
+            Assert.That(StrategicMapView.Current, Is.Not.Null);
+            Assert.That(StrategicMapView.Current.SelectedCountry, Is.EqualTo(selected.Country),
+                "Camp selection now drives the strategic territory inspection surface.");
             foreach (var town in battle.Towns.Where(t => t.State.Country == 0)) town.State.Owner = 0;
             battle.Reinforcements.CreditRound();
             Assert.That(battle.Reinforcements.Pending(0), Is.EqualTo(MapLayout.Countries[0].PerTurn));
@@ -127,10 +126,10 @@ namespace RiskAI.Tests
             Assert.That(reinforcements.All(unit => unit.Kind == UnitKind.Archer), Is.True);
             foreach (var unit in reinforcements)
                 Assert.That(Vector3.Distance(unit.transform.position, selected.SpawnPoint), Is.LessThan(4));
-            battle.Reinforcements.Tick(.5f);
+            for(int emitted=1;emitted<MapLayout.Countries[0].PerTurn;emitted++)battle.Reinforcements.Tick(.5f);
             Assert.That(battle.Units.Count(u => u && u.OriginCountry == 0), Is.EqualTo(MapLayout.Countries[0].PerTurn));
             controller.Clear();
-            Assert.That(overlay.gameObject.activeSelf, Is.False);
+            Assert.That(StrategicMapView.Current.SelectedCountry, Is.EqualTo(-1));
             yield return null;
         }
 

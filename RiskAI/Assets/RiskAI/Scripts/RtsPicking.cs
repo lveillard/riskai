@@ -8,6 +8,7 @@ namespace RiskAI
         // Screen-space padding stays useful when the player zooms out.
         public static CombatTarget Target(BattleSession battle, Camera camera, Vector2 pointer, int relation = 0)
         {
+            if (StrategicMapView.Active) return null;
             CombatTarget best = null; float bestScore = float.MaxValue;
             foreach (var candidate in battle.Targets)
             {
@@ -36,6 +37,13 @@ namespace RiskAI
         }
         public static Settlement Town(BattleSession battle, Camera camera, Vector2 pointer)
         {
+            if(StrategicMapView.Active)
+            {
+                Settlement closest=null;float score=144;
+                foreach(var city in battle.Towns)
+                {var p=camera.WorldToScreenPoint(city.transform.position);float d=((Vector2)p-pointer).sqrMagnitude;if(p.z>0&&d<score){score=d;closest=city;}}
+                return closest;
+            }
             foreach (var town in battle.Towns)
             {
                 if (!town.Selected && !(Keyboard.current != null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed))) continue;
@@ -54,6 +62,13 @@ namespace RiskAI
         public static Harbor Harbor(BattleSession battle, Camera camera, Vector2 pointer)
         {
             if(battle==null)return null;
+            if(StrategicMapView.Active&&battle.Naval)
+            {
+                Harbor closest=null;float score=144;
+                foreach(var port in battle.Naval.Harbors)
+                {var p=camera.WorldToScreenPoint(port.Landing);float d=((Vector2)p-pointer).sqrMagnitude;if(p.z>0&&d<score){score=d;closest=port;}}
+                return closest;
+            }
             var ray=camera.ScreenPointToRay(pointer);Harbor best=null;float nearest=camera.farClipPlane;
             if(!battle.Naval)return null;
             foreach(var harbor in battle.Naval.Harbors)

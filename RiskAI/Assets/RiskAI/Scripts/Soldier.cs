@@ -349,7 +349,7 @@ namespace RiskAI
                 if (direction.sqrMagnitude > .001f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(direction), 650 * simDelta);
                 if (session.BattleTime >= nextAttack && strikeAt < 0)
                 {
-                    nextAttack = session.BattleTime + BattleRules.AttackInterval(Kind); strikeAt = session.BattleTime + (Kind == UnitKind.Footman ? .17f : .24f);
+                    nextAttack = session.BattleTime + BattleRules.AttackInterval(Kind); strikeAt = session.BattleTime + BattleRules.AttackPoint(Kind);
                     strikeTarget = target; attackFlash = .4f;
                     if(visualAnimator)visualAnimator.Strike();
                 }

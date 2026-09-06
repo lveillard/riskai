@@ -48,6 +48,7 @@ namespace RiskAI.Core
         public static float Range(UnitKind kind) => Profile(kind).Range;
         public static float MinimumRange(UnitKind kind)=>kind==UnitKind.Mortar?5:0;
         public static float AttackInterval(UnitKind kind) => Profile(kind).Cooldown;
+        public static float AttackPoint(UnitKind kind) => Profile(kind).AttackPoint;
         public static float Speed(UnitKind kind) => Profile(kind).Speed;
         public static bool Ranged(UnitKind kind) => kind != UnitKind.Footman && kind != UnitKind.Guard && kind != UnitKind.MarineMajor && kind != UnitKind.MarineGeneral;
         // The extracted map does not define this prototype's upgrade unlocks;

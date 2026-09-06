@@ -62,7 +62,7 @@ namespace RiskAI
             Block(root,"Sail heraldry",new(0,2.9f,.405f),new(.2f,1.15f,.025f),0,new Color(1.6f,1.5f,1.15f));
             Block(root,"Sail heraldry crossbar",new(0,3.1f,.405f),new(.8f,.18f,.025f),0,new Color(1.6f,1.5f,1.15f));
         }
-        public static void CreateHarbor(Harbor harbor)
+        public static BuildingEntranceAnchor CreateHarbor(Harbor harbor)
         {
             var root=new GameObject("Harbor architecture").transform;root.SetParent(harbor.transform,false);root.position=harbor.Landing;
             var direction=harbor.Berth-harbor.Landing;direction.y=0;root.rotation=Quaternion.LookRotation(direction);float length=direction.magnitude;
@@ -75,12 +75,15 @@ namespace RiskAI
             }
             Block(root,"Harbormaster stone foundation",new(-3,.2f,-.3f),new(3.2f,.4f,3),0);
             Block(root,"Timber boathouse",new(-3,1.2f,-.3f),new(2.65f,1.8f,2.5f));
+            // This lies on the boathouse's landward facade, not at the naval landing/spawn point.
+            var entrance=BuildingEntranceAnchor.Create(root,"Boathouse entrance anchor",new(-3,0,-1.55f),Vector3.back);
             var roof=VisualFactory.Cone(root,"Port team roof",new(-3,2.1f,-.3f),2.1f,1.4f,Color.white,4,45);roof.GetComponent<Renderer>().sharedMaterial=WorldArt.RoofMaterial(harbor.Owner);
             for(int i=0;i<3;i++)Block(root,"Dockside cargo",new(2.1f+i%2*.7f,.35f,-.3f+i/2*.7f),new(.6f,.7f,.6f),2,new Color(1.2f,1,.65f));
             Beam(root,new(-1.35f,0,0),new(-1.35f,4.1f,0),.12f);
             var flag=Block(root,"Harbor standard",new(-.8f,3.5f,0),new(1.05f,.78f,.07f),0);
             var collider=harbor.gameObject.AddComponent<BoxCollider>();collider.center=harbor.transform.InverseTransformPoint(harbor.Landing)+Vector3.up;collider.size=new(9,4,7);collider.isTrigger=true;
             var appearance=harbor.gameObject.AddComponent<HarborAppearance>();appearance.Initialize(harbor,roof.GetComponent<Renderer>(),flag.GetComponent<Renderer>());
+            return entrance;
         }
     }
     public sealed class ShipAppearance:MonoBehaviour

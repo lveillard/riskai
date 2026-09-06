@@ -1,24 +1,55 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace RiskAI
 {
+    /// <summary>Art-owned world point and horizontal outward normal for a building entrance.</summary>
+    public sealed class BuildingEntranceAnchor : MonoBehaviour
+    {
+        public Vector3 Position => transform.position;
+        public Vector3 Outward
+        {
+            get
+            {
+                var outward = transform.forward; outward.y = 0;
+                return outward.sqrMagnitude > .0001f ? outward.normalized : Vector3.back;
+            }
+        }
+        public static BuildingEntranceAnchor Create(Transform parent, string name, Vector3 localPosition, Vector3 localOutward)
+        {
+            var go = new GameObject(name); go.transform.SetParent(parent, false); go.transform.localPosition = localPosition;
+            localOutward.y = 0;
+            if (localOutward.sqrMagnitude > .0001f) go.transform.localRotation = Quaternion.LookRotation(localOutward.normalized);
+            return go.AddComponent<BuildingEntranceAnchor>();
+        }
+        public static BuildingEntranceAnchor Find(Transform root) => root ? root.GetComponentInChildren<BuildingEntranceAnchor>() : null;
+    }
+
     /// <summary>
-    /// A small, pooled-by-lifetime training cue. Its owner advances it from the
-    /// simulation tick, so it has no per-building Update and naturally freezes on pause.
+    /// A small entrance cue advanced from the simulation tick. It has no per-building
+    /// Update, so it naturally freezes with the match and does not add a render pass.
     /// </summary>
     public sealed class BuildingTrainingView : MonoBehaviour
     {
-        Transform hammerPivot;
-        Transform pennant;
-        Renderer pennantRenderer;
+        Transform doorPivot;
+        Transform warmSeams;
+        Renderer[] warmRenderers;
         Material landMaterial;
         Material navalMaterial;
         Material displayedMaterial;
-        Vector3 pennantBaseScale;
+        Vector3 seamBaseScale;
         bool active;
 
         public bool Active => active;
 
+        public static BuildingTrainingView Create(Transform building, BuildingEntranceAnchor entrance)
+        {
+            Vector3 position = entrance ? entrance.Position : building.position;
+            Vector3 outward = entrance ? entrance.Outward : Vector3.back;
+            return Create(building, position, outward);
+        }
+
+        // Retained for callers that build temporary presentation without authored art.
         public static BuildingTrainingView Create(Transform building, Vector3 worldDoor, Vector3 outward)
         {
             var root = new GameObject("Training activity");
@@ -32,26 +63,30 @@ namespace RiskAI
 
         void Build()
         {
-            landMaterial = VisualFactory.Mat(new Color(.96f, .67f, .25f));
-            navalMaterial = VisualFactory.Mat(new Color(.28f, .76f, 1f));
-            var pivot = new GameObject("Training hammer pivot");pivot.transform.SetParent(transform,false);pivot.transform.localPosition=new Vector3(0,.12f,0);
-            hammerPivot=pivot.transform;
-            VisualFactory.Shape(hammerPivot, PrimitiveType.Cube, "Training hammer handle", new Vector3(0, .31f, 0), new Vector3(.07f, .62f, .07f), new Color(.28f, .15f, .07f));
-            VisualFactory.Shape(hammerPivot, PrimitiveType.Cube, "Training hammer head", new Vector3(0, .62f, 0), new Vector3(.34f, .11f, .13f), new Color(.42f, .43f, .39f));
-            var flag = VisualFactory.Shape(transform, PrimitiveType.Cube, "Training pennant", new Vector3(.32f, .67f, 0), new Vector3(.25f, .42f, .035f), new Color(.96f, .67f, .25f));
-            pennant = flag.transform;
-            pennantBaseScale = pennant.localScale;
-            pennantRenderer = flag.GetComponent<Renderer>();
+            landMaterial = VisualFactory.EmissiveMat(new Color(1f, .39f, .08f), .48f);
+            navalMaterial = VisualFactory.EmissiveMat(new Color(.18f, .63f, 1f), .35f);
+            var pivot = new GameObject("Training door pivot");
+            pivot.transform.SetParent(transform, false);
+            doorPivot = pivot.transform;
+            warmSeams = new GameObject("Training gate glow").transform;
+            warmSeams.SetParent(doorPivot, false);
+
+            // These slits illuminate the art's existing door leaves; they do not add a second doorway.
+            var left = VisualFactory.Shape(warmSeams, PrimitiveType.Cube, "Training gate seam left", new Vector3(-.24f, .63f, .016f), new Vector3(.035f, 1.03f, .018f), new Color(1f, .39f, .08f));
+            var right = VisualFactory.Shape(warmSeams, PrimitiveType.Cube, "Training gate seam right", new Vector3(.24f, .63f, .016f), new Vector3(.035f, 1.03f, .018f), new Color(1f, .39f, .08f));
+            var lintel = VisualFactory.Shape(warmSeams, PrimitiveType.Cube, "Training gate lintel glow", new Vector3(0, 1.12f, .016f), new Vector3(.55f, .035f, .018f), new Color(1f, .39f, .08f));
+            warmRenderers = new[] { left.GetComponent<Renderer>(), right.GetComponent<Renderer>(), lintel.GetComponent<Renderer>() };
+            seamBaseScale = warmSeams.localScale;
             foreach (var renderer in GetComponentsInChildren<Renderer>())
             {
-                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
             }
         }
 
         public void Reposition(Vector3 worldDoor, Vector3 outward)
         {
-            transform.position = worldDoor + Vector3.up * .16f;
+            transform.position = worldDoor;
             outward.y = 0;
             if (outward.sqrMagnitude > .01f) transform.rotation = Quaternion.LookRotation(outward.normalized);
         }
@@ -66,13 +101,13 @@ namespace RiskAI
             }
             if (!shouldShow) return;
 
-            // These transforms are deliberately changed only by an already-existing
-            // rules tick. Paused sessions do not call us, so the cue is motionless.
-            float swing = Mathf.Sin(simulationTime * 8f) * 28f;
-            hammerPivot.localRotation = Quaternion.Euler(0, 0, swing);
-            pennant.localScale = new Vector3(pennantBaseScale.x, pennantBaseScale.y * (.82f + Mathf.Sin(simulationTime * 5f) * .18f), pennantBaseScale.z);
+            float breath = .90f + Mathf.Sin(simulationTime * 4.2f) * .10f;
+            doorPivot.localRotation = Quaternion.Euler(0, Mathf.Sin(simulationTime * 2.1f) * 1.4f, 0);
+            warmSeams.localScale = seamBaseScale * breath;
             var material = navalTraining && !landTraining ? navalMaterial : landMaterial;
-            if (pennantRenderer && displayedMaterial != material) { pennantRenderer.sharedMaterial = material; displayedMaterial = material; }
+            if (displayedMaterial == material) return;
+            displayedMaterial = material;
+            foreach (var renderer in warmRenderers) if (renderer) renderer.sharedMaterial = material;
         }
     }
 }

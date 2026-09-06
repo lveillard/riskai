@@ -80,19 +80,65 @@ namespace RiskAI
         }
         public void SetDefender(Soldier defender)
         {
-            if (Defender == defender) return;
+            TrySetDefender(defender);
+        }
+        bool TrySetDefender(Soldier defender)
+        {
+            if (Defender == defender) return true;
             if (!defender)
             {
                 if (Defender) Defender.ReleaseGarrison(this);
                 Defender = null;
                 Contested = false;
-                return;
+                return true;
             }
-            if (!IsEligible(defender) || defender.IsGarrison && defender.Garrison != this || !defender.BindGarrison(this)) return;
+            if (!IsEligible(defender) || defender.IsGarrison && defender.Garrison != this || !defender.BindGarrison(this)) return false;
             var previous = Defender;
             Defender = defender;
             if (previous) previous.ReleaseGarrison(this);
             Contested=false;
+            return true;
+        }
+        internal bool CanReleaseDefenderForOrder(BattleSession session, Soldier defender)
+        {
+            return Defender == defender && FindCircleReplacement(session, defender.Team, defender);
+        }
+        internal bool TryReleaseDefenderForOrder(BattleSession session, Soldier defender)
+        {
+            if (Defender != defender) return false;
+            var replacement = FindCircleReplacement(session, defender.Team, defender);
+            return replacement && TrySetDefender(replacement);
+        }
+        // Port ships use this same exact land-circle rule before a naval guard can leave.
+        internal bool TryAssignCircleReplacement(BattleSession session, int team)
+        {
+            if (Defender && IsEligible(Defender) && Defender.Team == team) return true;
+            if (Defender) return false;
+            var replacement = FindCircleReplacement(session, team, null);
+            return replacement && TrySetDefender(replacement);
+        }
+        Soldier FindCircleReplacement(BattleSession session, int team, Soldier excluded)
+        {
+            if (!session) return null;
+            session.Spatial.Query(Center, ClaimRules.CircleRadius, nearby);
+            Soldier best = null;
+            float bestDistance = float.MaxValue;
+            float radiusSquared = ClaimRules.CircleRadius * ClaimRules.CircleRadius;
+            for (int i = 0; i < nearby.Count; i++)
+            {
+                var unit = nearby[i] as Soldier;
+                if (unit == excluded || !IsEligible(unit) || unit.IsGarrison || unit.Team != team) continue;
+                var difference = unit.transform.position - Center;
+                float distance = difference.x * difference.x + difference.z * difference.z;
+                if (Mathf.Abs(difference.y) > VerticalExtent || distance > radiusSquared) continue;
+                if (ClaimRules.BetterCandidate(team, unit.Team, distance, unit.EntityId,
+                    best ? best.Team : -1, bestDistance, best ? best.EntityId : 0))
+                {
+                    best = unit;
+                    bestDistance = distance;
+                }
+            }
+            return best;
         }
         static bool IsEligible(Soldier unit) => unit && unit.isActiveAndEnabled && unit.IsAlive &&
             unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh &&
