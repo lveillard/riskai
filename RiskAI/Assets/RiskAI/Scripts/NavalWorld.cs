@@ -21,6 +21,11 @@ namespace RiskAI
         void Initialize(BattleSession session)
         {
             Session=session;session.Naval=this;Current=this;nextAi=session.AiFirstNavalOffensiveTime;
+            if(MapLayout.IsImported)
+            {
+                foreach(var town in Session.Towns)if(town&&town.IsPort)AddImportedHarbor(town);
+                return;
+            }
             int[] mainland=MapLayout.MainlandHarborX;
             var linkedTowns=mainland.Select(x=>Session.Towns.OrderBy(t=>FlatDistance(t.transform.position,new Vector3(x*MapLayout.Spacing,0,MapLayout.Coast(x*MapLayout.Spacing)))).FirstOrDefault()).ToArray();
             // Ports are independent posts. Give each side the same number and leave
@@ -48,6 +53,20 @@ namespace RiskAI
             float x=site.x*MapLayout.Spacing,z=(site.y-site.w)*MapLayout.Spacing;
             var state=new TownState(name,owner,-1,-1);
             AddHarbor(name,null,state,MapLayout.IslandHarborLanding(island),new Vector3(x,-.24f,z-4));
+        }
+        void AddImportedHarbor(Settlement town)
+        {
+            var outward=town.ClaimPoint-town.transform.position;outward.y=0;
+            if(outward.sqrMagnitude<.01f)outward=Vector3.forward;else outward.Normalize();
+            // Imported claim circles are authored at waterfront coordinates.  Their
+            // gameplay deck is walkable, so launch from beyond it instead of finding
+            // the nearest water directly under the defender.
+            var probe=town.ClaimPoint+outward*6f;
+            bool found=SeaNavigation.TryNearestOcean(probe,30f,out var berth);
+            if(!found)berth=new Vector3(probe.x,-.24f,probe.z);
+            var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;
+            var harbor=go.AddComponent<Harbor>();
+            harbor.InitializeImported(this,town,berth,found?null:"El puerto no tiene una salida marítima segura.");Harbors.Add(harbor);
         }
         void AddHarbor(string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
         {
@@ -77,7 +96,7 @@ namespace RiskAI
             {
                 if (!Session || Session.BattleTime < Session.AiFirstNavalOffensiveTime || PendingShips(1) > 0) return 0;
                 foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == 1) return 0;
-                foreach (var harbor in Harbors) if (harbor.Owner == 1) return Harbor.Cost(ShipKind.Galley);
+                foreach (var harbor in Harbors) if (harbor.Owner == 1 && harbor.CanLaunch) return Harbor.Cost(ShipKind.Galley);
                 return 0;
             }
         }
@@ -93,7 +112,7 @@ namespace RiskAI
                     if (harbor.Owner == 1 && harbor.QueueCount == 0 && harbor.Buy(ShipKind.Galley, 1) == null) break;
             foreach(var ship in Ships)if(ship&&ship.Team==1&&ship.Kind==ShipKind.Galley&&!ship.CurrentTarget)
             {
-                var target=Harbors.Where(h=>h.Owner==0).OrderBy(h=>FlatDistance(h.Berth,ship.transform.position)).FirstOrDefault();
+                var target=Harbors.Where(h=>h.Owner==0&&h.CanLaunch).OrderBy(h=>FlatDistance(h.Berth,ship.transform.position)).FirstOrDefault();
                 if(target)ship.MoveTo(target.Berth,true);
             }
         }

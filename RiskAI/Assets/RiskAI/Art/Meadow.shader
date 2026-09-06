@@ -48,6 +48,12 @@ Shader "RiskAI/Meadow"
     arid=max(arid,smoothstep(59,64,b.y));
     color=lerp(color,dry*half3(1.18,1.03,.78),autumn*.55);
     color=lerp(color,Biome(p*.16,float2(0,.5))*half3(1.09,.98,.69),arid*.88);
+    // Las Marcas continues into a drier, olive-toned southwest.  Keep this
+    // local to the classic layout so Cuatro Riberas retains its own materials.
+    float classicSouthwest=(1-step(.5,_RiskExpandedMap))*(1-smoothstep(-48,-42,b.y))*(1-smoothstep(2,10,b.x));
+    float dryPatch=smoothstep(.42,.78,Noise(b*.18+float2(31,47)));
+    half3 oliveGround=Biome(p*.18,float2(.5,0))*half3(1.04,.87,.54);
+    color=lerp(color,oliveGround,classicSouthwest*(.44+.34*dryPatch));
     half3 dirt=Biome(p*.22,float2(.5,.5))*half3(.78,.89,.82);
     float pond=min(length((b-float2(-11,-30))/float2(8,5)),length((b-float2(16,-4))/float2(3,2)));
     float wet=(1-smoothstep(1.02,1.65,pond+(noise-.5)*.2));

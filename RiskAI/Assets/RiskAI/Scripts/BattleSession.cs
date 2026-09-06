@@ -9,7 +9,9 @@ namespace RiskAI
     public sealed class BattleSession : MonoBehaviour
     {
         public enum VictoryMode { Conquest }
-        public static bool ExpandedMapForNewMatch;
+        public static ScenarioMap MapForNewMatch;
+        // Retained for existing scene tests and integrations selecting the two authored arenas.
+        public static bool ExpandedMapForNewMatch { get=>MapForNewMatch==ScenarioMap.Riverlands;set=>MapForNewMatch=value?ScenarioMap.Riverlands:ScenarioMap.Classic; }
         public static VictoryMode ModeForNewMatch = VictoryMode.Conquest;
         public enum StartLayout { RandomCities, RandomCountries, Fixed }
         public static StartLayout LayoutForNewMatch = StartLayout.RandomCities;
@@ -84,6 +86,12 @@ namespace RiskAI
             for(int i=0;i<Units.Count;i++) if(Units[i] && Units[i].Team==team) count++;
             return count;
         }
+        public int RecruitmentPopulation(int team)
+        {
+            if(!MapLayout.IsImported)return Population(team);
+            int count=0;foreach(var unit in Units)if(unit&&unit.Team==team&&!unit.IsGarrison)count++;
+            return count;
+        }
         public void RegisterTarget(CombatTarget target)
         {
             if (!target) return;
@@ -147,7 +155,7 @@ namespace RiskAI
                 int current = 0; foreach(var unit in Units)if(unit && unit.Team==team && unit.OriginCountry==country)current+=BattleRules.PointValue(unit.Kind);
                 int pointCap=cities.Count*5;
                 int amount=Mathf.Min(config.PerTurn,Mathf.Max(0,pointCap-current)/Mathf.Max(1,BattleRules.PointValue(config.Reinforcement)));
-                amount = Mathf.Min(amount, Mathf.Max(0, BattleRules.PopulationLimit - Population(team) - pending));
+                amount = Mathf.Min(amount, Mathf.Max(0, BattleRules.PopulationLimit - RecruitmentPopulation(team) - pending));
                 if(cities.Count==0 || amount<=0) continue;
                 for (int i=0; i<amount; i++)
                 {

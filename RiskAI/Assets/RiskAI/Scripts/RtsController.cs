@@ -79,7 +79,7 @@ namespace RiskAI
             foreach(var camp in session.Camps)if(camp){var p=cam.WorldToScreenPoint(camp.transform.position+Vector3.up*.7f);float d=Vector2.Distance(pointer,p);if(p.z>0&&d<distance){best=camp;distance=d;}}
             return best;
         }
-        public void SelectTown(Settlement town) { Clear();SelectedTown=town;if(town)town.Selected=true; }
+        public void SelectTown(Settlement town) { if(town&&town.Port){SelectHarbor(town.Port);return;}Clear();SelectedTown=town;if(town)town.Selected=true; }
         public void SelectHarbor(Harbor harbor) { Clear();SelectedHarbor=harbor; }
         public void SelectShip(Ship ship,bool append=false)
         {
@@ -130,7 +130,7 @@ namespace RiskAI
 
         public void Recruit(UnitKind kind)
         {
-            var town=SelectedTown ? SelectedTown : session.Towns.FirstOrDefault(t=>t.State.Owner==0);
+            var town=SelectedTown ? SelectedTown : session.Towns.FirstOrDefault(t=>t.State.Owner==0&&!t.IsPort);
             string error=town?town.Recruit(kind):"Conquista una ciudad para reclutar.";
             if(error!=null)session.Message(error);
             else { if(!SelectedTown)SelectTown(town);session.Message(BattleRules.Name(kind)+" en la cola de "+town.DisplayName+"."); }
@@ -272,7 +272,7 @@ namespace RiskAI
         }
         T Pick<T>(Vector2 pointer) where T:Component
         {
-            var hits=Physics.RaycastAll(cam.ScreenPointToRay(pointer),250,~0,QueryTriggerInteraction.Collide);
+            var hits=Physics.RaycastAll(cam.ScreenPointToRay(pointer),cam.farClipPlane,~0,QueryTriggerInteraction.Collide);
             foreach(var hit in hits.OrderBy(h=>h.distance)) { var item=hit.collider.GetComponentInParent<T>();if(item)return item; }return null;
         }
         bool TryEdgePan(Vector2 point,out Vector3 direction)

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using RiskAI.Core;
 using UnityEngine;
+using UnityEngine.AI;
 namespace RiskAI
 {
     // Spatial adapter for garrison selection and pure candidate ranking.
@@ -10,12 +11,33 @@ namespace RiskAI
         public const float VerticalExtent = 1.25f;
         readonly List<CombatTarget> nearby = new List<CombatTarget>(32);
         public Vector3 Center { get; }
+        // This is deliberately resolved once.  Every replacement defender must use
+        // the same walkable point, otherwise NavMesh sampling around a sloped ring
+        // can make a hand-off look like the guard has moved off the post.
+        Vector3 garrisonAnchor;
+        bool hasGarrisonAnchor;
         public float HalfExtent { get; }
         public Soldier Defender { get; private set; }
         public bool Contested { get; private set; }
         public float Progress => 0;
         public int CapturingTeam => -1;
         public CityClaimZone(Vector3 center, float halfExtent = DefaultHalfExtent) { Center = center; HalfExtent = halfExtent; }
+        internal bool TryGetGarrisonAnchor(out Vector3 anchor)
+        {
+            if (hasGarrisonAnchor)
+            {
+                anchor = garrisonAnchor;
+                return true;
+            }
+            if (!NavMesh.SamplePosition(Center, out var hit, .9f, NavMesh.AllAreas))
+            {
+                anchor = default;
+                return false;
+            }
+            garrisonAnchor = anchor = hit.position;
+            hasGarrisonAnchor = true;
+            return true;
+        }
         public int Step(BattleSession session, int owner, float delta)
         {
             session.Spatial.Query(Center, ClaimRules.TakeoverRadius, nearby);
@@ -58,9 +80,18 @@ namespace RiskAI
         }
         public void SetDefender(Soldier defender)
         {
-            if (Defender && Defender != defender) Defender.ReleaseGarrison(this);
-            Defender=null;
-            if (IsEligible(defender) && (!defender.IsGarrison || defender.Garrison==this) && defender.BindGarrison(this)) Defender=defender;
+            if (Defender == defender) return;
+            if (!defender)
+            {
+                if (Defender) Defender.ReleaseGarrison(this);
+                Defender = null;
+                Contested = false;
+                return;
+            }
+            if (!IsEligible(defender) || defender.IsGarrison && defender.Garrison != this || !defender.BindGarrison(this)) return;
+            var previous = Defender;
+            Defender = defender;
+            if (previous) previous.ReleaseGarrison(this);
             Contested=false;
         }
         static bool IsEligible(Soldier unit) => unit && unit.isActiveAndEnabled && unit.IsAlive &&

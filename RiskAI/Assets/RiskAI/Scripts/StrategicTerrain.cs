@@ -46,6 +46,7 @@ namespace RiskAI
                 float east=Mathf.Abs(bx-(29+6*Mathf.Sin(bz*.12f)));
                 float south=Mathf.Abs(bz-(-27+5*Mathf.Sin(bx*.09f)));
                 bool island=pz>MapLayout.Coast(px);
+                bool southwest=!MapLayout.IsExpanded&&bx<4&&bz<-45;
                 if(island){float d=-1;for(int islandIndex=0;islandIndex<MapLayout.Islands.Length;islandIndex++)d=Mathf.Max(d,MapLayout.IslandDistance(px,pz,islandIndex));if(d<3)continue;}
                 bool edge=Mathf.Abs(bx)>mapX-5||bz<-mapZ+6||Mathf.Abs(pz-MapLayout.Coast(px))<5;
                 bool ribbon=west<3.5f||east<3.1f||south<2.8f;
@@ -55,7 +56,7 @@ namespace RiskAI
                     ||(Mathf.Abs(bz-12)<5&&bx>-21&&bx<6)||(Mathf.Abs(bz-13)<5&&bx>44);
                 if(!edge&&(Mathf.Abs(bz-2)<3.2f||Mathf.Abs(bz-22)<3||rampPass))continue;
                 if(Mathf.Abs(MapLayout.Height(px+1,pz)-point.y)>1||Mathf.Abs(MapLayout.Height(px,pz+1)-point.y)>1)continue;
-                float treeHeight=3.6f+(float)random.NextDouble()*2.1f;
+                float treeHeight=southwest?2.8f+(float)random.NextDouble()*1.55f:3.6f+(float)random.NextDouble()*2.1f;
                 int treeSeed=seed++;
                 if(ObscuresBuilding(point,treeHeight,clearings))continue;
                 BiomeVegetation.Tree(trees.transform,point,treeHeight,treeSeed);
@@ -74,6 +75,32 @@ namespace RiskAI
                 if(Vector2.Distance(new Vector2(x,z)/MapLayout.Spacing,new Vector2(mountainX,mountainZ))>17)continue;
                 WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z),z),.6f+(float)random.NextDouble()*1.6f,i+80);
             }
+            if(!MapLayout.IsExpanded)CreateClassicSouthwestDetails(root,clearings);
+        }
+        static void CreateClassicSouthwestDetails(Transform parent,List<Vector4> clearings)
+        {
+            // A handful of repeatable stone clusters gives the olive clearings a
+            // dry Mediterranean edge without filling their deployment space.
+            var root=new GameObject("Southwestern dry-stone outcrops");root.transform.SetParent(parent,false);
+            var centers=new[]{new Vector2(-67,-54),new Vector2(-45,-75),new Vector2(-18,-53),new Vector2(5,-77)};
+            var random=new System.Random(9127);int seed=320;
+            foreach(var center in centers)for(int i=0;i<6;i++)
+            {
+                float a=(float)random.NextDouble()*Mathf.PI*2,r=1.2f+(float)random.NextDouble()*4.6f;
+                float x=(center.x+Mathf.Cos(a)*r)*MapLayout.Spacing,z=(center.y+Mathf.Sin(a)*r)*MapLayout.Spacing;
+                if(!MapLayout.IsLand(x,z)||NearClearing(x,z,clearings,3.3f))continue;
+                WorldArt.Rock(root.transform,new Vector3(x,MapLayout.Height(x,z)-.03f,z),.42f+(float)random.NextDouble()*.72f,seed++);
+            }
+            StaticBatchingUtility.Combine(root);
+        }
+        static bool NearClearing(float x,float z,List<Vector4> clearings,float margin)
+        {
+            foreach(var site in clearings)
+            {
+                float radius=site.w+margin,dx=site.x-x,dz=site.z-z;
+                if(dx*dx+dz*dz<radius*radius)return true;
+            }
+            return false;
         }
         static void CreateIslands(Transform root)
         {

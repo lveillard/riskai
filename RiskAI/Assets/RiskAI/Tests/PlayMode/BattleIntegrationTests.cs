@@ -95,15 +95,26 @@ namespace RiskAI.Tests
         }
         [UnityTest] public IEnumerator StopEngagesWhileHoldAndMoveRespectTheirOrders()
         {
-            var foot=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,new Vector3(-30,0,-16));
-            var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,new Vector3(-25,0,-16));
-            Assert.That(foot.Agent.Warp(new Vector3(-30,0,-16)),Is.True);Assert.That(enemy.Agent.Warp(new Vector3(-25,0,-16)),Is.True);enemy.HoldPosition();
+            // City zero's southern deployment clearing is deliberately reserved by
+            // terrain generation. Sample it after the enlarged classic NavMesh bake
+            // instead of warping actors to a historic y=0 probe.
+            foreach(var tower in battle.Towers)if(tower)tower.enabled=false;
+            foreach(var town in battle.Towns)if(town)town.enabled=false;
+            foreach(var unit in battle.Units.ToArray())if(unit)unit.gameObject.SetActive(false);
+            var clearing=battle.Towns[0];
+            Assert.That(NavMesh.SamplePosition(clearing.Rally,out var footPoint,.8f,NavMesh.AllAreas),Is.True);
+            Assert.That(NavMesh.SamplePosition(footPoint.position+Vector3.right*5,out var enemyPoint,.8f,NavMesh.AllAreas),Is.True);
+            Assert.That(Vector2.Distance(new Vector2(footPoint.position.x,footPoint.position.z),new Vector2(enemyPoint.position.x,enemyPoint.position.z)),Is.EqualTo(5).Within(.1f));
+            Assert.That(NavMesh.SamplePosition(footPoint.position+Vector3.back*6,out var retreat,.8f,NavMesh.AllAreas),Is.True);
+            var foot=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,footPoint.position);
+            var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,enemyPoint.position);
+            Assert.That(foot.Agent.Warp(footPoint.position),Is.True);Assert.That(enemy.Agent.Warp(enemyPoint.position),Is.True);enemy.HoldPosition();
             Assert.That(NavMesh.Raycast(foot.transform.position,enemy.transform.position,out _,NavMesh.AllAreas),Is.False,"Test opponents must have a clear line across the town clearing.");
             foot.HoldPosition();yield return new WaitForSeconds(.5f);
-            Assert.That(foot.CurrentTarget,Is.Null);Assert.That(Vector2.Distance(new Vector2(foot.transform.position.x,foot.transform.position.z),new Vector2(-30,-16)),Is.LessThan(.2f),"Hold keeps its XZ position while the agent settles onto sculpted ground.");
+            Assert.That(foot.CurrentTarget,Is.Null);Assert.That(Vector2.Distance(new Vector2(foot.transform.position.x,foot.transform.position.z),new Vector2(footPoint.position.x,footPoint.position.z)),Is.LessThan(.2f),"Hold keeps its XZ position while the agent settles onto sculpted ground.");
             foot.Stop();yield return new WaitForSeconds(2);
             Assert.That(enemy.Health,Is.LessThan(enemy.MaxHealth),$"Stop must acquire and approach nearby enemies. Target: {foot.CurrentTarget}, positions: {foot.transform.position} / {enemy.transform.position}; path: {foot.Agent.pathStatus}, remaining: {foot.Agent.remainingDistance}, visible: {!NavMesh.Raycast(foot.transform.position,enemy.transform.position,out _,NavMesh.AllAreas)}");
-            foot.MoveTo(new Vector3(-25,0,-10),false,false);yield return new WaitForSeconds(.25f);
+            foot.MoveTo(retreat.position,false,false);yield return new WaitForSeconds(.25f);
             Assert.That(foot.CurrentTarget,Is.Null,"Explicit movement must remain usable for retreating.");
         }
         [UnityTest] public IEnumerator AttackMoveResumesAfterKillingItsTarget()

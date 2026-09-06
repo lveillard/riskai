@@ -147,7 +147,7 @@ namespace RiskAI
             foreach (var unit in session.Units) if (IsMobileDefender(unit)) mobile++;
             int navalBudget = threats.Count == 0 && mobile >= 2 && session.Naval ? session.Naval.AiSavingsTarget : 0;
             int purchases = relaxed ? 1 : 2;
-            for (int i = 0; i < purchases && session.Population(1) < 45; i++)
+            for (int i = 0; i < purchases && session.RecruitmentPopulation(1) < 45; i++)
             {
                 var town = RecruitmentSite();
                 if (!town) break;
@@ -179,7 +179,7 @@ namespace RiskAI
             float bestScore = float.PositiveInfinity;
             foreach (var town in session.Towns)
             {
-                if (!town || town.State.Owner != 1 || town.QueueCount >= 2) continue;
+                if (!town || town.IsPort || town.State.Owner != 1 || town.QueueCount >= 2) continue;
                 float frontierDistance = 10000;
                 foreach (var other in session.Towns)
                 {

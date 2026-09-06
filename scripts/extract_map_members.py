@@ -32,7 +32,7 @@ def main() -> int:
         raise SystemExit(f"StormLib could not open {args.map}")
     args.output.mkdir(parents=True, exist_ok=True)
     try:
-        for name in ("war3mapUnits.doo", "war3map.j", "scripts\\war3map.j", "war3map.wts", "war3map.w3i", "(listfile)"):
+        for name in ("war3map.doo", "war3mapUnits.doo", "war3map.j", "scripts\\war3map.j", "war3map.wts", "war3map.w3i", "war3map.w3e", "(listfile)"):
             handle = Handle()
             if not storm.SFileOpenFileEx(archive, name.encode(), 0, ctypes.byref(handle)):
                 continue

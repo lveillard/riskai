@@ -15,8 +15,11 @@ namespace RiskAI.Tests
         {
             yield return LoadLayout(BattleSession.StartLayout.RandomCities, 701);
             Assert.That(MapLayout.IsExpanded, Is.False);
+            Assert.That(MapLayout.Towns.Length, Is.EqualTo(18));
+            Assert.That(MapLayout.Countries.Length, Is.EqualTo(9));
             var guards = battle.Units.ToArray();
-            Assert.That(guards.Length, Is.EqualTo(19));
+            Assert.That(guards.Length, Is.EqualTo(MapLayout.Towns.Length + NavalWorld.Current.Harbors.Count));
+            Assert.That(guards.Length, Is.EqualTo(25));
             foreach (var tower in battle.Towers)
                 foreach (var guard in guards)
                 {
@@ -54,17 +57,29 @@ namespace RiskAI.Tests
             {
                 yield return LoadLayout(layout, 2468);
 
-                var expectedOwned = layout == BattleSession.StartLayout.RandomCities ? 6 : 2;
-                var expectedNeutral = layout == BattleSession.StartLayout.RandomCities ? 0 : 8;
+                Assert.That(MapLayout.Towns.Length, Is.EqualTo(18));
+                Assert.That(MapLayout.Countries.Length, Is.EqualTo(9));
+                var expectedOwned = layout == BattleSession.StartLayout.RandomCities ? MapLayout.Towns.Length / 2 : 2;
+                var expectedNeutral = MapLayout.Towns.Length - expectedOwned * 2;
                 Assert.That(battle.Towns.Count(t => t.State.Owner == 0), Is.EqualTo(expectedOwned));
                 Assert.That(battle.Towns.Count(t => t.State.Owner == 1), Is.EqualTo(expectedOwned));
                 Assert.That(battle.Towns.Count(t => t.State.Owner < 0), Is.EqualTo(expectedNeutral));
                 Assert.That(battle.StartingOwners(), Is.EqualTo(battle.Towns.Select(t => t.State.Owner).ToArray()));
+                if (layout == BattleSession.StartLayout.RandomCountries)
+                {
+                    for (int team = 0; team < 2; team++)
+                    {
+                        var countries = battle.Towns.Where(t => t.State.Owner == team).Select(t => t.State.Country).Distinct().ToArray();
+                        Assert.That(countries.Length, Is.EqualTo(1), "Whole-country starts assign one group per team.");
+                        Assert.That(battle.Towns.Count(t => t.State.Country == countries[0]), Is.EqualTo(2));
+                    }
+                }
 
                 var posts = battle.Towns.Select(town => new { Owner = town.State.Owner, Defender = town.Defender })
                     .Concat(NavalWorld.Current.Harbors.Select(harbor => new { Owner = harbor.Owner, Defender = harbor.Defender }))
                     .ToArray();
-                Assert.That(posts.Length, Is.EqualTo(19));
+                Assert.That(posts.Length, Is.EqualTo(MapLayout.Towns.Length + NavalWorld.Current.Harbors.Count));
+                Assert.That(posts.Length, Is.EqualTo(25));
                 Assert.That(battle.Units.Count, Is.EqualTo(posts.Length));
                 Assert.That(posts.All(post => post.Defender && post.Defender.Kind == UnitKind.Archer && post.Defender.IsGarrison), Is.True);
                 Assert.That(posts.All(post => post.Defender.Team == (post.Owner >= 0 ? post.Owner : 2)), Is.True);

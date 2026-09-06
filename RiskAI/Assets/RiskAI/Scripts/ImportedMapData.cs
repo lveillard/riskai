@@ -1,0 +1,121 @@
+using System;
+using UnityEngine;
+
+namespace RiskAI
+{
+    public enum ScenarioMap { Classic, Riverlands, Europe, NewWorld }
+
+    /// <summary>Numeric source geography. Art and gameplay remain RiskAI's own adapters.</summary>
+    [Serializable]
+    public sealed class ImportedMapData
+    {
+        [Serializable] public sealed class City
+        {
+            public string id, name;
+            public float x, z, claimX, claimZ;
+            public int country;
+            public bool port;
+        }
+        [Serializable] public sealed class Country { public string name; public float x, z; public int count; }
+        public string mapId, name;
+        public int width, height;
+        public float originX, originZ, cellSize;
+        public float[] heightSamples, waterSamples;
+        public int[] landSamples, tileSamples;
+        public string[] tileNames;
+        public City[] cities;
+        public Country[] countries;
+        public float HalfWidth => (width - 1) * cellSize * .5f;
+        public float HalfDepth => (height - 1) * cellSize * .5f;
+
+        public static ImportedMapData Load(ScenarioMap scenario)
+        {
+            string resource = scenario == ScenarioMap.Europe ? "Europe" : "NewWorld";
+            var source = Resources.Load<TextAsset>("Maps/" + resource);
+            if (!source) throw new InvalidOperationException("Missing imported map: " + resource);
+            var data = JsonUtility.FromJson<ImportedMapData>(source.text);
+            data.Validate();
+            data.PrepareBuildingPads();
+            return data;
+        }
+        static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+        public void Validate()
+        {
+            int size = checked(width * height);
+            if (width < 2 || height < 2 || cellSize <= 0 || !Finite(cellSize) ||
+                heightSamples == null || heightSamples.Length != size || landSamples == null || landSamples.Length != size ||
+                waterSamples == null || waterSamples.Length != size || tileSamples == null || tileSamples.Length != size ||
+                cities == null || countries == null || countries.Length == 0)
+                throw new InvalidOperationException("Invalid imported terrain arrays.");
+            for (int i = 0; i < size; i++)
+                if (!Finite(heightSamples[i]) || !Finite(waterSamples[i]))
+                    throw new InvalidOperationException("Non-finite imported terrain.");
+            foreach (var city in cities)
+                if (city.country < 0 || city.country >= countries.Length || !Finite(city.x) || !Finite(city.z) ||
+                    !Finite(city.claimX) || !Finite(city.claimZ))
+                    throw new InvalidOperationException("Invalid imported city: " + city.id);
+        }
+        public bool Contains(float x, float z) => x >= originX && z >= originZ && x <= originX + (width - 1) * cellSize && z <= originZ + (height - 1) * cellSize;
+        public float HeightAt(float x, float z) => Sample(heightSamples, x, z);
+        public float WaterAt(float x, float z) => Sample(waterSamples, x, z);
+        public bool IsLand(float x, float z)
+        {
+            if(!Contains(x,z))return false;
+            int ix=Mathf.Clamp(Mathf.FloorToInt((x-originX)/cellSize),0,width-2);
+            int iz=Mathf.Clamp(Mathf.FloorToInt((z-originZ)/cellSize),0,height-2);
+            int index=iz*width+ix;
+            // W3E may disable water even below the encoded water elevation.
+            if(landSamples[index]+landSamples[index+1]+landSamples[index+width]+landSamples[index+width+1]==4)return true;
+            return HeightAt(x,z)>=WaterAt(x,z)+.02f;
+        }
+        public int TileAt(float x, float z)
+        {
+            int ix = Mathf.Clamp(Mathf.RoundToInt((x - originX) / cellSize), 0, width - 1);
+            int iz = Mathf.Clamp(Mathf.RoundToInt((z - originZ) / cellSize), 0, height - 1);
+            return tileSamples[iz * width + ix];
+        }
+        float Sample(float[] samples, float x, float z)
+        {
+            float fx = Mathf.Clamp((x - originX) / cellSize, 0, width - 1), fz = Mathf.Clamp((z - originZ) / cellSize, 0, height - 1);
+            int ix = Mathf.Min(Mathf.FloorToInt(fx), width - 2), iz = Mathf.Min(Mathf.FloorToInt(fz), height - 2), index = iz * width + ix;
+            float u = fx - ix, v = fz - iz;
+            float lowerLeft = samples[index], lowerRight = samples[index + 1];
+            float upperLeft = samples[index + width], upperRight = samples[index + width + 1];
+            // ImportedTerrain splits every source quad from upper-left to
+            // lower-right.  Sampling that same pair of triangles keeps gameplay
+            // points, claim rings, colliders and NavMesh agents on one surface;
+            // bilinear interpolation produces a different height inside a cell.
+            return u + v <= 1
+                ? lowerLeft + u * (lowerRight - lowerLeft) + v * (upperLeft - lowerLeft)
+                : upperRight + (1 - v) * (lowerRight - upperRight) + (1 - u) * (upperLeft - upperRight);
+        }
+        void PrepareBuildingPads()
+        {
+            // Keep source XY. Small own foundations smooth a model footprint;
+            // the original sampled coast and relief continue outside that footprint.
+            foreach (var city in cities)
+            {
+                Flatten(city.x, city.z, 2.7f);
+                Flatten(city.claimX, city.claimZ, .9f);
+            }
+        }
+        void Flatten(float x, float z, float radius)
+        {
+            float heightAtCenter = HeightAt(x, z);
+            if (!IsLand(x, z)) return;
+            int cx = Mathf.RoundToInt((x - originX) / cellSize), cz = Mathf.RoundToInt((z - originZ) / cellSize);
+            int cells = Mathf.CeilToInt((radius + cellSize) / cellSize);
+            for (int dz = -cells; dz <= cells; dz++) for (int dx = -cells; dx <= cells; dx++)
+            {
+                int ix = cx + dx, iz = cz + dz;
+                if (ix < 0 || iz < 0 || ix >= width || iz >= height) continue;
+                float distance = Vector2.Distance(new Vector2(x,z), new Vector2(originX + ix*cellSize,originZ + iz*cellSize));
+                if (distance > radius + cellSize) continue;
+                int index = iz * width + ix;
+                if (landSamples[index] == 0) continue;
+                heightSamples[index] = Mathf.Lerp(heightSamples[index], heightAtCenter,
+                    1 - Mathf.SmoothStep(0,1,Mathf.InverseLerp(radius, radius + cellSize, distance)));
+            }
+        }
+    }
+}

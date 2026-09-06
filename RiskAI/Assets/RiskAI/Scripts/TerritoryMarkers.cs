@@ -73,18 +73,19 @@ namespace RiskAI
 
         void BuildPosts()
         {
-            int xCount = Mathf.CeilToInt(MapLayout.HalfWidth * 2f / GridStep);
-            int zCount = Mathf.CeilToInt(MapLayout.HalfDepth * 2f / GridStep);
-            for (int ix = 0; ix <= xCount && posts.Count < MaximumMarkers; ix++)
+            float step=MapLayout.IsImported?10:GridStep;int limit=MapLayout.IsImported?1800:MaximumMarkers;
+            int xCount = Mathf.CeilToInt(MapLayout.HalfWidth * 2f / step);
+            int zCount = Mathf.CeilToInt(MapLayout.HalfDepth * 2f / step);
+            for (int ix = 0; ix <= xCount && posts.Count < limit; ix++)
             {
-                float x = Mathf.Min(MapLayout.HalfWidth, -MapLayout.HalfWidth + ix * GridStep);
-                for (int iz = 0; iz <= zCount && posts.Count < MaximumMarkers; iz++)
+                float x = Mathf.Min(MapLayout.HalfWidth, -MapLayout.HalfWidth + ix * step);
+                for (int iz = 0; iz <= zCount && posts.Count < limit; iz++)
                 {
-                    float z = Mathf.Min(MapLayout.HalfDepth, -MapLayout.HalfDepth + iz * GridStep);
+                    float z = Mathf.Min(MapLayout.HalfDepth, -MapLayout.HalfDepth + iz * step);
                     var sample = new Vector3(x, 0, z);
-                    TryBoundary(sample, new Vector3(Mathf.Min(MapLayout.HalfWidth, x + GridStep), 0, z));
-                    if (posts.Count >= MaximumMarkers) break;
-                    TryBoundary(sample, new Vector3(x, 0, Mathf.Min(MapLayout.HalfDepth, z + GridStep)));
+                    TryBoundary(sample, new Vector3(Mathf.Min(MapLayout.HalfWidth, x + step), 0, z));
+                    if (posts.Count >= limit) break;
+                    TryBoundary(sample, new Vector3(x, 0, Mathf.Min(MapLayout.HalfDepth, z + step)));
                 }
             }
         }
@@ -97,8 +98,8 @@ namespace RiskAI
 
             Vector3 candidate = (first + second) * .5f;
             if (!MapLayout.IsLand(candidate.x, candidate.z)) return;
-            if (candidate.z > MapLayout.Coast(candidate.x)) return;
-            if (TerrainHydrology.DistanceToRiver(candidate.x, candidate.z) < 3f) return;
+            if (!MapLayout.IsImported && candidate.z > MapLayout.Coast(candidate.x)) return;
+            if (!MapLayout.IsImported && TerrainHydrology.DistanceToRiver(candidate.x, candidate.z) < 3f) return;
             if (NearTown(candidate)) return;
 
             if (!CityAt(first, out int cityA) || !CityAt(second, out int cityB) || cityA == cityB) return;

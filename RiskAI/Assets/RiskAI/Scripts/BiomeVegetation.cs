@@ -9,14 +9,17 @@ namespace RiskAI
         {
             float x=p.x/MapLayout.Spacing,z=p.z/MapLayout.Spacing;
             bool island=p.z>MapLayout.Coast(p.x);
-            int biome=island&&z>60?2:x>28&&z<-25?2:x<-24&&z>15?1:(seed%7==0?0:-1);
+            // The new southern marches are a low, dry olive country.  It uses the
+            // fourth existing foliage-atlas tile, rather than adding another asset.
+            bool classicSouthwest=!MapLayout.IsExpanded&&x<4&&z<-45;
+            int biome=classicSouthwest?3:island&&z>60?2:x>28&&z<-25?2:x<-24&&z>15?1:(seed%7==0?0:-1);
             if(island&&z<60)biome=seed%3==0?1:0;
             if(biome<0){WorldArt.Tree(root,p,height,seed);return;}
-            var go=new GameObject(biome==2?"Coastal palm":biome==1?"Amber oak":"Green oak");go.transform.SetParent(root,false);go.transform.localPosition=p;
+            var go=new GameObject(biome==2?"Coastal palm":biome==3?"Dry olive":biome==1?"Amber oak":"Green oak");go.transform.SetParent(root,false);go.transform.localPosition=p;
             go.transform.localRotation=Quaternion.Euler(0,seed*137.5f,0);
             float trunkHeight=biome==2?height*.78f:height*.63f;
             var trunk=VisualFactory.Shape(go.transform,PrimitiveType.Cylinder,"Bark",Vector3.up*trunkHeight*.5f,new Vector3(biome==2?.3f:.46f,trunkHeight*.5f,biome==2?.3f:.46f),Color.white,true);
-            trunk.GetComponent<Renderer>().sharedMaterial=WorldArt.Painted(2,new Color(.85f,.78f,.58f),.6f);
+            trunk.GetComponent<Renderer>().sharedMaterial=WorldArt.Painted(2,biome==3?new Color(.69f,.62f,.43f):new Color(.85f,.78f,.58f),.6f);
             if(biome!=2)for(int j=0;j<3;j++)
             {
                 float a=(j*120+seed*17)*Mathf.Deg2Rad;
@@ -33,11 +36,12 @@ namespace RiskAI
             int key=biome*10+variation;if(crowns.TryGetValue(key,out var found)&&found)return found;
             var v=new List<Vector3>();var uv=new List<Vector2>();var t=new List<int>();var colors=new List<Color>();
             Vector2 tile=new((biome%2)*.5f,biome<2?.5f:0);
+            Color foliageTint=biome==3?new Color(1.08f,.86f,.58f):Color.white;
             void Quad(Vector3 a,Vector3 b,Vector3 c,Vector3 d,float shade)
             {
                 int k=v.Count;v.Add(a);v.Add(b);v.Add(c);v.Add(d);
                 uv.Add(tile+new Vector2(.012f,.012f));uv.Add(tile+new Vector2(.488f,.012f));uv.Add(tile+new Vector2(.488f,.488f));uv.Add(tile+new Vector2(.012f,.488f));
-                t.Add(k);t.Add(k+2);t.Add(k+1);t.Add(k);t.Add(k+3);t.Add(k+2);for(int n=0;n<4;n++)colors.Add(Color.white*shade);
+                t.Add(k);t.Add(k+2);t.Add(k+1);t.Add(k);t.Add(k+3);t.Add(k+2);for(int n=0;n<4;n++)colors.Add(foliageTint*shade);
             }
             if(biome==2)
             {

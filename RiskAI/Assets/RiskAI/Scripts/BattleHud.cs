@@ -21,6 +21,7 @@ namespace RiskAI
         readonly HudSnapshot hud = new HudSnapshot();
         long lastHudTick = -1;
         bool hudDirty = true;
+        int countryPage;
         Vector2 MousePoint => new Vector2(controller.Pointer.x / Scale, (Screen.height - controller.Pointer.y) / Scale);
         public void Initialize(BattleSession battle, RtsController input, Camera camera)
         {
@@ -70,10 +71,13 @@ namespace RiskAI
             Label(22, 7, 270, "RISKAI · DOMINIOS", RtsSkin.Title);
             Label(23, 30, 235, "V"+Application.version+" · "+MapLayout.MapName.ToUpperInvariant(), RtsSkin.Tiny);
             Label(270, 13, 180, hud.Gold + " ORO  +" + hud.Income + "/RONDA", RtsSkin.Small);
-            Label(455, 13, 150, hud.Population0 + " TROPAS / IA " + hud.Population1, RtsSkin.Small);
-            Label(610, 13, 155, "RONDA " + hud.Round + " · " + Mathf.CeilToInt(BattleRules.RoundSeconds - hud.RoundElapsed) + " s", RtsSkin.Small);
-            Label(770, 13, 245, hud.OwnedTowns + " / " + MapLayout.Towns.Length + " CIUDADES", RtsSkin.Small);
-            Label(1030,13,330,"IA "+session.DifficultyName+(session.BattleTime<session.AiFirstOffensiveTime?" / prepara tus defensas":""),RtsSkin.Small);
+            string population=MapLayout.IsImported
+                ? "MÓV. "+hud.MobilePopulation0+" / 100 · G "+hud.GarrisonPopulation0+"  | IA "+hud.MobilePopulation1+" / 100 · G "+hud.GarrisonPopulation1
+                : hud.Population0 + " TROPAS / IA " + hud.Population1;
+            Label(455, 13, 310, population, RtsSkin.Small);
+            Label(770, 13, 170, "RONDA " + hud.Round + " · " + Mathf.CeilToInt(BattleRules.RoundSeconds - hud.RoundElapsed) + " s", RtsSkin.Small);
+            Label(945, 13, 245, hud.OwnedTowns + " / " + MapLayout.Towns.Length + " CIUDADES", RtsSkin.Small);
+            Label(1200,13,190,"IA "+session.DifficultyName+(session.BattleTime<session.AiFirstOffensiveTime?" / prepara":""),RtsSkin.Small);
             if (Button(new Rect(width - 195, 13, 86, 35), session.Paused ? "Continuar" : "Pausa", "F10 · pausar o continuar")) session.TogglePause();
             if (Button(new Rect(width - 101, 13, 81, 35), "Menú", "F1 · partida, controles y ajustes")) controller.HelpVisible = !controller.HelpVisible;
             RtsSkin.Frame(new Rect(0, bottom, width, 208));
@@ -126,7 +130,7 @@ namespace RiskAI
         {
             Label(253,bottom+18,650,harbor.DisplayName,RtsSkin.Title);
             Label(253,bottom+50,620,harbor.Owner==0?"PUERTO ALIADO":harbor.Owner==1?"PUERTO ENEMIGO":"PUERTO NEUTRAL",RtsSkin.Small);
-            Label(253,bottom+80,625,harbor.IsIsland?"Puerto insular: desembarca y ocupa su círculo.":"Puerto independiente · producción naval y punto de desembarco.",RtsSkin.Small);
+            Label(253,bottom+80,625,harbor.IsImportedPort?"Ciudad portuaria · cuenta para su grupo, ingresos y conquista.":harbor.IsIsland?"Puerto insular: desembarca y ocupa su círculo.":"Puerto independiente · producción naval y punto de desembarco.",RtsSkin.Small);
             Label(253,bottom+103,650,ClaimText(harbor.State,harbor.Defender),RtsSkin.Tiny);
             Label(253,bottom+123,610,"Cola naval: "+harbor.QueueCount+" / 3 · pulsa un encargo para cancelarlo",RtsSkin.Tiny);
             for(int i=0;i<harbor.QueueCount;i++)
@@ -290,14 +294,19 @@ namespace RiskAI
         }
         void Countries(float x)
         {
-            Label(x, bottom + 11, 380, "PAÍSES", RtsSkin.Small);
-            for (int i = 0; i < MapLayout.Countries.Length; i++)
+            const int rowsPerPage=6;
+            int pages=Mathf.Max(1,Mathf.CeilToInt(MapLayout.Countries.Length/(float)rowsPerPage));countryPage=Mathf.Clamp(countryPage,0,pages-1);
+            int first=countryPage*rowsPerPage,last=Mathf.Min(MapLayout.Countries.Length,first+rowsPerPage);
+            Label(x, bottom + 11, 260,"PAÍSES · "+(first+1)+"–"+last+" / "+MapLayout.Countries.Length, RtsSkin.Small);
+            bool enabled=GUI.enabled;GUI.enabled=countryPage>0;if(Button(new Rect(x+300,bottom+8,34,25),"‹"))countryPage--;GUI.enabled=enabled;
+            enabled=GUI.enabled;GUI.enabled=countryPage<pages-1;if(Button(new Rect(x+340,bottom+8,34,25),"›"))countryPage++;GUI.enabled=enabled;
+            for (int i = first; i < last; i++)
             {
                 CountrySnapshot snapshot = hud.Countries[i];
                 int owned = snapshot.Owned; int owner = snapshot.Owner;
                 int potential = snapshot.PotentialIncome;
                 var country = MapLayout.Countries[i];
-                var r = new Rect(x, bottom + 32 + i * 24, 380, 22);
+                var r = new Rect(x, bottom + 32 + (i-first) * 24, 380, 22);
                 if (GUI.Button(r, GUIContent.none, RtsSkin.Button))
                 {
                     Settlement town = null;
@@ -306,11 +315,12 @@ namespace RiskAI
                     if (!town && snapshot.CityCount > 0) town = snapshot.Cities[0];
                     if (town) { MarkHudDirty(); controller.SelectTown(town); controller.Focus(town.transform.position); }
                 }
-                Label(x + 8, r.y + 1, 150, country.Name, RtsSkin.Tiny);
-                Label(x + 158, r.y + 1, 45, owned + "/" + snapshot.CityCount, RtsSkin.Tiny);
-                string status = owner == 0 ? "+" + potential + " oro" : owner == 1 ? "enemigo +" + potential : "potencial +" + potential;
-                Label(x + 204, r.y + 1, 120, status, RtsSkin.Tiny);
-                for (int c = 0; c < snapshot.CityCount; c++) RtsSkin.Fill(new Rect(r.xMax - 35 + c * 16, r.y + 5, 11, 11), VisualFactory.TeamColor(snapshot.Cities[c].State.Owner));
+                Label(x + 8, r.y + 1, 145, country.Name, RtsSkin.Tiny);
+                Label(x + 153, r.y + 1, 42, owned + "/" + snapshot.CityCount, RtsSkin.Tiny);
+                string status = owner == 0 ? "+" + potential + " oro" : owner == 1 ? "rival +" + potential : "potencial +" + potential;
+                Label(x + 195, r.y + 1, 118, status, RtsSkin.Tiny);
+                int markers=Mathf.Min(snapshot.CityCount,8);
+                for (int c = 0; c < markers; c++) RtsSkin.Fill(new Rect(r.xMax-8-markers*6+c*6,r.y+7,4,4),VisualFactory.TeamColor(snapshot.Cities[c].State.Owner));
                 if (r.Contains(MousePoint)) tooltip = country.Name + "\n" + (owner == 0 ? "+" + potential + " oro por ronda" : "Potencial: +" + potential + " oro por ronda") + ". Al completarlo: +" + country.PerTurn + " " + BattleRules.Name(country.Reinforcement) + " cada 60 s (máx " + snapshot.CityCount * 5 + " puntos vivos); las bajas liberan capacidad para nuevos refuerzos.";
             }
             Label(x, bottom + 181, 390, "SHIFT: ENCOLAR · CTRL + 1–9: GRUPOS", RtsSkin.Tiny);
@@ -361,12 +371,13 @@ namespace RiskAI
         void DrawMinimap(Rect r)
         {
             RtsSkin.Frame(new Rect(r.x-3,r.y-3,r.width+6,r.height+6));
-            if (!minimapTexture) { minimapTexture = new Texture2D(48,37,TextureFormat.RGBA32,false); for (int ix=0;ix<48;ix++) for(int iz=0;iz<37;iz++){float x=Mathf.Lerp(-MapLayout.HalfWidth,MapLayout.HalfWidth,(ix+.5f)/48f),z=Mathf.Lerp(-MapLayout.HalfDepth,MapLayout.HalfDepth,(iz+.5f)/37f);float h=MapLayout.Height(x,z); minimapTexture.SetPixel(ix,iz,MapLayout.IsLand(x,z)?Color.Lerp(new Color(.24f,.38f,.20f),new Color(.56f,.63f,.30f),Mathf.Clamp01(h/6.2f)):new Color(.10f,.25f,.34f));} minimapTexture.Apply(); minimapTexture.filterMode=FilterMode.Point; }
+            if (!minimapTexture) { const int resolution=192; minimapTexture = new Texture2D(resolution,resolution,TextureFormat.RGBA32,false); for (int ix=0;ix<resolution;ix++) for(int iz=0;iz<resolution;iz++){float x=Mathf.Lerp(-MapLayout.HalfWidth,MapLayout.HalfWidth,(ix+.5f)/resolution),z=Mathf.Lerp(-MapLayout.HalfDepth,MapLayout.HalfDepth,(iz+.5f)/resolution);float h=MapLayout.Height(x,z); minimapTexture.SetPixel(ix,iz,MapLayout.IsLand(x,z)?Color.Lerp(new Color(.24f,.38f,.20f),new Color(.56f,.63f,.30f),Mathf.Clamp01(h/6.2f)):new Color(.10f,.25f,.34f));} minimapTexture.Apply(); minimapTexture.filterMode=FilterMode.Point; }
             GUI.DrawTexture(r,minimapTexture,ScaleMode.StretchToFill,false);
             foreach(var town in session.Towns)
             {
-                var p=MapPoint(town.transform.position,r);RtsSkin.Fill(new Rect(p.x-4,p.y-4,8,8),VisualFactory.TeamColor(town.State.Owner));
-                if(town.Defense.IsAlive)Outline(new Rect(p.x-6,p.y-6,12,12),new Color(.83f,.76f,.48f));
+                float marker=MapLayout.IsImported?3:8;
+                var p=MapPoint(town.transform.position,r);RtsSkin.Fill(new Rect(p.x-marker*.5f,p.y-marker*.5f,marker,marker),VisualFactory.TeamColor(town.State.Owner));
+                if(town.Defense.IsAlive)Outline(new Rect(p.x-marker*.5f-2,p.y-marker*.5f-2,marker+4,marker+4),new Color(.83f,.76f,.48f));
             }
             foreach(var unit in session.Units) {if(!unit||!unit.IsAlive)continue;var p=MapPoint(unit.transform.position,r);RtsSkin.Fill(new Rect(p.x-1,p.y-1,2.5f,2.5f),unit.Selected?Color.white:VisualFactory.TeamColor(unit.Team));}
             if(NavalWorld.Current)
@@ -408,6 +419,10 @@ namespace RiskAI
             public int Income;
             public int Population0;
             public int Population1;
+            public int MobilePopulation0;
+            public int MobilePopulation1;
+            public int GarrisonPopulation0;
+            public int GarrisonPopulation1;
             public int OwnedTowns;
             public int Round;
             public float RoundElapsed;
@@ -428,6 +443,10 @@ namespace RiskAI
                 Income = battle.Economy.Income(0);
                 Population0 = battle.Population(0);
                 Population1 = battle.Population(1);
+                MobilePopulation0 = battle.RecruitmentPopulation(0);
+                MobilePopulation1 = battle.RecruitmentPopulation(1);
+                GarrisonPopulation0 = Population0 - MobilePopulation0;
+                GarrisonPopulation1 = Population1 - MobilePopulation1;
                 OwnedTowns = 0;
                 Round = battle.Economy.Round;
                 RoundElapsed = battle.Economy.ElapsedInRound;

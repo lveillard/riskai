@@ -73,11 +73,11 @@ La [investigación de World Editor](docs/WORLD-EDITOR-TERRAIN.md) orienta el sig
 
 ## Importación de Europe y World
 
-- [ ] Importar primero Saran Europe/Mediterráneo: 212 ciudades y 69 grupos, conservando XY de ciudad, círculo y punto de refuerzo. Las dos arenas actuales siguen siendo mapas originales.
-- [ ] Mantener puerto como una clase de ciudad del mapa importado, incluida en reparto, grupos, ingresos y victoria; los puertos adicionales actuales aún tienen reglas separadas.
-- [ ] Importar después la variante World que se elija. Ya existen coordenadas de **New World v3.0**, 293 ciudades y 100 grupos; no equivale a haber identificado la versión histórica más popular ni a todo el planeta.
+- [x] Importar Saran Europe/Mediterráneo: 212 ciudades y 69 grupos, conservando XY de ciudad, círculo y punto de refuerzo. Las dos arenas pequeñas siguen siendo mapas originales.
+- [x] Mantener puerto como una clase de ciudad del mapa importado, incluida en reparto, grupos, ingresos y victoria; los puertos adicionales actuales aún tienen reglas separadas.
+- [x] Incorporar **New World v3.0**, 293 ciudades y 100 grupos, como escenario seleccionable. No equivale a todo el planeta ni a haber identificado la versión histórica más popular.
 - [ ] Leer altura, rampas, agua, pasos, biomas y límites desde datos propios de autoría; reconstruir el arte con materiales/modelos originales. Verificar rutas, distancia al círculo y ángulos de tiro por ciudad.
-- [ ] Antes de escalar a 212/293 puestos, resolver el tope de población: no bloquear todas las compras porque las guarniciones iniciales ya superen 100. Separar presupuesto de ejército móvil y ocupantes o definir un límite por mapa.
+- [x] Separar guarniciones del presupuesto de 100 tropas móviles en los mapas importados para permitir compras desde el inicio.
 - [ ] Generalizar PlayerId, alianzas y asignación a 6–12 jugadores; el runtime actual sigue siendo 0/1 y neutral.
 
 ## Héroes y bucle de partida — fase posterior
@@ -92,3 +92,14 @@ La [investigación de World Editor](docs/WORLD-EDITOR-TERRAIN.md) orienta el sig
 - [x] Medir Qwen3.8 por Grok CLI en tandas de 3 a 10: 51/52 respuestas completas en tareas pequeñas. [Medición y límites](docs/audits/QWEN-CONCURRENCY-v0.13.md). Una respuesta completa no implica que el hallazgo sea correcto.
 - [ ] Dar paquetes pequeños por tema; contrastar contra código y tests antes de aplicar sugerencias. Terra/Luna pueden preparar pruebas y verificar hallazgos; decisiones de diseño e integración a cargo del agente principal.
 - [ ] Revisión adversarial Grok4.6 sobre cambios concretos, con evidencias y limitaciones.
+
+## Expansión v0.14
+
+- [x] Anclar cada defensor a un punto navegable estable y excluirlo de la evasión que lo desplazaba del círculo. Restaurar movimiento al liberarlo.
+- [x] Las Marcas: 18 ciudades, nueve grupos y secano con vegetación baja al suroeste.
+- [x] Menú con cuatro mapas; listas de grupos y ciudades paginadas, zoom estratégico y foco de cámara adaptados a los mapas grandes.
+- [x] Importar alturas, agua, tiles y posiciones numéricas; crear terreno y muelles con materiales propios.
+- [ ] Refinar navegación y decoración de los cientos de puestos importados mediante partidas; medir carga y renderizado, y hornear NavMesh en editor.
+- [ ] Incorporar datos fuente de pathing, puentes y destructibles cuando sean necesarios; la cuadrícula de altura no reproduce por sí sola todo el World Editor.
+
+- [ ] Leer límites jugables y de cámara W3I para recortar el espacio exterior de los imports sin mover las coordenadas de ciudades.

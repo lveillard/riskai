@@ -10,7 +10,10 @@ namespace RiskAI
         public static float HalfWidth { get; private set; }
         public static float HalfDepth { get; private set; }
         public static bool IsExpanded { get; private set; }
-        public static string MapName => IsExpanded ? "Cuatro Riberas" : "Las Marcas";
+        public static ScenarioMap Scenario { get; private set; }
+        public static ImportedMapData Imported { get; private set; }
+        public static bool IsImported => Imported != null;
+        public static string MapName => IsImported ? Imported.name : IsExpanded ? "Cuatro Riberas" : "Las Marcas";
         static readonly int[] ClassicMainlandHarborX = { -58, -37, -3, 20, 43 };
         static readonly int[] ExpandedMainlandHarborX = { -58, -32, -7, 20, 43 };
         public static int[] MainlandHarborX => IsExpanded ? ExpandedMainlandHarborX : ClassicMainlandHarborX;
@@ -30,8 +33,12 @@ namespace RiskAI
         public readonly struct City
         {
             public readonly string Id, Name; public readonly Vector3 Position; public readonly int Owner, Region, Country; public readonly bool Capital;
+            public readonly bool IsPort;
+            public readonly Vector3 ClaimPoint;
             public City(string id, string name, float x, float z, int owner, int region, int country, bool capital = false)
-            { Id = id; Name = name; Position = Point(x * Spacing, z * Spacing); Owner = owner; Region = region; Country = country; Capital = capital; }
+            { Id = id; Name = name; Position = Point(x * Spacing, z * Spacing); Owner = owner; Region = region; Country = country; Capital = capital; IsPort=false;ClaimPoint=Point(Position.x,Position.z-4.2f); }
+            public City(ImportedMapData.City city)
+            { Id=city.id;Name=city.name;Position=city.port?new Vector3(city.x,.55f,city.z):Point(city.x,city.z);Owner=city.country%2;Region=Country=city.country;Capital=false;IsPort=city.port;ClaimPoint=city.port?new Vector3(city.claimX,.55f,city.claimZ):Point(city.claimX,city.claimZ); }
         }
         public readonly struct Country
         {
@@ -48,9 +55,18 @@ namespace RiskAI
         static readonly Country[] ClassicCountries = {
             new Country("Marca del Alba",0,UnitKind.Archer,1), new Country("Valdeluz",0,UnitKind.Archer,1),
             new Country("Paso del Rey",1,UnitKind.Archer,1), new Country("Ribera Gris",1,UnitKind.Archer,1),
-            new Country("Las Atalayas",2,UnitKind.Archer,1), new Country("Ceniza",2,UnitKind.Archer,1)
+            new Country("Las Atalayas",2,UnitKind.Archer,1), new Country("Ceniza",2,UnitKind.Archer,1),
+            // The south-west is deliberately split into small, claimable pairs so
+            // its long approach is active without changing either original home.
+            new Country("Dehesa de Poniente",3,UnitKind.Archer,1), new Country("Campos del Secano",4,UnitKind.Archer,1),
+            new Country("Lomas de Azafrán",5,UnitKind.Archer,1)
         };
-        static readonly Vector2[] ClassicPads = { new(-38,-12),new(-47,12),new(-21,5),new(-23,30),new(-2,24),new(8,3),new(1,-18),new(28,30),new(43,9),new(38,-25),new(20,-39),new(-24,-34) };
+        static readonly Vector2[] ClassicPads = {
+            new(-38,-12),new(-47,12),new(-21,5),new(-23,30),new(-2,24),new(8,3),new(1,-18),new(28,30),new(43,9),new(38,-25),new(20,-39),new(-24,-34),
+            // Southern clearings: each column is 25 authored metres apart and each
+            // pair is 17 apart, leaving ample room for the 13-unit tower circles.
+            new(-56,-65),new(-56,-82),new(-31,-65),new(-31,-82),new(-6,-65),new(-6,-82)
+        };
         static readonly Vector4[] ClassicIslands = { new(-47,53,12,8),new(-8,69,13,9) };
         static readonly Vector2[][] ClassicCliffs = {
             new[]{new Vector2(-58,3),new Vector2(-53,-4),new Vector2(-40,-6),new Vector2(-32,-3),new Vector2(-24,-7),new Vector2(-17,-1),new Vector2(-17,9),new Vector2(-10,14),new Vector2(-13,21),new Vector2(-18,24),new Vector2(-18,33),new Vector2(-29,34),new Vector2(-34,27),new Vector2(-45,26),new Vector2(-52,22),new Vector2(-59,16)},
@@ -76,9 +92,21 @@ namespace RiskAI
         };
 
         static MapLayout() { Configure(false); }
-        public static void Configure(bool expanded)
+        public static void Configure(bool expanded) => Configure(expanded ? ScenarioMap.Riverlands : ScenarioMap.Classic);
+        public static void Configure(ScenarioMap scenario)
         {
-            IsExpanded = expanded; HalfWidth = 72 * Spacing; HalfDepth = (expanded ? 112 : 84) * Spacing;
+            Scenario=scenario;IsExpanded=scenario==ScenarioMap.Riverlands;Imported=null;
+            bool expanded=IsExpanded;
+            if (scenario == ScenarioMap.Europe || scenario == ScenarioMap.NewWorld)
+            {
+                Imported=ImportedMapData.Load(scenario);HalfWidth=Imported.HalfWidth;HalfDepth=Imported.HalfDepth;
+                Islands=System.Array.Empty<Vector4>();Cliffs=System.Array.Empty<Vector2[]>();Pads=new Vector2[Imported.cities.Length];
+                Countries=new Country[Imported.countries.Length];Towns=new City[Imported.cities.Length];
+                for(int i=0;i<Countries.Length;i++){var c=Imported.countries[i];Countries[i]=new Country(c.name,i,UnitKind.Archer,Mathf.CeilToInt(c.count*.5f),Point(c.x,c.z));}
+                for(int i=0;i<Towns.Length;i++){Towns[i]=new City(Imported.cities[i]);Pads[i]=new Vector2(Towns[i].Position.x/Spacing,Towns[i].Position.z/Spacing);}
+                TerrainHydrology.Configure(false);UploadShaderGlobals();return;
+            }
+            HalfWidth = 72 * Spacing; HalfDepth = (expanded ? 112 : 90) * Spacing;
             Pads = expanded ? ExpandedPads : ClassicPads; Islands = expanded ? ExpandedIslands : ClassicIslands; Cliffs = expanded ? ExpandedCliffs : ClassicCliffs;
             Countries = expanded ? ExpandedCountries : ClassicCountries; TerrainHydrology.Configure(expanded); Towns = expanded ? BuildExpandedTowns() : BuildClassicTowns();
             UploadShaderGlobals();
@@ -92,7 +120,10 @@ namespace RiskAI
                 new City("gate","Puerta de Piedra",-2,24,-1,1,2),new City("ford","Valle del Fresno",8,3,-1,1,2),
                 new City("stone","Piedra Vieja",1,-18,-1,1,3),new City("ash","Torre del Roble",28,30,-1,2,4),
                 new City("watch","Vigía del Este",43,9,-1,2,4),new City("red","Fortaleza Carmesí",38,-25,1,2,5,true),
-                new City("highland","Altos de Ceniza",20,-39,1,2,5),new City("west","Marca del Sur",-24,-34,-1,1,3)
+                new City("highland","Altos de Ceniza",20,-39,1,2,5),new City("west","Marca del Sur",-24,-34,-1,1,3),
+                new City("dehesa","Dehesa de Poniente",-56,-65,-1,3,6),new City("encina","Encinar Bajo",-56,-82,-1,3,6),
+                new City("secano","Campos del Secano",-31,-65,-1,4,7),new City("trigal","Trigal Dorado",-31,-82,-1,4,7),
+                new City("azafran","Lomas de Azafrán",-6,-65,-1,5,8),new City("olivar","Olivar de la Marca",-6,-82,-1,5,8)
             };
             return ClassicTowns;
         }
@@ -130,11 +161,12 @@ namespace RiskAI
         }
         public static bool IsLand(float x, float z)
         {
+            if(IsImported)return Imported.IsLand(x,z);
             if (Mathf.Abs(x) > HalfWidth || Mathf.Abs(z) > HalfDepth) return false;
             bool land = (z <= Coast(x) && !IsPond(x, z)) || AnyIslandAt(x, z);
             return land && (!IsExpanded || !TerrainHydrology.IsChannel(x, z));
         }
-        public static bool IsOcean(float x, float z) => Mathf.Abs(x) < HalfWidth && Mathf.Abs(z) < HalfDepth && z > Coast(x) && !AnyIslandAt(x, z);
+        public static bool IsOcean(float x, float z) => IsImported ? Imported.Contains(x,z) && !Imported.IsLand(x,z) && Mathf.Abs(Imported.WaterAt(x,z)+.24f)<.4f : Mathf.Abs(x) < HalfWidth && Mathf.Abs(z) < HalfDepth && z > Coast(x) && !AnyIslandAt(x, z);
         static bool AnyIslandAt(float x, float z) { for (int i = 0; i < Islands.Length; i++) if (IslandDistance(x, z, i) >= 0) return true; return false; }
         public static bool IsPond(float x, float z)
         {
@@ -167,6 +199,7 @@ namespace RiskAI
         }
         public static float Height(float x, float z)
         {
+            if(IsImported)return Imported.HeightAt(x,z);
             float height=IsExpanded?ExpandedHeight(x,z):ClassicHeight(x,z);
             float pond=PondDistance(x,z);
             return Mathf.Lerp(-1.05f+.25f*Mathf.Clamp01(pond),height,Mathf.SmoothStep(0,1,Mathf.InverseLerp(.72f,1.18f,pond)));

@@ -11,10 +11,15 @@ namespace RiskAI
         readonly List<Order> queue=new List<Order>();
         NavalWorld world;TownState state;int lastOwner;
         CityClaimZone claimZone;LineRenderer claimRing;
+        bool sharesTown,canLaunch;
+        string launchBlockReason;
         public Settlement LinkedTown { get; private set; }
         public DefenseTower Defense { get; private set; }
         public TownState State=>state;
         public bool IsIsland=>!LinkedTown;
+        public bool IsImportedPort=>sharesTown;
+        public bool CanLaunch=>canLaunch;
+        public string LaunchBlockReason=>launchBlockReason;
         public CityClaimZone ClaimZone=>claimZone;
         public Soldier Defender=>claimZone?.Defender;
         public Vector3 Landing { get; private set; }
@@ -30,6 +35,7 @@ namespace RiskAI
 
         public void Initialize(NavalWorld naval,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth)
         {
+            sharesTown=false;canLaunch=SeaNavigation.HasClearance(berth);launchBlockReason=canLaunch?null:"El puerto no tiene una salida marítima segura.";
             world=naval;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;lastOwner=Owner;
             NavalArt.CreateHarbor(this);
             claimZone=new CityClaimZone(Landing);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));claimRing.transform.position=Landing;
@@ -41,8 +47,17 @@ namespace RiskAI
             towerPoint=MapLayout.Point(towerPoint.x,towerPoint.z);towerObject.transform.position=towerPoint;
             Defense=towerObject.AddComponent<DefenseTower>();Defense.Initialize(world.Session,this,true);
         }
+        internal void InitializeImported(NavalWorld naval,Settlement town,Vector3 berth,string unavailableReason)
+        {
+            world=naval;DisplayName=town.DisplayName;LinkedTown=town;state=town.State;claimZone=town.ClaimZone;Defense=town.Defense;
+            Landing=town.ClaimPoint;Berth=berth;lastOwner=Owner;sharesTown=true;
+            canLaunch=string.IsNullOrEmpty(unavailableReason)&&SeaNavigation.HasClearance(berth);
+            launchBlockReason=canLaunch?null:unavailableReason??"El puerto no tiene una salida marítima segura.";
+            town.Port=this;
+        }
         internal bool InitializeGarrison()
         {
+            if(sharesTown)return Defender;
             Soldier best=null;float score=float.MaxValue;int team=Owner>=0?Owner:2;
             foreach(var unit in world.Session.Units)
             {
@@ -58,6 +73,7 @@ namespace RiskAI
             if(kind!=ShipKind.Galley&&kind!=ShipKind.Transport)return "Tipo de barco inválido.";
             if(team<0||team>1)return "Bando inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";
+            if(!CanLaunch)return LaunchBlockReason;
             if(world.Session.Winner>=0)return "La batalla ha terminado.";
             if(world.Session.Paused)return "Reanuda la partida para comprar barcos.";
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
@@ -79,6 +95,7 @@ namespace RiskAI
         }
         public string BuildTower(int team=0)
         {
+            if(sharesTown)return LinkedTown?LinkedTown.BuildTower(team):"Este puerto no tiene ciudad.";
             if(team<0||team>1)return "Bando inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";
             if(world.Session.Winner>=0)return "La batalla ha terminado.";
@@ -95,8 +112,13 @@ namespace RiskAI
         public void SimTick(float delta)
         {
             if(!world||world.Session.Paused||world.Session.Winner>=0)return;
-            if(Owner!=lastOwner){RefundQueue();CancelTowerBuild(true);Defense.ChangeOwner();lastOwner=Owner;}
-            if(state!=null)
+            if(Owner!=lastOwner)
+            {
+                RefundQueue();
+                if(!sharesTown){CancelTowerBuild(true);Defense.ChangeOwner();}
+                lastOwner=Owner;
+            }
+            if(!sharesTown&&state!=null)
             {
                 var previous=claimZone.Defender;int owner=claimZone.Step(world.Session,state.Owner,delta);
                 state.Capture=claimZone.Progress;state.Capturing=claimZone.CapturingTeam;state.Contested=claimZone.Contested;
@@ -104,14 +126,14 @@ namespace RiskAI
                 if(owner!=state.Owner){state.Owner=owner;Captured();}
                 claimRing.startColor=claimRing.endColor=state.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,state.Capture*.65f);
             }
-            if(Defense&&Defense.UnderConstruction)
+            if(!sharesTown&&Defense&&Defense.UnderConstruction)
             {
                 towerBuildRemaining-=delta;Defense.SetBuildProgress(1-towerBuildRemaining/BattleRules.ConstructionSeconds);
                 if(towerBuildRemaining<=0){Defense.CompleteBuild();towerBuildRemaining=0;towerBuilder=-1;}
             }
             if(queue.Count==0)return;
             queue[0].Remaining-=delta;if(queue[0].Remaining>0)return;
-            var item=queue[0];queue.RemoveAt(0);var ship=world.Spawn(item.Team,item.Kind,Berth);
+            var item=queue[0];queue.RemoveAt(0);var ship=CanLaunch?world.Spawn(item.Team,item.Kind,Berth):null;
             if(!ship)world.Session.Economy.Refund(item.Team,Cost(item.Kind));
         }
         void Captured()

@@ -7,6 +7,7 @@ namespace RiskAI
         static bool firstLaunch=true;
         int menuTab;
         bool initialMenu;
+        int campCityPage=-1, campCountry=-1;
         void OpenInitialMenu()
         {
             if(!firstLaunch||Application.isEditor||Application.isBatchMode||System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"--riskai-capture")>=0)return;
@@ -22,16 +23,18 @@ namespace RiskAI
             menuTab=GUI.SelectionGrid(new Rect(r.x+30,r.y+102,860,38),menuTab,new[]{"PARTIDA","CONTROLES","AJUSTES"},3,RtsSkin.Button);
             if(menuTab==0)
             {
-                MapCard(new Rect(r.x+30,r.y+160,418,151),false,"LAS MARCAS","12 ciudades · 6 grupos","Costas, dos mesetas y expediciones a las islas. Escenario compacto para aprender y comparar.");
-                MapCard(new Rect(r.x+472,r.y+160,418,151),true,"CUATRO RIBERAS","20 ciudades · 4 dominios + archipiélago","Río central, puente y más tierras al norte. Grupos amplios y rutas marítimas alternativas.");
-                Label(r.x+30,r.y+333,210,"REPARTO INICIAL",RtsSkin.Small);
-                BattleSession.LayoutForNewMatch=(BattleSession.StartLayout)GUI.SelectionGrid(new Rect(r.x+255,r.y+327,635,37),(int)BattleSession.LayoutForNewMatch,new[]{"Ciudades al azar","Grupos iniciales","Posiciones fijas"},3,RtsSkin.Button);
-                Label(r.x+30,r.y+388,200,"SEMILLA",RtsSkin.Small);
-                seedText=GUI.TextField(new Rect(r.x+255,r.y+382,280,35),seedText,11);
-                if(Button(new Rect(r.x+551,r.y+382,150,35),"Otra semilla")){BattleSession.NewSeed();seedText=BattleSession.SeedForNewMatch.ToString();}
-                Label(r.x+30,r.y+443,820,"CONQUISTA · controla el 60 % de las ciudades.",RtsSkin.Small);
-                Label(r.x+30,r.y+477,820,"Empiezas con 4 de oro y un defensor por puesto. Compra tu primera tropa en una ciudad.",RtsSkin.Small);
-                Label(r.x+30,r.y+511,820,"Pulsa una hoguera para ver su grupo y dónde aparecen sus refuerzos.",RtsSkin.Small);
+                MapCard(new Rect(r.x+30,r.y+155,418,96),ScenarioMap.Classic,"LAS MARCAS","18 ciudades · 9 grupos","Costas, dos mesetas y nuevas marcas secas del sur.");
+                MapCard(new Rect(r.x+472,r.y+155,418,96),ScenarioMap.Riverlands,"CUATRO RIBERAS","20 ciudades · 5 grupos","Río central, puente y archipiélago del norte.");
+                MapCard(new Rect(r.x+30,r.y+259,418,96),ScenarioMap.Europe,"Europe · Reforged","212 ciudades · 69 grupos · 44 puertos","Territorio europeo importado y reinterpretado para Dominios.");
+                MapCard(new Rect(r.x+472,r.y+259,418,96),ScenarioMap.NewWorld,"New World · Europa y América","293 ciudades · 100 grupos · 59 puertos","Europa y América en un escenario de gran escala.");
+                Label(r.x+30,r.y+372,210,"REPARTO INICIAL",RtsSkin.Small);
+                BattleSession.LayoutForNewMatch=(BattleSession.StartLayout)GUI.SelectionGrid(new Rect(r.x+255,r.y+366,635,37),(int)BattleSession.LayoutForNewMatch,new[]{"Ciudades al azar","Grupos iniciales","Posiciones fijas"},3,RtsSkin.Button);
+                Label(r.x+30,r.y+423,200,"SEMILLA",RtsSkin.Small);
+                seedText=GUI.TextField(new Rect(r.x+255,r.y+417,280,35),seedText,11);
+                if(Button(new Rect(r.x+551,r.y+417,150,35),"Otra semilla")){BattleSession.NewSeed();seedText=BattleSession.SeedForNewMatch.ToString();}
+                Label(r.x+30,r.y+466,820,"CONQUISTA · controla el 60 % de las ciudades.",RtsSkin.Small);
+                Label(r.x+30,r.y+496,820,"Empiezas con 4 de oro y un defensor por puesto. Compra tu primera tropa en una ciudad.",RtsSkin.Small);
+                Label(r.x+30,r.y+526,820,"Pulsa una hoguera para ver su grupo y dónde aparecen sus refuerzos.",RtsSkin.Small);
                 if(Button(new Rect(r.x+590,r.y+595,300,54),"EMPEZAR PARTIDA"))StartMatch();
             }
             else if(menuTab==1)
@@ -50,16 +53,17 @@ namespace RiskAI
                 Label(r.x+30,r.y+478,820,"Ambas reaccionan para defender sus ciudades desde el comienzo.",RtsSkin.Small);
             }
             if(!initialMenu&&Button(new Rect(r.x+30,r.y+595,250,54),"VOLVER A LA PARTIDA"))controller.HelpVisible=false;
-            Label(r.x+30,r.y+656,820,"Escenario actual: "+MapLayout.MapName+" · semilla "+session.Seed,RtsSkin.Tiny);
+            Label(r.x+30,r.y+656,820,"Próximo escenario: "+ScenarioName(BattleSession.MapForNewMatch)+" · semilla "+BattleSession.SeedForNewMatch,RtsSkin.Tiny);
         }
-        void MapCard(Rect r,bool expanded,string name,string stats,string description)
+        void MapCard(Rect r,ScenarioMap scenario,string name,string stats,string description)
         {
-            bool selected=BattleSession.ExpandedMapForNewMatch==expanded;
+            bool selected=BattleSession.MapForNewMatch==scenario;
             RtsSkin.Frame(r,selected?RtsSkin.Gold:new Color(.26f,.3f,.29f));
-            if(Button(new Rect(r.x+12,r.y+12,r.width-24,39),(selected?"● ":"")+name))BattleSession.ExpandedMapForNewMatch=expanded;
-            Label(r.x+18,r.y+60,r.width-36,stats,RtsSkin.Small);
-            Text(new Rect(r.x+18,r.y+88,r.width-36,53),description,new GUIStyle(RtsSkin.Small){wordWrap=true});
+            if(Button(new Rect(r.x+12,r.y+10,r.width-24,32),(selected?"● ":"")+name))BattleSession.MapForNewMatch=scenario;
+            Label(r.x+18,r.y+48,r.width-36,stats,RtsSkin.Tiny);
+            Text(new Rect(r.x+18,r.y+66,r.width-36,25),description,new GUIStyle(RtsSkin.Tiny){wordWrap=true});
         }
+        static string ScenarioName(ScenarioMap scenario)=>scenario==ScenarioMap.Riverlands?"Cuatro Riberas":scenario==ScenarioMap.Europe?"Europe · Reforged":scenario==ScenarioMap.NewWorld?"New World · Europa y América":"Las Marcas";
         void StartMatch()
         {
             if(!int.TryParse(seedText,out int seed)){session.Message("Escribe una semilla numérica válida.");return;}
@@ -69,15 +73,21 @@ namespace RiskAI
         void CampDetails(CountryCamp camp,float x)
         {
             var group=hud.Countries[camp.Country];var rule=MapLayout.Countries[camp.Country];
+            if(campCountry!=camp.Country){campCountry=camp.Country;campCityPage=0;}
             Label(253,bottom+18,650,camp.DisplayName.ToUpperInvariant(),RtsSkin.Title);
             Label(253,bottom+52,630,"HOGUERA · "+group.Owned+" / "+group.CityCount+" ciudades",RtsSkin.Small);
             Label(253,bottom+85,630,group.Owner<0?"Completa el grupo para activar ingresos y refuerzos.":"Grupo controlado por "+(group.Owner==0?"tu ejército.":"el enemigo."),RtsSkin.Small);
             Label(253,bottom+116,630,"Cada ronda: "+rule.PerTurn+" × "+Core.BattleRules.Name(rule.Reinforcement)+" en esta hoguera.",RtsSkin.Small);
             Label(253,bottom+147,630,"La superposición muestra el grupo; los anillos señalan sus ciudades.",RtsSkin.Tiny);
             Label(x,bottom+17,590,"CIUDADES DEL GRUPO",RtsSkin.Title);
-            for(int i=0;i<group.CityCount;i++)
+            const int perPage=6;int pages=Mathf.Max(1,Mathf.CeilToInt(group.CityCount/(float)perPage));campCityPage=Mathf.Clamp(campCityPage,0,pages-1);
+            int start=campCityPage*perPage,end=Mathf.Min(group.CityCount,start+perPage);
+            Label(x+292,bottom+20,105,(start+1)+"–"+end+" / "+group.CityCount,RtsSkin.Tiny);
+            bool enabled=GUI.enabled;GUI.enabled=campCityPage>0;if(Button(new Rect(x+404,bottom+15,34,27),"‹"))campCityPage--;GUI.enabled=enabled;
+            enabled=GUI.enabled;GUI.enabled=campCityPage<pages-1;if(Button(new Rect(x+444,bottom+15,34,27),"›"))campCityPage++;GUI.enabled=enabled;
+            for(int i=start;i<end;i++)
             {
-                var town=group.Cities[i];int column=i%2,row=i/2;
+                var town=group.Cities[i];int relative=i-start,column=relative%2,row=relative/2;
                 if(Button(new Rect(x+column*260,bottom+52+row*36,250,30),town.DisplayName+(town.State.Owner==0?" · tuya":town.State.Owner==1?" · rival":" · libre")))
                 {controller.Focus(town.transform.position);controller.SelectTown(town);}
             }

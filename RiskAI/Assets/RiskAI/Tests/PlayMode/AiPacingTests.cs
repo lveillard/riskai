@@ -38,10 +38,16 @@ namespace RiskAI.Tests
             Assert.That(battle.Difficulty, Is.EqualTo(BattleSession.AiDifficulty.Relaxed));
             Assert.That(battle.Economy.Gold[0], Is.EqualTo(battle.Economy.Gold[1]));
             Assert.That(battle.Population(0), Is.EqualTo(battle.Population(1)));
+            Assert.That(MapLayout.Towns.Length, Is.EqualTo(18));
+            Assert.That(MapLayout.Countries.Length, Is.EqualTo(9));
+            Assert.That(battle.Towns.Count(town => town.State.Owner == 0), Is.EqualTo(2));
+            Assert.That(battle.Towns.Count(town => town.State.Owner == 1), Is.EqualTo(2));
+            Assert.That(battle.Towns.Count(town => town.State.Owner < 0), Is.EqualTo(14));
             var posts = battle.Towns.Select(town => new { Owner = town.State.Owner, Defender = town.Defender })
                 .Concat(NavalWorld.Current.Harbors.Select(harbor => new { Owner = harbor.Owner, Defender = harbor.Defender }))
                 .ToArray();
-            Assert.That(posts.Length, Is.EqualTo(19));
+            Assert.That(posts.Length, Is.EqualTo(MapLayout.Towns.Length + NavalWorld.Current.Harbors.Count));
+            Assert.That(posts.Length, Is.EqualTo(25));
             Assert.That(battle.Units.Count, Is.EqualTo(posts.Length));
             Assert.That(posts.All(post => post.Defender && post.Defender.Kind == UnitKind.Archer && post.Defender.IsGarrison), Is.True);
             Assert.That(posts.All(post => post.Defender.Team == (post.Owner >= 0 ? post.Owner : 2)), Is.True);

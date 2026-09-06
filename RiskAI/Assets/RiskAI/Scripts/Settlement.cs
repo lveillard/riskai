@@ -14,6 +14,8 @@ namespace RiskAI
         public bool IsCapital { get; private set; }
         public int FoundingTeam { get; private set; }
         public DefenseTower Defense { get; private set; }
+        public bool IsPort { get; private set; }
+        public Harbor Port { get; internal set; }
         public CityClaimZone ClaimZone { get; private set; }
         public Soldier Defender => ClaimZone != null ? ClaimZone.Defender : null;
         public Vector3 ClaimPoint { get; private set; }
@@ -37,12 +39,12 @@ namespace RiskAI
         enum BuildingProject { None, Tower, Upgrade }
         sealed class Training { public int Team; public UnitKind Kind; public float Remaining; }
 
-        public void Initialize(BattleSession battle, string id, string displayName, int owner, int region, bool capital, int country = -1)
+        public void Initialize(BattleSession battle, string id, string displayName, int owner, int region, bool capital, int country = -1, Vector3? sourceClaim = null, bool isPort = false)
         {
-            session = battle; State = new TownState(id, owner, region, country); DisplayName = displayName; IsCapital = capital; FoundingTeam = owner;
+            session = battle; State = new TownState(id, owner, region, country); DisplayName = displayName; IsCapital = capital; FoundingTeam = owner;IsPort=isPort;
             Rally = transform.position + new Vector3(0, 0, owner == 1 ? 6 : -6);
             Vector3 claimProbe = transform.position + new Vector3(0, 0, -4.2f);
-            ClaimPoint = MapLayout.Point(claimProbe.x, claimProbe.z);
+            ClaimPoint = sourceClaim ?? MapLayout.Point(claimProbe.x, claimProbe.z);
             ClaimZone = new CityClaimZone(ClaimPoint);
             session.Towns.Add(this); session.Economy.Towns.Add(State);
             flag = VisualFactory.Town(transform, owner, capital);
@@ -51,19 +53,46 @@ namespace RiskAI
             var towerObject = new GameObject("Torre de " + displayName);
             towerObject.transform.SetParent(transform, false);
             towerObject.transform.localPosition = new Vector3(transform.position.x < 0 ? 3.8f : -3.8f, 0, 0);
+            if(sourceClaim.HasValue) towerObject.transform.position=ImportedTowerPoint();
             Defense = towerObject.AddComponent<DefenseTower>(); Defense.Initialize(session, this, true);
             var rallyObject = new GameObject("Punto de reunión"); rallyObject.transform.SetParent(transform, false);
             rallyRing = VisualFactory.Ring(rallyObject.transform, .6f, .09f, new Color(.8f, 1, .5f));
             rallyObject.transform.position = Rally; rallyRing.enabled = false;
         }
 
+        Vector3 ImportedTowerPoint()
+        {
+            Vector3 away=transform.position-ClaimPoint;away.y=0;away.Normalize();
+            Vector3 fallback=transform.position+away*3.8f;
+            // Rotate our added tower, keeping both source city and circle XY intact.
+            // Independent starting posts must not bombard each other's defenders.
+            float clearance=ReforgedProfiles.CapturableTower.Range+1;
+            for(int attempt=0;attempt<25;attempt++)
+            {
+                float angle=attempt==0?0:((attempt+1)/2)*15*(attempt%2==0?-1:1);
+                Vector3 spot=transform.position+Quaternion.Euler(0,angle,0)*away*3.8f;
+                if(!IsPort&&!MapLayout.IsLand(spot.x,spot.z))continue;
+                bool clear=true;
+                foreach(var city in MapLayout.Towns)
+                {
+                    if(city.Id==State.Id)continue;
+                    var difference=city.ClaimPoint-spot;difference.y=0;
+                    if(difference.sqrMagnitude<clearance*clearance){clear=false;break;}
+                }
+                if(clear){fallback=spot;break;}
+            }
+            fallback.y=IsPort?.55f:MapLayout.Height(fallback.x,fallback.z);
+            return fallback;
+        }
+
         public string Recruit(UnitKind kind, int team = 0)
         {
+            if(IsPort)return "Este astillero produce barcos. Selecciona una ciudad para reclutar soldados.";
             string error = CanManage(team); if (error != null) return error;
             if (State.Level < BattleRules.RequiredLevel(kind)) return "Mejora la ciudad a nivel II para reclutar esta unidad.";
             if (queue.Count >= 5) return "La cola está llena. Pulsa un encargo para cancelarlo.";
             int pending = session.Towns.Sum(t => t.queue.Count(q => q.Team == team));
-            if (session.Population(team) + pending >= BattleRules.PopulationLimit) return "Límite de 100 soldados alcanzado.";
+            if (session.RecruitmentPopulation(team) + pending >= BattleRules.PopulationLimit) return MapLayout.IsImported?"Límite de 100 soldados móviles alcanzado.":"Límite de 100 soldados alcanzado.";
             if (!session.Economy.Spend(team, BattleRules.Cost(kind))) return "Oro insuficiente. Recibirás ingresos al terminar la ronda.";
             queue.Add(new Training { Team = team, Kind = kind, Remaining = BattleRules.TrainTime(kind) });
             return null;

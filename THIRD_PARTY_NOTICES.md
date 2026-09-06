@@ -22,3 +22,13 @@ Copyright (c) 2019 trigger. The upstream project is provided under the MIT Licen
 > THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Full text: `references/wc3-risk-system/LICENSE`.
+
+## Risk map geography references
+
+`RiskAI/Assets/RiskAI/Resources/Maps/Europe.json` derives numerical terrain, city, capture-circle and country placement from **Risk Reforged v3.0 by Saran**. `NewWorld.json` derives the corresponding numerical layout from **Risk - New World v3.0**. Credit for the source map designs remains with their creators; RiskAI's terrain rendering, models, materials and port platforms are independently authored.
+
+- Risk Reforged listing: https://maps.w3reforged.com/maps/categories/risk/risk-reforged
+- Risk New World v3.0 listing: https://www.wc3maps.com/map/167651/Risk_-_New_World_v3.0
+- Extraction method, source archive hashes and adaptation details: `docs/ITERATION-v0.14.md` and each JSON's `metadata`.
+
+The original archives and Warcraft art are not bundled. These numeric data files are source-derived map layouts; they should not be described as wholly original maps or as KayKit CC0 content.

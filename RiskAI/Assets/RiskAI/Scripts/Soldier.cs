@@ -31,7 +31,7 @@ namespace RiskAI
         LineRenderer ring;
         SoldierAnimator visualAnimator;
         OrderMode mode;
-        Vector3 destination, anchor, pursuitOrigin, patrolOrigin;
+        Vector3 destination, anchor, pursuitOrigin, patrolOrigin, garrisonAnchor;
         float nextSense, nextPath, nextAttack, strikeAt = -1, attackFlash, stalled;
         bool wasFighting, simulationPaused, stoppedBeforePause;
         float simDelta;
@@ -51,6 +51,7 @@ namespace RiskAI
             Agent=GetComponent<NavMeshAgent>(); Agent.enabled=true;
             Agent.radius=.24f; Agent.height=1.3f; Agent.speed=BattleRules.Speed(kind);
             Agent.acceleration=32; Agent.angularSpeed=540; Agent.stoppingDistance=.15f; Agent.autoBraking=true;
+            Agent.updatePosition=true; Agent.updateRotation=true;
             Agent.obstacleAvoidanceType=ObstacleAvoidanceType.LowQualityObstacleAvoidance;
             session.RegisterTarget(this);
             Agent.avoidancePriority=25+EntityId%32;
@@ -82,12 +83,39 @@ namespace RiskAI
         }
         internal bool BindGarrison(CityClaimZone zone)
         {
-            if(!IsAlive || IsGarrison && Garrison!=zone || !Agent || !Agent.isOnNavMesh)return false;
-            if(!NavMesh.SamplePosition(zone.Center,out var hit,.9f,NavMesh.AllAreas))return false;
-            Stand(OrderMode.Hold);Agent.Warp(hit.position);anchor=hit.position;Garrison=zone;Agent.isStopped=true;
+            if(zone==null || !IsAlive || IsGarrison && Garrison!=zone || !Agent || !Agent.isOnNavMesh)return false;
+            if(!zone.TryGetGarrisonAnchor(out var point))return false;
+            Stand(OrderMode.Hold);
+            Agent.updatePosition=true; Agent.updateRotation=true;
+            Agent.ResetPath(); Agent.isStopped=true;
+            if(!Agent.Warp(point))return false;
+            transform.position=point;
+            anchor=garrisonAnchor=point;Garrison=zone;
+            // A guard is an anchored combat target.  Letting its NavMeshAgent keep
+            // writing the transform allows local avoidance to separate overlapping
+            // agents, even though the guard has no path.
+            Agent.obstacleAvoidanceType=ObstacleAvoidanceType.NoObstacleAvoidance;
+            Agent.updatePosition=false; Agent.updateRotation=false;
             return true;
         }
-        internal void ReleaseGarrison(CityClaimZone zone) { if(Garrison==zone)Garrison=null; }
+        internal void ReleaseGarrison(CityClaimZone zone)
+        {
+            if(Garrison!=zone)return;
+            Garrison=null; orders.Clear(); CancelStrike(); target=followTarget=null; mode=OrderMode.Idle;
+            anchor=destination=transform.position; nextSense=0; wasFighting=false;
+            if(!Agent || !Agent.enabled)return;
+            Agent.updatePosition=true; Agent.updateRotation=true;
+            Agent.obstacleAvoidanceType=ObstacleAvoidanceType.LowQualityObstacleAvoidance;
+            if(Agent.isOnNavMesh){Agent.Warp(transform.position);Agent.ResetPath();Agent.isStopped=false;}
+        }
+
+        void MaintainGarrisonAnchor()
+        {
+            if(!IsGarrison || !Agent || !Agent.enabled)return;
+            Agent.isStopped=true;
+            if((transform.position-garrisonAnchor).sqrMagnitude>.000001f)transform.position=garrisonAnchor;
+            if(Agent.isOnNavMesh && (Agent.nextPosition-garrisonAnchor).sqrMagnitude>.000001f)Agent.Warp(garrisonAnchor);
+        }
 
         public void Select(bool value) { Selected = value; if (ring) ring.enabled = value; }
         public void MoveTo(Vector3 point, bool attackMove, bool append) => Issue(point, attackMove ? OrderMode.AttackMove : OrderMode.Move, append);
@@ -205,6 +233,7 @@ namespace RiskAI
         }
         void LateUpdate()
         {
+            MaintainGarrisonAnchor();
             if(!session || session.Paused || session.Winner>=0 || !IsAlive || !Agent || !Agent.enabled)return;
             float stride = Agent.velocity.magnitude > .15f ? Mathf.Sin(session.BattleTime * 13 + EntityId) * 30 : 0;
             if (LeftLeg) LeftLeg.localRotation = Quaternion.Euler(stride, 0, 0);
@@ -218,7 +247,7 @@ namespace RiskAI
             bool visible = Visible(target);
             if(distance<BattleRules.MinimumRange(Kind))
             {
-                if(mode==OrderMode.Hold){target=null;Agent.isStopped=false;return;}
+                if(mode==OrderMode.Hold){target=null;Agent.isStopped=IsGarrison;return;}
                 if(session.BattleTime>=nextPath)
                 {
                     nextPath=session.BattleTime+.4f;var away=transform.position-target.transform.position;away.y=0;

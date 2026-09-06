@@ -22,7 +22,7 @@ namespace RiskAI
             Settlement anchor=null;
             foreach(var town in battle.Towns)if(town.State.Country==country){anchor=town;break;}
             if(!anchor)return null;
-            var probe=anchor.Rally+Vector3.left*6;
+            var probe=MapLayout.IsImported?MapLayout.Countries[country].CampPoint:anchor.Rally+Vector3.left*6;
             if(!NavMesh.SamplePosition(probe,out var hit,8,NavMesh.AllAreas))return null;
             var go=new GameObject("Hoguera · "+MapLayout.Countries[country].Name);
             go.transform.SetParent(parent,false);go.transform.position=hit.position;
@@ -46,9 +46,13 @@ namespace RiskAI
         }
         void BuildOverlay()
         {
-            var vertices=new List<Vector3>();var triangles=new List<int>();var colors=new List<Color>();const float step=3;
-            for(float x=-MapLayout.HalfWidth;x<MapLayout.HalfWidth-step;x+=step)
-                for(float z=-MapLayout.HalfDepth;z<MapLayout.HalfDepth-step;z+=step)
+            var vertices=new List<Vector3>();var triangles=new List<int>();var colors=new List<Color>();float step=MapLayout.IsImported?5:3;
+            float minX=MapLayout.HalfWidth,maxX=-minX,minZ=MapLayout.HalfDepth,maxZ=-minZ;
+            foreach(var town in session.Towns)if(town.State.Country==Country){minX=Mathf.Min(minX,town.transform.position.x);maxX=Mathf.Max(maxX,town.transform.position.x);minZ=Mathf.Min(minZ,town.transform.position.z);maxZ=Mathf.Max(maxZ,town.transform.position.z);}
+            float padding=MapLayout.IsImported?55:30;
+            minX=Mathf.Max(-MapLayout.HalfWidth,minX-padding);maxX=Mathf.Min(MapLayout.HalfWidth,maxX+padding);minZ=Mathf.Max(-MapLayout.HalfDepth,minZ-padding);maxZ=Mathf.Min(MapLayout.HalfDepth,maxZ+padding);
+            for(float x=minX;x<maxX-step;x+=step)
+                for(float z=minZ;z<maxZ-step;z+=step)
                 {
                     if(!MapLayout.IsLand(x+step*.5f,z+step*.5f)||GroupWeight(x+step*.5f,z+step*.5f)<.01f)continue;
                     if(!MapLayout.IsLand(x,z)||!MapLayout.IsLand(x+step,z+step))continue;

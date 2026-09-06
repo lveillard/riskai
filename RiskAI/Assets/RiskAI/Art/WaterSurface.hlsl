@@ -26,9 +26,13 @@ half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow
  float fresnel=pow(1-saturate(dot(normal,view)),4);
  // A continuous geographical tint also covers the far sea beyond the rendered bed.
  // Actual scene depth still controls transmission, contact foam and water/land intersections.
+ #if defined(RISK_IMPORTED_WATER)
+ float opticalDepth=.4+depth*5;
+ #else
  float coast=max(0,RiskShore(p/max(1,_RiskMapScale))*_RiskMapScale);
  float channel=max(0,-RiskRiverDistance(p));
  float opticalDepth=.4+max(coast*.65,channel*.50);
+ #endif
  half3 tint=lerp(half3(.024,.235,.225),half3(.012,.073,.19),1-exp(-opticalDepth*.24));
  half3 bottom=SampleSceneColor(uv);
  // Limit deep transmission so independently tessellated river/sea beds cannot

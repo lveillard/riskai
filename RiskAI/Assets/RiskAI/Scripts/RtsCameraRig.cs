@@ -8,6 +8,8 @@ namespace RiskAI
         public float TargetZoom { get; private set; }=DefaultZoom;
         [Range(.1f,3f)] public float PanSpeed=1;
         public Vector3 FocusPoint => focus;
+        public float MaximumZoom => MapLayout.IsImported?Mathf.Max(180,MapLayout.HalfDepth*.94f):MapLayout.IsExpanded?60:44;
+        float FocusSpeedCap => MapLayout.IsImported?Mathf.Max(120,MapLayout.HalfDepth*1.25f):120;
         Camera cam;Vector3 focus,targetFocus,panVelocity,zoomAnchor,homePoint=new Vector3(-26,0,-17);Vector2 anchorScreen;
         float zoomVelocity;bool anchorZoom;
         public void Initialize(Camera camera)
@@ -18,12 +20,13 @@ namespace RiskAI
         public Vector3 Ground(Vector2 screen)
         {
             var ray=cam.ScreenPointToRay(screen);
-            if(Physics.Raycast(ray,out var hit,500,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))return hit.point;
+            if(Physics.Raycast(ray,out var hit,MapLayout.IsImported?2300:500,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))return hit.point;
             new Plane(Vector3.up,Vector3.zero).Raycast(ray,out float distance);return ray.GetPoint(distance);
         }
         public void Focus(Vector3 point) { targetFocus=Clamp(point);anchorZoom=false; }
         public void SetHome(Vector3 point) { homePoint=point;focus=targetFocus=Clamp(point);Apply(); }
         public void ResetView() { TargetZoom=DefaultZoom;targetFocus=Clamp(homePoint);anchorZoom=false; }
+        public void FrameMap(){TargetZoom=MaximumZoom;targetFocus=Vector3.zero;anchorZoom=false;}
         public void Pan(Vector3 direction,float dt)
         {
             if(direction.sqrMagnitude<.001f)return;
@@ -44,14 +47,14 @@ namespace RiskAI
         {
             if(Mathf.Abs(wheelSteps)<.001f)return;
             zoomAnchor=Ground(screen);anchorScreen=screen;anchorZoom=true;
-            TargetZoom=Mathf.Clamp(TargetZoom*Mathf.Exp(-Mathf.Clamp(wheelSteps,-4,4)*.24f),17,MapLayout.IsExpanded?60:44);
+            TargetZoom=Mathf.Clamp(TargetZoom*Mathf.Exp(-Mathf.Clamp(wheelSteps,-4,4)*.24f),17,MaximumZoom);
         }
         public void CancelMotion() { targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;zoomVelocity=0;if(cam)TargetZoom=cam.orthographicSize; }
         void LateUpdate()
         {
             if(!cam)return;float dt=Mathf.Min(Time.unscaledDeltaTime,.05f);
             cam.orthographicSize=Mathf.SmoothDamp(cam.orthographicSize,TargetZoom,ref zoomVelocity,.10f,200,dt);
-            focus=Vector3.SmoothDamp(focus,Clamp(targetFocus),ref panVelocity,.1f,120,dt);Apply();
+            focus=Vector3.SmoothDamp(focus,Clamp(targetFocus),ref panVelocity,.1f,FocusSpeedCap,dt);Apply();
             if(anchorZoom)
             {
                 // Keep the original surface point under the cursor, including on cliff edges.
