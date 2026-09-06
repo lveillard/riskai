@@ -190,6 +190,11 @@ namespace RiskAI
         {
             var root=soldier.transform; var team=TeamColor(soldier.Team);
             WorldArt.GroundShadow(root,new Vector3(.07f,.045f,.1f),new Vector2(1.1f,.95f));
+            if(soldier.Kind==UnitKind.Guard)
+            {
+                MountedKnightView.Create(soldier);
+                Ring(root,.74f,.025f,team);return;
+            }
             var prefab=Resources.Load<GameObject>("Units/"+BattleRules.Model(soldier.Kind));
             if(prefab)
             {

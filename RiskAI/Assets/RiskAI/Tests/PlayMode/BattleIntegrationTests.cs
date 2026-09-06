@@ -143,6 +143,16 @@ namespace RiskAI.Tests
             rig.Pan(Vector3.left,1);yield return new WaitForSecondsRealtime(.2f);
             Assert.That(camera.WorldToScreenPoint(panAnchor).x,Is.GreaterThan(beforePan+1),"Panning left must move the world to the right at the oblique camera yaw.");
         }
+        [UnityTest] public IEnumerator ResetZoomThenFocusUsesTheNewZoomBounds()
+        {
+            var rig=Object.FindFirstObjectByType<RtsCameraRig>();
+            rig.FrameMap();yield return new WaitForSecondsRealtime(1);
+            var requested=new Vector3(MapLayout.PlayableMin.x+22,0,0);
+            rig.ResetView();rig.Focus(requested);
+            yield return new WaitForSecondsRealtime(2);
+            Assert.That(rig.FocusPoint.x,Is.EqualTo(requested.x).Within(.1f),"A focus issued while zooming in must not retain the broad overview clamp.");
+        }
+
         [UnityTest] public IEnumerator NormalizedWheelEventChangesVirtualZoomAndKeepsCursorAnchored()
         {
             var rig=Object.FindFirstObjectByType<RtsCameraRig>();var camera=Camera.main;
@@ -193,23 +203,35 @@ namespace RiskAI.Tests
             var pointer=new Vector2(bounds.xMin-7,bounds.center.y);
             Assert.That(RtsPicking.Target(battle,Camera.main,pointer,-1),Is.EqualTo(target),"Clicks near the visible silhouette should acquire the enemy.");
         }
-        [UnityTest] public IEnumerator ReinforcementsRespectQueuesAcrossAllFriendlyTowns()
+        [UnityTest] public IEnumerator RecruitmentReservationsCombineTownHarborAndCountryCreditsAtTheLocalCap()
         {
-            var region0=battle.Towns.Where(t=>t.State.Region==0).ToArray();
-            var region1=battle.Towns.Where(t=>t.State.Region==1).ToArray();
-            foreach(var town in region0.Concat(region1))town.State.Owner=0;
+            var town=battle.Towns.First(t=>t.State.Owner==0);
+            var harbor=battle.Naval.Harbors.First(h=>!h.IsImportedPort&&h.Owner==0);
+            int country=town.State.Country;
+            foreach(var member in battle.Towns.Where(t=>t.State.Country==country))member.State.Owner=0;
             battle.Economy.Gold[0]=1000;
-            foreach(var unused in Enumerable.Range(0,5))Assert.That(region1[0].Recruit(UnitKind.Footman),Is.Null);
-            while(battle.Population(0)<95)
+            while(battle.RecruitmentPopulation(0)<93)
             {
-                var unit=battle.Spawn(0,UnitKind.Footman,new Vector3(-20,0,-12));
+                var unit=battle.Spawn(0,UnitKind.Footman,town.Rally);
                 Assert.That(unit,Is.Not.Null);unit.HoldPosition();
             }
-            battle.Economy.Advance(59.9f);
-            yield return new WaitForSeconds(.2f);
-            Assert.That(battle.Population(0),Is.EqualTo(95));
-            Assert.That(region1[0].QueueCount,Is.EqualTo(5));
-            Assert.That(battle.Population(0)+battle.Towns.Where(t=>t.State.Owner==0).Sum(t=>t.QueueCount),Is.EqualTo(100),"Reinforcements must count queued units across every friendly town.");
+            foreach(var unused in Enumerable.Range(0,5))Assert.That(town.Recruit(UnitKind.Footman),Is.Null);
+            foreach(var unused in Enumerable.Range(0,2))Assert.That(harbor.RecruitLand(UnitKind.MarinePrivate),Is.Null);
+            Assert.That(battle.RecruitmentReservations(0),Is.EqualTo(BattleRules.PopulationLimit),"Town and standalone-port land queues share the mobile reservation cap.");
+
+            var recruits=new CountryRecruitment(battle);
+            recruits.CreditRound();int pending=recruits.Pending(country);
+            Assert.That(pending,Is.GreaterThan(0));
+            recruits.Tick(.5f);
+            Assert.That(battle.RecruitmentPopulation(0),Is.EqualTo(93),"Country spawning must respect paid reservations before those queues finish.");
+            Assert.That(recruits.Pending(country),Is.EqualTo(pending));
+            for(int i=0;i<5;i++)town.SimTick(BattleRules.TrainTime(UnitKind.Footman));
+            for(int i=0;i<2;i++)harbor.SimTick(BattleRules.TrainTime(UnitKind.MarinePrivate));
+            Assert.That(battle.RecruitmentPopulation(0),Is.EqualTo(BattleRules.PopulationLimit));
+            recruits.Tick(.5f);
+            Assert.That(battle.RecruitmentPopulation(0),Is.EqualTo(BattleRules.PopulationLimit));
+            Assert.That(recruits.Pending(country),Is.EqualTo(pending),"The local cap defers country credit instead of spawning over 100.");
+            yield return null;
         }
         [UnityTest] public IEnumerator FormationPlacesMeleeBeforeRanged()
         {
@@ -240,31 +262,38 @@ namespace RiskAI.Tests
             Assert.That(rallyObject.position,Is.EqualTo(hit.position));
             yield return null;
         }
-        [UnityTest] public IEnumerator CountryReinforcementsUseArcherWavesAndReplenishToTheTenPointCapAfterRoundSix()
+        [UnityTest] public IEnumerator CountryReinforcementsCreditThenSpawnOnePerHalfSecondToTheTenPointCap()
         {
+            var recruits=new CountryRecruitment(battle); // Isolate the 500 ms timer from setup frames.
             var countryTowns = battle.Towns.Where(t => t.State.Country == 0).ToArray();
             Assert.That(countryTowns.Length, Is.EqualTo(2));
             foreach (var town in countryTowns) town.State.Owner = 0;
-            battle.SendMessage("CountryReinforcements"); yield return null;
-            var firstWave = battle.Units.Where(u => u && u.Team == 0 && u.OriginCountry == 0).ToArray();
-            Assert.That(firstWave.Length, Is.EqualTo(1));
-            Assert.That(firstWave.All(unit => unit.Kind == UnitKind.Archer), Is.True);
-            for (int wave = 0; wave < 9; wave++) battle.SendMessage("CountryReinforcements");
+            recruits.CreditRound();
+            Assert.That(recruits.Pending(0), Is.EqualTo(1));
+            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.Zero, "Credit must not create an immediate wave.");
+            recruits.Tick(.49f);
+            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.Zero);
+            recruits.Tick(.01f);
+            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.EqualTo(1));
+            for (int round = 0; round < 9; round++) { recruits.CreditRound(); recruits.Tick(.5f); }
             Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.EqualTo(10));
-            battle.Economy.Advance(BattleRules.RoundSeconds * 7);
-            Assert.That(battle.Economy.Round, Is.GreaterThan(6));
             var casualty = battle.Units.First(u => u && u.Team == 0 && u.OriginCountry == 0);
-            casualty.TakeDamage(casualty.MaxHealth + 1, 1); yield return new WaitForSeconds(1.5f);
-            battle.SendMessage("CountryReinforcements");
-            Assert.That(battle.Units.Count(u => u && u.Team == 0 && u.OriginCountry == 0), Is.EqualTo(10));
+            casualty.TakeDamage(casualty.MaxHealth + 1, 1); yield return null;
+            recruits.CreditRound(); recruits.Tick(.5f);
+            Assert.That(battle.Units.Count(u => u && u.IsAlive && u.Team == 0 && u.OriginCountry == 0), Is.EqualTo(10));
         }
-        [UnityTest] public IEnumerator CountryIncomeStopsOnLossAndReturnsAfterRecapture()
+        [UnityTest] public IEnumerator CountryIncomeLosesOnlyTheCapturedCityAndReturnsAfterRecapture()
         {
             var countryTowns = battle.Towns.Where(t => t.State.Country == 0).ToArray(); Assert.That(countryTowns.Length, Is.EqualTo(2));
             foreach (var town in countryTowns) town.State.Owner = 0;
-            Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(0)); Assert.That(battle.Economy.Income(0), Is.GreaterThan(BattleRules.BaseIncome));
-            countryTowns[1].State.Owner = 1; Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(-1)); Assert.That(battle.Economy.Income(0), Is.EqualTo(BattleRules.BaseIncome));
-            countryTowns[1].State.Owner = 0; Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(0)); Assert.That(battle.Economy.Income(0), Is.GreaterThan(BattleRules.BaseIncome)); yield return null;
+            Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(0));
+            int completeIncome = battle.Economy.Income(0);
+            countryTowns[1].State.Owner = 1;
+            Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(-1));
+            Assert.That(battle.Economy.Income(0), Is.EqualTo(completeIncome - BattleRules.TownIncome));
+            countryTowns[1].State.Owner = 0;
+            Assert.That(battle.Economy.CountryOwner(0), Is.EqualTo(0));
+            Assert.That(battle.Economy.Income(0), Is.EqualTo(completeIncome)); yield return null;
         }
     }
 }

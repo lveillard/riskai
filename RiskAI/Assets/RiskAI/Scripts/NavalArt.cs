@@ -14,7 +14,7 @@ namespace RiskAI
         }
         public static void CreateShip(Ship ship)
         {
-            var root=new GameObject("Ship model").transform;root.SetParent(ship.transform,false);bool war=ship.Kind==ShipKind.Galley;float length=war?5.8f:4.8f,width=war?1.75f:1.65f;
+            var root=new GameObject("Ship model").transform;root.SetParent(ship.transform,false);bool war=ship.Kind==ShipKind.Galley;float length=war?7.2f:5.15f,width=war?1.65f:2.65f;
             var v=new List<Vector3>();var t=new List<int>();const int sections=12;
             for(int level=0;level<3;level++)for(int s=0;s<=sections;s++)
             {
@@ -40,7 +40,7 @@ namespace RiskAI
                 var cannon=VisualFactory.Shape(root,PrimitiveType.Cylinder,"Deck ballista",new(0,.94f,length*.23f),new(.3f,.6f,.3f),new Color(.21f,.26f,.28f));cannon.transform.localRotation=Quaternion.Euler(90,0,0);
                 Beam(root,new(-.7f,.95f,length*.22f),new(.7f,.95f,length*.22f),.12f);
             }
-            else for(int i=0;i<3;i++)Block(root,"Transport crates",new(-.4f+i*.4f,.88f,-1.1f),new(.34f,.55f,.4f));
+            else for(int i=0;i<6;i++)Block(root,"Transport cargo hold",new(-.85f+i%3*.85f,.88f,-1.15f+i/3*.8f),new(.68f,.55f,.62f));
             Beam(root,new(0,.65f,length*.35f),new(0,1.05f,length*.58f),.13f,new Color(1.6f,1.15f,.4f));
             var collider=ship.gameObject.AddComponent<BoxCollider>();collider.center=new(0,1.3f,0);collider.size=new(width,3,length*.82f);collider.isTrigger=true;
             var visual=ship.gameObject.AddComponent<ShipAppearance>();visual.Initialize(ship,root,VisualFactory.Ring(ship.transform,1.5f,.07f,new Color(.5f,1,.55f)));

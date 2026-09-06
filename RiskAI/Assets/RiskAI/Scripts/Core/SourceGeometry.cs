@@ -42,6 +42,9 @@ namespace RiskAI.Core
                 case UnitKind.Medic: return 16f / NativePerUnity;  // h00E / hmpr inherited ucol=16
                 case UnitKind.Guard: return 32f / NativePerUnity;  // h00G / hkni inherited ucol=32
                 case UnitKind.Mortar: return 32f / NativePerUnity; // h00H / hmtm inherited ucol=32
+                case UnitKind.MarinePrivate: return 16f / NativePerUnity; // h012 / hrif inherited ucol=16
+                case UnitKind.MarineMajor:
+                case UnitKind.MarineGeneral: return 32f / NativePerUnity; // h014,h015 / hkni inherited ucol=32
                 default: return LocalUnverifiedRadius;
             }
         }

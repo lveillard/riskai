@@ -3,7 +3,7 @@ namespace RiskAI.Core
     /// <summary>Device-independent arbitration: a secondary tap orders, a drag pans.</summary>
     public sealed class PointerGesture
     {
-        public const float DragThreshold = 7;
+        public const float DragThreshold = 12;
         float x, y;
         public bool Pending { get; private set; }
         public bool Dragging { get; private set; }

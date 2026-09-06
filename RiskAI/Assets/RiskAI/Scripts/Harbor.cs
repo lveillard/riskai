@@ -8,9 +8,11 @@ namespace RiskAI
     public sealed class Harbor : MonoBehaviour
     {
         sealed class Order { public ShipKind Kind; public int Team; public float Remaining; }
+        sealed class LandOrder { public UnitKind Kind; public int Team; public float Remaining; }
         readonly List<Order> queue=new List<Order>();
+        readonly List<LandOrder> landQueue=new List<LandOrder>();
         NavalWorld world;TownState state;int lastOwner;
-        CityClaimZone claimZone;LineRenderer claimRing;
+        CityClaimZone claimZone;LineRenderer claimRing,selectionRing;
         bool sharesTown,canLaunch;
         string launchBlockReason;
         public Settlement LinkedTown { get; private set; }
@@ -28,6 +30,12 @@ namespace RiskAI
         public int Owner => state!=null?state.Owner:-1;
         public float CaptureProgress => state==null?0:state.Capture;
         public int QueueCount=>queue.Count;
+        public int LandQueueCount=>sharesTown&&LinkedTown?LinkedTown.QueueCount:landQueue.Count;
+        public UnitKind QueuedLandKind(int index)=>sharesTown&&LinkedTown?LinkedTown.QueuedKind(index):landQueue[index].Kind;
+        public float LandTrainingProgress=>sharesTown&&LinkedTown?LinkedTown.TrainingProgress:landQueue.Count==0?0:1-landQueue[0].Remaining/BattleRules.TrainTime(landQueue[0].Kind);
+        public bool Selected { get; private set; }
+        public const float EmbarkRadius = Ship.LoadRadius;
+        public const float BerthRadius = 7.5f;
         public float TrainingProgress=>queue.Count==0?0:1-queue[0].Remaining/TrainTime(queue[0].Kind);
         public ShipKind QueuedKind(int index)=>queue[index].Kind;
         public bool BuildingTower=>Defense&&Defense.UnderConstruction;
@@ -46,6 +54,7 @@ namespace RiskAI
             if(!MapLayout.IsLand(towerPoint.x,towerPoint.z))towerPoint=Landing-side*3.8f;
             towerPoint=MapLayout.Point(towerPoint.x,towerPoint.z);towerObject.transform.position=towerPoint;
             Defense=towerObject.AddComponent<DefenseTower>();Defense.Initialize(world.Session,this,true);
+            selectionRing=BuildingSelection.CreateRing(this);
         }
         internal void InitializeImported(NavalWorld naval,Settlement town,Vector3 berth,string unavailableReason)
         {
@@ -68,6 +77,44 @@ namespace RiskAI
             if(!best)return false;
             best.Agent.Warp(Landing);claimZone.SetDefender(best);return claimZone.Defender;
         }
+        public bool IsEmbarkZone(Vector3 point)
+        {
+            return MapLayout.IsLand(point.x,point.z)&&FlatDistance(point,Landing)<=EmbarkRadius*EmbarkRadius;
+        }
+        public bool IsShipDocked(Ship ship)=>ship&&FlatDistance(ship.transform.position,Berth)<=BerthRadius*BerthRadius;
+        public bool HasLivingDefender=>Defender&&Defender.IsAlive;
+        public Ship NavalDefender
+        {
+            get
+            {
+                if(!world||!PlayerRules.IsPlayer(Owner))return null;
+                Ship best=null;
+                foreach(var ship in world.Ships)
+                    if(ship&&ship.IsAlive&&ship.Kind==ShipKind.Galley&&ship.Team==Owner&&IsShipDocked(ship)&&(!best||ship.EntityId<best.EntityId))best=ship;
+                return best;
+            }
+        }
+        public bool HasNavalDefender=>NavalDefender;
+        public void Select(bool selected)
+        {
+            Selected=selected;
+            if(selectionRing)selectionRing.enabled=selected;
+            if(claimRing)claimRing.widthMultiplier=selected ? .11f : .065f;
+        }
+        /// <summary>Called after land claim resolution; a live land defender always wins.</summary>
+        public int ResolveNavalOwner(int previousOwner)
+        {
+            if(HasLivingDefender)return previousOwner;
+            Ship allied=null,enemy=null;float enemyDistance=float.MaxValue;
+            foreach(var ship in world.Ships)
+            {
+                if(!ship||!ship.IsAlive||ship.Kind!=ShipKind.Galley||!IsShipDocked(ship))continue;
+                if(ship.Team==previousOwner){if(!allied||ship.EntityId<allied.EntityId)allied=ship;continue;}
+                float distance=FlatDistance(ship.transform.position,Berth);
+                if(!enemy||distance<enemyDistance||(Mathf.Approximately(distance,enemyDistance)&&ship.EntityId<enemy.EntityId)){enemy=ship;enemyDistance=distance;}
+            }
+            return allied ? previousOwner : enemy ? enemy.Team : PlayerRules.NeutralOwner;
+        }
         public string Buy(ShipKind kind,int team=0)
         {
             if(kind!=ShipKind.Galley&&kind!=ShipKind.Transport)return "Tipo de barco inválido.";
@@ -82,6 +129,31 @@ namespace RiskAI
             int cost=Cost(kind);if(!world.Session.Economy.Spend(team,cost))return "Oro insuficiente para comprar este barco.";
             queue.Add(new Order{Kind=kind,Team=team,Remaining=TrainTime(kind)});return null;
         }
+        public string RecruitLand(UnitKind kind,int team=0)
+        {
+            if(kind!=UnitKind.MarinePrivate&&kind!=UnitKind.MarineMajor&&kind!=UnitKind.MarineGeneral)return "Este muelle sólo entrena Marines.";
+            if(sharesTown&&LinkedTown)return LinkedTown.Recruit(kind,team);
+            if(!world||!world.Session)return "No hay una batalla activa.";
+            if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
+            if(world.Session.Winner>=0)return "La batalla ha terminado.";
+            if(world.Session.Paused)return "Reanuda la partida para reclutar.";
+            if(Owner!=team)return "Este puerto no pertenece a tu bando.";
+            if(landQueue.Count>=5)return "La cola de Marines está llena.";
+            if(world.Session.RecruitmentReservations(team)>=BattleRules.PopulationLimit)return "Límite de soldados alcanzado.";
+            if(!world.Session.Economy.Spend(team,BattleRules.Cost(kind)))return "Oro insuficiente para reclutar este Marine.";
+            landQueue.Add(new LandOrder{Kind=kind,Team=team,Remaining=BattleRules.TrainTime(kind)});return null;
+        }
+        public string CancelLandTraining(int index,int team=0)
+        {
+            if(sharesTown&&LinkedTown)return LinkedTown.CancelTraining(index,team);
+            if(!world||!world.Session)return "No hay una batalla activa.";
+            if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
+            if(world.Session.Paused||world.Session.Winner>=0)return "La partida está detenida.";
+            if(Owner!=team)return "Este puerto no pertenece a tu bando.";
+            if(index<0||index>=landQueue.Count)return "Este encargo ya no está en la cola.";
+            var order=landQueue[index];landQueue.RemoveAt(index);world.Session.Economy.Refund(order.Team,BattleRules.Cost(order.Kind));return null;
+        }
+        internal int PendingLandRecruits(int team){if(sharesTown)return 0;int count=0;foreach(var order in landQueue)if(order.Team==team)count++;return count;}
         internal int PendingCount(int team){int count=0;foreach(var item in queue)if(item.Team==team)count++;return count;}
         public string CancelTraining(int index,int team=0)
         {
@@ -114,7 +186,7 @@ namespace RiskAI
             if(!world||world.Session.Paused||world.Session.Winner>=0)return;
             if(Owner!=lastOwner)
             {
-                RefundQueue();
+                RefundQueue();RefundLandQueue();
                 if(!sharesTown){CancelTowerBuild(true);Defense.ChangeOwner();}
                 lastOwner=Owner;
             }
@@ -123,6 +195,7 @@ namespace RiskAI
                 var previous=claimZone.Defender;int owner=claimZone.Step(world.Session,state.Owner,delta);
                 state.Capture=claimZone.Progress;state.Capturing=claimZone.CapturingTeam;state.Contested=claimZone.Contested;
                 if(claimZone.Defender&&claimZone.Defender!=previous)claimZone.Defender.HoldPosition();
+                if(!HasLivingDefender)owner=ResolveNavalOwner(state.Owner);
                 if(owner!=state.Owner){state.Owner=owner;Captured();}
                 claimRing.startColor=claimRing.endColor=state.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,state.Capture*.65f);
             }
@@ -131,14 +204,16 @@ namespace RiskAI
                 towerBuildRemaining-=delta;Defense.SetBuildProgress(1-towerBuildRemaining/BattleRules.ConstructionSeconds);
                 if(towerBuildRemaining<=0){Defense.CompleteBuild();towerBuildRemaining=0;towerBuilder=-1;}
             }
-            if(queue.Count==0)return;
-            queue[0].Remaining-=delta;if(queue[0].Remaining>0)return;
-            var item=queue[0];queue.RemoveAt(0);var ship=CanLaunch?world.Spawn(item.Team,item.Kind,Berth):null;
-            if(!ship)world.Session.Economy.Refund(item.Team,Cost(item.Kind));
+            if(queue.Count>0)
+            {
+                queue[0].Remaining-=delta;
+                if(queue[0].Remaining<=0){var item=queue[0];queue.RemoveAt(0);var ship=CanLaunch?world.Spawn(item.Team,item.Kind,Berth):null;if(!ship)world.Session.Economy.Refund(item.Team,Cost(item.Kind));}
+            }
+            TickLandQueue(delta);
         }
         void Captured()
         {
-            RefundQueue();CancelTowerBuild(true);Defense.ChangeOwner();lastOwner=Owner;world.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".");
+            RefundQueue();RefundLandQueue();CancelTowerBuild(true);Defense.ChangeOwner();lastOwner=Owner;world.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".");
         }
         void CancelTowerBuild(bool refund)
         {
@@ -147,6 +222,16 @@ namespace RiskAI
             towerBuilder=-1;towerBuildRemaining=0;Defense.CancelBuild();
         }
         void RefundQueue(){foreach(var item in queue)world.Session.Economy.Refund(item.Team,Cost(item.Kind));queue.Clear();}
+        void RefundLandQueue(){foreach(var item in landQueue)world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));landQueue.Clear();}
+        void TickLandQueue(float delta)
+        {
+            if(sharesTown||landQueue.Count==0)return;
+            landQueue[0].Remaining-=delta;if(landQueue[0].Remaining>0)return;
+            var item=landQueue[0];if(world.Session.RecruitmentPopulation(item.Team)>=BattleRules.PopulationLimit)return;landQueue.RemoveAt(0);
+            Vector3 away=Landing-Berth;away.y=0;if(away.sqrMagnitude<.01f)away=Vector3.back;else away.Normalize();
+            var unit=world.Session.Spawn(item.Team,item.Kind,Landing);
+            if(unit)unit.MoveTo(Landing+away*5,true,false);else world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));
+        }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
     }
 }

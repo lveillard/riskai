@@ -118,12 +118,17 @@ namespace RiskAI.Tests
             Assert.That(overlay.GetComponent<MeshFilter>().sharedMesh.vertexCount, Is.GreaterThan(0));
             Assert.That(overlay.GetComponentsInChildren<LineRenderer>().Length, Is.EqualTo(4));
             foreach (var town in battle.Towns.Where(t => t.State.Country == 0)) town.State.Owner = 0;
-            battle.SendMessage("CountryReinforcements");
+            battle.Reinforcements.CreditRound();
+            Assert.That(battle.Reinforcements.Pending(0), Is.EqualTo(MapLayout.Countries[0].PerTurn));
+            Assert.That(battle.Units.Count(u => u && u.OriginCountry == 0), Is.Zero, "Country credit must not spawn immediately.");
+            battle.Reinforcements.Tick(.5f);
             var reinforcements = battle.Units.Where(u => u && u.OriginCountry == 0).ToArray();
-            Assert.That(reinforcements.Length, Is.EqualTo(MapLayout.Countries[0].PerTurn));
+            Assert.That(reinforcements.Length, Is.EqualTo(1));
             Assert.That(reinforcements.All(unit => unit.Kind == UnitKind.Archer), Is.True);
             foreach (var unit in reinforcements)
                 Assert.That(Vector3.Distance(unit.transform.position, selected.SpawnPoint), Is.LessThan(4));
+            battle.Reinforcements.Tick(.5f);
+            Assert.That(battle.Units.Count(u => u && u.OriginCountry == 0), Is.EqualTo(MapLayout.Countries[0].PerTurn));
             controller.Clear();
             Assert.That(overlay.gameObject.activeSelf, Is.False);
             yield return null;

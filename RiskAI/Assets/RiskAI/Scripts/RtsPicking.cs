@@ -43,24 +43,25 @@ namespace RiskAI
                 float s=BattleHud.Scale;
                 if (label.z > 0 && new Rect(label.x - 88*s, label.y - 22*s, 176*s, 28*s).Contains(pointer)) return town;
             }
-            var hits = Physics.RaycastAll(camera.ScreenPointToRay(pointer), camera.farClipPlane, ~0, QueryTriggerInteraction.Collide);
-            foreach (var hit in hits)
+            var ray=camera.ScreenPointToRay(pointer);Settlement best=null;float nearest=camera.farClipPlane;
+            foreach (var town in battle.Towns)
             {
-                var town = hit.collider.GetComponentInParent<Settlement>();
-                if (town) return town;
+                if(!town)continue;float distance=BuildingSelection.HitDistance(town,ray);
+                if(distance<nearest){nearest=distance;best=town;}
             }
-            return null;
+            return best;
         }
         public static Harbor Harbor(BattleSession battle, Camera camera, Vector2 pointer)
         {
             if(battle==null)return null;
-            var hits=Physics.RaycastAll(camera.ScreenPointToRay(pointer),camera.farClipPlane,~0,QueryTriggerInteraction.Collide);
-            foreach(var hit in hits)
+            var ray=camera.ScreenPointToRay(pointer);Harbor best=null;float nearest=camera.farClipPlane;
+            if(!battle.Naval)return null;
+            foreach(var harbor in battle.Naval.Harbors)
             {
-                var harbor=hit.collider.GetComponentInParent<Harbor>();
-                if(harbor)return harbor;
+                if(!harbor)continue;float distance=BuildingSelection.HitDistance(harbor,ray);
+                if(distance<nearest){nearest=distance;best=harbor;}
             }
-            return null;
+            return best;
         }
     }
 }

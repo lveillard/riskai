@@ -77,9 +77,9 @@ namespace RiskAI
         };
         static City[] ClassicTowns;
         static readonly Vector2[] ExpandedPads = {
-            new(-54,-58),new(-52,-25),new(-50,10),new(-46,42), new(-26,-58),new(-25,-24),new(-24,10),new(-20,45),
-            new(18,-60),new(20,-26),new(19,11),new(23,45), new(48,-55),new(46,-20),new(45,15),new(42,45),
-            new(-50,92),new(-21,98),new(-3,98),new(30,99)
+            new(-55,-59),new(-50,-27),new(-53,8),new(-44,44), new(-28,-59),new(-23,-22),new(-27,12),new(-19,43),
+            new(17,-58),new(22,-28),new(18,9),new(26,46), new(49,-57),new(44,-18),new(48,17),new(40,43),
+            new(-51,91),new(-20,100),new(-5,96),new(31,101)
         };
         // Extend islands northward, retaining the south coast/berths. Independent
         // city and port garrisons must not start inside each other's tower range.
@@ -89,8 +89,8 @@ namespace RiskAI
             new[]{new Vector2(29,7),new Vector2(34,-4),new Vector2(48,-7),new Vector2(61,2),new Vector2(59,20),new Vector2(51,32),new Vector2(36,28),new Vector2(27,17)}
         };
         static readonly Country[] ExpandedCountries = {
-            new Country("Marca Occidental",0,UnitKind.Archer,2,new Vector3(-54 * Spacing,0,-58 * Spacing)), new Country("Cuenca del Río",1,UnitKind.Archer,2,new Vector3(-25 * Spacing,0,-24 * Spacing)),
-            new Country("Altos Centrales",2,UnitKind.Archer,2,new Vector3(20 * Spacing,0,-26 * Spacing)), new Country("Frontera Oriental",3,UnitKind.Archer,2,new Vector3(46 * Spacing,0,-20 * Spacing)),
+            new Country("Marca Occidental",0,UnitKind.Archer,2,new Vector3(-55 * Spacing,0,-59 * Spacing)), new Country("Cuenca del Río",1,UnitKind.Archer,2,new Vector3(-23 * Spacing,0,-22 * Spacing)),
+            new Country("Altos Centrales",2,UnitKind.Archer,2,new Vector3(22 * Spacing,0,-28 * Spacing)), new Country("Frontera Oriental",3,UnitKind.Archer,2,new Vector3(44 * Spacing,0,-18 * Spacing)),
             new Country("Archipiélago Norte",4,UnitKind.Archer,2,new Vector3(-16 * Spacing,0,90 * Spacing))
         };
 
@@ -143,11 +143,11 @@ namespace RiskAI
         static City[] BuildExpandedTowns()
         {
             return new[] {
-                new City("west-01","Bastión Occidental",-54,-58,0,0,0,true),new City("west-02","Pinar Occidental",-52,-25,0,0,0),new City("west-03","Marjal Occidental",-50,10,1,0,0),new City("west-04","Cresta Occidental",-46,42,1,0,0),
-                new City("river-01","Puerta del Río",-26,-58,0,1,1),new City("river-02","Molino del Río",-25,-24,0,1,1),new City("river-03","Vado del Río",-24,10,1,1,1),new City("river-04","Ribera Alta",-20,45,1,1,1),
-                new City("high-01","Bastión Central",18,-60,0,2,2),new City("high-02","Loma Central",20,-26,0,2,2),new City("high-03","Paso Central",19,11,1,2,2),new City("high-04","Atalaya Central",23,45,1,2,2),
-                new City("east-01","Puerta Oriental",48,-55,0,3,3),new City("east-02","Cantera Oriental",46,-20,0,3,3),new City("east-03","Vigía Oriental",45,15,1,3,3),new City("east-04","Cresta Oriental",42,45,1,3,3),
-                new City("isle-01","Isla del Roble",-50,92,0,4,4),new City("isle-02","Isla del Viento",-21,98,0,4,4),new City("isle-03","Isla del Faro",-3,98,1,4,4),new City("isle-04","Isla del Alba",30,99,1,4,4)
+                new City("west-01","Bastión Occidental",-55,-59,0,0,0,true),new City("west-02","Pinar Occidental",-50,-27,0,0,0),new City("west-03","Marjal Occidental",-53,8,1,0,0),new City("west-04","Cresta Occidental",-44,44,1,0,0),
+                new City("river-01","Puerta del Río",-28,-59,0,1,1),new City("river-02","Molino del Río",-23,-22,0,1,1),new City("river-03","Vado del Río",-27,12,1,1,1),new City("river-04","Ribera Alta",-19,43,1,1,1),
+                new City("high-01","Bastión Central",17,-58,0,2,2),new City("high-02","Loma Central",22,-28,0,2,2),new City("high-03","Paso Central",18,9,1,2,2),new City("high-04","Atalaya Central",26,46,1,2,2),
+                new City("east-01","Puerta Oriental",49,-57,0,3,3),new City("east-02","Cantera Oriental",44,-18,0,3,3),new City("east-03","Vigía Oriental",48,17,1,3,3),new City("east-04","Cresta Oriental",40,43,1,3,3),
+                new City("isle-01","Isla del Roble",-51,91,0,4,4),new City("isle-02","Isla del Viento",-20,100,0,4,4),new City("isle-03","Isla del Faro",-5,96,1,4,4),new City("isle-04","Isla del Alba",31,101,1,4,4)
             };
         }
         public static float Coast(float x)

@@ -23,6 +23,7 @@ Shader "RiskAI/Meadow"
    float4 _RiskCities[32];
    int _RiskCityCount;
    #include "MapSurface.hlsl"
+   #include "NaturalNoise.hlsl"
    struct A {float4 p:POSITION;float3 n:NORMAL;};
    struct V {float4 p:SV_POSITION;float3 w:TEXCOORD0;half fog:TEXCOORD1;float3 n:TEXCOORD2;float river:TEXCOORD3;};
    V Vert(A a){V o;VertexPositionInputs p=GetVertexPositionInputs(a.p.xyz);o.p=p.positionCS;o.w=p.positionWS;o.n=TransformObjectToWorldNormal(a.n);o.fog=ComputeFogFactor(o.p.z);o.river=RiskRiverDistance(o.w.xz);return o;}
@@ -35,7 +36,9 @@ Shader "RiskAI/Meadow"
    {
     float2 p=i.w.xz,b=p/max(1,_RiskMapScale);float3 n=normalize(i.n);
     float noise=Noise(p*.42);
-    half3 grass=Tile(p*.26,float2(0,.5))*half3(1.20,1.95,.98);
+    float2 warped=NaturalWarp(p)*.26;
+    float2 alternate=float2(warped.x*.73+warped.y*.68,-warped.x*.68+warped.y*.73)*.637+17.3;
+    half3 grass=lerp(Tile(warped,float2(0,.5)),Tile(alternate,float2(0,.5)),.3+NaturalNoise(p*.055)*.4)*half3(1.20,1.95,.98);
     // Keep the variation in world space so it stays anchored while the camera pans.
     float meadowMacro=Noise(p*.055);
     grass*=lerp(.91,1.16,meadowMacro);

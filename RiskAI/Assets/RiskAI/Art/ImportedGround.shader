@@ -14,14 +14,19 @@ Shader "RiskAI/ImportedGround"
    #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
    #pragma multi_compile_fog
    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+   #include "NaturalNoise.hlsl"
    TEXTURE2D(_Atlas); SAMPLER(sampler_Atlas);TEXTURE2D(_Cliffs);SAMPLER(sampler_Cliffs);
    struct A {float4 p:POSITION;float3 n:NORMAL;half4 color:COLOR;};
    struct V {float4 p:SV_POSITION;float3 w:TEXCOORD0;float3 n:TEXCOORD1;half fog:TEXCOORD2;half4 color:COLOR;};
    V Vert(A a){V o;VertexPositionInputs p=GetVertexPositionInputs(a.p.xyz);o.p=p.positionCS;o.w=p.positionWS;o.n=TransformObjectToWorldNormal(a.n);o.fog=ComputeFogFactor(o.p.z);o.color=a.color;return o;}
    half4 Frag(V i):SV_Target
    {
-    float2 uv=i.w.xz*.25;float3 n=normalize(i.n);
-    half3 grass=SAMPLE_TEXTURE2D_GRAD(_Atlas,sampler_Atlas,frac(uv)*.46+float2(.02,.52),ddx(uv)*.46,ddy(uv)*.46).rgb;
+    float2 warped=NaturalWarp(i.w.xz);float2 uv=warped*.25;float3 n=normalize(i.n);
+    float2 rotated=float2(uv.x*.73+uv.y*.68,-uv.x*.68+uv.y*.73)*.637+17.3;
+    half patch=NaturalNoise(warped*.055);
+    half3 grassA=SAMPLE_TEXTURE2D_GRAD(_Atlas,sampler_Atlas,frac(uv)*.46+float2(.02,.52),ddx(uv)*.46,ddy(uv)*.46).rgb;
+    half3 grassB=SAMPLE_TEXTURE2D_GRAD(_Atlas,sampler_Atlas,frac(rotated)*.46+float2(.02,.52),ddx(rotated)*.46,ddy(rotated)*.46).rgb;
+    half3 grass=lerp(grassA,grassB,.30+patch*.4);
     half3 rock=SAMPLE_TEXTURE2D_GRAD(_Cliffs,sampler_Cliffs,frac(uv*.8)*.46+float2(.02,.02),ddx(uv)*.368,ddy(uv)*.368).rgb;
     half3 color=lerp(grass*1.65,rock*1.25,1-smoothstep(.6,.96,n.y))*i.color.rgb;
     half ridge=saturate(i.color.a);
@@ -31,7 +36,10 @@ Shader "RiskAI/ImportedGround"
     color=lerp(color,snowRock,snow*.45);
     // A short natural shoreline transition, from the same physical source relief.
     color=lerp(color,rock*half3(.86,.76,.54),1-smoothstep(-.12,.70,i.w.y));
-    color*=.96+.04*sin(i.w.x*.16+sin(i.w.z*.1));
+    // Overlapping irregular patches break the square repetition without changing source biomes.
+    half meadow=NaturalNoise(warped*.18+patch*3);
+    color*=lerp(half3(.84,.92,.80),half3(1.10,1.07,.96),patch);
+    color*=.90+meadow*.17;
     Light sun=GetMainLight(TransformWorldToShadowCoord(i.w),i.w,half4(1,1,1,1));
     color*=half3(.36,.41,.43)+sun.color*saturate(dot(n,sun.direction))*lerp(.24,1,sun.shadowAttenuation)*.78;
     return half4(MixFog(color,i.fog),1);

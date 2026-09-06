@@ -13,9 +13,11 @@ namespace RiskAI.Editor
         {
             Directory.CreateDirectory("Assets/RiskAI/Resources/Units");
             Directory.CreateDirectory("Assets/RiskAI/Resources/Portraits");
+            var prepared=new System.Collections.Generic.HashSet<string>();
             foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
                 string name = BattleRules.Model(kind);
+                if(!prepared.Add(name))continue;
                 if(kind==UnitKind.Mortar)
                 {
                     var cart=new GameObject("Mortar portrait model");VisualFactory.MortarModel(cart.transform,VisualFactory.TeamColor(0));
@@ -24,6 +26,7 @@ namespace RiskAI.Editor
                 string model = kind == UnitKind.Guard ? "Knight" : kind==UnitKind.Medic?"Mage":name;
                 string path = Folder + model + ".fbx";
                 var importer = (ModelImporter)AssetImporter.GetAtPath(path);
+                if(!importer)throw new System.InvalidOperationException("Missing own unit art importer: "+path);
                 if (importer.animationType != ModelImporterAnimationType.Legacy)
                 {
                     importer.animationType = ModelImporterAnimationType.Legacy;
@@ -62,6 +65,10 @@ namespace RiskAI.Editor
                 RenderPortrait(root, animation, name);
                 Object.DestroyImmediate(root);
             }
+            var mountedRoot=new GameObject("Original mounted portrait");
+            MountedKnightView.Create(mountedRoot.transform,0);
+            RenderPortrait(mountedRoot,null,"MountedKnight");
+            Object.DestroyImmediate(mountedRoot);
             AssetDatabase.Refresh(); AssetDatabase.SaveAssets(); Debug.Log("RISKAI_ART_OK");
         }
         static void RenderPortrait(GameObject root, Animation animation, string name)
@@ -72,7 +79,7 @@ namespace RiskAI.Editor
             var cameraObject = new GameObject("Portrait camera");
             var camera = cameraObject.AddComponent<Camera>(); camera.cullingMask = 1 << 31;
             camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.075f,.085f,.09f);
-            camera.orthographic = true; camera.orthographicSize = name=="Mortar"?.85f:1.4f;
+            camera.orthographic = true; camera.orthographicSize = name=="Mortar"?.85f:name=="MountedKnight"?1.85f:1.4f;
             Vector3 focus = root.transform.position + Vector3.up * (name=="Mortar"?.62f:1.75f);
             camera.transform.position = focus + new Vector3(2, 1, 5); camera.transform.LookAt(focus);
             var keyObject = new GameObject("Portrait light"); var key = keyObject.AddComponent<Light>();

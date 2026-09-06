@@ -38,7 +38,7 @@ namespace RiskAI
             float mapX=MapLayout.HalfWidth/MapLayout.Spacing,mapZ=MapLayout.HalfDepth/MapLayout.Spacing;
             for(float x=-mapX+2;x<mapX-1;x+=1.9f)for(float z=-mapZ+2;z<mapZ-1;z+=1.9f)
             {
-                float px=(x+(float)random.NextDouble()*1.5f)*MapLayout.Spacing,pz=(z+(float)random.NextDouble()*1.5f)*MapLayout.Spacing;
+                float px=(x+(float)random.NextDouble()*1.9f)*MapLayout.Spacing,pz=(z+(float)random.NextDouble()*1.9f)*MapLayout.Spacing;
                 if(!MapLayout.IsLand(px,pz)||TerrainHydrology.DistanceToRiver(px,pz)<4)continue;
                 var point=new Vector3(px,MapLayout.Height(px,pz),pz);
                 float bx=px/MapLayout.Spacing,bz=pz/MapLayout.Spacing;
@@ -51,7 +51,15 @@ namespace RiskAI
                 bool edge=Mathf.Abs(bx)>mapX-5||bz<-mapZ+6||Mathf.Abs(pz-MapLayout.Coast(px))<5;
                 bool ribbon=west<3.5f||east<3.1f||south<2.8f;
                 bool grove=Mathf.PerlinNoise(px*.046f+14,pz*.046f+8)>.64f;
-                if(!(edge||ribbon||grove||island)||random.NextDouble()<(island?.38:.12))continue;
+                // Broad warped noise creates recognisable woods, dry openings and scrub
+                // without a second scatter pass or a new asset. The small-scale noise
+                // only breaks each patch edge, so it reads as natural cover at RTS range.
+                float warpX=Mathf.PerlinNoise(px*.012f+31,pz*.012f+7)*18-9;
+                float warpZ=Mathf.PerlinNoise(px*.012f-11,pz*.012f+43)*18-9;
+                float patch=Mathf.PerlinNoise((px+warpX)*.021f+4,(pz+warpZ)*.021f+19);
+                float fringe=Mathf.PerlinNoise(px*.079f+71,pz*.079f+13);
+                bool woodland=patch>.68f&&fringe>.35f;
+                if(!(edge||ribbon||grove||woodland||island)||random.NextDouble()<(island?.38:woodland?.055:.16))continue;
                 bool rampPass=MapLayout.IsExpanded ? TerrainHydrology.IsChannel(px,pz) : (Mathf.Abs(bx+32)<5.5f&&bz>-14&&bz<7)||(Mathf.Abs(bx-34)<5.5f&&bz>-16&&bz<8)
                     ||(Mathf.Abs(bz-12)<5&&bx>-21&&bx<6)||(Mathf.Abs(bz-13)<5&&bx>44);
                 if(!edge&&(Mathf.Abs(bz-2)<3.2f||Mathf.Abs(bz-22)<3||rampPass))continue;

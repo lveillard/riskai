@@ -26,7 +26,7 @@ namespace RiskAI
         }
         public void Strike()
         {
-            if(!anim)return;string clip=soldier.Kind==Core.UnitKind.Footman?"1H_Melee_Attack_Slice_Horizontal":soldier.Kind==Core.UnitKind.Guard?"2H_Melee_Attack_Slice":soldier.Kind==Core.UnitKind.Mage?"Spellcast_Shoot":"2H_Ranged_Shoot";
+            if(!anim)return;string clip=soldier.Kind==Core.UnitKind.Footman?"1H_Melee_Attack_Slice_Horizontal":!Core.BattleRules.Ranged(soldier.Kind)?"2H_Melee_Attack_Slice":soldier.Kind==Core.UnitKind.Mage?"Spellcast_Shoot":"2H_Ranged_Shoot";
             if(!anim[clip])return;current=clip;anim[clip].time=0;anim[clip].speed=1.9f;anim[clip].wrapMode=WrapMode.Once;
             anim.CrossFade(clip,.065f);lockedUntil=(BattleSession.Current?BattleSession.Current.BattleTime:0)+.45f;
         }

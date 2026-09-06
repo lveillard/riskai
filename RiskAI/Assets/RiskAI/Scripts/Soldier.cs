@@ -23,6 +23,7 @@ namespace RiskAI
         public bool IsIdle => !IsGarrison && isActiveAndEnabled && mode == OrderMode.Idle && !target && Agent && Agent.enabled && !Agent.hasPath;
         public NavMeshAgent Agent { get; private set; }
         public CombatTarget CurrentTarget => target;
+        public bool IsHolding => !IsGarrison && isActiveAndEnabled && mode==OrderMode.Hold && !target && Agent && Agent.enabled;
         public string OrderLabel => IsGarrison ? "Guarnición · mantiene el edificio" : target ? "En combate" : mode == OrderMode.Move ? "Moviendo" : mode == OrderMode.AttackMove ? "Avanzando y atacando" : mode == OrderMode.Hold ? "Manteniendo posición" : mode == OrderMode.Patrol ? "Patrullando" : mode == OrderMode.Follow ? "Siguiendo" : "Preparado";
         public Transform LeftLeg, RightLeg, Weapon;
         internal BattleSession session;
@@ -120,14 +121,20 @@ namespace RiskAI
         }
 
         public void Select(bool value) { Selected = value; if (ring) ring.enabled = value; }
-        public void MoveTo(Vector3 point, bool attackMove, bool append) => Issue(point, attackMove ? OrderMode.AttackMove : OrderMode.Move, append);
-        public void Patrol(Vector3 point, bool append) => Issue(point, OrderMode.Patrol, append);
-        void Issue(Vector3 point, OrderMode orderMode, bool append)
+        public string LastMoveError { get; private set; }
+        public void MoveTo(Vector3 point, bool attackMove, bool append) => TryMoveTo(point,attackMove,append);
+        public bool TryMoveTo(Vector3 point,bool attackMove,bool append) => Issue(point,attackMove?OrderMode.AttackMove:OrderMode.Move,append);
+        public bool Patrol(Vector3 point, bool append) => Issue(point, OrderMode.Patrol, append);
+        bool Issue(Vector3 point, OrderMode orderMode, bool append)
         {
-            if (IsGarrison || session.Paused || session.Winner>=0 || !Agent || !Agent.enabled || !Agent.isOnNavMesh || !NavMesh.SamplePosition(point, out var hit, 8, NavMesh.AllAreas)) return;
+            LastMoveError=null;
+            if(IsGarrison){LastMoveError="El defensor está retenido en su círculo.";return false;}
+            if(session.Paused||session.Winner>=0){LastMoveError="La partida está detenida.";return false;}
+            if(!Agent||!Agent.enabled||!Agent.isOnNavMesh){LastMoveError="La unidad no está sobre terreno transitable.";return false;}
+            if(!NavMesh.SamplePosition(point,out var hit,8,NavMesh.AllAreas)){LastMoveError="Ese destino no es transitable; usa un transporte para cruzar el agua.";return false;}
             var order = new Order { Point = hit.position, Mode = orderMode };
-            if (append && mode != OrderMode.Idle && mode != OrderMode.Hold) { if (orders.Count < 35) orders.Enqueue(order); return; }
-            orders.Clear(); Apply(order);
+            if (append && mode != OrderMode.Idle && mode != OrderMode.Hold) { if (orders.Count < 35){orders.Enqueue(order);return true;}LastMoveError="La cola de órdenes está llena.";return false; }
+            orders.Clear(); Apply(order);return LastMoveError==null;
         }
         void Apply(Order order)
         {
@@ -138,7 +145,8 @@ namespace RiskAI
         void ResumePath()
         {
             Agent.isStopped = false; Agent.stoppingDistance = .15f; nextPath = 0;
-            if (mode == OrderMode.Move || mode == OrderMode.AttackMove || mode == OrderMode.Patrol) Agent.SetDestination(destination);
+            if (mode == OrderMode.Move || mode == OrderMode.AttackMove || mode == OrderMode.Patrol)
+            {if(!Agent.SetDestination(destination))LastMoveError="No se ha podido calcular la ruta a ese destino.";}
             else Agent.ResetPath();
         }
         public void Attack(CombatTarget enemy)
@@ -159,10 +167,10 @@ namespace RiskAI
             orders.Clear(); CancelStrike(); target = followTarget = null; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false;
             if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); Agent.isStopped = false; }
         }
-        void Complete()
+        void Complete(bool failed=false)
         {
             if (orders.Count > 0) Apply(orders.Dequeue());
-            else if (mode == OrderMode.Patrol) { var swap = destination; destination = patrolOrigin; patrolOrigin = swap; ResumePath(); }
+            else if (mode == OrderMode.Patrol && !failed) { var swap = destination; destination = patrolOrigin; patrolOrigin = swap; ResumePath(); }
             else Stop();
         }
         void SetTarget(CombatTarget enemy) { target = enemy; pursuitOrigin = transform.position; nextPath = 0; }
@@ -318,7 +326,19 @@ namespace RiskAI
                 if (Agent.pathPending) return;
                 float distance = Vector3.Distance(transform.position, destination);
                 stalled = Agent.velocity.sqrMagnitude < .04f ? stalled + simDelta : 0;
-                if (distance < .65f || (Agent.hasPath && Agent.remainingDistance < .4f) || (stalled > 1.2f && distance < 3)) Complete();
+                if(Agent.pathStatus!=NavMeshPathStatus.PathComplete && distance>.65f)
+                {
+                    if(LastMoveError==null)
+                    {
+                        LastMoveError="No hay un camino terrestre hasta ese punto. Elige otro destino o usa un transporte.";
+                        if(Team==0){session.Message(LastMoveError);Debug.Log("RISKAI_ROUTE_BLOCKED: id="+EntityId+" tick="+session.Clock.TickCount+" destination="+destination);}
+                    }
+                    // Follow the reachable segment once. Re-requesting an exhausted partial
+                    // path keeps pathPending cycling and never lets a stalled timer complete.
+                    if(!Agent.hasPath || Agent.remainingDistance<.4f || stalled>1.2f)Complete(true);
+                    return;
+                }
+                if (distance < .65f || (Agent.pathStatus==NavMeshPathStatus.PathComplete && ((Agent.hasPath && Agent.remainingDistance < .4f) || (stalled > 1.2f && distance < 3)))) Complete();
                 else if (!Agent.hasPath && session.BattleTime >= nextPath) { Agent.stoppingDistance = .15f; Agent.SetDestination(destination); nextPath = session.BattleTime + .5f; }
             }
         }

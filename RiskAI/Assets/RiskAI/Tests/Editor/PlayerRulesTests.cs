@@ -12,10 +12,12 @@ namespace RiskAI.Tests
             var economy=new Economy(PlayerRules.MaxPlayers);
             Assert.That(economy.Gold.Length,Is.EqualTo(PlayerRules.MaxPlayers));
             Assert.That(economy.Gold.All(gold=>gold==BattleRules.StartingGold),Is.True);
+            for(int player=0;player<PlayerRules.MaxPlayers;player++)economy.Towns.Add(new TownState("city-"+player,player,0,player));
             Assert.That(economy.Grant(15,3),Is.True);
             Assert.That(economy.Grant(16,1),Is.False);
             economy.Advance(BattleRules.RoundSeconds);
-            Assert.That(economy.Gold[15],Is.EqualTo(BattleRules.StartingGold+3+BattleRules.BaseIncome));
+            Assert.That(economy.Gold[15],Is.EqualTo(BattleRules.StartingGold+3+BattleRules.BaseIncome+BattleRules.TownIncome));
+            for(int player=0;player<15;player++)Assert.That(economy.Gold[player],Is.EqualTo(BattleRules.StartingGold+BattleRules.BaseIncome+BattleRules.TownIncome));
             Assert.Throws<System.ArgumentOutOfRangeException>(()=>new Economy(PlayerRules.MaxPlayers+1));
         }
 

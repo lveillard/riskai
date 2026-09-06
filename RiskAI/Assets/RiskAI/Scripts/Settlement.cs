@@ -28,7 +28,7 @@ namespace RiskAI
         public string ProjectName => project == BuildingProject.Tower ? "Torre de guardia" : "Mejora de ciudad";
         public float ProjectProgress => Building ? 1 - projectRemaining / BattleRules.ConstructionSeconds : 0;
         public int PotentialIncome => BattleRules.TownIncome + (State.Level - 1) * BattleRules.UpgradeIncome;
-        public int Income => State.Owner >= 0 && (State.Country < 0 || session == null || session.Economy.CountryOwner(State.Country) == State.Owner) ? PotentialIncome : 0;
+        public int Income => State.Owner >= 0 ? PotentialIncome : 0;
         BattleSession session;
         Renderer flag;
         readonly List<Training> queue = new List<Training>();
@@ -36,6 +36,7 @@ namespace RiskAI
         int projectOwner;
         BuildingProject project;
         LineRenderer rallyRing;
+        public LineRenderer SelectionRing { get; private set; }
         enum BuildingProject { None, Tower, Upgrade }
         sealed class Training { public int Team; public UnitKind Kind; public float Remaining; }
 
@@ -55,6 +56,7 @@ namespace RiskAI
             towerObject.transform.localPosition = new Vector3(transform.position.x < 0 ? 3.8f : -3.8f, 0, 0);
             if(sourceClaim.HasValue) towerObject.transform.position=ImportedTowerPoint();
             Defense = towerObject.AddComponent<DefenseTower>(); Defense.Initialize(session, this, true);
+            SelectionRing=BuildingSelection.CreateRing(this);
             var rallyObject = new GameObject("Punto de reunión"); rallyObject.transform.SetParent(transform, false);
             rallyRing = VisualFactory.Ring(rallyObject.transform, .6f, .09f, new Color(.8f, 1, .5f));
             rallyObject.transform.position = Rally; rallyRing.enabled = false;
@@ -87,12 +89,11 @@ namespace RiskAI
 
         public string Recruit(UnitKind kind, int team = 0)
         {
-            if(IsPort)return "Este astillero produce barcos. Selecciona una ciudad para reclutar soldados.";
+            if(kind>=UnitKind.MarinePrivate && !IsPort)return "La infantería de marina se recluta en los puertos.";
             string error = CanManage(team); if (error != null) return error;
             if (State.Level < BattleRules.RequiredLevel(kind)) return "Mejora la ciudad a nivel II para reclutar esta unidad.";
             if (queue.Count >= 5) return "La cola está llena. Pulsa un encargo para cancelarlo.";
-            int pending = session.Towns.Sum(t => t.queue.Count(q => q.Team == team));
-            if (session.RecruitmentPopulation(team) + pending >= BattleRules.PopulationLimit) return MapLayout.IsImported?"Límite de 100 soldados móviles alcanzado.":"Límite de 100 soldados alcanzado.";
+            if (session.RecruitmentReservations(team) >= BattleRules.PopulationLimit) return MapLayout.IsImported?"Límite de 100 soldados móviles alcanzado.":"Límite de 100 soldados alcanzado.";
             if (!session.Economy.Spend(team, BattleRules.Cost(kind))) return "Oro insuficiente. Recibirás ingresos al terminar la ronda.";
             queue.Add(new Training { Team = team, Kind = kind, Remaining = BattleRules.TrainTime(kind) });
             return null;
@@ -105,6 +106,7 @@ namespace RiskAI
             if (State.Owner != team) return "Selecciona una ciudad de tu bando.";
             return null;
         }
+        internal int PendingRecruits(int team){int count=0;foreach(var order in queue)if(order.Team==team)count++;return count;}
         public UnitKind QueuedKind(int index) => queue[index].Kind;
         public string CancelTraining(int index, int team = 0)
         {
@@ -168,11 +170,12 @@ namespace RiskAI
             flag.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamColor(State.Owner)); Defense.ChangeOwner();
             foreach(var roof in GetComponentsInChildren<Renderer>())if(roof.name=="Faction roof"&&!roof.GetComponentInParent<DefenseTower>())roof.sharedMaterial=WorldArt.RoofMaterial(State.Owner);
             session.Message((State.Owner < 0 ? "Queda neutral " : State.Owner == 0 ? "Has conquistado " : VisualFactory.TeamName(State.Owner) + " ha conquistado ") + DisplayName);
-            if (State.Country >= 0 && session.Economy.CountryOwner(State.Country) == State.Owner)
-                session.Message((State.Owner==0?"País completado: ":VisualFactory.TeamName(State.Owner)+" completa ") + MapLayout.Countries[State.Country].Name + ". Ingresos y refuerzos activos.");
+            if (State.Owner >= 0 && State.Country >= 0 && session.Economy.CountryOwner(State.Country) == State.Owner)
+                session.Message((State.Owner==0?"País completado: ":VisualFactory.TeamName(State.Owner)+" completa ") + MapLayout.Countries[State.Country].Name + ". Refuerzos activos.");
         }
         void Update()
         {
+            SelectionRing.enabled=Selected;
             rallyRing.enabled = Selected && State.Owner == 0;
             Ring.enabled = true;
             Ring.startColor = Ring.endColor = State.Contested ? new Color(1,.7f,.15f) : Color.Lerp(VisualFactory.TeamColor(State.Owner),Color.white,State.Capture*.65f);
@@ -184,6 +187,7 @@ namespace RiskAI
             int previousOwner = State.Owner;
             Soldier previousDefender = Defender;
             int nextOwner = ClaimZone.Step(session, State.Owner, delta);
+            if(!Defender && IsPort && Port)nextOwner=Port.ResolveNavalOwner(previousOwner);
             State.Capture = ClaimZone.Progress; State.Capturing = ClaimZone.CapturingTeam; State.Contested = ClaimZone.Contested;
             if (Defender && Defender != previousDefender) Defender.HoldPosition();
             if (nextOwner != previousOwner) { State.Owner = nextOwner; Captured(); }
@@ -201,9 +205,9 @@ namespace RiskAI
             }
             if (queue.Count == 0) return;
             var first = queue[0]; first.Remaining -= delta;
-            if (first.Remaining <= 0)
+            if (first.Remaining <= 0 && session.RecruitmentPopulation(first.Team) < BattleRules.PopulationLimit)
             {
-                Vector3 spawn = transform.position + new Vector3(0, 0, State.Owner == 0 ? -4 : 4);
+                Vector3 spawn = IsPort && Port ? Port.Landing : transform.position + new Vector3(0, 0, State.Owner == 0 ? -4 : 4);
                 var unit = session.Spawn(first.Team, first.Kind, spawn);
                 if (unit) { queue.RemoveAt(0); unit.MoveTo(Rally, true, false); }
             }

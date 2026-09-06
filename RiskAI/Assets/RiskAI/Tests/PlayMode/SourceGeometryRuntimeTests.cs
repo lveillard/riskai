@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using NUnit.Framework;
 using RiskAI.Core;
 using UnityEngine;
@@ -64,6 +65,32 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator GuardUsesCalibratedOriginalMountedGeometry()
+        {
+            var guard=BattleTestScenario.Mobile(battle,0,UnitKind.Guard,new Vector3(-26,0,-16));
+            var model=guard.transform.Find("RoyalGuard(Clone)");
+            Assert.That(model,Is.Not.Null);
+            Assert.That(model.GetComponent<MountedKnightView>(),Is.Not.Null);
+            Assert.That(model.GetComponentsInChildren<Transform>().Count(item=>item.name=="Horse leg"),Is.EqualTo(4));
+            Assert.That(model.GetComponentsInChildren<SkinnedMeshRenderer>().Length,Is.Zero,"The guard must not retain the standing humanoid prefab.");
+            Assert.That(model.GetComponentsInChildren<Animation>().Length,Is.Zero);
+
+            var renderers=model.GetComponentsInChildren<MeshRenderer>();
+            Assert.That(renderers.Length,Is.GreaterThan(0));
+            foreach(var renderer in renderers)
+            {
+                var bounds=renderer.bounds;
+                Assert.That(float.IsNaN(bounds.min.x)||float.IsNaN(bounds.min.y)||float.IsNaN(bounds.min.z)||
+                    float.IsInfinity(bounds.max.x)||float.IsInfinity(bounds.max.y)||float.IsInfinity(bounds.max.z),Is.False,
+                    renderer.name+" must retain finite mounted geometry.");
+            }
+            float renderedHeight=ModelMetrics.Measure(model).size.y*model.lossyScale.y;
+            Assert.That(renderedHeight,Is.EqualTo(SourceGeometry.StandingHeight(UnitKind.Guard)).Within(.01f));
+            Assert.That(renderers.Min(renderer=>renderer.bounds.min.y),Is.EqualTo(guard.transform.position.y).Within(.06f),
+                "Horse hooves must remain grounded after source-height calibration.");
+            yield return null;
+        }
         [UnityTearDown]
         public IEnumerator TearDown()
         {

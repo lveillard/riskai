@@ -13,6 +13,7 @@ namespace RiskAI
         public override float MaxHealth => BattleRules.TowerHealth;
         public override bool CanBeAttacked => false;
         public Soldier Defender => Town ? Town.Defender : Harbor ? Harbor.Defender : null;
+        public CombatTarget Guardian => Defender ? Defender : Town && Town.Port ? Town.Port.NavalDefender : Harbor ? Harbor.NavalDefender : null;
         public override Vector3 AimPoint => transform.position + Vector3.up * 2.8f;
         public override AttackKind AttackType => AttackKind.Piercing;
         public override ArmorKind ArmorType => ArmorKind.Fortified;
@@ -88,7 +89,7 @@ namespace RiskAI
 
         public void SimTick(float delta)
         {
-            if (!IsAlive || UnderConstruction || !Defender || !Defender.IsAlive) { CurrentTarget=null; return; }
+            if (!IsAlive || UnderConstruction || !Guardian || !Guardian.IsAlive) { CurrentTarget=null; return; }
             if (session.Paused || session.Winner >= 0) return;
             if (!IsValidTarget(CurrentTarget)) CurrentTarget=FindTarget();
             if (!CurrentTarget || session.BattleTime < nextShot) return;

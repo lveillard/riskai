@@ -9,7 +9,7 @@ namespace RiskAI
         float InitialZoom => MapLayout.IsImported ? 80 * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad) : DefaultZoom;
         float MinimumZoom => MapLayout.IsImported ? 18 * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad) : 17;
         public float TargetZoom { get; private set; }=DefaultZoom;
-        [Range(.1f,3f)] public float PanSpeed=1;
+        [Range(.1f,3f)] public float PanSpeed=1.35f;
         public Vector3 FocusPoint => focus;
         public float MaximumZoom => MapLayout.IsImported ? MapFrameZoom() : MapLayout.IsExpanded ? 60 : 44;
         float FocusSpeedCap => MapLayout.IsImported?Mathf.Max(120,MapLayout.HalfDepth*1.25f):120;
@@ -26,9 +26,9 @@ namespace RiskAI
             if(Physics.Raycast(ray,out var hit,MapLayout.IsImported?2300:500,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))return hit.point;
             new Plane(Vector3.up,Vector3.zero).Raycast(ray,out float distance);return ray.GetPoint(distance);
         }
-        public void Focus(Vector3 point) { targetFocus=Clamp(point);anchorZoom=false; }
+        public void Focus(Vector3 point) { targetFocus=Clamp(point,TargetZoom);anchorZoom=false; }
         public void SetHome(Vector3 point) { homePoint=point;focus=targetFocus=Clamp(point);Apply(); }
-        public void ResetView() { TargetZoom=InitialZoom;targetFocus=Clamp(homePoint);anchorZoom=false; }
+        public void ResetView() { TargetZoom=InitialZoom;targetFocus=Clamp(homePoint,TargetZoom);anchorZoom=false; }
         public void FrameMap(){TargetZoom=MaximumZoom;targetFocus=MapLayout.PlayableCenter;anchorZoom=false;}
         public void Pan(Vector3 direction,float dt)
         {
@@ -69,11 +69,12 @@ namespace RiskAI
         {
             var ray=cam.ScreenPointToRay(screen);new Plane(Vector3.up,Vector3.up*height).Raycast(ray,out float distance);return ray.GetPoint(distance);
         }
-        Vector3 Clamp(Vector3 point)
+        Vector3 Clamp(Vector3 point,float requestedZoom=-1)
         {
+            float zoom=requestedZoom>=0?requestedZoom:cam.orthographicSize;
             Vector2 min = MapLayout.PlayableMin, max = MapLayout.PlayableMax;
-            float marginX = Mathf.Min((max.x - min.x) * .5f, cam.orthographicSize * .6f);
-            float marginZ = Mathf.Min((max.y - min.y) * .5f, cam.orthographicSize * .7f);
+            float marginX = Mathf.Min((max.x - min.x) * .5f, zoom * .6f);
+            float marginZ = Mathf.Min((max.y - min.y) * .5f, zoom * .7f);
             return new Vector3(Mathf.Clamp(point.x, min.x + marginX, max.x - marginX),
                 Mathf.Clamp(point.y, 0, 20), Mathf.Clamp(point.z, min.y + marginZ, max.y - marginZ));
         }

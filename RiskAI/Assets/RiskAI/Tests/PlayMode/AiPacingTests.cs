@@ -78,6 +78,42 @@ namespace RiskAI.Tests
             Assert.That(battle.Towns.Count(t => t.QueueCount > 0), Is.LessThanOrEqualTo(1));
         }
 
+        [UnityTest]
+        public IEnumerator SeededDefensePhaseStillDispatchesAMobileReserveToAContestedPost()
+        {
+            battle.AiEnabled = true;
+            var town = battle.Towns.First(t => t.State.Owner == 1);
+            var reserve = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, town.ClaimPoint + Vector3.forward * 12);
+            var invader = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, town.ClaimPoint);
+            Assert.That(reserve.IsGarrison, Is.False);
+            Assert.That(invader.IsGarrison, Is.False);
+
+            while (battle.BattleTime < 1f)
+                battle.Clock.Advance(SimClock.StepSeconds, false, battle.World.Tick);
+
+            Assert.That(town.State.Contested, Is.True);
+            Assert.That(reserve.IsIdle, Is.False, "The phased defense pass must still give the reserve an order.");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CommanderMobilizesItsWaitingCountryReinforcements()
+        {
+            var camp=battle.Camps.First(c=>c&&battle.Economy.CountryOwner(c.Country)==1);
+            var reserves=new Soldier[3];
+            for(int i=0;i<reserves.Length;i++)
+            {
+                reserves[i]=BattleTestScenario.Mobile(battle,1,UnitKind.Archer,camp.SpawnPoint+Vector3.right*i*1.2f);
+                camp.ApplyRally(reserves[i]);
+                Assert.That(reserves[i].IsHolding,Is.True);
+            }
+            typeof(SkirmishCommander).GetMethod("IssueOffensiveOrders",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)
+                .Invoke(battle.Commander,new object[]{false});
+            battle.Commands.Tick();
+            Assert.That(reserves.Any(unit=>!unit.IsHolding&&!unit.IsIdle),Is.True,"The AI must be able to assign an offensive order to troops waiting at its own camp.");
+            yield return null;
+        }
+
         IEnumerator ReachBattleTime(float target)
         {
             float deadline = Time.realtimeSinceStartup + 10;

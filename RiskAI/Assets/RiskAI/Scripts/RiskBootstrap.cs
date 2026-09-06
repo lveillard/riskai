@@ -23,6 +23,7 @@ namespace RiskAI
             Application.targetFrameRate=120;WorldArt.ResetRoads();Shader.SetGlobalFloat("_RiskMapScale",MapLayout.Spacing);
             UnityEngine.InputSystem.InputSystem.settings.scrollDeltaBehavior=UnityEngine.InputSystem.InputSettings.ScrollDeltaBehavior.UniformAcrossAllPlatforms;
             var session=gameObject.AddComponent<BattleSession>();session.Initialize();var owners=session.StartingOwners();var capitals=new int[session.PlayerCount];
+            gameObject.AddComponent<RuntimeDiagnostics>().Initialize(session);
             for(int player=0;player<capitals.Length;player++)capitals[player]=-1;
             for(int i=0;i<owners.Length;i++)if(owners[i]>=0 && (capitals[owners[i]]<0 || MapLayout.Towns[i].Capital))capitals[owners[i]]=i;
             var terrain=new GameObject("Battlefield · NavMesh geometry");
@@ -53,6 +54,7 @@ namespace RiskAI
             for(int c=0;c<MapLayout.Countries.Length;c++)session.Camps.Add(CountryCamp.Create(session,c,terrain.transform));
             TerritoryMarkers.Create(session,terrain.transform);
             NavalWorld.Create(session,terrain.transform);
+            GroundCover.Create(session,terrain.transform);
             var cameraObject=new GameObject("RTS Camera");var camera=cameraObject.AddComponent<Camera>();cameraObject.tag="MainCamera";
             camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=MapLayout.IsImported?(MapLayout.HalfWidth+MapLayout.HalfDepth)*5:440;
             camera.transform.rotation=RtsCameraRig.DefaultRotation;
@@ -65,7 +67,7 @@ namespace RiskAI
             RenderSettings.fog=!MapLayout.IsImported;RenderSettings.fogColor=camera.backgroundColor;RenderSettings.fogMode=FogMode.Linear;RenderSettings.fogStartDistance=MapLayout.IsImported?1500:260;RenderSettings.fogEndDistance=MapLayout.IsImported?2100:420;
             var controller=gameObject.AddComponent<RtsController>();controller.Initialize(session,camera);controller.FocusHome();
             gameObject.AddComponent<BattleHud>().Initialize(session,controller,camera);
-            session.Message(session.LayoutName+" · semilla "+session.Seed+". Completa países para cobrar y recibir refuerzos.");
+            session.Message(session.LayoutName+" · semilla "+session.Seed+". Cada ciudad aporta oro; completa países para recibir refuerzos.");
             session.Message("Un ballestero por puesto. Recluta tu primera tropa en una ciudad aliada.");
         }
     }

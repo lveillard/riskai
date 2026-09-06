@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace RiskAI
 {
-    /// <summary>Decorative, collider-free posts marking the borders between nearby towns.</summary>
+    /// <summary>Decorative, collider-free posts marking ownership borders between nearby towns.</summary>
     [DisallowMultipleComponent]
     public sealed class TerritoryMarkers : MonoBehaviour
     {
@@ -217,9 +217,12 @@ namespace RiskAI
             return VisualFactory.TeamColor(owner);
         }
 
+        /// <summary>Internal country borders vanish whenever both adjacent cities share an owner.</summary>
+        public static bool IsOwnershipBoundary(int ownerA, int ownerB) => ownerA != ownerB;
+
         static bool ShouldShow(int countryA, int countryB, int ownerA, int ownerB)
         {
-            return countryA != countryB || ownerA != ownerB;
+            return IsOwnershipBoundary(ownerA, ownerB);
         }
 
         void Update()

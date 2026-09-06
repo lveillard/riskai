@@ -24,18 +24,20 @@ namespace RiskAI.Core
         // Footman and Mage are local fantasy units. Art is original/KayKit, independent of stats.
         public static readonly UnitProfile[] Units={
             new(200,17,1,4,.9f,1.35f,5.4f,2,AttackKind.Normal,ArmorKind.Heavy,1,1,"Adaptación de infantería",1),
-            new(200,15,2,4,8,1.5f,5.4f,0,AttackKind.Piercing,ArmorKind.Medium,1,1,"h00B · Rifleman",1),
-            new(650,37,2,5,1.05f,1.4f,7,7,AttackKind.Normal,ArmorKind.Heavy,5,1,"h00G · Knight",5),
+            new(200,15,2,4,8,1.6f,5.4f,0,AttackKind.Piercing,ArmorKind.Light,1,1,"h00B · Rifleman",1),
+            new(650,37,2,5,2f,1.36f,7,7,AttackKind.Normal,ArmorKind.Heavy,5,1,"h00G · Knight",5),
             new(250,29,1,3,10,1.6f,5.4f,1,AttackKind.Magic,ArmorKind.Unarmored,4,1,"Adaptación de mago",4),
-            new(350,18,1,13,18,3.5f,4.6f,0,AttackKind.Siege,ArmorKind.Heavy,3,1,"h00H · Mortar",3),
-            new(250,7,1,2,8,2,5.4f,1,AttackKind.Magic,ArmorKind.Unarmored,2,1,"h00E · Medic",2)
+            new(350,18,1,13,18,3.5f,4.6f,0,AttackKind.Siege,ArmorKind.Medium,3,1,"h00H · Mortar",3),
+            new(250,7,1,2,8,2,5.4f,1,AttackKind.Piercing,ArmorKind.Light,2,1,"h00E · Medic",2),
+            new(200,16,2,4,6,1.6f,5.4f,1,AttackKind.Piercing,ArmorKind.Light,1,1,"h012 Marine Private (hrif inherited)",1),
+            new(650,37,2,5,2,1.36f,5.6f,6,AttackKind.Normal,ArmorKind.Heavy,5,1,"h014 Marine Major (hkni inherited)",5),
+            new(800,64,2,5,2,1.45f,5.6f,8,AttackKind.Normal,ArmorKind.Heavy,10,1,"h015 Marine General (hkni inherited)",10)
         };
         // The map's Bunker overrides HP550, base50, cooldown1.5 and armor3.
         public static readonly UnitProfile Tower=new(550,50,1,8,8.5f,1.5f,0,3,AttackKind.Piercing,ArmorKind.Fortified,3,1,"o000 · Bunker",3);
-        // Local capturable-city tuning. Saran's h00N/h00O source fields are
-        // 45 piercing, one die/five sides, .9 cooldown and 650 range; this
-        // prototype scales the range and damage for its smaller battlefield.
-        // It is explicitly local tuning, not a claim about the original map.
-        public static readonly UnitProfile CapturableTower=new(550,80,1,8,13f,.9f,0,3,AttackKind.Piercing,ArmorKind.Fortified,3,1,"Local v0.12 capture-tower tuning",3);
+        // h00N/h00O override base45, one die/five sides, .9 cooldown and
+        // 650 native range (13 Unity). Health and armor remain the shared
+        // runtime post shell; no local damage/range tuning is retained here.
+        public static readonly UnitProfile CapturableTower=new(550,45,1,5,13f,.9f,0,3,AttackKind.Piercing,ArmorKind.Fortified,3,1,"h00N/h00O City Post",3);
     }
 }

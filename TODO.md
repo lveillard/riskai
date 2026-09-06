@@ -67,7 +67,7 @@ La [investigación de World Editor](docs/WORLD-EDITOR-TERRAIN.md) orienta el sig
 - [x] Frenada de unidades a distancia cerca de su alcance útil, para evitar sobrepasarlo entre ticks.
 - [x] Prueba táctica del ballestero que se aproxima por el lado opuesto a la torre, mata una guarnición cuerpo a cuerpo y ocupa su círculo.
 - [x] Regresión de aproximación a distancia con fotogramas largos (10 FPS, velocidad ×4); ruta hasta la posición de tiro. Suite final: 101 casos aprobados, 32 EditMode + 69 PlayMode.
-- [ ] Emitir los refuerzos de país de uno en uno según el temporizador de reclutamiento del JASS; ahora salen juntos al cambiar de ronda.
+- [x] Emitir los refuerzos de país de uno en uno cada 500 ms según JASS, con crédito persistente por país y límite regional de puntos.
 - [ ] Completar adquisición, alcance mínimo y activación de armas heredados desde las tablas apropiadas; no presentar ajustes locales de torre como estadísticas exactas del mapa.
 - [ ] Sustituir las suposiciones de IA sobre navegación y visión por consultas de ruta/visión. Mejorar concentración de expediciones y desembarcos.
 
@@ -92,7 +92,7 @@ La [investigación de World Editor](docs/WORLD-EDITOR-TERRAIN.md) orienta el sig
 
 - [x] Medir Qwen3.8 por Grok CLI en tandas de 3 a 10: 51/52 respuestas completas en tareas pequeñas. [Medición y límites](docs/audits/QWEN-CONCURRENCY-v0.13.md). Una respuesta completa no implica que el hallazgo sea correcto.
 - [ ] Dar paquetes pequeños por tema; contrastar contra código y tests antes de aplicar sugerencias. Terra/Luna pueden preparar pruebas y verificar hallazgos; decisiones de diseño e integración a cargo del agente principal.
-- [ ] Revisión adversarial Grok4.6 sobre cambios concretos, con evidencias y limitaciones.
+- [x] Dos rondas adversariales reales de Grok 4.6, contrastadas y convertidas en correcciones y regresiones: [revisión v0.16](docs/audits/GROK-v0.16.md).
 
 ## Expansión v0.14
 
@@ -112,9 +112,29 @@ La [investigación de World Editor](docs/WORLD-EDITOR-TERRAIN.md) orienta el sig
 - [x] Menú 2–16 participantes, paleta de 16 colores, identificación por IA y panel de jugadores.
 - [x] Cordilleras opcionales: relieve suave y transición a roca/nieve que preserva claros, costa y agua.
 - [x] Obtener bounds efectivos de Rifleman, Priest, Knight, MortarTeam y HumanBarracks; calibrar la altura de espera de nuestros cuatro tipos de unidad correspondientes y comprobar la selección. No confundir ucol con anchura/altura de un mesh.
-- [ ] Calibrar edificios, torre y árboles propios; revisar siluetas, anchuras y animaciones. La altura del guardia corresponde a Knight, pero el arte propio aún es infantería sin montura.
+- [ ] Calibrar edificios, torre y árboles propios; revisar siluetas, anchuras y animaciones. El caballero ya tiene una montura propia; falta calibrar anchuras y otros edificios/árboles.
 - [ ] Resolver pathing fuente de árboles y edificios: los árboles importados siguen siendo decoración sin nuevos bloqueadores NavMesh.
 - [ ] Diseñar un Rin continuo desde los Alpes al mar con lecho, riberas y cruces. El prototipo de traza chocó con exclusiones de ciudades/círculos y no se incorpora.
 - [ ] Medir partidas prolongadas con 16 ejércitos, optimizar decisiones de IA y hornear navegación en editor. No equiparar 15 IA locales con multiplayer autoritativo.
 - [x] Usar inclinación, orientación y distancia inicial de cámara del JASS para Europe/New World; mantener FOV explícitamente adaptado y extender el zoom estratégico.
 - [x] Decodificar el índice de suelo W3E desde el nibble correcto, independientemente de variación y flags de agua/acantilado.
+
+## Control, puertos y presentación · v0.16
+
+- [x] Selección conjunta de casa y torre, incluyendo tejado/base, con anillo amplio del edificio.
+- [x] Salida opcional por hoguera; por defecto los refuerzos esperan allí. Países incluyen sus puertos en la superposición; fronteras internas del mismo dueño sin postes.
+- [x] Corregir ingreso FFA: 4 + ciudades propias, aunque estén en grupos fragmentados; 0 sin ciudades. Revalidar estadísticas y torre contra W3U y tablas heredadas disponibles.
+- [x] Caballero montado propio, sin agrandar un infante; reclutas Marines de puerto con costes y perfiles verificados.
+- [x] Embarque con aproximación, desembarque costero en cola y permanencia de órdenes al cambiar selección. Puertos sin guarnición defendidos/ocupados por fragatas cercanas.
+- [x] Fragata larga y transporte ancho con carga; puntos de muelle visibles. Rechazar desembarco en agua abierta o terreno escarpado.
+- [x] Tab para marcadores, cámara más rápida, órdenes rechazadas con motivo y diagnóstico periódico de fotogramas/GC/cola.
+- [x] Reducir patrón de cuadrícula con manchas de vegetación, mezcla de suelos/agua y posiciones menos regulares en Cuatro Riberas.
+- [ ] Completar pathing y playas del mapa fuente: los marcadores actuales y la prueba de costa transitable son adaptaciones, no áreas de World Editor extraídas.
+- [ ] Permitir varios embarques simultáneos independientes desde el adaptador de input, y mostrar progreso/cancelación por transporte en HUD.
+- [ ] Calibrar siluetas de marina por variante de mapa, capacidad naval y el resto de armas heredadas TFT aún no resueltas; no atribuirles valores supuestos como exactos.
+- [ ] Medir una partida prolongada con órdenes reales y 16 ejércitos; usar los nuevos logs para reproducir la incidencia de unidades propias sin respuesta.
+
+- [x] Corregir rutas parciales que se reiniciaban, fallos silenciosos de patrulla y foco de cámara al volver del zoom estratégico.
+- [x] Movilizar refuerzos que esperan en hogueras de la IA, manteniendo la espera por defecto del jugador.
+
+- [x] Sondas reproducibles de 70 s con 16 bandos en Europe/New World: todas las tropas del jugador seguidas se movieron, sin rechazos ni órdenes pendientes al finalizar. No sustituyen una partida prolongada ni una prueba de input físico; [mediciones](docs/VALIDATION-v0.16.md).

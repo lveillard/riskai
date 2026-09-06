@@ -7,6 +7,14 @@ namespace RiskAI
         static bool firstLaunch=true;
         int menuTab;
         public void ShowPlayers() { menuTab=2; controller.HelpVisible=true; }
+        void Scores()
+        {
+            RtsSkin.Fill(new Rect(0,0,width,height),new Color(.015f,.025f,.032f,.62f));
+            var r=new Rect(width/2-460,height/2-312,920,624);RtsSkin.Frame(r,RtsSkin.Gold);
+            Label(r.x+30,r.y+28,850,"MARCADORES · TAB",RtsSkin.Title);
+            Label(r.x+30,r.y+74,850,"Suelta Tab para volver.",RtsSkin.Small);
+            PlayersPanel(r);
+        }
         bool initialMenu;
         int campCityPage=-1, campCountry=-1;
         void OpenInitialMenu()
@@ -78,7 +86,7 @@ namespace RiskAI
                 float x=r.x+30+(player/8)*445,y=r.y+210+(player%8)*43;
                 RtsSkin.Fill(new Rect(x,y+5,15,15),VisualFactory.TeamColor(player));
                 Label(x+25,y,385,VisualFactory.TeamName(player)+" · "+hud.PlayerCities[player]+" ciudades",RtsSkin.Small);
-                Label(x+25,y+19,385,hud.PlayerMobile[player]+" móviles · "+hud.PlayerGuards[player]+" defensores",RtsSkin.Tiny);
+                Label(x+25,y+19,385,session.Economy.Gold[player]+" oro · "+hud.PlayerMobile[player]+" móviles · "+hud.PlayerGuards[player]+" guardias · "+session.Kills[player]+" bajas",RtsSkin.Tiny);
             }
         }
         void StartMatch()
@@ -93,9 +101,10 @@ namespace RiskAI
             if(campCountry!=camp.Country){campCountry=camp.Country;campCityPage=0;}
             Label(253,bottom+18,650,camp.DisplayName.ToUpperInvariant(),RtsSkin.Title);
             Label(253,bottom+52,630,"HOGUERA · "+group.Owned+" / "+group.CityCount+" ciudades",RtsSkin.Small);
-            Label(253,bottom+85,630,group.Owner<0?"Completa el grupo para activar ingresos y refuerzos.":"Grupo controlado por "+VisualFactory.TeamName(group.Owner),RtsSkin.Small);
+            Label(253,bottom+85,630,group.Owner<0?"Completa el grupo para activar sus refuerzos.":"Grupo controlado por "+VisualFactory.TeamName(group.Owner),RtsSkin.Small);
             Label(253,bottom+116,630,"Cada ronda: "+rule.PerTurn+" × "+Core.BattleRules.Name(rule.Reinforcement)+" en esta hoguera.",RtsSkin.Small);
-            Label(253,bottom+147,630,"La superposición muestra el grupo; los anillos señalan sus ciudades.",RtsSkin.Tiny);
+            Label(253,bottom+147,630,camp.HasRally?"Salida fijada · clic derecho cambia el punto de reunión.":"Sin salida: los refuerzos esperan aquí. Clic derecho fija su destino.",RtsSkin.Tiny);
+            if(camp.HasRally && group.Owner==0 && Button(new Rect(253,bottom+174,280,27),"Quitar salida · esperar aquí"))camp.ClearRally();
             Label(x,bottom+17,590,"CIUDADES DEL GRUPO",RtsSkin.Title);
             const int perPage=6;int pages=Mathf.Max(1,Mathf.CeilToInt(group.CityCount/(float)perPage));campCityPage=Mathf.Clamp(campCityPage,0,pages-1);
             int start=campCityPage*perPage,end=Mathf.Min(group.CityCount,start+perPage);

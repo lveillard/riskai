@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RiskAI.Core;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace RiskAI
 {
@@ -10,6 +11,7 @@ namespace RiskAI
         public static NavalWorld Current { get; private set; }
         public readonly List<Ship> Ships=new List<Ship>();
         public readonly List<Harbor> Harbors=new List<Harbor>();
+        public readonly List<NavalEmbarkZone> EmbarkZones=new List<NavalEmbarkZone>();
         public BattleSession Session { get; private set; }
         float nextAi;
 
@@ -78,12 +80,16 @@ namespace RiskAI
             if(!found)berth=new Vector3(probe.x,-.24f,probe.z);
             var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;
             var harbor=go.AddComponent<Harbor>();
-            harbor.InitializeImported(this,town,berth,found?null:"El puerto no tiene una salida marítima segura.");Harbors.Add(harbor);
+            harbor.InitializeImported(this,town,berth,found?null:"El puerto no tiene una salida marítima segura.");Harbors.Add(harbor);AddEmbarkZone(harbor);
         }
         void AddHarbor(string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
         {
             var go=new GameObject(name);go.transform.SetParent(transform,false);go.transform.position=berth;
-            var harbor=go.AddComponent<Harbor>();harbor.Initialize(this,name,linked,state,landing,berth);Harbors.Add(harbor);
+            var harbor=go.AddComponent<Harbor>();harbor.Initialize(this,name,linked,state,landing,berth);Harbors.Add(harbor);AddEmbarkZone(harbor);
+        }
+        void AddEmbarkZone(Harbor harbor)
+        {
+            var zone=NavalEmbarkZone.Create(transform,harbor);if(zone)EmbarkZones.Add(zone);
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
         public Ship Spawn(int team,ShipKind kind,Vector3 point)
@@ -97,6 +103,49 @@ namespace RiskAI
             Harbor best=null;float distance=radius*radius;
             foreach(var harbor in Harbors){float next=FlatDistance(harbor.Landing,point);if(next<distance){distance=next;best=harbor;}}
             return best;
+        }
+        public Harbor NearestEmbarkHarbor(Vector3 point,float radius=float.MaxValue)
+        {
+            Harbor best=null;float distance=radius*radius;
+            foreach(var harbor in Harbors)if(harbor&&harbor.IsEmbarkZone(point))
+            {float next=FlatDistance(harbor.Landing,point);if(next<distance){distance=next;best=harbor;}}
+            return best;
+        }
+        /// <summary>Moves a transport and selected soldier into the same marked embark zone.</summary>
+        public string OrderEmbark(Ship ship,Soldier soldier)
+        {
+            var selected=new List<Soldier>{soldier};
+            if(!TryPlanEmbark(ship,selected,out var landing,out var berth,out var error))return error;
+            ship.MoveTo(berth);soldier.MoveTo(landing,false,false);
+            return "El transporte se acerca al muelle de embarque.";
+        }
+        /// <summary>Plans one common visible shore for a controller-owned boarding queue.</summary>
+        public bool TryPlanEmbark(Ship ship,IReadOnlyList<Soldier> soldiers,out Vector3 landing,out Vector3 berth,out string error)
+        {
+            landing=default;berth=default;error=null;
+            if(!ship||!ship.IsAlive||ship.Kind!=ShipKind.Transport){error="Selecciona un transporte.";return false;}
+            if(soldiers==null||soldiers.Count==0){error="Selecciona soldados para embarcar.";return false;}
+            Harbor best=null;float score=float.MaxValue;
+            foreach(var harbor in Harbors)
+            {
+                if(!harbor||!harbor.CanLaunch||!MapLayout.IsLand(harbor.Landing.x,harbor.Landing.z)||!NavMesh.SamplePosition(harbor.Landing,out var shore,1.25f,NavMesh.AllAreas))continue;
+                float next=FlatDistance(ship.transform.position,harbor.Berth);
+                bool valid=false;
+                for(int i=0;i<soldiers.Count;i++)
+                {
+                    var soldier=soldiers[i];if(!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=ship.Team)continue;
+                    valid=true;next+=FlatDistance(soldier.transform.position,harbor.Landing);
+                }
+                if(valid&&next<score){best=harbor;score=next;landing=shore.position;}
+            }
+            if(!best){error="No hay playa o muelle de embarque alcanzable.";return false;}
+            berth=best.Berth;return true;
+        }
+        public string OrderDisembark(Ship ship,Harbor harbor)
+        {
+            if(!ship||ship.Kind!=ShipKind.Transport)return "Selecciona un transporte.";
+            if(!harbor)return "Elige una playa o muelle de desembarco marcado.";
+            ship.SailToHarbor(harbor);return "El transporte navega al desembarco marcado.";
         }
         public int PendingShips(int team)
         {

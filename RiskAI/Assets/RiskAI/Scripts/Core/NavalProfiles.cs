@@ -15,6 +15,12 @@ namespace RiskAI.Core
         public readonly string Name;
         public readonly float Health;
         public readonly float Damage;
+        public readonly float BaseDamage;
+        public readonly int Dice, Sides;
+        public float MinimumDamage=>BaseDamage+Dice;
+        public float MaximumDamage=>BaseDamage+Dice*Sides;
+        public string DamageText=>Dice>0?MinimumDamage+"–"+MaximumDamage:Damage.ToString();
+        public float RollDamage(Random random){float value=BaseDamage;for(int i=0;i<Dice;i++)value+=random.Next(1,Sides+1);return value;}
         public readonly float Range;
         public readonly float Cooldown;
         public readonly float Speed;
@@ -37,11 +43,11 @@ namespace RiskAI.Core
             int cost,
             float trainSeconds,
             int capacity,
-            int pointValue)
+            int pointValue,int dice=0,int sides=0)
         {
             Name = name;
             Health = health;
-            Damage = damage;
+            BaseDamage=damage;Dice=dice;Sides=sides;Damage=damage+dice*(sides+1)*.5f;
             Range = range;
             Cooldown = cooldown;
             Speed = speed;
@@ -60,12 +66,16 @@ namespace RiskAI.Core
         // while its source-aligned profile is the documented h00W Warship B.
         public static readonly ShipProfile Galley = new ShipProfile(
             "Fragata", 400f, 30f, 20f, 1.5f, 6.8f, 6f,
-            AttackKind.Normal, 5, 4f, 0, 5);
+            AttackKind.Normal, 5, 4f, 0, 5,1,15);
 
         public static ShipProfile Frigate => Galley;
 
+        // n008 (old nzep) overrides HP300, speed340/50 and cost/point2.
+        // Its inherited nzep armor is 0 and it has no enabled weapon. Capacity,
+        // train time and the UI's Normal token remain local. The inspected Aloa
+        // tables do not encode cargo capacity; these are not source-stat claims.
         public static readonly ShipProfile Transport = new ShipProfile(
-            "Transporte", 300f, 0f, 0f, 0f, 5f, 1f,
+            "Transporte", 300f, 0f, 0f, 0f, 6.8f, 0f,
             AttackKind.Normal, 2, 6f, 6, 2);
 
         public static ShipProfile Profile(NavalUnitKind kind)

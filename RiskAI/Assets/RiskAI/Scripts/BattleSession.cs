@@ -50,6 +50,7 @@ namespace RiskAI
         public ICommander Commander { get; private set; }
         public IReadOnlyList<SkirmishCommander> Commanders { get; private set; }
         public BattleCommands Commands { get; private set; }
+        public CountryRecruitment Reinforcements { get; private set; }
         public NavalWorld Naval { get; internal set; }
         readonly Dictionary<int, CombatTarget> entities = new Dictionary<int, CombatTarget>(256);
         int nextEntityId;
@@ -59,6 +60,7 @@ namespace RiskAI
         public bool AiEnabled = true;
         System.Random combatRandom;
         public float RollDamage(UnitProfile profile)=>profile.RollDamage(combatRandom);
+        public float RollDamage(ShipProfile profile)=>profile.RollDamage(combatRandom);
         public bool RollMiss(float probability)=>probability>0 && combatRandom.NextDouble()<probability;
 
         void Awake() => Initialize();
@@ -79,6 +81,7 @@ namespace RiskAI
             // sessions tick the complete commander collection.
             Commander = PlayerCount == 2 ? Commanders[0] : commanders;
             Commands = new BattleCommands(this);
+            Reinforcements = new CountryRecruitment(this);
             World = new BattleWorld(this);
             tickWorld = World.Tick;
         }
@@ -104,6 +107,13 @@ namespace RiskAI
         {
             if(!MapLayout.IsImported)return Population(team);
             int count=0;foreach(var unit in Units)if(unit&&unit.Team==team&&!unit.IsGarrison)count++;
+            return count;
+        }
+        public int RecruitmentReservations(int team)
+        {
+            int count=RecruitmentPopulation(team);
+            foreach(var town in Towns)if(town)count+=town.PendingRecruits(team);
+            if(Naval)foreach(var harbor in Naval.Harbors)if(harbor)count+=harbor.PendingLandRecruits(team);
             return count;
         }
         public void RegisterTarget(CombatTarget target)
@@ -134,6 +144,7 @@ namespace RiskAI
         {
             if (Paused || Winner >= 0) return;
             if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro"); CountryReinforcements(); }
+            Reinforcements.Tick(delta);
             for (int team = 0; team < PlayerCount; team++)
             {
                 VictoryProgress[team] = Mode == VictoryMode.Conquest && Towns.Count(t => t.State.Owner == team) >= VictoryTarget
@@ -166,27 +177,7 @@ namespace RiskAI
             return soldier;
         }
 
-        void CountryReinforcements()
-        {
-            for(int team=0;team<PlayerCount;team++) for(int country=0;country<MapLayout.Countries.Length;country++)
-            {
-                var config = MapLayout.Countries[country];
-                if (Economy.CountryOwner(country) != team) continue;
-                var cities=Towns.Where(t=>t.State.Country==country && t.State.Owner==team).ToList();
-                int pending = Towns.Where(t => t.State.Owner == team).Sum(t => t.QueueCount);
-                int current = 0; foreach(var unit in Units)if(unit && unit.Team==team && unit.OriginCountry==country)current+=BattleRules.PointValue(unit.Kind);
-                int pointCap=cities.Count*5;
-                int amount=Mathf.Min(config.PerTurn,Mathf.Max(0,pointCap-current)/Mathf.Max(1,BattleRules.PointValue(config.Reinforcement)));
-                amount = Mathf.Min(amount, Mathf.Max(0, BattleRules.PopulationLimit - RecruitmentPopulation(team) - pending));
-                if(cities.Count==0 || amount<=0) continue;
-                for (int i=0; i<amount; i++)
-                {
-                    var point=country<Camps.Count && Camps[country] ? Camps[country].SpawnPoint : cities[0].Rally;
-                    var unit=Spawn(team,config.Reinforcement,point+new Vector3(i%3*1.2f,0,i/3*1.2f),country);
-                    if(unit) unit.MoveTo(cities[0].Rally,true,false);
-                }
-            }
-        }
+        void CountryReinforcements() => Reinforcements.CreditRound();
 
         public static void GiveFormation(IReadOnlyList<Soldier> units, Vector3 point, bool attackMove, bool queue, bool patrol=false)
         {

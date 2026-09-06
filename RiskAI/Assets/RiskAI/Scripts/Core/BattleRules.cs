@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RiskAI.Core
 {
-    public enum UnitKind { Footman, Archer, Guard, Mage, Mortar, Medic }
+    public enum UnitKind { Footman, Archer, Guard, Mage, Mortar, Medic, MarinePrivate, MarineMajor, MarineGeneral }
 
     public static class BattleRules
     {
@@ -17,6 +17,13 @@ namespace RiskAI.Core
         public const float RoundSeconds = 60f;
         public const float VictoryHoldSeconds = 20f;
         public const int BountyDivisor = 4;
+        // `ModesSpawnLimit=5`: a complete country holds five point-value units
+        // per city. In FFA it earns ceil(cityCount / 2) h00B points each turn,
+        // then the source creates one point every 0.5 seconds until that credit
+        // or the country cap is exhausted.
+        public const int CountryReinforcementPointCapPerCity = 5;
+        public const float CountryReinforcementStepSeconds = .5f;
+        public static int CountryReinforcementPointsPerRound(int cityCount) => cityCount < 1 ? 0 : (cityCount + 1) / 2;
 
         public const int TowerCost = 60;
         public const int UpgradeCost = 90;
@@ -27,8 +34,10 @@ namespace RiskAI.Core
         public const float ConstructionSeconds = 7;
         public const float TowerHealth = 550;
         public const float TowerRange = 8.5f;
-        static readonly float[] Training = { 3f, 4f, 5.5f, 6f, 6f, 4f };
-        static readonly string[] Names = { "Espadachín", "Ballestero", "Guardia real", "Mago", "Mortero", "Sanador" }, Roles = { "Primera línea", "Ataque a distancia", "Infantería pesada", "Daño de área", "Área a larga distancia", "Sana aliados · 15 vida/s" }, Keys = { "Q", "W", "D", "F", "R", "C" }, Models = { "Knight", "RogueHooded", "RoyalGuard", "Mage", "Mortar", "Medic" };
+        // No `ubld` override was found for the port marines; their queue times are
+        // local presentation timings, while combat/economy fields are source-backed.
+        static readonly float[] Training = { 3f, 4f, 5.5f, 6f, 6f, 4f, 4f, 5.5f, 6f };
+        static readonly string[] Names = { "Espadach\u00edn", "Ballestero", "Caballero", "Mago", "Mortero", "Sanador", "Marine Private", "Marine Major", "Marine General" }, Roles = { "Primera l\u00ednea", "Ataque a distancia", "Caballer\u00eda pesada", "Da\u00f1o de \u00e1rea", "\u00c1rea a larga distancia", "Sana aliados \u00b7 15 vida/s", "Fusilero de puerto", "Caballer\u00eda de puerto", "Caballer\u00eda veterana de puerto" }, Keys = { "Q", "W", "D", "F", "R", "C", "V", "B", "C" }, Models = { "Knight", "RogueHooded", "RoyalGuard", "Mage", "Mortar", "Medic", "RogueHooded", "RoyalGuard", "RoyalGuard" };
         public static UnitProfile Profile(UnitKind kind)=>ReforgedProfiles.Units[(int)kind];
         public static int Cost(UnitKind kind) => Profile(kind).Cost;
         public static int PointValue(UnitKind kind) => Profile(kind).PointValue;
@@ -40,7 +49,7 @@ namespace RiskAI.Core
         public static float MinimumRange(UnitKind kind)=>kind==UnitKind.Mortar?5:0;
         public static float AttackInterval(UnitKind kind) => Profile(kind).Cooldown;
         public static float Speed(UnitKind kind) => Profile(kind).Speed;
-        public static bool Ranged(UnitKind kind) => kind != UnitKind.Footman && kind != UnitKind.Guard;
+        public static bool Ranged(UnitKind kind) => kind != UnitKind.Footman && kind != UnitKind.Guard && kind != UnitKind.MarineMajor && kind != UnitKind.MarineGeneral;
         // The extracted map does not define this prototype's upgrade unlocks;
         // every source-aligned unit remains available at level I.
         public static int RequiredLevel(UnitKind kind) => 1;
@@ -120,22 +129,18 @@ namespace RiskAI.Core
 
         int CalculateIncome(int team)
         {
-            int income = BattleRules.BaseIncome;
+            // Saran's default Conquest FFA pays every city a player owns. It
+            // does not gate city income on a completed country. The source adds
+            // BasicIncome only when the player owns at least one city.
+            int ownedCities = 0;
+            int income = 0;
             foreach (var town in Towns)
-            {
-                var countryComplete = town.Country < 0 ||
-                    (countryOwners.TryGetValue(town.Country, out var owner) && owner == team);
-                if (town.Owner == team && countryComplete)
+                if (town.Owner == team)
+                {
+                    ownedCities++;
                     income += BattleRules.TownIncome + (town.Level - 1) * BattleRules.UpgradeIncome;
-            }
-            for (int region = 0; region < RegionBonuses.Length; region++)
-            {
-                bool found = false, owned = true;
-                foreach (var town in Towns) if (town.Region == region)
-                { found = true; if (town.Owner != team) owned = false; }
-                if (found && owned) income += RegionBonuses[region];
-            }
-            return income;
+                }
+            return ownedCities > 0 ? income + BattleRules.BaseIncome : 0;
         }
 
         public bool Spend(int team, int amount)

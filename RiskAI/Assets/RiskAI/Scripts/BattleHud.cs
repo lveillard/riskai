@@ -27,13 +27,13 @@ namespace RiskAI
         {
             session = battle; controller = input; cam = camera;
             seedText=session.Seed.ToString();
-            foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind))) portraits[kind] = Resources.Load<Texture2D>("Portraits/" + BattleRules.Model(kind));
+            foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind))) portraits[kind] = Resources.Load<Texture2D>("Portraits/" + (kind==UnitKind.Guard?"MountedKnight":BattleRules.Model(kind)));
             RefreshHudSnapshot();OpenInitialMenu();
         }
         void LateUpdate()
         {
             if (!session || session.Clock == null) return;
-            if (!hudDirty && lastHudTick == session.Clock.TickCount) return;
+            if (!hudDirty && lastHudTick / 2 == session.Clock.TickCount / 2) return;
             RefreshHudSnapshot();
         }
         void RefreshHudSnapshot()
@@ -121,6 +121,7 @@ namespace RiskAI
             for (int team = 0; team < session.PlayerCount; team++) if (session.VictoryProgress[team] > 0)
                 Text(new Rect(width / 2 - 270, 117, 540, 30), VisualFactory.TeamName(team)+" vence en " + Mathf.CeilToInt(BattleRules.VictoryHoldSeconds - session.VictoryProgress[team]) + " s · objetivo " + session.VictoryTarget, RtsSkin.Center);
             if (controller.HelpVisible) Help();
+            if (controller.ScoreboardVisible) Scores();
             if (session.Winner >= 0) Result();
         }
         void Resource(float x, string value, string detail) { Label(x, 7, 280, value, RtsSkin.Title); Label(x, 35, 295, detail, RtsSkin.Tiny); }
@@ -136,16 +137,30 @@ namespace RiskAI
                 var r=new Rect(254+i*125,bottom+148,118,42);if(Button(r,harbor.QueuedKind(i)==ShipKind.Galley?"Fragata":"Transporte"))controller.Feedback(harbor.CancelTraining(i));
                 if(i==0)RtsSkin.Bar(new Rect(r.x,r.yMax+3,r.width,5),harbor.TrainingProgress,RtsSkin.Gold);
             }
-            Label(x,bottom+16,590,"ASTILLERO",RtsSkin.Title);
+            Label(x,bottom+16,590,"ASTILLERO E INFANTERÍA DE MARINA",RtsSkin.Small);
             bool enabled=GUI.enabled;GUI.enabled=harbor.Owner==0&&!session.Paused;
             ShipProfile galley=Harbor.Profile(ShipKind.Galley),transport=Harbor.Profile(ShipKind.Transport);
             if(Button(new Rect(x,bottom+51,220,62),"[Q] "+galley.Name+" · "+galley.Cost+" oro",galley.Health+" vida · "+AttackName(galley.Attack).ToLowerInvariant()+" "+galley.Damage+" · alcance "+galley.Range+" · armadura "+galley.Armor+" · "+galley.TrainSeconds+" s"))controller.BuyShip(ShipKind.Galley);
             if(Button(new Rect(x+231,bottom+51,220,62),"[W] "+transport.Name+" · "+transport.Cost+" oro",transport.Health+" vida · "+transport.Capacity+" soldados · sin ataque · armadura "+transport.Armor+" · "+transport.TrainSeconds+" s"))controller.BuyShip(ShipKind.Transport);
             GUI.enabled=enabled;
-            Label(x,bottom+133,225,"TORRE PERMANENTE",RtsSkin.Small);
-            Label(x,bottom+155,225,"Protege a su guarnición",RtsSkin.Tiny);
-            if(Button(new Rect(x+231,bottom+126,220,44),"[N] Seleccionar flota"))controller.SelectFleet();
-            Label(x,bottom+182,590,"Clic derecho en un muelle: navegar y desembarcar",RtsSkin.Tiny);
+            for(int i=0;i<3;i++)
+                PortLandCard(new Rect(x+i*155,bottom+123,149,64),(UnitKind)((int)UnitKind.MarinePrivate+i),harbor);
+            Label(x,bottom+190,590,"V/B/C: marina · clic derecho: salida terrestre · N: flota",RtsSkin.Tiny);
+            for(int i=0;i<harbor.LandQueueCount;i++)
+            {
+                int index=i;var rect=new Rect(650+i*51,bottom+147,46,40);
+                Portrait(rect,harbor.QueuedLandKind(i),RtsSkin.Gold);
+                if(GUI.Button(rect,GUIContent.none,GUIStyle.none))controller.Feedback(harbor.CancelLandTraining(index));
+                if(i==0)RtsSkin.Bar(new Rect(rect.x,rect.yMax+2,rect.width,4),harbor.LandTrainingProgress,RtsSkin.Gold);
+            }
+        }
+        void PortLandCard(Rect rect,UnitKind kind,Harbor harbor)
+        {
+            bool enabled=GUI.enabled;
+            GUI.enabled=enabled&&harbor.Owner==0&&!session.Paused&&hud.Gold>=BattleRules.Cost(kind)&&harbor.LandQueueCount<5;
+            if(Button(rect,"["+BattleRules.Hotkey(kind)+"] "+BattleRules.Name(kind)+"\n"+BattleRules.Cost(kind)+" oro"))controller.Recruit(kind);
+            GUI.enabled=enabled;
+            if(rect.Contains(MousePoint))tooltip=BattleRules.Name(kind)+" · "+BattleRules.Health(kind)+" vida\n"+BattleRules.DamageRange(kind)+" "+AttackName(BattleRules.Profile(kind).Attack)+" · "+ArmorName(BattleRules.Profile(kind).Defense)+" "+BattleRules.Profile(kind).Armor+" · alcance "+BattleRules.Range(kind);
         }
         void FleetDetails(float x)
         {
@@ -161,9 +176,9 @@ namespace RiskAI
             Label(253,bottom+50,620,Mathf.CeilToInt(ship.Health)+" / "+ship.MaxHealth+" VIDA · "+ship.OrderLabel,RtsSkin.Small);
             RtsSkin.Bar(new Rect(254,bottom+83,255,8),ship.Health/ship.MaxHealth,new Color(.4f,.8f,.4f));
             ShipProfile profile=ship.Profile;
-            Label(253,bottom+105,650,capacity>0?"TROPAS EMBARCADAS · "+cargo+" / "+capacity:profile.Damage+" DAÑO "+AttackName(profile.Attack).ToUpperInvariant()+" · "+profile.Range+" ALCANCE · "+profile.Armor+" ARMADURA",RtsSkin.Small);
-            Label(253,bottom+137,630,"B: embarca tropas junto al muelle. D: desembarca cerca del puerto.",RtsSkin.Small);
-            Label(253,bottom+171,650,"Clic derecho en un puerto: navegar y desembarcar allí.",RtsSkin.Tiny);
+            Label(253,bottom+105,650,capacity>0?"TROPAS EMBARCADAS · "+cargo+" / "+capacity:profile.DamageText+" DAÑO "+AttackName(profile.Attack).ToUpperInvariant()+" · "+profile.Range+" ALCANCE · "+profile.Armor+" ARMADURA",RtsSkin.Small);
+            Label(253,bottom+137,630,"B: embarcar tropas cercanas. D: elige una playa para desembarcar.",RtsSkin.Small);
+            Label(253,bottom+171,650,"Selecciona tropas y haz clic derecho en el transporte para embarcar.",RtsSkin.Tiny);
             if(Button(new Rect(x,bottom+28,190,52),"[M] Navegar"))controller.ArmMove();
             if(Button(new Rect(x+200,bottom+28,190,52),"[A] Atacar"))controller.ArmAttack();
             if(Button(new Rect(x+400,bottom+28,190,52),"[S] Detener"))controller.Stop();
@@ -184,7 +199,7 @@ namespace RiskAI
             Label(253, bottom + 45, 640, owner + "   /   +" + hud.IncomeFor(town) + " ORO POR RONDA", RtsSkin.Small);
             var country = town.State.Country >= 0 && town.State.Country < MapLayout.Countries.Length ? MapLayout.Countries[town.State.Country] : default(MapLayout.Country);
             CountrySnapshot countrySnapshot = town.State.Country >= 0 && town.State.Country < hud.Countries.Length ? hud.Countries[town.State.Country] : null;
-            string countryLine = countrySnapshot != null ? country.Name + "  ·  " + countrySnapshot.Owned + "/" + countrySnapshot.CityCount + "  ·  " + (countrySnapshot.Owner == 0 ? "+" + countrySnapshot.PotentialIncome + " oro/ronda · " + country.PerTurn + " " + BattleRules.Name(country.Reinforcement) + "/60 s (máx " + countrySnapshot.CityCount * 5 + " puntos)" : "Completa el país para cobrar") : "Completa el país para cobrar";
+            string countryLine = countrySnapshot != null ? country.Name + "  ·  " + countrySnapshot.Owned + "/" + countrySnapshot.CityCount + "  ·  " + (countrySnapshot.Owner == 0 ? "+" + countrySnapshot.PotentialIncome + " oro/ronda · " + country.PerTurn + " " + BattleRules.Name(country.Reinforcement) + "/60 s (máx " + countrySnapshot.CityCount * 5 + " puntos)" : "Completa el país para recibir refuerzos") : "Completa el país para recibir refuerzos";
             Label(253, bottom + 73, 680, countryLine, RtsSkin.Small);
             Label(253, bottom + 97, 650, ClaimText(town.State, town.Defender), RtsSkin.Tiny);
             Label(253,bottom+121,640,"TORRE PERMANENTE · protege a su defensor",RtsSkin.Tiny);
@@ -247,7 +262,7 @@ namespace RiskAI
                 ShipProfile profile=ship.Profile;
                 Label(253,bottom+23,590,ship.DisplayName+" · FLOTA ENEMIGA",RtsSkin.Title);
                 Label(253,bottom+61,590,Mathf.CeilToInt(ship.Health)+" / "+profile.Health+" vida · armadura "+profile.Armor,RtsSkin.Small);
-                Label(253,bottom+95,590,ship.Kind==ShipKind.Galley?profile.Damage+" daño normal cada "+profile.Cooldown+" s · alcance "+profile.Range:"Transporte · "+profile.Capacity+" plazas · sin ataque",RtsSkin.Small);return;
+                Label(253,bottom+95,590,ship.Kind==ShipKind.Galley?profile.DamageText+" daño normal cada "+profile.Cooldown+" s · alcance "+profile.Range:"Transporte · "+profile.Capacity+" plazas · sin ataque",RtsSkin.Small);return;
             }
             if(target is DefenseTower tower)
             {
@@ -327,6 +342,7 @@ namespace RiskAI
         {
             if(NavalWorld.Current)foreach(var harbor in NavalWorld.Current.Harbors)
             {
+                if(harbor.IsImportedPort)continue; // Its town already renders the shared post label.
                 bool capturing=harbor.CaptureProgress>0&&harbor.CaptureProgress<1&&harbor.State.Capturing>=0;
                 if(controller.SelectedHarbor!=harbor&&!capturing&&!harbor.State.Contested&&!controller.ShowHealthBars)continue;
                 var hp=cam.WorldToScreenPoint(harbor.Landing+Vector3.up*4.8f)/Scale;float hy=height-hp.y;if(hp.z<=0||hy<69||hy>bottom-20)continue;
@@ -336,10 +352,7 @@ namespace RiskAI
                     RtsSkin.Bar(new Rect(hp.x-65,hy+27,130,7),harbor.CaptureProgress,VisualFactory.TeamColor(harbor.State.Capturing));
                 }
             }
-            Settlement hoveredTown = null;
-            var townRay = cam.ScreenPointToRay(controller.Pointer);
-            foreach (var hit in Physics.RaycastAll(townRay, 250, ~0, QueryTriggerInteraction.Collide))
-            { hoveredTown = hit.collider.GetComponentInParent<Settlement>(); if (hoveredTown) break; }
+            Settlement hoveredTown = controller.OverHud(controller.Pointer)?null:RtsPicking.Town(session,cam,controller.Pointer);
             foreach (var town in session.Towns)
             {
                 bool visible = town.Selected || hoveredTown == town || controller.ShowHealthBars;
@@ -360,7 +373,8 @@ namespace RiskAI
                 if (target is DefenseTower) continue; // Permanent buildings have no destructible health bar.
                 bool selected = target is Soldier soldier && soldier.Selected || target is Ship ship && ship.Selected;
                 if (!target.IsAlive || (!controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth)) continue;
-                var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * (target is DefenseTower || target is Ship ? 4.8f : 1.5f)) / Scale;
+                float healthHeight=target is Soldier person?VisualMetrics.HeightFor(person.Kind)+.15f:4.8f;
+                var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * healthHeight) / Scale;
                 float y = height - p.y; if(p.z<=0||y<66||y>bottom-8)continue;
                 float size = target is DefenseTower || target is Ship ? 44 : 18;
                 RtsSkin.Bar(new Rect(p.x-size/2,y,size,5),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
@@ -435,8 +449,7 @@ namespace RiskAI
             public int IncomeFor(Settlement town)
             {
                 if (!town || town.State.Owner < 0) return 0;
-                if (town.State.Country < 0) return town.PotentialIncome;
-                return town.State.Country < Countries.Length && Countries[town.State.Country].Owner == town.State.Owner ? town.PotentialIncome : 0;
+                return town.PotentialIncome;
             }
             public void Rebuild(BattleSession battle)
             {

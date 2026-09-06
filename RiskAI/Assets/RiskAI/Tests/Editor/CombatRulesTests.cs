@@ -51,6 +51,29 @@ namespace RiskAI.Tests
         }
 
         [Test]
+        public void ExtractedReforgedProfilesUseMapAttackAndDefenseTypes()
+        {
+            var rifleman = ReforgedProfiles.Units[(int)UnitKind.Archer];
+            var knight = ReforgedProfiles.Units[(int)UnitKind.Guard];
+            var mortar = ReforgedProfiles.Units[(int)UnitKind.Mortar];
+            var medic = ReforgedProfiles.Units[(int)UnitKind.Medic];
+            Assert.That(rifleman.Cooldown, Is.EqualTo(1.6f)); Assert.That(rifleman.Defense, Is.EqualTo(ArmorKind.Light));
+            Assert.That(knight.Range, Is.EqualTo(2f)); Assert.That(knight.Cooldown, Is.EqualTo(1.36f));
+            Assert.That(mortar.Defense, Is.EqualTo(ArmorKind.Medium));
+            Assert.That(medic.Attack, Is.EqualTo(AttackKind.Piercing)); Assert.That(medic.Defense, Is.EqualTo(ArmorKind.Light));
+            Assert.That(BattleRules.Name(UnitKind.Guard), Is.EqualTo("Caballero"));
+            Assert.That(BattleRules.Role(UnitKind.Guard), Is.EqualTo("Caballer\u00eda pesada"));
+            var privateMarine = ReforgedProfiles.Units[(int)UnitKind.MarinePrivate];
+            var major = ReforgedProfiles.Units[(int)UnitKind.MarineMajor];
+            var general = ReforgedProfiles.Units[(int)UnitKind.MarineGeneral];
+            Assert.That(privateMarine.MinimumDamage, Is.EqualTo(18)); Assert.That(privateMarine.MaximumDamage, Is.EqualTo(24));
+            Assert.That(major.Health, Is.EqualTo(650)); Assert.That(major.Armor, Is.EqualTo(6));
+            Assert.That(general.Health, Is.EqualTo(800)); Assert.That(general.Cost, Is.EqualTo(10)); Assert.That(general.PointValue, Is.EqualTo(10));
+            Assert.That(BattleRules.Hotkey(UnitKind.MarinePrivate), Is.EqualTo("V"));
+            Assert.That(BattleRules.Ranged(UnitKind.MarinePrivate), Is.True); Assert.That(BattleRules.Ranged(UnitKind.MarineMajor), Is.False);
+        }
+
+        [Test]
         public void MortarUsesSiegeProfileAndCanRecruitWithoutUpgrade()
         {
             Assert.That(BattleRules.Cost(UnitKind.Mortar),Is.EqualTo(3));
