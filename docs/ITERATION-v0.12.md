@@ -30,3 +30,9 @@ Botón derecho distingue pulsación de arrastre con un reconocedor puro: superar
 Seguimos sobre Core sin Unity, simulación 20 Hz, proyectiles independientes de vistas, adquisición espacial, pools y snapshots de HUD de v0.11. No se cambia a ECS. La nueva IA usa IDs de torres para identificar posiciones; el estado de autoridad continúa dentro de la simulación local.
 
 Persisten cortes pendientes: perfiles externos, UI Toolkit, Input Actions completo, mapas/NavMesh horneados, compra/naval por comandos, servidor y 6–12 jugadores, niebla, guardado y habilidades. Los métodos de construcción antiguos permanecen como compatibilidad interna, sin acceso de compra normal; conviene retirarlos al separar datos de asentamientos. NavMesh aún impide afirmar determinismo de replay. No se acreditan plataformas táctiles, Web o Android ni mejoras porcentuales de rendimiento sin medirlas.
+
+## Ajuste posterior: visibilidad de edificios
+
+El bosque reserva espacio para la copa y su proyección desde la cámara alrededor de casas, torres, círculos y despliegues. Los puertos continentales e insulares comparten sus coordenadas con el generador de vegetación, para que el claro exista antes de hornear navegación. También se aplica al arbolado del fondo; no requiere ocultar árboles cada frame.
+
+El HUD deja de dibujar barras vacías por tener una guarnición o enemigos cerca. Las barras de captura requieren progreso real entre 0 y 1; la sucesión inmediata actual no las muestra. Las torres permanentes tampoco enseñan una barra de vida destructible. El círculo conserva su color de propietario y aviso de disputa; los puertos tranquilos muestran su nombre al seleccionarlos o pedir las barras con Alt.

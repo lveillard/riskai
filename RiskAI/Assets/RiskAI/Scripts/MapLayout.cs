@@ -11,6 +11,19 @@ namespace RiskAI
         public static float HalfDepth { get; private set; }
         public static bool IsExpanded { get; private set; }
         public static string MapName => IsExpanded ? "Cuatro Riberas" : "Las Marcas";
+        public static readonly int[] MainlandHarborX = { -58, -32, -7, 20, 43 };
+
+        // Shared by port placement and vegetation, before the ports exist in the scene.
+        public static Vector3 MainlandHarborLanding(int index)
+        {
+            float x = MainlandHarborX[index] * Spacing;
+            return Point(x, Coast(x) - 4);
+        }
+        public static Vector3 IslandHarborLanding(int index)
+        {
+            var island = Islands[index];
+            return Point(island.x * Spacing, (island.y - island.w) * Spacing + 4);
+        }
 
         public readonly struct City
         {

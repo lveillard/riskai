@@ -29,7 +29,8 @@ namespace RiskAI
             var collisionMesh=new Mesh{name="Walkable land excluding water",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32};
             collisionMesh.vertices=vertices;collisionMesh.SetTriangles(walkableTriangles,0);collisionMesh.RecalculateBounds();
             land.AddComponent<MeshCollider>().sharedMesh=collisionMesh;
-            CreateIslands(root);CreateSeabed(root);CreateBackdrop();
+            var clearings = BuildingClearings();
+            CreateIslands(root);CreateSeabed(root);CreateBackdrop(clearings);
             var sea=VisualFactory.Shape(null,PrimitiveType.Cube,"Northern sea",new Vector3(0,-.3f,0),new Vector3(420,.12f,420),Color.white);
             sea.GetComponent<Renderer>().sharedMaterial=Resources.Load<Material>("RiverWater");
             var trees=new GameObject("Pine forests");trees.transform.SetParent(root,false);
@@ -39,9 +40,7 @@ namespace RiskAI
             {
                 float px=(x+(float)random.NextDouble()*1.5f)*MapLayout.Spacing,pz=(z+(float)random.NextDouble()*1.5f)*MapLayout.Spacing;
                 if(!MapLayout.IsLand(px,pz)||TerrainHydrology.DistanceToRiver(px,pz)<4)continue;
-                var point=new Vector3(px,MapLayout.Height(px,pz),pz);bool clear=false;
-                foreach(var city in MapLayout.Towns)if(Vector3.Distance(point,city.Position)<9f){clear=true;break;}
-                if(clear)continue;
+                var point=new Vector3(px,MapLayout.Height(px,pz),pz);
                 float bx=px/MapLayout.Spacing,bz=pz/MapLayout.Spacing;
                 float west=Mathf.Abs(bx-(-10+5*Mathf.Sin(bz*.095f)));
                 float east=Mathf.Abs(bx-(29+6*Mathf.Sin(bz*.12f)));
@@ -56,7 +55,10 @@ namespace RiskAI
                     ||(Mathf.Abs(bz-12)<5&&bx>-21&&bx<6)||(Mathf.Abs(bz-13)<5&&bx>44);
                 if(!edge&&(Mathf.Abs(bz-2)<3.2f||Mathf.Abs(bz-22)<3||rampPass))continue;
                 if(Mathf.Abs(MapLayout.Height(px+1,pz)-point.y)>1||Mathf.Abs(MapLayout.Height(px,pz+1)-point.y)>1)continue;
-                BiomeVegetation.Tree(trees.transform,point,3.6f+(float)random.NextDouble()*2.1f,seed++);
+                float treeHeight=3.6f+(float)random.NextDouble()*2.1f;
+                int treeSeed=seed++;
+                if(ObscuresBuilding(point,treeHeight,clearings))continue;
+                BiomeVegetation.Tree(trees.transform,point,treeHeight,treeSeed);
             }
             StaticBatchingUtility.Combine(trees);
             CliffDetails.Create(root);
@@ -106,7 +108,7 @@ namespace RiskAI
             var go=new GameObject("Sandy sea bed · visual only");go.transform.SetParent(root,false);
             go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
         }
-        static void CreateBackdrop()
+        static void CreateBackdrop(List<Vector4> clearings)
         {
             // Visual continuation beyond the playable rectangle: no artificial board edges.
             // It has no colliders and therefore cannot expand the gameplay NavMesh.
@@ -132,9 +134,45 @@ namespace RiskAI
             {
                 if(Mathf.Abs(x)<MapLayout.HalfWidth&&Mathf.Abs(z)<MapLayout.HalfDepth||z>MapLayout.Coast(x)-1.5f||random.NextDouble()<.4)continue;
                 float px=x+(float)random.NextDouble()*1.8f,pz=z+(float)random.NextDouble()*1.8f;
-                WorldArt.Tree(root.transform,new Vector3(px,MapLayout.Height(px,pz),pz),3.1f+(float)random.NextDouble()*1.5f,(int)(x*17+z*31)&32767,false);
+                var point=new Vector3(px,MapLayout.Height(px,pz),pz);
+                float treeHeight=3.1f+(float)random.NextDouble()*1.5f;
+                if(ObscuresBuilding(point,treeHeight,clearings))continue;
+                WorldArt.Tree(root.transform,point,treeHeight,(int)(x*17+z*31)&32767,false);
             }
             StaticBatchingUtility.Combine(root);
+        }
+        static List<Vector4> BuildingClearings()
+        {
+            var sites = new List<Vector4>();
+            void Add(Vector3 point, float radius) => sites.Add(new Vector4(point.x, point.y, point.z, radius));
+            foreach (var city in MapLayout.Towns)
+            {
+                Add(city.Position, 3f);
+                Add(city.Position + new Vector3(city.Position.x < 0 ? 3.8f : -3.8f, 0, 0), 2f);
+                Add(MapLayout.Point(city.Position.x, city.Position.z - 4.2f), 2.5f);
+                // Keep deployment space clear for either owner, regardless of the random allocation.
+                Add(MapLayout.Point(city.Position.x, city.Position.z - 6), 2.5f);
+                Add(MapLayout.Point(city.Position.x, city.Position.z + 6), 2.5f);
+            }
+            for (int i = 0; i < MapLayout.MainlandHarborX.Length; i++) Add(MapLayout.MainlandHarborLanding(i), 6f);
+            for (int i = 0; i < MapLayout.Islands.Length; i++) Add(MapLayout.IslandHarborLanding(i), 6f);
+            return sites;
+        }
+        static bool ObscuresBuilding(Vector3 tree, float height, List<Vector4> clearings)
+        {
+            // Reserve the canopy, not just the trunk. Project its height along the fixed
+            // RTS viewing angle so foreground trees cannot cover a roof or garrison circle.
+            var forward = new Vector2(.5f, .8660254f); // camera yaw 30 degrees
+            float crownRadius = height * .72f;
+            foreach (var site in clearings)
+            {
+                var delta = new Vector2(site.x - tree.x, site.z - tree.z);
+                float projection = Mathf.Max(0, tree.y + height * 1.1f - site.y) / 1.150368f; // tan(49 degrees)
+                var nearest = forward * Mathf.Clamp(Vector2.Dot(delta, forward), 0, projection);
+                float radius = site.w + crownRadius;
+                if ((delta - nearest).sqrMagnitude < radius * radius) return true;
+            }
+            return false;
         }
     }
 }

@@ -21,7 +21,7 @@ namespace RiskAI
         void Initialize(BattleSession session)
         {
             Session=session;session.Naval=this;Current=this;nextAi=session.AiFirstNavalOffensiveTime;
-            int[] mainland={-58,-32,-7,20,43};
+            int[] mainland=MapLayout.MainlandHarborX;
             var linkedTowns=mainland.Select(x=>Session.Towns.OrderBy(t=>FlatDistance(t.transform.position,new Vector3(x*MapLayout.Spacing,0,MapLayout.Coast(x*MapLayout.Spacing)))).FirstOrDefault()).ToArray();
             // Guarantee a starting port using the authored, well-spaced harbor sites.
             // Extra docks beside neutral towers used to trigger combat before the AI grace period.
@@ -39,9 +39,9 @@ namespace RiskAI
             {
                 float x=mainland[i]*MapLayout.Spacing,z=MapLayout.Coast(x);
                 var linked=linkedTowns[i];
-                AddHarbor(new[]{"Muelle del Oeste","Puerto del Pinar","Puerto del Paso","Dársena del Roble","Muelle del Este"}[i],linked,null,LandPoint(x,z-4),new Vector3(x,-.24f,z+4));
+                AddHarbor(new[]{"Muelle del Oeste","Puerto del Pinar","Puerto del Paso","Dársena del Roble","Muelle del Este"}[i],linked,null,MapLayout.MainlandHarborLanding(i),new Vector3(x,-.24f,z+4));
             }
-            for(int island=0;island<MapLayout.Islands.Length;island++){var c=MapLayout.Islands[island];AddIslandHarbor("Muelle insular "+(island+1),c.x,c.y,c.z,c.w);}
+            for(int island=0;island<MapLayout.Islands.Length;island++)AddIslandHarbor("Muelle insular "+(island+1),island);
             foreach(var harbor in Harbors)if(!harbor.IsIsland)harbor.InitializeGarrison();
             for(int team=0;team<2;team++)
             {
@@ -54,18 +54,18 @@ namespace RiskAI
                 {if(UnityEngine.AI.NavMesh.SamplePosition(port.Landing+new Vector3(i++-1,0,-1),out var hit,5,UnityEngine.AI.NavMesh.AllAreas)){unit.Agent.Warp(hit.position);unit.Stop();}}
             }
         }
-        void AddIslandHarbor(string name,float centerX,float centerZ,float radiusX,float radiusZ)
+        void AddIslandHarbor(string name,int island)
         {
-            float x=centerX*MapLayout.Spacing,z=(centerZ-radiusZ)*MapLayout.Spacing;
+            var site=MapLayout.Islands[island];
+            float x=site.x*MapLayout.Spacing,z=(site.y-site.w)*MapLayout.Spacing;
             var state=new TownState(name,-1,-1,-1);
-            AddHarbor(name,null,state,LandPoint(x,z+4),new Vector3(x,-.24f,z-4));
+            AddHarbor(name,null,state,MapLayout.IslandHarborLanding(island),new Vector3(x,-.24f,z-4));
         }
         void AddHarbor(string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
         {
             var go=new GameObject(name);go.transform.SetParent(transform,false);go.transform.position=berth;
             var harbor=go.AddComponent<Harbor>();harbor.Initialize(this,name,linked,state,landing,berth);Harbors.Add(harbor);
         }
-        static Vector3 LandPoint(float x,float z)=>MapLayout.IsLand(x,z)?MapLayout.Point(x,z):new Vector3(x,MapLayout.Height(x,z),z);
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
         public Ship Spawn(int team,ShipKind kind,Vector3 point)
         {

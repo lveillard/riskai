@@ -40,3 +40,11 @@ Ejemplos sin retoque del ejecutable:
 - Los perfiles propios y los campos todavía heredados de Warcraft están identificados en la [auditoría](RISK-RULES-v0.12.md). No se han reconstruido las tablas completas de TFT 1.21b ni abierto World Editor.
 
 Los siguientes pasos están en [TODO.md](../TODO.md).
+
+## Ajuste de claros y barras
+
+Tras el feedback sobre edificios tapados por árboles y barras vacías, se repitieron las ocho pruebas existentes de `MapVariantTests` y `NavalGameplayTests`: 8 aprobadas, 0 fallidas, 0 omitidas (`TestResults/playmode-v12-clearings.xml`, fin 02:54:47 UTC). Comprueban que el nuevo arbolado conserva rutas, círculos accesibles, refuerzos, cruce del río, desembarco y captura insular; las posiciones de puertos siguen siendo las mismas.
+
+Compilación `RISKAI_BUILD_OK: 195789910 bytes` en `build-v12-clearings.log`. Ambas ejecuciones de captura finalizaron con 13 PNG y `RISKAI_PLAYER_CAPTURE_OK`, sin excepciones ni errores de shader (`player-v12-clearings-expanded.log` y `player-v12-clearings-classic.log`). Se revisaron puertos y ciudades insulares antes ocultos; la captura del puerto seleccionado confirma la ausencia de una barra vacía.
+
+![Puerto y ciudad despejados, con nombre de selección y sin barra de captura inactiva](images/v0.12-harbor-clearing.png)

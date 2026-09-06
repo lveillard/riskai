@@ -318,13 +318,13 @@ namespace RiskAI
         {
             if(NavalWorld.Current)foreach(var harbor in NavalWorld.Current.Harbors)
             {
-                if(controller.SelectedHarbor!=harbor&&harbor.CaptureProgress<=0&&!harbor.State.Contested&&!harbor.Defender&&!controller.ShowHealthBars)continue;
+                bool capturing=harbor.CaptureProgress>0&&harbor.CaptureProgress<1&&harbor.State.Capturing>=0;
+                if(controller.SelectedHarbor!=harbor&&!capturing&&!harbor.State.Contested&&!controller.ShowHealthBars)continue;
                 var hp=cam.WorldToScreenPoint(harbor.Landing+Vector3.up*4.8f)/Scale;float hy=height-hp.y;if(hp.z<=0||hy<69||hy>bottom-20)continue;
                 var hr=new Rect(hp.x-92,hy,184,24);RtsSkin.Fill(hr,new Color(.025f,.035f,.025f,.86f));Text(hr,harbor.DisplayName,RtsSkin.Center);
-                if(harbor.CaptureProgress>0||harbor.State.Contested||harbor.Defender)
+                if(capturing)
                 {
-                    RtsSkin.Bar(new Rect(hp.x-65,hy+27,130,7),harbor.CaptureProgress,harbor.State.Contested?RtsSkin.Gold:VisualFactory.TeamColor(harbor.State.Capturing));
-                    if(harbor.State.Contested)Label(hp.x-65,hy+34,150,"DEFENSOR EN COMBATE",RtsSkin.Tiny);
+                    RtsSkin.Bar(new Rect(hp.x-65,hy+27,130,7),harbor.CaptureProgress,VisualFactory.TeamColor(harbor.State.Capturing));
                 }
             }
             Settlement hoveredTown = null;
@@ -339,14 +339,16 @@ namespace RiskAI
                 if (!visible) continue;
                 var r = new Rect(p.x - 88, y - 3, 176, 25); RtsSkin.Fill(r, new Color(.025f,.035f,.025f,.86f));
                 Text(r, town.DisplayName, new GUIStyle(RtsSkin.Center){fontSize=12,normal={textColor=Color.Lerp(VisualFactory.TeamColor(town.State.Owner),Color.white,.55f)}});
-                if (town.State.Capture > 0 || town.State.Contested)
+                // Succession is immediate; nearby enemies or a bound guard are not a progress bar.
+                if (town.State.Capture > 0 && town.State.Capture < 1 && town.State.Capturing >= 0)
                 {
-                    RtsSkin.Bar(new Rect(p.x - 65, y + 25, 130, 7), town.State.Capture, town.State.Contested ? RtsSkin.Gold : VisualFactory.TeamColor(town.State.Capturing));
-                    Label(p.x-65,y+33,170,town.State.Contested?"DEFENSOR EN COMBATE":"CONVERSIÓN "+Mathf.RoundToInt(town.State.Capture*100)+"%",RtsSkin.Tiny);
+                    RtsSkin.Bar(new Rect(p.x - 65, y + 25, 130, 7), town.State.Capture, VisualFactory.TeamColor(town.State.Capturing));
+                    Label(p.x-65,y+33,170,"CONVERSIÓN "+Mathf.RoundToInt(town.State.Capture*100)+"%",RtsSkin.Tiny);
                 }
             }
             foreach (var target in session.Targets)
             {
+                if (target is DefenseTower) continue; // Permanent buildings have no destructible health bar.
                 bool selected = target is Soldier soldier && soldier.Selected || target is Ship ship && ship.Selected;
                 if (!target.IsAlive || (!controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth)) continue;
                 var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * (target is DefenseTower || target is Ship ? 4.8f : 1.5f)) / Scale;
