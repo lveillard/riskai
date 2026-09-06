@@ -80,7 +80,7 @@ namespace RiskAI
         {
             string error = CanManage(team); if (error != null) return error;
             if (index < 0 || index >= queue.Count) return "Este encargo ya no está en la cola.";
-            var item = queue[index]; session.Economy.Gold[item.Team] += BattleRules.Cost(item.Kind); queue.RemoveAt(index);
+            var item = queue[index]; session.Economy.Refund(item.Team, BattleRules.Cost(item.Kind)); queue.RemoveAt(index);
             return null;
         }
         public string BuildTower(int team = 0)
@@ -115,7 +115,7 @@ namespace RiskAI
             if (assigned == null) assigned = new HashSet<Soldier>();
             int team = State.Owner >= 0 ? State.Owner : 2;
             var candidate = soldiers == null ? null : soldiers
-                .Where(unit => unit && !assigned.Contains(unit) && unit.IsAlive && unit.isActiveAndEnabled && unit.Team == team &&
+                .Where(unit => unit && !unit.IsGarrison && !assigned.Contains(unit) && unit.IsAlive && unit.isActiveAndEnabled && unit.Team == team &&
                                unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh)
                 .Where(unit => Vector3.SqrMagnitude(unit.transform.position - transform.position) <= 12f * 12f)
                 .OrderBy(unit => Vector3.SqrMagnitude(unit.transform.position - ClaimPoint))
@@ -130,11 +130,11 @@ namespace RiskAI
 
         void Captured()
         {
-            foreach (var item in queue) session.Economy.Gold[item.Team] += BattleRules.Cost(item.Kind);
+            foreach (var item in queue) session.Economy.Refund(item.Team, BattleRules.Cost(item.Kind));
             queue.Clear();
             if (Building)
             {
-                session.Economy.Gold[projectOwner] += project == BuildingProject.Tower ? BattleRules.TowerCost : BattleRules.UpgradeCost;
+                session.Economy.Refund(projectOwner, project == BuildingProject.Tower ? BattleRules.TowerCost : BattleRules.UpgradeCost);
                 project = BuildingProject.None; Defense.CancelBuild();
             }
             flag.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamColor(State.Owner)); Defense.ChangeOwner();
@@ -147,18 +147,21 @@ namespace RiskAI
         {
             rallyRing.enabled = Selected && State.Owner == 0;
             Ring.enabled = true;
-            Ring.startColor = Ring.endColor = Selected ? new Color(.5f,1,.55f) : VisualFactory.TeamColor(State.Owner)*.8f;
-            Ring.widthMultiplier = Selected ? .06f : .025f;
+            Ring.startColor = Ring.endColor = State.Contested ? new Color(1,.7f,.15f) : Color.Lerp(VisualFactory.TeamColor(State.Owner),Color.white,State.Capture*.65f);
+            Ring.widthMultiplier = Selected ? .10f : .065f;
+        }
+        public void SimTick(float delta)
+        {
             if (session.Paused || session.Winner >= 0) return;
             int previousOwner = State.Owner;
             Soldier previousDefender = Defender;
-            int nextOwner = ClaimZone.Step(session.Units, State.Owner);
-            State.Capture = 0; State.Capturing = -1; State.Contested = ClaimZone.Contested;
+            int nextOwner = ClaimZone.Step(session, State.Owner, delta);
+            State.Capture = ClaimZone.Progress; State.Capturing = ClaimZone.CapturingTeam; State.Contested = ClaimZone.Contested;
             if (Defender && Defender != previousDefender) Defender.HoldPosition();
             if (nextOwner != previousOwner) { State.Owner = nextOwner; Captured(); }
             if (Building)
             {
-                projectRemaining -= Time.deltaTime;
+                projectRemaining -= delta;
                 if (project == BuildingProject.Tower) Defense.SetBuildProgress(ProjectProgress);
                 if (projectRemaining <= 0)
                 {
@@ -169,7 +172,7 @@ namespace RiskAI
                 }
             }
             if (queue.Count == 0) return;
-            var first = queue[0]; first.Remaining -= Time.deltaTime;
+            var first = queue[0]; first.Remaining -= delta;
             if (first.Remaining <= 0)
             {
                 Vector3 spawn = transform.position + new Vector3(0, 0, State.Owner == 1 ? 4 : -4);

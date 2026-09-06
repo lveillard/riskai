@@ -105,14 +105,19 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator LiveHarborTowerKeepsItsTeamWhenLinkedTownChangesOwner()
+        public IEnumerator MainlandHarborOwnStateAndTowerIgnoreLinkedTownOwnerChanges()
         {
             var harbor = naval.Harbors.First(item => item.Owner == 0 && item.LinkedTown);
             Assert.That(harbor.Defense.IsAlive, Is.True);
+            Assert.That(harbor.State, Is.Not.SameAs(harbor.LinkedTown.State));
+            Assert.That(harbor.ClaimZone, Is.Not.Null);
+            int owner = harbor.Owner;
             harbor.LinkedTown.State.Owner = 1;
             yield return null;
-            Assert.That(harbor.Owner, Is.EqualTo(1));
-            Assert.That(harbor.Defense.Team, Is.EqualTo(0));
+            Assert.That(harbor.Owner, Is.EqualTo(owner));
+            Assert.That(harbor.State.Owner, Is.EqualTo(owner));
+            Assert.That(harbor.Defense.HostOwner, Is.EqualTo(owner));
+            Assert.That(harbor.Defense.Team, Is.EqualTo(owner));
         }
 
         [UnityTearDown]

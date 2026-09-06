@@ -19,22 +19,24 @@ namespace RiskAI
         Soldier self;
         BattleSession session;
         float nextCastTime;
+        readonly System.Collections.Generic.List<CombatTarget> nearby = new System.Collections.Generic.List<CombatTarget>(32);
 
         /// <summary>Initializes the support behavior after the owning Soldier is ready.</summary>
         public void Initialize(Soldier owner, BattleSession battle)
         {
             self = owner;
             session = battle;
-            nextCastTime = Time.time + CastInterval;
+            nextCastTime = session.BattleTime + CastInterval;
+            CastCount=0;TotalHealing=0;
         }
 
-        void Update()
+        public void SimTick(float delta)
         {
             if (!self || self.Kind != Core.UnitKind.Medic || !self.IsAlive || !self.isActiveAndEnabled ||
-                !session || session.Paused || session.Winner >= 0 || Time.time < nextCastTime)
+                !session || session.Paused || session.Winner >= 0 || session.BattleTime < nextCastTime)
                 return;
 
-            nextCastTime = Time.time + CastInterval;
+            nextCastTime = session.BattleTime + CastInterval;
             var target = FindMostInjuredAlly();
             if (!target) return;
 
@@ -52,8 +54,10 @@ namespace RiskAI
             float greatestDeficit = 0;
             Vector3 origin = self.transform.position;
 
-            foreach (var candidate in session.Units)
+            session.Spatial.Query(origin,HealRadius,nearby);
+            foreach (var entity in nearby)
             {
+                var candidate=entity as Soldier;
                 if (!candidate || candidate.Team != self.Team || !candidate.IsAlive || !candidate.isActiveAndEnabled)
                     continue;
                 if (!candidate.Agent || !candidate.Agent.enabled || !candidate.Agent.isOnNavMesh)

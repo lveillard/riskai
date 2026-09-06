@@ -1,12 +1,116 @@
 using System.Collections.Generic;
 using RiskAI.Core;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace RiskAI
 {
     public static class VisualFactory
     {
         static readonly Dictionary<Color, Material> Materials = new Dictionary<Color, Material>();
+        const int MaxProjectileViews = 128;
+        const int MaxImpactViews = 192;
+        static Transform fxRoot;
+        static ProjectilePool projectilePool;
+        static ImpactPool impactPool;
+        static Material ringMaterial;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetRuntimeState()
+        {
+            Materials.Clear();
+            fxRoot = null;
+            projectilePool = null;
+            impactPool = null;
+            ringMaterial = null;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void InstallSceneHooks()
+        {
+            SceneManager.sceneUnloaded -= OnSceneUnloaded;
+            SceneManager.sceneUnloaded += OnSceneUnloaded;
+        }
+
+        static void OnSceneUnloaded(Scene scene)
+        {
+            // Pools contain Unity references, so invalidate them as soon as their owning
+            // scene goes away. The next effect lazily creates a fresh scene-local root.
+            if (!fxRoot || fxRoot.gameObject.scene == scene)
+            {
+                fxRoot = null;
+                projectilePool = null;
+                impactPool = null;
+                ringMaterial = null;
+            }
+        }
+
+        public static int ProjectilePoolCreatedCount => projectilePool == null ? 0 : projectilePool.CreatedCount;
+        public static int ImpactPoolCreatedCount => impactPool == null ? 0 : impactPool.CreatedCount;
+        public static int ActiveProjectileViewCount => projectilePool == null ? 0 : projectilePool.ActiveCount;
+        public static int ActiveImpactViewCount => impactPool == null ? 0 : impactPool.ActiveCount;
+
+        static Transform FxRoot()
+        {
+            // A scene transition destroys this root. Dropping the old pools here also drops
+            // references to destroyed Unity objects before the next effect is rented.
+            if (!fxRoot)
+            {
+                var root = new GameObject("RiskAI visual FX");
+                root.hideFlags = HideFlags.DontSave;
+                fxRoot = root.transform;
+                projectilePool = new ProjectilePool(MaxProjectileViews);
+                impactPool = new ImpactPool(MaxImpactViews);
+            }
+            return fxRoot;
+        }
+
+        static GameObject CreateFxPrimitive(PrimitiveType type, string name)
+        {
+            var go = GameObject.CreatePrimitive(type);
+            go.name = name;
+            go.transform.SetParent(FxRoot(), false);
+            var collider = go.GetComponent<Collider>();
+            if (collider) collider.enabled = false;
+            var renderer = go.GetComponent<Renderer>();
+            if (renderer) renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            go.SetActive(false);
+            return go;
+        }
+
+        internal static void ConfigureProjectile(ArrowFlight flight, AttackKind attack)
+        {
+            var renderer = flight.GetComponent<Renderer>();
+            if (!renderer) return;
+            bool magic = attack == AttackKind.Magic;
+            bool mortar = attack == AttackKind.Siege;
+            renderer.sharedMaterial = Mat(magic ? new Color(.48f, .66f, 1f) : mortar ? new Color(.72f, .68f, .54f) : new Color(.97f, .84f, .45f));
+            flight.transform.localScale = magic ? Vector3.one * .2f : mortar ? Vector3.one * .16f : new Vector3(.04f, .04f, .5f);
+        }
+
+        internal static void Release(ArrowFlight flight)
+        {
+            if (!flight) return;
+            if (!fxRoot || projectilePool == null) FxRoot();
+            projectilePool.Return(flight);
+        }
+
+        internal static void Release(ImpactPulse pulse)
+        {
+            if (!pulse) return;
+            if (!fxRoot || impactPool == null) FxRoot();
+            impactPool.Return(pulse);
+        }
+
+        internal static void Forget(ArrowFlight flight)
+        {
+            if (projectilePool != null) projectilePool.Forget(flight);
+        }
+
+        internal static void Forget(ImpactPulse pulse)
+        {
+            if (impactPool != null) impactPool.Forget(pulse);
+        }
         public static Color TeamColor(int team) => team == 0 ? new Color(.17f,.55f,.95f) : team == 1 ? new Color(.85f,.22f,.19f) : new Color(.74f,.65f,.43f);
         public static Material Mat(Color color)
         {
@@ -27,7 +131,9 @@ namespace RiskAI
             var go = new GameObject("Selection ring"); go.transform.SetParent(parent, false);
             var line = go.AddComponent<LineRenderer>(); line.useWorldSpace = false; line.loop = true; line.positionCount = 64;
             var template = Resources.Load<Material>("RiskAIRing");
-            line.sharedMaterial = template ? template : new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Sprites/Default"));
+            if (!ringMaterial)
+                ringMaterial = template ? template : new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Sprites/Default"));
+            line.sharedMaterial = ringMaterial;
             line.startColor = line.endColor = color; line.widthMultiplier = width;
             for(int i=0;i<64;i++) { float angle=i*Mathf.PI*2/64; line.SetPosition(i,new Vector3(Mathf.Cos(angle)*radius,.09f,Mathf.Sin(angle)*radius)); }
             return line;
@@ -122,12 +228,10 @@ namespace RiskAI
         }
         public static void Arrow(Vector3 from, Vector3 to, CombatTarget target=null, float damage=0, int team=0, CombatTarget source=null, AttackKind attack=AttackKind.Piercing)
         {
-            bool magic=attack==AttackKind.Magic,mortar=attack==AttackKind.Siege;
-            var color=magic?new Color(.48f,.66f,1):mortar?new Color(.72f,.68f,.54f):new Color(.97f,.84f,.45f);
-            var go=Shape(null,magic||mortar?PrimitiveType.Sphere:PrimitiveType.Cube,magic?"Arcane bolt":mortar?"Mortar shell":"Arrow",from,magic?Vector3.one*.2f:mortar?Vector3.one*.16f:new Vector3(.04f,.04f,.5f),color);
-            go.GetComponent<Renderer>().shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
-            Impact(from,color,.16f);
-            go.AddComponent<ArrowFlight>().Init(from,to,target,damage,team,source,attack);
+            // CombatWorld owns projectile state and damage. This compatibility entry point
+            // only forwards the request so legacy callers keep using the simulation API.
+            var session = BattleSession.Current;
+            if (session) session.Combat.FireProjectile(from, to, target, damage, team, source, attack);
         }
         public static void Arrow(Vector3 from, Vector3 to, CombatTarget target, float damage, int team, CombatTarget source, bool magic)
         {
@@ -135,48 +239,270 @@ namespace RiskAI
         }
         public static void Impact(Vector3 point, Color color, float size)
         {
-            var go=Shape(null,PrimitiveType.Sphere,"Impact",point,Vector3.one*size,color);
-            go.GetComponent<Renderer>().shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
-            go.AddComponent<ImpactPulse>();
+            if (!fxRoot || impactPool == null) FxRoot();
+            var pulse = impactPool.Rent();
+            if (pulse) pulse.Init(BattleSession.Current, point, color, size);
+        }
+
+        public static void ProjectileView(BattleSession session, int projectileId, Vector3 from, Vector3 to, float duration, AttackKind attack)
+        {
+            if (!session) return;
+            if (!fxRoot || projectilePool == null) FxRoot();
+            var view = projectilePool.Rent();
+            if (view) view.Init(session, projectileId, from, to, duration, attack);
+        }
+
+        sealed class ProjectilePool
+        {
+            readonly int capacity;
+            readonly Stack<ArrowFlight> available = new Stack<ArrowFlight>();
+            readonly HashSet<ArrowFlight> allocated = new HashSet<ArrowFlight>();
+            int created;
+            int active;
+
+            public ProjectilePool(int max) { capacity = max; }
+            public int CreatedCount => created;
+            public int ActiveCount => active;
+
+            public ArrowFlight Rent()
+            {
+                while (available.Count > 0)
+                {
+                    var view = available.Pop();
+                    if (view)
+                    {
+                        view.MarkRented();
+                        active++;
+                        return view;
+                    }
+                }
+                if (created >= capacity) return null;
+                created++;
+                var go = CreateFxPrimitive(PrimitiveType.Cube, "Projectile view");
+                var flight = go.AddComponent<ArrowFlight>();
+                flight.MarkPoolOwned();
+                allocated.Add(flight);
+                flight.MarkRented();
+                active++;
+                return flight;
+            }
+
+            public void Return(ArrowFlight view)
+            {
+                if (!view || view.IsPooled) return;
+                if (!view.PoolOwned)
+                {
+                    view.PrepareForPool();
+                    Object.Destroy(view.gameObject);
+                    return;
+                }
+                active = Mathf.Max(0, active - 1);
+                view.PrepareForPool();
+                available.Push(view);
+            }
+
+            public void Forget(ArrowFlight view)
+            {
+                if (!allocated.Remove(view)) return;
+                created = Mathf.Max(0, created - 1);
+                if (!view.IsPooled) active = Mathf.Max(0, active - 1);
+            }
+        }
+
+        sealed class ImpactPool
+        {
+            readonly int capacity;
+            readonly Stack<ImpactPulse> available = new Stack<ImpactPulse>();
+            readonly HashSet<ImpactPulse> allocated = new HashSet<ImpactPulse>();
+            int created;
+            int active;
+
+            public ImpactPool(int max) { capacity = max; }
+            public int CreatedCount => created;
+            public int ActiveCount => active;
+
+            public ImpactPulse Rent()
+            {
+                while (available.Count > 0)
+                {
+                    var pulse = available.Pop();
+                    if (pulse)
+                    {
+                        pulse.MarkRented();
+                        active++;
+                        return pulse;
+                    }
+                }
+                if (created >= capacity) return null;
+                created++;
+                var go = CreateFxPrimitive(PrimitiveType.Sphere, "Impact view");
+                var pulseView = go.AddComponent<ImpactPulse>();
+                allocated.Add(pulseView);
+                pulseView.MarkRented();
+                active++;
+                return pulseView;
+            }
+
+            public void Return(ImpactPulse pulse)
+            {
+                if (!pulse || pulse.IsPooled) return;
+                active = Mathf.Max(0, active - 1);
+                pulse.PrepareForPool();
+                available.Push(pulse);
+            }
+
+            public void Forget(ImpactPulse pulse)
+            {
+                if (!allocated.Remove(pulse)) return;
+                created = Mathf.Max(0, created - 1);
+                if (!pulse.IsPooled) active = Mathf.Max(0, active - 1);
+            }
         }
     }
     public sealed class ArrowFlight : MonoBehaviour
     {
-        Vector3 from,to; float elapsed,damage,duration;int team;CombatTarget target,source;AttackKind attack;bool impacted;
+        BattleSession session;
+        int projectileId = -1;
+        Vector3 from, to;
+        float elapsed, duration;
+        AttackKind attack;
+        bool legacy;
+        bool pooled;
+        bool poolOwned;
+        AttackKind configuredAttack;
+
+        internal bool IsPooled => pooled;
+        internal bool PoolOwned => poolOwned;
+        internal void MarkRented() { pooled = false; }
+        internal void MarkPoolOwned() { poolOwned = true; }
+        internal void PrepareForPool()
+        {
+            if (pooled) return;
+            pooled = true;
+            session = null;
+            projectileId = -1;
+            legacy = false;
+            gameObject.SetActive(false);
+        }
+
+        internal void Init(BattleSession owner, int id, Vector3 a, Vector3 b, float travelDuration, AttackKind kind)
+        {
+            session = owner;
+            projectileId = id;
+            from = a;
+            to = b;
+            duration = Mathf.Max(.01f, travelDuration);
+            elapsed = 0;
+            attack = kind;
+            configuredAttack = kind;
+            legacy = false;
+            pooled = false;
+            VisualFactory.ConfigureProjectile(this, attack);
+            gameObject.SetActive(true);
+            transform.position = from;
+            var direction = to - from;
+            if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);
+        }
+
         public void Init(Vector3 a,Vector3 b,CombatTarget victim,float hit,int attacker,CombatTarget shooter,bool arcane)
         { Init(a,b,victim,hit,attacker,shooter,arcane?AttackKind.Magic:AttackKind.Piercing); }
         public void Init(Vector3 a,Vector3 b,CombatTarget victim,float hit,int attacker,CombatTarget shooter,AttackKind kind)
-        { from=a;to=b;target=victim;damage=hit;team=attacker;source=shooter;attack=kind;duration=Mathf.Clamp(Vector3.Distance(a,b)/25,.15f,.6f);transform.rotation=Quaternion.LookRotation(b-a); }
+        {
+            // Kept for old callers and tests. Legacy initialization is presentation-only;
+            // damage and target references are deliberately ignored.
+            session = null;
+            projectileId = -1;
+            from = a;
+            to = b;
+            duration = Mathf.Clamp(Vector3.Distance(a, b) / 25f, .15f, .6f);
+            elapsed = 0;
+            attack = kind;
+            configuredAttack = kind;
+            legacy = true;
+            pooled = false;
+            VisualFactory.ConfigureProjectile(this, attack);
+            gameObject.SetActive(true);
+            transform.position = from;
+            var direction = to - from;
+            if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);
+        }
+
         void Update()
         {
-            elapsed+=Time.deltaTime;float t=elapsed/duration;if(target)to=target.AimPoint;
-            float arc=attack==AttackKind.Siege?2f:.5f;
-            transform.position=Vector3.Lerp(from,to,t)+Vector3.up*Mathf.Sin(t*Mathf.PI)*arc;
-            if(t>=1&&!impacted)
+            if (session)
             {
-                impacted=true;
-                if(target&&target.IsAlive)target.ReceiveAttack(damage,attack,team,source);
-                if(attack==AttackKind.Magic&&BattleSession.Current)
+                if (session.Paused || session.Winner >= 0) return;
+                if (!session.Combat.TryGetProjectile(projectileId, out var state))
                 {
-                    foreach(var other in BattleSession.Current.Units.ToArray())
-                        if(other&&other!=target&&other.Team!=team&&Vector3.Distance(other.AimPoint,to)<2.4f)other.ReceiveAttack(damage*.5f,attack,team,source);
-                    VisualFactory.Impact(to,new Color(.55f,.7f,1),.8f);
+                    VisualFactory.Release(this);
+                    return;
                 }
-                else if(attack==AttackKind.Siege&&BattleSession.Current)
+                from = state.From;
+                to = state.To;
+                attack = state.Attack;
+                if (attack != configuredAttack)
                 {
-                    foreach(var other in BattleSession.Current.Targets.ToArray())
-                        if(other&&other!=target&&other.Team!=team&&Vector3.Distance(other.AimPoint,to)<1.5f)other.ReceiveAttack(damage*.35f,attack,team,source);
-                    VisualFactory.Impact(to,new Color(.78f,.62f,.32f),.75f);
+                    configuredAttack = attack;
+                    VisualFactory.ConfigureProjectile(this, attack);
                 }
-                else VisualFactory.Impact(to,new Color(1,.72f,.35f),.32f);
-                Destroy(gameObject);
+                SetPosition(state.Progress);
+                return;
             }
+
+            if (!legacy) { VisualFactory.Release(this); return; }
+            elapsed += Time.unscaledDeltaTime;
+            SetPosition(elapsed / duration);
+            if (elapsed >= duration) VisualFactory.Release(this);
+        }
+
+        void OnDestroy() { VisualFactory.Forget(this); }
+
+        void SetPosition(float progress)
+        {
+            float t = Mathf.Clamp01(progress);
+            float arc = attack == AttackKind.Siege ? 2f : .5f;
+            transform.position = Vector3.Lerp(from, to, t) + Vector3.up * Mathf.Sin(t * Mathf.PI) * arc;
+            var direction = to - from;
+            if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);
         }
     }
     public sealed class ImpactPulse : MonoBehaviour
     {
-        float remaining=.22f;
-        void Update() { remaining-=Time.deltaTime;transform.localScale*=Mathf.Exp(-Time.deltaTime*6);if(remaining<=0)Destroy(gameObject); }
+        BattleSession session;
+        float remaining;
+        bool pooled;
+        internal bool IsPooled => pooled;
+        internal void MarkRented() { pooled = false; }
+        internal void PrepareForPool()
+        {
+            if (pooled) return;
+            pooled = true;
+            session = null;
+            gameObject.SetActive(false);
+        }
+
+        internal void Init(BattleSession owner, Vector3 point, Color color, float size)
+        {
+            session = owner;
+            remaining = .22f;
+            transform.position = point;
+            transform.localScale = Vector3.one * size;
+            var renderer = GetComponent<Renderer>();
+            if (renderer) renderer.sharedMaterial = VisualFactory.Mat(color);
+            pooled = false;
+            gameObject.SetActive(true);
+        }
+
+        void Update()
+        {
+            if (session && (session.Paused || session.Winner >= 0)) return;
+            float delta = Time.unscaledDeltaTime;
+            remaining -= delta;
+            transform.localScale *= Mathf.Exp(-delta * 6f);
+            if (remaining <= 0) VisualFactory.Release(this);
+        }
+
+        void OnDestroy() { VisualFactory.Forget(this); }
     }
 }
 

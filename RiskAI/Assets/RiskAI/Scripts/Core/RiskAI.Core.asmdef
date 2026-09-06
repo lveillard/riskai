@@ -1,0 +1,7 @@
+{
+  "name": "RiskAI.Core",
+  "rootNamespace": "RiskAI.Core",
+  "references": [],
+  "noEngineReferences": true,
+  "autoReferenced": true
+}

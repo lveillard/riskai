@@ -1,0 +1,14 @@
+{
+  "name": "RiskAI.Editor",
+  "rootNamespace": "RiskAI.Editor",
+  "references": [
+    "RiskAI.Core",
+    "RiskAI.Runtime",
+    "Unity.RenderPipelines.Universal.Runtime",
+    "Unity.RenderPipelines.Core.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false
+}

@@ -19,7 +19,7 @@ namespace RiskAI
         {
             Application.targetFrameRate=120;WorldArt.ResetRoads();Shader.SetGlobalFloat("_RiskMapScale",MapLayout.Spacing);
             UnityEngine.InputSystem.InputSystem.settings.scrollDeltaBehavior=UnityEngine.InputSystem.InputSettings.ScrollDeltaBehavior.UniformAcrossAllPlatforms;
-            var session=gameObject.AddComponent<BattleSession>();var owners=session.StartingOwners();var capitals=new int[]{-1,-1};
+            var session=gameObject.AddComponent<BattleSession>();session.Initialize();var owners=session.StartingOwners();var capitals=new int[]{-1,-1};
             for(int i=0;i<owners.Length;i++)if(owners[i]>=0 && (capitals[owners[i]]<0 || MapLayout.Towns[i].Capital))capitals[owners[i]]=i;
             var terrain=new GameObject("Battlefield · NavMesh geometry");
             StrategicTerrain.Create(terrain.transform);

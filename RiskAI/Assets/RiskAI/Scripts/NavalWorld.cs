@@ -20,7 +20,7 @@ namespace RiskAI
         }
         void Initialize(BattleSession session)
         {
-            Session=session;Current=this;nextAi=session.AiFirstNavalOffensiveTime;
+            Session=session;session.Naval=this;Current=this;nextAi=session.AiFirstNavalOffensiveTime;
             int[] mainland={-58,-32,-7,20,43};
             var linkedTowns=mainland.Select(x=>Session.Towns.OrderBy(t=>FlatDistance(t.transform.position,new Vector3(x*MapLayout.Spacing,0,MapLayout.Coast(x*MapLayout.Spacing)))).FirstOrDefault()).ToArray();
             // Guarantee a starting port using the authored, well-spaced harbor sites.
@@ -43,6 +43,7 @@ namespace RiskAI
             }
             AddIslandHarbor("Isla del Norte",-47,53,12,8);
             AddIslandHarbor("Isla del Sur",-8,69,13,9);
+            foreach(var harbor in Harbors)if(!harbor.IsIsland)harbor.InitializeGarrison();
             for(int team=0;team<2;team++)
             {
                 var port=Harbors.FirstOrDefault(h=>h.Owner==team);
@@ -50,7 +51,7 @@ namespace RiskAI
                 Spawn(team,ShipKind.Transport,port.Berth);
                 var outward=port.Berth-port.Landing;outward.y=0;
                 if(SeaNavigation.TryNearestOcean(port.Berth+outward.normalized*5+Vector3.right*4,6,out var sea))Spawn(team,ShipKind.Galley,sea);
-                int i=0;foreach(var unit in session.Units.Where(u=>u.Team==team&&!session.Towns.Any(t=>t.Defender==u)).OrderBy(u=>FlatDistance(u.transform.position,port.Landing)).Take(3))
+                int i=0;foreach(var unit in session.Units.Where(u=>u.Team==team&&!u.IsGarrison).OrderBy(u=>FlatDistance(u.transform.position,port.Landing)).Take(3))
                 {if(UnityEngine.AI.NavMesh.SamplePosition(port.Landing+new Vector3(i++-1,0,-1),out var hit,5,UnityEngine.AI.NavMesh.AllAreas)){unit.Agent.Warp(hit.position);unit.Stop();}}
             }
         }
@@ -71,7 +72,7 @@ namespace RiskAI
         {
             if(!SeaNavigation.HasClearance(point))return null;
             var go=new GameObject(kind==ShipKind.Galley?"Galera":"Transporte");go.transform.SetParent(transform,false);go.transform.position=new Vector3(point.x,-.24f,point.z);
-            var ship=go.AddComponent<Ship>();ship.Initialize(this,team,kind);Ships.Add(ship);Session.Targets.Add(ship);return ship;
+            var ship=go.AddComponent<Ship>();ship.Initialize(this,team,kind);Ships.Add(ship);Session.RegisterTarget(ship);return ship;
         }
         public Harbor NearestHarbor(Vector3 point,float radius=float.MaxValue)
         {
@@ -84,7 +85,7 @@ namespace RiskAI
             int count=0;foreach(var harbor in Harbors)count+=harbor.PendingCount(team);return count;
         }
         public void Message(string message){if(Session)Session.Message(message);}
-        void Update()
+        public void SimTick(float delta)
         {
             if(!Session||Session.Paused||Session.Winner>=0||!Session.AiEnabled||Session.BattleTime<nextAi)return;nextAi=Session.BattleTime+18;
             foreach(var ship in Ships)if(ship&&ship.Team==1&&ship.Kind==ShipKind.Galley&&!ship.CurrentTarget)

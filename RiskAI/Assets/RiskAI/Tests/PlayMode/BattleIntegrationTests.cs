@@ -108,12 +108,14 @@ namespace RiskAI.Tests
         }
         [UnityTest] public IEnumerator AttackMoveResumesAfterKillingItsTarget()
         {
-            var archer=battle.Units.First(u=>u.Team==0&&u.Kind==UnitKind.Archer);
-            var enemy=battle.Units.First(u=>u.Team==1&&u.Kind==UnitKind.Footman);
+            var archer=battle.Units.First(u=>u.Team==0&&u.Kind==UnitKind.Archer&&!u.IsGarrison);
+            var enemy=battle.Units.First(u=>u.Team==1&&u.Kind==UnitKind.Footman&&!u.IsGarrison);
             archer.Agent.Warp(new Vector3(-30,0,-16));enemy.Agent.Warp(new Vector3(-29,0,-21));enemy.HoldPosition();enemy.TakeDamage(enemy.MaxHealth-5,0);
             archer.MoveTo(new Vector3(-30,0,-30),true,false);
             yield return new WaitForSeconds(5.5f);
-            Assert.That(enemy==null,Is.True);Assert.That(Vector3.Distance(archer.transform.position,new Vector3(-30,0,-30)),Is.LessThan(2));
+            Assert.That(enemy.IsAlive,Is.False);
+            Assert.That(battle.Units.Contains(enemy),Is.False,"A pooled casualty must leave the active army registry.");
+            Assert.That(Vector3.Distance(archer.transform.position,new Vector3(-30,0,-30)),Is.LessThan(2));
         }
         [UnityTest] public IEnumerator CameraZoomIsSmoothAndMiddleDragTracksGround()
         {
@@ -171,17 +173,27 @@ namespace RiskAI.Tests
             Assert.That(town.State.Level,Is.EqualTo(2));Assert.That(battle.Economy.Income(0),Is.EqualTo(34));
             Assert.That(town.Recruit(UnitKind.Guard),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(10));
         }
-        [UnityTest] public IEnumerator CapturedTownKeepsEnemyTowerUntilDestroyedAndRebuilt()
+        [UnityTest] public IEnumerator CapturedTownTransfersTowerAndCanRebuildAfterDestruction()
         {
-            var town=battle.Towns[0];foreach(var blue in battle.Units.Where(u=>u.Team==0).ToArray()){blue.Agent.Warp(new Vector3(-42,0,-28));blue.HoldPosition();}
+            var town=battle.Towns[0];
+            // Isolate ownership and rebuilding from the starting armies' combat.
+            town.ClaimZone.SetDefender(null);
+            foreach(var unit in battle.Units) { unit.Agent.isStopped=true; unit.enabled=false; }
+            foreach(var tower in battle.Towers) tower.enabled=false;
+            foreach(var ship in battle.Naval.Ships) ship.enabled=false;
+            town.Defense.TakeDamage(17,1);
+            float towerHealth=town.Defense.Health;
             var attacker=battle.Spawn(1,UnitKind.Guard,town.ClaimPoint);attacker.HoldPosition();
-            yield return new WaitForSeconds(1.8f);
-            Assert.That(town.State.Owner,Is.EqualTo(1));Assert.That(town.Defense.Team,Is.EqualTo(0));
-            Assert.That(attacker.Health,Is.LessThan(attacker.MaxHealth),"The independently owned tower must keep shooting invaders after city capture.");
-            Assert.That(town.BuildTower(1),Is.Not.Null,"An enemy tower must be destroyed before the slot can be rebuilt.");
-            town.Defense.TakeDamage(1000,1,attacker);
+            float deadline=Time.realtimeSinceStartup+5;
+            while(town.State.Owner!=1&&Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.That(town.State.Owner,Is.EqualTo(1));Assert.That(town.Defense.Team,Is.EqualTo(1));
+            Assert.That(town.Defense.Health,Is.EqualTo(towerHealth),"Changing owner must preserve the tower's remaining health.");
+            Assert.That(town.ClaimZone.Defender,Is.SameAs(attacker));
+            Assert.That(town.BuildTower(1),Is.Not.Null,"An existing friendly tower must not be purchased twice.");
+            town.Defense.TakeDamage(1000,0);
             battle.Economy.Gold[1]=100;Assert.That(town.BuildTower(1),Is.Null);Assert.That(battle.Economy.Gold[1],Is.EqualTo(40));
-            yield return new WaitForSeconds(7.3f);
+            deadline=Time.realtimeSinceStartup+12;
+            while(!town.Defense.IsAlive&&Time.realtimeSinceStartup<deadline)yield return null;
             Assert.That(town.Defense.IsAlive,Is.True);Assert.That(town.Defense.Team,Is.EqualTo(1));Assert.That(battle.Targets.Contains(town.Defense),Is.True);
         }
         [UnityTest] public IEnumerator SoldiersCanSiegeAndDestroyATower()
@@ -233,11 +245,14 @@ namespace RiskAI.Tests
         {
             var spawnedGuard=battle.Spawn(0,UnitKind.Guard,new Vector3(-20,0,-12));
             Assert.That(spawnedGuard,Is.Not.Null);
-            var units=battle.Units.Where(u=>u.Team==0).GroupBy(u=>u.Kind).Select(g=>g.First()).ToArray();
+            var units=battle.Units.Where(u=>u.Team==0&&!u.IsGarrison).GroupBy(u=>u.Kind).Select(g=>g.First()).ToArray();
             Assert.That(units.Select(u=>u.Kind),Does.Contain(UnitKind.Archer));
             Assert.That(units.Select(u=>u.Kind),Does.Contain(UnitKind.Guard));
             for(int i=0;i<units.Length;i++){Assert.That(units[i].Agent.Warp(new Vector3(-20+i*1.2f,0,-12)),Is.True);units[i].Stop();}
             BattleSession.GiveFormation(units,new Vector3(-20,0,0),false,false);
+            float deadline=Time.realtimeSinceStartup+2;
+            while(battle.Commands.PendingCount>0&&Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.That(battle.Commands.PendingCount,Is.Zero,"Formation commands must be applied by the next simulation tick.");
             var archer=units.First(u=>u.Kind==UnitKind.Archer);var guard=units.First(u=>u.Kind==UnitKind.Guard);
             Assert.That(guard.Agent.destination.z,Is.GreaterThan(archer.Agent.destination.z),"Melee must occupy the leading formation row.");
             yield return null;

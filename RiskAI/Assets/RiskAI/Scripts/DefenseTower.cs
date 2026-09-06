@@ -23,6 +23,7 @@ namespace RiskAI
         GameObject upper, scaffolding;
         Renderer banner;
         float nextShot;
+        readonly System.Collections.Generic.List<CombatTarget> nearby = new System.Collections.Generic.List<CombatTarget>(48);
         float AttackCooldown=>ReforgedProfiles.Tower.Cooldown;
         float AttackRange=>ReforgedProfiles.Tower.Range;
 
@@ -72,10 +73,10 @@ namespace RiskAI
         {
             Team = CombatTeam(HostOwner); Health = MaxHealth; UnderConstruction = false; BuildProgress = 1;
             CurrentTarget=null;nextShot=0;
-            if (!session.Targets.Contains(this)) session.Targets.Add(this);
+            session.RegisterTarget(this);
             RefreshVisuals();
         }
-        public void ChangeOwner() { if(!IsAlive)Team = CombatTeam(HostOwner); CurrentTarget=null; nextShot=0; RefreshVisuals(); }
+        public void ChangeOwner() { Team = CombatTeam(HostOwner); CurrentTarget=null; nextShot=Mathf.Max(nextShot,session.BattleTime+.2f); RefreshVisuals(); }
         void RefreshVisuals()
         {
             upper.SetActive(IsAlive); scaffolding.SetActive(UnderConstruction);
@@ -83,20 +84,21 @@ namespace RiskAI
             foreach(var roof in upper.GetComponentsInChildren<Renderer>())if(roof.name=="Faction roof")roof.sharedMaterial=WorldArt.RoofMaterial(Team);
         }
 
-        void Update()
+        public void SimTick(float delta)
         {
             if (!IsAlive || UnderConstruction) { CurrentTarget=null; return; }
             if (session.Paused || session.Winner >= 0) return;
             if (!IsValidTarget(CurrentTarget)) CurrentTarget=FindTarget();
-            if (!CurrentTarget || Time.time < nextShot) return;
-            nextShot = Time.time + AttackCooldown; ShotsFired++;
-            VisualFactory.Arrow(AimPoint + Vector3.up, CurrentTarget.AimPoint, CurrentTarget, session.RollDamage(ReforgedProfiles.Tower), Team, this, AttackType);
+            if (!CurrentTarget || session.BattleTime < nextShot) return;
+            nextShot = session.BattleTime + AttackCooldown; ShotsFired++;
+            session.Combat.FireProjectile(AimPoint + Vector3.up, CurrentTarget.AimPoint, CurrentTarget, session.RollDamage(ReforgedProfiles.Tower), Team, this, AttackType);
         }
 
         CombatTarget FindTarget()
         {
             CombatTarget best=null;float bestDistance=float.MaxValue;
-            foreach(var unit in session.Targets)
+            session.Spatial.Query(transform.position,AttackRange,nearby);
+            foreach(var unit in nearby)
             {
                 if(!IsValidTarget(unit))continue;
                 float distance=DistanceXZ(transform.position,unit.transform.position);
@@ -122,7 +124,7 @@ namespace RiskAI
             Health = Mathf.Max(0, Health - damage);
             if (IsAlive) return;
             CurrentTarget=null;
-            session.Targets.Remove(this); RefreshVisuals();
+            session.UnregisterTarget(this); RefreshVisuals();
             VisualFactory.Impact(AimPoint, new Color(.9f, .65f, .3f), 1.1f);
             session.Message("Ha caído la torre de " + HostName + ".");
         }

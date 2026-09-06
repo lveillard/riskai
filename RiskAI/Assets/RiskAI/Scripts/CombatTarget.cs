@@ -5,6 +5,8 @@ namespace RiskAI
 {
     public abstract class CombatTarget : MonoBehaviour
     {
+        // Monotonic per battle; pooled objects receive a new identity on every spawn.
+        public int EntityId { get; internal set; }
         public int Team { get; protected set; }
         public float Health { get; protected set; }
         public abstract float MaxHealth { get; }

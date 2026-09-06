@@ -1,6 +1,10 @@
 {
   "name": "RiskAI.Runtime",
   "rootNamespace": "RiskAI",
-  "references": ["Unity.AI.Navigation", "Unity.InputSystem"],
-  "autoReferenced": true
+  "references": [
+    "RiskAI.Core",
+    "Unity.AI.Navigation",
+    "Unity.InputSystem"
+  ],
+  "autoReferenced": false
 }

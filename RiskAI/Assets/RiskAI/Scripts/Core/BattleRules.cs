@@ -12,7 +12,6 @@ namespace RiskAI.Core
         public const int TownIncome = 8;
         public const int PopulationLimit = 100;
         public const float RoundSeconds = 60f;
-        public const int TownsToWin = 8;
         public const float VictoryHoldSeconds = 20f;
 
         public const int TowerCost = 60;
@@ -62,27 +61,51 @@ namespace RiskAI.Core
         public readonly int[] Gold = { BattleRules.StartingGold, BattleRules.StartingGold };
         public readonly List<TownState> Towns = new List<TownState>();
         public readonly int[] RegionBonuses = { 8, 12, 8 };
+        // TownState is intentionally mutable and Towns is publicly editable for the
+        // prototype. Rebuild this reusable map for each query instead of caching a
+        // result that could become stale after an ownership or topology change.
+        readonly Dictionary<int, int> countryOwners = new Dictionary<int, int>();
         public float ElapsedInRound { get; private set; }
         public int Round { get; private set; } = 1;
 
         public int CountryOwner(int country)
         {
-            int owner = -1; bool found = false;
+            RebuildCountryOwners();
+            return countryOwners.TryGetValue(country, out var owner) ? owner : -1;
+        }
+
+        void RebuildCountryOwners()
+        {
+            countryOwners.Clear();
             foreach (var town in Towns)
             {
-                if (town.Country != country) continue;
-                if (!found) { owner = town.Owner; found = true; }
-                if (town.Owner < 0 || town.Owner != owner) return -1;
+                if (!countryOwners.TryGetValue(town.Country, out var owner))
+                {
+                    countryOwners.Add(town.Country, town.Owner >= 0 ? town.Owner : -1);
+                    continue;
+                }
+
+                if (owner < 0 || town.Owner != owner)
+                    countryOwners[town.Country] = -1;
             }
-            return found && owner >= 0 ? owner : -1;
         }
 
         public int Income(int team)
         {
+            RebuildCountryOwners();
+            return CalculateIncome(team);
+        }
+
+        int CalculateIncome(int team)
+        {
             int income = BattleRules.BaseIncome;
             foreach (var town in Towns)
-                if (town.Owner == team && (town.Country < 0 || CountryOwner(town.Country) == team))
+            {
+                var countryComplete = town.Country < 0 ||
+                    (countryOwners.TryGetValue(town.Country, out var owner) && owner == team);
+                if (town.Owner == team && countryComplete)
                     income += BattleRules.TownIncome + (town.Level - 1) * BattleRules.UpgradeIncome;
+            }
             for (int region = 0; region < RegionBonuses.Length; region++)
             {
                 bool found = false, owned = true;
@@ -99,6 +122,18 @@ namespace RiskAI.Core
             Gold[team] -= amount; return true;
         }
 
+        /// <summary>Adds earned or otherwise awarded gold to a team's account.</summary>
+        public bool Grant(int team, int amount)
+        {
+            if (team < 0 || team > 1 || amount < 0 ||
+                (amount > 0 && Gold[team] > int.MaxValue - amount)) return false;
+            Gold[team] += amount;
+            return true;
+        }
+
+        /// <summary>Returns previously spent gold to a team's account.</summary>
+        public bool Refund(int team, int amount) => Grant(team, amount);
+
         public int Advance(float dt)
         {
             if (dt < 0 || float.IsNaN(dt) || float.IsInfinity(dt)) return 0;
@@ -107,7 +142,8 @@ namespace RiskAI.Core
             while (ElapsedInRound >= BattleRules.RoundSeconds)
             {
                 ElapsedInRound -= BattleRules.RoundSeconds; Round++; paid++;
-                Gold[0] += Income(0); Gold[1] += Income(1);
+                RebuildCountryOwners();
+                Gold[0] += CalculateIncome(0); Gold[1] += CalculateIncome(1);
             }
             return paid;
         }

@@ -1,76 +1,75 @@
 using System.Collections.Generic;
-using System.Linq;
+using RiskAI.Core;
 using UnityEngine;
-
 namespace RiskAI
 {
-    /// <summary>Unit-only city claim footprint and defender selection.</summary>
+    // Spatial adapter for garrison selection and a pure timed ownership transition.
     public sealed class CityClaimZone
     {
-        public const float DefaultHalfExtent = 1.1f;
+        public const float DefaultHalfExtent = ClaimRules.CircleRadius;
         public const float VerticalExtent = 1.25f;
+        readonly ClaimTransition transition = new ClaimTransition();
+        readonly List<CombatTarget> nearby = new List<CombatTarget>(32);
         public Vector3 Center { get; }
         public float HalfExtent { get; }
         public Soldier Defender { get; private set; }
         public bool Contested { get; private set; }
-
-        public CityClaimZone(Vector3 center, float halfExtent = DefaultHalfExtent)
+        public float Progress => transition.Progress;
+        public int CapturingTeam => transition.CandidateTeam;
+        public CityClaimZone(Vector3 center, float halfExtent = DefaultHalfExtent) { Center = center; HalfExtent = halfExtent; }
+        public int Step(BattleSession session, int owner, float delta)
         {
-            Center = center;
-            HalfExtent = halfExtent;
+            session.Spatial.Query(Center, ClaimRules.ProtectionRadius, nearby);
+            return StepTargets(nearby, owner, delta);
         }
-
-        /// <summary>Returns the owner after applying the current footprint state.</summary>
-        public int Step(IEnumerable<Soldier> soldiers, int owner)
+        public int Step(IReadOnlyList<Soldier> soldiers, int owner, float delta = .05f) => StepTargets(soldiers, owner, delta);
+        int StepTargets<T>(IReadOnlyList<T> soldiers, int owner, float delta) where T : CombatTarget
         {
-            var eligible = soldiers == null ? new List<Soldier>() : soldiers.Where(IsEligible).ToList();
-            var inside = eligible.Where(IsInside).ToList();
-            var current = Defender;
-            if (current && IsEligible(current) && IsInside(current))
+            int ownerTeam = owner >= 0 ? owner : 2;
+            Soldier ownInside = null, candidate = null;
+            bool ownerNearby = false;
+            float ownDistance = float.MaxValue, candidateDistance = float.MaxValue;
+            Contested = false;
+            if (Defender && (!IsEligible(Defender) || Defender.Garrison != this)) Defender = null;
+            for (int i = 0; soldiers != null && i < soldiers.Count; i++)
             {
-                Contested = inside.Any(unit => unit.Team >= 0 && unit.Team <= 1 && unit.Team != current.Team);
-                return owner;
+                var unit = soldiers[i] as Soldier; if (!IsEligible(unit)) continue;
+                var difference = unit.transform.position - Center;
+                float distance = difference.x*difference.x + difference.z*difference.z;
+                if (Mathf.Abs(difference.y)>VerticalExtent || distance>ClaimRules.ProtectionRadius*ClaimRules.ProtectionRadius) continue;
+                if (unit.Team == ownerTeam) ownerNearby = true; else Contested = true;
+                if (distance>HalfExtent*HalfExtent || unit.IsGarrison && unit.Garrison != this) continue;
+                if (unit.Team == ownerTeam && (distance<ownDistance || distance==ownDistance && (!ownInside || unit.EntityId<ownInside.EntityId)))
+                { ownInside=unit; ownDistance=distance; }
+                else if (unit.Team != ownerTeam && unit.Team<2 && (distance<candidateDistance || distance==candidateDistance && (!candidate || unit.EntityId<candidate.EntityId)))
+                { candidate=unit; candidateDistance=distance; }
             }
-
-            Defender = null;
-            var replacement = owner >= 0 && owner <= 1
-                ? inside.Where(unit => unit.Team == owner).OrderBy(DistanceToCenter).FirstOrDefault()
-                : null;
-            Defender = replacement ?? inside.OrderBy(DistanceToCenter).FirstOrDefault();
-            if (!Defender)
+            if (Defender) { transition.Reset(); return owner; }
+            if (ownInside) { SetDefender(ownInside); return owner; }
+            bool blocked=ownerNearby;
+            if (candidate)
+                for (int i=0;i<soldiers.Count;i++)
+                {
+                    var unit=soldiers[i] as Soldier; if (!IsEligible(unit) || unit.Team==candidate.Team) continue;
+                    var d=unit.transform.position-Center;
+                    if (Mathf.Abs(d.y)<=VerticalExtent && d.x*d.x+d.z*d.z<=ClaimRules.ProtectionRadius*ClaimRules.ProtectionRadius)
+                    { blocked=true; break; }
+                }
+            Contested=candidate && blocked;
+            if (transition.Advance(candidate?candidate.EntityId:0,candidate?candidate.Team:-1,blocked,delta))
             {
-                Contested = false;
-                return owner;
+                int nextOwner=candidate.Team; SetDefender(candidate); return Defender?nextOwner:owner;
             }
-
-            Contested = inside.Any(unit => unit.Team >= 0 && unit.Team <= 1 && unit.Team != Defender.Team);
-            return Defender.Team >= 0 && Defender.Team <= 1 ? Defender.Team : owner;
+            return owner;
         }
-
         public void SetDefender(Soldier defender)
         {
-            Defender = IsEligible(defender) ? defender : null;
-            Contested = false;
+            if (Defender && Defender != defender) Defender.ReleaseGarrison(this);
+            Defender=null;
+            if (IsEligible(defender) && (!defender.IsGarrison || defender.Garrison==this) && defender.BindGarrison(this)) Defender=defender;
+            transition.Reset(); Contested=false;
         }
-
-        bool IsInside(Soldier unit)
-        {
-            Vector3 position = unit.transform.position;
-            return Mathf.Abs(position.x - Center.x) <= HalfExtent &&
-                   Mathf.Abs(position.z - Center.z) <= HalfExtent &&
-                   Mathf.Abs(position.y - Center.y) <= VerticalExtent;
-        }
-
-        float DistanceToCenter(Soldier unit)
-        {
-            Vector3 delta = unit.transform.position - Center;
-            return delta.sqrMagnitude;
-        }
-
-        static bool IsEligible(Soldier unit)
-        {
-            return unit && unit.isActiveAndEnabled && unit.IsAlive && unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh &&
-                   unit.Team >= 0 && unit.Team <= 2;
-        }
+        static bool IsEligible(Soldier unit) => unit && unit.isActiveAndEnabled && unit.IsAlive &&
+            unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh && unit.Team>=0;
     }
 }

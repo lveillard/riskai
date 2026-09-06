@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq;
 using NUnit.Framework;
+using RiskAI.Core;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
@@ -35,22 +36,26 @@ namespace RiskAI.Tests
             Assert.That(battle.Units.Count, Is.EqualTo(48));
             Assert.That(battle.Towns.All(town => town.Defender), Is.True, string.Join(", ",battle.Towns.Where(t=>!t.Defender).Select(t=>t.DisplayName+" @ "+t.ClaimPoint)));
             Assert.That(battle.Towns.Select(town => town.Defender).Distinct().Count(), Is.EqualTo(battle.Towns.Count));
+            var naval = NavalWorld.Current;
+            Assert.That(naval.Harbors.Where(harbor => harbor.IsIsland).All(harbor => harbor.Defender == null), Is.True);
             yield return null;
         }
 
         [UnityTest]
-        public IEnumerator UnitsOutsideClaimSquareDoNotChangeOwner()
+        public IEnumerator UnitsOutsideClaimCircleDoNotChangeOwner()
         {
             var town = battle.Towns.First(t => t.State.Owner < 0);
             var attacker = battle.Units.First(unit => unit && unit.Team == 0 && unit != town.Defender);
-            Move(attacker, town.ClaimPoint + Vector3.right * 5f);
-            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(-1));
+            town.Defender.TakeDamage(10000, 0);
+            Move(attacker, town.ClaimPoint + Vector3.right + Vector3.forward);
+            MoveOtherTeamUnitsOutsideProtection(town, attacker);
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, ClaimRules.ConversionSeconds), Is.EqualTo(-1));
             Assert.That(town.ClaimZone.Defender, Is.Not.SameAs(attacker));
             yield return null;
         }
 
         [UnityTest]
-        public IEnumerator EntryClaimsInstantlyAndPreservesUnitIdentityAndHealth()
+        public IEnumerator EntryRequiresContinuousOccupationAndPreservesUnitIdentityAndHealth()
         {
             var town = battle.Towns.First(t => t.State.Owner < 0);
             DisableAllTowers();
@@ -59,7 +64,15 @@ namespace RiskAI.Tests
             var attacker = battle.Units.First(unit => unit && unit.Team == 0);
             float health = attacker.Health;
             Move(attacker, town.ClaimPoint);
+            MoveOtherTeamUnitsOutsideProtection(town, attacker);
+            IsolateClaimCombat(attacker);
             yield return null;
+            Assert.That(town.State.Owner, Is.EqualTo(-1));
+            Move(attacker, town.ClaimPoint + Vector3.right * 4f);
+            yield return null;
+            Assert.That(town.State.Owner, Is.EqualTo(-1));
+            Move(attacker, town.ClaimPoint);
+            yield return new WaitForSecondsRealtime(1.4f);
             Assert.That(town.State.Owner, Is.EqualTo(0));
             Assert.That(town.Defender, Is.SameAs(attacker));
             Assert.That(attacker.Health, Is.EqualTo(health));
@@ -81,34 +94,59 @@ namespace RiskAI.Tests
             var defender = town.Defender;
             var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != defender);
             Move(attacker, town.ClaimPoint);
+            MoveOtherTeamUnitsOutsideProtection(town, attacker);
             Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(0));
             Assert.That(town.ClaimZone.Contested, Is.True);
             defender.TakeDamage(10000, 1);
-            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(1));
+            MoveOwnerUnitsOutsideProtection(town, 0);
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .6f), Is.EqualTo(0));
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .65f), Is.EqualTo(1));
             yield return null;
         }
 
         [UnityTest]
-        public IEnumerator AlliedUnitOutsideSquareCannotBlockEnemyClaim()
+        public IEnumerator AlliedUnitOutsideCircleButInsideProtectionRadiusBlocksEnemyClaim()
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
             var defender = town.Defender;
             var ally = battle.Units.First(unit => unit && unit.Team == 0 && unit != defender);
             var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != defender);
             defender.TakeDamage(10000, 1);
-            Move(ally, town.ClaimPoint + Vector3.right * 5f);
+            MoveOwnerUnitsOutsideProtection(town, 0);
+            Move(ally, town.ClaimPoint + Vector3.right * 2f);
             Move(attacker, town.ClaimPoint);
-            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(1));
+            MoveOtherTeamUnitsOutsideProtection(town, attacker);
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .9f), Is.EqualTo(0));
+            Assert.That(town.ClaimZone.Contested, Is.True);
+            Move(ally, town.ClaimPoint + Vector3.right * 5f);
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .9f), Is.EqualTo(0));
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner, .4f), Is.EqualTo(1));
             Assert.That(town.ClaimZone.Defender, Is.SameAs(attacker));
             yield return null;
         }
 
         [UnityTest]
-        public IEnumerator EnemyOutsideSquareDoesNotContestLivingDefender()
+        public IEnumerator EnemyOutsideProtectionRadiusDoesNotContestLivingDefender()
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
             var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != town.Defender);
             Move(attacker, town.ClaimPoint + Vector3.right * 5f);
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(0));
+            Assert.That(town.ClaimZone.Contested, Is.False);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator EnemyOutsideClaimCircleWithinProtectionHeightContestsLivingDefender()
+        {
+            var town = battle.Towns.First(t => t.State.Owner == 0);
+            var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != town.Defender);
+            Move(attacker, town.ClaimPoint + Vector3.right * 2f);
+            MoveOtherTeamUnitsOutsideProtection(town, attacker);
+            attacker.transform.position += Vector3.up;
+            Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(0));
+            Assert.That(town.ClaimZone.Contested, Is.True);
+            attacker.transform.position += Vector3.up * .4f;
             Assert.That(town.ClaimZone.Step(battle.Units, town.State.Owner), Is.EqualTo(0));
             Assert.That(town.ClaimZone.Contested, Is.False);
             yield return null;
@@ -121,19 +159,86 @@ namespace RiskAI.Tests
             var defender = town.Defender;
             var ally = battle.Units.First(unit => unit && unit.Team == 0 && unit != defender);
             var attacker = battle.Units.First(unit => unit && unit.Team == 1 && unit != defender);
+            DisableAllTowers();
             town.Defense.CompleteBuild();
+            float towerHealth = town.Defense.Health;
+            town.Defense.enabled = false;
+            battle.Targets.Remove(town.Defense);
             defender.TakeDamage(10000, 1);
+            MoveOwnerUnitsOutsideProtection(town, 0);
             Move(ally, town.ClaimPoint + Vector3.right * 5f);
             Move(attacker, town.ClaimPoint);
-            yield return null;
+            MoveOtherTeamUnitsOutsideProtection(town, attacker);
+            IsolateClaimCombat(attacker);
+            yield return new WaitForSecondsRealtime(1.4f);
             Assert.That(town.State.Owner, Is.EqualTo(1));
             Assert.That(town.Defender, Is.SameAs(attacker));
-            Assert.That(town.Defense.Team, Is.EqualTo(0));
+            Assert.That(town.Defense.HostOwner, Is.EqualTo(1));
+            Assert.That(town.Defense.Team, Is.EqualTo(1));
+            Assert.That(town.Defense.Health, Is.EqualTo(towerHealth));
+        }
+
+        [UnityTest]
+        public IEnumerator GarrisonCannotBeReleasedByOrdersOrEmbark()
+        {
+            var town = battle.Towns.First(t => t.State.Owner == 0);
+            var defender = town.Defender;
+            var ally = battle.Units.First(unit => unit && unit.Team == defender.Team && unit != defender);
+            var position = defender.transform.position;
+            defender.MoveTo(position + Vector3.right * 5f, false, false);
+            defender.Stop();
+            defender.Follow(ally);
+            var transport = NavalWorld.Current.Ships.First(ship => ship.Team == defender.Team && ship.Kind == ShipKind.Transport);
+            Assert.That(transport.TryEmbark(defender), Is.False);
+            Assert.That(defender.IsGarrison, Is.True);
+            Assert.That(defender.transform.position, Is.EqualTo(position));
+            yield return null;
+            Assert.That(defender.IsGarrison, Is.True);
+        }
+
+        void MoveOwnerUnitsOutsideProtection(Settlement town, int owner)
+        {
+            foreach (var unit in battle.Units.ToArray())
+            {
+                if (!unit || unit.Team != owner || unit == town.Defender) continue;
+                Vector3 difference = unit.transform.position - town.ClaimPoint;
+                difference.y = 0;
+                if (difference.sqrMagnitude <= ClaimRules.ProtectionRadius * ClaimRules.ProtectionRadius)
+                    Move(unit, town.ClaimPoint + Vector3.right * 5f);
+            }
+        }
+
+        void MoveOtherTeamUnitsOutsideProtection(Settlement town, Soldier keep)
+        {
+            int ownerTeam = town.State.Owner >= 0 ? town.State.Owner : 2;
+            foreach (var unit in battle.Units.ToArray())
+            {
+                if (!unit || unit == keep || unit.Team == ownerTeam || unit.Team >= 2) continue;
+                Vector3 difference = unit.transform.position - town.ClaimPoint;
+                difference.y = 0;
+                if (difference.sqrMagnitude <= ClaimRules.ProtectionRadius * ClaimRules.ProtectionRadius)
+                    Move(unit, town.ClaimPoint + Vector3.right * 5f);
+            }
+        }
+
+        void IsolateClaimCombat(Soldier keep)
+        {
+            foreach (var unit in battle.Units.ToArray())
+            {
+                if (!unit || unit == keep) continue;
+                if (unit.IsGarrison) unit.Garrison.SetDefender(null);
+                unit.gameObject.SetActive(false);
+            }
+            var naval = NavalWorld.Current;
+            if (!naval) return;
+            foreach (var ship in naval.Ships.ToArray())
+                if (ship) ship.gameObject.SetActive(false);
         }
 
         static void Move(Soldier unit, Vector3 point)
         {
             Assert.That(unit && unit.Agent, Is.True);
+            if (unit.IsGarrison) unit.Garrison.SetDefender(null);
             Assert.That(NavMesh.SamplePosition(point, out var hit, .9f, NavMesh.AllAreas), Is.True);
             unit.Agent.Warp(hit.position);
             unit.Stop();

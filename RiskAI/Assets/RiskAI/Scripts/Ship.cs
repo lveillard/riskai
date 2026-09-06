@@ -12,7 +12,8 @@ namespace RiskAI
     {
         readonly List<Soldier> cargo=new List<Soldier>();
         readonly List<Vector3> route=new List<Vector3>();
-        NavalWorld world;int routeIndex;float nextAttack,nextTargetPath;
+        NavalWorld world;int routeIndex;float nextAttack,nextTargetPath,simDelta,nextSense;
+        readonly List<CombatTarget> nearby = new List<CombatTarget>(48);
         CombatTarget target;
         bool attackMoveOrder;
         Harbor unloadDestination;
@@ -21,16 +22,19 @@ namespace RiskAI
         public IReadOnlyList<Soldier> Cargo=>cargo;
         public int CargoCount=>cargo.Count;
         public CombatTarget CurrentTarget=>target;
-        public string DisplayName=>Kind==ShipKind.Galley?"Galera":"Transporte";
+        public ShipProfile Profile=>NavalProfiles.Profile((NavalUnitKind)Kind);
+        public string DisplayName=>Profile.Name;
         public string OrderLabel=>target?"En combate":route.Count>routeIndex?"Navegando":"En puerto";
-        public override float MaxHealth=>Kind==ShipKind.Galley?500:300;
+        public override float MaxHealth=>Profile.Health;
         public override Vector3 AimPoint=>transform.position+Vector3.up*.55f;
-        public override AttackKind AttackType=>Kind==ShipKind.Galley?AttackKind.Siege:AttackKind.Normal;
+        public override AttackKind AttackType=>Profile.Attack;
         public override ArmorKind ArmorType=>ArmorKind.Heavy;
-        public override float Armor=>Kind==ShipKind.Galley?2:1;
-        public float Speed=>Kind==ShipKind.Galley?7:5;
-        const int Capacity=6;
-        const float AttackDamage=20,AttackRange=17,AttackInterval=1.5f;
+        public override float Armor=>Profile.Armor;
+        public float Speed=>Profile.Speed;
+        int Capacity=>Profile.Capacity;
+        float AttackDamage=>Profile.Damage;
+        float AttackRange=>Profile.Range;
+        float AttackInterval=>Profile.Cooldown;
 
         internal void Initialize(NavalWorld naval,int team,ShipKind kind)
         {
@@ -59,7 +63,7 @@ namespace RiskAI
         public bool TryEmbark(Soldier soldier)
         {
             if(world.Session.Paused||world.Session.Winner>=0)return false;
-            if(!IsAlive||Kind!=ShipKind.Transport||cargo.Count>=Capacity||!soldier||!soldier.IsAlive||soldier.Team!=Team||cargo.Contains(soldier))return false;
+            if(!IsAlive||Kind!=ShipKind.Transport||cargo.Count>=Capacity||!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=Team||cargo.Contains(soldier))return false;
             var harbor=world.NearestHarbor(soldier.transform.position,6);if(!harbor)return false;
             if(DistanceXZ(soldier.transform.position,harbor.Landing)>6||DistanceXZ(transform.position,harbor.Landing)>9.5f)return false;
             soldier.Stop();soldier.Select(false);if(soldier.Agent)soldier.Agent.enabled=false;
@@ -81,24 +85,25 @@ namespace RiskAI
             }
             return unloaded;
         }
-        void Update()
+        public void SimTick(float delta)
         {
+            simDelta=delta;
             if(!IsAlive||!world||world.Session.Paused||world.Session.Winner>=0)return;
             if(unloadDestination&&DistanceXZ(transform.position,unloadDestination.Berth)<4){Unload(unloadDestination);if(CargoCount==0)unloadDestination=null;}
             if(target&&!target.IsAlive||target&&target.Team==Team){target=null;route.Clear();routeIndex=0;}
-            if(!target&&Kind==ShipKind.Galley&&(attackMoveOrder||routeIndex>=route.Count))target=FindNearbyEnemy();
+            if(!target&&Kind==ShipKind.Galley&&world.Session.BattleTime>=nextSense&&(attackMoveOrder||routeIndex>=route.Count)){nextSense=world.Session.BattleTime+.2f;target=FindNearbyEnemy();}
             if(target&&DistanceXZ(transform.position,target.transform.position)<=AttackRange&&Visible(target))
             {
                 route.Clear();routeIndex=0;Face(target.transform.position);
-                if(Time.time>=nextAttack){nextAttack=Time.time+AttackInterval;VisualFactory.Arrow(AimPoint,target.AimPoint,target,AttackDamage,Team,this,AttackType);}
+                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireProjectile(AimPoint,target.AimPoint,target,AttackDamage,Team,this,AttackType);}
             }
-            else if(target&&Time.time>=nextTargetPath)
+            else if(target&&world.Session.BattleTime>=nextTargetPath)
             {
                 if(SeaNavigation.TryNearestOcean(target.transform.position,8,out var ocean)&&SeaNavigation.TryBuildPath(transform.position,ocean,out var next))
                 {
-                    route.Clear();route.AddRange(next);routeIndex=0;nextTargetPath=Time.time+.7f;
+                    route.Clear();route.AddRange(next);routeIndex=0;nextTargetPath=world.Session.BattleTime+.7f;
                 }
-                else nextTargetPath=Time.time+.7f;
+                else nextTargetPath=world.Session.BattleTime+.7f;
                 if(routeIndex<route.Count)Advance();
             }
             else if(routeIndex<route.Count)Advance();
@@ -106,10 +111,11 @@ namespace RiskAI
         CombatTarget FindNearbyEnemy()
         {
             CombatTarget best=null;float score=float.MaxValue;
-            foreach(var ship in world.Ships)
+            world.Session.Spatial.Query(transform.position,AttackRange,nearby);
+            foreach(var ship in nearby)
             {
                 if(!ship||ship==this||!ship.IsAlive||ship.Team==Team)continue;
-                float distance=DistanceXZ(transform.position,ship.transform.position);if(distance<=AttackRange&&distance<score){best=ship;score=distance;}
+                float distance=DistanceXZ(transform.position,ship.transform.position);if(distance<=AttackRange&&distance<score&&Visible(ship)){best=ship;score=distance;}
             }
             return best;
         }
@@ -123,15 +129,15 @@ namespace RiskAI
                 Vector3 away=transform.position-other.transform.position;away.y=0;float distance=away.magnitude;
                 if(distance<2.8f&&distance>.01f)separation+=away.normalized*(2.8f-distance);
             }
-            Vector3 next=Vector3.MoveTowards(transform.position,destination,Speed*Time.deltaTime);
-            if(separation.sqrMagnitude>.001f)next+=separation.normalized*Mathf.Min(.8f,separation.magnitude)*Time.deltaTime*Speed;
+            Vector3 next=Vector3.MoveTowards(transform.position,destination,Speed*simDelta);
+            if(separation.sqrMagnitude>.001f)next+=separation.normalized*Mathf.Min(.8f,separation.magnitude)*simDelta*Speed;
             next.y=-.24f;
-            if(!SeaNavigation.HasClearance(next)||!SeaNavigation.ClearSegment(transform.position,next))next=Vector3.MoveTowards(transform.position,destination,Speed*Time.deltaTime);
+            if(!SeaNavigation.HasClearance(next)||!SeaNavigation.ClearSegment(transform.position,next))next=Vector3.MoveTowards(transform.position,destination,Speed*simDelta);
             if(SeaNavigation.HasClearance(next)&&SeaNavigation.ClearSegment(transform.position,next)){Face(next);transform.position=next;}
         }
         void Face(Vector3 point)
         {
-            Vector3 direction=point-transform.position;direction.y=0;if(direction.sqrMagnitude>.001f)transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(direction),180*Time.deltaTime);
+            Vector3 direction=point-transform.position;direction.y=0;if(direction.sqrMagnitude>.001f)transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(direction),180*simDelta);
         }
         bool Visible(CombatTarget enemy)
         {
@@ -145,8 +151,8 @@ namespace RiskAI
             Health=Mathf.Max(0,Health-damage);if(IsAlive)return;
             foreach(var soldier in cargo.ToArray())if(soldier)soldier.DestroyEmbarked(attacker);
             cargo.Clear();route.Clear();routeIndex=0;target=null;
-            world.Ships.Remove(this);world.Session.Targets.Remove(this);
-            if(attacker>=0&&attacker<2){world.Session.Kills[attacker]++;world.Session.Economy.Gold[attacker]+=2;}
+            world.Ships.Remove(this);world.Session.UnregisterTarget(this);
+            if(attacker>=0&&attacker<2){world.Session.Kills[attacker]++;world.Session.Economy.Grant(attacker,2);}
             VisualFactory.Impact(AimPoint,new Color(.72f,.78f,.86f),.75f);Destroy(gameObject);
         }
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}

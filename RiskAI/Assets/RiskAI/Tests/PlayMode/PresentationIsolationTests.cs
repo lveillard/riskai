@@ -1,0 +1,106 @@
+using System.Collections;
+using System.Linq;
+using NUnit.Framework;
+using RiskAI.Core;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
+
+namespace RiskAI.Tests
+{
+    public sealed class PresentationIsolationTests
+    {
+        Scene scene, previous;
+        BattleSession battle;
+
+        [UnitySetUp]
+        public IEnumerator SetUp()
+        {
+            BattleSession.ModeForNewMatch = BattleSession.VictoryMode.Conquest;
+            BattleSession.LayoutForNewMatch = BattleSession.StartLayout.Fixed;
+            previous = SceneManager.GetActiveScene();
+            scene = SceneManager.CreateScene("Presentation isolation");
+            SceneManager.SetActiveScene(scene);
+            new GameObject("Presentation isolation bootstrap").AddComponent<RiskBootstrap>();
+            battle = BattleSession.Current;
+            battle.AiEnabled = false;
+            var controller = Object.FindFirstObjectByType<RtsController>();
+            if (controller) controller.enabled = false;
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator DestroyingProjectileViewsDoesNotCancelSimulationHit()
+        {
+            var source = battle.Units.First(u => u && u.Team == 0);
+            var target = battle.Units.First(u => u && u.Team == 2);
+            StopBackgroundCombat(source, target);
+            battle.RegisterTarget(source);
+            battle.RegisterTarget(target);
+            source.enabled = false;
+            target.enabled = false;
+
+            float healthBefore = target.Health;
+            int projectileId = battle.Combat.FireProjectile(source.AimPoint, target.AimPoint, target, 24, source.Team, source, AttackKind.Piercing);
+            Assert.That(projectileId, Is.GreaterThan(0));
+
+            var views = Object.FindObjectsOfType<ArrowFlight>();
+            Assert.That(views.Length, Is.GreaterThan(0), "The simulation projectile should have a presentation view.");
+            for (int i = 0; i < views.Length; i++)
+            {
+                if (!views[i]) continue;
+                if ((i & 1) == 0) Object.Destroy(views[i].gameObject);
+                else views[i].enabled = false;
+            }
+
+            yield return new WaitForSecondsRealtime(.85f);
+            Assert.That(battle.Combat.ActiveProjectileCount, Is.Zero);
+            Assert.That(target.Health, Is.LessThan(healthBefore), "Removing a projectile view must not remove its simulation hit.");
+        }
+
+        [UnityTest]
+        public IEnumerator ImpactViewsReuseTheirBoundedPool()
+        {
+            StopBackgroundCombat(null, null);
+            Color color = new Color(.52f, .71f, .96f);
+            for (int i = 0; i < 24; i++) VisualFactory.Impact(new Vector3(300 + i, 0, 300), color, .2f);
+            yield return null;
+            int created = VisualFactory.ImpactPoolCreatedCount;
+            Assert.That(created, Is.GreaterThan(0));
+
+            yield return new WaitForSecondsRealtime(.6f);
+            Assert.That(VisualFactory.ActiveImpactViewCount, Is.Zero);
+            for (int i = 0; i < 24; i++) VisualFactory.Impact(new Vector3(300 + i, 0, 300), color, .2f);
+            yield return null;
+            Assert.That(VisualFactory.ImpactPoolCreatedCount, Is.EqualTo(created), "A completed impact burst should be served by the existing pool.");
+        }
+
+        void StopBackgroundCombat(CombatTarget keepA, CombatTarget keepB)
+        {
+            foreach (var tower in battle.Towers.ToArray())
+            {
+                if (!tower) continue;
+                if (tower.IsAlive) tower.TakeDamage(10000, tower.Team == 0 ? 1 : 0);
+                if (tower) tower.enabled = false;
+            }
+            foreach (var unit in battle.Units.ToArray())
+            {
+                if (!unit || unit == keepA || unit == keepB) continue;
+                unit.enabled = false;
+                if (unit.Agent) unit.Agent.enabled = false;
+            }
+            if (battle.Naval)
+                foreach (var ship in battle.Naval.Ships.ToArray())
+                    if (ship) ship.gameObject.SetActive(false);
+        }
+
+        [UnityTearDown]
+        public IEnumerator TearDown()
+        {
+            Time.timeScale = 1;
+            BattleSession.LayoutForNewMatch = BattleSession.StartLayout.RandomCities;
+            SceneManager.SetActiveScene(previous);
+            yield return SceneManager.UnloadSceneAsync(scene);
+        }
+    }
+}

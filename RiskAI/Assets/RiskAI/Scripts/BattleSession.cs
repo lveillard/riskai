@@ -35,18 +35,37 @@ namespace RiskAI
         public readonly List<string> Messages = new List<string>();
         public readonly int[] Kills = new int[2];
         public readonly float[] VictoryProgress = new float[2];
-        public float BattleTime { get; private set; }
+        public float BattleTime => (float)Clock.Elapsed;
+        public SimClock Clock { get; private set; }
+        public BattleWorld World { get; private set; }
+        public CombatWorld Combat { get; private set; }
+        public SpatialTargetIndex Spatial { get; } = new SpatialTargetIndex();
+        public SoldierPool SoldierPool { get; private set; }
+        public ICommander Commander { get; private set; }
+        public BattleCommands Commands { get; private set; }
+        public NavalWorld Naval { get; internal set; }
+        readonly Dictionary<int, CombatTarget> entities = new Dictionary<int, CombatTarget>(256);
+        int nextEntityId;
+        System.Action<float> tickWorld;
         public int Winner { get; private set; } = -1;
         public bool Paused { get; private set; }
         public bool AiEnabled = true;
-        float nextAi;
         System.Random combatRandom;
         public float RollDamage(UnitProfile profile)=>profile.RollDamage(combatRandom);
 
-        void Awake()
+        void Awake() => Initialize();
+        public void Initialize()
         {
+            if (World != null) return;
             Current = this; Mode = ModeForNewMatch; Layout = LayoutForNewMatch; Difficulty = DifficultyForNewMatch; Seed = SeedForNewMatch;
-            combatRandom=new System.Random(Seed ^ 0x2945); nextAi = AiFirstRecruitmentTime; Time.timeScale = 1;
+            combatRandom = new System.Random(Seed ^ 0x2945);
+            Clock = new SimClock();
+            Combat = new CombatWorld(this);
+            SoldierPool = new SoldierPool(this);
+            Commander = new SkirmishCommander(this);
+            Commands = new BattleCommands(this);
+            World = new BattleWorld(this);
+            tickWorld = World.Tick;
         }
         public static void NewSeed() { SeedForNewMatch = System.Environment.TickCount & int.MaxValue; }
         public int[] StartingOwners()
@@ -55,33 +74,57 @@ namespace RiskAI
             return StartingAllocation.Generate(Seed,MapLayout.Towns.Select(t=>t.Country).ToArray(),2,
                 Layout == StartLayout.RandomCities ? StartingAllocationMode.IndividualCities : StartingAllocationMode.WholeCountries).CityOwners;
         }
-        void OnDestroy() { if (Current == this) { Current = null; Time.timeScale = 1; } }
-        public int Population(int team) => Units.Count(u => u && u.Team == team);
+        void OnDestroy() { if (Current == this) Current = null; }
+        public int Population(int team)
+        {
+            int count=0;
+            for(int i=0;i<Units.Count;i++) if(Units[i] && Units[i].Team==team) count++;
+            return count;
+        }
+        public void RegisterTarget(CombatTarget target)
+        {
+            if (!target) return;
+            if (target.EntityId == 0 || !entities.TryGetValue(target.EntityId, out var current) || current != target)
+            { target.EntityId=++nextEntityId; entities.Add(target.EntityId,target); }
+            if(!Targets.Contains(target)){Targets.Add(target);Spatial.Add(target);}
+        }
+        public void UnregisterTarget(CombatTarget target)
+        {
+            if(!target) return;
+            entities.Remove(target.EntityId); Targets.Remove(target);
+        }
+        public CombatTarget FindTarget(int id) => entities.TryGetValue(id,out var target) && target ? target : null;
+        void SuspendMovement(bool suspended)
+        {
+            for(int i=0;i<Units.Count;i++) if(Units[i]) Units[i].SetSimulationPaused(suspended);
+        }
         public void Message(string message) { Messages.Insert(0, message); if (Messages.Count > 5) Messages.RemoveAt(5); }
-        public void TogglePause() { if (Winner >= 0) return; Paused = !Paused; Time.timeScale = Paused ? 0 : 1; }
+        public void TogglePause() { if (Winner >= 0) return; Paused = !Paused; SuspendMovement(Paused); }
 
         void Update()
         {
+            Clock.Advance(Time.deltaTime, Paused || Winner >= 0, tickWorld);
+        }
+        internal void TickRules(float delta)
+        {
             if (Paused || Winner >= 0) return;
-            BattleTime += Time.deltaTime;
-            if (Economy.Advance(Time.deltaTime) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro"); CountryReinforcements(); }
-            if (AiEnabled && BattleTime >= nextAi) { nextAi = BattleTime + AiInterval; RunAi(); }
+            if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro"); CountryReinforcements(); }
             for (int team = 0; team < 2; team++)
             {
                 bool capitalWon = Mode == VictoryMode.Capitals && Towns.Any(t => t.IsCapital && t.State.Owner == team && t.FoundingTeam >= 0 && t.FoundingTeam != team);
                 if (capitalWon)
                 {
-                    Winner = team; Time.timeScale = 0;
+                    Winner = team; SuspendMovement(true);
                     Message(team == 0 ? "¡Victoria! Las Marcas son tuyas." : "La Frontera Carmesí controla las Marcas.");
                     break;
                 }
                 VictoryProgress[team] = Mode == VictoryMode.Conquest && Towns.Count(t => t.State.Owner == team) >= VictoryTarget
-                    ? VictoryProgress[team] + Time.deltaTime : 0;
+                    ? VictoryProgress[team] + delta : 0;
                 int opponent = 1 - team;
                 if (VictoryProgress[team] >= BattleRules.VictoryHoldSeconds ||
                     (Population(opponent) == 0 && Towns.All(t => t.State.Owner != opponent)))
                 {
-                    Winner = team; Time.timeScale = 0;
+                    Winner = team; SuspendMovement(true);
                     Message(team == 0 ? "¡Victoria! Las Marcas son tuyas." : "La Frontera Carmesí controla las Marcas.");
                     break;
                 }
@@ -91,47 +134,12 @@ namespace RiskAI
         public Soldier Spawn(int team, UnitKind kind, Vector3 position, int originCountry = -1)
         {
             if (!NavMesh.SamplePosition(position, out var hit, 10, NavMesh.AllAreas)) return null;
-            var go = new GameObject(BattleRules.Name(kind)); go.transform.position = hit.position;
-            go.transform.rotation=Quaternion.Euler(0,team==0?180:0,0);
-            var soldier = go.AddComponent<Soldier>(); soldier.Initialize(this, team, kind); soldier.OriginCountry = originCountry; Units.Add(soldier); Targets.Add(soldier); return soldier;
+            var soldier=SoldierPool.Rent(team,kind,hit.position);
+            soldier.OriginCountry=originCountry;
+            Units.Add(soldier);
+            return soldier;
         }
 
-        void RunAi()
-        {
-            bool relaxed = Difficulty == AiDifficulty.Relaxed;
-            bool recruited = false;
-            foreach (var town in Towns.Where(t => t.State.Owner == 1))
-            {
-                float upgradeTime = relaxed ? 120f : 70f;
-                float towerTime = relaxed ? 150f : 90f;
-                if(!town.Building && BattleTime>=upgradeTime && Economy.Gold[1]>=125 && town.IsCapital && town.State.Level==1)town.Upgrade(1);
-                else if(!town.Building && BattleTime>=towerTime && Economy.Gold[1]>=100 && !town.Defense.IsAlive)town.BuildTower(1);
-                if (relaxed && recruited) continue;
-                if (town.QueueCount < 2 && Population(1) < 45)
-                {
-                    var kind = town.State.Level==2 ? (UnitKind)(Mathf.FloorToInt(BattleTime/AiInterval)%4) : Mathf.FloorToInt(BattleTime/AiInterval)%3==0 ? UnitKind.Archer : UnitKind.Footman;
-                    if (town.Recruit(kind,1) == null) recruited = true;
-                }
-            }
-            if (BattleTime < AiFirstOffensiveTime) return;
-            var active = Units.Where(u => u && u.Team == 1 && u.IsAlive && u.isActiveAndEnabled && u.Agent && u.Agent.enabled && u.IsIdle).ToList();
-            if (active.Count < 5) return;
-            var available = active;
-            if (relaxed)
-            {
-                var infantry = active.Where(IsInfantry).Take(6).ToList();
-                if (infantry.Count < 6) return;
-                available = active.Where(u => !infantry.Contains(u)).Take(10).ToList();
-                if (available.Count == 0) return;
-            }
-            Vector3 center = available.Aggregate(Vector3.zero, (sum, u) => sum + u.transform.position) / available.Count;
-            bool neutralsRemain=Towns.Any(t=>t.State.Owner<0);
-            var target = Towns.Where(t => t.State.Owner != 1 && (BattleTime > 100 || t.State.Owner < 0 || !neutralsRemain))
-                .OrderByDescending(t => t.State.Country >= 0 && Towns.Any(x => x.State.Country == t.State.Country && x.State.Owner == 1))
-                .ThenBy(t => Vector3.SqrMagnitude(t.transform.position - center)).FirstOrDefault();
-            if (target) GiveFormation(available, target.ClaimPoint, true, false);
-        }
-        static bool IsInfantry(Soldier unit) => unit.Kind == UnitKind.Footman || unit.Kind == UnitKind.Guard;
         void CountryReinforcements()
         {
             for(int team=0;team<2;team++) for(int country=0;country<MapLayout.Countries.Length;country++)
@@ -155,7 +163,7 @@ namespace RiskAI
         public static void GiveFormation(IReadOnlyList<Soldier> units, Vector3 point, bool attackMove, bool queue, bool patrol=false)
         {
             if(units.Count==0)return;
-            var remaining=units.Where(u=>u&&u.Health>0).ToList();
+            var remaining=units.Where(u=>u&&u.Health>0&&!u.IsGarrison).ToList();
             int count=remaining.Count;if(count==0)return;
             Vector3 center=remaining.Aggregate(Vector3.zero,(sum,u)=>sum+u.transform.position)/remaining.Count;
             Vector3 forward=point-center;forward.y=0;forward=forward.sqrMagnitude>.01f?forward.normalized:Vector3.forward;
@@ -165,8 +173,16 @@ namespace RiskAI
             {
                 var offset = right*(i % columns - (columns - 1) * .5f)*1.4f + forward*((Mathf.CeilToInt((float)count / columns)-1)*.5f-i/columns)*1.4f;
                 var slot=point+offset;
-                var unit=remaining.OrderBy(u=>BattleRules.Ranged(u.Kind)).ThenBy(u=>u.Kind).ThenBy(u=>Vector3.SqrMagnitude(u.transform.position-slot)).First();remaining.Remove(unit);
-                if(patrol)unit.Patrol(slot,queue);else unit.MoveTo(slot,attackMove,queue);
+                int best=0;
+                for(int j=1;j<remaining.Count;j++)
+                {
+                    var a=remaining[j];var b=remaining[best];
+                    int rank=(BattleRules.Ranged(a.Kind)?100:0)+(int)a.Kind;
+                    int currentRank=(BattleRules.Ranged(b.Kind)?100:0)+(int)b.Kind;
+                    if(rank<currentRank || rank==currentRank && (a.transform.position-slot).sqrMagnitude<(b.transform.position-slot).sqrMagnitude)best=j;
+                }
+                var unit=remaining[best];remaining.RemoveAt(best);
+                unit.session.Commands.Submit(new UnitCommand(unit.Team,unit.EntityId,patrol?UnitCommandKind.Patrol:attackMove?UnitCommandKind.AttackMove:UnitCommandKind.Move,slot.x,slot.y,slot.z,append:queue));
             }
         }
     }
