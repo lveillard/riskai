@@ -1,14 +1,14 @@
-# RiskAI · v0.14
+# RiskAI · v0.15
 
 Prototipo RTS de conquista por ciudades, inspirado en los mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP, partida local contra IA y arte propio/CC0.
 
-Abre **Play-RiskAI.cmd** para jugar la compilación local. El menú permite elegir escenario, reparto, semilla y dificultad antes de empezar. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`. Las compilaciones y las referencias de Warcraft quedan fuera de Git.
+Abre **Play-RiskAI.cmd** para jugar la compilación local. El menú permite elegir escenario, 2–16 jugadores, reparto, semilla y dificultad antes de empezar. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`. Las compilaciones y las referencias de Warcraft quedan fuera de Git.
 
-Esta versión amplía Las Marcas a **18 ciudades**, fija las guarniciones en sus círculos e incorpora **Europe (212 ciudades)** y **New World (293)** a partir de las coordenadas y geografía de los mapas de referencia. Todos comienzan con un ballestero por puesto, sin ejércitos ni barcos gratuitos. [Cambios y límites](docs/ITERATION-v0.14.md) · [Fuentes de las reglas](docs/RISK-RULES-v0.12.md) · [Validación](docs/VALIDATION-v0.14.md) · [Pendientes](TODO.md).
+Esta versión permite **un jugador y hasta 15 IA independientes**. Europe (212 ciudades) y New World (293) conservan distancias y coordenadas fuente con una conversión común de unidades, límites W3I y árboles DOO. Ballestero, guardia, sanador y mortero usan colisiones verificadas y alturas de espera calibradas contra medidas numéricas de los modelos originales. Sus siluetas son distintas y el tamaño de los edificios propios aún no está calibrado. [Escala y límites](docs/MAP-SCALE-v0.15.md) · [Cambios](docs/ITERATION-v0.15.md) · [Validación](docs/VALIDATION-v0.15.md) · [Pendientes](TODO.md).
 
-![Europe v0.14: geografía fuente y 212 ciudades jugables](docs/images/v0.14-europe.png)
+![Europe v0.15: geografía fuente, cámara del mapa y 16 jugadores](docs/images/v0.15-europe.png)
 
-[New World](docs/images/v0.14-newworld.png) · [Nuevo suroeste de Las Marcas](docs/images/v0.14-southwest.png)
+[New World](docs/images/v0.15-newworld.png) · [Panel de 16 jugadores](docs/images/v0.15-players.png) · [Suroeste de Las Marcas](docs/images/v0.14-southwest.png)
 
 ## Escenarios
 
@@ -23,7 +23,7 @@ Los postes indican fronteras y propietario. Selecciona una **hoguera** para most
 
 ## Primera partida y reglas
 
-**Ciudades al azar** reparte la mitad de las ciudades a cada bando mediante una semilla. En los dos escenarios originales, los puertos adicionales tienen su propio reparto equilibrado; en los imports forman parte del reparto de ciudades. Un puesto sobrante queda neutral. Cada ciudad y puerto, también los neutrales, empieza con **un ballestero retenido en su círculo**. No hay tropas móviles ni barcos gratuitos. Las Marcas tiene 25 puestos: 12 defensores por bando y 1 neutral con este reparto; Cuatro Riberas tiene 28: 14 por bando. Ambos jugadores reciben 4 de oro.
+**Ciudades al azar** asigna el mismo número de ciudades a cada jugador mediante una semilla; el resto queda neutral. Con 16 jugadores, Europe da 13 ciudades por bando y deja 4 neutrales; New World da 18 y deja 5. En los dos escenarios originales, los puertos adicionales se reparten por separado entre jugadores elegidos por semilla. Cada ciudad y puerto, también los neutrales, empieza con **un ballestero retenido en su círculo**. Todos reciben **4 de oro**, sin tropas móviles ni barcos gratuitos. El menú permite reducir el número de jugadores para los mapas pequeños.
 
 Para empezar, selecciona una ciudad azul (**F2**) y compra un ballestero (**W**) o espadachín (**Q**). La tropa entrenada puede salir a conquistar; **E** selecciona las tropas móviles. Los barcos se compran en un puerto azul (**F3**). También puedes elegir grupos completos o posiciones fijas; el número de puestos neutrales depende del mapa y del modo. La base inicial sirve de referencia para la cámara y el despliegue.
 
@@ -46,7 +46,7 @@ Cada 60 s recibes **4 de base + 1 por ciudad de un grupo totalmente controlado**
 
 Todas están disponibles directamente en su ciudad o puerto. Las ciudades tienen cola de cinco y los puertos de tres; cancelar devuelve el precio. Tope por bando: 100 soldados, incluidos embarcados y compras pendientes, y 12 barcos. En Europe y New World las guarniciones quedan fuera del tope de 100 para permitir reclutar con más de cien defensores iniciales. En esos mapas los puertos forman parte de las ciudades, grupos, ingresos y victoria, y comparten su defensor y torre. En Las Marcas y Cuatro Riberas siguen siendo puestos navales independientes que no cuentan como ciudades. El reparto naval y los tiempos de producción siguen siendo adaptaciones del prototipo.
 
-Ganas conservando el 60 % de las ciudades durante 20 s: 11 en Las Marcas, 12 en Cuatro Riberas, 128 en Europe o 176 en New World. También vence quien deja al rival sin ciudades ni soldados. La IA relajada retrasa su ofensiva, pero ambas dificultades reaccionan para defender bases amenazadas. Todavía no hay niebla de guerra; la IA conoce el mapa completo y no prepara desembarcos.
+Ganas conservando el 60 % de las ciudades durante 20 s: 11 en Las Marcas, 12 en Cuatro Riberas, 128 en Europe o 176 en New World. También vence el último jugador con puestos o tropas: eliminar a una sola IA no termina una partida con más rivales. La IA relajada retrasa su ofensiva, pero ambas dificultades reaccionan para defender bases amenazadas. Todavía no hay niebla de guerra; la IA conoce el mapa completo y no prepara desembarcos.
 
 ## Controles
 
@@ -80,7 +80,7 @@ Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. Escena: `Assets/RiskAI/S
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
 .\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
-.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.14/RiskAI.exe
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.15/RiskAI.exe
 ```
 
 Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map classic`, `riverlands`, `europe` o `newworld`. [Estructura del código](RiskAI/README.md).

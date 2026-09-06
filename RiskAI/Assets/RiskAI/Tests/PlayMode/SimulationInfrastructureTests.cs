@@ -39,7 +39,7 @@ namespace RiskAI.Tests
         public IEnumerator PauseFreezesSimulationWithoutChangingTimeScale()
         {
             var mover = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, new Vector3(-30, 0, -16));
-            var victim = BattleTestScenario.Mobile(battle, 2, UnitKind.Footman, new Vector3(-24, 0, -16));
+            var victim = BattleTestScenario.Mobile(battle, PlayerRules.NeutralTeam, UnitKind.Footman, new Vector3(-24, 0, -16));
             StopBackgroundUnits(mover, victim);
             victim.enabled = false;
             mover.MoveTo(mover.transform.position + mover.transform.forward * 8, false, false);

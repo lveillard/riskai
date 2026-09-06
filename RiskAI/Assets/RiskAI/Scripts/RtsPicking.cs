@@ -26,8 +26,8 @@ namespace RiskAI
         }
         public static Rect Bounds(Camera camera, CombatTarget target)
         {
-            float height = target is Ship ? 4.8f : target is DefenseTower ? VisualMetrics.TowerHeight : VisualMetrics.UnitHeight;
-            float radius = target is Ship ? 1.8f : target is DefenseTower ? VisualMetrics.TowerRadius : VisualMetrics.UnitRadius;
+            float height = target is Ship ? 4.8f : target is DefenseTower ? VisualMetrics.TowerHeight : target is Soldier soldier?VisualMetrics.HeightFor(soldier.Kind):VisualMetrics.UnitHeight;
+            float radius = target is Ship ? 1.8f : target is DefenseTower ? VisualMetrics.TowerRadius : target is Soldier unit?VisualMetrics.RadiusFor(unit.Kind):VisualMetrics.UnitRadius;
             Vector3 foot = camera.WorldToScreenPoint(target.transform.position);
             Vector3 head = camera.WorldToScreenPoint(target.transform.position + Vector3.up * height);
             if (head.z <= 0) return Rect.zero;
@@ -43,7 +43,7 @@ namespace RiskAI
                 float s=BattleHud.Scale;
                 if (label.z > 0 && new Rect(label.x - 88*s, label.y - 22*s, 176*s, 28*s).Contains(pointer)) return town;
             }
-            var hits = Physics.RaycastAll(camera.ScreenPointToRay(pointer), 250, ~0, QueryTriggerInteraction.Collide);
+            var hits = Physics.RaycastAll(camera.ScreenPointToRay(pointer), camera.farClipPlane, ~0, QueryTriggerInteraction.Collide);
             foreach (var hit in hits)
             {
                 var town = hit.collider.GetComponentInParent<Settlement>();
@@ -54,7 +54,7 @@ namespace RiskAI
         public static Harbor Harbor(BattleSession battle, Camera camera, Vector2 pointer)
         {
             if(battle==null)return null;
-            var hits=Physics.RaycastAll(camera.ScreenPointToRay(pointer),250,~0,QueryTriggerInteraction.Collide);
+            var hits=Physics.RaycastAll(camera.ScreenPointToRay(pointer),camera.farClipPlane,~0,QueryTriggerInteraction.Collide);
             foreach(var hit in hits)
             {
                 var harbor=hit.collider.GetComponentInParent<Harbor>();

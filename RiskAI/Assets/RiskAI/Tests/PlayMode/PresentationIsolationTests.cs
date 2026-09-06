@@ -33,7 +33,7 @@ namespace RiskAI.Tests
         public IEnumerator DestroyingProjectileViewsDoesNotCancelSimulationHit()
         {
             var source = battle.Units.First(u => u && u.Team == 0);
-            var target = battle.Units.First(u => u && u.Team == 2);
+            var target = battle.Units.First(u => u && u.Team == PlayerRules.NeutralTeam);
             StopBackgroundCombat(source, target);
             battle.RegisterTarget(source);
             battle.RegisterTarget(target);

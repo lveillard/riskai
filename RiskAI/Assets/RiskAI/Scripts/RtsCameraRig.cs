@@ -5,16 +5,19 @@ namespace RiskAI
     public sealed class RtsCameraRig : MonoBehaviour
     {
         public const float DefaultZoom=34;
+        public static Quaternion DefaultRotation => Quaternion.Euler(MapLayout.IsImported ? 70 : 55, 0, 0);
+        float InitialZoom => MapLayout.IsImported ? 80 * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad) : DefaultZoom;
+        float MinimumZoom => MapLayout.IsImported ? 18 * Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad) : 17;
         public float TargetZoom { get; private set; }=DefaultZoom;
         [Range(.1f,3f)] public float PanSpeed=1;
         public Vector3 FocusPoint => focus;
-        public float MaximumZoom => MapLayout.IsImported?Mathf.Max(180,MapLayout.HalfDepth*.94f):MapLayout.IsExpanded?60:44;
+        public float MaximumZoom => MapLayout.IsImported ? MapFrameZoom() : MapLayout.IsExpanded ? 60 : 44;
         float FocusSpeedCap => MapLayout.IsImported?Mathf.Max(120,MapLayout.HalfDepth*1.25f):120;
         Camera cam;Vector3 focus,targetFocus,panVelocity,zoomAnchor,homePoint=new Vector3(-26,0,-17);Vector2 anchorScreen;
         float zoomVelocity;bool anchorZoom;
         public void Initialize(Camera camera)
         {
-            cam=camera;cam.orthographicSize=TargetZoom=DefaultZoom;
+            cam=camera;cam.orthographicSize=TargetZoom=InitialZoom;
             focus=targetFocus=new Vector3(-26,0,-17);Apply();
         }
         public Vector3 Ground(Vector2 screen)
@@ -25,8 +28,8 @@ namespace RiskAI
         }
         public void Focus(Vector3 point) { targetFocus=Clamp(point);anchorZoom=false; }
         public void SetHome(Vector3 point) { homePoint=point;focus=targetFocus=Clamp(point);Apply(); }
-        public void ResetView() { TargetZoom=DefaultZoom;targetFocus=Clamp(homePoint);anchorZoom=false; }
-        public void FrameMap(){TargetZoom=MaximumZoom;targetFocus=Vector3.zero;anchorZoom=false;}
+        public void ResetView() { TargetZoom=InitialZoom;targetFocus=Clamp(homePoint);anchorZoom=false; }
+        public void FrameMap(){TargetZoom=MaximumZoom;targetFocus=MapLayout.PlayableCenter;anchorZoom=false;}
         public void Pan(Vector3 direction,float dt)
         {
             if(direction.sqrMagnitude<.001f)return;
@@ -47,7 +50,7 @@ namespace RiskAI
         {
             if(Mathf.Abs(wheelSteps)<.001f)return;
             zoomAnchor=Ground(screen);anchorScreen=screen;anchorZoom=true;
-            TargetZoom=Mathf.Clamp(TargetZoom*Mathf.Exp(-Mathf.Clamp(wheelSteps,-4,4)*.24f),17,MaximumZoom);
+            TargetZoom=Mathf.Clamp(TargetZoom*Mathf.Exp(-Mathf.Clamp(wheelSteps,-4,4)*.24f),MinimumZoom,MaximumZoom);
         }
         public void CancelMotion() { targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;zoomVelocity=0;if(cam)TargetZoom=cam.orthographicSize; }
         void LateUpdate()
@@ -68,10 +71,36 @@ namespace RiskAI
         }
         Vector3 Clamp(Vector3 point)
         {
-            float xLimit=MapLayout.HalfWidth-cam.orthographicSize*.6f;
-            float zLimit=MapLayout.HalfDepth-cam.orthographicSize*.7f;
-            return new Vector3(Mathf.Clamp(point.x,-xLimit,xLimit),Mathf.Clamp(point.y,0,20),Mathf.Clamp(point.z,-zLimit,zLimit));
+            Vector2 min = MapLayout.PlayableMin, max = MapLayout.PlayableMax;
+            float marginX = Mathf.Min((max.x - min.x) * .5f, cam.orthographicSize * .6f);
+            float marginZ = Mathf.Min((max.y - min.y) * .5f, cam.orthographicSize * .7f);
+            return new Vector3(Mathf.Clamp(point.x, min.x + marginX, max.x - marginX),
+                Mathf.Clamp(point.y, 0, 20), Mathf.Clamp(point.z, min.y + marginZ, max.y - marginZ));
         }
+        float MapFrameZoom()
+        {
+            if (!cam) return Mathf.Max(180, MapLayout.HalfDepth);
+            // Solve the perspective frustum for the W3I rectangle and the space
+            // left by the HUD. This also handles New World's wider, off-centre map.
+            float tangent = Mathf.Tan(cam.fieldOfView * .5f * Mathf.Deg2Rad);
+            float top = 1 - 2 * BattleHud.TopPixels / Screen.height;
+            float bottom = -1 + 2 * BattleHud.BottomPixels / Screen.height;
+            float offset = (BattleHud.BottomPixels - BattleHud.TopPixels) / Screen.height;
+            Vector2 min = MapLayout.PlayableMin, max = MapLayout.PlayableMax;
+            float zoom = 180;
+            for (int corner = 0; corner < 4; corner++)
+            {
+                var point = new Vector3((corner & 1) == 0 ? min.x : max.x, 0, (corner & 2) == 0 ? min.y : max.y) - MapLayout.PlayableCenter;
+                float x = Vector3.Dot(point, cam.transform.right);
+                float y = Vector3.Dot(point, cam.transform.up);
+                float depth = Vector3.Dot(point, cam.transform.forward) * tangent;
+                zoom = Mathf.Max(zoom, Mathf.Abs(x) / cam.aspect - depth,
+                    (y - top * depth) / Mathf.Max(.1f, top - offset),
+                    (-y + bottom * depth) / Mathf.Max(.1f, offset - bottom));
+            }
+            return zoom * 1.025f;
+        }
+
         void Apply()
         {
             float playableOffset=cam.orthographicSize*(BattleHud.BottomPixels-BattleHud.TopPixels)/Screen.height;

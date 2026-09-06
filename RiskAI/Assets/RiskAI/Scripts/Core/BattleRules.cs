@@ -68,18 +68,26 @@ namespace RiskAI.Core
 
     public sealed class Economy
     {
-        public readonly int[] Gold = { BattleRules.StartingGold, BattleRules.StartingGold };
+        public readonly int[] Gold;
         public readonly List<TownState> Towns = new List<TownState>();
         // TownState is intentionally mutable and Towns is publicly editable for the
         // prototype. Rebuild this reusable map for each query instead of caching a
         // result that could become stale after an ownership or topology change.
         readonly Dictionary<int, int> countryOwners = new Dictionary<int, int>();
-        readonly int[] bountyRemainders = new int[2];
+        readonly int[] bountyRemainders;
         public float ElapsedInRound { get; private set; }
         public int Round { get; private set; } = 1;
         // Kept as a compatibility surface for existing HUD/tests. Saran's
         // extracted source has no additional continent/region gold stack.
         public readonly int[] RegionBonuses = { 0, 0, 0 };
+
+        public Economy(int playerCount = 2)
+        {
+            if (playerCount < 1 || playerCount > PlayerRules.MaxPlayers)
+                throw new ArgumentOutOfRangeException(nameof(playerCount));
+            Gold = new int[playerCount]; bountyRemainders = new int[playerCount];
+            for (int player = 0; player < Gold.Length; player++) Gold[player] = BattleRules.StartingGold;
+        }
 
         public int CountryOwner(int country)
         {
@@ -105,6 +113,7 @@ namespace RiskAI.Core
 
         public int Income(int team)
         {
+            if (team < 0 || team >= Gold.Length) return 0;
             RebuildCountryOwners();
             return CalculateIncome(team);
         }
@@ -131,14 +140,14 @@ namespace RiskAI.Core
 
         public bool Spend(int team, int amount)
         {
-            if (team < 0 || team > 1 || amount < 0 || Gold[team] < amount) return false;
+            if (team < 0 || team >= Gold.Length || amount < 0 || Gold[team] < amount) return false;
             Gold[team] -= amount; return true;
         }
 
         /// <summary>Adds earned or otherwise awarded gold to a team's account.</summary>
         public bool Grant(int team, int amount)
         {
-            if (team < 0 || team > 1 || amount < 0 ||
+            if (team < 0 || team >= Gold.Length || amount < 0 ||
                 (amount > 0 && Gold[team] > int.MaxValue - amount)) return false;
             Gold[team] += amount;
             return true;
@@ -154,7 +163,7 @@ namespace RiskAI.Core
         /// </summary>
         public bool GrantBounty(int team, int pointValue)
         {
-            if (team < 0 || team > 1 || pointValue < 0) return false;
+            if (team < 0 || team >= Gold.Length || pointValue < 0) return false;
             if (pointValue > int.MaxValue - bountyRemainders[team]) return false;
             int total = bountyRemainders[team] + pointValue;
             int whole = total / BattleRules.BountyDivisor;
@@ -173,7 +182,7 @@ namespace RiskAI.Core
             {
                 ElapsedInRound -= BattleRules.RoundSeconds; Round++; paid++;
                 RebuildCountryOwners();
-                Grant(0, CalculateIncome(0)); Grant(1, CalculateIncome(1));
+                for (int player = 0; player < Gold.Length; player++) Grant(player, CalculateIncome(player));
             }
             return paid;
         }

@@ -82,7 +82,7 @@ namespace RiskAI.Tests
                 Assert.That(posts.Length, Is.EqualTo(25));
                 Assert.That(battle.Units.Count, Is.EqualTo(posts.Length));
                 Assert.That(posts.All(post => post.Defender && post.Defender.Kind == UnitKind.Archer && post.Defender.IsGarrison), Is.True);
-                Assert.That(posts.All(post => post.Defender.Team == (post.Owner >= 0 ? post.Owner : 2)), Is.True);
+                Assert.That(posts.All(post => post.Defender.Team == (post.Owner >= 0 ? post.Owner : PlayerRules.NeutralTeam)), Is.True);
                 Assert.That(posts.Select(post => post.Defender).Distinct().Count(), Is.EqualTo(posts.Length));
                 Assert.That(battle.Units.All(unit => unit.IsGarrison), Is.True);
                 Assert.That(NavalWorld.Current.Ships, Is.Empty);

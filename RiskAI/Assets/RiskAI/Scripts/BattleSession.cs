@@ -18,7 +18,9 @@ namespace RiskAI
         public enum AiDifficulty { Relaxed, Standard }
         public static AiDifficulty DifficultyForNewMatch = AiDifficulty.Relaxed;
         public static int SeedForNewMatch = System.Environment.TickCount & int.MaxValue;
+        public static int PlayerCountForNewMatch = PlayerRules.MaxPlayers;
         public int Seed { get; private set; }
+        public int PlayerCount { get; private set; }
         public StartLayout Layout { get; private set; }
         public string LayoutName => Layout == StartLayout.RandomCities ? "Reparto Risk" : Layout == StartLayout.RandomCountries ? "Países iniciales" : "Escenario de práctica";
         public AiDifficulty Difficulty { get; private set; }
@@ -30,15 +32,15 @@ namespace RiskAI
         public VictoryMode Mode { get; set; }
         public int VictoryTarget => Towns.Count == 0 ? 0 : RiskReferenceRules.CalculateCityCountWin(Towns.Count, .6);
         public static BattleSession Current { get; private set; }
-        public readonly Economy Economy = new Economy();
+        public Economy Economy { get; private set; }
         public readonly List<Soldier> Units = new List<Soldier>();
         public readonly List<CombatTarget> Targets = new List<CombatTarget>();
         public readonly List<DefenseTower> Towers = new List<DefenseTower>();
         public readonly List<Settlement> Towns = new List<Settlement>();
         public readonly List<CountryCamp> Camps = new List<CountryCamp>();
         public readonly List<string> Messages = new List<string>();
-        public readonly int[] Kills = new int[2];
-        public readonly float[] VictoryProgress = new float[2];
+        public int[] Kills { get; private set; }
+        public float[] VictoryProgress { get; private set; }
         public float BattleTime => (float)Clock.Elapsed;
         public SimClock Clock { get; private set; }
         public BattleWorld World { get; private set; }
@@ -46,6 +48,7 @@ namespace RiskAI
         public SpatialTargetIndex Spatial { get; } = new SpatialTargetIndex();
         public SoldierPool SoldierPool { get; private set; }
         public ICommander Commander { get; private set; }
+        public IReadOnlyList<SkirmishCommander> Commanders { get; private set; }
         public BattleCommands Commands { get; private set; }
         public NavalWorld Naval { get; internal set; }
         readonly Dictionary<int, CombatTarget> entities = new Dictionary<int, CombatTarget>(256);
@@ -63,11 +66,18 @@ namespace RiskAI
         {
             if (World != null) return;
             Current = this; Mode = ModeForNewMatch; Layout = LayoutForNewMatch; Difficulty = DifficultyForNewMatch; Seed = SeedForNewMatch;
+            PlayerCount = Mathf.Clamp(PlayerCountForNewMatch, 2, Mathf.Min(PlayerRules.MaxPlayers, Mathf.Max(2, MapLayout.Towns.Length)));
+            Economy = new Economy(PlayerCount); Kills = new int[PlayerCount]; VictoryProgress = new float[PlayerCount];
             combatRandom = new System.Random(Seed ^ 0x2945);
             Clock = new SimClock();
             Combat = new CombatWorld(this);
             SoldierPool = new SoldierPool(this);
-            Commander = new SkirmishCommander(this);
+            var commanders = new CommanderGroup(this, PlayerCount);
+            Commanders = commanders.Commanders;
+            // Existing integrations cast Commander to SkirmishCommander in the
+            // authored two-player match. Keep that surface while multi-player
+            // sessions tick the complete commander collection.
+            Commander = PlayerCount == 2 ? Commanders[0] : commanders;
             Commands = new BattleCommands(this);
             World = new BattleWorld(this);
             tickWorld = World.Tick;
@@ -75,9 +85,13 @@ namespace RiskAI
         public static void NewSeed() { SeedForNewMatch = System.Environment.TickCount & int.MaxValue; }
         public int[] StartingOwners()
         {
-            if(Layout == StartLayout.Fixed) return MapLayout.Towns.Select(t=>t.Owner).ToArray();
-            return StartingAllocation.Generate(Seed,MapLayout.Towns.Select(t=>t.Country).ToArray(),2,
-                Layout == StartLayout.RandomCities ? StartingAllocationMode.IndividualCities : StartingAllocationMode.WholeCountries).CityOwners;
+            var countries=MapLayout.Towns.Select(t=>t.Country).ToArray();
+            if(Layout == StartLayout.Fixed && PlayerCount<=2)return MapLayout.Towns.Select(t=>t.Owner).ToArray();
+            bool fallback=Layout == StartLayout.RandomCountries && PlayerCount>MapLayout.Countries.Length;
+            var mode=Layout != StartLayout.RandomCountries || fallback
+                ? StartingAllocationMode.IndividualCities : StartingAllocationMode.WholeCountries;
+            if(fallback)Message("No hay países suficientes para todos: reparto por ciudades.");
+            return StartingAllocation.Generate(Seed,countries,PlayerCount,mode).CityOwners;
         }
         void OnDestroy() { if (Current == this) Current = null; }
         public int Population(int team)
@@ -120,19 +134,27 @@ namespace RiskAI
         {
             if (Paused || Winner >= 0) return;
             if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro"); CountryReinforcements(); }
-            for (int team = 0; team < 2; team++)
+            for (int team = 0; team < PlayerCount; team++)
             {
                 VictoryProgress[team] = Mode == VictoryMode.Conquest && Towns.Count(t => t.State.Owner == team) >= VictoryTarget
                     ? VictoryProgress[team] + delta : 0;
-                int opponent = 1 - team;
-                if (VictoryProgress[team] >= BattleRules.VictoryHoldSeconds ||
-                    (Population(opponent) == 0 && Towns.All(t => t.State.Owner != opponent)))
+                if (VictoryProgress[team] >= BattleRules.VictoryHoldSeconds || OtherPlayersEliminated(team))
                 {
                     Winner = team; SuspendMovement(true);
-                    Message(team == 0 ? "¡Victoria! Las Marcas son tuyas." : "La Frontera Carmesí controla las Marcas.");
+                    Message(team == 0 ? "¡Victoria! Las Marcas son tuyas." : VisualFactory.TeamName(team) + " ha ganado.");
                     break;
                 }
             }
+        }
+        bool OtherPlayersEliminated(int winner)
+        {
+            for(int player=0;player<PlayerCount;player++)
+            {
+                if(player==winner)continue;
+                if(Towns.Any(t=>t&&t.State.Owner==player)||Units.Any(u=>u&&u.IsAlive&&u.Team==player))return false;
+                if(Naval&&(Naval.Ships.Any(ship=>ship&&ship.IsAlive&&ship.Team==player)||Naval.Harbors.Any(harbor=>harbor&&harbor.Owner==player)))return false;
+            }
+            return true;
         }
 
         public Soldier Spawn(int team, UnitKind kind, Vector3 position, int originCountry = -1)
@@ -146,7 +168,7 @@ namespace RiskAI
 
         void CountryReinforcements()
         {
-            for(int team=0;team<2;team++) for(int country=0;country<MapLayout.Countries.Length;country++)
+            for(int team=0;team<PlayerCount;team++) for(int country=0;country<MapLayout.Countries.Length;country++)
             {
                 var config = MapLayout.Countries[country];
                 if (Economy.CountryOwner(country) != team) continue;

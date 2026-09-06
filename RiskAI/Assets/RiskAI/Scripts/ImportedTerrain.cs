@@ -30,6 +30,7 @@ namespace RiskAI
                 float wx=data.originX+ix*data.cellSize,wz=data.originZ+iz*data.cellSize;
                 vertices[index]=new Vector3(wx,data.heightSamples[source],wz);
                 colors[index]=GroundTint(data.tileSamples[source],wx,wz);
+                colors[index].a=ImportedLandscapeAugment.Enabled?ImportedLandscapeAugment.RockSnowWeightAt(data,wx,wz):0;
                 if(x==nx||z==nz)continue;
                 int b=index+nx+1;
                 AddQuad(triangles,index,b,index+1,b+1);
@@ -59,30 +60,60 @@ namespace RiskAI
         static void AddQuad(List<int> target,int a,int b,int c,int d){target.Add(a);target.Add(b);target.Add(c);target.Add(c);target.Add(b);target.Add(d);}
         static Color GroundTint(int tile,float x,float z)
         {
-            Color tint=GroundColors[Mathf.Abs(tile)%GroundColors.Length];
+            Color tint=GroundColors[Mathf.Min(ImportedMapData.GroundTileIndex(tile),GroundColors.Length-1)];
             float patch=Mathf.PerlinNoise(x*.022f+51,z*.022f+19);
             return tint*Mathf.Lerp(.88f,1.1f,patch);
         }
         static void CreateVegetation(Transform root,ImportedMapData data)
         {
-            var random=new System.Random(17391);int planted=0;
-            // Sparse patches leave strategic routes readable across a much larger map.
-            for(float z=data.originZ+5;z<MapLayout.HalfDepth-5;z+=6.4f)
-                for(float x=data.originX+5;x<MapLayout.HalfWidth-5;x+=6.4f)
+            // Every candidate is a static DOO destructible exported at its authored
+            // Warcraft coordinate.  The source X/Y ground axes map to Unity X/Z;
+            // source Z is vertical and is preserved as scaleZ in the export.
+            if(data.sourceTrees==null||data.sourceTrees.Length==0)return;
+            var trees=new GameObject("Source tree destructibles");trees.transform.SetParent(root,false);
+            int placed=0,dead=0;
+            for(int i=0;i<data.sourceTrees.Length;i++)
+            {
+                var tree=data.sourceTrees[i];
+                if(tree.lifePercent<=0){dead++;continue;}
+                float horizontalX=Mathf.Max(.08f,tree.scaleX),horizontalZ=Mathf.Max(.08f,tree.scaleY);
+                float crownRadius=1.7f*Mathf.Max(horizontalX,horizontalZ);
+                if(!data.IsLand(tree.x,tree.z)||!ClearOfPosts(tree.x,tree.z,crownRadius,data))continue;
+                string sourceType=SourceTreeType(data,tree.species);
+                int before=trees.transform.childCount;
+                BiomeVegetation.ImportedTree(trees.transform,MapLayout.Point(tree.x,tree.z),
+                    4.2f*Mathf.Max(.08f,tree.scaleZ),tree.sourceRecord+tree.variation,
+                    TreeForm(sourceType));
+                if(trees.transform.childCount>before)
                 {
-                    if(planted>=2200)return;
-                    if(random.NextDouble()>.60||!data.IsLand(x,z)||Mathf.PerlinNoise(x*.037f+8,z*.037f+5)<.63f)continue;
-                    float wx=x+(float)random.NextDouble()*2,wz=z+(float)random.NextDouble()*2;
-                    if(!data.IsLand(wx,wz)||!ClearOfPosts(wx,wz,data))continue;
-                    var point=MapLayout.Point(wx,wz);
-                    if(Mathf.Abs(data.HeightAt(wx+2,wz)-point.y)>1||Mathf.Abs(data.HeightAt(wx,wz+2)-point.y)>1)continue;
-                    WorldArt.Tree(root,point,3.2f+(float)random.NextDouble()*1.8f,planted++,false);
+                    var instance=trees.transform.GetChild(trees.transform.childCount-1);
+                    instance.name="Source "+sourceType+" · f"+tree.pathingFlags+" · "+tree.lifePercent+"% · #"+tree.sourceRecord;
+                    // x,y,z -> x,z,y reflects handedness, so authored yaw is negated.
+                    instance.localRotation=Quaternion.Euler(0,-tree.rotationDegrees,0);
+                    instance.localScale=new Vector3(horizontalX,1,horizontalZ);
+                    placed++;
                 }
+            }
+            trees.name="Source tree destructibles · "+placed+" visible · "+dead+" destroyed";
+            if(placed>0)StaticBatchingUtility.Combine(trees);
         }
-        static bool ClearOfPosts(float x,float z,ImportedMapData data)
+        static string SourceTreeType(ImportedMapData data,int species)
+        {
+            if(data.treeSpecies==null||species<0||species>=data.treeSpecies.Length)return "unknown";
+            return data.treeSpecies[species];
+        }
+        static BiomeVegetation.ImportedTreeForm TreeForm(string sourceType)
+        {
+            int separator=sourceType.IndexOf(':');string code=separator>=0?sourceType.Substring(separator+1):sourceType;
+            if(code=="WTst")return BiomeVegetation.ImportedTreeForm.Fir;
+            if(code=="BTtc"||code=="BTtw")return BiomeVegetation.ImportedTreeForm.DryOak;
+            return BiomeVegetation.ImportedTreeForm.Oak;
+        }
+        static bool ClearOfPosts(float x,float z,float crownRadius,ImportedMapData data)
         {
             foreach(var c in data.cities)
-                if((new Vector2(x-c.x,z-c.z)).sqrMagnitude<110||(new Vector2(x-c.claimX,z-c.claimZ)).sqrMagnitude<64)return false;
+                if((new Vector2(x-c.x,z-c.z)).sqrMagnitude<Mathf.Max(110,(crownRadius+6)*(crownRadius+6))||
+                   (new Vector2(x-c.claimX,z-c.claimZ)).sqrMagnitude<Mathf.Max(64,(crownRadius+5)*(crownRadius+5)))return false;
             return true;
         }
         static void CreatePortPlatforms(Transform root,ImportedMapData data)

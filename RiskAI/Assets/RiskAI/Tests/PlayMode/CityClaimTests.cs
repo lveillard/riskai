@@ -51,7 +51,7 @@ namespace RiskAI.Tests
             {
                 Assert.That(post.Defender.Kind, Is.EqualTo(UnitKind.Archer));
                 Assert.That(post.Defender.IsGarrison, Is.True);
-                Assert.That(post.Defender.Team, Is.EqualTo(post.Owner >= 0 ? post.Owner : 2));
+                Assert.That(post.Defender.Team, Is.EqualTo(post.Owner >= 0 ? post.Owner : PlayerRules.NeutralTeam));
             }
             Assert.That(naval.Ships, Is.Empty);
             Assert.That(battle.Units.All(unit => unit.IsGarrison), Is.True);
@@ -231,10 +231,10 @@ namespace RiskAI.Tests
 
         void MoveOtherTeamUnitsOutsideProtection(Settlement town, Soldier keep)
         {
-            int ownerTeam = town.State.Owner >= 0 ? town.State.Owner : 2;
+            int ownerTeam = town.State.Owner >= 0 ? town.State.Owner : PlayerRules.NeutralTeam;
             foreach (var unit in battle.Units.ToArray())
             {
-                if (!unit || unit == keep || unit.Team == ownerTeam || unit.Team >= 2) continue;
+                if (!unit || unit == keep || unit.Team == ownerTeam || unit.Team == PlayerRules.NeutralTeam) continue;
                 Vector3 difference = unit.transform.position - town.ClaimPoint;
                 difference.y = 0;
                 if (difference.sqrMagnitude <= ClaimRules.ProtectionRadius * ClaimRules.ProtectionRadius)

@@ -15,16 +15,22 @@ namespace RiskAI
             var args=System.Environment.GetCommandLineArgs();
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-map")BattleSession.MapForNewMatch=args[a+1]=="europe"?ScenarioMap.Europe:args[a+1]=="world"||args[a+1]=="newworld"?ScenarioMap.NewWorld:args[a+1]=="riverlands"?ScenarioMap.Riverlands:ScenarioMap.Classic;
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-seed" && int.TryParse(args[a+1],out int seed))BattleSession.SeedForNewMatch=seed;
+            for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-players" && int.TryParse(args[a+1],out int players))BattleSession.PlayerCountForNewMatch=Mathf.Clamp(players,2,PlayerRules.MaxPlayers);
         }
         void Awake()
         {
             MapLayout.Configure(BattleSession.MapForNewMatch);
             Application.targetFrameRate=120;WorldArt.ResetRoads();Shader.SetGlobalFloat("_RiskMapScale",MapLayout.Spacing);
             UnityEngine.InputSystem.InputSystem.settings.scrollDeltaBehavior=UnityEngine.InputSystem.InputSettings.ScrollDeltaBehavior.UniformAcrossAllPlatforms;
-            var session=gameObject.AddComponent<BattleSession>();session.Initialize();var owners=session.StartingOwners();var capitals=new int[]{-1,-1};
+            var session=gameObject.AddComponent<BattleSession>();session.Initialize();var owners=session.StartingOwners();var capitals=new int[session.PlayerCount];
+            for(int player=0;player<capitals.Length;player++)capitals[player]=-1;
             for(int i=0;i<owners.Length;i++)if(owners[i]>=0 && (capitals[owners[i]]<0 || MapLayout.Towns[i].Capital))capitals[owners[i]]=i;
             var terrain=new GameObject("Battlefield · NavMesh geometry");
-            if(MapLayout.IsImported)ImportedTerrain.Create(terrain.transform);else StrategicTerrain.Create(terrain.transform);
+            if(MapLayout.IsImported)
+            {
+                ImportedTerrain.Create(terrain.transform);
+            }
+            else StrategicTerrain.Create(terrain.transform);
             for(int i=0;i<MapLayout.Towns.Length;i++)
             {
                 var city=MapLayout.Towns[i];int owner=owners[i];bool capital=owner>=0 && capitals[owner]==i;
@@ -40,7 +46,7 @@ namespace RiskAI
             {
                 town.SetRally(town.IsPort?town.ClaimPoint:MapLayout.Point(town.Rally.x,town.Rally.z));
                 // Saran creates one h00B at each circle, including neutral posts.
-                session.Spawn(town.State.Owner>=0?town.State.Owner:2,UnitKind.Archer,town.ClaimPoint);
+                session.Spawn(PlayerRules.ToCombatTeam(town.State.Owner),UnitKind.Archer,town.ClaimPoint);
                 town.InitializeGarrison(session.Units,assignedGarrisons);
             }
             if(!MapLayout.IsImported)WorldLife.Create(session,terrain.transform);
@@ -48,15 +54,15 @@ namespace RiskAI
             TerritoryMarkers.Create(session,terrain.transform);
             NavalWorld.Create(session,terrain.transform);
             var cameraObject=new GameObject("RTS Camera");var camera=cameraObject.AddComponent<Camera>();cameraObject.tag="MainCamera";
-            camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=MapLayout.IsImported?2200:440;
-            camera.transform.rotation=Quaternion.Euler(49,30,0);
+            camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=MapLayout.IsImported?(MapLayout.HalfWidth+MapLayout.HalfDepth)*5:440;
+            camera.transform.rotation=RtsCameraRig.DefaultRotation;
             camera.backgroundColor=new Color(.035f,.075f,.13f);camera.clearFlags=CameraClearFlags.SolidColor;
             cameraObject.AddComponent<AudioListener>();
             var sun=new GameObject("Sun").AddComponent<Light>();sun.type=LightType.Directional;sun.intensity=1.22f;sun.color=new Color(1,.95f,.83f);
             sun.transform.rotation=Quaternion.Euler(53,-38,0);sun.shadows=LightShadows.Soft;sun.shadowStrength=.95f;sun.shadowBias=.025f;sun.shadowNormalBias=.1f;
             RenderSettings.ambientMode=AmbientMode.Trilight;RenderSettings.ambientSkyColor=new Color(.43f,.53f,.68f);
             RenderSettings.ambientEquatorColor=new Color(.3f,.37f,.36f);RenderSettings.ambientGroundColor=new Color(.18f,.24f,.23f);
-            RenderSettings.fog=true;RenderSettings.fogColor=camera.backgroundColor;RenderSettings.fogMode=FogMode.Linear;RenderSettings.fogStartDistance=MapLayout.IsImported?1500:260;RenderSettings.fogEndDistance=MapLayout.IsImported?2100:420;
+            RenderSettings.fog=!MapLayout.IsImported;RenderSettings.fogColor=camera.backgroundColor;RenderSettings.fogMode=FogMode.Linear;RenderSettings.fogStartDistance=MapLayout.IsImported?1500:260;RenderSettings.fogEndDistance=MapLayout.IsImported?2100:420;
             var controller=gameObject.AddComponent<RtsController>();controller.Initialize(session,camera);controller.FocusHome();
             gameObject.AddComponent<BattleHud>().Initialize(session,controller,camera);
             session.Message(session.LayoutName+" · semilla "+session.Seed+". Completa países para cobrar y recibir refuerzos.");

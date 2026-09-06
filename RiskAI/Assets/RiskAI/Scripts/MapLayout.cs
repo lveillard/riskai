@@ -13,6 +13,9 @@ namespace RiskAI
         public static ScenarioMap Scenario { get; private set; }
         public static ImportedMapData Imported { get; private set; }
         public static bool IsImported => Imported != null;
+        public static Vector2 PlayableMin => IsImported ? new Vector2(Imported.PlayableMinX, Imported.PlayableMinZ) : new Vector2(-HalfWidth, -HalfDepth);
+        public static Vector2 PlayableMax => IsImported ? new Vector2(Imported.PlayableMaxX, Imported.PlayableMaxZ) : new Vector2(HalfWidth, HalfDepth);
+        public static Vector3 PlayableCenter => new Vector3((PlayableMin.x + PlayableMax.x) * .5f, 0, (PlayableMin.y + PlayableMax.y) * .5f);
         public static string MapName => IsImported ? Imported.name : IsExpanded ? "Cuatro Riberas" : "Las Marcas";
         static readonly int[] ClassicMainlandHarborX = { -58, -37, -3, 20, 43 };
         static readonly int[] ExpandedMainlandHarborX = { -58, -32, -7, 20, 43 };

@@ -6,6 +6,7 @@ namespace RiskAI.Core
         public const float CircleRadius = 1.55f;
         public const float ProtectionRadius = 4.43f;
         public const float TakeoverRadius = 6f;
+        public static bool IsValidOwner(int owner) => owner == PlayerRules.NeutralOwner || PlayerRules.IsPlayer(owner);
 
         /// <summary>
         /// Compares two possible post-defender successors without depending on Unity objects.

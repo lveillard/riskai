@@ -5,6 +5,16 @@ using UnityEngine;
 namespace RiskAI
 {
     public interface ICommander { void Tick(float delta); }
+    public sealed class CommanderGroup : ICommander
+    {
+        readonly List<SkirmishCommander> commanders = new List<SkirmishCommander>();
+        public IReadOnlyList<SkirmishCommander> Commanders => commanders;
+        public CommanderGroup(BattleSession session,int playerCount)
+        {
+            for(int player=1;player<playerCount;player++)commanders.Add(new SkirmishCommander(session,player));
+        }
+        public void Tick(float delta){for(int i=0;i<commanders.Count;i++)commanders[i].Tick(delta);}
+    }
     // Tactical policy remains deliberately modest; a visibility service can replace its world view.
     public sealed class SkirmishCommander : ICommander
     {
@@ -12,6 +22,7 @@ namespace RiskAI
         const float DefenseRadius = 12f;
         const float DefenseDispatchRadius = 32f;
         readonly BattleSession session;
+        readonly int team;
         readonly Dictionary<int, int> defenseAssignments = new Dictionary<int, int>(32);
         readonly List<DefenseSite> threats = new List<DefenseSite>(32);
         readonly List<CombatTarget> nearby = new List<CombatTarget>(64);
@@ -24,7 +35,8 @@ namespace RiskAI
             UnitKind.Archer, UnitKind.Archer, UnitKind.Footman,
             UnitKind.Archer, UnitKind.Guard, UnitKind.Mortar, UnitKind.Mage
         };
-        public SkirmishCommander(BattleSession battle) { session=battle; nextDecision=battle.AiFirstRecruitmentTime; nextDefenseDecision=0; }
+        public int Team => team;
+        public SkirmishCommander(BattleSession battle,int player=1) { session=battle; team=player; nextDecision=battle.AiFirstRecruitmentTime; nextDefenseDecision=0; }
         public void Tick(float delta)
         {
             if (!session.AiEnabled || session.Paused || session.Winner >= 0) return;
@@ -42,13 +54,13 @@ namespace RiskAI
             threats.Clear();
             foreach (var town in session.Towns)
             {
-                if (!town || town.State.Owner != 1) continue;
+                if (!town || town.State.Owner != team) continue;
                 AddThreat(town.Defense.EntityId, town.ClaimPoint, town.State.Capture, town.State.Contested);
             }
             if (session.Naval)
                 foreach (var harbor in session.Naval.Harbors)
                 {
-                    if (!harbor || harbor.Owner != 1) continue;
+                    if (!harbor || harbor.Owner != team) continue;
                     AddThreat(harbor.Defense.EntityId, harbor.Landing, harbor.State.Capture, harbor.State.Contested);
                 }
             if (threats.Count == 0) { defenseAssignments.Clear(); return; }
@@ -84,8 +96,8 @@ namespace RiskAI
             {
                 var unit = nearby[i] as Soldier;
                 if (!unit || !unit.IsAlive || (unit.transform.position-point).sqrMagnitude>DefenseRadius*DefenseRadius) continue;
-                if (unit.Team == 0) enemies++;
-                else if (unit.Team == 1) friendlies++;
+                if (unit.Team == team) friendlies++;
+                else if (PlayerRules.IsPlayer(unit.Team)) enemies++;
             }
             if (enemies == 0 && !contested && capture <= 0) return;
             if (!contested && capture <= 0 && enemies < Mathf.Max(1, friendlies)) return;
@@ -131,7 +143,7 @@ namespace RiskAI
             }
             return best;
         }
-        static bool IsMobileDefender(Soldier unit) => unit && unit.Team == 1 && unit.IsAlive && !unit.IsGarrison && unit.isActiveAndEnabled && unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh;
+        bool IsMobileDefender(Soldier unit) => unit && unit.Team == team && unit.IsAlive && !unit.IsGarrison && unit.isActiveAndEnabled && unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh;
         struct DefenseSite
         {
             public int Key;
@@ -145,18 +157,19 @@ namespace RiskAI
             bool relaxed = session.Difficulty == BattleSession.AiDifficulty.Relaxed;
             int mobile = 0;
             foreach (var unit in session.Units) if (IsMobileDefender(unit)) mobile++;
-            int navalBudget = threats.Count == 0 && mobile >= 2 && session.Naval ? session.Naval.AiSavingsTarget : 0;
+            int navalBudget = threats.Count == 0 && mobile >= 2 && session.Naval
+                ? session.Naval.FirstFleetSavingsTargetFor(team) : 0;
             int purchases = relaxed ? 1 : 2;
-            for (int i = 0; i < purchases && session.RecruitmentPopulation(1) < 45; i++)
+            for (int i = 0; i < purchases && session.RecruitmentPopulation(team) < 45; i++)
             {
                 var town = RecruitmentSite();
                 if (!town) break;
                 var kind = RecruitmentCycle[recruitsOrdered % RecruitmentCycle.Length];
                 // Four starting gold must produce a mobile opening, even when
                 // the next preferred specialist is temporarily unaffordable.
-                if (BattleRules.Cost(kind) > session.Economy.Gold[1]) kind = UnitKind.Archer;
-                if (session.Economy.Gold[1] - BattleRules.Cost(kind) < navalBudget) break;
-                if (town.Recruit(kind, 1) != null) break;
+                if (BattleRules.Cost(kind) > session.Economy.Gold[team]) kind = UnitKind.Archer;
+                if (session.Economy.Gold[team] - BattleRules.Cost(kind) < navalBudget) break;
+                if (town.Recruit(kind, team) != null) break;
                 recruitsOrdered++;
             }
             if (session.BattleTime < session.AiFirstOffensiveTime) return;
@@ -168,8 +181,8 @@ namespace RiskAI
             var available = active.Take(Mathf.Min(active.Count - reserve, relaxed ? 8 : 12)).ToList();
             Vector3 center = available.Aggregate(Vector3.zero, (sum, u) => sum + u.transform.position) / available.Count;
             bool neutralsRemain=session.Towns.Any(t=>t.State.Owner<0);
-            var target = session.Towns.Where(t => t.State.Owner != 1 && (session.BattleTime > 100 || t.State.Owner < 0 || !neutralsRemain))
-                .OrderByDescending(t => t.State.Country >= 0 && session.Towns.Any(x => x.State.Country == t.State.Country && x.State.Owner == 1))
+            var target = session.Towns.Where(t => t.State.Owner != team && (session.BattleTime > 100 || t.State.Owner < 0 || !neutralsRemain))
+                .OrderByDescending(t => t.State.Country >= 0 && session.Towns.Any(x => x.State.Country == t.State.Country && x.State.Owner == team))
                 .ThenBy(t => Vector3.SqrMagnitude(t.transform.position - center)).FirstOrDefault();
             if (target) BattleSession.GiveFormation(available, target.ClaimPoint, true, false);
         }
@@ -179,11 +192,11 @@ namespace RiskAI
             float bestScore = float.PositiveInfinity;
             foreach (var town in session.Towns)
             {
-                if (!town || town.IsPort || town.State.Owner != 1 || town.QueueCount >= 2) continue;
+                if (!town || town.IsPort || town.State.Owner != team || town.QueueCount >= 2) continue;
                 float frontierDistance = 10000;
                 foreach (var other in session.Towns)
                 {
-                    if (!other || other.State.Owner == 1) continue;
+                    if (!other || other.State.Owner == team) continue;
                     frontierDistance = Mathf.Min(frontierDistance, Vector3.Distance(town.ClaimPoint, other.ClaimPoint));
                 }
                 // Replenish threatened posts first, then the closest frontier.

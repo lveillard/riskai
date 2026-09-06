@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "nativePerUnity": 50.0,
+  "extraction": "Classic MDLX: UnitUI modelScale plus SEQS Stand bounds; numeric metadata only, no MDX assets.",
+  "sources": {
+    "archive": {
+      "path": "owned RoC Disk1 ISO /WAR3.MPQ (not distributed)",
+      "sha256": "00dc676fb5ca3e93ba85839d60155ea8877f2f32a2bff1612440d8065f5b5626"
+    },
+    "unitUi": {
+      "path": "Units\\UnitUI.slk",
+      "sha256": "d2014c04ee2c618f4533e073aefbdef0264539227ae761ee60fe3fee32d39b33"
+    }
+  },
+  "models": {
+    "hrif": {
+      "modelPath": "units\\human\\Rifleman\\Rifleman.mdx",
+      "mdxSha256": "f08bbf59f57b4fce8ac1554a74ce03afd25d3de84eb7838bb9e7af5fa9e2b2d1",
+      "modelScale": 1.0,
+      "standingSequence": "Stand",
+      "standingHeightNative": 81.83708000183105,
+      "standingWidthNative": 94.89460182189941,
+      "standingHeightUnity": 1.636741600036621,
+      "standingWidthUnity": 1.8978920364379883
+    },
+    "hmpr": {
+      "modelPath": "units\\human\\Priest\\Priest.mdx",
+      "mdxSha256": "5d58a0f6bd9339934c6248ec3c05669968dcb3a0f2274fbc8ebe62142fc41db2",
+      "modelScale": 1.0,
+      "standingSequence": "Stand",
+      "standingHeightNative": 122.36734265089035,
+      "standingWidthNative": 94.41359901428223,
+      "standingHeightUnity": 2.447346853017807,
+      "standingWidthUnity": 1.8882719802856446
+    },
+    "hkni": {
+      "modelPath": "units\\human\\Knight\\Knight.mdx",
+      "mdxSha256": "fd342464612c3f555d9369406a4c9e2f4ad62e2fd23f4ba5ea6f1e5069b78d0a",
+      "modelScale": 1.0,
+      "standingSequence": "Stand -1",
+      "standingHeightNative": 152.89486122131348,
+      "standingWidthNative": 148.09440231323242,
+      "standingHeightUnity": 3.0578972244262696,
+      "standingWidthUnity": 2.9618880462646485
+    },
+    "hmtm": {
+      "modelPath": "units\\human\\MortarTeam\\MortarTeam.mdx",
+      "mdxSha256": "2d64cb385b4d92ed9cc88bf451ca3fd17e83de519e038412588a351a74eb61f7",
+      "modelScale": 1.0,
+      "standingSequence": "Stand",
+      "standingHeightNative": 80.25314211845398,
+      "standingWidthNative": 113.64359664916992,
+      "standingHeightUnity": 1.6050628423690795,
+      "standingWidthUnity": 2.2728719329833983
+    },
+    "hbar": {
+      "modelPath": "buildings\\human\\HumanBarracks\\HumanBarracks.mdx",
+      "mdxSha256": "971df0d1631e64164fa7cb41c9b1ac04e91b24825ba5bfc9611610614d14e452",
+      "modelScale": 1.0,
+      "standingSequence": "Stand",
+      "standingHeightNative": 370.3380126953125,
+      "standingWidthNative": 347.9750061035156,
+      "standingHeightUnity": 7.40676025390625,
+      "standingWidthUnity": 6.959500122070312
+    }
+  },
+  "limits": "Standing bounds are source MDX animation extents. They do not describe collision radii, selection extents, or the local town compound."
+}

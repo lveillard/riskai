@@ -2,7 +2,8 @@
 
 The released .w3x archives remain research inputs under references/maps (which
 is ignored).  This exporter reads their extracted W3E/JASS/DOO members and
-emits only numeric terrain, city, claim-circle, and recruitment-spawn data.
+emits only numeric terrain, city, claim-circle, recruitment-spawn, camera-bound,
+and static-tree data.
 
 W3E version 11 uses 128 native units per cell.  The coordinate conversion here
 keeps Warcraft x as Unity x and Warcraft y as Unity z, scales by 50, and shifts
@@ -31,6 +32,26 @@ UNITY_WATER_LEVEL = -0.24
 WATER_ZERO_NATIVE = -89.6
 WATER_FLAG = 0x40
 BOUNDARY_FLAG = 0x4000
+
+# `war3map.w3b` in the Europe source identifies these custom rawcodes as
+# variants of Warcraft's destructible tree bases.  `B00Q` is intentionally
+# absent despite inheriting a tree base: one is placed at every country spawn
+# centre and it is a gameplay marker rather than landscape vegetation. B00R is
+# the city claim ring; B00T is New World's one-off special marker.
+TREE_SPECIES = {
+    "B000": "BTtw", "B001": "BTtw", "B002": "ATtc", "B003": "BTtc",
+    "B004": "BTtc", "B005": "ATtc", "B006": "BTtw", "B007": "BTtw",
+    "B008": "BTtw", "B009": "WTst", "B00A": "VTlt", "B00B": "ATtc",
+    "B00C": "ATtc", "B00D": "ATtc", "B00F": "BTtc", "B00G": "BTtc",
+    "B00H": "BTtc", "B00I": "WTst", "B00J": "WTst", "B00K": "WTst",
+    "B00L": "VTlt", "B00M": "VTlt", "B00N": "VTlt", "B00O": "WTst",
+    "B00P": "VTlt",
+    # Native rawcodes are retained only where the map JASS/tree tables use a
+    # tree destructible. Other native DOO props (ice, rocks, lamps, etc.) are
+    # deliberately not guessed to be vegetation.
+    "YTfc": "YTfc", "YTpc": "YTpc", "YTfb": "YTfb", "YTpb": "YTpb",
+    "WTst": "WTst",
+}
 
 
 MAPS = (
@@ -106,7 +127,7 @@ def w3e(path: Path) -> dict:
     tiles: list[int] = []
     water_raw_values: list[int] = []
     for i in range(count):
-        ground_raw, water_raw_with_boundary, flags, ground_texture, cliff = struct.unpack_from("<HHBBB", data, p + i * 7)
+        ground_raw, water_raw_with_boundary, flags, variation, cliff = struct.unpack_from("<HHBBB", data, p + i * 7)
         water_raw = water_raw_with_boundary & 0x3FFF
         # WC3's lower cliff nibble has baseline 2; every cliff layer is 512
         # encoded quarters = 128 native world units.
@@ -121,9 +142,9 @@ def w3e(path: Path) -> dict:
         water_native.append(water)
         land.append(1 if is_land else 0)
         water_raw_values.append(water_raw)
-        # Runtime format: ground texture byte | cliff/layer byte << 8 |
-        # terrain flags byte << 16 | W3E water-boundary bit << 24.
-        tiles.append(ground_texture | (cliff << 8) | (flags << 16) | ((water_raw_with_boundary & BOUNDARY_FLAG) << 10))
+        # Runtime format: variation byte | cliff/layer byte << 8 |
+        # terrain flags/texture byte << 16 | W3E water-boundary bit << 24.
+        tiles.append(variation | (cliff << 8) | (flags << 16) | ((water_raw_with_boundary & BOUNDARY_FLAG) << 10))
     dominant_water_raw, dominant_count = Counter(water_raw_values).most_common(1)[0]
     sea_native = (dominant_water_raw - 8192) / 4.0 + WATER_ZERO_NATIVE
     return {
@@ -143,6 +164,51 @@ def w3e(path: Path) -> dict:
             "customTileset": custom_tileset, "groundTiles": ground_tiles, "cliffTiles": cliff_tiles,
             "dominantWaterRaw": dominant_water_raw, "dominantWaterCount": dominant_count,
             "dominantWaterNative": sea_native,
+        },
+    }
+
+
+def cstring(data: bytes, offset: int, path: Path) -> tuple[str, int]:
+    end = data.find(b"\0", offset)
+    if end < 0:
+        raise ValueError(f"{path}: unterminated string at 0x{offset:x}")
+    return data[offset:end].decode("utf-8", errors="replace"), end + 1
+
+
+def w3i(path: Path) -> dict:
+    """Read Reforged W3I v31's authored camera rectangle.
+
+    The rectangle is exported as a useful playable/view limit but deliberately
+    does not crop W3E samples or shift existing city coordinates.  Consumers
+    can tighten camera/minimap bounds without changing source-relative XY.
+    """
+    data = path.read_bytes()
+    if len(data) < 128:
+        raise ValueError(f"{path}: truncated W3I")
+    version, editor_version, map_version, game_major, game_minor, game_patch, game_build = struct.unpack_from("<7i", data)
+    if version != 31:
+        raise ValueError(f"{path}: W3I version {version}; exporter supports verified version 31")
+    p = 28
+    strings = []
+    for _ in range(4):
+        value, p = cstring(data, p, path)
+        strings.append(value)
+    left, bottom, right, top, complement_left, complement_top, complement_right, complement_bottom = struct.unpack_from("<8f", data, p)
+    p += 32
+    boundary_complements = struct.unpack_from("<4i", data, p)
+    p += 16
+    playable_width, playable_height = struct.unpack_from("<2i", data, p)
+    if not (left < right and bottom < top and playable_width > 0 and playable_height > 0):
+        raise ValueError(f"{path}: invalid camera bounds")
+    return {
+        "left": left, "bottom": bottom, "right": right, "top": top,
+        "source": {
+            "path": rel(path), "sha256": sha256(path), "version": version,
+            "editorVersion": editor_version, "mapVersion": map_version,
+            "gameVersion": [game_major, game_minor, game_patch, game_build],
+            "strings": strings, "complementBoundsNative": [complement_left, complement_top, complement_right, complement_bottom],
+            "boundaryComplements": list(boundary_complements),
+            "playableSizeCells": [playable_width, playable_height],
         },
     }
 
@@ -182,7 +248,7 @@ def parse_placements(path: Path, map_id: str) -> tuple[list[dict], dict[int, str
     return placements, countries, []
 
 
-def parse_circles(path: Path) -> list[dict]:
+def parse_doodads(path: Path) -> list[dict]:
     data = path.read_bytes()
     if data[:4] != b"W3do" or len(data) < 16:
         raise ValueError(f"{path}: missing W3do header")
@@ -190,14 +256,49 @@ def parse_circles(path: Path) -> list[dict]:
     expected = 16 + count * 54 + 8
     if (version, subversion) != (8, 11) or len(data) != expected or data[-8:] != b"\0" * 8:
         raise ValueError(f"{path}: unsupported doodad layout {version}/{subversion}, length {len(data)}")
-    circles = []
+    records = []
     for index in range(count):
         offset = 16 + index * 54
-        if data[offset:offset + 4] != b"B00R":
+        raw_id = data[offset:offset + 4].decode("ascii", errors="replace")
+        variation = struct.unpack_from("<i", data, offset + 4)[0]
+        x, y, z, rotation, scale_x, scale_y, scale_z = struct.unpack_from("<7f", data, offset + 8)
+        skin_id = data[offset + 36:offset + 40].decode("ascii", errors="replace")
+        records.append({
+            "id": raw_id, "variation": variation, "x": x, "y": y, "z": z,
+            "rotationRadians": rotation, "scaleX": scale_x, "scaleY": scale_y, "scaleZ": scale_z,
+            "skinId": skin_id, "pathingFlags": data[offset + 40], "lifePercent": data[offset + 41],
+            "sourceRecord": index,
+        })
+    return records
+
+
+def parse_circles(doodads: list[dict]) -> list[dict]:
+    return [
+        {"x": row["x"], "y": row["y"], "sourceRecord": row["sourceRecord"]}
+        for row in doodads if row["id"] == "B00R"
+    ]
+
+
+def parse_trees(doodads: list[dict], terrain: dict) -> tuple[list[dict], list[str]]:
+    """Convert only inspected source tree destructibles, never procedural trees."""
+    used_species = sorted({row["id"] for row in doodads if row["id"] in TREE_SPECIES})
+    species_index = {raw_id: index for index, raw_id in enumerate(used_species)}
+    trees = []
+    for row in doodads:
+        raw_id = row["id"]
+        if raw_id not in species_index:
             continue
-        x, y = struct.unpack_from("<ff", data, offset + 8)
-        circles.append({"x": x, "y": y, "sourceRecord": index})
-    return circles
+        x, z = centered(row["x"], row["y"], terrain)
+        trees.append({
+            "x": round(x, 6), "z": round(z, 6),
+            "rotationDegrees": round(math.degrees(row["rotationRadians"]), 6),
+            "scaleX": round(row["scaleX"], 6), "scaleY": round(row["scaleY"], 6), "scaleZ": round(row["scaleZ"], 6),
+            "species": species_index[raw_id], "variation": row["variation"], "pathingFlags": row["pathingFlags"],
+            "lifePercent": row["lifePercent"], "sourceRecord": row["sourceRecord"],
+        })
+    # Keep strings out of every instance: index maps to rawcode/base type.
+    species = [f"{raw_id}:{TREE_SPECIES[raw_id]}" for raw_id in used_species]
+    return trees, species
 
 
 def match_circles(cities: list[dict], circles: list[dict]) -> dict[int, dict]:
@@ -272,12 +373,16 @@ def validate_positions(cities: list[dict], terrain: dict) -> list[dict]:
 def export(spec: dict) -> dict:
     source_dir: Path = spec["source_dir"]
     terrain_path = source_dir / "war3map.w3e"
+    info_path = source_dir / "war3map.w3i"
     jass_path = source_dir / "war3map.j"
     doodad_path = source_dir / "war3map.doo"
-    for path in (terrain_path, jass_path, doodad_path, spec["placements"]):
+    for path in (terrain_path, info_path, jass_path, doodad_path, spec["placements"]):
         if not path.exists():
             raise FileNotFoundError(f"missing required local research input: {path}")
     terrain = w3e(terrain_path)
+    info = w3i(info_path)
+    doodads = parse_doodads(doodad_path)
+    trees, tree_species = parse_trees(doodads, terrain)
     placements, country_names, _ = parse_placements(spec["placements"], spec["map_id"])
     cities_source = [row for row in placements if row.get("city_index") is not None]
     cities_source.sort(key=lambda row: row["city_index"])
@@ -286,7 +391,7 @@ def export(spec: dict) -> dict:
         raise ValueError(f"{spec['map_id']}: expected consecutive city indices 1..{expected}, got {len(cities_source)}")
     if len(country_names) != spec["expected_countries"]:
         raise ValueError(f"{spec['map_id']}: expected {spec['expected_countries']} countries, got {len(country_names)}")
-    circles = match_circles(cities_source, parse_circles(doodad_path))
+    circles = match_circles(cities_source, parse_circles(doodads))
     spawn_centers = parse_spawn_centers(jass_path, spec["expected_countries"])
     cities = []
     for row in cities_source:
@@ -320,16 +425,24 @@ def export(spec: dict) -> dict:
         for key in ("nativeX", "nativeY", "claimNativeX", "claimNativeY"):
             del city[key]
     cell_size = terrain["cell_size"]
+    playable_min_x, playable_min_z = centered(info["left"], info["bottom"], terrain)
+    playable_max_x, playable_max_z = centered(info["right"], info["top"], terrain)
     output = {
         "mapId": spec["map_id"], "name": spec["name"],
         "width": terrain["width"], "height": terrain["height"],
         "originX": round(-(terrain["width"] - 1) * cell_size / 2.0, 6),
         "originZ": round(-(terrain["height"] - 1) * cell_size / 2.0, 6),
         "cellSize": cell_size,
+        # Authored W3I camera rectangle, transformed with the same grid centre
+        # as cities. It is a limit only: keeping the samples untrimmed makes
+        # existing city and country coordinates byte-for-byte stable.
+        "playableMinX": round(playable_min_x, 6), "playableMaxX": round(playable_max_x, 6),
+        "playableMinZ": round(playable_min_z, 6), "playableMaxZ": round(playable_max_z, 6),
         "heightSamples": terrain["height_samples"], "waterSamples": terrain["water_samples"],
         "landSamples": terrain["land_samples"], "tileSamples": terrain["tile_samples"],
         "tileNames": terrain["source"]["groundTiles"],
         "cities": cities, "countries": countries,
+        "sourceTrees": trees, "treeSpecies": tree_species,
         "metadata": {
             "generatedBy": "scripts/export_playable_risk_maps.py",
             "coordinateTransform": {
@@ -342,17 +455,24 @@ def export(spec: dict) -> dict:
                 "groundNative": "((groundRaw-8192)+((cliffLayer&15)-2)*512)/4",
                 "waterNative": "((waterRaw&0x3fff)-8192)/4-89.6",
                 "waterFlag": "terrainFlags&0x40", "landRule": "no water flag OR groundNative > waterNative",
-                "tileSamples": "groundTexture | cliffTextureLayer<<8 | terrainFlags<<16 | waterBoundaryBit<<24",
+                "tileSamples": "variation | cliffTextureLayer<<8 | terrainFlagsAndTexture<<16 | waterBoundaryBit<<24",
             },
             "sources": {
                 "archive": {"path": rel(spec["archive"]), "sha256": sha256(spec["archive"])},
                 "terrain": terrain["source"],
+                "mapInfo": info["source"],
                 "jass": {"path": rel(jass_path), "sha256": sha256(jass_path)},
                 "circleDoodads": {"path": rel(doodad_path), "sha256": sha256(doodad_path), "id": "B00R", "count": len(circles)},
+                "treeDoodads": {
+                    "path": rel(doodad_path), "sha256": sha256(doodad_path), "count": len(trees),
+                    "excludedIds": ["B00Q", "B00R", "B00T"],
+                    "treeObjectTable": {"path": rel(source_dir / "war3map.w3b"), "sha256": sha256(source_dir / "war3map.w3b")} if (source_dir / "war3map.w3b").exists() else None,
+                },
                 "placementInventory": {"path": rel(spec["placements"]), "sha256": sha256(spec["placements"])},
             },
             "validation": {
                 "cityCount": len(cities), "countryCount": len(countries), "circleCount": len(circles),
+                "treeCount": len(trees), "treeTypeCounts": dict(sorted(Counter(tree_species[row["species"]].split(":", 1)[0] for row in trees).items())),
                 "citySourceTypeCounts": dict(sorted(Counter(row["raw_id"] for row in cities_source).items())),
                 "positionDefects": defects,
                 "heightMin": min(terrain["height_samples"]), "heightMax": max(terrain["height_samples"]),
@@ -362,6 +482,120 @@ def export(spec: dict) -> dict:
         },
     }
     return output
+
+
+SLK_CELL_RE = re.compile(r'C;(?:Y(\d+);)?X(\d+);K(?:"(.*)"|(.*))$')
+
+
+def slk_rows(path: Path) -> dict[str, dict[str, str]]:
+    """Read the sparse, text SLK rows used for inherited UnitData fields."""
+    grid: dict[int, dict[int, str]] = defaultdict(dict)
+    current_row: int | None = None
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        match = SLK_CELL_RE.match(line)
+        if not match:
+            continue
+        y_text, x_text, quoted, bare = match.groups()
+        if y_text is not None:
+            current_row = int(y_text)
+        if current_row is None:
+            continue
+        grid[current_row][int(x_text)] = quoted if quoted is not None else bare
+    headers = grid.get(1)
+    if not headers or headers.get(1) not in {"unitID", "unitBalanceID"}:
+        raise ValueError(f"{path}: missing SLK unit header")
+    result = {}
+    for row in grid.values():
+        raw_id = row.get(1)
+        if raw_id and raw_id != headers[1]:
+            result[raw_id] = {headers[column]: value for column, value in row.items() if column in headers}
+    return result
+
+
+def parse_w3u_geometry(path: Path) -> dict[str, dict]:
+    """Use the repository's complete v1–v3 object reader, narrowed to geometry."""
+    # Keeping one proven object reader avoids silently desynchronising on rare
+    # Warcraft object modification types while retaining source field offsets.
+    from audit_reforged_units import parse_w3u
+    _version, base, custom, _parsed_bytes = parse_w3u(path)
+    records: dict[str, dict] = {}
+    for record in (*base, *custom):
+        key = record.old_id if record.new_id == "\0\0\0\0" else record.new_id
+        fields = {
+            field: {"value": modification.value, "offset": modification.offset}
+            for field, modification in record.modifications.items()
+            if field in {"ucol", "umvs", "umdl", "usca"}
+        }
+        records[key] = {"oldId": record.old_id, "offset": record.offset, "fields": fields}
+    return records
+
+
+def source_geometry() -> dict:
+    """Publish source collisions plus verified inherited MDX standing extents."""
+    source_dir = MAPS[0]["source_dir"]
+    w3u_path = source_dir / "war3map.w3u"
+    unit_data_path = ROOT / "references/owned-disc-data/RoC-Units-UnitData.slk"
+    unit_balance_path = ROOT / "references/owned-disc-data/RoC-Units-UnitBalance.slk"
+    mdx_geometry_path = ROOT / "data/source-mdx-geometry.json"
+    objects = parse_w3u_geometry(w3u_path)
+    unit_data, unit_balance = slk_rows(unit_data_path), slk_rows(unit_balance_path)
+    mdx_geometry = json.loads(mdx_geometry_path.read_text(encoding="utf-8"))
+    if mdx_geometry.get("nativePerUnity") != NATIVE_PER_UNITY:
+        raise ValueError(f"{mdx_geometry_path}: nativePerUnity must equal {NATIVE_PER_UNITY}")
+    inherited_models = mdx_geometry.get("models", {})
+    entries = []
+    for raw_id in ("h00B", "h00G", "h00E", "h00H", "h00N", "h00O"):
+        record = objects[raw_id]
+        inherited_id = record["oldId"]
+        fields = record["fields"]
+        collision = fields.get("ucol", {}).get("value")
+        collision_source = "war3map.w3u" if collision is not None else "RoC-Units-UnitData.slk"
+        if collision is None:
+            collision = float(unit_data[inherited_id]["collision"])
+        speed = fields.get("umvs", {}).get("value")
+        speed_source = "war3map.w3u" if speed is not None else "RoC-Units-UnitBalance.slk"
+        if speed is None:
+            speed_text = unit_balance.get(inherited_id, {}).get("spd")
+            speed = float(speed_text) if speed_text and speed_text not in {"-", "_"} else None
+        inherited_model = inherited_models.get(inherited_id)
+        if not inherited_model:
+            raise ValueError(f"{mdx_geometry_path}: no inherited MDX metric for {raw_id}/{inherited_id}")
+        is_town_base = inherited_id == "hbar"
+        entries.append({
+            "id": raw_id, "inherits": inherited_id,
+            "collisionNative": collision, "collisionUnity": collision / NATIVE_PER_UNITY,
+            "collisionSource": collision_source,
+            "moveSpeedNative": speed, "moveSpeedUnity": speed / NATIVE_PER_UNITY if speed is not None else None,
+            "moveSpeedSource": speed_source if speed is not None else None,
+            "mapOverrides": {field: details["value"] for field, details in fields.items()},
+            "modelPath": fields.get("umdl", {}).get("value", inherited_model["modelPath"]),
+            "modelScale": fields.get("usca", {}).get("value", inherited_model["modelScale"]),
+            "standingSequence": inherited_model["standingSequence"],
+            "standingHeightNative": inherited_model["standingHeightNative"],
+            "standingWidthNative": inherited_model["standingWidthNative"],
+            "standingHeightUnity": inherited_model["standingHeightUnity"],
+            "standingWidthUnity": inherited_model["standingWidthUnity"],
+            "modelMetricsStatus": (
+                "verified inherited MDX standing extents; local town compound calibration remains separate"
+                if is_town_base else "verified inherited MDX standing extents"
+            ),
+        })
+    return {
+        "schemaVersion": 2, "nativePerUnity": NATIVE_PER_UNITY,
+        "units": entries,
+        "metadata": {
+            "generatedBy": "scripts/export_playable_risk_maps.py",
+            "sources": {
+                "w3u": {"path": rel(w3u_path), "sha256": sha256(w3u_path)},
+                "unitData": {"path": rel(unit_data_path), "sha256": sha256(unit_data_path), "format": "text SLK"},
+                "unitBalance": {"path": rel(unit_balance_path), "sha256": sha256(unit_balance_path), "format": "text SLK"},
+                "mdxGeometry": {"path": rel(mdx_geometry_path), "sha256": sha256(mdx_geometry_path),
+                                "schemaVersion": mdx_geometry.get("schemaVersion"),
+                                "provenance": mdx_geometry.get("sources")},
+            },
+            "limits": "ucol is Warcraft's source collision-size field, not an MDX mesh bounding box. MDX standing bounds are numeric metadata only; no source MDX is included or distributed.",
+        },
+    }
 
 
 def write_meta(path: Path) -> None:
@@ -385,6 +619,10 @@ def main() -> int:
         validation = payload["metadata"]["validation"]
         print(f"{target.name}: {validation['cityCount']} cities, {validation['countryCount']} countries, "
               f"{payload['width']}x{payload['height']} samples, {len(validation['positionDefects'])} terrain-position defects")
+    geometry_target = args.output / "SourceGeometry.json"
+    geometry_target.write_text(json.dumps(source_geometry(), separators=(",", ":"), ensure_ascii=False, allow_nan=False), encoding="utf-8")
+    write_meta(geometry_target)
+    print(f"{geometry_target.name}: verified source collision and movement fields")
     return 0
 
 

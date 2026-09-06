@@ -28,10 +28,22 @@ namespace RiskAI
             }
             int[] mainland=MapLayout.MainlandHarborX;
             var linkedTowns=mainland.Select(x=>Session.Towns.OrderBy(t=>FlatDistance(t.transform.position,new Vector3(x*MapLayout.Spacing,0,MapLayout.Coast(x*MapLayout.Spacing)))).FirstOrDefault()).ToArray();
-            // Ports are independent posts. Give each side the same number and leave
-            // an odd remainder neutral, without compensating with free mobile troops.
+            // Ports are independent posts. Distribute them over as many active
+            // players as the coast can host, leaving a remainder neutral.
+            int portCount=mainland.Length+MapLayout.Islands.Length;
+            int portPlayers=Mathf.Min(session.PlayerCount,portCount);
             int[] portOwners=StartingAllocation.Generate(session.Seed^0x504f5254,
-                new int[mainland.Length+MapLayout.Islands.Length],2,StartingAllocationMode.IndividualCities).CityOwners;
+                new int[portCount],portPlayers,StartingAllocationMode.IndividualCities).CityOwners;
+            // When there are fewer ports than players, sample across the whole
+            // roster rather than always granting extra guards to IDs 0..6.
+            if(session.PlayerCount>portPlayers)
+            {
+                var roster=Enumerable.Range(0,session.PlayerCount).ToArray();
+                var random=new System.Random(session.Seed^0x504c4159);
+                for(int i=roster.Length-1;i>0;i--)
+                { int swap=random.Next(i+1);int value=roster[i];roster[i]=roster[swap];roster[swap]=value; }
+                for(int i=0;i<portOwners.Length;i++)if(portOwners[i]>=0)portOwners[i]=roster[portOwners[i]];
+            }
             for(int i=0;i<mainland.Length;i++)
             {
                 float x=mainland[i]*MapLayout.Spacing,z=MapLayout.Coast(x);
@@ -43,7 +55,7 @@ namespace RiskAI
                 AddIslandHarbor("Muelle insular "+(island+1),island,portOwners[mainland.Length+island]);
             foreach(var harbor in Harbors)
             {
-                session.Spawn(harbor.Owner>=0?harbor.Owner:2,UnitKind.Archer,harbor.Landing);
+                session.Spawn(PlayerRules.ToCombatTeam(harbor.Owner),UnitKind.Archer,harbor.Landing);
                 harbor.InitializeGarrison();
             }
         }
@@ -90,30 +102,34 @@ namespace RiskAI
         {
             int count=0;foreach(var harbor in Harbors)count+=harbor.PendingCount(team);return count;
         }
-        public int AiSavingsTarget
+        public int AiSavingsTarget => FirstFleetSavingsTargetFor(1);
+
+        public int FirstFleetSavingsTargetFor(int team)
         {
-            get
-            {
-                if (!Session || Session.BattleTime < Session.AiFirstNavalOffensiveTime || PendingShips(1) > 0) return 0;
-                foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == 1) return 0;
-                foreach (var harbor in Harbors) if (harbor.Owner == 1 && harbor.CanLaunch) return Harbor.Cost(ShipKind.Galley);
-                return 0;
-            }
+            if (!Session || !PlayerRules.IsPlayer(team) || team == 0 || team >= Session.PlayerCount ||
+                Session.BattleTime < Session.AiFirstNavalOffensiveTime || PendingShips(team) > 0) return 0;
+            foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == team) return 0;
+            foreach (var harbor in Harbors) if (harbor.Owner == team && harbor.CanLaunch) return Harbor.Cost(ShipKind.Galley);
+            return 0;
         }
         public void Message(string message){if(Session)Session.Message(message);}
         public void SimTick(float delta)
         {
             if(!Session||Session.Paused||Session.Winner>=0||!Session.AiEnabled||Session.BattleTime<nextAi)return;nextAi=Session.BattleTime+18;
-            int fleet = PendingShips(1);
-            foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == 1) fleet++;
-            // No free starting fleet: pay through the same port queue as the player.
-            if (fleet < 2 && Session.Economy.Gold[1] >= Harbor.Cost(ShipKind.Galley))
-                foreach (var harbor in Harbors)
-                    if (harbor.Owner == 1 && harbor.QueueCount == 0 && harbor.Buy(ShipKind.Galley, 1) == null) break;
-            foreach(var ship in Ships)if(ship&&ship.Team==1&&ship.Kind==ShipKind.Galley&&!ship.CurrentTarget)
+            for (int team = 1; team < Session.PlayerCount; team++)
             {
-                var target=Harbors.Where(h=>h.Owner==0&&h.CanLaunch).OrderBy(h=>FlatDistance(h.Berth,ship.transform.position)).FirstOrDefault();
-                if(target)ship.MoveTo(target.Berth,true);
+                int fleet = PendingShips(team);
+                foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == team) fleet++;
+                // Each AI uses its own gold and one of its own queues.
+                if (fleet < 2 && Session.Economy.Gold[team] >= Harbor.Cost(ShipKind.Galley))
+                    foreach (var harbor in Harbors)
+                        if (harbor.Owner == team && harbor.QueueCount == 0 && harbor.Buy(ShipKind.Galley, team) == null) break;
+                foreach(var ship in Ships)if(ship&&ship.Team==team&&ship.Kind==ShipKind.Galley&&!ship.CurrentTarget)
+                {
+                    var target=Harbors.Where(h=>PlayerRules.IsPlayer(h.Owner)&&h.Owner!=team&&h.CanLaunch)
+                        .OrderBy(h=>FlatDistance(h.Berth,ship.transform.position)).FirstOrDefault();
+                    if(target)ship.MoveTo(target.Berth,true);
+                }
             }
         }
         void OnDestroy(){if(Current==this)Current=null;}

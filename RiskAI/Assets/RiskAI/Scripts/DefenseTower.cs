@@ -125,6 +125,6 @@ namespace RiskAI
             // Permanent capturable structure: attack the soldier in its circle.
         }
 
-        static int CombatTeam(int owner) => owner >= 0 && owner <= 1 ? owner : 2;
+        static int CombatTeam(int owner) => PlayerRules.ToCombatTeam(owner);
     }
 }

@@ -4,6 +4,7 @@ namespace RiskAI
 {
     public static class BiomeVegetation
     {
+        public enum ImportedTreeForm { Fir, Oak, DryOak }
         static readonly Dictionary<int,Mesh> crowns=new();
         public static void Tree(Transform root,Vector3 p,float height,int seed)
         {
@@ -15,10 +16,20 @@ namespace RiskAI
             int biome=classicSouthwest?3:island&&z>60?2:x>28&&z<-25?2:x<-24&&z>15?1:(seed%7==0?0:-1);
             if(island&&z<60)biome=seed%3==0?1:0;
             if(biome<0){WorldArt.Tree(root,p,height,seed);return;}
+            CreateBroadleaf(root,p,height,seed,biome);
+        }
+        /// <summary>Own mesh families selected from an imported destructible's verified base code.</summary>
+        public static void ImportedTree(Transform root,Vector3 p,float height,int seed,ImportedTreeForm form)
+        {
+            if(form==ImportedTreeForm.Fir){WorldArt.Tree(root,p,height,seed,false);return;}
+            CreateBroadleaf(root,p,height,seed,form==ImportedTreeForm.DryOak?3:(seed%5==0?1:0),false);
+        }
+        static void CreateBroadleaf(Transform root,Vector3 p,float height,int seed,int biome,bool solid=true)
+        {
             var go=new GameObject(biome==2?"Coastal palm":biome==3?"Dry olive":biome==1?"Amber oak":"Green oak");go.transform.SetParent(root,false);go.transform.localPosition=p;
             go.transform.localRotation=Quaternion.Euler(0,seed*137.5f,0);
             float trunkHeight=biome==2?height*.78f:height*.63f;
-            var trunk=VisualFactory.Shape(go.transform,PrimitiveType.Cylinder,"Bark",Vector3.up*trunkHeight*.5f,new Vector3(biome==2?.3f:.46f,trunkHeight*.5f,biome==2?.3f:.46f),Color.white,true);
+            var trunk=VisualFactory.Shape(go.transform,PrimitiveType.Cylinder,"Bark",Vector3.up*trunkHeight*.5f,new Vector3(biome==2?.3f:.46f,trunkHeight*.5f,biome==2?.3f:.46f),Color.white,solid);
             trunk.GetComponent<Renderer>().sharedMaterial=WorldArt.Painted(2,biome==3?new Color(.69f,.62f,.43f):new Color(.85f,.78f,.58f),.6f);
             if(biome!=2)for(int j=0;j<3;j++)
             {

@@ -48,7 +48,7 @@ namespace RiskAI
             Beam(root,basePoint+v[3],basePoint+v[4],.2f);Beam(root,basePoint+v[4],basePoint+v[5],.2f);
             Beam(root,basePoint+v[1],basePoint+v[4],.2f);return go;
         }
-        public static Material RoofMaterial(int team) => Painted(1,team==0?new Color(.24f,.42f,.95f):team==1?new Color(.92f,.20f,.13f):new Color(.96f,.91f,.72f),.32f,true);
+        public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamColor(team),.32f,true);
         static Renderer Banner(Transform root,Vector3 position,int team,float width=.7f,float height=1.6f)
         {
             var go=new GameObject("Banner");go.transform.SetParent(root,false);go.transform.localPosition=position;

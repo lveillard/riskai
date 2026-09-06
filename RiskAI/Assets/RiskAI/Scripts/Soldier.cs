@@ -49,7 +49,9 @@ namespace RiskAI
             nextPath=nextAttack=attackFlash=stalled=0; strikeAt=-1; wasFighting=false;
             bool first=!Agent;
             Agent=GetComponent<NavMeshAgent>(); Agent.enabled=true;
-            Agent.radius=.24f; Agent.height=1.3f; Agent.speed=BattleRules.Speed(kind);
+            // SourceGeometry holds verified W3U/SLK collision sizes. Height is
+            // separate from rendered standing bounds: navigation clearance stays unchanged.
+            Agent.radius=SourceGeometry.AgentRadius(kind); Agent.height=1.3f; Agent.speed=BattleRules.Speed(kind);
             Agent.acceleration=32; Agent.angularSpeed=540; Agent.stoppingDistance=.15f; Agent.autoBraking=true;
             Agent.updatePosition=true; Agent.updateRotation=true;
             Agent.obstacleAvoidanceType=ObstacleAvoidanceType.LowQualityObstacleAvoidance;
@@ -63,7 +65,7 @@ namespace RiskAI
                 VisualFactory.Soldier(this);
                 if(kind==UnitKind.Medic)medic=gameObject.AddComponent<MedicSupport>();
                 visualAnimator=GetComponent<SoldierAnimator>();
-                ring=VisualFactory.Ring(transform,.43f,.045f,new Color(.5f,1f,.6f));
+                ring=VisualFactory.Ring(transform,Mathf.Max(.43f,SourceGeometry.AgentRadius(kind)*1.15f),.045f,new Color(.5f,1f,.6f));
             }
             GetComponent<Collider>().enabled=true;
             if(medic)medic.Initialize(this,battle);
@@ -179,14 +181,14 @@ namespace RiskAI
         {
             if (!target || !target.CanBeAttacked || target.Team == Team) return false;
             if (mode == OrderMode.Attack) return true;
-            float leash = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == 2 ? 7 : 11;
+            float leash = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == PlayerRules.NeutralTeam ? 7 : 11;
             var origin = mode == OrderMode.Idle || mode == OrderMode.Hold ? anchor : pursuitOrigin;
             return Vector3.Distance(target.transform.position, origin) <= leash;
         }
         void Acquire()
         {
             if (mode == OrderMode.Move || mode == OrderMode.Follow || mode == OrderMode.Attack) return;
-            float radius = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 1 : mode == OrderMode.Hold ? BattleRules.Range(Kind) : Team == 2 ? 5 : 7.5f;
+            float radius = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 1 : mode == OrderMode.Hold ? BattleRules.Range(Kind) : Team == PlayerRules.NeutralTeam ? 5 : 7.5f;
             CombatTarget best = null; float score = float.MaxValue;
             session.Spatial.Query(transform.position,radius+3,nearby);
             foreach (var enemy in nearby)
@@ -194,7 +196,7 @@ namespace RiskAI
                 if (!enemy || enemy.Team == Team || !enemy.CanBeAttacked) continue;
                 float distance = Vector3.Distance(transform.position, enemy.ApproachPoint(transform.position));
                 if (distance > radius || !Visible(enemy)) continue;
-                if ((mode == OrderMode.Idle || Team == 2) && Vector3.Distance(anchor, enemy.transform.position) > (BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == 2 ? 7 : 11)) continue;
+                if ((mode == OrderMode.Idle || Team == PlayerRules.NeutralTeam) && Vector3.Distance(anchor, enemy.transform.position) > (BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == PlayerRules.NeutralTeam ? 7 : 11)) continue;
                 int pressure = session.Spatial.Pressure(Team, enemy);
                 float candidate = distance + (Kind == UnitKind.Footman ? pressure * .48f : pressure * .1f);
                 if (candidate < score || candidate == score && (!best || enemy.EntityId < best.EntityId)) { best = enemy; score = candidate; }
@@ -328,7 +330,7 @@ namespace RiskAI
         public void DestroyEmbarked(int attacker)
         {
             if(Health<=0)return;Health=0;
-            if(attacker>=0&&attacker<2){session.Kills[attacker]++;session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind));}
+            if(PlayerRules.IsPlayer(attacker)&&attacker<session.PlayerCount){session.Kills[attacker]++;session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind));}
             Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);
             session.SoldierPool.Retire(this,0);
         }
@@ -339,7 +341,7 @@ namespace RiskAI
             Health = Mathf.Max(0, Health - damage);
             if (Health <= 0)
             {
-                if (attacker >= 0 && attacker < 2) { session.Kills[attacker]++; session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind)); }
+                if (PlayerRules.IsPlayer(attacker) && attacker < session.PlayerCount) { session.Kills[attacker]++; session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind)); }
                 Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);Select(false);Agent.enabled=false;GetComponent<Collider>().enabled=false;enabled=false;
                 if(visualAnimator)visualAnimator.Die();
                 session.SoldierPool.Retire(this,visualAnimator?1.4f:0);

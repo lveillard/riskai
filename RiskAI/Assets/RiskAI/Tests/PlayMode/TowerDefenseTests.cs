@@ -36,8 +36,8 @@ namespace RiskAI.Tests
         {
             Assert.That(battle.Towns.All(town => town.Defense && town.Defense.IsAlive), Is.True);
             Assert.That(naval.Harbors.All(harbor => harbor.Defense && harbor.Defense.IsAlive), Is.True);
-            Assert.That(battle.Towns.Where(town => town.State.Owner < 0).All(town => town.Defense.Team == 2), Is.True);
-            Assert.That(naval.Harbors.Where(harbor => harbor.Owner < 0).All(harbor => harbor.Defense.Team == 2), Is.True);
+            Assert.That(battle.Towns.Where(town => town.State.Owner < 0).All(town => town.Defense.Team == PlayerRules.NeutralTeam), Is.True);
+            Assert.That(naval.Harbors.Where(harbor => harbor.Owner < 0).All(harbor => harbor.Defense.Team == PlayerRules.NeutralTeam), Is.True);
             Assert.That(battle.Population(0), Is.EqualTo(battle.Population(1)));
             Assert.That(battle.Units.Count, Is.GreaterThan(0));
             yield return null;
@@ -47,8 +47,8 @@ namespace RiskAI.Tests
         public IEnumerator NeutralTowerDoesNotFireAtNeutralSoldiers()
         {
             var tower = battle.Towns.First(town => town.State.Owner < 0).Defense;
-            var neutral = BattleTestScenario.Mobile(battle, 2, UnitKind.Footman, tower.transform.position + Vector3.forward * 6);
-            Assert.That(tower.Team, Is.EqualTo(2));
+            var neutral = BattleTestScenario.Mobile(battle, PlayerRules.NeutralTeam, UnitKind.Footman, tower.transform.position + Vector3.forward * 6);
+            Assert.That(tower.Team, Is.EqualTo(PlayerRules.NeutralTeam));
             KeepOnlyTower(tower);
             Assert.That(NavMesh.SamplePosition(tower.transform.position + Vector3.forward * 6, out var hit, 10, NavMesh.AllAreas), Is.True);
             Assert.That(neutral.Agent.Warp(hit.position), Is.True);

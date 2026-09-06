@@ -78,7 +78,8 @@ La [investigación de World Editor](docs/WORLD-EDITOR-TERRAIN.md) orienta el sig
 - [x] Incorporar **New World v3.0**, 293 ciudades y 100 grupos, como escenario seleccionable. No equivale a todo el planeta ni a haber identificado la versión histórica más popular.
 - [ ] Leer altura, rampas, agua, pasos, biomas y límites desde datos propios de autoría; reconstruir el arte con materiales/modelos originales. Verificar rutas, distancia al círculo y ángulos de tiro por ciudad.
 - [x] Separar guarniciones del presupuesto de 100 tropas móviles en los mapas importados para permitir compras desde el inicio.
-- [ ] Generalizar PlayerId, alianzas y asignación a 6–12 jugadores; el runtime actual sigue siendo 0/1 y neutral.
+- [x] Generalizar propietarios, economía, IA, combate, captura y reparto a 2–16 jugadores. Neutral separado del jugador 2.
+- [ ] Alianzas/diplomacia y participantes remotos; hoy todos los oponentes son IA locales.
 
 ## Héroes y bucle de partida — fase posterior
 
@@ -102,4 +103,18 @@ La [investigación de World Editor](docs/WORLD-EDITOR-TERRAIN.md) orienta el sig
 - [ ] Refinar navegación y decoración de los cientos de puestos importados mediante partidas; medir carga y renderizado, y hornear NavMesh en editor.
 - [ ] Incorporar datos fuente de pathing, puentes y destructibles cuando sean necesarios; la cuadrícula de altura no reproduce por sí sola todo el World Editor.
 
-- [ ] Leer límites jugables y de cámara W3I para recortar el espacio exterior de los imports sin mover las coordenadas de ciudades.
+- [x] Leer límites jugables y de cámara W3I para recortar el espacio exterior de los imports sin mover las coordenadas de ciudades.
+
+## Fidelidad y 16 jugadores · v0.15
+
+- [x] Mantener XY de ciudades, círculos y hogueras; aplicar la misma conversión nativa /50 a alcance, movimiento y colisiones verificadas, sin comprimir Europe/New World.
+- [x] Extraer árboles DOO, transformar ejes/rotación/escala correctamente, seleccionar meshes propios por especie y agrupar su renderizado. Dejar claros los puestos.
+- [x] Menú 2–16 participantes, paleta de 16 colores, identificación por IA y panel de jugadores.
+- [x] Cordilleras opcionales: relieve suave y transición a roca/nieve que preserva claros, costa y agua.
+- [x] Obtener bounds efectivos de Rifleman, Priest, Knight, MortarTeam y HumanBarracks; calibrar la altura de espera de nuestros cuatro tipos de unidad correspondientes y comprobar la selección. No confundir ucol con anchura/altura de un mesh.
+- [ ] Calibrar edificios, torre y árboles propios; revisar siluetas, anchuras y animaciones. La altura del guardia corresponde a Knight, pero el arte propio aún es infantería sin montura.
+- [ ] Resolver pathing fuente de árboles y edificios: los árboles importados siguen siendo decoración sin nuevos bloqueadores NavMesh.
+- [ ] Diseñar un Rin continuo desde los Alpes al mar con lecho, riberas y cruces. El prototipo de traza chocó con exclusiones de ciudades/círculos y no se incorpora.
+- [ ] Medir partidas prolongadas con 16 ejércitos, optimizar decisiones de IA y hornear navegación en editor. No equiparar 15 IA locales con multiplayer autoritativo.
+- [x] Usar inclinación, orientación y distancia inicial de cámara del JASS para Europe/New World; mantener FOV explícitamente adaptado y extender el zoom estratégico.
+- [x] Decodificar el índice de suelo W3E desde el nibble correcto, independientemente de variación y flags de agua/acantilado.

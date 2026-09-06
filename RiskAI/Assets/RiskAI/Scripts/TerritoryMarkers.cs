@@ -214,7 +214,7 @@ namespace RiskAI
 
         static Color TeamColor(int owner)
         {
-            return owner >= 0 && owner <= 1 ? VisualFactory.TeamColor(owner) : VisualFactory.TeamColor(2);
+            return VisualFactory.TeamColor(owner);
         }
 
         static bool ShouldShow(int countryA, int countryB, int ownerA, int ownerB)

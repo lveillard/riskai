@@ -42,12 +42,12 @@ namespace RiskAI
         public void Initialize(BattleSession battle, string id, string displayName, int owner, int region, bool capital, int country = -1, Vector3? sourceClaim = null, bool isPort = false)
         {
             session = battle; State = new TownState(id, owner, region, country); DisplayName = displayName; IsCapital = capital; FoundingTeam = owner;IsPort=isPort;
-            Rally = transform.position + new Vector3(0, 0, owner == 1 ? 6 : -6);
+            Rally = transform.position + new Vector3(0, 0, owner == 0 ? -6 : 6);
             Vector3 claimProbe = transform.position + new Vector3(0, 0, -4.2f);
             ClaimPoint = sourceClaim ?? MapLayout.Point(claimProbe.x, claimProbe.z);
             ClaimZone = new CityClaimZone(ClaimPoint);
             session.Towns.Add(this); session.Economy.Towns.Add(State);
-            flag = VisualFactory.Town(transform, owner, capital);
+            flag = VisualFactory.Town(transform, owner, capital && !MapLayout.IsImported);
             Ring = VisualFactory.Ring(transform, CityClaimZone.DefaultHalfExtent, .055f, new Color(.5f,1,.55f));
             Ring.transform.position = ClaimPoint; Ring.enabled=false;
             var towerObject = new GameObject("Torre de " + displayName);
@@ -99,6 +99,7 @@ namespace RiskAI
         }
         string CanManage(int team)
         {
+            if (!PlayerRules.IsPlayer(team) || team >= session.PlayerCount) return "Bando inválido.";
             if (session.Winner >= 0) return "La batalla ha terminado.";
             if (session.Paused) return "Reanuda la partida para dar esta orden.";
             if (State.Owner != team) return "Selecciona una ciudad de tu bando.";
@@ -140,7 +141,7 @@ namespace RiskAI
         {
             if (Defender) return false;
             if (assigned == null) assigned = new HashSet<Soldier>();
-            int team = State.Owner >= 0 ? State.Owner : 2;
+            int team = PlayerRules.ToCombatTeam(State.Owner);
             var candidate = soldiers == null ? null : soldiers
                 .Where(unit => unit && !unit.IsGarrison && !assigned.Contains(unit) && unit.IsAlive && unit.isActiveAndEnabled && unit.Team == team &&
                                unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh)
@@ -166,9 +167,9 @@ namespace RiskAI
             }
             flag.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamColor(State.Owner)); Defense.ChangeOwner();
             foreach(var roof in GetComponentsInChildren<Renderer>())if(roof.name=="Faction roof"&&!roof.GetComponentInParent<DefenseTower>())roof.sharedMaterial=WorldArt.RoofMaterial(State.Owner);
-            session.Message((State.Owner < 0 ? "Queda neutral " : State.Owner == 0 ? "Has conquistado " : "El enemigo ha conquistado ") + DisplayName);
+            session.Message((State.Owner < 0 ? "Queda neutral " : State.Owner == 0 ? "Has conquistado " : VisualFactory.TeamName(State.Owner) + " ha conquistado ") + DisplayName);
             if (State.Country >= 0 && session.Economy.CountryOwner(State.Country) == State.Owner)
-                session.Message((State.Owner==0?"País completado: ":"El enemigo completa ") + MapLayout.Countries[State.Country].Name + ". Ingresos y refuerzos activos.");
+                session.Message((State.Owner==0?"País completado: ":VisualFactory.TeamName(State.Owner)+" completa ") + MapLayout.Countries[State.Country].Name + ". Ingresos y refuerzos activos.");
         }
         void Update()
         {
@@ -202,7 +203,7 @@ namespace RiskAI
             var first = queue[0]; first.Remaining -= delta;
             if (first.Remaining <= 0)
             {
-                Vector3 spawn = transform.position + new Vector3(0, 0, State.Owner == 1 ? 4 : -4);
+                Vector3 spawn = transform.position + new Vector3(0, 0, State.Owner == 0 ? -4 : 4);
                 var unit = session.Spawn(first.Team, first.Kind, spawn);
                 if (unit) { queue.RemoveAt(0); unit.MoveTo(Rally, true, false); }
             }

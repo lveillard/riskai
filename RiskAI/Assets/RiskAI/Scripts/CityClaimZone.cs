@@ -46,7 +46,7 @@ namespace RiskAI
         public int Step(IReadOnlyList<Soldier> soldiers, int owner, float delta = .05f) => StepTargets(soldiers, owner, delta);
         int StepTargets<T>(IReadOnlyList<T> soldiers, int owner, float delta) where T : CombatTarget
         {
-            int ownerTeam = owner >= 0 ? owner : 2;
+            int ownerTeam = PlayerRules.ToCombatTeam(owner);
             Soldier friendly = null, enemy = null;
             float friendlyDistance = float.MaxValue, enemyDistance = float.MaxValue;
             Contested = false;
@@ -63,7 +63,7 @@ namespace RiskAI
                     if (ClaimRules.BetterCandidate(ownerTeam,unit.Team,distance,unit.EntityId,friendly?friendly.Team:-1,friendlyDistance,friendly?friendly.EntityId:0))
                     { friendly = unit; friendlyDistance = distance; }
                 }
-                else if (unit.Team != ownerTeam && unit.Team < 2 && distance <= ClaimRules.TakeoverRadius * ClaimRules.TakeoverRadius)
+                else if (unit.Team != ownerTeam && PlayerRules.IsPlayer(unit.Team) && distance <= ClaimRules.TakeoverRadius * ClaimRules.TakeoverRadius)
                 {
                     Contested = true;
                     if (ClaimRules.BetterCandidate(ownerTeam,unit.Team,distance,unit.EntityId,enemy?enemy.Team:-1,enemyDistance,enemy?enemy.EntityId:0))
@@ -76,7 +76,7 @@ namespace RiskAI
             var successor = friendly ? friendly : enemy;
             if (!successor) { return -1; }
             SetDefender(successor);
-            return Defender ? (successor.Team < 2 ? successor.Team : -1) : -1;
+            return Defender && PlayerRules.IsPlayer(successor.Team) ? successor.Team : PlayerRules.NeutralOwner;
         }
         public void SetDefender(Soldier defender)
         {
@@ -95,6 +95,7 @@ namespace RiskAI
             Contested=false;
         }
         static bool IsEligible(Soldier unit) => unit && unit.isActiveAndEnabled && unit.IsAlive &&
-            unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh && unit.Team>=0;
+            unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh &&
+            (PlayerRules.IsPlayer(unit.Team) || unit.Team == PlayerRules.NeutralTeam);
     }
 }

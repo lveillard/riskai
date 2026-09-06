@@ -39,7 +39,7 @@ namespace RiskAI.Tests
             enemy.ReceiveAttack(20,AttackKind.Normal,0);
             Assert.That(enemy.Health,Is.LessThan(enemyHealth));
 
-            var neutral=battle.Units.First(u=>u.Team==2); float neutralHealth=neutral.Health;
+            var neutral=battle.Units.First(u=>u.Team==PlayerRules.NeutralTeam); float neutralHealth=neutral.Health;
             neutral.ReceiveAttack(20,AttackKind.Piercing,0);
             Assert.That(neutral.Health,Is.LessThan(neutralHealth));
 
@@ -54,7 +54,7 @@ namespace RiskAI.Tests
         public IEnumerator TowerFiresAtNeutralUnitsInRange()
         {
             var tower=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital).Defense;
-            var neutral=BattleTestScenario.Mobile(battle,2,UnitKind.Footman,tower.transform.position+Vector3.forward*7);
+            var neutral=BattleTestScenario.Mobile(battle,PlayerRules.NeutralTeam,UnitKind.Footman,tower.transform.position+Vector3.forward*7);
             float before=neutral.Health;
             yield return new WaitForSecondsRealtime(1.5f);
             Assert.That(tower.ShotsFired,Is.GreaterThan(0));

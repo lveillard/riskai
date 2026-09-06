@@ -58,7 +58,7 @@ namespace RiskAI
         internal bool InitializeGarrison()
         {
             if(sharesTown)return Defender;
-            Soldier best=null;float score=float.MaxValue;int team=Owner>=0?Owner:2;
+            Soldier best=null;float score=float.MaxValue;int team=PlayerRules.ToCombatTeam(Owner);
             foreach(var unit in world.Session.Units)
             {
                 if(!unit || !unit.IsAlive || unit.Team!=team || unit.IsGarrison)continue;
@@ -71,8 +71,8 @@ namespace RiskAI
         public string Buy(ShipKind kind,int team=0)
         {
             if(kind!=ShipKind.Galley&&kind!=ShipKind.Transport)return "Tipo de barco inválido.";
-            if(team<0||team>1)return "Bando inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";
+            if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
             if(!CanLaunch)return LaunchBlockReason;
             if(world.Session.Winner>=0)return "La batalla ha terminado.";
             if(world.Session.Paused)return "Reanuda la partida para comprar barcos.";
@@ -85,8 +85,8 @@ namespace RiskAI
         internal int PendingCount(int team){int count=0;foreach(var item in queue)if(item.Team==team)count++;return count;}
         public string CancelTraining(int index,int team=0)
         {
-            if(team<0||team>1)return "Bando inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";
+            if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
             if(world.Session.Winner>=0)return "La batalla ha terminado.";
             if(world.Session.Paused)return "Reanuda la partida para cancelar encargos.";
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
@@ -96,8 +96,8 @@ namespace RiskAI
         public string BuildTower(int team=0)
         {
             if(sharesTown)return LinkedTown?LinkedTown.BuildTower(team):"Este puerto no tiene ciudad.";
-            if(team<0||team>1)return "Bando inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";
+            if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
             if(world.Session.Winner>=0)return "La batalla ha terminado.";
             if(world.Session.Paused)return "Reanuda la partida para construir.";
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
@@ -138,7 +138,7 @@ namespace RiskAI
         }
         void Captured()
         {
-            RefundQueue();CancelTowerBuild(true);Defense.ChangeOwner();lastOwner=Owner;world.Message(DisplayName+" conquistado por "+(Owner==0?"la alianza":"la frontera")+".");
+            RefundQueue();CancelTowerBuild(true);Defense.ChangeOwner();lastOwner=Owner;world.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".");
         }
         void CancelTowerBuild(bool refund)
         {

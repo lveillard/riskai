@@ -152,7 +152,7 @@ namespace RiskAI
             foreach(var soldier in cargo.ToArray())if(soldier)soldier.DestroyEmbarked(attacker);
             cargo.Clear();route.Clear();routeIndex=0;target=null;
             world.Ships.Remove(this);world.Session.UnregisterTarget(this);
-            if(attacker>=0&&attacker<2){world.Session.Kills[attacker]++;world.Session.Economy.GrantBounty(attacker,Profile.PointValue);}
+            if(PlayerRules.IsPlayer(attacker)&&attacker<world.Session.PlayerCount){world.Session.Kills[attacker]++;world.Session.Economy.GrantBounty(attacker,Profile.PointValue);}
             VisualFactory.Impact(AimPoint,new Color(.72f,.78f,.86f),.75f);Destroy(gameObject);
         }
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}

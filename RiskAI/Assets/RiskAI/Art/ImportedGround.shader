@@ -24,6 +24,11 @@ Shader "RiskAI/ImportedGround"
     half3 grass=SAMPLE_TEXTURE2D_GRAD(_Atlas,sampler_Atlas,frac(uv)*.46+float2(.02,.52),ddx(uv)*.46,ddy(uv)*.46).rgb;
     half3 rock=SAMPLE_TEXTURE2D_GRAD(_Cliffs,sampler_Cliffs,frac(uv*.8)*.46+float2(.02,.02),ddx(uv)*.368,ddy(uv)*.368).rgb;
     half3 color=lerp(grass*1.65,rock*1.25,1-smoothstep(.6,.96,n.y))*i.color.rgb;
+    half ridge=saturate(i.color.a);
+    color=lerp(color,rock*half3(.88,.91,.92),ridge*.75);
+    half snow=smoothstep(.78,.98,ridge)*smoothstep(.6,.96,n.y);
+    half3 snowRock=lerp(rock*half3(1.25,1.35,1.4),half3(.78,.82,.84),.25);
+    color=lerp(color,snowRock,snow*.45);
     // A short natural shoreline transition, from the same physical source relief.
     color=lerp(color,rock*half3(.86,.76,.54),1-smoothstep(-.12,.70,i.w.y));
     color*=.96+.04*sin(i.w.x*.16+sin(i.w.z*.1));

@@ -19,7 +19,7 @@ namespace RiskAI
         }
         bool Valid(UnitCommand command)
         {
-            if(command.PlayerId<0 || command.PlayerId>1 || !Finite(command.X) || !Finite(command.Y) || !Finite(command.Z))return false;
+            if(!PlayerRules.IsPlayer(command.PlayerId) || command.PlayerId>=session.PlayerCount || !Finite(command.X) || !Finite(command.Y) || !Finite(command.Z))return false;
             if(command.Kind<UnitCommandKind.Move || command.Kind>UnitCommandKind.Follow)return false;
             var unit=session.FindTarget(command.UnitId) as Soldier;
             if(!unit || !unit.IsAlive || unit.Team!=command.PlayerId || unit.IsGarrison)return false;

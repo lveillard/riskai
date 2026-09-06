@@ -17,16 +17,32 @@ namespace RiskAI
             public bool port;
         }
         [Serializable] public sealed class Country { public string name; public float x, z; public int count; }
+        [Serializable] public sealed class SourceTree
+        {
+            public float x, z, rotationDegrees, scaleX, scaleY, scaleZ;
+            public int species, variation, pathingFlags, lifePercent, sourceRecord;
+        }
         public string mapId, name;
         public int width, height;
         public float originX, originZ, cellSize;
+        // W3I's camera/playable rectangle. Old resources omit these fields;
+        // properties below then fall back to the complete W3E grid.
+        public float playableMinX, playableMaxX, playableMinZ, playableMaxZ;
         public float[] heightSamples, waterSamples;
         public int[] landSamples, tileSamples;
         public string[] tileNames;
         public City[] cities;
         public Country[] countries;
+        public SourceTree[] sourceTrees;
+        public string[] treeSpecies;
         public float HalfWidth => (width - 1) * cellSize * .5f;
         public float HalfDepth => (height - 1) * cellSize * .5f;
+        bool HasPlayableBounds => Finite(playableMinX) && Finite(playableMaxX) && Finite(playableMinZ) && Finite(playableMaxZ) && playableMinX < playableMaxX && playableMinZ < playableMaxZ;
+        public float PlayableMinX => HasPlayableBounds ? playableMinX : originX;
+        public float PlayableMaxX => HasPlayableBounds ? playableMaxX : originX + (width - 1) * cellSize;
+        public float PlayableMinZ => HasPlayableBounds ? playableMinZ : originZ;
+        public float PlayableMaxZ => HasPlayableBounds ? playableMaxZ : originZ + (height - 1) * cellSize;
+        public Vector4 PlayableBounds => new Vector4(PlayableMinX, PlayableMinZ, PlayableMaxX, PlayableMaxZ);
 
         public static ImportedMapData Load(ScenarioMap scenario)
         {
@@ -35,6 +51,7 @@ namespace RiskAI
             if (!source) throw new InvalidOperationException("Missing imported map: " + resource);
             var data = JsonUtility.FromJson<ImportedMapData>(source.text);
             data.Validate();
+            ImportedLandscapeAugment.Apply(data);
             data.PrepareBuildingPads();
             return data;
         }
@@ -54,6 +71,13 @@ namespace RiskAI
                 if (city.country < 0 || city.country >= countries.Length || !Finite(city.x) || !Finite(city.z) ||
                     !Finite(city.claimX) || !Finite(city.claimZ))
                     throw new InvalidOperationException("Invalid imported city: " + city.id);
+            if (sourceTrees != null)
+                foreach (var tree in sourceTrees)
+                    if (!Finite(tree.x) || !Finite(tree.z) || !Finite(tree.rotationDegrees) ||
+                        !Finite(tree.scaleX) || !Finite(tree.scaleY) || !Finite(tree.scaleZ) ||
+                        tree.scaleX <= 0 || tree.scaleY <= 0 || tree.scaleZ <= 0 ||
+                        treeSpecies == null || tree.species < 0 || tree.species >= treeSpecies.Length)
+                        throw new InvalidOperationException("Invalid imported source tree.");
         }
         public bool Contains(float x, float z) => x >= originX && z >= originZ && x <= originX + (width - 1) * cellSize && z <= originZ + (height - 1) * cellSize;
         public float HeightAt(float x, float z) => Sample(heightSamples, x, z);
@@ -68,6 +92,9 @@ namespace RiskAI
             if(landSamples[index]+landSamples[index+1]+landSamples[index+width]+landSamples[index+width+1]==4)return true;
             return HeightAt(x,z)>=WaterAt(x,z)+.02f;
         }
+        // W3E's terrain index is the low nibble of the flags/texture byte.
+        // The low byte of our packed sample holds variation, not texture ID.
+        public static int GroundTileIndex(int packed) => (packed >> 16) & 15;
         public int TileAt(float x, float z)
         {
             int ix = Mathf.Clamp(Mathf.RoundToInt((x - originX) / cellSize), 0, width - 1);
