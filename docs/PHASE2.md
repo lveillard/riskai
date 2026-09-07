@@ -119,8 +119,10 @@ Unity. El adaptador no emite órdenes de juego ni contiene reglas del mapa.
 
 `node scripts/test_browser_pen.cjs` verifica el contrato DOM; `python
 scripts/check_browser_pen.py` usa Playwright y un Edge instalado para enviar
-eventos CDP al canvas (sin reproductor Unity). Estas pruebas no verifican
-todavía el enlace IL2CPP/WebGL con el plugin ni un stylus físico.
+eventos CDP al canvas (sin reproductor Unity). La v0.20 añade una prueba con
+el reproductor exportado: el lápiz CDP comienza una batalla y el toque abre
+el menú. Esta última sí recorre el enlace IL2CPP/WebGL, pero no certifica un
+stylus físico ni todos los gestos y órdenes sobre el mapa.
 
 Unity 6.3 admite navegadores móviles seleccionados, incluido Chrome Android
 y Safari iOS. Se usarán versiones recientes. Esto no demuestra que RiskAI
@@ -148,17 +150,35 @@ evidencias v0.19 documentadas en
 [VALIDATION-v0.19.md](VALIDATION-v0.19.md). La tercera compilación Windows
 terminó; el parche posterior de entrada está generado y reúne 213 casos Unity
 distintos aprobados más ocho Python. El adaptador DOM añade 12 pruebas Node y
-siete comprobaciones CDP en Edge; aún sin reproductor Unity. No equivale a una
-validación del juego en navegador ni ARM. Los controles habituales usan 44 unidades lógicas; los botones del
+siete comprobaciones CDP en Edge sobre el adaptador DOM. La v0.20 añade
+batallas y entrada sintética en el reproductor Web exportado, con los límites
+descritos abajo. Los controles habituales usan 44 unidades lógicas; los botones del
 encabezado compacto usan 40 para mantener visible el campo de batalla.
 
-Web Build Support está descargado y firmado por Unity; su instalación en
-Program Files espera la elevación de Windows. No hay todavía una compilación
-Web validada, una medición en navegador ni una medición en hardware ARM
-físico. Las dos sondas nativas de reinicio no muestran crecimiento de conteos
+Web Build Support ya está instalado. La primera exportación real cargó el
+menú en Edge, pero falló al crear el campo de batalla por un componente
+eliminado durante stripping. La corrección v0.20 está verificada en batallas
+Classic y Europe: la sonda Europe aplicó 118 órdenes, sin rechazos y con
+movimiento de las seis unidades seguidas. Su media de 55,90 ms/fotograma
+es insuficiente; no se presenta como una versión tablet lista.
+Una repetición final sin ese compilador externo midió 37,20 ms medios y
+62 ms máximo en vista táctica; la vista estratégica verificada dio 28,35
+ms medios y 56 ms máximo. Ninguna prueba certifica 60 FPS ni ARM.
+Europe y NewWorld completaron tres reinicios Web cada uno, con conteos
+estables de mallas/materiales/renderers/NavMeshData; los bytes se informan
+sin inferir ausencia de fugas.
+Las verificaciones y la revisión Grok se siguen en
+[VALIDATION-v0.20.md](VALIDATION-v0.20.md). No hay todavía medición en hardware ARM físico.
+Las dos sondas nativas de reinicio no muestran crecimiento de conteos
 de malla/material/renderers, pero sus bytes asignados no mejoraron; quedan
 como datos de diagnóstico, no como una conclusión de ausencia de fugas.
 
-La v0.19 Windows se genera en Builds/Windows-v0.19. La v0.18 se conserva
-en Builds/Windows-v0.18. No se implementan servidor, multijugador, niebla ni héroes en esta
+La revisión visual v0.20 recupera el carácter de RTS: marcos ornamentados,
+títulos dorados, retratos y selección junto a órdenes/producción en escritorio.
+La distribución compacta conserva las pestañas y comparte los controles y
+las reglas con escritorio. Adaptar el espacio no implica eliminar la
+identidad visual ni reducir la información disponible en pantallas amplias.
+
+La v0.20 Windows se genera en Builds/Windows-v0.20. Las builds anteriores
+se conservan como referencia local. No se implementan servidor, multijugador, niebla ni héroes en esta
 fase.

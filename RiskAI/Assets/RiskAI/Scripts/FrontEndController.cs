@@ -135,19 +135,34 @@ namespace RiskAI
             header.style.flexShrink = 0;
             header.style.marginBottom = 12;
             var titleRow = new VisualElement(); RtsUiStyle.Row(titleRow);
-            var title = RtsUiStyle.Label("RISKAI · DOMINIOS", null, UiViewport.IsCompact ? 19 : 26);
-            title.style.unityFontStyleAndWeight = FontStyle.Bold; title.style.flexGrow = 1; titleRow.Add(title);
-            var version = RtsUiStyle.Label("v0.19 · CONQUISTA", null, UiViewport.IsCompact ? 11 : 13); version.style.marginLeft = 8; titleRow.Add(version); header.Add(titleRow);
-            var description = RtsUiStyle.Label("Elige el mapa, prepara a tus rivales y comienza una conquista independiente.", null, 14); description.style.whiteSpace = WhiteSpace.Normal; header.Add(description);
+            if(!UiViewport.IsCompact){var seal=new RtsHeraldicSeal(2,RtsUiStyle.Gold);seal.style.width=62;seal.style.height=62;seal.style.marginRight=18;titleRow.Add(seal);}
+            var title = RtsUiStyle.Title("DOMINIOS", null, UiViewport.IsCompact ? 24 : 34);
+            title.style.flexGrow = 1; titleRow.Add(title);
+            var version = RtsUiStyle.Label("v0.20 · CONQUISTA", null, UiViewport.IsCompact ? 11 : 13); version.style.marginLeft = 8; titleRow.Add(version); header.Add(titleRow);
+            var description = RtsUiStyle.Label("RISKAI  ·  Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.", null, 14); description.style.whiteSpace = WhiteSpace.Normal;description.style.color=RtsUiStyle.Muted; header.Add(description);
             root.Add(header);
 
             var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "Front end scroll" };
             scroll.horizontalScrollerVisibility=ScrollerVisibility.Hidden;
             scroll.contentContainer.style.minWidth=0;
-            scroll.contentContainer.style.width=Length.Percent(100);
+            // Percentage width can include the vertical scroller itself. Bind to
+            // the actual viewport so cards keep their right border on narrow screens.
+            scroll.contentViewport.RegisterCallback<GeometryChangedEvent>(evt =>
+            {
+                if(evt.newRect.width>0)scroll.contentContainer.style.width=evt.newRect.width;
+            });
             scroll.style.flexGrow = 1; scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
-            BuildScenarioSection(scroll);
-            BuildConfigurationSection(scroll);
+            var body=new VisualElement { name="War table setup" };
+            body.style.flexDirection=UiViewport.IsCompact?FlexDirection.Column:FlexDirection.Row;
+            var scenarios=new VisualElement();scenarios.style.minWidth=0;
+            var configuration=new VisualElement();configuration.style.minWidth=0;
+            if(!UiViewport.IsCompact)
+            {
+                scenarios.style.width=Length.Percent(53);scenarios.style.paddingRight=18;
+                configuration.style.width=Length.Percent(47);
+            }
+            BuildScenarioSection(scenarios);BuildConfigurationSection(configuration);
+            body.Add(scenarios);body.Add(configuration);scroll.Add(body);
             root.Add(scroll);
 
             var footer = RtsUiStyle.Panel("Front end footer");
@@ -160,16 +175,17 @@ namespace RiskAI
             {
                 var error = RtsUiStyle.Label(validation, null, 13); error.style.color = new Color(1f, .48f, .36f); footer.Add(error);
             }
-            var start = RtsUiStyle.Button("INICIAR PARTIDA", StartBattle, "Start battle");
+            var start = RtsUiStyle.Button("COMENZAR LA CONQUISTA", StartBattle, "Start battle");
+            start.style.backgroundColor=new Color(.31f,.23f,.105f);start.style.color=RtsUiStyle.Gold;start.style.minHeight=50;
             if (UiViewport.IsCompact) { start.style.width = Length.Percent(100); start.style.marginRight = 0; start.style.marginBottom = 0; } else start.style.minWidth = 250;
             footer.Add(start); root.Add(footer);
         }
 
         void BuildScenarioSection(VisualElement root)
         {
-            root.Add(SectionTitle("ESCENARIO"));
+            root.Add(SectionTitle("Elige tu campo de batalla"));
             var grid = new VisualElement { name = "Scenario cards" };
-            RtsUiStyle.Row(grid, true); grid.style.marginBottom = 16;
+            RtsUiStyle.Row(grid, true);grid.style.alignItems=Align.Stretch; grid.style.marginBottom = 16;
             ScenarioCard(grid, ScenarioMap.Classic, "LAS MARCAS", "Costa, mesetas y un sur seco para campañas rápidas.");
             ScenarioCard(grid, ScenarioMap.Riverlands, "CUATRO RIBERAS", "Río central, puente y un archipiélago al norte.");
             ScenarioCard(grid, ScenarioMap.Europe, "EUROPE · REFORGED", "Territorio importado a escala con puertos y fronteras reales.");
@@ -183,18 +199,27 @@ namespace RiskAI
             var button = RtsUiStyle.Button("", () => { selectedMap = map; Rebuild(); }, "Map " + map);
             button.style.flexGrow = 1;
             if (UiViewport.IsCompact) { button.style.width = Length.Percent(100); button.style.marginRight = 0; }
-            else button.style.minWidth = Length.Percent(47);
-            button.style.minHeight = UiViewport.IsCompact ? 88 : 106;
+            else { button.style.width=Length.Percent(47);button.style.minWidth=0; }
+            button.style.minHeight = UiViewport.IsCompact ? 108 : 186;
             button.style.backgroundColor = chosen ? new Color(.20f, .18f, .10f, 1) : RtsUiStyle.Card;
-            var titleLabel = RtsUiStyle.Label((chosen ? "●  " : "") + title, null, 16); titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold; titleLabel.style.whiteSpace = WhiteSpace.Normal;
+            button.style.paddingTop=12;button.style.paddingBottom=12;
+            var composition=new VisualElement();composition.pickingMode=PickingMode.Ignore;
+            composition.style.flexDirection=UiViewport.IsCompact?FlexDirection.Row:FlexDirection.Column;
+            composition.style.alignItems=UiViewport.IsCompact?Align.Center:Align.FlexStart;
+            var accent=map==ScenarioMap.Classic?new Color(.60f,.72f,.43f):map==ScenarioMap.Riverlands?new Color(.43f,.68f,.69f):map==ScenarioMap.Europe?new Color(.88f,.67f,.36f):new Color(.70f,.60f,.83f);
+            var seal=new RtsHeraldicSeal((int)map,accent);seal.style.width=UiViewport.IsCompact?54:50;seal.style.height=UiViewport.IsCompact?66:58;seal.style.marginRight=12;
+            var words=new VisualElement();words.style.minWidth=0;words.style.flexShrink=1;
+            var titleLabel = RtsUiStyle.Title(title, null, 15);
             var detail = RtsUiStyle.Label(MapLayout.ScenarioDetail(map), null, 13); detail.style.color = RtsUiStyle.Bronze; detail.style.whiteSpace = WhiteSpace.Normal;
             var body = RtsUiStyle.Label(description, null, 12); body.style.color = RtsUiStyle.Muted; body.style.whiteSpace = WhiteSpace.Normal;
-            button.Add(titleLabel); button.Add(detail); button.Add(body); parent.Add(button);
+            words.Add(titleLabel);words.Add(detail);words.Add(body);
+            if(chosen){var selected=RtsUiStyle.Label("ELEGIDO",null,10);selected.style.color=RtsUiStyle.Gold;selected.style.marginTop=5;words.Add(selected);}
+            composition.Add(seal);composition.Add(words);button.Add(composition);parent.Add(button);
         }
 
         void BuildConfigurationSection(VisualElement root)
         {
-            root.Add(SectionTitle("CONFIGURACIÓN"));
+            root.Add(SectionTitle("Prepara la expedición"));
             var panel = RtsUiStyle.Panel("Match configuration"); panel.style.marginBottom = 16;
             AddPlayers(panel); AddSeed(panel); AddLayout(panel); AddDifficulty(panel); AddMountains(panel);
             root.Add(panel);
@@ -247,7 +272,7 @@ namespace RiskAI
         {
             var row = new VisualElement(); RtsUiStyle.Row(row, true); row.style.marginBottom = 10;
             var label = RtsUiStyle.Label(heading, null, 13); label.style.color = RtsUiStyle.Bronze;
-            if (UiViewport.IsCompact) label.style.minWidth = Length.Percent(100); else label.style.minWidth = 180;
+            label.style.minWidth = Length.Percent(100);label.style.marginBottom=4;
             row.Add(label); parent.Add(row); return row;
         }
 
@@ -261,7 +286,7 @@ namespace RiskAI
 
         static Label SectionTitle(string text)
         {
-            var title = RtsUiStyle.Label(text, null, 17); title.style.unityFontStyleAndWeight = FontStyle.Bold; title.style.marginBottom = 8; return title;
+            var title = RtsUiStyle.Title(text, null, 17); title.style.marginBottom = 10; return title;
         }
     }
 }

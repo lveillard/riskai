@@ -60,6 +60,8 @@ namespace RiskAI
             var document = gameObject.AddComponent<UIDocument>();
             document.panelSettings = panelSettings;
             Root = document.rootVisualElement;
+            var chrome=Resources.Load<StyleSheet>("UI/RiskAIChrome");
+            if(chrome)Root.styleSheets.Add(chrome);
             Root.pickingMode = PickingMode.Ignore;
             safeRoot = new VisualElement { name = panelName + " safe root", pickingMode = PickingMode.Ignore };
             safeRoot.style.position = Position.Absolute;
@@ -119,12 +121,23 @@ namespace RiskAI
 
     public static class RtsUiStyle
     {
-        public static readonly Color Slate = new Color(.035f, .055f, .075f, .96f);
-        public static readonly Color PanelColor = new Color(.075f, .105f, .13f, .96f);
-        public static readonly Color Card = new Color(.105f, .145f, .17f, .98f);
-        public static readonly Color Bronze = new Color(.73f, .53f, .25f, 1);
+        public static readonly Color Slate = new Color(.035f, .043f, .041f, 1);
+        public static readonly Color PanelColor = new Color(.085f, .083f, .068f, .99f);
+        public static readonly Color Card = new Color(.16f, .15f, .115f, 1);
+        public static readonly Color Bronze = new Color(.72f, .56f, .30f, 1);
+        public static readonly Color Gold = new Color(.94f, .79f, .43f, 1);
         public static readonly Color Text = new Color(.93f, .92f, .84f, 1);
         public static readonly Color Muted = new Color(.68f, .72f, .70f, 1);
+        static Font titleFont;
+
+        public static Label Title(string text, string name = null, int size = 20)
+        {
+            var label=Label(text,name,size);
+            if(!titleFont)titleFont=Resources.Load<Font>("UI/CinzelDecorative-Regular");
+            if(titleFont)label.style.unityFontDefinition=FontDefinition.FromFont(titleFont);
+            label.style.color=Gold;label.style.whiteSpace=WhiteSpace.Normal;
+            return label;
+        }
 
         public static Label Label(string text, string name = null, int size = 14)
         {
@@ -134,7 +147,7 @@ namespace RiskAI
         }
         public static Button Button(string text, System.Action action, string name = null)
         {
-            var button = new Button(action) { text = text, name = name };
+            var button = new RtsOrnamentButton(action) { text = text, name = name };
             button.style.minHeight = 44; button.style.paddingLeft = 12; button.style.paddingRight = 12;
             button.style.marginRight = 8; button.style.marginBottom = 8;
             button.style.backgroundColor = Card; button.style.borderTopColor = Bronze; button.style.borderBottomColor = Bronze;
@@ -145,7 +158,7 @@ namespace RiskAI
         }
         public static VisualElement Panel(string name = null)
         {
-            var panel = new VisualElement { name = name };
+            var panel = new RtsOrnamentPanel { name = name };
             panel.style.backgroundColor = PanelColor; panel.style.paddingLeft = 16; panel.style.paddingRight = 16;
             panel.style.paddingTop = 14; panel.style.paddingBottom = 14;
             panel.style.borderTopColor = Bronze; panel.style.borderBottomColor = Bronze;

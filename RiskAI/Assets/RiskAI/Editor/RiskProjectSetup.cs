@@ -9,7 +9,7 @@ namespace RiskAI.Editor
 {
     public static class RiskProjectSetup
     {
-        const string Version="0.19";
+        const string Version="0.20";
         const string FrontEndScenePath="Assets/RiskAI/Scenes/FrontEnd.unity";
         const string ScenePath="Assets/RiskAI/Scenes/LasMarcas.unity";
         [MenuItem("RiskAI/Prepare playable scene")]
@@ -17,6 +17,7 @@ namespace RiskAI.Editor
         {
             RiskWorldArtSetup.Prepare();
             RiskArtSetup.Prepare();
+            PrepareUiFrame();
             Directory.CreateDirectory("Assets/RiskAI/Scenes");
             EnsureBattlefieldScene();
             EnsureFrontEndScene();
@@ -72,6 +73,15 @@ namespace RiskAI.Editor
             var shader=Shader.Find(shaderName);if(!shader)throw new System.Exception("Required shader unavailable: "+shaderName);
             AssetDatabase.CreateAsset(new Material(shader),path);
         }
+        static void PrepareUiFrame()
+        {
+            var importer=AssetImporter.GetAtPath("Assets/RiskAI/Resources/UI/WarTableFrame-v20.png") as TextureImporter;
+            if(!importer)return;
+            if(importer.maxTextureSize==1024&&!importer.mipmapEnabled&&importer.wrapMode==TextureWrapMode.Clamp)return;
+            importer.maxTextureSize=1024;importer.mipmapEnabled=false;importer.isReadable=false;
+            importer.wrapMode=TextureWrapMode.Clamp;importer.textureCompression=TextureImporterCompression.Compressed;
+            importer.SaveAndReimport();
+        }
         [MenuItem("RiskAI/Build Windows prototype")]
         public static void BuildWindows()
         {
@@ -106,6 +116,7 @@ namespace RiskAI.Editor
         {
             File.Copy("../THIRD_PARTY_NOTICES.md",directory+"/THIRD_PARTY_NOTICES.md",true);
             File.Copy("Assets/RiskAI/Art/KayKit/LICENSE.txt",directory+"/KayKit-LICENSE.txt",true);
+            File.Copy("Assets/RiskAI/Art/UI/Cinzel-OFL.txt",directory+"/Cinzel-OFL.txt",true);
         }
     }
 }

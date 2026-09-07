@@ -56,14 +56,14 @@ namespace RiskAI.Tests
         {
             var view=StrategicMapView.Current;var camera=Camera.main;
             var unit=battle.Units[0];int mask=camera.cullingMask;
-            camera.orthographicSize=view.EnterZoom+1;view.SendMessage("LateUpdate");
+            camera.orthographicSize=view.EnterZoom+1;view.RefreshPresentation();
             Assert.That(view.IsStrategic,Is.True);
             Assert.That(camera.cullingMask,Is.EqualTo(1<<StrategicMapView.StrategicLayer));
             Assert.That(unit.isActiveAndEnabled,Is.True);
             Assert.That(unit.Agent.enabled,Is.True);
-            camera.orthographicSize=view.EnterZoom*.94f;view.SendMessage("LateUpdate");
+            camera.orthographicSize=view.EnterZoom*.94f;view.RefreshPresentation();
             Assert.That(view.IsStrategic,Is.True,"Small wheel reversals must not flicker between modes.");
-            camera.orthographicSize=view.EnterZoom*.80f;view.SendMessage("LateUpdate");
+            camera.orthographicSize=view.EnterZoom*.80f;view.RefreshPresentation();
             Assert.That(view.IsStrategic,Is.False);
             Assert.That(camera.cullingMask,Is.EqualTo(mask));
             yield return null;
@@ -89,7 +89,10 @@ namespace RiskAI.Tests
             Assert.That(camera.cullingMask,Is.EqualTo(mask));
             Assert.That(camera.backgroundColor,Is.EqualTo(background));
             Assert.That(battle.Units[0].isActiveAndEnabled,Is.True);
-            view.enabled=true;camera.orthographicSize=view.EnterZoom+1;view.SendMessage("LateUpdate");
+            // SendMessage("LateUpdate") also ticks RtsCameraRig on the same object,
+            // which smooths the zoom back toward home by a frame-duration-dependent amount.
+            view.enabled=true;camera.orthographicSize=view.EnterZoom+1;view.RefreshPresentation();
+            Assert.That(camera.orthographicSize,Is.EqualTo(view.EnterZoom+1),"Refreshing presentation cannot advance camera movement.");
             Assert.That(view.IsStrategic,Is.True,"Re-enabling the component must recover the current camera mode.");
             yield return null;
         }

@@ -1,15 +1,28 @@
 # RiskAI — decisiones y siguientes pasos
 
+## v0.20 · recuperar identidad RTS
+
+- [x] Recuperar marcos propios, materiales, títulos y retratos sin duplicar UI ni reglas por plataforma.
+- [x] Selección y órdenes/producción simultáneas en escritorio; pestañas compartidas en ancho compacto.
+- [x] Corregir cambio de ayuda a victoria y acotar scroll compacto; revisión Grok 4.6 contrastada contra los consumidores reales.
+- [x] Retirar el radio azul adicional de los muelles; conservar selección común y alcance de embarque en todos los mapas.
+- [x] Instalar Web Build Support y comprobar el primer reproductor real; detectado y corregido en fuente el stripping de Collider al crear la batalla.
+- [x] Verificar la exportación Web final con batallas, comandos, tres reinicios Europe/NewWorld y lápiz/toque sintéticos dentro de Unity.
+- [ ] Mejorar y atribuir el coste Web: Europe táctico sin compilador externo midió 37,20 ms medios/62 ms máximo; vista estratégica 28,35/56 ms. Las pasadas bajo carga tenían fuertes picos y omitir draws no los eliminó. Seguir con trazas de CPU del navegador; no presentar esto como rendimiento ARM validado.
+- [ ] Mostrar «recogiendo muestra» en el menú de rendimiento hasta tener el primer informe; los ceros iniciales no son una medición.
+
+[Capturas, pruebas y límites v0.20](docs/VALIDATION-v0.20.md).
+
 ## v0.19 · adaptación compartida y rendimiento
 
 - [x] Menú y HUD interactivos UI Toolkit, con áreas seguras y disposiciones para escritorio/vertical/horizontal.
 - [x] Reconocedor táctil y lápiz con regresiones sintéticas; cámara y órdenes compartidas entre los cuatro mapas.
 - [x] Catálogo común de producción, IDs de edificio y ejecutor local preparado para una futura frontera de autoridad.
 - [x] Cuatro revisiones adversariales Grok 4.6; 213 casos Unity distintos y ocho Python aprobados.
-- [x] Adaptador de lápiz DOM → Input System compartido; 12 pruebas Node y siete comprobaciones CDP en Edge. Pendiente de enlazar y probar dentro del player WebGL.
+- [x] Adaptador de lápiz DOM → Input System compartido; 12 pruebas Node y siete comprobaciones CDP en Edge. v0.20 comprueba también lápiz/toque sintéticos dentro del reproductor Web; hardware físico pendiente.
 - [x] Sondas Windows de partida avanzada, 625–660 unidades y reinicios Europe/New World. Mantener en el informe los picos no reproducidos y la variación de memoria.
 - [x] Traza opcional de hitches y contadores de motor; no activarla por defecto.
-- [ ] Completar instalación de Web Build Support, generar build Web y probar Unity dentro del navegador.
+- [x] Completar instalación de Web Build Support y generar primera build Web; validación de batalla seguida arriba.
 - [ ] Validar memoria, respuesta, rotación, trackpad y lápiz en hardware tablet/ARM real.
 
 [Resultados y limitaciones v0.19](docs/VALIDATION-v0.19.md) · [Fase 2 activa](docs/PHASE2.md).

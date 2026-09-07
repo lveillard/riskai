@@ -1,0 +1,11 @@
+/* Shared physical controls: the same retained theme on desktop and tablet. */
+.unity-scroller--vertical { width: 12px; min-width: 12px; max-width: 12px; margin-left: 4px; }
+.unity-scroller--horizontal { height: 12px; }
+.unity-scroller__low-button, .unity-scroller__high-button { display: none; }
+.unity-scroller #unity-tracker { background-color: rgb(27, 27, 23); border-width: 1px; border-color: rgb(63, 55, 37); }
+.unity-scroller #unity-dragger { background-color: rgb(133, 109, 65); border-width: 1px; border-color: rgb(187, 153, 87); border-radius: 2px; min-width: 8px; }
+.unity-scroller #unity-dragger:hover { background-color: rgb(180, 150, 88); }
+.unity-base-text-field__input { background-color: rgb(27, 29, 25); color: rgb(237, 234, 214); border-color: rgb(148, 118, 64); border-width: 1px; padding-left: 10px; padding-right: 10px; }
+.unity-toggle { color: rgb(218, 215, 195); }
+.unity-toggle__checkmark { background-color: rgb(31, 33, 27); border-color: rgb(167, 132, 72); border-width: 1px; }
+Button:focus { border-color: rgb(242, 207, 117); }

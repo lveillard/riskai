@@ -1,4 +1,7 @@
 using System.Collections;
+using System.Linq;
+using RiskAI.Core;
+using RiskAI.Core;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -44,6 +47,29 @@ namespace RiskAI.Tests
 
             Assert.That(battle.Clock.TickCount,Is.EqualTo(tickBefore),"The assertion must cover a model change before any next simulation tick.");
             Assert.That(gold.text,Does.StartWith(granted+" ORO"),"The retained header must read economy gold even while its simulation snapshot is paused.");
+        }
+
+        [UnityTest]
+        public IEnumerator HelpSheetIsReplacedByActualVictoryResult()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            controller.HelpVisible=true;
+            yield return null;
+
+            // Establish the conquest condition through the public settlement state, then
+            // drive the normal BattleWorld rule pass. Opponent guards remain alive, so
+            // this specifically covers the timed 60-percent victory rather than a
+            // synthetic Winner assignment or elimination shortcut.
+            foreach(var town in battle.Towns)town.State.Owner=0;
+            int steps=0;
+            while(battle.Winner<0&&steps++<1000)
+                battle.Clock.Advance(SimClock.StepSeconds,false,battle.World.Tick);
+            Assert.That(battle.Winner,Is.EqualTo(0),"Fixture must reach victory through BattleSession.TickRules.");
+
+            yield return null;
+            var labels=hud.GetComponent<UIDocument>().rootVisualElement.Query<Label>().ToList();
+            Assert.That(labels.Any(label=>label.text=="VICTORIA"),Is.True,
+                "A modal already open as help must rebuild as the result sheet when the normal victory rule fires.");
         }
 
         [UnityTearDown]

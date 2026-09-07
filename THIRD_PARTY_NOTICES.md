@@ -1,5 +1,15 @@
 # Third-party notices
 
+## Cinzel Decorative
+
+`RiskAI/Assets/RiskAI/Resources/UI/CinzelDecorative-Regular.ttf` is by Natanael
+Gama, copyright 2012, licensed under the SIL Open Font License 1.1. The
+unmodified font is used for display headings; body text uses Unity's default
+font. Source: https://github.com/google/fonts/tree/main/ofl/cinzeldecorative
+
+The complete license is in `RiskAI/Assets/RiskAI/Art/UI/Cinzel-OFL.txt` and is
+copied into both Windows and Web export directories.
+
 ## KayKit Adventurers
 
 Character models, animations and equipment under `RiskAI/Assets/RiskAI/Art/KayKit/` are by Kay Lousberg, distributed under CC0. The full license is included in that directory. Source: https://kaylousberg.itch.io/kaykit-adventurers

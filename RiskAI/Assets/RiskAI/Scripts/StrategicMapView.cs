@@ -62,7 +62,9 @@ namespace RiskAI
             IsStrategic=enabled;cam.cullingMask=enabled?1<<StrategicLayer:tacticalMask;
             cam.backgroundColor=enabled?new Color(.055f,.15f,.20f):tacticalBackground;
         }
-        void LateUpdate()
+        void LateUpdate() => RefreshPresentation();
+
+        public void RefreshPresentation()
         {
             if(!cam)return;
             if(Time.unscaledTime>=nextRefresh){nextRefresh=Time.unscaledTime+.3f;Atlas.RefreshOwners();}
