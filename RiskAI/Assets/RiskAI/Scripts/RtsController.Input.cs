@@ -14,6 +14,13 @@ namespace RiskAI
         internal bool BlocksWorldInput(Vector2 screen) => !InsideScreen(screen) || OverHud(screen);
         internal bool ShiftHeld => Shift;
 
+        /// <summary>Device cancellation must discard a gesture before its synthetic release reaches input.</summary>
+        public void CancelDirectPointerInput()
+        {
+            inputRouter?.Cancel();
+            CancelAreaSelection();
+        }
+
         internal void PrepareDirectPointerInput()
         {
             CameraDragging=false;secondaryGesture.Cancel();previousMouse=Pointer;CancelAreaSelection();

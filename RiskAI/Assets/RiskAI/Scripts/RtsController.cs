@@ -28,7 +28,7 @@ namespace RiskAI
         public bool CameraDragging { get; private set; }
         public bool CursorCaptured { get; private set; }
         public Vector2 DragStart { get; private set; }
-        public Vector2 Pointer => Mouse.current == null ? Vector2.zero : Mouse.current.position.ReadValue();
+        public Vector2 Pointer => UnityEngine.InputSystem.Pointer.current == null ? Vector2.zero : UnityEngine.InputSystem.Pointer.current.position.ReadValue();
         Vector2 AreaEndPoint => areaPointerActive?areaPointer:Pointer;
         public Rect SelectionRect => Rect.MinMaxRect(Mathf.Min(DragStart.x,AreaEndPoint.x),Screen.height-Mathf.Max(DragStart.y,AreaEndPoint.y),Mathf.Max(DragStart.x,AreaEndPoint.x),Screen.height-Mathf.Min(DragStart.y,AreaEndPoint.y));
         readonly Dictionary<int,List<Soldier>> groups=new Dictionary<int,List<Soldier>>();
@@ -328,7 +328,9 @@ namespace RiskAI
         {
             direction=Vector3.zero;
             bool runtimeCursorReleased=RtsCameraPolicy.SupportsConfinedCursor(Application.isEditor,Application.platform)&&!cursorCaptureRequested;
-            bool blocked=!EdgePan||!EffectiveFocus||runtimeCursorReleased||session.Paused||session.Winner>=0||HelpVisible||Dragging||pressedWorld||CameraDragging;
+            // A lifted finger or hovering pen must not leave the camera scrolling
+            // from its last position. Direct devices pan through explicit gestures.
+            bool blocked=!(UnityEngine.InputSystem.Pointer.current is Mouse)||!EdgePan||!EffectiveFocus||runtimeCursorReleased||session.Paused||session.Winner>=0||HelpVisible||Dragging||pressedWorld||CameraDragging;
             var mouse=Mouse.current;
             if(mouse!=null&&(mouse.middleButton.isPressed||mouse.rightButton.isPressed))blocked=true;
             if(mouse!=null&&mouse.leftButton.isPressed)blocked=true;

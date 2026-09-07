@@ -19,8 +19,12 @@
   <canvas id="game" tabindex="0" aria-label="RiskAI. Conquista ciudades y controla territorios."></canvas>
   <div id="safe"></div>
   <div id="cover"><div class="card"><h1>DOMINIOS</h1><p id="status">Preparando RiskAI…</p><progress id="progress" value="0" max="1" aria-label="Descarga del juego"></progress><p id="hint">Ratón, dedos o lápiz. Elige mapa y jugadores al terminar la carga.</p><button id="retry" hidden>Volver a intentar</button></div></div>
+  <script src="riskai-pen.js"></script>
   <script>
     const canvas=document.getElementById('game'),cover=document.getElementById('cover'),status=document.getElementById('status'),progress=document.getElementById('progress');
+    // Installed before the Unity loader so pen compatibility mouse events cannot
+    // reach Unity before the shared Pen device receives their original input.
+    window.riskaiPen=window.RiskAIPen?window.RiskAIPen.attach(canvas):null;
     let instance=null;
     window.riskaiSafeInsets=[0,0,0,0];
     function refreshViewport(){
@@ -52,7 +56,8 @@
     loader.onload=()=>createUnityInstance(canvas,config,value=>{progress.value=value;status.textContent=value<1?'Cargando RiskAI · '+Math.round(value*100)+' %':'Preparando el menú…';})
       .then(game=>{instance=game;window.riskaiInstance=game;cover.hidden=true;canvas.focus({preventScroll:true});})
       .catch(fail);
-    document.body.appendChild(loader);
+    if(window.riskaiPen)document.body.appendChild(loader);
+    else fail('No se pudieron cargar los controles. Vuelve a intentar la descarga.');
   </script>
 </body>
 </html>

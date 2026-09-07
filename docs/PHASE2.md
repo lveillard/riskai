@@ -56,12 +56,13 @@ que una llamada desde IA o presentación no puede colar un tipo de unidad ajeno
 a ese edificio.
 
 PlayerBuildingIntent describe una acción por BuildingId, canal y valores
-escalares. RuntimePlayerBuildingCommands es el único ejecutor local de estas
+escalares. PlayerBuildingCommands es el ejecutor local de estas
 intenciones: comprueba que la partida no esté pausada ni terminada, que el
 propietario y el edificio sigan siendo válidos, que la cola y el índice de
 cancelación existan y que el destino de reunión sea finito antes de delegar
 en la regla de dominio. Incluye reclutamiento, compra de nave, cancelación y
-punto de reunión de tierra o naval cuando el edificio lo soporta.
+punto de reunión de tierra. El DTO reserva una variante naval, pero ningún
+edificio la acepta todavía: no se presenta esa reserva como funcionalidad.
 
 Este límite mejora la consistencia entre UI e IA y deja una superficie
 concreta para una autoridad futura. Sigue siendo ejecución local: no hay
@@ -97,6 +98,30 @@ reglas de partida.
 
 ## Plataforma y fuentes
 
+El paquete instalado (`com.unity.inputsystem` 1.14.2) marca expresamente
+**Pen: WebGL no**, aunque admite lápiz en Android nativo. No se puede trasladar
+la validación de `Pen.current` de Windows a un navegador. El adaptador toma
+sólo `PointerEvent.pointerType === 'pen'` del canvas y
+alimenta un `Pen` virtual de Unity. La interfaz y las órdenes siguen usando
+los consumidores existentes. [Matriz oficial de dispositivos](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.14/manual/SupportedDevices.html).
+
+El navegador debe identificar el dispositivo como lápiz; no se adivina que
+un Mouse/Touch anónimo sea un stylus. Los eventos de compatibilidad pueden
+variar, por lo que las pruebas de Chromium sintéticas no certifican un lápiz
+físico. [Pointer Events](https://www.w3.org/TR/pointerevents/).
+
+La cola DOM está acotada a 64 muestras y combina sólo movimientos que no
+cambian botones. Unity lee una muestra por fotograma para conservar los
+flancos de pulsación y liberación; desbordamiento, pérdida de captura o foco
+cancelan el gesto antes de retirar el dispositivo virtual. Las coordenadas
+se normalizan respecto al canvas y se convierten al espacio de pantalla de
+Unity. El adaptador no emite órdenes de juego ni contiene reglas del mapa.
+
+`node scripts/test_browser_pen.cjs` verifica el contrato DOM; `python
+scripts/check_browser_pen.py` usa Playwright y un Edge instalado para enviar
+eventos CDP al canvas (sin reproductor Unity). Estas pruebas no verifican
+todavía el enlace IL2CPP/WebGL con el plugin ni un stylus físico.
+
 Unity 6.3 admite navegadores móviles seleccionados, incluido Chrome Android
 y Safari iOS. Se usarán versiones recientes. Esto no demuestra que RiskAI
 ya cumpla un presupuesto de memoria o fotograma en esos dispositivos.
@@ -121,9 +146,10 @@ La base de comandos de producción, la propiedad explícita de recursos runtime
 y la sonda opt-in de reinicio están implementadas y cubiertas por las
 evidencias v0.19 documentadas en
 [VALIDATION-v0.19.md](VALIDATION-v0.19.md). La tercera compilación Windows
-terminó; la compilación final también está generada y reúne 206 casos Unity
-distintos aprobados más ocho Python. No equivale a una validación en navegador
-ni ARM. Los controles habituales usan 44 unidades lógicas; los botones del
+terminó; el parche posterior de entrada está generado y reúne 213 casos Unity
+distintos aprobados más ocho Python. El adaptador DOM añade 12 pruebas Node y
+siete comprobaciones CDP en Edge; aún sin reproductor Unity. No equivale a una
+validación del juego en navegador ni ARM. Los controles habituales usan 44 unidades lógicas; los botones del
 encabezado compacto usan 40 para mantener visible el campo de batalla.
 
 Web Build Support está descargado y firmado por Unity; su instalación en

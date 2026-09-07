@@ -126,12 +126,11 @@ namespace RiskAI
             }
             Vector2 position=pen.position.ReadValue();bool tipDown=pen.tip.isPressed;bool barrelDown=pen.firstBarrelButton.isPressed;
             if(barrelDown)SuppressSyntheticMouse();
-            // `wasPressedThisFrame` is frame-counter based. Treat a newly observed held
-            // barrel as the same edge so manually driven and real device updates agree.
             if(barrelDown&&!barrelHeld)
             {
                 barrelHeld=true;Cancel();penBlocked=tipDown;SuppressSyntheticMouse();
-                if(!controller.BlocksWorldInput(position))controller.ContextAction(position);
+                // A held button first observed after pause/focus loss is not a new command.
+                if(pen.firstBarrelButton.wasPressedThisFrame&&!controller.BlocksWorldInput(position))controller.ContextAction(position);
                 return;
             }
             if(barrelHeld)
@@ -150,7 +149,7 @@ namespace RiskAI
             }
             if(!penOwned&&tipDown)
             {
-                if(controller.BlocksWorldInput(position)||ownedTouches.Count>0||ignoredTouches.Count>0||blockedTouches.Count>0||armedTouches.Count>0)
+                if(!pen.tip.wasPressedThisFrame||controller.BlocksWorldInput(position)||ownedTouches.Count>0||ignoredTouches.Count>0||blockedTouches.Count>0||armedTouches.Count>0)
                 {
                     penBlocked=true;SuppressSyntheticMouse();return;
                 }

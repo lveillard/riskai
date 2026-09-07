@@ -11,7 +11,11 @@ ARM ni una nueva ejecución completa posterior a cada corrección.
 | TestResults/v19-playmode-first.xml | 124/127 aprobadas | Primera pasada completa de PlayMode |
 | TestResults/v19-regressions-third.xml | 22/22 aprobadas | Regresiones dirigidas posteriores |
 | TestResults/v19-ui-release.xml | 13/13 aprobadas | Oro al pausar entre ticks, frontend y encuadre de cámara |
+| TestResults/v19-web-pen-third.xml | 21/23 aprobadas | Siete casos nuevos del lápiz y regresiones de cámara/frontend; dos fallos de fixture nativo sustituidos abajo |
+| TestResults/v19-web-pen-native.xml | 4/4 aprobadas | Regresiones del router nativo, incluidos los dos casos anteriores |
 | Pruebas Python | 8/8 aprobadas | Observación runtime y servidor Web local |
+| scripts/test_browser_pen.cjs | 12/12 aprobadas | Contrato DOM y ciclo de vida del lápiz |
+| scripts/check_browser_pen.py | 7/7 comprobaciones aprobadas | Canvas en Edge 152.0.4191.66 con eventos CDP, sin Unity |
 
 La primera pasada completa de PlayMode tuvo estas tres sustituciones exactas,
 todas aprobadas en la pasada dirigida posterior:
@@ -38,12 +42,34 @@ La unión final es de **206 casos Unity únicos, 206 aprobados**, tomando el
 resultado más reciente por nombre completo. Las ocho pruebas Python también
 se repitieron y aprobaron.
 
+El parche posterior de lápiz añade siete casos Unity: coordenadas, flancos
+entre fotogramas, cancelación de selección, punta y botón mantenidos al
+cerrar ayuda, hover sin desplazamiento de cámara y filas inválidas. Las dos
+primeras pasadas del nuevo fixture fallaron al perder foco el Editor. Se
+configuran y restauran **sólo en los fixtures** las políticas de foco del
+Input System y del Game View. No se cambia el comportamiento de foco del
+juego. Al exigir flancos nuevos en el router, dos pruebas nativas existentes
+necesitaron la misma corrección de fixture; las cuatro pasaron en la última
+pasada. La unión actual por nombre completo es de **213 casos Unity,
+213 aprobados**. No es una nueva pasada completa de todos los casos.
+
+El navegador verifica exclusivamente el adaptador DOM: coordenadas a DPR 2,
+punta, botón, cancelación, ausencia de doble acción por ratón de compatibilidad
+y paso de touch/ratón real. El enlace del plugin con IL2CPP, la UI de Unity en
+WebGL y el lápiz físico siguen sin validar.
+
 La compilación Windows tras las regresiones terminó en
 `RiskAI/Logs/v19-build-release.log` (206.252.497 bytes). La final, con la traza
 opt-in y las colas navales compactadas, terminó en
 `RiskAI/Logs/v19-build-final.log`: **206.256.257 bytes**. Corrige además el estado de salida y
 propietario de las hogueras sin reconstruir su panel, y usa iconos vectoriales
 distintos para fragata y transporte. Esta evidencia no valida Web ni ARM.
+
+El parche de entrada se compiló después de sus regresiones en
+`RiskAI/Logs/v19-build-pen.log`: **206.258.648 bytes**, en el mismo destino
+`Builds/Windows-v0.19`. Esta es la compilación local actual. Las sondas de
+rendimiento de abajo pertenecen a las builds indicadas en cada registro;
+el parche de lápiz no se presenta como una nueva optimización medida.
 
 ## Sonda avanzada nativa
 

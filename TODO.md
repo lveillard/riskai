@@ -5,7 +5,8 @@
 - [x] Menú y HUD interactivos UI Toolkit, con áreas seguras y disposiciones para escritorio/vertical/horizontal.
 - [x] Reconocedor táctil y lápiz con regresiones sintéticas; cámara y órdenes compartidas entre los cuatro mapas.
 - [x] Catálogo común de producción, IDs de edificio y ejecutor local preparado para una futura frontera de autoridad.
-- [x] Tres revisiones adversariales Grok 4.6; 206 casos Unity distintos y ocho Python aprobados.
+- [x] Cuatro revisiones adversariales Grok 4.6; 213 casos Unity distintos y ocho Python aprobados.
+- [x] Adaptador de lápiz DOM → Input System compartido; 12 pruebas Node y siete comprobaciones CDP en Edge. Pendiente de enlazar y probar dentro del player WebGL.
 - [x] Sondas Windows de partida avanzada, 625–660 unidades y reinicios Europe/New World. Mantener en el informe los picos no reproducidos y la variación de memoria.
 - [x] Traza opcional de hitches y contadores de motor; no activarla por defecto.
 - [ ] Completar instalación de Web Build Support, generar build Web y probar Unity dentro del navegador.
@@ -29,7 +30,7 @@ Feedback del 6 de septiembre de 2026. Las reglas verificadas y las adaptaciones 
 - [x] Reutilizar buffers A* navales y acotar suavizado conservando validación de costa y rutas independientes.
 - [x] Tres revisiones Grok 4.6, pruebas de partida avanzada y carga controlada; resultados y límites en [Validación](docs/VALIDATION-v0.18.md).
 - [ ] Reducir y explicar las esperas de navegación hasta el primer movimiento: la sonda avanzada v0.18 tiene 0 órdenes pendientes/rechazadas, pero registra un máximo elegible de 945,55 ms. Medir eventos físicos y esperas de ruta por orden antes de atribuir todo a cantidad de unidades.
-- [ ] Catálogo de producción común para HUD e IA, incluyendo Marines; impedir que un adaptador de puerto permita compras que otro no ofrece.
+- [x] Catálogo de producción común para HUD e IA, incluyendo Marines; impedir que un adaptador de puerto permita compras que otro no ofrece (v0.19).
 
 La fase 2 de navegador, tablet, móvil y lápiz está autorizada después de cerrar
 esta validación. Se trabajará con un objetivo explícito y un solo proyecto de

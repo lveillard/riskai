@@ -15,10 +15,22 @@ namespace RiskAI.Tests
         RtsController controller;
         ScenarioMap previousMap;
         BattleSession.StartLayout previousLayout;
+        InputSettings.BackgroundBehavior previousBackground;
+#if UNITY_EDITOR
+        InputSettings.EditorInputBehaviorInPlayMode previousEditorInput;
+#endif
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            // Batchmode has no focused Game view. Exercise real frame edges rather
+            // than the Editor's independently reset pointer buffers.
+            previousBackground=InputSystem.settings.backgroundBehavior;
+            InputSystem.settings.backgroundBehavior=InputSettings.BackgroundBehavior.IgnoreFocus;
+#if UNITY_EDITOR
+            previousEditorInput=InputSystem.settings.editorInputBehaviorInPlayMode;
+            InputSystem.settings.editorInputBehaviorInPlayMode=InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+#endif
             previous=SceneManager.GetActiveScene();previousMap=BattleSession.MapForNewMatch;previousLayout=BattleSession.LayoutForNewMatch;
             BattleSession.MapForNewMatch=ScenarioMap.Classic;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.Fixed;
             scene=SceneManager.CreateScene("Direct pointer input");SceneManager.SetActiveScene(scene);
@@ -124,6 +136,10 @@ namespace RiskAI.Tests
         {
             Time.timeScale=1;BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
             SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);
+            InputSystem.settings.backgroundBehavior=previousBackground;
+#if UNITY_EDITOR
+            InputSystem.settings.editorInputBehaviorInPlayMode=previousEditorInput;
+#endif
         }
     }
 }
