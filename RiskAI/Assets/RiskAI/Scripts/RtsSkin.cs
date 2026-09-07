@@ -20,7 +20,7 @@ namespace RiskAI
             Text=new GUIStyle(GUI.skin.label){fontSize=14,normal={textColor=new Color(.95f,.94f,.85f)}};
             Small=new GUIStyle(Text){fontSize=13,normal={textColor=Muted}};
             Tiny=new GUIStyle(Small){fontSize=12};
-            Title=new GUIStyle(Text){font=Font.CreateDynamicFontFromOSFont(new[]{"Georgia","Times New Roman"},20),fontSize=20,fontStyle=FontStyle.Bold,normal={textColor=Gold}};
+            Title=new GUIStyle(Text){font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"),fontSize=20,fontStyle=FontStyle.Bold,normal={textColor=Gold}};
             Center=new GUIStyle(Text){alignment=TextAnchor.MiddleCenter,fontStyle=FontStyle.Bold};
             WrappedText=new GUIStyle(Text){wordWrap=true};
             CardLabel=new GUIStyle(Small){alignment=TextAnchor.MiddleCenter,fontSize=12};

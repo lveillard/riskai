@@ -22,6 +22,7 @@ namespace RiskAI
         const float DefenseDispatchRadius = 32f;
         const float OpeningRecruitmentWindow = .15f;
         readonly BattleSession session;
+        readonly PlayerBuildingCommands buildingCommands;
         readonly int team;
         readonly Dictionary<int, int> defenseAssignments = new Dictionary<int, int>(32);
         readonly List<DefenseSite> threats = new List<DefenseSite>(32);
@@ -46,6 +47,7 @@ namespace RiskAI
         public SkirmishCommander(BattleSession battle,int player=1)
         {
             session=battle;
+            buildingCommands=new PlayerBuildingCommands(session);
             team=player;
             // Let every AI spend its opening gold immediately, then distribute its
             // recurring work through a deterministic seed/team phase.
@@ -225,7 +227,7 @@ namespace RiskAI
                 // the next preferred specialist is temporarily unaffordable.
                 if (BattleRules.Cost(kind) > session.Economy.Gold[team]) kind = UnitKind.Archer;
                 if (session.Economy.Gold[team] - BattleRules.Cost(kind) < navalBudget) break;
-                if (town.Recruit(kind, team) != null) break;
+                if (buildingCommands.Execute(team,PlayerBuildingIntent.Recruit(town.BuildingId,kind)) != null) break;
                 recruitsOrdered++;
             }
             if (session.BattleTime < session.AiFirstOffensiveTime) return;

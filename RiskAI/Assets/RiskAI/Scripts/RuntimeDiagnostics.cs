@@ -6,6 +6,11 @@ namespace RiskAI
     /// <summary>Reports coarse runtime health at a deliberately low cadence.</summary>
     public sealed class RuntimeDiagnostics : MonoBehaviour
     {
+        public static float LatestAverageMs { get; private set; }
+        public static float LatestMaximumMs { get; private set; }
+        public static int LatestUnits { get; private set; }
+        public static long LatestUnityAllocatedBytes { get; private set; }
+        public static string LatestReport { get; private set; }
         const float ReportIntervalSeconds = 30f;
         BattleSession session;
         float nextReportAt, frameSeconds, maxFrameSeconds;
@@ -17,6 +22,7 @@ namespace RiskAI
 
         public void Initialize(BattleSession battle)
         {
+            LatestReport=null;LatestAverageMs=LatestMaximumMs=0;LatestUnits=0;LatestUnityAllocatedBytes=0;
             session = battle;
             pauseStateKnown = false;
             if (session.Commands != null) session.Commands.SetTelemetryPauseState(session.Paused);
@@ -125,7 +131,9 @@ namespace RiskAI
             double firstMoveAverage = commandTelemetry.HumanFirstMoveCount > 0 ? commandTelemetry.HumanFirstMoveMilliseconds / commandTelemetry.HumanFirstMoveCount : 0;
             float pendingAgeAverage = pathPending > 0 ? pendingAgeTotal * 1000f / pathPending : 0;
 
-            Debug.Log(
+            LatestAverageMs=averageMilliseconds;LatestMaximumMs=maxFrameSeconds*1000f;
+            LatestUnits=session.Units.Count;LatestUnityAllocatedBytes=UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            LatestReport=(
                 $"RuntimeDiagnostics 30s avgMs={averageMilliseconds:F2} maxMs={maxFrameSeconds * 1000f:F2} " +
                 $"managedHeapDeltaB={heapNow - managedHeapBytes} gcGen0={GC.CollectionCount(0) - generation0Collections} " +
                 $"units={session.Units.Count} simTime={session.BattleTime:F1} simTicks={session.Clock.TickCount} " +
@@ -153,7 +161,8 @@ namespace RiskAI
                 $"submitApplyAiActiveAvgMs={aiApplyAverage:F2} submitApplyAiActiveMaxMs={commandTelemetry.AiSubmitToApplyMaxMilliseconds:F2} commandObservedPauseMs={commandTelemetry.ObservedPauseMilliseconds:F1} " +
                 $"firstMoveHumanEligible={commandTelemetry.HumanFirstMoveEligible} firstMoveHumanCancelled={commandTelemetry.HumanFirstMoveCancelled} " +
                 $"firstMoveHumanCount={commandTelemetry.HumanFirstMoveCount} firstMoveHumanActiveAvgMs={firstMoveAverage:F2} firstMoveHumanActiveMaxMs={commandTelemetry.HumanFirstMoveMaxMilliseconds:F2} " +
-                $"pathPending={pathPending} pathPendingAvgAgeMs={pendingAgeAverage:F1} pathPendingMaxAgeMs={pendingAgeMax * 1000f:F1} navIterationsPerFrame={UnityEngine.AI.NavMesh.pathfindingIterationsPerFrame}");
+                $"pathPending={pathPending} pathPendingAvgAgeMs={pendingAgeAverage:F1} pathPendingMaxAgeMs={pendingAgeMax * 1000f:F1} navIterationsPerFrame={UnityEngine.AI.NavMesh.pathfindingIterationsPerFrame} unityAllocatedB={LatestUnityAllocatedBytes}");
+            Debug.Log(LatestReport);
             managedHeapBytes = heapNow;
             generation0Collections = GC.CollectionCount(0);
             appliedCommands = appliedNow;

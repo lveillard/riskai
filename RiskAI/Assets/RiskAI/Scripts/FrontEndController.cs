@@ -3,21 +3,16 @@ using System.Collections;
 using RiskAI.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 
 namespace RiskAI
 {
-    /// <summary>
-    /// Lightweight match setup scene. It deliberately creates neither a BattleSession
-    /// nor map geometry; the battlefield scene owns those only after StartBattle.
-    /// </summary>
+    /// <summary>Standalone retained setup screen. It does not create a match until StartBattle.</summary>
     public sealed class FrontEndController : MonoBehaviour
     {
         public const string FrontEndSceneName = "FrontEnd";
         public const string BattlefieldSceneName = "LasMarcas";
-        const float DesignWidth = 1120f;
-        const float DesignHeight = 760f;
 
-        static GUIStyle heading, subheading, cardTitle, cardDetail, startButton, choiceButton, errorStyle, versionLabel, loadingLabel;
         ScenarioMap selectedMap;
         BattleSession.StartLayout selectedLayout;
         BattleSession.AiDifficulty selectedDifficulty;
@@ -26,33 +21,50 @@ namespace RiskAI
         bool sourceMountains;
         bool loading;
         string validation;
+        RtsUiRuntime ui;
+        VisualElement content;
+        bool lastCompact;
 
         void Awake()
         {
-            Application.targetFrameRate=60;
+            Application.targetFrameRate = 60;
             selectedMap = BattleSession.MapForNewMatch;
             selectedLayout = BattleSession.LayoutForNewMatch;
             selectedDifficulty = BattleSession.DifficultyForNewMatch;
             selectedPlayers = Mathf.Clamp(BattleSession.PlayerCountForNewMatch, 2, PlayerRules.MaxPlayers);
             seedText = BattleSession.SeedForNewMatch.ToString();
             sourceMountains = ImportedLandscapeAugment.Enabled;
+        }
+
+        void Start()
+        {
+            ui = RtsUiRuntime.Attach(gameObject, "Front end", 40);
+            Rebuild();
             if (AutomatedLaunchRequested()) StartBattle();
         }
 
-        /// <summary>Returns from a battlefield UI to the standalone setup scene.</summary>
-        public static void Open()
+        void Update()
         {
-            if (SceneManager.GetActiveScene().name == FrontEndSceneName) return;
-            SceneManager.LoadScene(FrontEndSceneName, LoadSceneMode.Single);
+            // A mobile keyboard changes available height, but must not recreate the focused seed field.
+            if (lastCompact != UiViewport.IsCompact)
+                Rebuild();
         }
 
-        /// <summary>Applies the selected next-match configuration, then loads the battlefield.</summary>
+        /// <summary>Returns from battlefield help to the standalone configuration scene.</summary>
+        public static void Open()
+        {
+            if (SceneManager.GetActiveScene().name != FrontEndSceneName)
+                SceneManager.LoadScene(FrontEndSceneName, LoadSceneMode.Single);
+        }
+
+        /// <summary>Applies the selected next-match configuration and loads the battlefield scene.</summary>
         public void StartBattle()
         {
             if (loading) return;
             if (!int.TryParse(seedText, out int seed))
             {
                 validation = "Escribe una semilla numérica válida.";
+                Rebuild();
                 return;
             }
             BattleSession.MapForNewMatch = selectedMap;
@@ -67,14 +79,12 @@ namespace RiskAI
 
         IEnumerator LoadBattlefield()
         {
-            loading = true;
-            // Present the loading state for one rendered frame before the terrain build starts.
-            yield return null;
+            loading = true; Rebuild();
+            yield return null; // Render feedback before a map or NavMesh is constructed.
             var operation = SceneManager.LoadSceneAsync(BattlefieldSceneName, LoadSceneMode.Single);
             if (operation == null)
             {
-                loading = false;
-                validation = "No se encontró la escena de batalla.";
+                loading = false; validation = "No se encontró la escena de batalla."; Rebuild();
                 yield break;
             }
             while (!operation.isDone) yield return null;
@@ -83,112 +93,175 @@ namespace RiskAI
         static bool AutomatedLaunchRequested()
         {
             bool automated = false;
-            foreach (var argument in Environment.GetCommandLineArgs())
+            foreach (var argument in LaunchArguments.Get())
             {
                 if (string.Equals(argument, "--riskai-capture-menu", StringComparison.OrdinalIgnoreCase)) return false;
                 if (string.Equals(argument, "--riskai-capture", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(argument, "--riskai-probe", StringComparison.OrdinalIgnoreCase)) automated = true;
+                    string.Equals(argument, "--riskai-probe", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(argument, "--riskai-play", StringComparison.OrdinalIgnoreCase)) automated = true;
             }
             return automated;
         }
 
-        void OnGUI()
+        void Rebuild()
         {
-            EnsureStyles();
-            float scale = Mathf.Min(Screen.width / (DesignWidth+36), Screen.height / (DesignHeight+36));
-            scale = Mathf.Max(.5f, scale);
-            var previousMatrix = GUI.matrix;
-            GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one * scale);
-            Draw(new Rect(0, 0, Screen.width / scale, Screen.height / scale));
-            GUI.matrix = previousMatrix;
+            if (!ui) return;
+            lastCompact = UiViewport.IsCompact;
+            content = new VisualElement { name = "Front end content" };
+            content.style.flexGrow = 1; content.style.backgroundColor = RtsUiStyle.Slate;
+            content.style.paddingLeft = UiViewport.IsCompact ? 14 : 28;
+            content.style.paddingRight = UiViewport.IsCompact ? 14 : 28;
+            content.style.paddingTop = UiViewport.IsCompact ? 12 : 24;
+            content.style.paddingBottom = UiViewport.IsCompact ? 12 : 24;
+            if (loading) BuildLoading(content); else BuildSetup(content);
+            ui.SetContent(content);
         }
 
-        void Draw(Rect screen)
+        void BuildLoading(VisualElement root)
         {
-            RtsSkin.Fill(screen, new Color(.018f, .028f, .042f));
-            if(loading)
+            var panel = RtsUiStyle.Panel("Loading panel");
+            if (UiViewport.IsCompact) panel.style.width = Length.Percent(100); else panel.style.width = 700;
+            panel.style.alignSelf = Align.Center; panel.style.marginTop = Length.Percent(30);
+            panel.Add(RtsUiStyle.Label("PREPARANDO LA CONQUISTA", null, 24));
+            panel.Add(RtsUiStyle.Label(MapLayout.ScenarioDetail(selectedMap) + " · " + selectedPlayers + " jugadores", null, 16));
+            panel.Add(RtsUiStyle.Label("Cargando terreno, ciudades y rutas…", null, 14));
+            root.Add(panel);
+        }
+
+        void BuildSetup(VisualElement root)
+        {
+            var header = RtsUiStyle.Panel("Front end header");
+            header.style.flexDirection = FlexDirection.Column;
+            header.style.flexShrink = 0;
+            header.style.marginBottom = 12;
+            var titleRow = new VisualElement(); RtsUiStyle.Row(titleRow);
+            var title = RtsUiStyle.Label("RISKAI · DOMINIOS", null, UiViewport.IsCompact ? 19 : 26);
+            title.style.unityFontStyleAndWeight = FontStyle.Bold; title.style.flexGrow = 1; titleRow.Add(title);
+            var version = RtsUiStyle.Label("v0.19 · CONQUISTA", null, UiViewport.IsCompact ? 11 : 13); version.style.marginLeft = 8; titleRow.Add(version); header.Add(titleRow);
+            var description = RtsUiStyle.Label("Elige el mapa, prepara a tus rivales y comienza una conquista independiente.", null, 14); description.style.whiteSpace = WhiteSpace.Normal; header.Add(description);
+            root.Add(header);
+
+            var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "Front end scroll" };
+            scroll.horizontalScrollerVisibility=ScrollerVisibility.Hidden;
+            scroll.contentContainer.style.minWidth=0;
+            scroll.contentContainer.style.width=Length.Percent(100);
+            scroll.style.flexGrow = 1; scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+            BuildScenarioSection(scroll);
+            BuildConfigurationSection(scroll);
+            root.Add(scroll);
+
+            var footer = RtsUiStyle.Panel("Front end footer");
+            footer.style.flexDirection = UiViewport.IsCompact ? FlexDirection.Column : FlexDirection.Row;
+            footer.style.flexShrink = 0;
+            footer.style.marginTop = 12;
+            var rules = RtsUiStyle.Label("4 de oro y un defensor por puesto. Conquista el 60 % de las ciudades.", null, 13);
+            rules.style.flexGrow = 1; rules.style.whiteSpace = WhiteSpace.Normal; footer.Add(rules);
+            if (!string.IsNullOrEmpty(validation))
             {
-                var box=new Rect(screen.center.x-350,screen.center.y-95,700,190);
-                RtsSkin.Frame(box,RtsSkin.Gold);
-                GUI.Label(new Rect(box.x+30,box.y+31,640,38),"PREPARANDO LA CONQUISTA",heading);
-                GUI.Label(new Rect(box.x+30,box.y+90,640,28),MapLayout.ScenarioDetail(selectedMap)+"   ·   "+selectedPlayers+" jugadores",subheading);
-                GUI.Label(new Rect(box.x+30,box.y+132,640,28),"Cargando terreno, ciudades y rutas…",subheading);
-                return;
+                var error = RtsUiStyle.Label(validation, null, 13); error.style.color = new Color(1f, .48f, .36f); footer.Add(error);
             }
-            var panel = new Rect(screen.x + (screen.width - DesignWidth) * .5f, screen.y + Mathf.Max(18, (screen.height - DesignHeight) * .5f), DesignWidth, DesignHeight);
-            RtsSkin.Frame(panel, new Color(.67f, .52f, .25f));
-            RtsSkin.Fill(new Rect(panel.x + 2, panel.y + 2, panel.width - 4, 86), new Color(.075f, .105f, .15f));
-            GUI.Label(new Rect(panel.x + 34, panel.y + 18, 700, 32), "RISKAI · DOMINIOS", heading);
-            GUI.Label(new Rect(panel.x + 34, panel.y + 53, 860, 24), "Elige el mapa, prepara a tus rivales y comienza una conquista independiente.", subheading);
-            GUI.Label(new Rect(panel.xMax - 220, panel.y + 28, 180, 24), "v0.18 · CONQUISTA", versionLabel);
-
-            DrawMaps(new Rect(panel.x + 28, panel.y + 120, panel.width - 56, 228));
-            DrawConfiguration(new Rect(panel.x + 28, panel.y + 356, panel.width - 56, 270));
-            GUI.Label(new Rect(panel.x + 34, panel.yMax - 94, 690, 18), "4 de oro y un defensor por puesto. Completa países para ganar sus refuerzos.", RtsSkin.Small);
-            GUI.Label(new Rect(panel.x + 34, panel.yMax - 69, 700, 18), "Conquista: controla el 60 % de las ciudades. Todas las configuraciones usan las mismas reglas.", RtsSkin.Tiny);
-            if (!string.IsNullOrEmpty(validation)) GUI.Label(new Rect(panel.x + 34, panel.yMax - 42, 500, 24), validation, errorStyle);
-            if (GUI.Button(new Rect(panel.xMax - 292, panel.yMax - 78, 252, 50), loading ? "CARGANDO…" : "INICIAR PARTIDA", startButton) && !loading) StartBattle();
-            if (loading) GUI.Label(new Rect(panel.xMax - 292, panel.yMax - 25, 252, 18), "Preparando el campo de batalla…", loadingLabel);
+            var start = RtsUiStyle.Button("INICIAR PARTIDA", StartBattle, "Start battle");
+            if (UiViewport.IsCompact) { start.style.width = Length.Percent(100); start.style.marginRight = 0; start.style.marginBottom = 0; } else start.style.minWidth = 250;
+            footer.Add(start); root.Add(footer);
         }
 
-        void DrawMaps(Rect area)
+        void BuildScenarioSection(VisualElement root)
         {
-            GUI.Label(new Rect(area.x, area.y - 30, 540, 30), "ESCENARIO", heading);
-            DrawMapCard(new Rect(area.x, area.y, area.width * .5f - 8, 104), ScenarioMap.Classic, "LAS MARCAS", MapLayout.ScenarioDetail(ScenarioMap.Classic), "Costa, mesetas y un sur seco para campañas rápidas.");
-            DrawMapCard(new Rect(area.x + area.width * .5f + 8, area.y, area.width * .5f - 8, 104), ScenarioMap.Riverlands, "CUATRO RIBERAS", MapLayout.ScenarioDetail(ScenarioMap.Riverlands), "Río central, puente y un archipiélago al norte.");
-            DrawMapCard(new Rect(area.x, area.y + 116, area.width * .5f - 8, 104), ScenarioMap.Europe, "EUROPE · REFORGED", MapLayout.ScenarioDetail(ScenarioMap.Europe), "Territorio importado a escala con puertos y fronteras reales.");
-            DrawMapCard(new Rect(area.x + area.width * .5f + 8, area.y + 116, area.width * .5f - 8, 104), ScenarioMap.NewWorld, "NEW WORLD · EUROPA Y AMÉRICA", MapLayout.ScenarioDetail(ScenarioMap.NewWorld), "Europa y América para una conquista de gran escala.");
+            root.Add(SectionTitle("ESCENARIO"));
+            var grid = new VisualElement { name = "Scenario cards" };
+            RtsUiStyle.Row(grid, true); grid.style.marginBottom = 16;
+            ScenarioCard(grid, ScenarioMap.Classic, "LAS MARCAS", "Costa, mesetas y un sur seco para campañas rápidas.");
+            ScenarioCard(grid, ScenarioMap.Riverlands, "CUATRO RIBERAS", "Río central, puente y un archipiélago al norte.");
+            ScenarioCard(grid, ScenarioMap.Europe, "EUROPE · REFORGED", "Territorio importado a escala con puertos y fronteras reales.");
+            ScenarioCard(grid, ScenarioMap.NewWorld, "NEW WORLD · EUROPA Y AMÉRICA", "Europa y América para una conquista de gran escala.");
+            root.Add(grid);
         }
 
-        void DrawMapCard(Rect rect, ScenarioMap map, string title, string detail, string description)
+        void ScenarioCard(VisualElement parent, ScenarioMap map, string title, string description)
         {
-            bool selected = selectedMap == map;
-            RtsSkin.Frame(rect, selected ? RtsSkin.Gold : new Color(.24f, .31f, .33f));
-            if (GUI.Button(rect, GUIContent.none, GUIStyle.none)) selectedMap = map;
-            RtsSkin.Fill(new Rect(rect.x + 13, rect.y + 15, 7, rect.height - 30), selected ? RtsSkin.Gold : new Color(.24f, .35f, .40f));
-            GUI.Label(new Rect(rect.x + 34, rect.y + 13, rect.width - 48, 25), (selected ? "●  " : "") + title, cardTitle);
-            GUI.Label(new Rect(rect.x + 34, rect.y + 42, rect.width - 48, 19), detail, cardDetail);
-            GUI.Label(new Rect(rect.x + 34, rect.y + 66, rect.width - 48, 30), description, RtsSkin.Tiny);
+            bool chosen = selectedMap == map;
+            var button = RtsUiStyle.Button("", () => { selectedMap = map; Rebuild(); }, "Map " + map);
+            button.style.flexGrow = 1;
+            if (UiViewport.IsCompact) { button.style.width = Length.Percent(100); button.style.marginRight = 0; }
+            else button.style.minWidth = Length.Percent(47);
+            button.style.minHeight = UiViewport.IsCompact ? 88 : 106;
+            button.style.backgroundColor = chosen ? new Color(.20f, .18f, .10f, 1) : RtsUiStyle.Card;
+            var titleLabel = RtsUiStyle.Label((chosen ? "●  " : "") + title, null, 16); titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold; titleLabel.style.whiteSpace = WhiteSpace.Normal;
+            var detail = RtsUiStyle.Label(MapLayout.ScenarioDetail(map), null, 13); detail.style.color = RtsUiStyle.Bronze; detail.style.whiteSpace = WhiteSpace.Normal;
+            var body = RtsUiStyle.Label(description, null, 12); body.style.color = RtsUiStyle.Muted; body.style.whiteSpace = WhiteSpace.Normal;
+            button.Add(titleLabel); button.Add(detail); button.Add(body); parent.Add(button);
         }
 
-        void DrawConfiguration(Rect area)
+        void BuildConfigurationSection(VisualElement root)
         {
-            GUI.Label(new Rect(area.x, area.y, 420, 25), "CONFIGURACIÓN", heading);
-            GUI.Label(new Rect(area.x, area.y + 39, 152, 22), "JUGADORES", subheading);
-            if (GUI.Button(new Rect(area.x + 156, area.y + 33, 46, 38), "−", choiceButton)) selectedPlayers = Mathf.Max(2, selectedPlayers - 1);
-            GUI.Label(new Rect(area.x + 210, area.y + 40, 210, 22), selectedPlayers + " · tú y " + (selectedPlayers - 1) + " IA", RtsSkin.Small);
-            if (GUI.Button(new Rect(area.x + 426, area.y + 33, 46, 38), "+", choiceButton)) selectedPlayers = Mathf.Min(PlayerRules.MaxPlayers, selectedPlayers + 1);
+            root.Add(SectionTitle("CONFIGURACIÓN"));
+            var panel = RtsUiStyle.Panel("Match configuration"); panel.style.marginBottom = 16;
+            AddPlayers(panel); AddSeed(panel); AddLayout(panel); AddDifficulty(panel); AddMountains(panel);
+            root.Add(panel);
+        }
 
-            GUI.Label(new Rect(area.x + 570, area.y + 39, 90, 22), "SEMILLA", subheading);
-            seedText = GUI.TextField(new Rect(area.x + 657, area.y + 33, 176, 38), seedText, 11, choiceButton);
-            if (GUI.Button(new Rect(area.x + 842, area.y + 33, 202, 38), "NUEVA SEMILLA", choiceButton)) { BattleSession.NewSeed(); seedText = BattleSession.SeedForNewMatch.ToString(); }
+        void AddPlayers(VisualElement parent)
+        {
+            var row = NewFieldRow(parent, "JUGADORES");
+            row.Add(RtsUiStyle.Button("−", () => { selectedPlayers = Mathf.Max(2, selectedPlayers - 1); Rebuild(); }));
+            var count = RtsUiStyle.Label(selectedPlayers + " · tú y " + (selectedPlayers - 1) + " IA", null, 15); count.style.minWidth = 154; row.Add(count);
+            row.Add(RtsUiStyle.Button("+", () => { selectedPlayers = Mathf.Min(PlayerRules.MaxPlayers, selectedPlayers + 1); Rebuild(); }));
+        }
 
-            GUI.Label(new Rect(area.x, area.y + 94, 240, 22), "REPARTO INICIAL", subheading);
-            selectedLayout = (BattleSession.StartLayout)GUI.SelectionGrid(new Rect(area.x, area.y + 122, 500, 42), (int)selectedLayout, new[] { "Ciudades al azar", "Grupos iniciales", "Posiciones fijas" }, 3, choiceButton);
-            GUI.Label(new Rect(area.x + 540, area.y + 94, 280, 22), "DIFICULTAD DE IA", subheading);
-            selectedDifficulty = (BattleSession.AiDifficulty)GUI.SelectionGrid(new Rect(area.x + 540, area.y + 122, 504, 42), (int)selectedDifficulty, new[] { "Relajada · ataque más tarde", "Estándar · presión temprana" }, 2, choiceButton);
+        void AddSeed(VisualElement parent)
+        {
+            var row = NewFieldRow(parent, "SEMILLA");
+            var field = new TextField { value = seedText, maxLength = 11, name = "Match seed" }; field.style.minHeight = 44; field.style.minWidth = 150;
+            field.RegisterValueChangedCallback(change => seedText = change.newValue); row.Add(field);
+            row.Add(RtsUiStyle.Button("NUEVA SEMILLA", () => { BattleSession.NewSeed(); seedText = BattleSession.SeedForNewMatch.ToString(); Rebuild(); }));
+        }
 
+        void AddLayout(VisualElement parent)
+        {
+            var row = NewFieldRow(parent, "REPARTO INICIAL");
+            Choice(row, "Ciudades al azar", selectedLayout == BattleSession.StartLayout.RandomCities, () => selectedLayout = BattleSession.StartLayout.RandomCities);
+            Choice(row, "Países iniciales", selectedLayout == BattleSession.StartLayout.RandomCountries, () => selectedLayout = BattleSession.StartLayout.RandomCountries);
+            Choice(row, "Posiciones fijas", selectedLayout == BattleSession.StartLayout.Fixed, () => selectedLayout = BattleSession.StartLayout.Fixed);
+        }
+
+        void AddDifficulty(VisualElement parent)
+        {
+            var row = NewFieldRow(parent, "DIFICULTAD DE IA");
+            Choice(row, "Relajada · ataque más tarde", selectedDifficulty == BattleSession.AiDifficulty.Relaxed, () => selectedDifficulty = BattleSession.AiDifficulty.Relaxed);
+            Choice(row, "Estándar · presión temprana", selectedDifficulty == BattleSession.AiDifficulty.Standard, () => selectedDifficulty = BattleSession.AiDifficulty.Standard);
+        }
+
+        void AddMountains(VisualElement parent)
+        {
             bool imported = selectedMap == ScenarioMap.Europe || selectedMap == ScenarioMap.NewWorld;
-            GUI.Label(new Rect(area.x, area.y + 191, 330, 20), "RELIEVE IMPORTADO", subheading);
-            GUI.enabled = imported;
-            sourceMountains = GUI.Toggle(new Rect(area.x, area.y + 218, 650, 34), sourceMountains, "Añadir cordilleras suaves a las fuentes Europe y New World", RtsSkin.Button);
-            GUI.enabled = true;
-            GUI.Label(new Rect(area.x + 680, area.y + 222, 360, 22), imported ? "Respeta coordenadas y despeja anclajes." : "Disponible en escenarios importados.", RtsSkin.Tiny);
+            var row = NewFieldRow(parent, "RELIEVE IMPORTADO");
+            var toggle = new Toggle("Añadir cordilleras suaves a Europe y New World") { value = sourceMountains, name = "Source mountains" };
+            toggle.SetEnabled(imported); toggle.style.minHeight = 44;
+            toggle.style.flexShrink=1;toggle.style.whiteSpace=WhiteSpace.Normal;toggle.style.maxWidth=Length.Percent(100);
+            toggle.RegisterValueChangedCallback(change => sourceMountains = change.newValue); row.Add(toggle);
+            var note = RtsUiStyle.Label(imported ? "Respeta coordenadas y despeja anclajes." : "Disponible en escenarios importados.", null, 12);
+            note.style.color = RtsUiStyle.Muted;note.style.whiteSpace=WhiteSpace.Normal;note.style.maxWidth=Length.Percent(100);row.Add(note);
         }
 
-        static void EnsureStyles()
+        VisualElement NewFieldRow(VisualElement parent, string heading)
         {
-            RtsSkin.Initialize();
-            if (heading != null) return;
-            heading = new GUIStyle(RtsSkin.Title) { fontSize = 22 };
-            subheading = new GUIStyle(RtsSkin.Small) { fontSize = 13 };
-            cardTitle = new GUIStyle(RtsSkin.Text) { fontSize = 16, fontStyle = FontStyle.Bold };
-            cardDetail = new GUIStyle(RtsSkin.Small) { fontSize = 12 };
-            startButton = new GUIStyle(RtsSkin.Button) { fontSize = 16, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-            choiceButton = new GUIStyle(RtsSkin.Button) { fontSize = 13, alignment = TextAnchor.MiddleCenter };
-            errorStyle = new GUIStyle(RtsSkin.Small) { normal = { textColor = new Color(1f, .47f, .35f) } };
-            versionLabel = new GUIStyle(subheading) { alignment = TextAnchor.MiddleRight };
-            loadingLabel = new GUIStyle(RtsSkin.Tiny) { alignment = TextAnchor.MiddleCenter };
+            var row = new VisualElement(); RtsUiStyle.Row(row, true); row.style.marginBottom = 10;
+            var label = RtsUiStyle.Label(heading, null, 13); label.style.color = RtsUiStyle.Bronze;
+            if (UiViewport.IsCompact) label.style.minWidth = Length.Percent(100); else label.style.minWidth = 180;
+            row.Add(label); parent.Add(row); return row;
+        }
+
+        void Choice(VisualElement parent, string text, bool selected, Action select)
+        {
+            var choice = RtsUiStyle.Button((selected ? "●  " : "") + text, () => { select(); Rebuild(); });
+            choice.style.backgroundColor = selected ? new Color(.20f, .18f, .10f, 1) : RtsUiStyle.Card; choice.style.whiteSpace = WhiteSpace.Normal;
+            if (UiViewport.IsCompact) { choice.style.width = Length.Percent(100); choice.style.marginRight = 0; }
+            parent.Add(choice);
+        }
+
+        static Label SectionTitle(string text)
+        {
+            var title = RtsUiStyle.Label(text, null, 17); title.style.unityFontStyleAndWeight = FontStyle.Bold; title.style.marginBottom = 8; return title;
         }
     }
 }

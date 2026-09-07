@@ -10,6 +10,7 @@ namespace RiskAI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void EnableCapture()
         {
+            foreach(var argument in LaunchArguments.Get())if(string.Equals(argument,"--riskai-restart-probe",System.StringComparison.OrdinalIgnoreCase))return;
             var args=System.Environment.GetCommandLineArgs();
             for(int i=0;i<args.Length-1;i++)if(args[i]=="--riskai-capture")
             {

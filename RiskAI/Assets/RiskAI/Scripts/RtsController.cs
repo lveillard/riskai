@@ -29,19 +29,21 @@ namespace RiskAI
         public bool CursorCaptured { get; private set; }
         public Vector2 DragStart { get; private set; }
         public Vector2 Pointer => Mouse.current == null ? Vector2.zero : Mouse.current.position.ReadValue();
-        public Rect SelectionRect => Rect.MinMaxRect(Mathf.Min(DragStart.x,Pointer.x),Screen.height-Mathf.Max(DragStart.y,Pointer.y),Mathf.Max(DragStart.x,Pointer.x),Screen.height-Mathf.Min(DragStart.y,Pointer.y));
+        Vector2 AreaEndPoint => areaPointerActive?areaPointer:Pointer;
+        public Rect SelectionRect => Rect.MinMaxRect(Mathf.Min(DragStart.x,AreaEndPoint.x),Screen.height-Mathf.Max(DragStart.y,AreaEndPoint.y),Mathf.Max(DragStart.x,AreaEndPoint.x),Screen.height-Mathf.Min(DragStart.y,AreaEndPoint.y));
         readonly Dictionary<int,List<Soldier>> groups=new Dictionary<int,List<Soldier>>();
         readonly Dictionary<int,List<Ship>> shipGroups=new Dictionary<int,List<Ship>>();
         BattleSession session;Camera cam;Vector2 previousMouse;
         public RtsCameraRig CameraRig { get; private set; }
         bool pressedWorld;
         readonly PointerGesture secondaryGesture = new PointerGesture();
+        RtsInputRouter inputRouter;
         bool cursorCaptureRequested;
         bool gameplayFocus;
         float lastSelectTime,lastGroupTime;int lastGroup=-1;UnitKind lastSelectKind;
         LineRenderer hoverRing;
         readonly List<Soldier> pendingBoarders=new();Ship pendingBoardingTransport;Vector3 pendingBoardingLanding;
-        public void Initialize(BattleSession battle,Camera camera) { session=battle;cam=camera;gameplayFocus=true;CameraRig=gameObject.AddComponent<RtsCameraRig>();CameraRig.Initialize(camera);var home=session.Towns.FirstOrDefault(t=>t.State.Owner==0&&t.IsCapital);if(home)CameraRig.SetHome(home.transform.position);previousMouse=Pointer;RequestCursorCapture(); }
+        public void Initialize(BattleSession battle,Camera camera) { session=battle;cam=camera;gameplayFocus=true;CameraRig=gameObject.AddComponent<RtsCameraRig>();CameraRig.Initialize(camera);inputRouter=new RtsInputRouter(this);var home=session.Towns.FirstOrDefault(t=>t.State.Owner==0&&t.IsCapital);if(home)CameraRig.SetHome(home.transform.position);previousMouse=Pointer;RequestCursorCapture(); }
         bool EffectiveFocus => gameplayFocus&&(Application.isEditor||Application.isFocused);
         bool ConfinedCursorSupported => RtsCameraPolicy.SupportsConfinedCursor(Application.isEditor,Application.platform);
         void ApplyCursorCapture()
@@ -61,9 +63,9 @@ namespace RiskAI
         }
         void ReleaseCursor()
         {
-            secondaryGesture.Cancel();cursorCaptureRequested=false;CursorCaptured=false;Cursor.lockState=CursorLockMode.None;Cursor.visible=true;
+            secondaryGesture.Cancel();inputRouter?.Cancel();cursorCaptureRequested=false;CursorCaptured=false;Cursor.lockState=CursorLockMode.None;Cursor.visible=true;
         }
-        public bool OverHud(Vector2 screen) => screen.y<BattleHud.BottomPixels || screen.y>Screen.height-BattleHud.TopPixels || HelpVisible || ScoreboardVisible || session.Winner>=0;
+        public bool OverHud(Vector2 screen) => RtsUiInput.BlocksWorld(screen) || HelpVisible || ScoreboardVisible || session.Winner>=0;
         bool Shift => Keyboard.current!=null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
         public void Clear()
         {
@@ -142,7 +144,7 @@ namespace RiskAI
             if(error!=null)session.Message(error);
             else session.Message(BattleRules.Name(kind)+" en la cola de reclutamiento.");
         }
-        public void BuildTower() { if(SelectedHarbor)Feedback(SelectedHarbor.BuildTower());else if(SelectedTown)Feedback(SelectedTown.BuildTower());else session.Message("Selecciona una ciudad o un puerto tuyo para reconstruir su torre."); }
+        public void BuildTower() { if(SelectedHarbor)Feedback(ExecuteBuilding(PlayerBuildingIntent.BuildTower(SelectedHarbor.BuildingId)));else if(SelectedTown)Feedback(ExecuteBuilding(PlayerBuildingIntent.BuildTower(SelectedTown.BuildingId)));else session.Message("Selecciona una ciudad o un puerto tuyo para reconstruir su torre."); }
         public void UpgradeTown() { if(SelectedTown)Feedback(SelectedTown.Upgrade());else session.Message("Selecciona una ciudad tuya para mejorarla."); }
         public void Feedback(string error) { if(error!=null)session.Message(error); }
         void OnApplicationFocus(bool hasFocus)
@@ -246,7 +248,7 @@ namespace RiskAI
             if(!issued&&SelectedCamp)
             {
                 if(session.Economy.CountryOwner(SelectedCamp.Country)!=0)session.Message("Controla todo el país para fijar la salida de sus refuerzos.");
-                else if(SelectedCamp.SetRally(point)){ShowOrder(point,false);session.Message("Salida de la hoguera actualizada.");}
+                else if(ExecuteBuilding(PlayerBuildingIntent.SetLandRally(SelectedCamp.BuildingId,point.x,point.y,point.z))==null){ShowOrder(point,false);session.Message("Salida de la hoguera actualizada.");}
                 else session.Message("Elige un punto de salida transitable.");
             }
             else if(!issued&&SetSelectedBuildingRallies(point)) { ShowOrder(point,false);session.Message("Punto de reunión actualizado."); }
@@ -349,9 +351,11 @@ namespace RiskAI
             }
             if(session.Paused||session.Winner>=0)ReleaseCursor();
             else ApplyCursorCapture();
-            var mouse=Mouse.current;var key=Keyboard.current;if(mouse==null||key==null)return;
+            var mouse=Mouse.current;var key=Keyboard.current;
             Selection.RemoveAll(u=>!IsSelectableSoldier(u));
             Fleet.RemoveAll(s=>!IsSelectableShip(s));
+            if(key!=null)
+            {
             if(key.f1Key.wasPressedThisFrame)HelpVisible=!HelpVisible;
             if(key.f1Key.wasPressedThisFrame&&HelpVisible)ReleaseCursor();
             if(key.f10Key.wasPressedThisFrame)
@@ -404,6 +408,15 @@ namespace RiskAI
                     lastGroup=i;lastGroupTime=Time.unscaledTime;
                 }
             }
+            }
+            inputRouter?.Tick();
+            if(inputRouter!=null&&inputRouter.OwnsDirectPointer)
+            {
+                Hovered=null;RtsCursor.SetAttack(false);
+                if(hoverRing)hoverRing.enabled=false;
+                return;
+            }
+            if(mouse==null)return;
             var point=Pointer;
             bool insideScreen=InsideScreen(point);
             if(insideScreen&&(mouse.leftButton.wasPressedThisFrame||mouse.rightButton.wasPressedThisFrame||mouse.middleButton.wasPressedThisFrame))RequestCursorCapture();
@@ -417,7 +430,7 @@ namespace RiskAI
                 hoverRing.transform.localScale=Vector3.one*(Hovered is DefenseTower?1.15f:Hovered is Ship?1.6f:.47f);
                 hoverRing.startColor=hoverRing.endColor=Hovered.Team==0?new Color(.65f,1,.65f):new Color(1,.3f,.2f);
             }
-            Vector3 pan=new Vector3((key.rightArrowKey.isPressed?1:0)-(key.leftArrowKey.isPressed?1:0),0,(key.upArrowKey.isPressed?1:0)-(key.downArrowKey.isPressed?1:0));
+            Vector3 pan=key==null?Vector3.zero:new Vector3((key.rightArrowKey.isPressed?1:0)-(key.leftArrowKey.isPressed?1:0),0,(key.upArrowKey.isPressed?1:0)-(key.downArrowKey.isPressed?1:0));
             float panMultiplier=1;
             if(pan.sqrMagnitude>.001f)
             {
@@ -459,103 +472,22 @@ namespace RiskAI
             }
             if(mouse.leftButton.wasPressedThisFrame&&!OverHud(point))
             {
-                if(OrderCursor)
-                {
-                    if(session.Paused||session.Winner>=0){CancelCursor();return;}
-                    if(UnloadCursor)
-                    {
-                        var shore=Ground(point);foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Kind==ShipKind.Transport)Feedback(ship.SailToShore(shore));
-                        ShowOrder(shore,false);CancelCursor();pressedWorld=false;return;
-                    }
-                    var victim=AttackCursor?AttackRecipient(RtsPicking.Target(session,cam,point,-1)):null;
-                    if(victim&&victim.Team!=0) { foreach(var u in Selection)session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Attack,targetId:victim.EntityId));foreach(var ship in Fleet)ship.Attack(victim);CancelCursor(); }
-                    else OrderAt(Ground(point),AttackCursor);
-                    pressedWorld=false;
-                }
-                else { pressedWorld=true;DragStart=point;Dragging=false; }
+                if(OrderCursor)ExecuteArmedPointer(point);
+                else BeginAreaSelection(point);
             }
-            if(pressedWorld&&mouse.leftButton.isPressed&&(point-DragStart).sqrMagnitude>36)Dragging=true;
-            if(mouse.leftButton.wasReleasedThisFrame&&pressedWorld)
+            if(areaPointerActive&&mouse.leftButton.isPressed&&(point-DragStart).sqrMagnitude>36)UpdateAreaSelection(point);
+            if(mouse.leftButton.wasReleasedThisFrame&&areaPointerActive)
             {
-                if(Dragging)
-                {
-                    var rect=SelectionRect;
-                    var units=session.Units.Where(u=>!StrategicMapView.Active&&IsSelectableSoldier(u)&&!u.IsGarrison&&InSelection(u,rect)).ToList();
-                    var ships=NavalWorld.Current?NavalWorld.Current.Ships.Where(s=>!StrategicMapView.Active&&IsSelectableShip(s)&&InSelection(s,rect)).ToList():new List<Ship>();
-                    if(units.Count+ships.Count>0)
-                    {
-                        SelectUnits(units,Shift);
-                        SelectShips(ships,true);
-                    }
-                    else SelectBuildingsIn(rect,Shift);
-                }
-                else
-                {
-                    var camp=PickCamp(point);var picked=RtsPicking.Target(session,cam,point);var unit=picked as Soldier;var ship=picked as Ship;var town=RtsPicking.Town(session,cam,point);var harbor=RtsPicking.Harbor(session,cam,point);
-                    // Camps are a strategic control. In the tactical view an actor
-                    // directly under the cursor must remain selectable.
-                    bool tacticalActor=!StrategicMapView.Active&&(unit||ship);
-                    if(tacticalActor&&unit&&unit.Team==0)
-                    {
-                        bool sameType=(Time.unscaledTime-lastSelectTime<.3f&&lastSelectKind==unit.Kind)||key.leftCtrlKey.isPressed||key.rightCtrlKey.isPressed;
-                        if(sameType)SelectUnits(session.Units.Where(u=>u.Team==0&&u.Kind==unit.Kind&&!u.IsGarrison&&OnScreen(u)),Shift);
-                        else if(Shift&&Selection.Contains(unit)){Selection.Remove(unit);unit.Select(false);}else SelectUnits(new[]{unit},Shift);
-                        if(unit.IsGarrison && !sameType)session.Message("El defensor puede salir si un aliado ocupa su círculo como relevo.");
-                        lastSelectTime=Time.unscaledTime;lastSelectKind=unit.Kind;
-                    }
-                    else if(tacticalActor&&ship&&ship.Team==0)SelectShip(ship,Shift);
-                    else if(tacticalActor&&ship){Clear();InspectedTarget=ship;}
-                    else if(tacticalActor&&unit) { Clear();InspectedTarget=unit; }
-                    else if(camp)SelectCamp(camp);
-                    else if(unit&&unit.Team==0)
-                    {
-                        bool sameType=(Time.unscaledTime-lastSelectTime<.3f&&lastSelectKind==unit.Kind)||key.leftCtrlKey.isPressed||key.rightCtrlKey.isPressed;
-                        if(sameType)SelectUnits(session.Units.Where(u=>u.Team==0&&u.Kind==unit.Kind&&!u.IsGarrison&&OnScreen(u)),Shift);
-                        else if(Shift&&Selection.Contains(unit)){Selection.Remove(unit);unit.Select(false);}else SelectUnits(new[]{unit},Shift);
-                        if(unit.IsGarrison && !sameType)session.Message("El defensor puede salir si un aliado ocupa su círculo como relevo.");
-                        lastSelectTime=Time.unscaledTime;lastSelectKind=unit.Kind;
-                    }
-                    else if(ship&&ship.Team==0)SelectShip(ship,Shift);
-                    else if(ship){Clear();InspectedTarget=ship;}
-                    else if(picked is DefenseTower tower)
-                    {
-                        if(tower.Harbor)HandleHarborClick(tower.Harbor,Shift);
-                        else HandleTownClick(tower.Town,Shift);
-                    }
-                    else if(unit) { Clear();InspectedTarget=unit; }
-                    else if(town)HandleTownClick(town,Shift);
-                    else if(harbor)HandleHarborClick(harbor,Shift);
-                    else if(!Shift)Clear();
-                }
-                Dragging=false;pressedWorld=false;
+                if(Dragging)EndAreaSelection(point,Shift);
+                else { areaPointerActive=false;Dragging=false;pressedWorld=false;PrimaryTap(point,Shift,true); }
             }
-            if(secondaryClick&&insideScreen&&!OverHud(point))
-            {
-                if(OrderCursor){CancelCursor();return;}
-                if(session.Paused||session.Winner>=0)return;
-                var clickedEnemy=RtsPicking.Target(session,cam,point,-1);var enemy=AttackRecipient(clickedEnemy);var ally=RtsPicking.Target(session,cam,point,1) as Soldier;var town=RtsPicking.Town(session,cam,point);var harbor=RtsPicking.Harbor(session,cam,point);
-                var ownShip=RtsPicking.Target(session,cam,point,1) as Ship;
-                if(harbor && Fleet.Count>0)MoveFleetToHarbor(harbor);
-                else if(town && town.Port && Fleet.Count>0)MoveFleetToHarbor(town.Port);
-                else if(enemy&&enemy.Team!=0&&HasSelection)
-                {
-                    CancelBoardingForSelection();
-                    foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Attack,targetId:enemy.EntityId));
-                    foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Kind==ShipKind.Galley)ship.Attack(enemy);
-                    ShowOrder(enemy.transform.position,true);
-                }
-                else if(ownShip&&ownShip.Kind==ShipKind.Transport&&Selection.Count>0)BeginBoarding(ownShip);
-                else if(harbor&&Fleet.Count>0)MoveFleetToHarbor(harbor);
-                else if(ally&&!Selection.Contains(ally)&&Selection.Count>0){CancelBoardingForSelection();foreach(var u in Selection)session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Follow,targetId:ally.EntityId));ShowOrder(ally.transform.position,false);}
-                else if(clickedEnemy is DefenseTower fort)OrderAt(fort.Town?fort.Town.ClaimPoint:fort.Harbor.Landing,true);
-                else OrderAt(harbor?harbor.Landing:town?town.ClaimPoint:Ground(point),harbor?harbor.Owner!=0:town&&town.State.Owner!=0);
-            }
+            if(secondaryClick&&insideScreen&&!OverHud(point))ContextAction(point);
         }
         bool InSelection(Soldier unit,Rect rect) { var p=cam.WorldToScreenPoint(unit.transform.position+Vector3.up);return p.z>0&&rect.Contains(new Vector2(p.x,Screen.height-p.y)); }
         bool InSelection(Ship ship,Rect rect) { var p=cam.WorldToScreenPoint(ship.transform.position+Vector3.up*2.4f);return p.z>0&&rect.Contains(new Vector2(p.x,Screen.height-p.y)); }
         void OnEnable() { gameplayFocus=true; }
         void OnDisable() { ReleaseCursor(); }
-        void OnDestroy() { ReleaseCursor();RtsCursor.SetAttack(false); }
+        void OnDestroy() { ReleaseCursor();inputRouter?.Dispose();RtsCursor.SetAttack(false); }
         bool OnScreen(Soldier unit) { var p=cam.WorldToViewportPoint(unit.transform.position);return p.z>0&&p.x>=0&&p.x<=1&&p.y>=.2f&&p.y<=.92f; }
     }
 }

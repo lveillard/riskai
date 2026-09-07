@@ -19,7 +19,7 @@ namespace RiskAI
                 float dx = Mathf.Max(0f, Mathf.Max(bounds.xMin - pointer.x, pointer.x - bounds.xMax));
                 float dy = Mathf.Max(0f, Mathf.Max(bounds.yMin - pointer.y, pointer.y - bounds.yMax));
                 float outside = Mathf.Sqrt(dx * dx + dy * dy);
-                if (outside > 9) continue;
+                if (outside > 9 * UiViewport.Scale) continue;
                 float score = outside * 8 + Vector2.Distance(pointer, bounds.center) * .2f;
                 if (score < bestScore) { best = candidate; bestScore = score; }
             }
@@ -32,14 +32,14 @@ namespace RiskAI
             Vector3 foot = camera.WorldToScreenPoint(target.transform.position);
             Vector3 head = camera.WorldToScreenPoint(target.transform.position + Vector3.up * height);
             if (head.z <= 0) return Rect.zero;
-            float halfWidth = Mathf.Max(8, Mathf.Abs(camera.WorldToScreenPoint(target.transform.position + Vector3.right * radius).x - foot.x));
+            float halfWidth = Mathf.Max(8 * UiViewport.Scale, Mathf.Abs(camera.WorldToScreenPoint(target.transform.position + Vector3.right * radius).x - foot.x));
             return Rect.MinMaxRect(foot.x - halfWidth, Mathf.Min(foot.y, head.y) - 2, foot.x + halfWidth, Mathf.Max(foot.y, head.y) + 3);
         }
         public static Settlement Town(BattleSession battle, Camera camera, Vector2 pointer)
         {
             if(StrategicMapView.Active)
             {
-                Settlement closest=null;float score=144;
+                Settlement closest=null;float score=144*UiViewport.Scale*UiViewport.Scale;
                 foreach(var city in battle.Towns)
                 {var p=camera.WorldToScreenPoint(city.transform.position);float d=((Vector2)p-pointer).sqrMagnitude;if(p.z>0&&d<score){score=d;closest=city;}}
                 return closest;
@@ -64,7 +64,7 @@ namespace RiskAI
             if(battle==null)return null;
             if(StrategicMapView.Active&&battle.Naval)
             {
-                Harbor closest=null;float score=144;
+                Harbor closest=null;float score=144*UiViewport.Scale*UiViewport.Scale;
                 foreach(var port in battle.Naval.Harbors)
                 {var p=camera.WorldToScreenPoint(port.Landing);float d=((Vector2)p-pointer).sqrMagnitude;if(p.z>0&&d<score){score=d;closest=port;}}
                 return closest;

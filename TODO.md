@@ -1,5 +1,18 @@
 # RiskAI — decisiones y siguientes pasos
 
+## v0.19 · adaptación compartida y rendimiento
+
+- [x] Menú y HUD interactivos UI Toolkit, con áreas seguras y disposiciones para escritorio/vertical/horizontal.
+- [x] Reconocedor táctil y lápiz con regresiones sintéticas; cámara y órdenes compartidas entre los cuatro mapas.
+- [x] Catálogo común de producción, IDs de edificio y ejecutor local preparado para una futura frontera de autoridad.
+- [x] Tres revisiones adversariales Grok 4.6; 206 casos Unity distintos y ocho Python aprobados.
+- [x] Sondas Windows de partida avanzada, 625–660 unidades y reinicios Europe/New World. Mantener en el informe los picos no reproducidos y la variación de memoria.
+- [x] Traza opcional de hitches y contadores de motor; no activarla por defecto.
+- [ ] Completar instalación de Web Build Support, generar build Web y probar Unity dentro del navegador.
+- [ ] Validar memoria, respuesta, rotación, trackpad y lápiz en hardware tablet/ARM real.
+
+[Resultados y limitaciones v0.19](docs/VALIDATION-v0.19.md) · [Fase 2 activa](docs/PHASE2.md).
+
 Feedback del 6 de septiembre de 2026. Las reglas verificadas y las adaptaciones se distinguen en [la auditoría de Risk](docs/RISK-RULES-v0.12.md). Esta lista conserva también las propuestas que todavía no están implementadas.
 
 ## Revisión v0.18 — territorios, controles y reglas compartidas
@@ -63,23 +76,26 @@ Unity; el servidor autoritativo sigue siendo una etapa posterior.
 - [x] Inspección del ejecutable: ciudades, puertos, islas, río, hogueras, menú y zoom en ambos escenarios.
 - [ ] Recoger feedback jugado de esta versión.
 
-## Entrada táctil y lápiz — todavía pendiente
+## Entrada táctil y lápiz — implementación v0.19; validación física pendiente
 
 Intenciones compartidas con ratón, sin mutar directamente salud, propiedad u oro:
 
-- [ ] Un dedo: toque selecciona; arrastre crea selección en área.
-- [ ] Dos dedos: desplazamiento conjunto mueve cámara; pinza cambia zoom manteniendo el centro del gesto sobre el terreno.
-- [ ] Toque de dos dedos sin movimiento: orden contextual, equivalente a clic derecho.
-- [ ] Doble toque con un dedo: orden contextual. Resolver la espera del toque simple y su conflicto con seleccionar todas las unidades del mismo tipo; conservar el doble clic tradicional para ratón.
-- [ ] Lápiz: selección y arrastre equivalentes al dedo; acción secundaria o doble toque para orden contextual según dispositivo.
-- [ ] Arbitrar cuándo el segundo dedo cancela una selección pendiente; cancelar gestos al perder foco, salir de ventana o abrir menús. Una pinza/arrastre nunca termina enviando una orden.
-- [ ] Separar Input Actions y gestos del adaptador de órdenes. `Core/PointerGesture` y `RtsCameraRig.Drag/ZoomAt/Pan` son los primeros límites, no soporte táctil completo.
-- [ ] HUD adaptable y botones aptos para dedos: evitar simplemente encoger el HUD de escritorio. Probar tablet real, trackpad y stylus.
+- [x] Un dedo: toque selecciona; arrastre crea selección en área. Reconocedor puro y dispositivos sintéticos.
+- [x] Dos dedos: centro mueve cámara; separación cambia zoom con el mismo rig que ratón.
+- [x] Toque de dos dedos sin movimiento: orden contextual al soltar.
+- [x] Doble toque: orden contextual conservando la selección. Toque simple espera 240 ms; ratón conserva doble clic tradicional.
+- [x] Lápiz: punta y botón secundario, con doble toque como alternativa. Pruebas Input System, no certificación de hardware.
+- [x] Cancelación por modal/foco, propiedad del gesto y cuarentena hasta soltar los contactos. Tercer dedo y ratón sintético no generan órdenes.
+- [x] `RtsInputRouter` y `DirectPointerGesture` separan dispositivo y reconocimiento de las intenciones existentes.
+- [x] HUD y menú UI Toolkit adaptables; viewport y área segura compartidos con cámara/picking.
+- [ ] Validar dedos, lápiz, trackpad, rotación y teclado virtual en tablet/móvil físicos y navegador.
+- [ ] Migrar los atajos de teclado restantes a Input Actions configurables; el router compartido no equivale a remapeo completo.
 
 ## Servidor y plataformas — todavía pendiente
 
 - [ ] Servidor autoritativo con conexión autenticada, validación de órdenes y snapshots. La identidad del jugador la decide el servidor.
 - [ ] Incorporar compras, barcos, embarque y desembarque al protocolo de comandos; actualmente la cola por ID cubre infantería.
+- [x] Preparar catálogo único y ejecutor local de compras, cancelaciones, salidas y torres con IDs de edificio. No es todavía un protocolo de red ni autoridad remota.
 - [ ] Separar vistas y arranque de arte para Dedicated Server; navegación autoritativa sin exigir que NavMesh coincida entre clientes.
 - [ ] Hornear el campo de coste del bosque como dato de mapa compartido: hoy se genera desde las cotas de las copas de la escena, y un servidor sin arte necesita el mismo campo numérico.
 - [ ] Transporte compatible con navegador, reconexión, latencia, visión por jugador y niebla de guerra.

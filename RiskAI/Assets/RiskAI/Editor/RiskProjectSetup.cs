@@ -9,6 +9,7 @@ namespace RiskAI.Editor
 {
     public static class RiskProjectSetup
     {
+        const string Version="0.19";
         const string FrontEndScenePath="Assets/RiskAI/Scenes/FrontEnd.unity";
         const string ScenePath="Assets/RiskAI/Scenes/LasMarcas.unity";
         [MenuItem("RiskAI/Prepare playable scene")]
@@ -20,12 +21,12 @@ namespace RiskAI.Editor
             EnsureBattlefieldScene();
             EnsureFrontEndScene();
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(FrontEndScenePath,true),new EditorBuildSettingsScene(ScenePath,true)};
-            PlayerSettings.companyName="RiskAI";PlayerSettings.productName="RiskAI — Las Marcas v0.18";
+            PlayerSettings.companyName="RiskAI";PlayerSettings.productName="RiskAI — Dominios v"+Version;
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android,"com.lveillard.riskai");
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Standalone,"com.lveillard.riskai");
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.iOS,"com.lveillard.riskai");
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.WindowsStoreApps,"com.lveillard.riskai");
-            PlayerSettings.bundleVersion="0.18.0";PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
+            PlayerSettings.bundleVersion=Version+".0";PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
             PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;PlayerSettings.runInBackground=false;
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
             PlayerSettings.colorSpace=ColorSpace.Linear;
@@ -49,7 +50,7 @@ namespace RiskAI.Editor
             var names=new[]{"Universal Render Pipeline/Lit","Universal Render Pipeline/Particles/Unlit"};
             for(int i=0;i<names.Length;i++) EnsureMaterial("Assets/RiskAI/Resources/"+(i==0?"RiskAILit":"RiskAIRing")+".mat",names[i]);
             AssetDatabase.SaveAssets();
-            EditorSceneManager.OpenScene(FrontEndScenePath);Debug.Log("RISKAI_SETUP_OK: v0.18 frontend and battlefield prepared.");
+            EditorSceneManager.OpenScene(FrontEndScenePath);Debug.Log("RISKAI_SETUP_OK: v"+Version+" frontend and battlefield prepared.");
         }
         static void EnsureBattlefieldScene()
         {
@@ -74,12 +75,37 @@ namespace RiskAI.Editor
         [MenuItem("RiskAI/Build Windows prototype")]
         public static void BuildWindows()
         {
-            Prepare();Directory.CreateDirectory("../Builds/Windows-v0.18");
-            var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{FrontEndScenePath,ScenePath},locationPathName="../Builds/Windows-v0.18/RiskAI.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None });
+            Prepare();string directory="../Builds/Windows-v"+Version;Directory.CreateDirectory(directory);
+            var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{FrontEndScenePath,ScenePath},locationPathName=directory+"/RiskAI.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None });
             if(report.summary.result!=BuildResult.Succeeded)throw new System.Exception("Build failed: "+report.summary.result);
-            File.Copy("../THIRD_PARTY_NOTICES.md","../Builds/Windows-v0.18/THIRD_PARTY_NOTICES.md",true);
-            File.Copy("Assets/RiskAI/Art/KayKit/LICENSE.txt","../Builds/Windows-v0.18/KayKit-LICENSE.txt",true);
+            CopyNotices(directory);
             Debug.Log("RISKAI_BUILD_OK: "+report.summary.totalSize+" bytes");
+        }
+        [MenuItem("RiskAI/Build browser prototype")]
+        public static void BuildWeb()
+        {
+            if(!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.WebGL,BuildTarget.WebGL))
+                throw new System.Exception("Install Web Build Support for Unity 6000.3.23f1 before building the browser player.");
+            Prepare();
+            PlayerSettings.WebGL.template="PROJECT:RiskAI";
+            PlayerSettings.WebGL.compressionFormat=WebGLCompressionFormat.Gzip;
+            PlayerSettings.WebGL.decompressionFallback=true;
+            PlayerSettings.WebGL.dataCaching=true;
+            // Start conservatively and allow bounded growth. Tune only from the browser's observed heap.
+            PlayerSettings.WebGL.initialMemorySize=128;
+            PlayerSettings.WebGL.maximumMemorySize=2048;
+            PlayerSettings.WebGL.threadsSupport=false;
+            PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.WebGL,ScriptingImplementation.IL2CPP);
+            string directory="../Builds/Web-v"+Version;Directory.CreateDirectory(directory);
+            var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes=new[]{FrontEndScenePath,ScenePath},locationPathName=directory,target=BuildTarget.WebGL,options=BuildOptions.None });
+            if(report.summary.result!=BuildResult.Succeeded)throw new System.Exception("Web build failed: "+report.summary.result);
+            CopyNotices(directory);
+            Debug.Log("RISKAI_WEB_BUILD_OK: "+report.summary.totalSize+" bytes");
+        }
+        static void CopyNotices(string directory)
+        {
+            File.Copy("../THIRD_PARTY_NOTICES.md",directory+"/THIRD_PARTY_NOTICES.md",true);
+            File.Copy("Assets/RiskAI/Art/KayKit/LICENSE.txt",directory+"/KayKit-LICENSE.txt",true);
         }
     }
 }

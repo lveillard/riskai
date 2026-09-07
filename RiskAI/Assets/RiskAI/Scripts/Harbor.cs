@@ -18,6 +18,7 @@ namespace RiskAI
         bool sharesTown,canLaunch;
         string launchBlockReason;
         public Settlement LinkedTown { get; private set; }
+        public BuildingId BuildingId { get; private set; }
         public DefenseTower Defense { get; private set; }
         public TownState State=>state;
         public bool IsIsland=>!LinkedTown;
@@ -61,10 +62,10 @@ namespace RiskAI
         BuildingTrainingView trainingView;
         LineRenderer rallyRing;
 
-        public void Initialize(NavalWorld naval,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth)
+        public void Initialize(NavalWorld naval,BuildingId buildingId,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth)
         {
             sharesTown=false;canLaunch=SeaNavigation.HasClearance(berth);launchBlockReason=canLaunch?null:"El puerto no tiene una salida marítima segura.";
-            world=naval;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;landRally=LandEntry;lastOwner=Owner;
+            world=naval;BuildingId=buildingId;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;landRally=LandEntry;lastOwner=Owner;
             var entrance=NavalArt.CreateHarbor(this);
             trainingView=BuildingTrainingView.Create(transform,entrance);
             claimZone=new CityClaimZone(Landing);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));claimRing.transform.position=Landing;
@@ -79,9 +80,9 @@ namespace RiskAI
             CreateNavalClaimRing();
             rallyRing=VisualFactory.Ring(transform,.6f,.09f,new Color(.8f,1,.5f));rallyRing.transform.position=landRally;rallyRing.enabled=false;
         }
-        internal void InitializeImported(NavalWorld naval,Settlement town,Vector3 berth,string unavailableReason)
+        internal void InitializeImported(NavalWorld naval,BuildingId buildingId,Settlement town,Vector3 berth,string unavailableReason)
         {
-            world=naval;DisplayName=town.DisplayName;LinkedTown=town;state=town.State;claimZone=town.ClaimZone;Defense=town.Defense;
+            world=naval;BuildingId=buildingId;DisplayName=town.DisplayName;LinkedTown=town;state=town.State;claimZone=town.ClaimZone;Defense=town.Defense;
             Landing=town.ClaimPoint;Berth=berth;lastOwner=Owner;sharesTown=true;
             canLaunch=string.IsNullOrEmpty(unavailableReason)&&SeaNavigation.HasClearance(berth);
             launchBlockReason=canLaunch?null:unavailableReason??"El puerto no tiene una salida marítima segura.";
@@ -130,11 +131,7 @@ namespace RiskAI
         }
         public bool SetRally(Vector3 target)
         {
-            if(sharesTown&&LinkedTown)
-            {
-                if(!NavMesh.SamplePosition(target,out _,8,NavMesh.AllAreas))return false;
-                LinkedTown.SetRally(target);return true;
-            }
+            if(sharesTown&&LinkedTown)return LinkedTown.SetRally(target);
             if(!NavMesh.SamplePosition(target,out var hit,8,NavMesh.AllAreas))return false;
             landRally=hit.position;if(rallyRing)rallyRing.transform.position=landRally;return true;
         }
@@ -218,7 +215,7 @@ namespace RiskAI
         }
         public string Buy(ShipKind kind,int team=0)
         {
-            if(kind!=ShipKind.Galley&&kind!=ShipKind.Transport)return "Tipo de barco inválido.";
+            if(!TryCatalogShip(kind,out var catalogKind)||!ProductionCatalog.AllowsHarborShip(catalogKind))return "Tipo de barco inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";
             if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
             if(!CanLaunch)return LaunchBlockReason;
@@ -232,8 +229,8 @@ namespace RiskAI
         }
         public string RecruitLand(UnitKind kind,int team=0)
         {
-            if(kind!=UnitKind.MarinePrivate&&kind!=UnitKind.MarineMajor&&kind!=UnitKind.MarineGeneral)return "Este muelle sólo entrena Marines.";
-            if(sharesTown&&LinkedTown)return LinkedTown.Recruit(kind,team);
+            if(!ProductionCatalog.AllowsHarborUnit(kind))return "Este muelle sólo entrena Marines.";
+            if(sharesTown&&LinkedTown)return LinkedTown.RecruitPortMarine(kind,team);
             if(!world||!world.Session)return "No hay una batalla activa.";
             if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
             if(world.Session.Winner>=0)return "La batalla ha terminado.";
@@ -340,6 +337,15 @@ namespace RiskAI
             var item=landQueue[0];if(world.Session.RecruitmentPopulation(item.Team)>=BattleRules.PopulationLimit)return;landQueue.RemoveAt(0);
             var unit=world.Session.Spawn(item.Team,item.Kind,LandEntry);
             if(unit)unit.MoveTo(LandRally,true,false);else world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));
+        }
+        static bool TryCatalogShip(ShipKind kind,out NavalUnitKind catalogKind)
+        {
+            switch(kind)
+            {
+                case ShipKind.Galley:catalogKind=NavalUnitKind.Galley;return true;
+                case ShipKind.Transport:catalogKind=NavalUnitKind.Transport;return true;
+                default:catalogKind=default;return false;
+            }
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
     }

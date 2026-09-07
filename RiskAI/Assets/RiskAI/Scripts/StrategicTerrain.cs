@@ -6,6 +6,7 @@ namespace RiskAI
     {
         public static void Create(Transform root)
         {
+            var resources=GeneratedResourceOwner.For(root);
             // Sub-metre sampling keeps the bevel and river banks continuous with the walkable surface.
             const int nx=360,nz=400;
             var vertices=new Vector3[(nx+1)*(nz+1)];var triangles=new List<int>(nx*nz*6);
@@ -23,14 +24,14 @@ namespace RiskAI
                 walkableTriangles.Add(i);walkableTriangles.Add(i+1);walkableTriangles.Add(b);
                 walkableTriangles.Add(i+1);walkableTriangles.Add(b+1);walkableTriangles.Add(b);
             }
-            var mesh=new Mesh{name="Irregular continental terrain",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32};mesh.vertices=vertices;mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+            var mesh=resources.Track(new Mesh{name="Irregular continental terrain",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32});mesh.vertices=vertices;mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var land=new GameObject("Coastal marches");land.layer=MapLayout.TerrainLayer;land.transform.SetParent(root,false);land.AddComponent<MeshFilter>().sharedMesh=mesh;
             land.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
-            var collisionMesh=new Mesh{name="Walkable land excluding water",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32};
+            var collisionMesh=resources.Track(new Mesh{name="Walkable land excluding water",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32});
             collisionMesh.vertices=vertices;collisionMesh.SetTriangles(walkableTriangles,0);collisionMesh.RecalculateBounds();
             land.AddComponent<MeshCollider>().sharedMesh=collisionMesh;
             var clearings = BuildingClearings();
-            CreateIslands(root);CreateSeabed(root);CreateBackdrop(clearings);
+            CreateIslands(root,resources);CreateSeabed(root,resources);CreateBackdrop(clearings,resources);
             var sea=VisualFactory.Shape(null,PrimitiveType.Cube,"Northern sea",new Vector3(0,-.3f,0),new Vector3(420,.12f,420),Color.white);
             sea.GetComponent<Renderer>().sharedMaterial=Resources.Load<Material>("RiverWater");
             var trees=new GameObject("Pine forests");trees.transform.SetParent(root,false);
@@ -110,7 +111,7 @@ namespace RiskAI
             }
             return false;
         }
-        static void CreateIslands(Transform root)
+        static void CreateIslands(Transform root,GeneratedResourceOwner resources)
         {
             for(int island=0;island<MapLayout.Islands.Length;island++)
             {
@@ -122,12 +123,12 @@ namespace RiskAI
                     v.Add(MapLayout.Point(x,z));if(r==rings||s==sides)continue;int i=r*(sides+1)+s,b=i+sides+1;
                     t.Add(i);t.Add(b+1);t.Add(b);t.Add(i);t.Add(i+1);t.Add(b+1);
                 }
-                var mesh=new Mesh{name="Sculpted island "+island};mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+                var mesh=resources.Track(new Mesh{name="Sculpted island "+island});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
                 var go=new GameObject(island==0?"Isla de los Robles":"Isla del Viento");go.layer=MapLayout.TerrainLayer;go.transform.SetParent(root,false);
                 go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");go.AddComponent<MeshCollider>().sharedMesh=mesh;
             }
         }
-        static void CreateSeabed(Transform root)
+        static void CreateSeabed(Transform root,GeneratedResourceOwner resources)
         {
             // Extend sand under the shoreline; no collider, so this cannot bake walkable ocean.
             var v=new List<Vector3>();var t=new List<int>();const int columns=360,rows=64;
@@ -139,11 +140,11 @@ namespace RiskAI
                 if(x==columns||z==rows)continue;int i=x*(rows+1)+z,b=i+rows+1;
                 t.Add(i);t.Add(i+1);t.Add(b);t.Add(i+1);t.Add(b+1);t.Add(b);
             }
-            var mesh=new Mesh{name="Submerged continental and island shelf"};mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+            var mesh=resources.Track(new Mesh{name="Submerged continental and island shelf"});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var go=new GameObject("Sandy sea bed · visual only");go.transform.SetParent(root,false);
             go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
         }
-        static void CreateBackdrop(List<Vector4> clearings)
+        static void CreateBackdrop(List<Vector4> clearings,GeneratedResourceOwner resources)
         {
             // Visual continuation beyond the playable rectangle: no artificial board edges.
             // It has no colliders and therefore cannot expand the gameplay NavMesh.
@@ -161,7 +162,7 @@ namespace RiskAI
                 vertices.Add(new Vector3(x+step,MapLayout.Height(x+step,zc),zc));vertices.Add(new Vector3(x+step,MapLayout.Height(x+step,zd),zd));
                 triangles.Add(i);triangles.Add(i+1);triangles.Add(i+2);triangles.Add(i+1);triangles.Add(i+3);triangles.Add(i+2);
             }
-            var mesh=new Mesh{name="Continental horizon",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32};
+            var mesh=resources.Track(new Mesh{name="Continental horizon",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32});
             mesh.SetVertices(vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             root.AddComponent<MeshFilter>().sharedMesh=mesh;root.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
             var random=new System.Random(561);

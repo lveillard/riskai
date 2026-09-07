@@ -12,6 +12,7 @@ namespace RiskAI
         public static void Create(BattleSession battle, Transform root)
         {
             if (!battle || !root) return;
+            var resources=GeneratedResourceOwner.For(root);
             foreach (var town in battle.Towns)
             {
                 if (!town) continue;
@@ -19,13 +20,13 @@ namespace RiskAI
 
                 AddBannerMotion(town.transform);
             }
-            AddBirds(root);
-            AddPondLife(root,new Vector2(-11,-30),new Vector2(8,5),29);
-            AddPondLife(root,new Vector2(16,-4),new Vector2(3,2),11);
+            AddBirds(root,resources);
+            AddPondLife(root,resources,new Vector2(-11,-30),new Vector2(8,5),29);
+            AddPondLife(root,resources,new Vector2(16,-4),new Vector2(3,2),11);
             TerrainHydrology.Create(root);
         }
 
-        static void AddPondLife(Transform root,Vector2 center,Vector2 size,int count)
+        static void AddPondLife(Transform root,GeneratedResourceOwner resources,Vector2 center,Vector2 size,int count)
         {
             var random=new System.Random(count*171);var vertices=new List<Vector3>();var triangles=new List<int>();
             for(int k=0;k<count;k++)
@@ -41,7 +42,7 @@ namespace RiskAI
                     triangles.Add(v);triangles.Add(v+1);triangles.Add(v+2);triangles.Add(v+2);triangles.Add(v+1);triangles.Add(v);
                 }
             }
-            var reeds=new GameObject("Lakeside reeds");reeds.transform.SetParent(root,false);var mesh=new Mesh{name="Original reed tufts"};
+            var reeds=new GameObject("Lakeside reeds");reeds.transform.SetParent(root,false);var mesh=resources.Track(new Mesh{name="Original reed tufts"});
             mesh.SetVertices(vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();
             reeds.AddComponent<MeshFilter>().sharedMesh=mesh;reeds.AddComponent<MeshRenderer>().sharedMaterial=VisualFactory.Mat(new Color(.31f,.39f,.13f));
         }
@@ -95,22 +96,22 @@ namespace RiskAI
                 if (renderer.name == "Banner") renderer.gameObject.AddComponent<AmbientBanner>();
         }
 
-        static void AddBirds(Transform root)
+        static void AddBirds(Transform root,GeneratedResourceOwner resources)
         {
             var flock = new GameObject("Ambient birds"); flock.transform.SetParent(root, false);
             var random = new System.Random(1307);
             for (int i = 0; i < 3; i++)
             {
                 var bird = new GameObject("Sea bird"); bird.transform.SetParent(flock.transform, false);
-                AddWing(bird.transform, "Left wing", true, i); AddWing(bird.transform, "Right wing", false, i);
+                AddWing(bird.transform, resources, "Left wing", true, i); AddWing(bird.transform, resources, "Right wing", false, i);
                 bird.AddComponent<AmbientBird>().Initialize(new Vector3(-55*MapLayout.Spacing,0,44*MapLayout.Spacing),10f+(float)random.NextDouble()*7f,8f+(float)random.NextDouble()*4f,i*2.1f);
             }
         }
 
-        static void AddWing(Transform bird, string name, bool left, int seed)
+        static void AddWing(Transform bird, GeneratedResourceOwner resources, string name, bool left, int seed)
         {
             var wing = new GameObject(name); wing.transform.SetParent(bird, false); wing.transform.localPosition = new Vector3(left ? -.12f : .12f, 0, 0);
-            wing.AddComponent<MeshFilter>().sharedMesh = WingMesh(left);
+            wing.AddComponent<MeshFilter>().sharedMesh = resources.Track(WingMesh(left));
             wing.AddComponent<MeshRenderer>().sharedMaterial = VisualFactory.Mat(seed % 2 == 0 ? new Color(.68f, .7f, .68f) : new Color(.35f, .37f, .36f));
         }
 

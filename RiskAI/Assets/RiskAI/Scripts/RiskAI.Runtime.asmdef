@@ -4,7 +4,8 @@
   "references": [
     "RiskAI.Core",
     "Unity.AI.Navigation",
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "Unity.ugui"
   ],
   "autoReferenced": false
 }

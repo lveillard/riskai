@@ -187,11 +187,11 @@ namespace RiskAI
         public string TryRecruitSelected(UnitKind kind)
         {
             string firstError = null;
-            if (kind >= UnitKind.MarinePrivate)
+            if (ProductionCatalog.AllowsHarborUnit(kind))
             {
                 foreach (var harbor in selectedHarbors.Where(h => h && h.Owner == 0).OrderBy(h => h.LandQueueCount).ThenBy(StableHarborIndex))
                 {
-                    string error = harbor.RecruitLand(kind);
+                    string error = ExecuteBuilding(PlayerBuildingIntent.Recruit(harbor.BuildingId,kind));
                     if (error == null) return null;
                     if (firstError == null) firstError = error;
                 }
@@ -199,7 +199,7 @@ namespace RiskAI
             }
             foreach (var town in selectedTowns.Where(t => t && t.State.Owner == 0).OrderBy(t => t.QueueCount).ThenBy(t => t.State.Id, System.StringComparer.Ordinal))
             {
-                string error = town.Recruit(kind);
+                string error = ExecuteBuilding(PlayerBuildingIntent.Recruit(town.BuildingId,kind));
                 if (error == null) return null;
                 if (firstError == null) firstError = error;
             }
@@ -212,7 +212,7 @@ namespace RiskAI
             string firstError = null;
             foreach (var harbor in selectedHarbors.Where(h => h && h.Owner == 0).OrderBy(h => h.QueueCount).ThenBy(StableHarborIndex))
             {
-                string error = harbor.Buy(kind);
+                string error = ExecuteBuilding(PlayerBuildingIntent.BuyShip(harbor.BuildingId,(NavalUnitKind)kind));
                 if (error == null) return null;
                 if (firstError == null) firstError = error;
             }
@@ -232,7 +232,7 @@ namespace RiskAI
             foreach (var town in selectedTowns)
             {
                 if (!town || town.State.Owner != 0) continue;
-                town.SetRally(point); changed = true;
+                if(ExecuteBuilding(PlayerBuildingIntent.SetLandRally(town.BuildingId,point.x,point.y,point.z))==null)changed=true;
             }
             foreach (var harbor in selectedHarbors)
             {
@@ -241,9 +241,9 @@ namespace RiskAI
                 if (town)
                 {
                     if (selectedTowns.Contains(town)) continue;
-                    town.SetRally(point); changed = true;
+                    if(ExecuteBuilding(PlayerBuildingIntent.SetLandRally(harbor.BuildingId,point.x,point.y,point.z))==null)changed=true;
                 }
-                else if (harbor.SetRally(point)) changed = true;
+                else if(ExecuteBuilding(PlayerBuildingIntent.SetLandRally(harbor.BuildingId,point.x,point.y,point.z))==null)changed=true;
             }
             return changed;
         }

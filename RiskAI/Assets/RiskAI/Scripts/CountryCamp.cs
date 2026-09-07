@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RiskAI.Core;
 using UnityEngine;
 using UnityEngine.AI;
 namespace RiskAI
@@ -7,6 +8,7 @@ namespace RiskAI
     public sealed class CountryCamp : MonoBehaviour
     {
         public int Country { get; private set; }
+        public BuildingId BuildingId => new BuildingId(BuildingKind.CountryCamp,Country.ToString(System.Globalization.CultureInfo.InvariantCulture));
         public Vector3 SpawnPoint => transform.position;
         public string DisplayName => MapLayout.Countries[Country].Name;
         public int Reinforcements => MapLayout.Countries[Country].PerTurn;
@@ -41,7 +43,7 @@ namespace RiskAI
         /// <summary>Stores a walkable rally point for future country reinforcements.</summary>
         public bool SetRally(Vector3 point)
         {
-            if(!NavMesh.SamplePosition(point,out var hit,8,NavMesh.AllAreas))return false;
+            if(float.IsNaN(point.x)||float.IsNaN(point.y)||float.IsNaN(point.z)||float.IsInfinity(point.x)||float.IsInfinity(point.y)||float.IsInfinity(point.z)||!NavMesh.SamplePosition(point,out var hit,8,NavMesh.AllAreas))return false;
             rallyPoint=hit.position;hasRally=true;rallyOwner=session.Economy.CountryOwner(Country);RefreshRallyView();return true;
         }
         public void ClearRally() { hasRally=false;RefreshRallyView(); }

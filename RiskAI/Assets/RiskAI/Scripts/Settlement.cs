@@ -9,6 +9,7 @@ namespace RiskAI
     public sealed class Settlement : MonoBehaviour
     {
         public TownState State { get; private set; }
+        public BuildingId BuildingId => new BuildingId(BuildingKind.Settlement,State?.Id);
         public string DisplayName { get; private set; }
         public Vector3 Rally { get; private set; }
         public bool IsCapital { get; private set; }
@@ -96,14 +97,24 @@ namespace RiskAI
 
         public string Recruit(UnitKind kind, int team = 0)
         {
-            if(kind>=UnitKind.MarinePrivate && !IsPort)return "La infantería de marina se recluta en los puertos.";
-            string error = CanManage(team); if (error != null) return error;
-            if (State.Level < BattleRules.RequiredLevel(kind)) return "Mejora la ciudad a nivel II para reclutar esta unidad.";
-            if (queue.Count >= 5) return "La cola está llena. Pulsa un encargo para cancelarlo.";
-            if (session.RecruitmentReservations(team) >= BattleRules.PopulationLimit) return "Límite de 100 soldados móviles alcanzado.";
-            if (!session.Economy.Spend(team, BattleRules.Cost(kind))) return "Oro insuficiente. Recibirás ingresos al terminar la ronda.";
-            queue.Add(new Training { Team = team, Kind = kind, Remaining = BattleRules.TrainTime(kind) });
-            return null;
+            if(!ProductionCatalog.AllowsSettlementUnit(kind))return "Esta ciudad sólo recluta tropas regulares.";
+            return QueueRecruit(kind,team);
+        }
+        // Imported port cities retain one shared land queue. Only their Harbor
+        // may enter the Marine catalog through this narrow domain path.
+        internal string RecruitPortMarine(UnitKind kind,int team)
+        {
+            if(!IsPort||!ProductionCatalog.AllowsHarborUnit(kind))return "Este puerto sólo recluta Marines.";
+            return QueueRecruit(kind,team);
+        }
+        string QueueRecruit(UnitKind kind,int team)
+        {
+            string error=CanManage(team);if(error!=null)return error;
+            if(State.Level<BattleRules.RequiredLevel(kind))return "Mejora la ciudad a nivel II para reclutar esta unidad.";
+            if(queue.Count>=5)return "La cola está llena. Pulsa un encargo para cancelarlo.";
+            if(session.RecruitmentReservations(team)>=BattleRules.PopulationLimit)return "Límite de 100 soldados móviles alcanzado.";
+            if(!session.Economy.Spend(team,BattleRules.Cost(kind)))return "Oro insuficiente. Recibirás ingresos al terminar la ronda.";
+            queue.Add(new Training{Team=team,Kind=kind,Remaining=BattleRules.TrainTime(kind)});return null;
         }
         string CanManage(int team)
         {
@@ -140,10 +151,10 @@ namespace RiskAI
             if (next == BuildingProject.Tower) Defense.BeginBuild();
             return null;
         }
-        public void SetRally(Vector3 target)
+        public bool SetRally(Vector3 target)
         {
-            if (!NavMesh.SamplePosition(target, out var hit, 8, NavMesh.AllAreas)) return;
-            Rally = hit.position; rallyRing.transform.parent.position = Rally;
+            if(float.IsNaN(target.x)||float.IsNaN(target.y)||float.IsNaN(target.z)||float.IsInfinity(target.x)||float.IsInfinity(target.y)||float.IsInfinity(target.z)||!NavMesh.SamplePosition(target,out var hit,8,NavMesh.AllAreas))return false;
+            Rally=hit.position;rallyRing.transform.parent.position=Rally;return true;
         }
         internal void SetNavalClaimVisual(bool active) => navalClaimVisual=active;
         internal void SetPortNavalTraining(bool active)
@@ -226,11 +237,16 @@ namespace RiskAI
             }
             if (queue.Count == 0) { RefreshTrainingView(); return; }
             var first = queue[0]; first.Remaining -= delta;
-            if (first.Remaining <= 0 && session.RecruitmentPopulation(first.Team) < BattleRules.PopulationLimit)
+            if (first.Remaining <= 0)
             {
-                Vector3 spawn = IsPort && Port ? Port.LandEntry : DefaultLandEntry;
-                var unit = session.Spawn(first.Team, first.Kind, spawn);
-                if (unit) { queue.RemoveAt(0); unit.MoveTo(Rally, true, false); }
+                // A full population is a temporary cap: retain this paid order until a slot opens.
+                if (session.RecruitmentPopulation(first.Team) < BattleRules.PopulationLimit)
+                {
+                    Vector3 spawn = IsPort && Port ? Port.LandEntry : DefaultLandEntry;
+                    var unit = session.Spawn(first.Team, first.Kind, spawn);
+                    if (unit) { queue.RemoveAt(0); unit.MoveTo(Rally, true, false); }
+                    else { queue.RemoveAt(0); session.Economy.Refund(first.Team, BattleRules.Cost(first.Kind)); }
+                }
             }
             RefreshTrainingView();
         }

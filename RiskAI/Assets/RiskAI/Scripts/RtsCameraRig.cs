@@ -16,7 +16,7 @@ namespace RiskAI
         [Range(.1f,3f)] public float PanSpeed=1.35f;
         public Vector3 FocusPoint => focus;
         public float MaximumZoom => MapFrameZoom();
-        float FocusSpeedCap => MapLayout.IsImported?Mathf.Max(120,MapLayout.HalfDepth*1.25f):120;
+        float FocusSpeedCap => Mathf.Max(120,MapLayout.HalfDepth*1.25f);
         Camera cam;Vector3 focus,targetFocus,panVelocity,zoomAnchor,homePoint=new Vector3(-26,0,-17);Vector2 anchorScreen;
         float zoomVelocity;bool anchorZoom;
         public void Initialize(Camera camera)
@@ -56,6 +56,11 @@ namespace RiskAI
             zoomAnchor=Ground(screen);anchorScreen=screen;anchorZoom=true;
             TargetZoom=Mathf.Clamp(TargetZoom*Mathf.Exp(-Mathf.Clamp(wheelSteps,-4,4)*.24f),MinimumZoom,MaximumZoom);
         }
+        public void ZoomByRatio(float ratio,Vector2 screen)
+        {
+            if(float.IsNaN(ratio)||float.IsInfinity(ratio)||ratio<=0)return;
+            ZoomAt(Mathf.Log(ratio)/.24f,screen);
+        }
         public void CancelMotion() { targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;zoomVelocity=0;if(cam)TargetZoom=cam.orthographicSize; }
         void LateUpdate()
         {
@@ -89,14 +94,15 @@ namespace RiskAI
             // Apply still centres the raw HUD gap; equal padding at both sides keeps
             // that centre while leaving a visible buffer for borders and terrain skirts.
             float width=Mathf.Max(1,Screen.width),height=Mathf.Max(1,Screen.height);
-            float horizontalPadding=Mathf.Min(MapFramePaddingPixels,width*.25f);
-            float verticalPadding=Mathf.Min(MapFramePaddingPixels,height*.25f);
-            float left=-1+2*horizontalPadding/width,right=1-2*horizontalPadding/width;
-            float top=1-2*(BattleHud.TopPixels+verticalPadding)/height;
-            float bottom=-1+2*(BattleHud.BottomPixels+verticalPadding)/height;
-            float offset=(BattleHud.BottomPixels-BattleHud.TopPixels)/height;
+            Rect viewport=UiViewport.WorldRect;
+            float horizontalPadding=Mathf.Min(MapFramePaddingPixels*UiViewport.Scale,viewport.width*.1f);
+            float verticalPadding=Mathf.Min(MapFramePaddingPixels*UiViewport.Scale,viewport.height*.1f);
+            float left=-1+2*(viewport.xMin+horizontalPadding)/width,right=-1+2*(viewport.xMax-horizontalPadding)/width;
+            float top=-1+2*(viewport.yMax-verticalPadding)/height;
+            float bottom=-1+2*(viewport.yMin+verticalPadding)/height;
+            float offset=-1+2*viewport.center.y/height;
+            float offsetX=-1+2*viewport.center.x/width;
             float tangent=Mathf.Tan(cam.fieldOfView*.5f*Mathf.Deg2Rad);
-            float horizontal=Mathf.Max(.05f,Mathf.Min(right,-left));
             Vector2 min=MapLayout.PlayableMin,max=MapLayout.PlayableMax;
             float zoom=InitialZoom;
             for(int corner=0;corner<4;corner++)
@@ -105,7 +111,8 @@ namespace RiskAI
                 float x=Vector3.Dot(point,cam.transform.right);
                 float y=Vector3.Dot(point,cam.transform.up);
                 float depth=Vector3.Dot(point,cam.transform.forward)*tangent;
-                zoom=Mathf.Max(zoom,Mathf.Abs(x)/(cam.aspect*horizontal)-depth);
+                zoom=Mathf.Max(zoom,(x/cam.aspect-right*depth)/Mathf.Max(.05f,right-offsetX));
+                zoom=Mathf.Max(zoom,(-x/cam.aspect+left*depth)/Mathf.Max(.05f,offsetX-left));
                 zoom=Mathf.Max(zoom,(y-top*depth)/Mathf.Max(.05f,top-offset));
                 zoom=Mathf.Max(zoom,(-y+bottom*depth)/Mathf.Max(.05f,offset-bottom));
             }
@@ -114,8 +121,10 @@ namespace RiskAI
 
         void Apply()
         {
-            float playableOffset=cam.orthographicSize*(BattleHud.BottomPixels-BattleHud.TopPixels)/Screen.height;
-            cam.transform.position=focus-cam.transform.forward*(cam.orthographicSize/Mathf.Tan(cam.fieldOfView*.5f*Mathf.Deg2Rad))-cam.transform.up*playableOffset;
+            Vector2 center=UiViewport.WorldRect.center;
+            float vertical=cam.orthographicSize*(2*center.y/Mathf.Max(1,Screen.height)-1);
+            float horizontal=cam.orthographicSize*cam.aspect*(2*center.x/Mathf.Max(1,Screen.width)-1);
+            cam.transform.position=focus-cam.transform.forward*(cam.orthographicSize/Mathf.Tan(cam.fieldOfView*.5f*Mathf.Deg2Rad))-cam.transform.up*vertical-cam.transform.right*horizontal;
         }
     }
 }

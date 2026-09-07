@@ -12,7 +12,7 @@ namespace RiskAI
         static void ReadLaunchSeed()
         {
             // Read launch arguments once, so F1 can choose a different seed on a scene restart.
-            var args=System.Environment.GetCommandLineArgs();
+            var args=LaunchArguments.Get();
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-map")BattleSession.MapForNewMatch=args[a+1]=="europe"?ScenarioMap.Europe:args[a+1]=="world"||args[a+1]=="newworld"?ScenarioMap.NewWorld:args[a+1]=="riverlands"?ScenarioMap.Riverlands:ScenarioMap.Classic;
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-seed" && int.TryParse(args[a+1],out int seed))BattleSession.SeedForNewMatch=seed;
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-players" && int.TryParse(args[a+1],out int players))BattleSession.PlayerCountForNewMatch=Mathf.Clamp(players,2,PlayerRules.MaxPlayers);
@@ -25,8 +25,10 @@ namespace RiskAI
         }
         void Awake()
         {
+            var startup=new StartupMetrics();
             MapLayout.Configure(BattleSession.MapForNewMatch);
-            Application.targetFrameRate=120;WorldArt.ResetRoads();Shader.SetGlobalFloat("_RiskMapScale",MapLayout.Spacing);
+            Application.targetFrameRate=Application.platform==RuntimePlatform.WebGLPlayer||PlatformPresentation.TouchCapable?60:120;
+            WorldArt.ResetRoads();Shader.SetGlobalFloat("_RiskMapScale",MapLayout.Spacing);
             UnityEngine.InputSystem.InputSystem.settings.scrollDeltaBehavior=UnityEngine.InputSystem.InputSettings.ScrollDeltaBehavior.UniformAcrossAllPlatforms;
             var session=gameObject.AddComponent<BattleSession>();session.Initialize();var owners=session.StartingOwners();var capitals=new int[session.PlayerCount];
             gameObject.AddComponent<RuntimeDiagnostics>().Initialize(session);
@@ -38,6 +40,7 @@ namespace RiskAI
                 ImportedTerrain.Create(terrain.transform);
             }
             else StrategicTerrain.Create(terrain.transform);
+            startup.Mark("terrain");
             for(int i=0;i<MapLayout.Towns.Length;i++)
             {
                 var city=MapLayout.Towns[i];int owner=owners[i];bool capital=owner>=0 && capitals[owner]==i;
@@ -46,8 +49,13 @@ namespace RiskAI
             }
             WorldArt.Cities(session.Towns);
             if(!MapLayout.IsImported)TerrainHydrology.CreateCrossings(terrain.transform);
+            startup.Mark("buildings");
             var nav=terrain.AddComponent<NavMeshSurface>();nav.collectObjects=CollectObjects.Children;
             nav.useGeometry=NavMeshCollectGeometry.PhysicsColliders;nav.overrideVoxelSize=true;nav.voxelSize=MapLayout.IsImported?.12f:.15f;nav.BuildNavMesh();
+            // NavMeshSurface detaches its NavMeshData on disable but does not own-destroy
+            // the runtime object; the terrain scene owner gives it the same lifetime as its colliders.
+            GeneratedResourceOwner.For(terrain.transform).Track(nav.navMeshData);
+            startup.Mark("navigation");
             var assignedGarrisons = new HashSet<Soldier>();
             foreach(var town in session.Towns)
             {
@@ -60,8 +68,11 @@ namespace RiskAI
             for(int c=0;c<MapLayout.Countries.Length;c++)session.Camps.Add(CountryCamp.Create(session,c,terrain.transform));
             TerritoryMarkers.Create(session,terrain.transform);
             NavalWorld.Create(session,terrain.transform);
+            startup.Mark("roster_and_ports");
             GroundCover.Create(session,terrain.transform);
+            startup.Mark("ground_cover");
             session.Canopies.Build(terrain.transform);
+            startup.Mark("canopy_index");
             var cameraObject=new GameObject("RTS Camera");var camera=cameraObject.AddComponent<Camera>();cameraObject.tag="MainCamera";
             camera.orthographic=false;camera.fieldOfView=44;camera.nearClipPlane=.3f;camera.farClipPlane=Mathf.Max(440,(MapLayout.HalfWidth+MapLayout.HalfDepth)*5);
             camera.transform.rotation=RtsCameraRig.DefaultRotation;
@@ -74,9 +85,9 @@ namespace RiskAI
             RenderSettings.fog=!MapLayout.IsImported;RenderSettings.fogColor=camera.backgroundColor;RenderSettings.fogMode=FogMode.Linear;RenderSettings.fogStartDistance=MapLayout.IsImported?1500:260;RenderSettings.fogEndDistance=MapLayout.IsImported?2100:420;
             var controller=gameObject.AddComponent<RtsController>();controller.Initialize(session,camera);controller.FocusHome();
             gameObject.AddComponent<StrategicMapView>().Initialize(session,camera,terrain.transform);
+            startup.Mark("territory_atlas");
             gameObject.AddComponent<BattleHud>().Initialize(session,controller,camera);
-            session.Message(session.LayoutName+" · semilla "+session.Seed+". Cada ciudad aporta oro; completa países para recibir refuerzos.");
-            session.Message("Un ballestero por puesto. Recluta tu primera tropa en una ciudad aliada.");
+            startup.Mark("ready");
         }
     }
 }

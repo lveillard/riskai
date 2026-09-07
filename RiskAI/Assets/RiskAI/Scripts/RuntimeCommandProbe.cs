@@ -10,7 +10,7 @@ using UnityEngine.AI;
 namespace RiskAI
 {
     /// <summary>
-    /// A command-line-only smoke probe for diagnosing live-player responsiveness.
+    /// An explicitly enabled desktop/browser smoke probe for diagnosing live-player responsiveness.
     /// It is deliberately absent unless the player is launched with --riskai-probe.
     /// </summary>
     public sealed class RuntimeCommandProbe : MonoBehaviour
@@ -76,11 +76,15 @@ namespace RiskAI
             var probe = new GameObject("RiskAI Runtime Command Probe");
             DontDestroyOnLoad(probe);
             probe.AddComponent<RuntimeCommandProbe>();
+            // Frame tracing is separately opt-in because its recorder and hitch logs can
+            // perturb the frame timing that the command probe normally measures.
+            if (HasExactFlag("--riskai-frame-trace")) probe.AddComponent<RuntimeFrameProbe>();
         }
 
         static bool HasProbeFlag()
         {
-            foreach (string argument in Environment.GetCommandLineArgs())
+            if(HasExactFlag("--riskai-restart-probe"))return false;
+            foreach (string argument in LaunchArguments.Get())
                 if (string.Equals(argument, Flag, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
@@ -282,7 +286,7 @@ namespace RiskAI
 
         static bool HasExactFlag(string flag)
         {
-            foreach (var argument in Environment.GetCommandLineArgs())
+            foreach (var argument in LaunchArguments.Get())
                 if (string.Equals(argument, flag, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
@@ -291,7 +295,7 @@ namespace RiskAI
         {
             value = fallback;
             error = null;
-            var arguments = Environment.GetCommandLineArgs();
+            var arguments = LaunchArguments.Get();
             for (int i = 0; i < arguments.Length; i++)
             {
                 string raw = arguments[i];

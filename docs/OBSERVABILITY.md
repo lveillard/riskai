@@ -1,5 +1,31 @@
 # Observing a live RiskAI runtime log
 
+The v0.19 player keeps this passive reader compatible. Diagnostics also report
+`unityAllocatedB` (Unity's tracked allocated memory, not total process/WASM
+memory). Startup emits `RISKAI_STARTUP` phase timings with allocated, reserved
+and managed memory; these separate map generation, navigation and UI startup
+from steady gameplay.
+
+Add `--riskai-frame-trace` alongside `--riskai-probe` for opt-in hitch
+correlation. It logs at most 64 frames above 50 ms, with available main/render
+thread and GC allocation recorders. Unsupported counters are reported as -1;
+FrameTiming CPU/GPU data requires the engine feature to be enabled. Samples
+can be asynchronous and logging itself adds overhead: use this to investigate
+correlation, not to assert a cause or replace a normal benchmark.
+
+The opt-in native command probe accepts `--riskai-probe --riskai-map europe
+--riskai-players 16 --riskai-seed 160212 --riskai-probe-warmup 900
+--riskai-probe-warmup-commander --riskai-probe-seconds 90`. It runs accelerated
+warmup, restores 1x, stabilizes, and records synthetic order and movement
+latencies. Do not treat startup/warmup diagnostic windows as 1x gameplay.
+
+`--riskai-restart-probe --riskai-restart-cycles 3 --riskai-map europe`
+loads the map and returns to the front end repeatedly. Only this diagnostic
+mode explicitly requests unused-asset collection and GC between checkpoints.
+Compare the first and final **front-end-after-cleanup** samples, not a loaded
+battle against an empty menu. Counts include meshes, materials, renderers and
+NavMeshData. Normal play never starts this probe implicitly.
+
 `scripts/observe_runtime.py` is a passive Python standard-library reader for the
 `RuntimeDiagnostics`, `RISKAI_ORDER_REJECTED`, and `RISKAI_ROUTE_BLOCKED`
 lines written by RiskAI. It does not start Unity, send input, or inspect/control

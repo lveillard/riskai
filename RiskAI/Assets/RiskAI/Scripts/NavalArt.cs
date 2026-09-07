@@ -14,7 +14,7 @@ namespace RiskAI
         }
         public static void CreateShip(Ship ship)
         {
-            var root=new GameObject("Ship model").transform;root.SetParent(ship.transform,false);bool war=ship.Kind==ShipKind.Galley;float length=war?7.2f:5.15f,width=war?1.65f:2.65f;
+            var root=new GameObject("Ship model").transform;root.SetParent(ship.transform,false);var resources=GeneratedResourceOwner.For(ship.transform);bool war=ship.Kind==ShipKind.Galley;float length=war?7.2f:5.15f,width=war?1.65f:2.65f;
             var v=new List<Vector3>();var t=new List<int>();const int sections=12;
             for(int level=0;level<3;level++)for(int s=0;s<=sections;s++)
             {
@@ -22,7 +22,7 @@ namespace RiskAI
                 v.Add(new(Mathf.Sin(angle)*width*.5f*beam,level==0?-.22f:level==1?.32f:.7f,Mathf.Cos(angle)*length*.5f*(level==0?.72f:1)));
                 if(level==2||s==sections)continue;int i=level*(sections+1)+s,b=i+sections+1;t.Add(i);t.Add(b);t.Add(b+1);t.Add(i);t.Add(b+1);t.Add(i+1);
             }
-            var mesh=new Mesh{name="Carvel planked ship hull"};mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+            var mesh=resources.Track(new Mesh{name="Carvel planked ship hull"});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var hull=new GameObject("Oak hull");hull.transform.SetParent(root,false);hull.AddComponent<MeshFilter>().sharedMesh=mesh;hull.AddComponent<MeshRenderer>().sharedMaterial=WorldArt.Painted(2,new Color(.9f,.67f,.36f),.8f);
             Block(root,"Planked deck",new(0,.48f,0),new(width*.86f,.13f,length*.68f),2,new Color(1.35f,1.12f,.75f));
             for(int side=-1;side<=1;side+=2)
@@ -33,7 +33,7 @@ namespace RiskAI
             }
             Beam(root,new(0,.5f,-.15f),new(0,4.8f,-.15f),.14f,new Color(1.1f,.8f,.48f));
             Beam(root,new(-1.42f,4.35f,-.15f),new(1.42f,4.35f,-.15f),.11f);
-            Sail(root,ship.Team,war);
+            Sail(root,resources,ship.Team,war);
             Block(root,"Raised stern",new(0,.8f,-length*.33f),new(width*.78f,.3f,.85f));
             if(war)
             {
@@ -45,7 +45,7 @@ namespace RiskAI
             var collider=ship.gameObject.AddComponent<BoxCollider>();collider.center=new(0,1.3f,0);collider.size=new(width,3,length*.82f);collider.isTrigger=true;
             var visual=ship.gameObject.AddComponent<ShipAppearance>();visual.Initialize(ship,root,VisualFactory.Ring(ship.transform,1.5f,.07f,new Color(.5f,1,.55f)));
         }
-        static void Sail(Transform root,int team,bool war)
+        static void Sail(Transform root,GeneratedResourceOwner resources,int team,bool war)
         {
             var v=new List<Vector3>();var t=new List<int>();const int nx=8,ny=6;
             for(int y=0;y<=ny;y++)for(int x=0;x<=nx;x++)
@@ -54,9 +54,9 @@ namespace RiskAI
                 v.Add(new((u*2-1)*w,Mathf.Lerp(1.55f,4.3f,f),-.15f+.55f*Mathf.Sin(u*Mathf.PI)*Mathf.Sin(f*Mathf.PI)));
                 if(x==nx||y==ny)continue;int k=y*(nx+1)+x,b=k+nx+1;t.Add(k);t.Add(b);t.Add(b+1);t.Add(k);t.Add(b+1);t.Add(k+1);
             }
-            var mesh=new Mesh{name="Wind filled team sail"};mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();
+            var mesh=resources.Track(new Mesh{name="Wind filled team sail"});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();
             var go=new GameObject("Team sail");go.transform.SetParent(root,false);go.AddComponent<MeshFilter>().sharedMesh=mesh;
-            var cloth=new Material(VisualFactory.Mat(Color.Lerp(VisualFactory.TeamColor(team),Color.white,war?.08f:.35f)));cloth.SetFloat("_Cull",0);go.AddComponent<MeshRenderer>().sharedMaterial=cloth;
+            var cloth=resources.Track(new Material(VisualFactory.Mat(Color.Lerp(VisualFactory.TeamColor(team),Color.white,war?.08f:.35f))));cloth.SetFloat("_Cull",0);go.AddComponent<MeshRenderer>().sharedMaterial=cloth;
             for(int side=-1;side<=1;side+=2)Beam(root,new(side*1.08f,1.55f,-.15f),new(side*1.36f,4.3f,-.15f),.045f,new Color(1.9f,1.6f,1));
             // Ivory standard reads at the strategic zoom without covering the team-coloured cloth.
             Block(root,"Sail heraldry",new(0,2.9f,.405f),new(.2f,1.15f,.025f),0,new Color(1.6f,1.5f,1.15f));

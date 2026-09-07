@@ -14,6 +14,7 @@ namespace RiskAI
         public readonly List<NavalEmbarkZone> EmbarkZones=new List<NavalEmbarkZone>();
         public BattleSession Session { get; private set; }
         float nextAi;
+        PlayerBuildingCommands buildingCommands;
         const float AiDecisionInterval = 18f;
         float[] nextAiByTeam;
 
@@ -24,7 +25,7 @@ namespace RiskAI
         }
         void Initialize(BattleSession session)
         {
-            Session=session;session.Naval=this;Current=this;nextAi=session.AiFirstNavalOffensiveTime;
+            Session=session;session.Naval=this;Current=this;buildingCommands=new PlayerBuildingCommands(session);nextAi=session.AiFirstNavalOffensiveTime;
             // Static W3E clearance, edge validation and disconnected-ocean labels
             // are paid once at setup rather than during every 18-second AI fleet pass.
             SeaNavigation.Prepare();
@@ -56,7 +57,7 @@ namespace RiskAI
                 float x=mainland[i]*MapLayout.Spacing,z=MapLayout.Coast(x);
                 var linked=linkedTowns[i];
                 string name=new[]{"Muelle del Oeste","Puerto del Pinar","Puerto del Paso","Dársena del Roble","Muelle del Este"}[i];
-                AddHarbor(name,linked,new TownState(name,portOwners[i],-1,-1),MapLayout.MainlandHarborLanding(i),new Vector3(x,-.24f,z+4));
+                AddHarbor(new BuildingId(BuildingKind.Harbor,"authored/mainland/"+i),name,linked,new TownState(name,portOwners[i],-1,-1),MapLayout.MainlandHarborLanding(i),new Vector3(x,-.24f,z+4));
             }
             for(int island=0;island<MapLayout.Islands.Length;island++)
                 AddIslandHarbor("Muelle insular "+(island+1),island,portOwners[mainland.Length+island]);
@@ -71,7 +72,7 @@ namespace RiskAI
             var site=MapLayout.Islands[island];
             float x=site.x*MapLayout.Spacing,z=(site.y-site.w)*MapLayout.Spacing;
             var state=new TownState(name,owner,-1,-1);
-            AddHarbor(name,null,state,MapLayout.IslandHarborLanding(island),new Vector3(x,-.24f,z-4));
+            AddHarbor(new BuildingId(BuildingKind.Harbor,"authored/island/"+island),name,null,state,MapLayout.IslandHarborLanding(island),new Vector3(x,-.24f,z-4));
         }
         void AddImportedHarbor(Settlement town)
         {
@@ -85,12 +86,12 @@ namespace RiskAI
             if(!found)berth=new Vector3(probe.x,-.24f,probe.z);
             var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;
             var harbor=go.AddComponent<Harbor>();
-            harbor.InitializeImported(this,town,berth,found?null:"El puerto no tiene una salida marítima segura.");Harbors.Add(harbor);AddEmbarkZone(harbor);
+            harbor.InitializeImported(this,new BuildingId(BuildingKind.Harbor,"imported/"+town.State.Id),town,berth,found?null:"El puerto no tiene una salida marítima segura.");Harbors.Add(harbor);AddEmbarkZone(harbor);
         }
-        void AddHarbor(string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
+        void AddHarbor(BuildingId buildingId,string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
         {
             var go=new GameObject(name);go.transform.SetParent(transform,false);go.transform.position=berth;
-            var harbor=go.AddComponent<Harbor>();harbor.Initialize(this,name,linked,state,landing,berth);Harbors.Add(harbor);AddEmbarkZone(harbor);
+            var harbor=go.AddComponent<Harbor>();harbor.Initialize(this,buildingId,name,linked,state,landing,berth);Harbors.Add(harbor);AddEmbarkZone(harbor);
         }
         void AddEmbarkZone(Harbor harbor)
         {
@@ -202,7 +203,7 @@ namespace RiskAI
             // their phase is staggered to avoid rebuilding every fleet route together.
             if(fleet<2&&Session.Economy.Gold[team]>=Harbor.Cost(ShipKind.Galley))
                 foreach(var harbor in Harbors)
-                    if(harbor.Owner==team&&harbor.QueueCount==0&&harbor.Buy(ShipKind.Galley,team)==null)break;
+                    if(harbor.Owner==team&&harbor.QueueCount==0&&buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Galley))==null)break;
             foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Galley&&!ship.CurrentTarget)
             {
                 Harbor target=null;float distance=float.MaxValue;

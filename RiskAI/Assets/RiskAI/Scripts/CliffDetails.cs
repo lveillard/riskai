@@ -8,11 +8,12 @@ namespace RiskAI
         public static void Create(Transform parent)
         {
             var root=new GameObject("Fractured escarpment outcrops");root.transform.SetParent(parent,false);
-            var template=Resources.Load<Material>("PaintedSurface");var stone=new Material(template);
+            var resources=GeneratedResourceOwner.For(parent);
+            var template=Resources.Load<Material>("PaintedSurface");var stone=resources.Track(new Material(template));
             stone.SetTexture("_Atlas",Resources.Load<Texture2D>("Painted/CliffAtlas-v07"));
             stone.SetVector("_Tile",new Vector4(0,.5f,0,0));stone.SetFloat("_Scale",.17f);
             stone.SetColor("_Tint",new Color(.94f,.99f,1.04f));
-            var random=new System.Random(704);var mesh=Shard();
+            var random=new System.Random(704);var mesh=resources.Track(Shard());
             for(int cliff=0;cliff<MapLayout.Cliffs.Length;cliff++)
             {
                 var points=MapLayout.Cliffs[cliff];

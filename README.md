@@ -1,10 +1,12 @@
-# RiskAI · v0.18
+# RiskAI · v0.19
 
 Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP y arte propio/CC0. Abre **Play-RiskAI.cmd** para jugar la compilación local. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`.
 
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
-![v0.18: menú previo](docs/images/v0.18-menu.png)
+La v0.19 incorpora menú y controles en UI Toolkit, paneles adaptables, entrada táctil/lápiz compartida y preparación de la exportación Web. **La compilación y las pruebas disponibles son Windows; navegador y ARM físico siguen sin validar.** [Fase 2 y límites](docs/PHASE2.md).
+
+![v0.19: menú previo](docs/images/v0.19-menu.png)
 
 ## Escenarios y reglas comunes
 
@@ -33,7 +35,7 @@ La caja de selección prioriza tropas móviles y, cuando no las contiene, permit
 
 La selección múltiple muestra las colas de cada edificio y permite cancelar encargos concretos. Una compra añade una unidad total a la cola compatible más corta; no multiplica coste ni unidades por los edificios seleccionados. Las ciudades y los puertos mantienen colas independientes de tierra y mar.
 
-![v0.18: ciudad y selección](docs/images/v0.18-city.png)
+![v0.19: ciudad y selección](docs/images/v0.19-city.png)
 
 ![v0.18: colas múltiples](docs/images/v0.18-queues.png)
 
@@ -70,15 +72,28 @@ Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. La batalla está en `Ass
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
 .\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
-.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.18/RiskAI.exe
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.19/RiskAI.exe
+.\scripts\Unity.ps1 -Action BuildWeb   # Requiere Web Build Support del mismo editor
 ```
 
 Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map classic`, `riverlands`, `europe` o `newworld`.
 
 La v0.18 tiene build Windows, 171 casos Unity aprobados y 7 pruebas Python. Las sondas incluyen una partida avanzada de 16 jugadores y una carga de hasta 660 unidades; registran respuesta a órdenes, tiempos de fotograma y coste naval. Persisten esperas de navegación y picos: [mediciones y límites](docs/VALIDATION-v0.18.md). [Cambios v0.18](docs/ITERATION-v0.18.md) · [Estructura del código](RiskAI/README.md) · [Diagnóstico en vivo](docs/OBSERVABILITY.md) · [Pendientes](TODO.md).
 
+La v0.19 reúne **206 casos Unity distintos aprobados y ocho Python**, con
+repeticiones dirigidas de los fallos encontrados. Europe, tras 900 segundos
+simulados, registró 10,05 ms por fotograma de media durante 90 segundos a 1x;
+no es una comparación determinista con v0.18. [Validación v0.19](docs/VALIDATION-v0.19.md)
+· [Tres revisiones Grok 4.6](docs/audits/GROK-v0.19.md).
+
+Los controles táctiles usan el mismo adaptador de órdenes: un dedo/lápiz
+selecciona o arrastra una caja; dos dedos mueven/zoom; un toque de dos dedos
+o doble toque da una orden contextual. El toque simple espera 240 ms para
+conservar la selección anterior en un doble toque. Las pruebas de dispositivos
+son sintéticas: falta comprobar el comportamiento en hardware real.
+
 ## Referencias y licencias
 
-`RiskAI.Core` no depende de Unity. `BattleWorld` ordena ticks a 20 Hz; `CombatWorld` resuelve impactos sin depender de la vista; NavMesh y actores aún usan Unity y no garantizan replay determinista. Touch, Web, Android, multijugador, niebla, guardado y diplomacia siguen pendientes.
+`RiskAI.Core` no depende de Unity. `BattleWorld` ordena ticks a 20 Hz; `CombatWorld` resuelve impactos sin depender de la vista; NavMesh y actores aún usan Unity y no garantizan replay determinista. Touch y lápiz cuentan con pruebas sintéticas; Web y Android necesitan validación de plataforma. Multijugador, niebla, guardado y diplomacia siguen pendientes.
 
 El juego distribuye arte propio y KayKit CC0. No incluye modelos, texturas, sonidos, discos ni claves de Warcraft. [Créditos y licencias](THIRD_PARTY_NOTICES.md). Las referencias de investigación y compilaciones quedan fuera de Git.
