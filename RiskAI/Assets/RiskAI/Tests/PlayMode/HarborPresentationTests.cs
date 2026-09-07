@@ -98,15 +98,15 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator EmbarkRingOnlyShowsForSelectedHarborAndEntriesUseNavMesh()
+        public IEnumerator HarborKeepsSmallClaimRingAndEntriesUseNavMesh()
         {
             var harbor=naval.Harbors.First(item=>item.Owner==0&&!item.IsImportedPort);
             var zone=naval.EmbarkZones.First(item=>item.Harbor==harbor);
-            var embarkRing=zone.GetComponentInChildren<LineRenderer>(true);
-            Assert.That(embarkRing,Is.Not.Null);Assert.That(embarkRing.enabled,Is.False);
+            Assert.That(zone.GetComponentsInChildren<LineRenderer>(true),Is.Empty);
             Assert.That(harbor.GetComponentsInChildren<LineRenderer>(true).Any(item=>item.enabled),Is.True,"The smaller harbor claim/guard ring remains visible.");
-            harbor.Select(true);Assert.That(embarkRing.enabled,Is.True);
-            harbor.Select(false);Assert.That(embarkRing.enabled,Is.False);
+            harbor.Select(true);
+            Assert.That(zone.GetComponentsInChildren<LineRenderer>(true),Is.Empty,"Selecting a port uses the common building ring, without a loading radius overlay.");
+            harbor.Select(false);
 
             var town=battle.Towns.First(item=>item.State.Owner==0);
             Assert.That(NavMesh.SamplePosition(town.DefaultLandEntry,out var townEntry,2f,NavMesh.AllAreas),Is.True);

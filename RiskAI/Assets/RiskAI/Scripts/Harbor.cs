@@ -58,7 +58,6 @@ namespace RiskAI
         public ShipKind QueuedKind(int index)=>queue[index].Kind;
         public bool BuildingTower=>Defense&&Defense.UnderConstruction;
         int towerBuilder=-1;float towerBuildRemaining;
-        bool embarkIndicatorSynced,embarkIndicatorVisible;
         BuildingTrainingView trainingView;
         LineRenderer rallyRing;
 
@@ -127,7 +126,6 @@ namespace RiskAI
             if(selectionRing)selectionRing.enabled=selected;
             if(rallyRing)rallyRing.enabled=selected&&Owner==0;
             if(claimRing)claimRing.widthMultiplier=selected ? .11f : .065f;
-            SyncEmbarkIndicator();
         }
         public bool SetRally(Vector3 target)
         {
@@ -148,22 +146,6 @@ namespace RiskAI
                 navalClaimRing.startColor=navalClaimRing.endColor=State.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,State.Capture*.65f);
             }
             if(sharesTown&&LinkedTown)LinkedTown.SetNavalClaimVisual(navalGuard);
-            // City-sized claim/guard circles stay present. The larger loading-area
-            // indicator is an interaction aid, so it appears only when selected.
-            SyncEmbarkIndicator();
-        }
-        void SyncEmbarkIndicator()
-        {
-            if(!world)return;
-            bool found=false;
-            foreach(var zone in world.EmbarkZones)
-            {
-                if(!zone||zone.Harbor!=this)continue;
-                found=true;
-                if(embarkIndicatorSynced&&embarkIndicatorVisible==Selected)break;
-                foreach(var ring in zone.GetComponentsInChildren<LineRenderer>(true))ring.enabled=Selected;
-            }
-            if(found){embarkIndicatorSynced=true;embarkIndicatorVisible=Selected;}
         }
         /// <summary>Called after land claim resolution; a live land defender always wins.</summary>
         public int ResolveNavalOwner(int previousOwner)

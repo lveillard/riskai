@@ -95,7 +95,9 @@ namespace RiskAI
         }
         void AddEmbarkZone(Harbor harbor)
         {
-            var zone=NavalEmbarkZone.Create(transform,harbor);if(zone)EmbarkZones.Add(zone);
+            var zone=NavalEmbarkZone.Create(transform,harbor);
+            if(!zone)return;
+            EmbarkZones.Add(zone);
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
         public Ship Spawn(int team,ShipKind kind,Vector3 point)
