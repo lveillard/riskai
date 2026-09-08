@@ -1,0 +1,1285 @@
+[
+  {
+    "timestamp": 1788886332.7770526,
+    "freeGiB": 9.033588409423828,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886332.798789,
+    "freeGiB": 9.034164428710938,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886333.814694,
+    "freeGiB": 8.700843811035156,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886334.8301983,
+    "freeGiB": 8.451713562011719,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886335.8477545,
+    "freeGiB": 8.419422149658203,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886336.8643818,
+    "freeGiB": 8.369529724121094,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886337.8848064,
+    "freeGiB": 8.38522720336914,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886338.9016545,
+    "freeGiB": 8.298046112060547,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886339.9176755,
+    "freeGiB": 8.227336883544922,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886340.9323385,
+    "freeGiB": 8.119560241699219,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886341.9479928,
+    "freeGiB": 7.943523406982422,
+    "competingProcesses": [
+      {
+        "pid": 45832,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886342.968062,
+    "freeGiB": 7.997161865234375,
+    "competingProcesses": [
+      {
+        "pid": 45832,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886343.98605,
+    "freeGiB": 7.9351959228515625,
+    "competingProcesses": [
+      {
+        "pid": 45832,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886345.006742,
+    "freeGiB": 7.993171691894531,
+    "competingProcesses": [
+      {
+        "pid": 45832,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886346.027146,
+    "freeGiB": 8.02346420288086,
+    "competingProcesses": [
+      {
+        "pid": 45832,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886347.0500488,
+    "freeGiB": 7.8958892822265625,
+    "competingProcesses": [
+      {
+        "pid": 45832,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886348.0731194,
+    "freeGiB": 7.948616027832031,
+    "competingProcesses": [
+      {
+        "pid": 45832,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886349.096328,
+    "freeGiB": 8.010326385498047,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886350.1214237,
+    "freeGiB": 7.921031951904297,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886351.1414084,
+    "freeGiB": 7.879844665527344,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886352.1622288,
+    "freeGiB": 7.895713806152344,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886353.179407,
+    "freeGiB": 7.955863952636719,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886354.2016747,
+    "freeGiB": 7.972232818603516,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886355.2213404,
+    "freeGiB": 7.958522796630859,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886356.2404704,
+    "freeGiB": 7.957515716552734,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886357.2631524,
+    "freeGiB": 7.902179718017578,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886358.2868848,
+    "freeGiB": 7.777202606201172,
+    "competingProcesses": [
+      {
+        "pid": 35232,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886359.3087525,
+    "freeGiB": 7.819965362548828,
+    "competingProcesses": [
+      {
+        "pid": 35232,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886360.3309376,
+    "freeGiB": 7.736759185791016,
+    "competingProcesses": [
+      {
+        "pid": 35232,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886361.353663,
+    "freeGiB": 7.787715911865234,
+    "competingProcesses": [
+      {
+        "pid": 35232,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886362.3781583,
+    "freeGiB": 7.784091949462891,
+    "competingProcesses": [
+      {
+        "pid": 35232,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886363.4025297,
+    "freeGiB": 7.709892272949219,
+    "competingProcesses": [
+      {
+        "pid": 35232,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886364.4239414,
+    "freeGiB": 7.696865081787109,
+    "competingProcesses": [
+      {
+        "pid": 35232,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886365.446614,
+    "freeGiB": 7.9561767578125,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886366.467217,
+    "freeGiB": 7.962055206298828,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886367.4893322,
+    "freeGiB": 7.931343078613281,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886368.5179543,
+    "freeGiB": 7.766986846923828,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886369.543299,
+    "freeGiB": 7.720237731933594,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886370.568396,
+    "freeGiB": 7.784526824951172,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886371.5882797,
+    "freeGiB": 7.811222076416016,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886372.6086032,
+    "freeGiB": 7.8359222412109375,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886373.6287737,
+    "freeGiB": 7.853710174560547,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886374.6528366,
+    "freeGiB": 7.773242950439453,
+    "competingProcesses": []
+  },
+  {
+    "timestamp": 1788886375.6762502,
+    "freeGiB": 7.747997283935547,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886376.6972778,
+    "freeGiB": 7.737030029296875,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886377.7148385,
+    "freeGiB": 7.689548492431641,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886378.7348871,
+    "freeGiB": 7.642585754394531,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886379.7550433,
+    "freeGiB": 7.621067047119141,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886380.777919,
+    "freeGiB": 7.5392913818359375,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886381.8015628,
+    "freeGiB": 7.47467041015625,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886382.823846,
+    "freeGiB": 6.723884582519531,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886383.846548,
+    "freeGiB": 6.835186004638672,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886384.873266,
+    "freeGiB": 6.745307922363281,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886385.892603,
+    "freeGiB": 6.634159088134766,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886386.915751,
+    "freeGiB": 6.5313262939453125,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886387.9395473,
+    "freeGiB": 6.427661895751953,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886388.9627082,
+    "freeGiB": 6.306537628173828,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886389.9879813,
+    "freeGiB": 6.186820983886719,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886391.0155978,
+    "freeGiB": 6.074146270751953,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886392.0490174,
+    "freeGiB": 5.847927093505859,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886393.0798159,
+    "freeGiB": 5.612995147705078,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886394.1150894,
+    "freeGiB": 5.610019683837891,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886395.1416152,
+    "freeGiB": 5.706764221191406,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886396.165191,
+    "freeGiB": 5.659198760986328,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886397.1870508,
+    "freeGiB": 5.560169219970703,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886398.208195,
+    "freeGiB": 5.550930023193359,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886399.2293248,
+    "freeGiB": 5.494678497314453,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886400.259922,
+    "freeGiB": 5.505214691162109,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886401.280863,
+    "freeGiB": 5.472175598144531,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886402.303706,
+    "freeGiB": 5.392665863037109,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886403.3246577,
+    "freeGiB": 5.386135101318359,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886404.341301,
+    "freeGiB": 5.377815246582031,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886405.3628237,
+    "freeGiB": 5.363334655761719,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886406.3870485,
+    "freeGiB": 5.344512939453125,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886407.4126825,
+    "freeGiB": 5.327598571777344,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886408.4329567,
+    "freeGiB": 5.316173553466797,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886409.455427,
+    "freeGiB": 5.370227813720703,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886410.4808187,
+    "freeGiB": 5.328266143798828,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886411.5051277,
+    "freeGiB": 5.235210418701172,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886412.5282972,
+    "freeGiB": 5.361812591552734,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886413.5625012,
+    "freeGiB": 5.2475738525390625,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886414.5844712,
+    "freeGiB": 5.118709564208984,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886415.6140356,
+    "freeGiB": 5.267921447753906,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886416.6427326,
+    "freeGiB": 5.239978790283203,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886417.6702344,
+    "freeGiB": 5.185184478759766,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886418.7005143,
+    "freeGiB": 5.118061065673828,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886419.7262082,
+    "freeGiB": 5.083915710449219,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886420.7570312,
+    "freeGiB": 4.994640350341797,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886421.7827024,
+    "freeGiB": 4.868492126464844,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886422.816162,
+    "freeGiB": 4.717201232910156,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886423.8559268,
+    "freeGiB": 4.436103820800781,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886424.8819754,
+    "freeGiB": 4.869831085205078,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886425.9099104,
+    "freeGiB": 4.686000823974609,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886426.9341073,
+    "freeGiB": 4.5875244140625,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886427.9665055,
+    "freeGiB": 4.4618072509765625,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886428.990161,
+    "freeGiB": 4.470607757568359,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886430.021327,
+    "freeGiB": 4.260295867919922,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886431.0435917,
+    "freeGiB": 4.6237640380859375,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 42184,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886432.070073,
+    "freeGiB": 5.983207702636719,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886433.0949807,
+    "freeGiB": 5.991889953613281,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886434.1137846,
+    "freeGiB": 5.968471527099609,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      }
+    ]
+  },
+  {
+    "timestamp": 1788886435.1325886,
+    "freeGiB": 6.680370330810547,
+    "competingProcesses": [
+      {
+        "pid": 64700,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 10752,
+        "name": "rustc.exe"
+      }
+    ]
+  }
+]

@@ -1,0 +1,49 @@
+{
+  "url": "http://127.0.0.1:8081/?riskai-seed=19031&riskai-players=16",
+  "viewport": [
+    1600,
+    900
+  ],
+  "physicalHardware": false,
+  "penStartedBattle": true,
+  "consumedPen": [
+    [
+      0,
+      0.884375,
+      0.92,
+      1,
+      0.5,
+      0,
+      0,
+      4841.9000000059605
+    ],
+    [
+      0,
+      0.884375,
+      0.92,
+      0,
+      0,
+      0,
+      0,
+      5014.5
+    ]
+  ],
+  "errors": [],
+  "cameraRequested": true,
+  "cameraTouchRequested": true,
+  "cameraCaptures": [
+    "Captures\\v22-web-minimap-ui-r1\\paused-before.png",
+    "Captures\\v22-web-minimap-ui-r1\\paused-wheel.png",
+    "Captures\\v22-web-minimap-ui-r1\\paused-right-drag.png",
+    "Captures\\v22-web-minimap-ui-r1\\paused-middle-drag.png",
+    "Captures\\v22-web-minimap-ui-r1\\paused-touch-camera.png"
+  ],
+  "uiWheelCaptures": [
+    "Captures\\v22-web-minimap-ui-r1\\ranking-before.png",
+    "Captures\\v22-web-minimap-ui-r1\\ranking-down.png",
+    "Captures\\v22-web-minimap-ui-r1\\ranking-up.png"
+  ],
+  "success": true,
+  "browser": "152.0.4191.66",
+  "seconds": 28.827
+}

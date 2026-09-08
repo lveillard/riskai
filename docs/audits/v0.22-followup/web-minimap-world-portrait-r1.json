@@ -1,0 +1,32 @@
+{
+  "url": "http://127.0.0.1:8081/?riskai-seed=19031&riskai-players=16&riskai-path-budget=500&riskai-map=world&riskai-play=1",
+  "desktop_browser": true,
+  "physical_arm": false,
+  "viewport": [
+    768,
+    1024
+  ],
+  "device_scale_factor": 1,
+  "draws_suppressed": false,
+  "overview": false,
+  "path_budget": 500,
+  "sustained_navigation": false,
+  "minimap_hidden": false,
+  "browser": "152.0.4191.66",
+  "loader_seconds": 6.06,
+  "battle_ready_seconds": 23.924,
+  "canvas": {
+    "width": 768,
+    "height": 1024,
+    "cssWidth": 768,
+    "cssHeight": 1024,
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Laptop GPU (0x00002C59) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "heapBytes": 577437696
+  },
+  "success": true,
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
+  "seconds": 31.87
+}

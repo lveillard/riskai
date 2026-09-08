@@ -1,9 +1,27 @@
 # Validación v0.22 — presentación y navegación
 
 Ronda del 8 de septiembre de 2026 sobre `main` tras el merge `a2d593d`.
-Código de ejecución: `8de052e`; la documentación posterior sólo normaliza
-espacios de metadatos Unity y publica la evidencia.
+Código de ejecución de esta evidencia inicial: `8de052e`. Este informe conserva
+sus resultados, capturas e intentos rechazados; no los atribuye al seguimiento.
 Un mismo proyecto Unity 6000.3.23f1 mantiene las reglas de Windows y Web.
+
+Estado posterior en `61f386d`: completado el suavizado **acotado** de esquinas
+costeras de Europe/NewWorld, con 10 casos EditMode y 10 PlayMode aprobados
+(`coast-edit-r1` y `coast-play-r1`). Se desplazan como máximo 0,2 celdas
+(0,512 m), con radios protegidos de 9 m alrededor de ciudades y 24 m alrededor
+de puertos, tanto en el ancla del modelo como en la de ocupación. Tierra, agua,
+collider y consultas CPU usan los mismos triángulos deformados; alturas, flags
+y conectividad fuente se conservan. No se añaden vértices, triángulos ni draws.
+El campo de arena/roca conserva sus coordenadas de mundo y su umbral compartido.
+Es un redondeo local de esquinas, no una remodelación realista de toda la costa.
+
+Las pasadas limpias 500 y 1000 del seguimiento mantienen 900 unidades durante
+90 s; la de 2000 coincidió con Rust externo y debe repetirse. La comparación
+completa y la confirmación avanzada siguen abiertas; el presupuesto continúa
+en 500. El seguimiento también incorpora el minimapa optimizado de `2a9192b`,
+Windows/Web finales y 27 pruebas adicionales dirigidas. Sus capturas y
+mediciones se documentan por separado en
+[Seguimiento v0.22](VALIDATION-v0.22-FOLLOWUP.md).
 
 ## Cambios
 
@@ -21,8 +39,9 @@ Un mismo proyecto Unity 6000.3.23f1 mantiene las reglas de Windows y Web.
   locales. Se mantienen las comprobaciones de muelle, NavMesh, pendiente y
   proximidad al océano: el material arenoso por sí solo no garantiza acceso.
   Arena texturada, roca más fría y agua somera distinguen mejor las orillas.
-  **La silueta geométrica angular de los mapas importados sigue pendiente**;
-  no se han desplazado ciudades, islas, agua ni datos de navegación fuente.
+  En `8de052e` la silueta geométrica angular seguía pendiente y no se habían
+  desplazado ciudades, islas, agua ni datos de navegación fuente. El redondeo
+  acotado posterior pertenece al seguimiento `61f386d` descrito arriba.
 - El caballero tiene patas articuladas en pares diagonales, balanceo y
   transición gradual al reposo. La fase se integra sin saltar cuando cambia
   la velocidad o la partida lleva mucho tiempo. La lanza lee la preparación
@@ -89,8 +108,8 @@ rechazó; el de 4 m conserva todos los criterios y alcanza 900.
 
 `scripts/measure_navigation_ab.py` prepara ejecuciones separadas de 90 s
 con presupuestos 500/1000/2000, verifica identidad de posiciones/órdenes y
-registra RAM y compiladores externos. La comparación limpia sigue pendiente
-de una ventana sin compilación externa. Dos intentos de preparar una partida
+registra RAM y compiladores externos. Al cierre de `8de052e`, la comparación
+limpia esperaba una ventana sin compilación externa. Dos intentos de preparar una partida
 avanzada llegaron a 900 s simulados y se rechazaron porque la sonda no logró
 crear una cohorte móvil del jugador cero; el segundo activaba su comandante
 durante el calentamiento. El registro no distingue eliminación del jugador

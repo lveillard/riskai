@@ -4,7 +4,9 @@ Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcra
 
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
-La v0.22 distingue los círculos navales, mantiene al guardián anclado al disparar y hace visible la luz de entrenamiento en la puerta. Arena, roca y reglas de desembarco comparten el mismo campo; las orillas importadas tienen nuevos materiales y agua somera. El caballero articula el trote y sincroniza la lanza con el golpe real. La ronda reúne 31 casos Unity aprobados y una prueba funcional con 900 unidades durante 30 segundos; la comparación limpia de navegación y el hardware ARM siguen pendientes. [Validación v0.22](docs/VALIDATION-v0.22.md) · [Fase 2](docs/PHASE2.md).
+La v0.22 distingue los círculos navales, mantiene al guardián anclado al disparar y hace visible la luz de entrenamiento en la puerta. Arena, roca y reglas de desembarco comparten el mismo campo. Europe y NewWorld también suavizan esquinas de costa hasta 0,512 m: terreno, agua, colisión y consultas de navegación usan la misma geometría, con ciudades y muelles protegidos. El caballero articula el trote y sincroniza la lanza con el golpe real.
+
+Windows y Web están exportados en `2a9192b`. El minimapa agrupa sus marcadores en una textura reutilizada; Web completa 90 s con 900 unidades y 27.000 órdenes sin rechazos. Se comprobaron interfaz, cámara y formato vertical. La ronda reúne 52 casos Unity distintos aprobados (27 en esta continuación) y 12 Python. Siguen pendientes las mediciones sin carga externa de 2000/partida avanzada, mayor fluidez Web con 900 unidades y ARM físico; el presupuesto sigue en 500. [Validación inicial v0.22](docs/VALIDATION-v0.22.md) · [Seguimiento](docs/VALIDATION-v0.22-FOLLOWUP.md) · [Fase 2](docs/PHASE2.md).
 
 ![v0.22: luz de entrenamiento](docs/audits/v0.22/classic-town-training.webp)
 

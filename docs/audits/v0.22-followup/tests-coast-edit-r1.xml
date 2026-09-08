@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="10" result="Passed" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.407598">
+  <test-suite type="TestSuite" id="1000" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="84" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.407598" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1111" name="RiskAI.Tests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.Tests.dll" runstate="Runnable" testcasecount="84" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.395000" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="31976" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1112" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="84" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.389776" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1113" name="Tests" fullname="RiskAI.Tests" runstate="Runnable" testcasecount="84" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.386341" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1038" name="ImportedCoastGeometryTests" fullname="RiskAI.Tests.ImportedCoastGeometryTests" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.275273" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="ParameterizedMethod" id="1045" name="CityAndPortBothProtectTheirModelAndClaimAnchors" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.056817" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1041" name="CityAndPortBothProtectTheirModelAndClaimAnchors(False,False)" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(False,False)" methodname="CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="227524242" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.042237" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1042" name="CityAndPortBothProtectTheirModelAndClaimAnchors(False,True)" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(False,True)" methodname="CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="241531627" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.000524" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1043" name="CityAndPortBothProtectTheirModelAndClaimAnchors(True,False)" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(True,False)" methodname="CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="119976572" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.000462" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1044" name="CityAndPortBothProtectTheirModelAndClaimAnchors(True,True)" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(True,True)" methodname="CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="29052115" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.000743" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1040" name="HeightWaterLandAndInverseMatchRenderedTrianglesIncludingCrossedSourceCells" fullname="RiskAI.Tests.ImportedCoastGeometryTests.HeightWaterLandAndInverseMatchRenderedTrianglesIncludingCrossedSourceCells" methodname="HeightWaterLandAndInverseMatchRenderedTrianglesIncludingCrossedSourceCells" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="1284499607" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.189169" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1039" name="RoundingIsBoundedPreservesSourceArraysAndKeepsEveryTriangleOriented" fullname="RiskAI.Tests.ImportedCoastGeometryTests.RoundingIsBoundedPreservesSourceArraysAndKeepsEveryTriangleOriented" methodname="RoundingIsBoundedPreservesSourceArraysAndKeepsEveryTriangleOriented" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="1610163262" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.011935" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1046" name="SmallDryIslandSurvivesInsideSourceWaterWithoutChangingItsFlags" fullname="RiskAI.Tests.ImportedCoastGeometryTests.SmallDryIslandSurvivesInsideSourceWaterWithoutChangingItsFlags" methodname="SmallDryIslandSurvivesInsideSourceWaterWithoutChangingItsFlags" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="1647046842" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.002066" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1047" name="ImportedGroundDecodingTests" fullname="RiskAI.Tests.ImportedGroundDecodingTests" classname="RiskAI.Tests.ImportedGroundDecodingTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.011470" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1048" name="TileSelectionIgnoresVariationWaterAndCliffFlags" fullname="RiskAI.Tests.ImportedGroundDecodingTests.TileSelectionIgnoresVariationWaterAndCliffFlags" methodname="TileSelectionIgnoresVariationWaterAndCliffFlags" classname="RiskAI.Tests.ImportedGroundDecodingTests" runstate="Runnable" seed="228730632" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.005115" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1049" name="ImportedLandscapeAugmentTests" fullname="RiskAI.Tests.ImportedLandscapeAugmentTests" classname="RiskAI.Tests.ImportedLandscapeAugmentTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.080315" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1050" name="EuropeReliefPreservesAnchorClearingsWaterAndGentleGrades" fullname="RiskAI.Tests.ImportedLandscapeAugmentTests.EuropeReliefPreservesAnchorClearingsWaterAndGentleGrades" methodname="EuropeReliefPreservesAnchorClearingsWaterAndGentleGrades" classname="RiskAI.Tests.ImportedLandscapeAugmentTests" runstate="Runnable" seed="1739521731" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.044092" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1051" name="NewWorldUsesTheSpecifiedSourceCoordinateOffset" fullname="RiskAI.Tests.ImportedLandscapeAugmentTests.NewWorldUsesTheSpecifiedSourceCoordinateOffset" methodname="NewWorldUsesTheSpecifiedSourceCoordinateOffset" classname="RiskAI.Tests.ImportedLandscapeAugmentTests" runstate="Runnable" seed="1447524550" result="Passed" start-time="2026-09-08 16:56:08Z" end-time="2026-09-08 16:56:08Z" duration="0.033752" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

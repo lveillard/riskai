@@ -1,10 +1,26 @@
 # Fase 2 · tablet, móvil y navegador
 
-Avance v0.22: guardianes navales, luz de entrenamiento, clasificación de
-playas compartida y animación montada mejorados. 31 casos Unity aprobados;
-la sonda aislada mantiene 900 unidades durante 30 s, con compilación externa.
-La comparación limpia de presupuestos, el combate con carga sostenida y
-los dispositivos ARM físicos siguen abiertos. [Evidencia v0.22](VALIDATION-v0.22.md).
+Avance v0.22: guardianes navales, luz de entrenamiento, playas compartidas y
+animación montada mejorados. El seguimiento `61f386d` completa el suavizado
+acotado de esquinas de costa de Europe/NewWorld: máximo 0,512 m, protección
+de ciudades y puertos, y geometría común para render, agua, colisión y consultas
+CPU, sin triángulos adicionales. Supera 10 casos EditMode y 10 PlayMode.
+
+`2a9192b` agrupa los marcadores del minimapa en una textura reutilizada y añade
+siete regresiones aprobadas. Windows/Web exportados y comprobados, incluida
+interfaz y vista vertical. Web sostiene 900 unidades durante 90 s, con 27.000
+órdenes y cero rechazos; la media observada baja de 85,92 a 56,63 ms/frame
+entre pasadas con carga externa variable. No es una comparación limpia ni
+resuelve la fluidez Web con esa carga. La ronda v0.22 reúne 52 casos Unity
+distintos aprobados y 12 Python.
+
+Las pasadas limpias con presupuestos 500 y 1000 mantienen 900 unidades durante
+90 s; la de 2000 debe repetirse por compilación Rust externa. La comparación
+completa, su confirmación en partida avanzada, el combate con carga sostenida
+y ARM físico siguen abiertos. La preparación avanzada ya completó 900 s
+simulados y 90 s medidos, también con carga externa. El presupuesto permanece
+en 500.
+[Evidencia inicial v0.22](VALIDATION-v0.22.md) · [Seguimiento](VALIDATION-v0.22-FOLLOWUP.md).
 
 Base cerrada: v0.18, commit cd3ff21. Objetivo activo desde el 7 de septiembre
 de 2026. Primera plataforma de referencia: Chrome en Android; un dispositivo

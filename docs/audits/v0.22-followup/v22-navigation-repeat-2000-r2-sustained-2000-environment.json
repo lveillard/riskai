@@ -1,0 +1,24 @@
+[
+  {
+    "timestamp": 1788889440.173906,
+    "freeGiB": 4.560649871826172,
+    "competingProcesses": [
+      {
+        "pid": 51784,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 35884,
+        "name": "rustc.exe"
+      },
+      {
+        "pid": 37240,
+        "name": "cargo.exe"
+      },
+      {
+        "pid": 24624,
+        "name": "rustc.exe"
+      }
+    ]
+  }
+]
