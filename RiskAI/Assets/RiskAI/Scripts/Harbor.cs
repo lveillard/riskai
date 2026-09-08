@@ -16,6 +16,8 @@ namespace RiskAI
         CityClaimZone claimZone;LineRenderer claimRing,selectionRing,navalClaimRing;
         Ship navalDefender=>claimZone?.NavalDefender;
         bool sharesTown,canLaunch;
+        bool transportLandingCached;
+        Vector3 cachedTransportLanding, cachedTransportBerth;
         string launchBlockReason;
         public Settlement LinkedTown { get; private set; }
         public BuildingId BuildingId { get; private set; }
@@ -63,6 +65,7 @@ namespace RiskAI
 
         public void Initialize(NavalWorld naval,BuildingId buildingId,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth)
         {
+            transportLandingCached=false;cachedTransportLanding=default;cachedTransportBerth=default;
             sharesTown=false;canLaunch=SeaNavigation.HasClearance(berth);launchBlockReason=canLaunch?null:"El puerto no tiene una salida marítima segura.";
             world=naval;BuildingId=buildingId;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;landRally=LandEntry;lastOwner=Owner;
             var entrance=NavalArt.CreateHarbor(this);
@@ -81,6 +84,7 @@ namespace RiskAI
         }
         internal void InitializeImported(NavalWorld naval,BuildingId buildingId,Settlement town,Vector3 berth,string unavailableReason)
         {
+            transportLandingCached=false;cachedTransportLanding=default;cachedTransportBerth=default;
             world=naval;BuildingId=buildingId;DisplayName=town.DisplayName;LinkedTown=town;state=town.State;claimZone=town.ClaimZone;Defense=town.Defense;
             Landing=town.ClaimPoint;Berth=berth;lastOwner=Owner;sharesTown=true;
             claimZone.AttachHarbor(this);
@@ -116,12 +120,14 @@ namespace RiskAI
         }
         public bool TryTransportLanding(out Vector3 landing,out Vector3 berth)
         {
+            if(transportLandingCached){landing=cachedTransportLanding;berth=cachedTransportBerth;return true;}
             berth=default;
             if(!CanLaunch||!ShoreAccess.TryLanding(Landing,out landing,out _))
             {landing=default;return false;}
             // The guard/spawn berth may be farther offshore. Cargo needs its
             // own approach inside the same loading range used by the player.
-            return SeaNavigation.TryNearestOcean(landing,Ship.LoadRadius-.45f,out berth);
+            if(!SeaNavigation.TryNearestOcean(landing,Ship.LoadRadius-.45f,out berth))return false;
+            cachedTransportLanding=landing;cachedTransportBerth=berth;transportLandingCached=true;return true;
         }
         internal bool IsInBerthCircle(Vector3 point)=>FlatDistance(point,Berth)<=ClaimRules.CircleRadius*ClaimRules.CircleRadius;
         public bool IsShipDocked(Ship ship)=>ship&&FlatDistance(ship.transform.position,Berth)<=BerthRadius*BerthRadius;
@@ -266,7 +272,6 @@ namespace RiskAI
         {
             if(!world||world.Session.Paused||world.Session.Winner>=0)return;
             if(navalDefender&&navalDefender.Team!=Owner)SetNavalDefender(null);
-            if(sharesTown&&HasLivingDefender)SetNavalDefender(null);
             if(Owner!=lastOwner)
             {
                 RefundQueue();RefundLandQueue();

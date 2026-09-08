@@ -58,8 +58,7 @@ namespace RiskAI
             if (Defender && (!IsEligible(Defender) || Defender.Garrison != this)) Defender = null;
             if (NavalDefender)
             {
-                if (harbor && harbor.HasNavalDefender) return owner;
-                SetNavalDefender(null,harbor);
+                if (!harbor || !harbor.HasNavalDefender) SetNavalDefender(null,harbor);
             }
             for (int i = 0; soldiers != null && i < soldiers.Count; i++)
             {
@@ -80,7 +79,9 @@ namespace RiskAI
                     { enemy = unit; enemyDistance = distance; }
                 }
             }
-            if (Defender) return owner;
+            // A living guardian holds ownership, but enemies in the capture area
+            // still make the post contested for visuals and combat decisions.
+            if (Defender || NavalDefender) return owner;
             // A living allied replacement has priority, even when an enemy is closer.
             // The nearest enemy inherits an undefended post; otherwise it becomes neutral.
             CombatTarget successor = friendly ? friendly : enemy;

@@ -113,13 +113,6 @@ namespace RiskAI
             foreach(var harbor in Harbors){float next=FlatDistance(harbor.Landing,point);if(next<distance){distance=next;best=harbor;}}
             return best;
         }
-        public Harbor NearestEmbarkHarbor(Vector3 point,float radius=float.MaxValue)
-        {
-            Harbor best=null;float distance=radius*radius;
-            foreach(var harbor in Harbors)if(harbor&&harbor.IsEmbarkZone(point))
-            {float next=FlatDistance(harbor.Landing,point);if(next<distance){distance=next;best=harbor;}}
-            return best;
-        }
         /// <summary>Moves a transport and selected soldier into the same marked embark zone.</summary>
         public string OrderEmbark(Ship ship,Soldier soldier)
         {

@@ -41,7 +41,7 @@ sin introducir excepciones de IA ni cambios de escala.
 
 ## Pruebas automatizadas
 
-Unity **6000.3.23f1**, Windows: **72 casos PlayMode distintos aprobados**
+Unity **6000.3.23f1**, Windows: **83 casos PlayMode distintos aprobados**
 según el resultado más reciente de cada caso, más **3/3 EditMode** de
 argumentos de lanzamiento. No se suman repeticiones como casos nuevos.
 
@@ -54,6 +54,9 @@ argumentos de lanzamiento. No se suman repeticiones como casos nuevos.
 | `RiskAI/Logs/v21-integration-r3.xml` | 15/16; último mensaje de error corregido |
 | `RiskAI/Logs/v21-ui-r2.xml` | 10/10; todos los fallos anteriores cubiertos |
 | `RiskAI/Logs/v21-launch-arguments.xml` | 3/3 EditMode |
+| `RiskAI/Logs/v21-release-fixes.xml` | 16/16; catálogo importado, colas y expedición |
+| `RiskAI/Logs/v21-review-fixes.xml` | 19/20; una expectativa de fixture revisada |
+| `RiskAI/Logs/v21-review-fixes-r2.xml` | 1/1; expedición con comandante naval aislado |
 
 Cobertura: cámara/pausa, ratón, lápiz y touch, selección, guarnición de
 puertos en cuatro mapas, playa/descarga en Europe y New World, navegación
@@ -72,6 +75,21 @@ cambio de foco está limitado al fixture y se restaura al terminar.
 
 Ratón/touch/lápiz sintéticos recorren Input System y UI Toolkit. Esto no
 certifica periféricos físicos ni tablet Android/ARM.
+
+La ronda posterior a revisión cubre relevo de galera con navegación real,
+presión enemiga junto a un guardián naval vivo, continuación del objetivo
+terrestre tras reemplazar una tropa, siete puertos desconectados antes de un
+fallback y selección de fuente según el componente marítimo del transporte.
+Los dos últimos fixtures usan geometría marítima sintética y adaptadores de
+puerto con puntos de carga precalculados; no prueban una travesía completa
+de recuperación. La expedición completa se prueba por separado.
+
+El primer pase completó el viaje con tropas reclutadas por el comandante
+terrestre durante la espera, pero el fixture exigía sus dos soldados iniciales.
+La repetición ejecuta sólo el comandante naval, con reloj y movimiento reales,
+y verifica esas identidades. Se conservó la comprobación de que fabricar
+el transporte no reserva a los soldados. No se cuentan como dos casos el
+test de cursor anterior y su extensión para cambios de roster. Total: 86 casos.
 
 ## Exportaciones, inspección y rendimiento
 

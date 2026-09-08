@@ -372,12 +372,12 @@ namespace RiskAI
             unchecked
             {
                 int hash=17;
-                for(int i=0;i<available.Count;i++)hash=hash*31+available[i].EntityId;
                 hash=hash*31+offensiveCandidates.Count;
                 for(int i=0;i<offensiveCandidates.Count;i++)
                 {
                     var candidate=offensiveCandidates[i];
                     hash=hash*31+candidate.Town.GetInstanceID();
+                    hash=hash*31+candidate.Order;
                     hash=hash*31+(candidate.JoinsCountry?1:0);
                     hash=hash*31+candidate.Town.State.Owner;
                     hash=hash*31+candidate.Town.State.Country;

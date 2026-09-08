@@ -36,7 +36,7 @@ namespace RiskAI
         Ship transport;
         float nextDecision, phaseDeadline, retryAt;
         float plannedSeaDistance, plannedGatherDistance;
-        int sourceHarborCursor, troopCursor, targetHarborCursor, recoveryHarborCursor;
+        int sourceHarborCursor, troopCursor, targetHarborCursor, recoveryHarborCursor, recoveryPass;
         bool embarkOrdersIssued, sailOrderIssued, attackOrderIssued;
 
         public bool IsActive => phase != Phase.Planning && phase != Phase.Cooldown;
@@ -49,7 +49,7 @@ namespace RiskAI
             nextDecision=(player-1)*DecisionSeconds/Mathf.Max(1,session.PlayerCount-1);
         }
 
-        public bool Reserves(Soldier soldier) => soldier && troops.Contains(soldier);
+        public bool Reserves(Soldier soldier) => phase != Phase.WaitingForTransport && soldier && troops.Contains(soldier);
 
         public void Tick(float delta)
         {
@@ -107,7 +107,16 @@ namespace RiskAI
         void WaitForTransport()
         {
             transport=FindTransport();
-            if(transport)BeginGathering();
+            if(!transport)return;
+            // Training does not immobilize the land army. Recheck the available
+            // squad when the paid boat is ready; defenders may have moved on.
+            if(!source||source.Owner!=team||!source.TryTransportLanding(out sourceLanding,out sourceTransportBerth)){Fail();return;}
+            CollectTroops(sourceLanding,troops);
+            if(troops.Count<MinimumTroops){Fail();return;}
+            plannedGatherDistance=0;
+            for(int i=0;i<troops.Count;i++)plannedGatherDistance+=DistanceXZ(troops[i].transform.position,sourceLanding);
+            plannedGatherDistance/=troops.Count;
+            BeginGathering();
         }
 
         void BeginGathering()
@@ -197,7 +206,7 @@ namespace RiskAI
                 if(!returnHarbor){phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
                 world.OrderDisembark(transport,returnHarbor);
                 if(!string.IsNullOrEmpty(transport.LastActionError)){phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
-                phaseDeadline=session.BattleTime+ReturnDeadline(returnHarbor);
+                phaseDeadline=session.BattleTime+ReturnDeadline();
             }
         }
 
@@ -209,8 +218,13 @@ namespace RiskAI
             for(int offset=0;offset<count&&probes<SourceProbeBudget;offset++)
             {
                 var harbor=world.Harbors[(start+offset)%count];
-                if(!harbor||harbor.Owner!=team||!harbor.TryTransportLanding(out var landing,out var berth))continue;
-                probes++;CollectTroops(landing,scratchTroops);
+                if(!harbor||harbor.Owner!=team)continue;
+                probes++;
+                if(!harbor.TryTransportLanding(out var landing,out var berth))continue;
+                // A close walking squad cannot use a boat in another ocean.
+                // Connectivity uses the prepared sea graph, without another A*.
+                if(transport&&!SeaNavigation.AreConnected(transport.transform.position,berth))continue;
+                CollectTroops(landing,scratchTroops);
                 if(scratchTroops.Count<MinimumTroops)continue;
                 float score=0;for(int i=0;i<scratchTroops.Count;i++)score+=DistanceXZ(scratchTroops[i].transform.position,landing);
                 if(score>=best)continue;
@@ -295,19 +309,26 @@ namespace RiskAI
         Harbor NearestRecoveryHarbor(Vector3 point)
         {
             if(world.Harbors.Count==0)return null;
-            int count=world.Harbors.Count,start=PositiveModulo(recoveryHarborCursor,count),probes=0;
-            // Owned docks first, then any valid dock. Continue across decisions
-            // rather than running an unbounded sea A* for every port on the map.
-            for(int pass=0;pass<2;pass++)for(int offset=0;offset<count;offset++)
+            int count=world.Harbors.Count,probes=0;
+            // Both the pass and the next unprobed index survive the budget. A
+            // large set of unreachable owned docks must not starve other docks.
+            while(recoveryPass<2)
             {
-                int index=(start+offset)%count;
-                var harbor=world.Harbors[index];
-                if(!harbor||(pass==0?harbor.Owner!=team:harbor.Owner==team)||
-                    !harbor.TryTransportLanding(out _,out var berth))continue;
-                recoveryHarborCursor=(index+1)%count;
-                if(++probes>TargetProbeBudget)return null;
-                if(SeaNavigation.TryBuildPath(point,berth,out _))return harbor;
+                while(recoveryHarborCursor<count)
+                {
+                    var harbor=world.Harbors[recoveryHarborCursor];
+                    if(!harbor||(recoveryPass==0?harbor.Owner!=team:harbor.Owner==team)){recoveryHarborCursor++;continue;}
+                    if(probes>=TargetProbeBudget)return null;
+                    probes++;recoveryHarborCursor++;
+                    if(!harbor.TryTransportLanding(out _,out var berth))continue;
+                    if(SeaNavigation.TryBuildPath(point,berth,out _))
+                    {
+                        recoveryHarborCursor=0;recoveryPass=0;return harbor;
+                    }
+                }
+                recoveryHarborCursor=0;recoveryPass++;
             }
+            recoveryPass=0;
             return null;
         }
 
@@ -321,7 +342,7 @@ namespace RiskAI
                 if(!returnHarbor){retryAt=session.BattleTime+RetrySeconds;return true;}
                 world.OrderDisembark(ship,returnHarbor);
                 if(!string.IsNullOrEmpty(ship.LastActionError)){retryAt=session.BattleTime+RetrySeconds;return true;}
-                phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline(returnHarbor);
+                phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
                 return true;
             }
             return false;
@@ -343,13 +364,16 @@ namespace RiskAI
         {
             float troopSpeed=3f;
             for(int i=0;i<troops.Count;i++)if(troops[i]&&troops[i].Agent)troopSpeed=Mathf.Min(troopSpeed,Mathf.Max(.5f,troops[i].Agent.speed));
-            return Mathf.Clamp(plannedGatherDistance/troopSpeed*1.75f+16f,30f,90f);
+            float boatTravel=transport?transport.RemainingRouteDistance/Mathf.Max(.5f,transport.Speed):0;
+            return Mathf.Clamp(boatTravel*1.6f+plannedGatherDistance/troopSpeed*1.75f+16f,30f,240f);
         }
         float SailingDeadline() => Mathf.Clamp(plannedSeaDistance/Mathf.Max(.5f,transport.Speed)*1.6f+20f,40f,240f);
-        float ReturnDeadline(Harbor harbor)
+        float ReturnDeadline()
         {
-            if(!transport||!harbor||!harbor.TryTransportLanding(out _,out var berth)||!SeaNavigation.TryBuildPath(transport.transform.position,berth,out var route))return PhaseTimeout;
-            return Mathf.Clamp(PathDistance(transport.transform.position,route,berth)/Mathf.Max(.5f,transport.Speed)*1.6f+20f,40f,240f);
+            if(!transport)return PhaseTimeout;
+            // OrderDisembark already built the route; timing it must not run A*
+            // again in the same AI decision.
+            return Mathf.Clamp(transport.RemainingRouteDistance/Mathf.Max(.5f,transport.Speed)*1.6f+20f,40f,240f);
         }
         static float PathDistance(Vector3 start,IReadOnlyList<Vector3> route,Vector3 end)
         {
@@ -369,7 +393,7 @@ namespace RiskAI
                 returnHarbor=retreat;world.OrderDisembark(transport,returnHarbor);
                 if(string.IsNullOrEmpty(transport.LastActionError))
                 {
-                    phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline(returnHarbor);return;
+                    phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();return;
                 }
             }
             transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;

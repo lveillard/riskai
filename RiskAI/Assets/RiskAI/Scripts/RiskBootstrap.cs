@@ -75,6 +75,9 @@ namespace RiskAI
             for(int c=0;c<MapLayout.Countries.Length;c++)session.Camps.Add(CountryCamp.Create(session,c,terrain.transform));
             TerritoryMarkers.Create(session,terrain.transform);
             NavalWorld.Create(session,terrain.transform);
+            // Geometry is complete and the NavMesh is baked. Resolve static
+            // cargo approaches once instead of during the first AI offensive.
+            foreach(var harbor in NavalWorld.Current.Harbors)harbor.TryTransportLanding(out _,out _);
             startup.Mark("roster_and_ports");
             GroundCover.Create(session,terrain.transform);
             startup.Mark("ground_cover");

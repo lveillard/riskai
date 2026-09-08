@@ -33,6 +33,19 @@ namespace RiskAI
         public string OrderLabel=>IsGarrison?"Guarnición · mantiene el puerto":target?"En combate":route.Count>routeIndex?"Navegando":"En puerto";
         public string LastActionError { get; private set; }
         public long RouteRevision { get; private set; }
+        public float RemainingRouteDistance
+        {
+            get
+            {
+                float distance=0;Vector3 previous=transform.position;
+                for(int i=routeIndex;i<route.Count;i++)
+                {
+                    var difference=route[i]-previous;difference.y=0;
+                    distance+=difference.magnitude;previous=route[i];
+                }
+                return distance;
+            }
+        }
         const float RouteArrivalDistance=.4f;
         const float RouteStallSeconds=3f;
         const float ShoreBerthSearchRadius=LoadRadius-RouteArrivalDistance-.05f;

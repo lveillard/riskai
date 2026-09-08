@@ -43,8 +43,11 @@ orden. Se cancela el estado pendiente al perder foco o abrir un modal.
 4. Exportación Web con plantilla propia, densidad de canvas acotada,
    diagnóstico por fases de arranque y pruebas de partidas/reinicios. Medir
    en navegador real antes de reducir geometría o presupuesto de navegación.
-5. Revisiones adversariales Grok 4.6, corrección, pruebas Windows/Web y
-   documentación de las limitaciones de hardware realmente disponible.
+5. Revisiones adversariales independientes, corrección, pruebas Windows/Web y
+   documentación de las limitaciones de hardware realmente disponible. Para
+   v0.21 se usan tres contextos aislados de Astra/Opus; por instrucción del
+   usuario del 8 de septiembre, Grok 4.6 queda reservado a revisiones esenciales
+   debido a su cuota restante.
 
 ## Producción y comandos locales
 

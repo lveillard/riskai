@@ -48,12 +48,21 @@ namespace RiskAI.Tests
             battle.AiEnabled=true;
             // Reserve and queue before the land commander receives its first post-grace turn.
             naval.ExpeditionFor(1).Tick(0);
+            Assert.That(naval.PendingShips(1),Is.GreaterThan(0),"The fixture must enter paid transport training.");
+            foreach(var unit in troops)Assert.That(naval.ExpeditionFor(1).Reserves(unit),Is.False,"Training must leave the land army available to defend; embark troops are chosen when the transport is ready.");
+            battle.AiEnabled=false;
 
             bool embarked=false,unloaded=false,attackOrders=false;int goldWhenQueued=naval.PendingShips(1)>0?battle.Economy.Gold[1]:-1;Ship transport=null;Soldier[] expedition=null;
             float deadline=Time.realtimeSinceStartup+30f;
             while(Time.realtimeSinceStartup<deadline&&!attackOrders)
             {
                 yield return null; // NavMeshAgent path solving and movement need live engine frames.
+                // Exercise only the naval commander in this identity fixture.
+                // The land commander can now legitimately recruit or deploy a
+                // different squad while its transport is training.
+                battle.AiEnabled=true;
+                naval.ExpeditionFor(1).Tick(0);
+                battle.AiEnabled=false;
                 transport=naval.Ships.FirstOrDefault(ship=>ship&&ship.Team==1&&ship.Kind==ShipKind.Transport);
                 if(naval.PendingShips(1)>0&&goldWhenQueued<0)goldWhenQueued=battle.Economy.Gold[1];
                 if(transport&&transport.CargoCount>=2){embarked=true;if(expedition==null)expedition=transport.Cargo.Take(2).ToArray();}

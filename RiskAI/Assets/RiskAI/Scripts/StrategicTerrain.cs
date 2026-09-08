@@ -169,7 +169,7 @@ namespace RiskAI
                 triangles.Add(i);triangles.Add(i+1);triangles.Add(i+2);triangles.Add(i+1);triangles.Add(i+3);triangles.Add(i+2);
             }
             var mesh=resources.Track(new Mesh{name="Continental horizon",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32});
-            mesh.SetVertices(vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+            mesh.SetVertices(vertices);BakeCoastWeights(mesh,vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             root.AddComponent<MeshFilter>().sharedMesh=mesh;root.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
             var random=new System.Random(561);
             for(float x=-104;x<104;x+=3.1f)for(float z=-88;z<83;z+=3.1f)

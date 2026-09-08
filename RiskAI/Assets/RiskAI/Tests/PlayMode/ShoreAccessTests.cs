@@ -52,7 +52,7 @@ namespace RiskAI.Tests
             Assert.That(transport.CargoCount,Is.Zero);
 
             Assert.That(FindNonBeachShore(out var shore,out var water),Is.True,map+" must expose a reachable green/rock coastal NavMesh point.");
-            Assert.That(ShoreAccess.SurfaceWeights(shore.x,shore.z).x,Is.LessThan(.55f));
+            Assert.That(IsSourceNonBeach(MapLayout.Imported,shore.x,shore.z),Is.True,"The selected point must be non-beach according to the imported terrain.");
             Assert.That(ShoreAccess.TryLanding(shore,out _,out var error),Is.False);
             Assert.That(error,Does.Contain("orillas"));
             var rejectedTransport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,water);
@@ -75,15 +75,33 @@ namespace RiskAI.Tests
             for(int z=2;z<data.height-2;z+=2) for(int x=2;x<data.width-2;x+=2)
             {
                 float wx=data.originX+x*data.cellSize,wz=data.originZ+z*data.cellSize;
-                if(!data.IsLand(wx,wz)||ShoreAccess.SurfaceWeights(wx,wz).x>=.55f)continue;
+                if(!data.IsLand(wx,wz)||!IsSourceNonBeach(data,wx,wz))continue;
                 if(!NavMesh.SamplePosition(new Vector3(wx,data.HeightAt(wx,wz),wz),out var hit,1.25f,NavMesh.AllAreas))continue;
-                if(!MapLayout.IsLand(hit.position.x,hit.position.z)||ShoreAccess.SurfaceWeights(hit.position.x,hit.position.z).x>=.55f)continue;
+                if(!MapLayout.IsLand(hit.position.x,hit.position.z)||!IsSourceNonBeach(data,hit.position.x,hit.position.z)||IsLegitimateDock(hit.position))continue;
                 if(!SeaNavigation.TryNearestOcean(hit.position,Ship.LoadRadius,out water))continue;
                 if(Vector3.Distance(new Vector3(water.x,0,water.z),new Vector3(hit.position.x,0,hit.position.z))>Ship.LoadRadius)continue;
-                if(ShoreAccess.TryLanding(hit.position,out _,out _))continue;
                 shore=hit.position; return true;
             }
             shore=water=default; return false;
+        }
+
+        static bool IsSourceNonBeach(ImportedMapData data,float x,float z)
+        {
+            if(data.tileNames==null)return false;
+            int tile=ImportedMapData.GroundTileIndex(data.TileAt(x,z));
+            return tile>=0&&tile<data.tileNames.Length&&data.tileNames[tile]!="Vcbp";
+        }
+
+        static bool IsLegitimateDock(Vector3 point)
+        {
+            var naval=NavalWorld.Current;if(!naval)return false;
+            foreach(var harbor in naval.Harbors)
+            {
+                if(!harbor||!harbor.CanLaunch)continue;
+                var delta=point-harbor.Landing;
+                if(delta.x*delta.x+delta.z*delta.z<=3.4f*3.4f&&Mathf.Abs(delta.y)<=1.5f)return true;
+            }
+            return false;
         }
 
         [UnityTearDown]

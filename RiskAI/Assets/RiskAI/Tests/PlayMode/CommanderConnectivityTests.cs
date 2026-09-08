@@ -71,7 +71,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator ReachabilityCursorContinuesPastBudgetedIslandCandidates()
+        public IEnumerator ReachabilityCursorSurvivesMobileRosterChurn()
         {
             var home=battle.Towns.First(town=>town.State.Owner==1);
             var firstIsland=battle.Towns.First(town=>OnIsland(town.ClaimPoint));
@@ -88,15 +88,23 @@ namespace RiskAI.Tests
             InvokeOffense(false);battle.Commands.Tick();
             foreach(var unit in force)Assert.That(unit.IsIdle,Is.True,"The first 24 probes cover only the two unreachable island candidates.");
 
+            // Replace a unit that was part of the bounded probe set. The target
+            // ranking is unchanged, but the mobile roster (and entity IDs) is not.
+            // The next decision must continue at the saved candidate cursor.
+            force[11].gameObject.SetActive(false);
+            var replacement=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,Sample(mainland.ClaimPoint));
+
             InvokeOffense(false);battle.Commands.Tick();
             yield return null;
             float deadline=Time.realtimeSinceStartup+2;
-            while(force.Take(12).Any(unit=>unit.Agent.pathPending)&&Time.realtimeSinceStartup<deadline)yield return null;
-            foreach(var unit in force.Take(12))
+            var commanded=force.Take(11).Concat(new[]{force[12]}).ToArray();
+            while(commanded.Any(unit=>unit.Agent.pathPending)&&Time.realtimeSinceStartup<deadline)yield return null;
+            foreach(var unit in commanded)
             {
                 Assert.That(unit.Agent.pathStatus,Is.EqualTo(NavMeshPathStatus.PathComplete));
                 Assert.That(Vector3.Distance(unit.Agent.destination,mainland.ClaimPoint),Is.LessThan(5f),"The next decision must resume with the third, reachable candidate.");
             }
+            Assert.That(replacement.IsIdle,Is.True,"The newly recruited unit is the reserved roster tail, not part of this wave.");
         }
 
         void InvokeOffense(bool relaxed)
