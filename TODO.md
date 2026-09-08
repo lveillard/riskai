@@ -1,5 +1,26 @@
 # RiskAI — decisiones y siguientes pasos
 
+## Ronda v0.21 · feedback de la partida, adicional a fase 2
+
+Registro del feedback del 8 de septiembre. Estas tareas se mantienen junto
+al objetivo activo de tablet/Web; no quedan sustituidas por él.
+
+- [x] Corregir arrastre derecho en pausa, conservar rueda de cámara y cancelar gestos pendientes al pausar/reanudar. Pruebas Input System: 30/30 y comprobación final de cámara/touch 18/18; build pendiente.
+- [x] Selección rectangular sólo de edificios propios, incluidos puertos; Shift conserva la selección al arrastrar vacío. Fuente compartida y regresiones aprobadas.
+- [ ] Verificar rueda del ratón dentro de paneles desplazables en el player real. La regresión sintética v0.21 está aprobada; la comprobación con el dispositivo físico sigue pendiente.
+- [ ] Mostrar iconos de fragata y transporte en compras y colas. Pasar explicaciones de asignación de colas a tooltip, sin ocupar espacio permanente. Capturas detectaron catálogo regular y cola naval oculta por alias de ciudad importada: corregido en código; prueba y exportación final pendientes.
+- [x] Un solo defensor y propietario por puerto; el barco guardián habilita producción mediante los mismos comandos que el resto. No sustituir un guardián vivo, no permitir que el transporte capture y respetar prioridad aliada entre tierra/mar. Código unificado en CityClaimZone; pruebas de guardia, carga por radio y sucesión aprobadas en la tanda PlayMode v0.21.
+- [ ] Eliminar interferencia entre círculo de selección, hover y círculo del guardián naval; mantener el barco anclado al disparar. Comparar visualmente al seleccionar/mover. La adaptación terrestre/atraque usa anclas distintas y no debe presentarse como el círculo fijo original sin comprobarlo.
+- [x] Ampliar ligeramente el margen de relevo de guarnición, especialmente para caballeros; misma tolerancia terrestre y naval (2,0 frente a radio pintado 1,55). Regresión de guardia naval y sucesión aprobada en la tanda PlayMode v0.21.
+- [ ] Entrenamiento con luz visible saliendo de la puerta y umbral, compartida entre edificios/colas. Cambio de presentación pendiente de inspección.
+- [x] Evitar que la IA reenvíe tropas a ciudades inaccesibles por tierra. Filtro por tropa con presupuesto de rutas y continuación entre decisiones implementado; regresiones de conectividad y selección de objetivos aprobadas.
+- [x] IA con expediciones marítimas reales: comprar transporte, reunir tropas móviles, embarcar, navegar, desembarcar en una zona válida y atacar/capturar. La expedición usa el punto de carga seguro, recupera cargamento varado con límites y libera la misión si pierde la ola; la mecánica y UX del jugador siguen necesitando verificación en el reproductor. [Auditorías navales](docs/audits/NAVAL-v0.21.md) · [Revisión Grok](docs/audits/GROK-v0.21.md).
+- [ ] Costa más natural: playas de desembarco, tramos rocosos y verdes no embarcables, con clasificación compartida entre representación y reglas. Suavizar escalones visibles conservando coordenadas/escala de los mapas importados y coherencia con navegación.
+- [ ] Investigar retraso de órdenes en partida avanzada sin cerrar la sesión. Sondas v0.21 con 604/614 unidades iniciales y 90 s: ambas responden, sin mejora clara al duplicar presupuesto; se conserva 500. Picos navales y carga sostenida de 800 pendientes. Medidas v0.20: unas 500 unidades, envío→aplicación 27–36 ms, una muestra de primer movimiento 1,24 s y rutas pendientes hasta 800 ms. Separar navegación de picos de frame de 23–26 s antes de atribuirlos a simulación o renderizado; la sesión v0.20 ya terminó.
+- [ ] Generar y comprobar Windows/Web de esta ronda, actualizar launcher y publicar cambios verificados. El código y las pruebas de v0.21 están preparados; build, reproductor, inspección visual y medición de rendimiento siguen pendientes.
+
+[Validación de la ronda](docs/VALIDATION-v0.21.md) · [Objetivo fase 2](docs/PHASE2.md).
+
 ## v0.20 · recuperar identidad RTS
 
 - [x] Recuperar marcos propios, materiales, títulos y retratos sin duplicar UI ni reglas por plataforma.
@@ -9,7 +30,7 @@
 - [x] Instalar Web Build Support y comprobar el primer reproductor real; detectado y corregido en fuente el stripping de Collider al crear la batalla.
 - [x] Verificar la exportación Web final con batallas, comandos, tres reinicios Europe/NewWorld y lápiz/toque sintéticos dentro de Unity.
 - [ ] Mejorar y atribuir el coste Web: Europe táctico sin compilador externo midió 37,20 ms medios/62 ms máximo; vista estratégica 28,35/56 ms. Las pasadas bajo carga tenían fuertes picos y omitir draws no los eliminó. Seguir con trazas de CPU del navegador; no presentar esto como rendimiento ARM validado.
-- [ ] Mostrar «recogiendo muestra» en el menú de rendimiento hasta tener el primer informe; los ceros iniciales no son una medición.
+- [x] Mostrar «recogiendo muestra» en el menú de rendimiento hasta tener el primer informe; los ceros iniciales no son una medición.
 
 [Capturas, pruebas y límites v0.20](docs/VALIDATION-v0.20.md).
 

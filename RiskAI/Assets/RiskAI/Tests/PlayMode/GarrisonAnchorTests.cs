@@ -119,6 +119,28 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator GuardReliefUsesTheExpandedRadiusButRejectsBeyondIt()
+        {
+            var town = battle.Towns.First(t => t.State.Owner == 0 && t.Defender && !t.IsPort);
+            var defender = town.Defender;
+            var target = town.Rally + Vector3.right * 3;
+            var relief=BattleTestScenario.Mobile(battle,0,UnitKind.Guard,town.ClaimZone.Center+Vector3.right*2.1f);
+            Assert.That(FlatDistance(relief.transform.position,town.ClaimZone.Center),Is.GreaterThan(ClaimRules.ReliefRadius));
+            Assert.That(battle.Commands.Submit(new UnitCommand(0,defender.EntityId,UnitCommandKind.Move,target.x,target.y,target.z)),Is.False,
+                "The only candidate is beyond the relief margin.");
+            Assert.That(town.Defender,Is.SameAs(defender));
+            Assert.That(relief.Agent.Warp(town.ClaimZone.Center+Vector3.right*1.8f),Is.True);
+            battle.Spatial.Rebuild(battle.Targets,battle.Units);
+            float reliefDistance=FlatDistance(relief.transform.position,town.ClaimZone.Center);
+            Assert.That(reliefDistance,Is.GreaterThan(ClaimRules.CircleRadius));
+            Assert.That(reliefDistance,Is.LessThan(ClaimRules.ReliefRadius));
+            Assert.That(battle.Commands.Submit(new UnitCommand(0,defender.EntityId,UnitCommandKind.Move,target.x,target.y,target.z)),Is.True);
+            battle.Commands.Tick();
+            Assert.That(town.Defender,Is.SameAs(relief));
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator PausedDefenderOrderReportsPauseBeforeReliefRequirement()
         {
             var town = battle.Towns.First(t => t.State.Owner == 0 && t.Defender);

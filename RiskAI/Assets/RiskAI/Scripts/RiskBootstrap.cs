@@ -8,6 +8,11 @@ namespace RiskAI
 {
     public sealed class RiskBootstrap : MonoBehaviour
     {
+        public const int DefaultPathfindingIterationsPerFrame = 500;
+        public const int MinPathfindingIterationsPerFrame = 100;
+        public const int MaxPathfindingIterationsPerFrame = 2000;
+        public static int PathfindingIterationsPerFrame { get; private set; } = DefaultPathfindingIterationsPerFrame;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void ReadLaunchSeed()
         {
@@ -16,12 +21,14 @@ namespace RiskAI
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-map")BattleSession.MapForNewMatch=args[a+1]=="europe"?ScenarioMap.Europe:args[a+1]=="world"||args[a+1]=="newworld"?ScenarioMap.NewWorld:args[a+1]=="riverlands"?ScenarioMap.Riverlands:ScenarioMap.Classic;
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-seed" && int.TryParse(args[a+1],out int seed))BattleSession.SeedForNewMatch=seed;
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-players" && int.TryParse(args[a+1],out int players))BattleSession.PlayerCountForNewMatch=Mathf.Clamp(players,2,PlayerRules.MaxPlayers);
+            for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-path-budget" && int.TryParse(args[a+1],out int budget))PathfindingIterationsPerFrame=Mathf.Clamp(budget,MinPathfindingIterationsPerFrame,MaxPathfindingIterationsPerFrame);
         }
         void Start()
         {
             // Apply after scene navigation settings and the generated NavMesh are
             // loaded: scene initialization can overwrite an earlier Awake value.
-            NavMesh.pathfindingIterationsPerFrame = 500;
+            NavMesh.pathfindingIterationsPerFrame = PathfindingIterationsPerFrame;
+            Debug.Log($"RISKAI_NAV_BUDGET applied={PathfindingIterationsPerFrame} requestedRange={MinPathfindingIterationsPerFrame}..{MaxPathfindingIterationsPerFrame}");
         }
         void Awake()
         {

@@ -139,3 +139,28 @@ warmup requests more NavMesh work per rendered frame and must not be presented
 as normal-speed pointer latency. The same seed/configuration does not guarantee
 identical battles: Unity movement is still frame-dependent. This is a controlled
 load probe, not a replay or a substitute for testing real mouse/touch input.
+
+## NavMesh path-budget A/B
+
+The desktop player accepts `--riskai-path-budget`, clamped to `100..2000`, and
+reports the applied value as `RISKAI_NAV_BUDGET` and
+`navIterationsPerFrame`. To compare the current budget with a larger budget,
+run the same controlled probe twice and change only the final value. Keep the
+same seed, map, players, warmup, duration, and recruit fixture. Record
+`unitsInitial` from `RISKAI_PROBE_PHASE phase=measurement`, the final unit
+count, and external load. Movement is not deterministic, so unequal battles
+make this an exploratory comparison; do not discard inconvenient runs or
+attribute every difference to the budget (fixture target: roughly 600 units):
+
+```powershell
+& ./Builds/Windows-v0.21/RiskAI.exe -screen-width 1600 -screen-height 900 -screen-fullscreen 0 --riskai-map europe --riskai-players 16 --riskai-seed 160212 --riskai-probe --riskai-probe-warmup 900 --riskai-probe-warmup-commander --riskai-probe-recruits 24 --riskai-probe-seconds 90 --riskai-path-budget 500 -logFile ./RiskAI/Logs/path-budget-500.log
+& ./Builds/Windows-v0.21/RiskAI.exe -screen-width 1600 -screen-height 900 -screen-fullscreen 0 --riskai-map europe --riskai-players 16 --riskai-seed 160212 --riskai-probe --riskai-probe-warmup 900 --riskai-probe-warmup-commander --riskai-probe-recruits 24 --riskai-probe-seconds 90 --riskai-path-budget 1000 -logFile ./RiskAI/Logs/path-budget-1000.log
+```
+
+Compare `firstMoveHumanActive*Ms`, `pathPending*`, frame thresholds, and the
+world phase timings. The first exploratory Windows runs are documented in
+[VALIDATION-v0.21](VALIDATION-v0.21.md); unequal battles and external load
+prevent attributing their differences solely to this budget. The default
+remains 500. The browser probe exposes the
+same switch through `scripts/check_web_player.py --path-budget 500` or
+`--path-budget 1000`; keep its other options identical for that A/B.

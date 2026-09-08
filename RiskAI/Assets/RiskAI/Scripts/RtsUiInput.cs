@@ -33,6 +33,7 @@ namespace RiskAI
         PanelSettings panelSettings;
         EventSystem ownedEventSystem;
         VisualElement safeRoot;
+        RtsRuntimeTooltip tooltip;
         float lastScale;
         Rect lastSafe;
 
@@ -66,6 +67,7 @@ namespace RiskAI
             safeRoot = new VisualElement { name = panelName + " safe root", pickingMode = PickingMode.Ignore };
             safeRoot.style.position = Position.Absolute;
             Root.Add(safeRoot);
+            tooltip=new RtsRuntimeTooltip(Root);
             RefreshViewport(true);
         }
 
@@ -93,6 +95,7 @@ namespace RiskAI
         public void SetContent(VisualElement content)
         {
             if (safeRoot == null) return;
+            tooltip?.SetContentChanged();
             safeRoot.Clear();
             if (content != null) safeRoot.Add(content);
         }
@@ -114,6 +117,7 @@ namespace RiskAI
 
         void OnDestroy()
         {
+            tooltip?.Dispose();
             if (panelSettings) Destroy(panelSettings);
             if (ownedEventSystem) Destroy(ownedEventSystem.gameObject);
         }
@@ -129,6 +133,12 @@ namespace RiskAI
         public static readonly Color Text = new Color(.93f, .92f, .84f, 1);
         public static readonly Color Muted = new Color(.68f, .72f, .70f, 1);
         static Font titleFont;
+
+        public static void ConfigureScroll(ScrollView scroll)
+        {
+            scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+            scroll.mouseWheelScrollSize = 32;
+        }
 
         public static Label Title(string text, string name = null, int size = 20)
         {

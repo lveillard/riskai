@@ -10,7 +10,7 @@ namespace RiskAI
         Vector2 areaPointer;
         bool areaPointerActive;
 
-        internal bool AcceptsDirectPointerInput => session && EffectiveFocus && !session.Paused && session.Winner < 0 && !HelpVisible && !ScoreboardVisible;
+        internal bool AcceptsDirectPointerInput => session && EffectiveFocus && session.Winner < 0 && !HelpVisible && !ScoreboardVisible;
         internal bool BlocksWorldInput(Vector2 screen) => !InsideScreen(screen) || OverHud(screen);
         internal bool ShiftHeld => Shift;
 

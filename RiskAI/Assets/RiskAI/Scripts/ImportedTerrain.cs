@@ -25,7 +25,7 @@ namespace RiskAI
             // This is a static material-only shore band.  It preserves the W3E
             // mesh, collision and land flags while avoiding a hard tile tint at
             // a one-cell water boundary.
-            var shoreBand=new Vector2[vertices.Length];
+            var shoreBand=new Vector3[vertices.Length];
             var triangles=new List<int>(nx*nz*6);var walkable=new List<int>(nx*nz*6);
             var seaVertices=new List<Vector3>();var seaColors=new List<Color>();var seaTriangles=new List<int>();
             for(int z=0;z<=nz;z++)for(int x=0;x<=nx;x++)
@@ -35,7 +35,8 @@ namespace RiskAI
                 vertices[index]=new Vector3(wx,data.heightSamples[source],wz);
                 colors[index]=GroundTint(data.tileSamples[source],wx,wz);
                 colors[index].a=ImportedLandscapeAugment.Enabled?ImportedLandscapeAugment.RockSnowWeightAt(data,wx,wz):0;
-                shoreBand[index]=new Vector2(ShoreBand(data,ix,iz),0);
+                var coast=ShoreAccess.SurfaceWeights(wx,wz);
+                shoreBand[index]=new Vector3(ShoreBand(data,ix,iz),coast.x,coast.y);
                 if(x==nx||z==nz)continue;
                 int b=index+nx+1;
                 AddQuad(triangles,index,b,index+1,b+1);

@@ -4,6 +4,9 @@ namespace RiskAI.Core
     public static class ClaimRules
     {
         public const float CircleRadius = 1.55f;
+        // Small shared tolerance for ordering a guard out; larger silhouettes
+        // should not require pixel-perfect placement at the painted ring edge.
+        public const float ReliefRadius = CircleRadius + .45f;
         public const float ProtectionRadius = 4.43f;
         public const float TakeoverRadius = 6f;
         public static bool IsValidOwner(int owner) => owner == PlayerRules.NeutralOwner || PlayerRules.IsPlayer(owner);

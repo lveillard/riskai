@@ -11,8 +11,8 @@ namespace RiskAI.Tests
         }
         [Test] public void ExplicitProbeUsesTheSameOptionsAsDesktop()
         {
-            var args=LaunchArguments.FromUrl("https://localhost/?riskai-probe=1&riskai-probe-recruits=32&riskai-players=16");
-            CollectionAssert.AreEqual(new[]{"--riskai-probe","--riskai-probe-recruits","32","--riskai-players","16"},args);
+            var args=LaunchArguments.FromUrl("https://localhost/?riskai-probe=1&riskai-probe-recruits=32&riskai-players=16&riskai-path-budget=1000");
+            CollectionAssert.AreEqual(new[]{"--riskai-probe","--riskai-probe-recruits","32","--riskai-players","16","--riskai-path-budget","1000"},args);
         }
         [Test] public void RestartProbeAndBoundedCyclesAreWhitelistedForBrowserDiagnostics()
         {

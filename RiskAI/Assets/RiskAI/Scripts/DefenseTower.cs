@@ -13,7 +13,7 @@ namespace RiskAI
         public override float MaxHealth => BattleRules.TowerHealth;
         public override bool CanBeAttacked => false;
         public Soldier Defender => Town ? Town.Defender : Harbor ? Harbor.Defender : null;
-        public CombatTarget Guardian => Defender ? Defender : Town && Town.Port ? Town.Port.NavalDefender : Harbor ? Harbor.NavalDefender : null;
+        public CombatTarget Guardian => Town ? Town.ClaimZone.Guardian : Harbor ? Harbor.ClaimZone.Guardian : null;
         public override Vector3 AimPoint => transform.position + Vector3.up * 2.8f;
         public override AttackKind AttackType => AttackKind.Piercing;
         public override ArmorKind ArmorType => ArmorKind.Fortified;

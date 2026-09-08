@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using RiskAI.Core;
 using UnityEngine;
+using UnityEngine.AI;
 namespace RiskAI
 {
     public interface ICommander { void Tick(float delta); }
@@ -21,6 +22,9 @@ namespace RiskAI
         const float DefenseRadius = 12f;
         const float DefenseDispatchRadius = 32f;
         const float OpeningRecruitmentWindow = .15f;
+        // Imported maps can have many separate coast and island components. Keep
+        // target validation bounded even when a player owns a large roster.
+        const int OffensivePathBudget = 24;
         readonly BattleSession session;
         readonly PlayerBuildingCommands buildingCommands;
         readonly int team;
@@ -32,10 +36,17 @@ namespace RiskAI
         readonly List<RecruitmentCandidate> recruitmentSites = new List<RecruitmentCandidate>(16);
         readonly List<Soldier> active = new List<Soldier>(32);
         readonly List<Soldier> available = new List<Soldier>(12);
+        readonly List<Soldier> reachable = new List<Soldier>(12);
+        readonly List<Soldier> candidateReachable = new List<Soldier>(12);
+        readonly List<OffensiveCandidate> offensiveCandidates = new List<OffensiveCandidate>(64);
         readonly HashSet<int> ownedCountries = new HashSet<int>();
+        readonly NavMeshPath offensivePath = new NavMeshPath();
         readonly float decisionPhase;
         float nextDecision;
         float nextDefenseDecision;
+        int offensiveCandidateCursor;
+        int offensiveCandidateSignature;
+        bool hasOffensiveCandidateCursor;
         bool openingDecision = true;
         int recruitsOrdered;
         static readonly UnitKind[] RecruitmentCycle = {
@@ -192,7 +203,7 @@ namespace RiskAI
             return best;
         }
 
-        bool IsMobileDefender(Soldier unit) => unit && unit.Team == team && unit.IsAlive && !unit.IsGarrison && unit.isActiveAndEnabled && unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh;
+        bool IsMobileDefender(Soldier unit) => unit && unit.Team == team && unit.IsAlive && !unit.IsGarrison && unit.isActiveAndEnabled && unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh && (!session.Naval || !session.Naval.IsReserved(unit));
 
         struct DefenseSite
         {
@@ -207,6 +218,14 @@ namespace RiskAI
         {
             public Settlement Town;
             public float FrontierDistance;
+        }
+
+        struct OffensiveCandidate
+        {
+            public Settlement Town;
+            public bool JoinsCountry;
+            public float Distance;
+            public int Order;
         }
 
         void Decide()
@@ -287,20 +306,84 @@ namespace RiskAI
                 if(town.State.Owner==team && town.State.Country>=0)ownedCountries.Add(town.State.Country);
             }
 
-            Settlement target=null;
-            bool targetJoinsCountry=false;
-            float targetDistance=float.PositiveInfinity;
+            offensiveCandidates.Clear();
+            int order=0;
             foreach(var town in session.Towns)
             {
-                if(town.State.Owner==team || (session.BattleTime<=100 && town.State.Owner>=0 && neutralsRemain))continue;
+                if(town.State.Owner==team || (session.BattleTime<=100 && town.State.Owner>=0 && neutralsRemain)){order++;continue;}
                 bool joinsCountry=town.State.Country>=0&&ownedCountries.Contains(town.State.Country);
                 float distance=Vector3.SqrMagnitude(town.transform.position-center);
-                if(!target || (joinsCountry&&!targetJoinsCountry) || joinsCountry==targetJoinsCountry&&distance<targetDistance)
-                {
-                    target=town;targetJoinsCountry=joinsCountry;targetDistance=distance;
-                }
+                offensiveCandidates.Add(new OffensiveCandidate { Town=town, JoinsCountry=joinsCountry, Distance=distance, Order=order });
+                order++;
             }
-            if(target)BattleSession.GiveFormation(available,target.ClaimPoint,true,false);
+            // This is the previous country-first, nearest-city policy expressed as
+            // an ordered candidate list. We can now skip an island or coast pocket
+            // without changing the ranking of the remaining reachable objectives.
+            offensiveCandidates.Sort(CompareOffensiveCandidates);
+            int signature=OffensiveCandidateSignature();
+            if(!hasOffensiveCandidateCursor||signature!=offensiveCandidateSignature)
+            {
+                offensiveCandidateCursor=0;offensiveCandidateSignature=signature;hasOffensiveCandidateCursor=true;
+            }
+            int pathBudget=OffensivePathBudget;
+            int minimumWave=relaxed?2:3;
+            Settlement target=null;
+            reachable.Clear();
+            int candidate=offensiveCandidateCursor;
+            // Consume a whole candidate at once. That leaves a small unused tail
+            // in unusual wave sizes, but lets the next decision continue at the
+            // next rank instead of repeatedly rechecking a partial candidate.
+            for(;candidate<offensiveCandidates.Count&&pathBudget>=available.Count;candidate++)
+            {
+                candidateReachable.Clear();
+                var town=offensiveCandidates[candidate].Town;
+                for(int unit=0;unit<available.Count;unit++)
+                {
+                    pathBudget--;
+                    var soldier=available[unit];
+                    if(CanReachOffensiveTarget(soldier,town.ClaimPoint))candidateReachable.Add(soldier);
+                }
+                if(candidateReachable.Count<minimumWave)continue;
+                target=town;reachable.AddRange(candidateReachable);break;
+            }
+            if(target)
+            {
+                offensiveCandidateCursor=0;hasOffensiveCandidateCursor=false;
+                BattleSession.GiveFormation(reachable,target.ClaimPoint,true,false);
+            }
+            else offensiveCandidateCursor=candidate>=offensiveCandidates.Count?0:candidate;
+        }
+
+        static int CompareOffensiveCandidates(OffensiveCandidate a,OffensiveCandidate b)
+        {
+            if(a.JoinsCountry!=b.JoinsCountry)return a.JoinsCountry?-1:1;
+            int distance=a.Distance.CompareTo(b.Distance);return distance!=0?distance:a.Order.CompareTo(b.Order);
+        }
+
+        bool CanReachOffensiveTarget(Soldier unit,Vector3 point)
+        {
+            if(!unit||!unit.Agent||!unit.Agent.enabled||!unit.Agent.isOnNavMesh)return false;
+            return NavMesh.CalculatePath(unit.transform.position,point,NavMesh.AllAreas,offensivePath)&&
+                offensivePath.status==NavMeshPathStatus.PathComplete;
+        }
+
+        int OffensiveCandidateSignature()
+        {
+            unchecked
+            {
+                int hash=17;
+                for(int i=0;i<available.Count;i++)hash=hash*31+available[i].EntityId;
+                hash=hash*31+offensiveCandidates.Count;
+                for(int i=0;i<offensiveCandidates.Count;i++)
+                {
+                    var candidate=offensiveCandidates[i];
+                    hash=hash*31+candidate.Town.GetInstanceID();
+                    hash=hash*31+(candidate.JoinsCountry?1:0);
+                    hash=hash*31+candidate.Town.State.Owner;
+                    hash=hash*31+candidate.Town.State.Country;
+                }
+                return hash;
+            }
         }
     }
 }

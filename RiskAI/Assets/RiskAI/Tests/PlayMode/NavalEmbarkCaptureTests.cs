@@ -103,6 +103,15 @@ namespace RiskAI.Tests
             Assert.That(port.NavalClaimRing,Is.Not.Null);
             Assert.That(port.NavalClaimRing.enabled,Is.True);
             Assert.That(Vector3.Distance(port.NavalClaimRing.transform.position,port.Berth),Is.LessThan(.001f),"The visible naval claim circle must share the berth anchor.");
+            var berthBefore=port.NavalClaimRing.transform.position;
+            guard.Select(true);yield return null;
+            var unitRing=guard.GetComponentInChildren<LineRenderer>();
+            Vector3 selectedCenter=Vector3.zero;
+            for(int i=0;i<unitRing.positionCount;i++)selectedCenter+=unitRing.transform.TransformPoint(unitRing.GetPosition(i));
+            selectedCenter/=unitRing.positionCount;
+            Assert.That(Vector2.Distance(new Vector2(selectedCenter.x,selectedCenter.z),new Vector2(berthBefore.x,berthBefore.z)),Is.LessThan(.001f));
+            Assert.That(port.NavalClaimRing.transform.position,Is.EqualTo(berthBefore),"Selecting a ship cannot move its harbor claim circle.");
+            Assert.That(unitRing.transform.lossyScale.x,Is.LessThan(.8f),"The selected guard ring must remain visually separate from the almost equal berth ring.");
 
             var destination=naval.Harbors.First(h=>h!=port&&h.CanLaunch).Berth;
             guard.MoveTo(destination);
@@ -115,9 +124,17 @@ namespace RiskAI.Tests
             Assert.That(port.NavalDefender,Is.SameAs(shipRelief));
             Assert.That(port.Owner,Is.EqualTo(0),"A same-team berth relief preserves port ownership.");
 
+            // The previous guard has a valid move order but is still at the berth
+            // in the submission frame. Let it leave before testing a land relief;
+            // land/sea candidates intentionally share distance and stable-ID ties.
+            float departDeadline=Time.realtimeSinceStartup+4;
+            while(Vector2.Distance(new Vector2(guard.transform.position.x,guard.transform.position.z),
+                new Vector2(port.Berth.x,port.Berth.z))<=ClaimRules.ReliefRadius&&Time.realtimeSinceStartup<departDeadline)yield return null;
+            Assert.That(Vector2.Distance(new Vector2(guard.transform.position.x,guard.transform.position.z),
+                new Vector2(port.Berth.x,port.Berth.z)),Is.GreaterThan(ClaimRules.ReliefRadius));
             var landRelief=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.ClaimZone.Center);
             shipRelief.MoveTo(destination);
-            Assert.That(port.Defender,Is.SameAs(landRelief),"A land relief takes priority over another naval hold.");
+            Assert.That(port.Defender,Is.SameAs(landRelief),"An available land relief can replace the naval guard through the shared slot.");
             Assert.That(port.NavalDefender,Is.Null);
             yield return null;
             Assert.That(port.NavalClaimRing.enabled,Is.False,"The water circle hides as soon as land defense resumes.");
@@ -137,7 +154,8 @@ namespace RiskAI.Tests
             Assert.That(soldier.Agent.destination,Is.EqualTo(before),"A rejected ship route must leave the soldier without a new land order.");
 
             string disembark=naval.OrderDisembark(transport,home);
-            Assert.That(disembark,Is.EqualTo("No hay una ruta marítima hasta ese destino."));
+            Assert.That(disembark,Is.EqualTo("No hay una ruta marítima segura hasta esa playa."));
+            Assert.That(disembark,Is.EqualTo(transport.LastActionError));
             yield return null;
         }
 

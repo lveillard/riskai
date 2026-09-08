@@ -134,9 +134,9 @@ namespace RiskAI
 
         void SelectBuildingsIn(Rect rect, bool append)
         {
-            var towns = session.Towns.Where(t => t && !t.Port && InSelection(t, rect)).ToList();
+            var towns = session.Towns.Where(t => t && !t.Port && t.State.Owner == 0 && InSelection(t, rect)).ToList();
             var harbors = (NavalWorld.Current
-                ? NavalWorld.Current.Harbors.Where(h => h && InSelection(h, rect))
+                ? NavalWorld.Current.Harbors.Where(h => h && h.Owner == 0 && InSelection(h, rect))
                 : Enumerable.Empty<Harbor>()).ToList();
             // Shift-dragging empty terrain must leave the prior selection intact.
             if (towns.Count == 0 && harbors.Count == 0)

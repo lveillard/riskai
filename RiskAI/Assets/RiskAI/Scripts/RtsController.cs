@@ -40,6 +40,7 @@ namespace RiskAI
         RtsInputRouter inputRouter;
         bool cursorCaptureRequested;
         bool gameplayFocus;
+        bool observedPause;
         float lastSelectTime,lastGroupTime;int lastGroup=-1;UnitKind lastSelectKind;
         LineRenderer hoverRing;
         readonly List<Soldier> pendingBoarders=new();Ship pendingBoardingTransport;Vector3 pendingBoardingLanding;
@@ -64,6 +65,15 @@ namespace RiskAI
         void ReleaseCursor()
         {
             secondaryGesture.Cancel();inputRouter?.Cancel();cursorCaptureRequested=false;CursorCaptured=false;Cursor.lockState=CursorLockMode.None;Cursor.visible=true;
+        }
+        void SyncPauseInput()
+        {
+            if(observedPause==session.Paused)return;
+            observedPause=session.Paused;
+            // Discard held actions once at the transition. Pausing releases OS
+            // confinement, but must not cancel a new camera drag every frame.
+            secondaryGesture.Cancel();inputRouter?.Cancel();CancelAreaSelection();CancelCursor();
+            CameraDragging=false;previousMouse=Pointer;
         }
         public bool OverHud(Vector2 screen) => RtsUiInput.BlocksWorld(screen) || HelpVisible || ScoreboardVisible || session.Winner>=0;
         bool Shift => Keyboard.current!=null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
@@ -351,8 +361,8 @@ namespace RiskAI
                 if(CameraRig!=null)CameraRig.CancelMotion();
                 return;
             }
-            if(session.Paused||session.Winner>=0)ReleaseCursor();
-            else ApplyCursorCapture();
+            SyncPauseInput();
+            ApplyCursorCapture();
             var mouse=Mouse.current;var key=Keyboard.current;
             Selection.RemoveAll(u=>!IsSelectableSoldier(u));
             Fleet.RemoveAll(s=>!IsSelectableShip(s));
@@ -363,7 +373,7 @@ namespace RiskAI
             if(key.f10Key.wasPressedThisFrame)
             {
                 session.TogglePause();
-                if(session.Paused)ReleaseCursor();
+                SyncPauseInput();ApplyCursorCapture();
             }
             if(key.escapeKey.wasPressedThisFrame&&HelpVisible)
             {
@@ -371,12 +381,16 @@ namespace RiskAI
                 if(CameraRig!=null)CameraRig.CancelMotion();
                 return;
             }
-            if(HelpVisible||ScoreboardVisible)
+            }
+            // Modal input exclusion also applies on devices without a keyboard.
+            if(HelpVisible||ScoreboardVisible||session.Winner>=0)
             {
                 ReleaseCursor();CameraDragging=false;Dragging=false;pressedWorld=false;previousMouse=Pointer;Hovered=null;
                 if(CameraRig!=null)CameraRig.CancelMotion();
                 return;
             }
+            if(key!=null)
+            {
             if(key.f2Key.wasPressedThisFrame)FocusHome();
             if(key.escapeKey.wasPressedThisFrame) { ReleaseCursor();if(OrderCursor)CancelCursor();else Clear();return; }
             if(key.backspaceKey.wasPressedThisFrame)CameraRig.ResetView();
@@ -419,17 +433,19 @@ namespace RiskAI
                 return;
             }
             if(mouse==null)return;
-            var point=Pointer;
+            // Mouse buttons and wheel must use that mouse's coordinates, even
+            // when a hovering pen was the last generic Pointer device updated.
+            var point=mouse.position.ReadValue();
             bool insideScreen=InsideScreen(point);
             if(insideScreen&&(mouse.leftButton.wasPressedThisFrame||mouse.rightButton.wasPressedThisFrame||mouse.middleButton.wasPressedThisFrame))RequestCursorCapture();
             Hovered=!insideScreen||OverHud(point)?null:RtsPicking.Target(session,cam,point);
             RtsCursor.SetAttack(insideScreen&&!OverHud(point)&&(AttackCursor||(Hovered&&Hovered.Team!=0&&HasSelection)));
             if(!hoverRing)hoverRing=VisualFactory.Ring(new GameObject("Mouse target highlight").transform,1,.08f,Color.white);
-            hoverRing.enabled=Hovered;
+            hoverRing.enabled=Hovered&&!(Hovered is Soldier selectedSoldier&&selectedSoldier.Selected)&&!(Hovered is Ship selectedShip&&selectedShip.Selected);
             if(Hovered)
             {
                 hoverRing.transform.position=Hovered.transform.position;
-                hoverRing.transform.localScale=Vector3.one*(Hovered is DefenseTower?1.15f:Hovered is Ship?1.6f:.47f);
+                hoverRing.transform.localScale=Vector3.one*(Hovered is DefenseTower?1.15f:Hovered is Ship ship?(ship.IsGarrison?.9f:1.6f):.47f);
                 hoverRing.startColor=hoverRing.endColor=Hovered.Team==0?new Color(.65f,1,.65f):new Color(1,.3f,.2f);
             }
             Vector3 pan=key==null?Vector3.zero:new Vector3((key.rightArrowKey.isPressed?1:0)-(key.leftArrowKey.isPressed?1:0),0,(key.upArrowKey.isPressed?1:0)-(key.downArrowKey.isPressed?1:0));

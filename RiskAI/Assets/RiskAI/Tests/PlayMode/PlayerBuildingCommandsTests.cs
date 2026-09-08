@@ -5,6 +5,7 @@ using RiskAI.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 
 namespace RiskAI.Tests
 {
@@ -41,7 +42,45 @@ namespace RiskAI.Tests
             Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(town.BuildingId,UnitKind.MarinePrivate)),Is.Not.Null);
             Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(port.BuildingId,UnitKind.Footman)),Is.Not.Null);
             Assert.That(town.Recruit(UnitKind.MarinePrivate),Is.Not.Null,"A city API cannot bypass the harbor Marine catalog.");
+            int gold=battle.Economy.Gold[0];
+            Assert.That(town.Recruit(UnitKind.Footman),Is.Not.Null,"The linked city must not bypass the port catalog with a regular unit.");
+            Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(town.BuildingId,UnitKind.Footman)),Is.Not.Null);
+            Assert.That(town.QueueCount,Is.EqualTo(1));
+            Assert.That(battle.Economy.Gold[0],Is.EqualTo(gold));
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ImportedPortHudUsesOnlyNavalCatalogAndShowsBothQueues()
+        {
+            var port=battle.Naval.Harbors.First(item=>item.IsImportedPort);
+            port.LinkedTown.State.Owner=0;battle.Economy.Gold[0]=100;
+            Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(port.BuildingId,UnitKind.MarinePrivate)),Is.Null);
+            Assert.That(commands.Execute(0,PlayerBuildingIntent.BuyShip(port.BuildingId,NavalUnitKind.Galley)),Is.Null);
+            var controller=Object.FindFirstObjectByType<RtsController>();controller.enabled=false;
+            controller.SelectTown(port.LinkedTown);
+            battle.TogglePause();
+            yield return null;
+            var root=Object.FindFirstObjectByType<BattleHud>().GetComponent<UIDocument>().rootVisualElement;
+            if(UiViewport.IsCompact){Activate(root.Q<Button>("HUD tab 2"));yield return null;}
+            Assert.That(root.Q<Button>("Recruit Footman"),Is.Null,"A port's legacy SelectedTown alias must not display regular-city production.");
+            foreach(var kind in ProductionCatalog.HarborUnits)Assert.That(root.Q<Button>("Recruit "+kind),Is.Not.Null);
+            Assert.That(root.Q<Button>("Build ship Galley"),Is.Not.Null);
+            Assert.That(root.Q<Button>("Build ship Transport"),Is.Not.Null);
+            if(UiViewport.IsCompact){Activate(root.Q<Button>("HUD tab 0"));yield return null;}
+            Assert.That(root.Query<Label>().ToList().Any(label=>label.text!=null&&label.text.Contains("tierra 1 / 5")&&label.text.Contains("barcos 1 / 5")),Is.True,
+                "Selecting the house or tower must expose the same port land/naval queues.");
+            var city=battle.Towns.First(item=>!item.IsPort);city.State.Owner=0;
+            controller.SelectTown(city,true);yield return null;
+            if(UiViewport.IsCompact){Activate(root.Q<Button>("HUD tab 2"));yield return null;}
+            Assert.That(root.Q<Button>("Recruit Footman"),Is.Not.Null,"A mixed selection still exposes regular production for its real city.");
+            Assert.That(root.Q<Button>("Recruit MarinePrivate"),Is.Not.Null);
+        }
+
+        static void Activate(Button button)
+        {
+            Assert.That(button,Is.Not.Null);
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=button;button.SendEvent(evt);}
         }
 
         [UnityTest]

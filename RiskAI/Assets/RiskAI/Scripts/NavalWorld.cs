@@ -17,6 +17,7 @@ namespace RiskAI
         PlayerBuildingCommands buildingCommands;
         const float AiDecisionInterval = 18f;
         float[] nextAiByTeam;
+        readonly Dictionary<int,NavalExpeditionCommander> expeditions=new Dictionary<int,NavalExpeditionCommander>();
 
         public static NavalWorld Create(BattleSession session,Transform root)
         {
@@ -122,12 +123,29 @@ namespace RiskAI
         /// <summary>Moves a transport and selected soldier into the same marked embark zone.</summary>
         public string OrderEmbark(Ship ship,Soldier soldier)
         {
+            return TryOrderEmbark(ship,soldier,out var error)?"El transporte se acerca al muelle de embarque.":error;
+        }
+        public bool TryOrderEmbark(Ship ship,Soldier soldier,out string error)
+        {
             var selected=new List<Soldier>{soldier};
-            if(!TryPlanEmbark(ship,selected,out var landing,out var berth,out var error))return error;
+            if(!TryPlanEmbark(ship,selected,out var landing,out var berth,out error))return false;
             ship.MoveTo(berth);
-            if(!string.IsNullOrEmpty(ship.LastActionError))return ship.LastActionError;
-            if(!soldier.TryMoveTo(landing,false,false))return string.IsNullOrEmpty(soldier.LastMoveError)?"La tropa no puede llegar al embarque marcado.":soldier.LastMoveError;
-            return "El transporte se acerca al muelle de embarque.";
+            if(!string.IsNullOrEmpty(ship.LastActionError)){error=ship.LastActionError;return false;}
+            if(!soldier.TryMoveTo(landing,false,false)){error=string.IsNullOrEmpty(soldier.LastMoveError)?"La tropa no puede llegar al embarque marcado.":soldier.LastMoveError;return false;}
+            error=null;return true;
+        }
+        /// <summary>Uses a selected friendly embark post instead of retargeting the nearest harbor.</summary>
+        public bool TryOrderEmbarkAt(Ship ship,Soldier soldier,Harbor harbor,out string error)
+        {
+            error=null;
+            if(!ship||!ship.IsAlive||ship.Kind!=ShipKind.Transport){error="Selecciona un transporte.";return false;}
+            if(!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=ship.Team){error="Selecciona una tropa móvil aliada.";return false;}
+            if(!harbor||harbor.Owner!=ship.Team||!harbor.TryTransportLanding(out var landing,out var berth))
+            {error="El puerto no tiene una playa o pasarela al alcance del transporte.";return false;}
+            ship.MoveTo(berth);
+            if(!string.IsNullOrEmpty(ship.LastActionError)){error=ship.LastActionError;return false;}
+            if(!soldier.TryMoveTo(landing,false,false)){error=string.IsNullOrEmpty(soldier.LastMoveError)?"La tropa no puede llegar al embarque marcado.":soldier.LastMoveError;return false;}
+            return true;
         }
         /// <summary>Plans one common visible shore for a controller-owned boarding queue.</summary>
         public bool TryPlanEmbark(Ship ship,IReadOnlyList<Soldier> soldiers,out Vector3 landing,out Vector3 berth,out string error)
@@ -138,18 +156,18 @@ namespace RiskAI
             Harbor best=null;float score=float.MaxValue;
             foreach(var harbor in Harbors)
             {
-                if(!harbor||!harbor.CanLaunch||!MapLayout.IsLand(harbor.Landing.x,harbor.Landing.z)||!NavMesh.SamplePosition(harbor.Landing,out var shore,1.25f,NavMesh.AllAreas))continue;
-                float next=FlatDistance(ship.transform.position,harbor.Berth);
+                if(!harbor||!harbor.TryTransportLanding(out var shore,out var transportBerth))continue;
+                float next=FlatDistance(ship.transform.position,transportBerth);
                 bool valid=false;
                 for(int i=0;i<soldiers.Count;i++)
                 {
                     var soldier=soldiers[i];if(!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=ship.Team)continue;
                     valid=true;next+=FlatDistance(soldier.transform.position,harbor.Landing);
                 }
-                if(valid&&next<score){best=harbor;score=next;landing=shore.position;}
+                if(valid&&next<score){best=harbor;score=next;landing=shore;berth=transportBerth;}
             }
             if(!best){error="No hay playa o muelle de embarque alcanzable.";return false;}
-            berth=best.Berth;return true;
+            return true;
         }
         public string OrderDisembark(Ship ship,Harbor harbor)
         {
@@ -176,10 +194,25 @@ namespace RiskAI
         public void SimTick(float delta)
         {
             if(!Session||Session.Paused||Session.Winner>=0||!Session.AiEnabled)return;
+            for(int player=1;player<Session.PlayerCount;player++)ExpeditionFor(player).Tick(delta);
             EnsureAiSchedule();
             int team=NextDueAiTeam();if(team<0)return;
             while(nextAiByTeam[team]<=Session.BattleTime)nextAiByTeam[team]+=AiDecisionInterval;
             RunAiDecision(team);
+        }
+        public NavalExpeditionCommander ExpeditionFor(int team)
+        {
+            if(!PlayerRules.IsPlayer(team)||team<=0||team>=Session.PlayerCount)return null;
+            if(!expeditions.TryGetValue(team,out var commander)){commander=new NavalExpeditionCommander(this,team);expeditions.Add(team,commander);}
+            return commander;
+        }
+        /// <summary>Expedition reservations are bounded by one small mission per AI player.</summary>
+        public bool IsReserved(Soldier soldier)
+        {
+            if(!soldier)return false;
+            foreach(var expedition in expeditions.Values)
+                if(expedition.Reserves(soldier))return true;
+            return false;
         }
         void EnsureAiSchedule()
         {
@@ -206,7 +239,7 @@ namespace RiskAI
             if(fleet<2&&Session.Economy.Gold[team]>=Harbor.Cost(ShipKind.Galley))
                 foreach(var harbor in Harbors)
                     if(harbor.Owner==team&&harbor.QueueCount==0&&buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Galley))==null)break;
-            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Galley&&!ship.CurrentTarget)
+            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Galley&&!ship.IsGarrison&&!ship.CurrentTarget)
             {
                 Harbor target=null;float distance=float.MaxValue;
                 foreach(var harbor in Harbors)

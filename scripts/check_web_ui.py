@@ -28,6 +28,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://127.0.0.1:8080")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--camera", action="store_true", help="Capture paused mouse and touch camera gestures.")
+    parser.add_argument("--camera-touch", action="store_true", help="Include a two-finger CDP camera gesture with --camera.")
+    parser.add_argument("--ui-wheel", action="store_true", help="Capture real wheel input on an overflowing ranking panel.")
     return parser.parse_args()
 
 
@@ -43,6 +46,10 @@ def main():
         "penStartedBattle": False,
         "consumedPen": [],
         "errors": [],
+        "cameraRequested": args.camera,
+        "cameraTouchRequested": args.camera and args.camera_touch,
+        "cameraCaptures": [],
+        "uiWheelCaptures": [],
         "success": False,
     }
     errors = []
@@ -117,6 +124,10 @@ def main():
             report["errors"] = errors
 
             if ready:
+                if args.camera:
+                    capture_camera_evidence(page, cdp, output, report, include_touch=args.camera_touch)
+                if args.ui_wheel:
+                    capture_ui_wheel_evidence(page, output, report)
                 cdp.send(
                     "Input.dispatchTouchEvent",
                     {"type": "touchStart", "touchPoints": [MENU_POINT]},
@@ -156,6 +167,89 @@ def main():
 
     print(json.dumps(report), flush=True)
     return 0 if report["success"] else 1
+
+
+def capture_camera_evidence(page, cdp, output, report, include_touch=False):
+    """Capture real paused camera gestures; evidence does not affect smoke success."""
+    page.mouse.click(800, 400)
+    page.wait_for_timeout(250)
+    page.keyboard.press("F10")
+    page.wait_for_timeout(350)
+
+    def capture(name):
+        path = output / name
+        page.screenshot(path=str(path))
+        report["cameraCaptures"].append(str(path))
+
+    capture("paused-before.png")
+    page.mouse.move(800, 400)
+    page.mouse.wheel(0, 300)
+    page.wait_for_timeout(700)
+    capture("paused-wheel.png")
+
+    page.mouse.move(800, 400)
+    page.mouse.down(button="right")
+    for point in ((840, 412), (885, 430), (930, 442), (970, 450)):
+        page.mouse.move(*point)
+        page.wait_for_timeout(80)
+    page.mouse.up(button="right")
+    page.wait_for_timeout(250)
+    capture("paused-right-drag.png")
+
+    page.mouse.move(970, 450)
+    page.mouse.down(button="middle")
+    for point in ((930, 442), (885, 430), (840, 412), (800, 400)):
+        page.mouse.move(*point)
+        page.wait_for_timeout(80)
+    page.mouse.up(button="middle")
+    page.wait_for_timeout(250)
+    capture("paused-middle-drag.png")
+
+    if include_touch:
+        cdp.send(
+            "Input.dispatchTouchEvent",
+            {
+                "type": "touchStart",
+                "touchPoints": [
+                    {"id": 31, "x": 760, "y": 400},
+                    {"id": 32, "x": 840, "y": 400},
+                ],
+            },
+        )
+        page.wait_for_timeout(120)
+        cdp.send(
+            "Input.dispatchTouchEvent",
+            {
+                "type": "touchMove",
+                "touchPoints": [
+                    {"id": 31, "x": 730, "y": 430},
+                    {"id": 32, "x": 870, "y": 430},
+                ],
+            },
+        )
+        page.wait_for_timeout(180)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        page.wait_for_timeout(300)
+        capture("paused-touch-camera.png")
+
+
+def capture_ui_wheel_evidence(page, output, report):
+    """Real browser events; captures need visual review, not just file existence."""
+    page.set_viewport_size({"width": 1600, "height": 420})
+    page.wait_for_timeout(700)
+    page.keyboard.down("Tab")
+    page.wait_for_timeout(500)
+    page.mouse.move(800, 210)
+    for name, wheel in (("ranking-before.png", 0), ("ranking-down.png", 480), ("ranking-up.png", -480)):
+        if wheel:
+            page.mouse.wheel(0, wheel)
+            page.wait_for_timeout(500)
+        path=output/name
+        page.screenshot(path=str(path))
+        report["uiWheelCaptures"].append(str(path))
+    page.keyboard.up("Tab")
+    page.set_viewport_size(VIEWPORT)
+    page.wait_for_timeout(700)
 
 
 if __name__ == "__main__":

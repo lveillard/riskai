@@ -24,7 +24,7 @@ namespace RiskAI
                 walkableTriangles.Add(i);walkableTriangles.Add(i+1);walkableTriangles.Add(b);
                 walkableTriangles.Add(i+1);walkableTriangles.Add(b+1);walkableTriangles.Add(b);
             }
-            var mesh=resources.Track(new Mesh{name="Irregular continental terrain",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32});mesh.vertices=vertices;mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+            var mesh=resources.Track(new Mesh{name="Irregular continental terrain",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32});mesh.vertices=vertices;BakeCoastWeights(mesh,vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var land=new GameObject("Coastal marches");land.layer=MapLayout.TerrainLayer;land.transform.SetParent(root,false);land.AddComponent<MeshFilter>().sharedMesh=mesh;
             land.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
             var collisionMesh=resources.Track(new Mesh{name="Walkable land excluding water",indexFormat=UnityEngine.Rendering.IndexFormat.UInt32});
@@ -86,6 +86,12 @@ namespace RiskAI
             }
             if(!MapLayout.IsExpanded)CreateClassicSouthwestDetails(root,clearings);
         }
+        static void BakeCoastWeights(Mesh mesh,IReadOnlyList<Vector3> vertices)
+        {
+            var weights=new Vector2[vertices.Count];
+            for(int i=0;i<weights.Length;i++)weights[i]=ShoreAccess.SurfaceWeights(vertices[i].x,vertices[i].z);
+            mesh.SetUVs(1,weights);
+        }
         static void CreateClassicSouthwestDetails(Transform parent,List<Vector4> clearings)
         {
             // A handful of repeatable stone clusters gives the olive clearings a
@@ -123,7 +129,7 @@ namespace RiskAI
                     v.Add(MapLayout.Point(x,z));if(r==rings||s==sides)continue;int i=r*(sides+1)+s,b=i+sides+1;
                     t.Add(i);t.Add(b+1);t.Add(b);t.Add(i);t.Add(i+1);t.Add(b+1);
                 }
-                var mesh=resources.Track(new Mesh{name="Sculpted island "+island});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+                var mesh=resources.Track(new Mesh{name="Sculpted island "+island});mesh.SetVertices(v);BakeCoastWeights(mesh,v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
                 var go=new GameObject(island==0?"Isla de los Robles":"Isla del Viento");go.layer=MapLayout.TerrainLayer;go.transform.SetParent(root,false);
                 go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");go.AddComponent<MeshCollider>().sharedMesh=mesh;
             }
@@ -140,7 +146,7 @@ namespace RiskAI
                 if(x==columns||z==rows)continue;int i=x*(rows+1)+z,b=i+rows+1;
                 t.Add(i);t.Add(i+1);t.Add(b);t.Add(i+1);t.Add(b+1);t.Add(b);
             }
-            var mesh=resources.Track(new Mesh{name="Submerged continental and island shelf"});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+            var mesh=resources.Track(new Mesh{name="Submerged continental and island shelf"});mesh.SetVertices(v);BakeCoastWeights(mesh,v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var go=new GameObject("Sandy sea bed · visual only");go.transform.SetParent(root,false);
             go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
         }

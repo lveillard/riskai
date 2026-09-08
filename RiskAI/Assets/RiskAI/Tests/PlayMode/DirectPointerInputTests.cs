@@ -59,6 +59,42 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator PausedTwoFingerTouchPansAndPinchesWithoutCommands()
+        {
+            Touchscreen touch=null;
+            try
+            {
+                touch=InputSystem.AddDevice<Touchscreen>("Paused two finger touch");
+                controller.SendMessage("OnApplicationFocus",true);
+                controller.SelectOnly(BattleSession.Current.Units.Find(unit=>unit&&unit.Team==0));
+                var commandsApplied=BattleSession.Current.Commands.AppliedCount;
+                BattleSession.Current.TogglePause();
+                var pausedTime=BattleSession.Current.BattleTime;
+                controller.SendMessage("Update");
+                var center=UiViewport.WorldRect.center;
+                var beforeFocus=controller.CameraRig.FocusPoint;var beforeZoom=controller.CameraRig.TargetZoom;
+                Pump(touch,
+                    new TouchState { touchId=101,position=center+new Vector2(-50,0),phase=UnityEngine.InputSystem.TouchPhase.Began },
+                    new TouchState { touchId=102,position=center+new Vector2(50,0),phase=UnityEngine.InputSystem.TouchPhase.Began });
+                Pump(touch,
+                    new TouchState { touchId=101,position=center+new Vector2(-70,20),delta=new Vector2(-20,20),phase=UnityEngine.InputSystem.TouchPhase.Moved },
+                    new TouchState { touchId=102,position=center+new Vector2(70,20),delta=new Vector2(20,20),phase=UnityEngine.InputSystem.TouchPhase.Moved });
+                Assert.That(Vector3.Distance(beforeFocus,controller.CameraRig.FocusPoint),Is.GreaterThan(.01f),"A paused two-finger drag must pan the camera.");
+                Assert.That(controller.CameraRig.TargetZoom,Is.Not.EqualTo(beforeZoom),"A paused two-finger spread must pinch-zoom the camera.");
+                Pump(touch,
+                    new TouchState { touchId=101,position=center+new Vector2(-70,20),phase=UnityEngine.InputSystem.TouchPhase.Ended },
+                    new TouchState { touchId=102,position=center+new Vector2(70,20),phase=UnityEngine.InputSystem.TouchPhase.Ended });
+                Assert.That(controller.Dragging,Is.False);
+                Assert.That(BattleSession.Current.Commands.PendingCount,Is.Zero,"Touch gestures in pause must not queue commands.");
+                Assert.That(BattleSession.Current.Commands.AppliedCount,Is.EqualTo(commandsApplied));
+                Assert.That(BattleSession.Current.BattleTime,Is.EqualTo(pausedTime),"A paused gesture must not advance the battle clock.");
+                yield return null;
+                Assert.That(BattleSession.Current.BattleTime,Is.EqualTo(pausedTime));
+            }
+            finally { if(touch!=null)InputSystem.RemoveDevice(touch); }
+        }
+
+        [UnityTest]
         public IEnumerator PenTipDragUsesSharedAreaSelectionPath()
         {
             Pen pen=null;
@@ -76,9 +112,10 @@ namespace RiskAI.Tests
             yield return null;
         }
 
-        void Pump(InputDevice device,TouchState state)
+        void Pump(InputDevice device,params TouchState[] states)
         {
-            InputSystem.QueueStateEvent(device,state);InputSystem.Update();controller.SendMessage("Update");
+            foreach(var state in states)InputSystem.QueueStateEvent(device,state);
+            InputSystem.Update();controller.SendMessage("Update");
         }
 
         [UnityTest]

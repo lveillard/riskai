@@ -16,9 +16,9 @@ Shader "RiskAI/ImportedGround"
    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
    #include "NaturalNoise.hlsl"
    TEXTURE2D(_Atlas); SAMPLER(sampler_Atlas);TEXTURE2D(_Cliffs);SAMPLER(sampler_Cliffs);
-   struct A {float4 p:POSITION;float3 n:NORMAL;half4 color:COLOR;float2 shore:TEXCOORD1;};
-   struct V {float4 p:SV_POSITION;float3 w:TEXCOORD0;float3 n:TEXCOORD1;half fog:TEXCOORD2;half shore:TEXCOORD3;half4 color:COLOR;};
-   V Vert(A a){V o;VertexPositionInputs p=GetVertexPositionInputs(a.p.xyz);o.p=p.positionCS;o.w=p.positionWS;o.n=TransformObjectToWorldNormal(a.n);o.fog=ComputeFogFactor(o.p.z);o.shore=a.shore.x;o.color=a.color;return o;}
+   struct A {float4 p:POSITION;float3 n:NORMAL;half4 color:COLOR;float3 shore:TEXCOORD1;};
+   struct V {float4 p:SV_POSITION;float3 w:TEXCOORD0;float3 n:TEXCOORD1;half fog:TEXCOORD2;half3 shore:TEXCOORD3;half4 color:COLOR;};
+   V Vert(A a){V o;VertexPositionInputs p=GetVertexPositionInputs(a.p.xyz);o.p=p.positionCS;o.w=p.positionWS;o.n=TransformObjectToWorldNormal(a.n);o.fog=ComputeFogFactor(o.p.z);o.shore=a.shore;o.color=a.color;return o;}
    half4 Frag(V i):SV_Target
    {
     float2 warped=NaturalWarp(i.w.xz);float2 uv=warped*.25;float3 n=normalize(i.n);
@@ -36,9 +36,11 @@ Shader "RiskAI/ImportedGround"
     color=lerp(color,snowRock,snow*.45);
     // Source water flags supply a one-cell static bank band. Existing noise
     // breaks its interpolation without moving land, water, or navigation.
-    half shore=saturate(i.shore+(patch-.5)*.10);
-    shore=max(shore,1-smoothstep(-.12,.70,i.w.y));
-    color=lerp(color,rock*half3(.86,.76,.54),shore);
+    half shore=saturate(i.shore.x+(patch-.5)*.10);
+    half sand=smoothstep(.25,.75,i.shore.y);
+    half3 bank=lerp(color*half3(.90,1.04,.91),rock*half3(.83,.88,.91),i.shore.z);
+    bank=lerp(bank,rock*half3(1.15,1.03,.72),sand);
+    color=lerp(color,bank,shore);
     // Overlapping irregular patches break the square repetition without changing source biomes.
     half meadow=NaturalNoise(warped*.18+patch*3);
     color*=lerp(half3(.84,.92,.80),half3(1.10,1.07,.96),patch);

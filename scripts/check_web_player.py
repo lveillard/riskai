@@ -28,6 +28,8 @@ def main():
     parser.add_argument('--map', choices=['classic', 'riverlands', 'europe', 'world'])
     parser.add_argument('--seconds', type=int, default=60)
     parser.add_argument('--recruits', type=int, default=6, choices=range(1, 101), metavar='1..100')
+    parser.add_argument('--path-budget', type=int, default=500, metavar='100..2000',
+                        help='Unity asynchronous NavMesh path budget for the controlled A/B probe.')
     parser.add_argument('--warmup', type=int, default=0)
     parser.add_argument('--probe', action='store_true')
     parser.add_argument('--restart', action='store_true')
@@ -45,8 +47,10 @@ def main():
         parser.error('--suppress-draws is only meaningful with --probe.')
     if args.overview and not args.probe:
         parser.error('--overview requires --probe and its battlefield.')
+    if not 100 <= args.path_budget <= 2000:
+        parser.error('--path-budget must be between 100 and 2000.')
     args.output.mkdir(parents=True, exist_ok=True)
-    query = {'riskai-seed': 19031, 'riskai-players': 16}
+    query = {'riskai-seed': 19031, 'riskai-players': 16, 'riskai-path-budget': args.path_budget}
     if args.map:
         query['riskai-map'] = args.map
         if not args.restart:
@@ -59,7 +63,8 @@ def main():
     url = args.url.rstrip('/') + '/?' + urlencode(query)
     report = {'url': url, 'desktop_browser': True, 'physical_arm': False,
               'viewport': [args.width, args.height], 'device_scale_factor': args.dpr,
-              'draws_suppressed': args.suppress_draws, 'overview': args.overview}
+              'draws_suppressed': args.suppress_draws, 'overview': args.overview,
+              'path_budget': args.path_budget}
     started = time.monotonic()
     with (args.output / 'console.log').open('w', encoding='utf-8') as log, sync_playwright() as p:
         browser = p.chromium.launch(channel='msedge', headless=not args.headed)

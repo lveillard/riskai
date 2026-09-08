@@ -209,14 +209,14 @@ namespace RiskAI
             {
                 var tabs = new VisualElement { name = "HUD tabs" }; RtsUiStyle.Row(tabs); tabs.style.marginBottom = 4;tabs.style.flexShrink=0;
                 Tab(tabs, 0, "Selección"); Tab(tabs, 1, "Órdenes"); Tab(tabs, 2, "Crear"); footer.Add(tabs);
-                context = new ScrollView(ScrollViewMode.Vertical) { name = "HUD context" }; context.style.flexGrow = 1;context.style.minHeight=0;
+                context = new ScrollView(ScrollViewMode.Vertical) { name = "HUD context" }; context.style.flexGrow = 1;context.style.minHeight=0; RtsUiStyle.ConfigureScroll((ScrollView)context);
                 wideContext = null;
             }
             else
             {
                 var columns = new VisualElement { name = "HUD wide columns" }; RtsUiStyle.Row(columns); columns.style.flexGrow = 1;columns.style.minHeight=0;columns.style.alignItems=Align.Stretch;
-                context = new ScrollView(ScrollViewMode.Vertical) { name = "HUD selection column" }; context.style.width = Length.Percent(43); context.style.flexShrink = 0;
-                wideContext = new ScrollView(ScrollViewMode.Vertical) { name = "HUD contextual column" }; wideContext.style.flexGrow = 1;wideContext.style.minWidth=0; wideContext.style.marginLeft = 16;
+                context = new ScrollView(ScrollViewMode.Vertical) { name = "HUD selection column" }; context.style.width = Length.Percent(43); context.style.flexShrink = 0; RtsUiStyle.ConfigureScroll((ScrollView)context);
+                wideContext = new ScrollView(ScrollViewMode.Vertical) { name = "HUD contextual column" }; wideContext.style.flexGrow = 1;wideContext.style.minWidth=0; wideContext.style.marginLeft = 16; RtsUiStyle.ConfigureScroll((ScrollView)wideContext);
                 wideContext.style.paddingLeft=14;wideContext.style.borderLeftWidth=1;wideContext.style.borderLeftColor=RtsUiStyle.Bronze;
                 ((ScrollView)context).horizontalScrollerVisibility=ScrollerVisibility.Hidden;
                 ((ScrollView)wideContext).horizontalScrollerVisibility=ScrollerVisibility.Hidden;
@@ -337,7 +337,7 @@ namespace RiskAI
                 for (int i = 0; i < controller.SelectedHarbors.Count; i++) QueueLabels(root, controller.SelectedHarbors[i]);
                 return;
             }
-            if (controller.SelectedTown)
+            if (controller.SelectedTown && !controller.SelectedHarbor)
             {
                 var town = controller.SelectedTown; AddTitle(root, town.DisplayName);
                 LiveInfo(root,()=>town?VisualFactory.TeamName(town.State.Owner)+" · "+town.QueueCount+" / 5 · "+(town.QueueCount>0?BattleRules.Name(town.TrainingKind):"cola vacía"):"Ciudad retirada");
@@ -395,20 +395,20 @@ namespace RiskAI
         void BuildProduction(VisualElement root)
         {
             if (controller.SelectedTowns.Count + controller.SelectedHarbors.Count > 1)
-                AddInfo(root, "Cada compra se añade una vez a la cola compatible más corta.");
-            if (controller.SelectedTown || controller.SelectedTowns.Count > 0)
+                root.tooltip = "Cada compra se añade una vez a la cola compatible más corta.";
+            if (controller.SelectedTowns.Count > 0)
             {
                 AddTitle(root, "EJÉRCITO");
                 UnitButtons(root, ProductionCatalog.SettlementUnits);
             }
-            if (controller.SelectedHarbor || controller.SelectedHarbors.Count > 0)
+            if (controller.SelectedHarbors.Count > 0)
             {
                 AddTitle(root, "MARINA"); UnitButtons(root, ProductionCatalog.HarborUnits);
                 var ships = new VisualElement(); RtsUiStyle.Row(ships, true);
                 foreach (var ship in ProductionCatalog.HarborShips)
                 {
                     var profile = Harbor.Profile((ShipKind)ship);
-                    ships.Add(GridButton(profile.Name + " · " + profile.Cost + " oro", () => controller.BuyShip((ShipKind)ship)));
+                    ships.Add(ShipButton((ShipKind)ship, profile.Name + " · " + profile.Cost + " oro", () => controller.BuyShip((ShipKind)ship)));
                 }
                 root.Add(ships);
             }
@@ -448,6 +448,16 @@ namespace RiskAI
             var button = RtsUiStyle.Button(text, action);
             if (UiViewport.IsCompact) button.style.width = Length.Percent(46);
             else button.style.minWidth = 126;
+            return button;
+        }
+
+        static Button ShipButton(ShipKind kind, string text, System.Action action)
+        {
+            var button = RtsUiStyle.Button("", action, "Build ship " + kind);
+            if (UiViewport.IsCompact) button.style.width = Length.Percent(46); else button.style.minWidth = 126;
+            var icon = new NavalQueueIcon(); icon.style.width = 30; icon.style.height = 22; icon.style.alignSelf = Align.Center;
+            var label = RtsUiStyle.Label(text, null, 11); label.style.whiteSpace = WhiteSpace.Normal; label.style.unityTextAlign = TextAnchor.MiddleCenter;
+            icon.SetKind(kind); button.Add(icon); button.Add(label); button.tooltip = text;
             return button;
         }
 
@@ -585,7 +595,7 @@ namespace RiskAI
             modal.style.backgroundColor = new Color(.01f, .02f, .03f, .88f); modal.style.paddingLeft = UiViewport.IsCompact ? 12 : 80; modal.style.paddingRight = UiViewport.IsCompact ? 12 : 80;
             modal.style.paddingTop = UiViewport.IsCompact ? 14 : 48; modal.style.paddingBottom = UiViewport.IsCompact ? 14 : 48;
             var panel = RtsUiStyle.Panel("HUD modal panel"); panel.style.flexGrow = 1;
-            var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "HUD modal scroll" }; scroll.style.flexGrow = 1;scroll.style.minHeight=0; panel.Add(scroll);
+            var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "HUD modal scroll" }; scroll.style.flexGrow = 1;scroll.style.minHeight=0; RtsUiStyle.ConfigureScroll(scroll); panel.Add(scroll);
             if (session.Winner >= 0) BuildResult(scroll);
             else if (controller.ScoreboardVisible || menuTab == 2) BuildRanking(scroll);
             else BuildHelp(scroll);
@@ -621,7 +631,7 @@ namespace RiskAI
                 panel.Add(RtsUiStyle.Button(controller.EdgePan ? "PANEO EN BORDES: ACTIVO" : "PANEO EN BORDES: INACTIVO", () => { controller.EdgePan = !controller.EdgePan; BuildRetainedUi(false); }));
                 panel.Add(RtsUiStyle.Button("VELOCIDAD CÁMARA −", () => { controller.CameraRig.PanSpeed = Mathf.Max(.5f, controller.CameraRig.PanSpeed - .2f); BuildRetainedUi(false); }));
                 panel.Add(RtsUiStyle.Button("VELOCIDAD CÁMARA +", () => { controller.CameraRig.PanSpeed = Mathf.Min(3f, controller.CameraRig.PanSpeed + .2f); BuildRetainedUi(false); }));
-                AddInfo(panel, "Rendimiento: " + RuntimeDiagnostics.LatestAverageMs.ToString("F1") + " ms medio · " + RuntimeDiagnostics.LatestMaximumMs.ToString("F1") + " ms máximo · " + RuntimeDiagnostics.LatestUnits + " unidades · " + (RuntimeDiagnostics.LatestUnityAllocatedBytes/1048576f).ToString("F0") + " MB Unity.");
+                AddInfo(panel, RuntimeDiagnostics.LatestReport == null ? "Recogiendo muestra de rendimiento…" : "Rendimiento: " + RuntimeDiagnostics.LatestAverageMs.ToString("F1") + " ms medio · " + RuntimeDiagnostics.LatestMaximumMs.ToString("F1") + " ms máximo · " + RuntimeDiagnostics.LatestUnits + " unidades · " + (RuntimeDiagnostics.LatestUnityAllocatedBytes/1048576f).ToString("F0") + " MB Unity.");
                 panel.Add(RtsUiStyle.Button("NUEVA PARTIDA · ELEGIR MAPA", FrontEndController.Open));
             }
         }
