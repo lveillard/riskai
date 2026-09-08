@@ -108,6 +108,185 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator SourceWeaponDeliveryControlsImpactInsteadOfDamageCategory()
+        {
+            battle.Combat.PresentationEnabled = false;
+            var source = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, new Vector3(-30, 0, -16));
+            var target = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, new Vector3(-28, 0, -16));
+            var bystander = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, new Vector3(-27.8f, 0, -16));
+            StopBackgroundUnits(source, target);
+            source.enabled = target.enabled = bystander.enabled = false;
+            source.Agent.enabled = target.Agent.enabled = bystander.Agent.enabled = false;
+
+            float targetBefore = target.Health, bystanderBefore = bystander.Health;
+            int projectileCount = battle.Combat.ActiveProjectileCount;
+            var instant = SourceWeapons.For(UnitKind.Archer, AttackKind.Piercing);
+            int instantId = battle.Combat.FireWeapon(source.AimPoint, target.AimPoint, target, 20,
+                source.Team, source, instant);
+            Assert.That(instant.Delivery, Is.EqualTo(WeaponDelivery.Instant));
+            Assert.That(instantId, Is.Zero);
+            Assert.That(battle.Combat.ActiveProjectileCount, Is.EqualTo(projectileCount));
+            Assert.That(target.Health, Is.LessThan(targetBefore), "h00B instant delivery must resolve at release.");
+
+            targetBefore = target.Health;
+            Vector3 from = target.AimPoint + Vector3.left * 44;
+            var magicMissile = new WeaponProfile(AttackKind.Magic, WeaponDelivery.Missile, 22);
+            int missileId = battle.Combat.FireWeapon(from, target.AimPoint, target, 20,
+                source.Team, source, magicMissile);
+            Assert.That(battle.Combat.TryGetProjectile(missileId, out var missile), Is.True);
+            Assert.That(missile.Duration, Is.EqualTo(2).Within(.001f), "Source flight time must be distance / speed without the legacy clamp.");
+            Assert.That(target.Health, Is.EqualTo(targetBefore));
+            battle.Combat.Tick(2.01f);
+            Assert.That(target.Health, Is.LessThan(targetBefore));
+            Assert.That(bystander.Health, Is.EqualTo(bystanderBefore), "Magic damage alone must not create splash.");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator RiflemanAcquiresInsideItsSourceRadiusBeyondWeaponRange()
+        {
+            var rifleman = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, new Vector3(-30, 0, -16));
+            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, new Vector3(-28, 0, -16));
+            StopBackgroundUnits(rifleman, enemy);
+            foreach (var unit in battle.Units.ToArray())
+                if (unit != rifleman && unit != enemy) battle.Targets.Remove(unit);
+            enemy.enabled = false;
+            enemy.Agent.enabled = false;
+            enemy.transform.position = rifleman.transform.position + Vector3.right * 11;
+            rifleman.Stop();
+            battle.Spatial.Rebuild(battle.Targets, battle.Units);
+
+            Assert.That(Vector3.Distance(rifleman.transform.position, enemy.transform.position), Is.EqualTo(11).Within(.01f));
+            Assert.That(Vector3.Distance(rifleman.transform.position, enemy.transform.position), Is.GreaterThan(BattleRules.Range(UnitKind.Archer) + 2));
+            Assert.That(SourceWeapons.AcquisitionRange(UnitKind.Archer), Is.EqualTo(12));
+            yield return new WaitForSecondsRealtime(.3f);
+            Assert.That(rifleman.CurrentTarget, Is.SameAs(enemy));
+            yield return new WaitForSecondsRealtime(.12f);
+            Assert.That(rifleman.CurrentTarget, Is.SameAs(enemy), "The source acquisition target must survive consecutive validity checks.");
+        }
+
+        [UnityTest]
+        public IEnumerator RiflemanDoesNotAcquireBeyondItsSourceRadius()
+        {
+            var rifleman = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, new Vector3(-30, 0, -16));
+            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, new Vector3(-28, 0, -16));
+            StopBackgroundUnits(rifleman, enemy);
+            foreach (var unit in battle.Units.ToArray())
+                if (unit != rifleman && unit != enemy) battle.Targets.Remove(unit);
+            enemy.enabled = false;
+            enemy.Agent.enabled = false;
+            enemy.transform.position = rifleman.transform.position + Vector3.right * 12.5f;
+            rifleman.Stop();
+            battle.Spatial.Rebuild(battle.Targets, battle.Units);
+
+            Assert.That(Vector3.Distance(rifleman.transform.position, enemy.transform.position), Is.EqualTo(12.5f).Within(.01f));
+            yield return new WaitForSecondsRealtime(.35f);
+            Assert.That(rifleman.CurrentTarget, Is.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator MortarDoesNotAcquireBeyondItsSourceRadius()
+        {
+            var mortar = BattleTestScenario.Mobile(battle, 0, UnitKind.Mortar, new Vector3(-30, 0, -16));
+            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, new Vector3(-11.5f, 0, -16));
+            StopBackgroundUnits(mortar, enemy);
+            foreach (var unit in battle.Units.ToArray())
+                if (unit != mortar && unit != enemy) battle.Targets.Remove(unit);
+            enemy.enabled = false;
+            enemy.Agent.enabled = false;
+            mortar.HoldPosition();
+            battle.Spatial.Rebuild(battle.Targets, battle.Units);
+
+            Assert.That(Vector3.Distance(mortar.transform.position, enemy.transform.position), Is.GreaterThan(SourceWeapons.AcquisitionRange(UnitKind.Mortar)));
+            yield return new WaitForSecondsRealtime(.3f);
+            Assert.That(mortar.CurrentTarget, Is.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator MortarArtilleryLocksItsImpactPointAndUsesThreeSourceBands()
+        {
+            battle.Combat.PresentationEnabled = false;
+            Vector3 center = new Vector3(-28, 0, -16);
+            var source = BattleTestScenario.Mobile(battle, 0, UnitKind.Mortar, center + Vector3.left * 18);
+            var original = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, center);
+            var full = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, center + Vector3.right * .25f);
+            var medium = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, center + Vector3.right * 2);
+            var small = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, center + Vector3.right * 4);
+            var outside = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, center + Vector3.right * 6);
+            var ally = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, center + Vector3.left * .4f);
+            var actors = new[] { source, original, full, medium, small, outside, ally };
+            foreach (var unit in battle.Units.ToArray())
+            {
+                if (!unit || actors.Contains(unit)) continue;
+                unit.enabled = false;
+                if (unit.Agent) unit.Agent.enabled = false;
+            }
+            foreach (var unit in actors)
+            {
+                unit.enabled = false;
+                unit.Agent.enabled = false;
+            }
+
+            var weapon = SourceWeapons.For(UnitKind.Mortar, AttackKind.Siege);
+            Assert.That(weapon.Delivery, Is.EqualTo(WeaponDelivery.Artillery));
+            Assert.That(weapon.Targeting, Is.EqualTo(WeaponTargeting.LaunchPoint));
+            float originalBefore = original.Health, fullBefore = full.Health, mediumBefore = medium.Health;
+            float smallBefore = small.Health, outsideBefore = outside.Health, allyBefore = ally.Health, sourceBefore = source.Health;
+            battle.Combat.FireWeapon(source.AimPoint, original.AimPoint, original, 100, source.Team, source, weapon);
+            original.transform.position += Vector3.forward * 8;
+            source.transform.position = center + Vector3.left * .25f;
+            battle.Spatial.Rebuild(battle.Targets, battle.Units);
+            battle.Combat.Tick(1.01f);
+
+            Assert.That(original.Health, Is.EqualTo(originalBefore), "Artillery must not home onto a moved target.");
+            Assert.That(full.Health, Is.EqualTo(fullBefore - CombatRules.ResolveDamage(100, AttackKind.Siege, full.ArmorType, full.Armor)).Within(.001f));
+            Assert.That(medium.Health, Is.EqualTo(mediumBefore - CombatRules.ResolveDamage(35, AttackKind.Siege, medium.ArmorType, medium.Armor)).Within(.001f));
+            Assert.That(small.Health, Is.EqualTo(smallBefore - CombatRules.ResolveDamage(10, AttackKind.Siege, small.ArmorType, small.Armor)).Within(.001f));
+            Assert.That(outside.Health, Is.EqualTo(outsideBefore));
+            Assert.That(ally.Health, Is.EqualTo(allyBefore - CombatRules.ResolveDamage(100, AttackKind.Siege, ally.ArmorType, ally.Armor)).Within(.001f),
+                "h00H has no relationship restriction in its explicit splash-target mask.");
+            Assert.That(source.Health, Is.EqualTo(sourceBefore), "h00H splash omits the self target flag.");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator WarshipSplashHonorsItsExplicitEnemyAndNeutralRelations()
+        {
+            battle.Combat.PresentationEnabled = false;
+            Vector3 center = new Vector3(-28, 0, -16);
+            var source = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, center + Vector3.left * 22);
+            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, center);
+            var neutral = BattleTestScenario.Mobile(battle, PlayerRules.NeutralTeam, UnitKind.Footman, center + Vector3.right * .3f);
+            var ally = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, center + Vector3.left * .3f);
+            var actors = new[] { source, enemy, neutral, ally };
+            foreach (var unit in battle.Units.ToArray())
+            {
+                if (!unit || actors.Contains(unit)) continue;
+                unit.enabled = false;
+                if (unit.Agent) unit.Agent.enabled = false;
+            }
+            foreach (var unit in actors)
+            {
+                unit.enabled = false;
+                unit.Agent.enabled = false;
+            }
+
+            float enemyBefore = enemy.Health, neutralBefore = neutral.Health, allyBefore = ally.Health;
+            var weapon = SourceWeapons.For(NavalUnitKind.Galley, AttackKind.Normal);
+            battle.Combat.FireWeapon(source.AimPoint, enemy.AimPoint, enemy, 40, source.Team, source, weapon);
+            // Keep the identity registered while excluding the primary from the area-query fixture.
+            // A missile-splash weapon must still apply its full primary hit.
+            battle.Targets.Remove(enemy);
+            battle.Spatial.Rebuild(battle.Targets, battle.Units);
+            battle.Combat.Tick(1.01f);
+
+            Assert.That(enemy.Health, Is.LessThan(enemyBefore));
+            Assert.That(neutral.Health, Is.LessThan(neutralBefore));
+            Assert.That(ally.Health, Is.EqualTo(allyBefore), "h00W explicitly restricts splash to enemies and neutral targets.");
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator BattleCommandsValidateOwnershipFiniteValuesGarrisonsDeferredAndStaleIds()
         {
             var unit = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, new Vector3(-30, 0, -16));

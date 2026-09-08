@@ -16,16 +16,18 @@ namespace RiskAI
         public CombatTarget Guardian => Town ? Town.ClaimZone.Guardian : Harbor ? Harbor.ClaimZone.Guardian : null;
         public override Vector3 AimPoint => transform.position + Vector3.up * 2.8f;
         public override AttackKind AttackType => AttackKind.Piercing;
-        public override ArmorKind ArmorType => ArmorKind.Fortified;
+        public override ArmorKind ArmorType => ArmorKind.Divine;
         public override float Armor => 3;
         public bool UnderConstruction { get; private set; }
         public float BuildProgress { get; private set; }
         public int ShotsFired { get; private set; }
         public CombatTarget CurrentTarget { get; private set; }
+        public bool IsWindingUp => launchAt >= 0;
         BattleSession session;
         GameObject upper, scaffolding;
         Renderer banner;
-        float nextShot;
+        float nextShot, launchAt = -1;
+        int launchTargetId;
         readonly System.Collections.Generic.List<CombatTarget> nearby = new System.Collections.Generic.List<CombatTarget>(48);
         float AttackCooldown=>ReforgedProfiles.CapturableTower.Cooldown;
         float AttackRange=>ReforgedProfiles.CapturableTower.Range;
@@ -68,18 +70,18 @@ namespace RiskAI
 
         public void BeginBuild()
         {
-            Team = CombatTeam(HostOwner); UnderConstruction = true; BuildProgress = 0; CurrentTarget=null; RefreshVisuals();
+            Team = CombatTeam(HostOwner); UnderConstruction = true; BuildProgress = 0; CurrentTarget=null; CancelLaunch(); RefreshVisuals();
         }
         public void SetBuildProgress(float progress) { BuildProgress = progress; }
-        public void CancelBuild() { UnderConstruction = false; BuildProgress = 0; RefreshVisuals(); }
+        public void CancelBuild() { UnderConstruction = false; BuildProgress = 0; CancelLaunch(); RefreshVisuals(); }
         public void CompleteBuild()
         {
             Team = CombatTeam(HostOwner); Health = MaxHealth; UnderConstruction = false; BuildProgress = 1;
-            CurrentTarget=null;nextShot=0;
+            CurrentTarget=null;nextShot=0;CancelLaunch();
             session.RegisterTarget(this);
             RefreshVisuals();
         }
-        public void ChangeOwner() { Team = CombatTeam(HostOwner); CurrentTarget=null; nextShot=Mathf.Max(nextShot,session.BattleTime+.2f); RefreshVisuals(); }
+        public void ChangeOwner() { Team = CombatTeam(HostOwner); CurrentTarget=null; CancelLaunch(); nextShot=Mathf.Max(nextShot,session.BattleTime+.2f); RefreshVisuals(); }
         void RefreshVisuals()
         {
             upper.SetActive(IsAlive); scaffolding.SetActive(UnderConstruction);
@@ -89,13 +91,29 @@ namespace RiskAI
 
         public void SimTick(float delta)
         {
-            if (!IsAlive || UnderConstruction || !Guardian || !Guardian.IsAlive) { CurrentTarget=null; return; }
+            if (!IsAlive || UnderConstruction || !Guardian || !Guardian.IsAlive) { CurrentTarget=null; CancelLaunch(); return; }
             if (session.Paused || session.Winner >= 0) return;
+            if (launchAt >= 0 && session.BattleTime >= launchAt)
+            {
+                var launchTarget = session.FindTarget(launchTargetId);
+                CancelLaunch();
+                if (IsValidTarget(launchTarget))
+                {
+                    CurrentTarget = launchTarget;
+                    ShotsFired++;
+                    var weapon = Town ? SourceWeapons.MilitaryBase : SourceWeapons.Shipyard;
+                    session.Combat.FireWeapon(AimPoint + Vector3.up, launchTarget.AimPoint, launchTarget,
+                        session.RollDamage(ReforgedProfiles.CapturableTower), Team, this, weapon);
+                }
+            }
             if (!IsValidTarget(CurrentTarget)) CurrentTarget=FindTarget();
-            if (!CurrentTarget || session.BattleTime < nextShot) return;
-            nextShot = session.BattleTime + AttackCooldown; ShotsFired++;
-            session.Combat.FireProjectile(AimPoint + Vector3.up, CurrentTarget.AimPoint, CurrentTarget, session.RollDamage(ReforgedProfiles.CapturableTower), Team, this, AttackType);
+            if (!CurrentTarget || launchAt >= 0 || session.BattleTime < nextShot) return;
+            nextShot = session.BattleTime + AttackCooldown;
+            launchAt = session.BattleTime + ReforgedProfiles.CapturableTower.AttackPoint;
+            launchTargetId = CurrentTarget.EntityId;
         }
+
+        void CancelLaunch() { launchAt = -1; launchTargetId = 0; }
 
         CombatTarget FindTarget()
         {

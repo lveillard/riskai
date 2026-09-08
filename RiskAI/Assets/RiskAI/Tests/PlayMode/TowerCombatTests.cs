@@ -62,6 +62,33 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator TowerLaunchesAfterItsSourceAttackPoint()
+        {
+            var tower=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital).Defense;
+            var guardian=tower.Guardian as Soldier;
+            var neutral=BattleTestScenario.Mobile(battle,PlayerRules.NeutralTeam,UnitKind.Footman,tower.transform.position+Vector3.forward*7);
+            var otherEnemy=battle.Towns.First(t=>t.State.Owner==1&&t.Defender).Defender;
+            KeepOnly(guardian,neutral,otherEnemy);
+            // A live, eligible guardian must remain bound through the normal claim
+            // pass; disabling its NavMeshAgent vacates the post and cancels its shot.
+            guardian.HoldPosition();
+            neutral.enabled=false;if(neutral.Agent)neutral.Agent.enabled=false;
+            tower.CompleteBuild();
+            battle.Spatial.Rebuild(battle.Targets,battle.Units);
+            int shots=tower.ShotsFired;
+
+            Assert.That(ReforgedProfiles.CapturableTower.AttackPoint,Is.EqualTo(.3f));
+            Assert.That(ReforgedProfiles.CapturableTower.Backswing,Is.EqualTo(.3f));
+            tower.SimTick(0);
+            Assert.That(tower.IsWindingUp,Is.True);
+            Assert.That(tower.ShotsFired,Is.EqualTo(shots),"Scheduling an attack must not launch before the .3 second attack point.");
+            yield return new WaitForSecondsRealtime(.15f);
+            Assert.That(tower.ShotsFired,Is.EqualTo(shots));
+            yield return new WaitForSecondsRealtime(.25f);
+            Assert.That(tower.ShotsFired,Is.GreaterThan(shots));
+        }
+
+        [UnityTest]
         public IEnumerator LoneArcherCanApproachFromFarSideKillGuardAndClaimWithoutTowerFire()
         {
             Settlement town=null;Vector3 start=default;

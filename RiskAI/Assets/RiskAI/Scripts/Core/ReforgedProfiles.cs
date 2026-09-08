@@ -38,6 +38,6 @@ namespace RiskAI.Core
         // h00N/h00O override base45, one die/five sides, .9 cooldown and
         // 650 native range (13 Unity). Health and armor remain the shared
         // runtime post shell; no local damage/range tuning is retained here.
-        public static readonly UnitProfile CapturableTower=new(550,45,1,5,13f,.9f,0,3,AttackKind.Piercing,ArmorKind.Fortified,3,1,"h00N/h00O City Post",3);
+        public static readonly UnitProfile CapturableTower=new(550,45,1,5,13f,.9f,0,3,AttackKind.Piercing,ArmorKind.Divine,3,1,"h00N/h00O City Post",3,.3f,.3f);
     }
 }

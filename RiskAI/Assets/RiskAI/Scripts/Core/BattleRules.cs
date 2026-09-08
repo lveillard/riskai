@@ -34,9 +34,9 @@ namespace RiskAI.Core
         public const float ConstructionSeconds = 7;
         public const float TowerHealth = 550;
         public const float TowerRange = 8.5f;
-        // No `ubld` override was found for the port marines; their queue times are
-        // local presentation timings, while combat/economy fields are source-backed.
-        static readonly float[] Training = { 3f, 4f, 5.5f, 6f, 6f, 4f, 4f, 5.5f, 6f };
+        // Every represented source unit explicitly overrides ubld=1 in W3U.
+        // Footman and Mage remain prototype identities with local queue timings.
+        static readonly float[] Training = { 3f, 1f, 1f, 6f, 1f, 1f, 1f, 1f, 1f };
         static readonly string[] Names = { "Espadach\u00edn", "Ballestero", "Caballero", "Mago", "Mortero", "Sanador", "Marine Private", "Marine Major", "Marine General" }, Roles = { "Primera l\u00ednea", "Ataque a distancia", "Caballer\u00eda pesada", "Da\u00f1o de \u00e1rea", "\u00c1rea a larga distancia", "Sana aliados \u00b7 15 vida/s", "Fusilero de puerto", "Caballer\u00eda de puerto", "Caballer\u00eda veterana de puerto" }, Keys = { "Q", "W", "D", "F", "R", "C", "V", "B", "C" }, Models = { "Knight", "RogueHooded", "RoyalGuard", "Mage", "Mortar", "Medic", "RogueHooded", "RoyalGuard", "RoyalGuard" };
         public static UnitProfile Profile(UnitKind kind)=>ReforgedProfiles.Units[(int)kind];
         public static int Cost(UnitKind kind) => Profile(kind).Cost;

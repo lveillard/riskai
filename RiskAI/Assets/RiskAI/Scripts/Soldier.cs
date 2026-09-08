@@ -246,14 +246,20 @@ namespace RiskAI
         {
             if (!target || !target.CanBeAttacked || target.Team == Team) return false;
             if (mode == OrderMode.Attack) return true;
-            float leash = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == PlayerRules.NeutralTeam ? 7 : 11;
+            float leash = AutonomousLeash();
             var origin = mode == OrderMode.Idle || mode == OrderMode.Hold ? anchor : pursuitOrigin;
             return Vector3.Distance(target.transform.position, origin) <= leash;
+        }
+        float AutonomousLeash()
+        {
+            float existing = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == PlayerRules.NeutralTeam ? 7 : 11;
+            return Mathf.Max(existing, SourceWeapons.AcquisitionRange(Kind));
         }
         void Acquire()
         {
             if (mode == OrderMode.Move || mode == OrderMode.Follow || mode == OrderMode.Attack) return;
-            float radius = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 1 : mode == OrderMode.Hold ? BattleRules.Range(Kind) : Team == PlayerRules.NeutralTeam ? 5 : 7.5f;
+            float sourceRadius = SourceWeapons.AcquisitionRange(Kind);
+            float radius = sourceRadius > 0 ? sourceRadius : mode == OrderMode.Hold ? BattleRules.Range(Kind) : Team == PlayerRules.NeutralTeam ? 5 : 7.5f;
             CombatTarget best = null; float score = float.MaxValue;
             session.Spatial.Query(transform.position,radius+3,nearby);
             foreach (var enemy in nearby)
@@ -261,7 +267,7 @@ namespace RiskAI
                 if (!enemy || enemy.Team == Team || !enemy.CanBeAttacked) continue;
                 float distance = Vector3.Distance(transform.position, enemy.ApproachPoint(transform.position));
                 if (distance > radius || !Visible(enemy)) continue;
-                if ((mode == OrderMode.Idle || Team == PlayerRules.NeutralTeam) && Vector3.Distance(anchor, enemy.transform.position) > (BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == PlayerRules.NeutralTeam ? 7 : 11)) continue;
+                if ((mode == OrderMode.Idle || Team == PlayerRules.NeutralTeam) && Vector3.Distance(anchor, enemy.transform.position) > AutonomousLeash()) continue;
                 int pressure = session.Spatial.Pressure(Team, enemy);
                 float candidate = distance + (Kind == UnitKind.Footman ? pressure * .48f : pressure * .1f);
                 if (candidate < score || candidate == score && (!best || enemy.EntityId < best.EntityId)) { best = enemy; score = candidate; }
@@ -283,7 +289,7 @@ namespace RiskAI
                 if (strikeTarget && strikeTarget.Health > 0 && Vector3.Distance(transform.position, strikeTarget.ApproachPoint(transform.position)) <= BattleRules.Range(Kind) + .55f && Vector3.Distance(transform.position,strikeTarget.ApproachPoint(transform.position))>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
                 {
                     float damage = session.RollDamage(BattleRules.Profile(Kind));
-                    if (BattleRules.Ranged(Kind)) session.Combat.FireProjectile(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, AttackType);
+                    if (BattleRules.Ranged(Kind)) session.Combat.FireWeapon(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, SourceWeapons.For(Kind, AttackType));
                     else strikeTarget.ReceiveAttack(damage, AttackType, Team, this);
                 }
                 strikeAt = -1; strikeTarget = null;

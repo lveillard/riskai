@@ -195,7 +195,7 @@ namespace RiskAI
             if(target&&DistanceXZ(transform.position,target.transform.position)<=AttackRange&&Visible(target))
             {
                 route.Clear();routeIndex=0;Face(target.transform.position);
-                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireProjectile(AimPoint,target.AimPoint,target,world.Session.RollDamage(Profile),Team,this,AttackType);}
+                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Profile),Team,this,SourceWeapons.For((NavalUnitKind)Kind,AttackType));}
             }
             else if(!IsGarrison&&target&&world.Session.BattleTime>=nextTargetPath)
             {
