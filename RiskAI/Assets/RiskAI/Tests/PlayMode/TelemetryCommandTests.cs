@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using RiskAI.Core;
 using UnityEngine;
@@ -47,6 +48,8 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator ConsumeTelemetrySeparatesHumanAiAndClearsTheWindow()
         {
+            battle.enabled = false;
+            battle.World.ConsumeTelemetry();
             var humanHome = battle.Towns.First(town => town.State.Owner == 0);
             var aiHome = battle.Towns.First(town => town.State.Owner == 1);
             var human = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, humanHome.Rally);
@@ -184,7 +187,9 @@ namespace RiskAI.Tests
             toward.Normalize();
             // Controlled velocity observations distinguish the two predicates; this
             // is not a claim that the fixture generated a natural detour or crowd.
+            human.Agent.isStopped = false;
             human.Agent.velocity = -toward;
+            yield return null; // NavMesh applies its requested velocity on the next engine update.
             Assert.That(Vector3.Dot(human.Agent.velocity, toward), Is.LessThan(0));
             human.SimTick((float)SimClock.StepSeconds);
             var away = battle.Commands.ConsumeTelemetry();
@@ -192,6 +197,7 @@ namespace RiskAI.Tests
             Assert.That(away.HumanFirstMoveCount, Is.Zero);
             Assert.That(away.HumanMoveOutstanding, Is.EqualTo(1));
             human.Agent.velocity = toward;
+            yield return null;
             human.SimTick((float)SimClock.StepSeconds);
             var directed = battle.Commands.ConsumeTelemetry();
             Assert.That(directed.HumanSpeedCount, Is.Zero, "The first-speed observation must not be counted twice.");
@@ -205,13 +211,15 @@ namespace RiskAI.Tests
         {
             double start = Time.realtimeSinceStartupAsDouble;
             battle.TogglePause();
-            battle.Commands.SetTelemetryPauseState(true);
-            double before = battle.Commands.HumanMoveActiveSeconds(start, 0);
+            yield return null; // RuntimeDiagnostics observes the public pause transition.
+            var activeTime = typeof(BattleCommands).GetMethod("HumanMoveActiveSeconds", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(activeTime, Is.Not.Null);
+            double before = (double)activeTime.Invoke(battle.Commands, new object[] { start, 0d });
             yield return new WaitForSecondsRealtime(.15f);
-            double during = battle.Commands.HumanMoveActiveSeconds(start, 0);
+            double during = (double)activeTime.Invoke(battle.Commands, new object[] { start, 0d });
             Assert.That(during, Is.EqualTo(before).Within(.01), "Observed pause must not age any paired movement stage.");
             battle.TogglePause();
-            battle.Commands.SetTelemetryPauseState(false);
+            yield return null;
             var telemetry = battle.Commands.ConsumeTelemetry();
             Assert.That(telemetry.ObservedPauseMilliseconds, Is.GreaterThanOrEqualTo(140));
         }
