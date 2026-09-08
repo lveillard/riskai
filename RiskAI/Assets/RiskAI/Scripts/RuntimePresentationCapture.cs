@@ -153,14 +153,22 @@ namespace RiskAI
                 var galley=battle.Naval.Spawn(0,ShipKind.Galley,start);
                 var transport=battle.Naval.Spawn(0,ShipKind.Transport,other);
                 if(!galley||!transport)continue;
-                input.Clear();Frame(input,start+new Vector3(5,0,7));
+                input.Clear();input.CameraRig.enabled=false;
+                var camera=Camera.main;var focus=start+new Vector3(5,0,9);
+                camera.orthographic=true;camera.orthographicSize=18;
+                camera.transform.position=focus+new Vector3(0,30,-24);
+                camera.transform.LookAt(focus);
                 galley.MoveTo(end);transport.MoveTo(otherEnd);
                 battle.TogglePause();
                 yield return Capture("ships-underway-0");
                 yield return Capture("ships-underway-1");
                 float distance=Vector3.Distance(galley.transform.position,start);
                 float cargoDistance=Vector3.Distance(transport.transform.position,other);
-                Debug.Log((distance>2&&cargoDistance>2?"RISKAI_PRESENTATION_OK: ":"RISKAI_PRESENTATION_FAILED: ")+"ships galleyMoved="+distance+" transportMoved="+cargoDistance);
+                var galleyView=camera.WorldToViewportPoint(galley.AimPoint);
+                var transportView=camera.WorldToViewportPoint(transport.AimPoint);
+                bool visible=galleyView.z>0&&galleyView.x>.05f&&galleyView.x<.95f&&galleyView.y>.05f&&galleyView.y<.95f&&
+                    transportView.z>0&&transportView.x>.05f&&transportView.x<.95f&&transportView.y>.05f&&transportView.y<.95f;
+                Debug.Log((visible&&distance>2&&cargoDistance>2?"RISKAI_PRESENTATION_OK: ":"RISKAI_PRESENTATION_FAILED: ")+"ships visible="+visible+" galleyMoved="+distance+" transportMoved="+cargoDistance);
                 yield break;
             }
             Debug.LogError("RISKAI_PRESENTATION_FAILED: no open sea fixture");
