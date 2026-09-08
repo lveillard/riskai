@@ -318,9 +318,68 @@ resolvió el lanzador sin modificar el test.
 
 El alcance de correcciones y diagnóstico de este PR tiene revisión de código,
 100 casos Unity y comprobación de los dos jugadores exportados. Se deja
-listo para revisión externa, sin fusionarlo. La aceptación de rendimiento
-sin contención y el hardware ARM continúan como trabajo de la fase 2; no se
-consideran completados por estos smoke tests.
+listo para revisión externa, sin fusionarlo. La medición acotada sin
+contención se completó después, como se detalla debajo. Estos smoke tests
+no certifican hardware ARM ni completan la fase 2.
+
+## Medición acotada con memoria recuperada · 8 de septiembre
+
+Se repitió únicamente la medición afectada en el mismo jugador Windows
+`624743c`, después de finalizar la otra prueba de GPU. El primer control
+previo no abrió ningún jugador porque seguía habiendo compilación externa.
+El segundo exigió diez muestras consecutivas con al menos 6 GiB libres y
+sin compiladores ni la sonda de juego conocida antes de arrancar.
+Durante la ejecución hubo 126 muestras: 10,01 GiB libres al inicio, mínimo
+7,97 GiB y separación máxima de 1,96 s. No se observó contención en ese
+muestreo. Esto no acredita exclusividad de GPU ni control térmico del equipo.
+
+Configuración: Europe, 16 bandos, semilla 160212, 1600×900, 900 s de
+calentamiento de simulación a 8×; después 48 reclutas por bando y 90 s reales
+a 1×. Presupuesto NavMesh sin cambiar: 500. La medición terminó con 90 s
+simulados, 903→349 unidades, 988 órdenes aplicadas, 0 rechazadas y ninguna
+pendiente al cerrar. Las seis identidades seguidas se desplazaron; dos
+seguían vivas al final. Se enviaron 109 órdenes de movimiento, sin destinos
+inviables ni timeouts de parada. La media de los 6035 frames medidos fue
+14,92 ms; máximo 54,44 ms, un frame por encima de 50 ms y ninguno de 100 ms.
+
+| Ventana a 1×: unidades al final / órdenes con etapas completas | Envío→velocidad, media/máximo | Aplicación→ruta observada, media/máximo | Ruta→velocidad, media/máximo |
+| --- | --- | --- | --- |
+| 733 / 55 | 107,47 / 437,03 ms | 71,33 / 351,33 ms | 6,64 / 109,40 ms |
+| 513 / 28 | 109,90 / 289,53 ms | 68,91 / 209,77 ms | 3,00 / 42,06 ms |
+| 352 / 26 | 91,52 / 244,57 ms | 56,78 / 154,58 ms | 4,19 / 54,52 ms |
+
+Las 109 observaciones llegaron a velocidad y a la condición dirigida en el
+mismo tick; no quedó ninguna abierta ni cancelada en estas ventanas. No se
+reprodujo el componente de giro/desvío que inflaba alguna muestra anterior.
+La aplicación de órdenes humanas promedió 24,37 / 37,31 / 34,63 ms en las
+tres ventanas, con máximo de 57,19 ms. Ese contador incluye también las
+paradas: no se resta de la media de movimiento para inventar otra etapa.
+La primera ventana tuvo tres órdenes de IA pendientes en la instantánea;
+la siguiente las había aplicado. No hubo acumulación persistente observada.
+
+**Diagnóstico acotado:** la espera hasta observar una ruta es el mayor
+intervalo posterior a la aplicación en estas muestras; esto señala la
+navegación para una comparación controlada, pero no mide directamente el
+coste del solver ni prueba que subir su presupuesto sea una solución.
+El tick de mundo promedió 4,83 / 4,25 / 3,64 ms; el máximo naval de IA fue
+30,38 ms. Ninguno de esos máximos se suma a otros ni demuestra por sí solo
+un bloqueo. No se cambió código, evitación, balance ni presupuesto a partir
+de esta observación.
+
+La población y las posiciones evolucionan por el combate; no son 800
+unidades sostenidas ni un experimento A/B idéntico al de las pasadas con
+contención. Tampoco se midió latencia desde un clic real: el controlador
+está deshabilitado y la sonda envía órdenes sintéticas. No se deduce una
+mejora porcentual del código ni se declara resuelto todo el retraso de
+partidas largas. La medición que faltaba queda completada con estos límites.
+
+[Resultado y etapas verificables](audits/PERFORMANCE-v0.21.json) incluye
+resumen de entorno y hashes de los tres archivos locales de evidencia.
+El log completo es `RiskAI/Logs/v21-perf-isolated-final2.log`; entorno,
+recibo y resumen están en `Captures/v21-perf-isolated-final2-*`. El jugador
+propio salió y su PID dejó de existir. Se conserva la aceptación funcional
+anterior: no hubo recompilación ni nuevas rondas de revisión del código sin
+cambios.
 
 ## Límites restantes
 
