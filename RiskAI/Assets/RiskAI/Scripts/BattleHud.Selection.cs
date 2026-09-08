@@ -26,14 +26,16 @@ namespace RiskAI
             var soldier = actor as Soldier;
             var ship = actor as Ship;
             string name = soldier ? BattleRules.Name(soldier.Kind) : ship.DisplayName;
-            bool StillSelected() => actor && actor.EntityId == entityId && actor.IsAlive &&
-                actor.isActiveAndEnabled && actor.Team == 0 &&
-                (soldier ? controller.Selection.Contains(soldier) : controller.Fleet.Contains(ship));
+            bool SameLiveActor() => actor && actor.EntityId == entityId && actor.IsAlive &&
+                actor.isActiveAndEnabled && actor.Team == 0;
 
             var button = RtsUiStyle.Button("", () =>
             {
                 // A pooled view may represent a new actor before this UI rebuilds.
-                if (!StillSelected()) return;
+                if (!SameLiveActor()) return;
+                // Membership is checked only when acting. Refreshing every card's
+                // health must stay linear in roster size, without nested scans.
+                if (soldier ? !controller.Selection.Contains(soldier) : !controller.Fleet.Contains(ship)) return;
                 if (soldier) controller.SelectOnly(soldier);
                 else controller.SelectShip(ship);
             });
@@ -58,6 +60,7 @@ namespace RiskAI
                 button.Add(icon);
             }
             var track = new VisualElement { pickingMode = PickingMode.Ignore };
+            track.style.width = Length.Percent(100);
             track.style.height = 5; track.style.flexShrink = 0;
             track.style.backgroundColor = new Color(.09f, .06f, .04f);
             var health = new VisualElement { name = "HUD selection health", pickingMode = PickingMode.Ignore };
@@ -67,7 +70,7 @@ namespace RiskAI
 
             System.Action refresh = () =>
             {
-                bool valid = StillSelected();
+                bool valid = SameLiveActor();
                 button.SetEnabled(valid);
                 health.style.width = Length.Percent(valid && actor.MaxHealth > 0 ? Mathf.Clamp01(actor.Health / actor.MaxHealth) * 100 : 0);
                 button.tooltip = valid ? name + " · " + Mathf.CeilToInt(actor.Health) + " / " + actor.MaxHealth + " vida" : "Unidad retirada";

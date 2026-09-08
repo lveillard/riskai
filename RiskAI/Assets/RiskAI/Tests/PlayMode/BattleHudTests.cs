@@ -87,8 +87,11 @@ namespace RiskAI.Tests
             var target=troops[1];var card=root.Q<Button>("HUD selected actor "+target.EntityId);
             target.TakeDamage(50,1);
             yield return new WaitForSecondsRealtime(.15f);
-            Assert.That(card.Q<VisualElement>("HUD selection health").style.width.value.value,
-                Is.EqualTo(target.Health/target.MaxHealth*100).Within(.01f));
+            yield return null;
+            var health=card.Q<VisualElement>("HUD selection health");
+            Assert.That(health.parent.resolvedStyle.width,Is.GreaterThan(30),"The track must have actual layout width, not just a requested percentage.");
+            Assert.That(health.resolvedStyle.width/health.parent.resolvedStyle.width,
+                Is.EqualTo(target.Health/target.MaxHealth).Within(.02f));
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=card;card.SendEvent(evt);}
             Assert.That(controller.Selection,Is.EquivalentTo(new[]{target}));
             Assert.That(controller.Fleet,Is.Empty);
@@ -110,7 +113,9 @@ namespace RiskAI.Tests
             Assert.That(root.Query<Button>(className:"riskai-selection-card").ToList().Count,Is.EqualTo(3));
             var card=root.Q<Button>("HUD selected actor "+ship.EntityId);
             Assert.That(card,Is.Not.Null,"A fleet selection must not hide selected land troops or the ship card.");
-            Assert.That(card.Q<VisualElement>("HUD selection health").style.width.value.value,Is.EqualTo(100));
+            var health=card.Q<VisualElement>("HUD selection health");
+            Assert.That(health.resolvedStyle.width,Is.GreaterThan(30));
+            Assert.That(health.resolvedStyle.width,Is.EqualTo(health.parent.resolvedStyle.width).Within(.1f));
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=card;card.SendEvent(evt);}
             Assert.That(controller.Fleet,Is.EquivalentTo(new[]{ship}));
             Assert.That(controller.Selection,Is.Empty);
@@ -135,6 +140,26 @@ namespace RiskAI.Tests
             yield return null;
             Assert.That(root.Q<Button>("HUD selected actor "+oldId),Is.Null);
             Assert.That(root.Q<Button>("HUD selected actor "+actor.EntityId),Is.Not.Null,"Actor identity must invalidate the retained roster.");
+        }
+
+        [UnityTest]
+        public IEnumerator AppendingFriendlyLandSelectionReplacesEnemyInspection()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var home=battle.Towns.First(town=>town.State.Owner==0);
+            var troops=BattleTestScenario.MobileArmy(battle,0,UnitKind.Archer,2,home.ClaimPoint);
+            var enemy=battle.Units.First(unit=>unit.Team==1);
+            battle.TogglePause();
+            // Establish inspection without making this retained-HUD regression
+            // depend on a particular camera or world picking fixture.
+            typeof(RtsController).GetProperty(nameof(RtsController.InspectedTarget)).SetValue(controller,enemy);
+            typeof(RtsController).GetMethod("SelectUnits",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance)
+                .Invoke(controller,new object[]{troops,true});
+            Assert.That(controller.InspectedTarget,Is.Null);
+            yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Query<Button>(className:"riskai-selection-card").ToList().Count,Is.EqualTo(2));
+            Assert.That(root.Q<Image>("HUD unit portrait"),Is.Null,"The enemy portrait must not wrap the friendly army roster.");
         }
 
         [UnityTearDown]

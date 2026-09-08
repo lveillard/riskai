@@ -108,7 +108,7 @@ namespace RiskAI
         {
             var list=units.Where(IsSelectableSoldier).ToList();if(!append)Clear();
             if(SelectedCamp)SelectedCamp.Select(false);SelectedCamp=null;
-            ClearSelectedBuildings();
+            ClearSelectedBuildings();InspectedTarget=null;
             foreach(var u in list)if(!Selection.Contains(u)){Selection.Add(u);u.Select(true);}
         }
         void SelectShips(IEnumerable<Ship> ships,bool append=false)
