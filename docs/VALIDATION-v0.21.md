@@ -316,6 +316,12 @@ servidor local de gzip/MIME pasó con
 módulo desde la raíz falló por importación; ejecutar el script desde su ruta
 resolvió el lanzador sin modificar el test.
 
+El alcance de correcciones y diagnóstico de este PR tiene revisión de código,
+100 casos Unity y comprobación de los dos jugadores exportados. Se deja
+listo para revisión externa, sin fusionarlo. La aceptación de rendimiento
+sin contención y el hardware ARM continúan como trabajo de la fase 2; no se
+consideran completados por estos smoke tests.
+
 ## Límites restantes
 
 La separación visual arena/roca/verde no suaviza la geometría escalonada de
