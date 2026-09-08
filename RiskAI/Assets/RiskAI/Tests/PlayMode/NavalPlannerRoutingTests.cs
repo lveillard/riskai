@@ -44,6 +44,7 @@ namespace RiskAI.Tests
         BattleSession battle;
         NavalWorld naval;
         object previousImported;
+        NavMeshDataInstance routingNavMesh;
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -98,9 +99,10 @@ namespace RiskAI.Tests
             Assert.That(transport,Is.Not.Null);
             BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,land.position);
             var planner=new NavalExpeditionCommander(naval,1);PlannerTransport.SetValue(planner,transport);
-            var arguments=new object[]{null};
+            var arguments=new object[]{false,null,null};
             Assert.That((bool)ChooseSource.Invoke(planner,arguments),Is.True);
-            Assert.That(arguments[0],Is.SameAs(reachable),"A transport in the left sea component must not gather at the earlier isolated dock.");
+            Assert.That(arguments[1],Is.SameAs(reachable),"A transport in the left sea component must not gather at the earlier isolated dock.");
+            Assert.That(arguments[2],Is.SameAs(transport));
             yield return null;
         }
 
@@ -164,9 +166,9 @@ namespace RiskAI.Tests
             Assert.That(attempted.Contains(viable),Is.False,"An unselected viable source must remain available for the next decision.");
 
             PlannerTroopCursor.SetValue(planner,0);
-            var sourceArguments=new object[]{null};
+            var sourceArguments=new object[]{true,null,null};
             Assert.That((bool)ChooseSource.Invoke(planner,sourceArguments),Is.True);
-            Assert.That(sourceArguments[0],Is.SameAs(viable));
+            Assert.That(sourceArguments[1],Is.SameAs(viable));
             var targetArguments=new object[]{viable,null,null};
             Assert.That((bool)ChooseTarget.Invoke(planner,targetArguments),Is.True);
             Assert.That(targetArguments[1],Is.SameAs(island));
@@ -205,6 +207,121 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator TargetFrontierPassesSevenNearerDisconnectedTowns()
+        {
+            // Three separate, real NavMesh islands outside the authored map:
+            // source, destination, and a nearer strip that cannot be reached
+            // from either. Only the eighth town belongs to the destination.
+            var sources=new List<NavMeshBuildSource>
+            {
+                WalkableBox(new Vector3(1000,0,1000),new Vector3(10,1,10)),
+                WalkableBox(new Vector3(1100,0,1000),new Vector3(40,1,8)),
+                WalkableBox(new Vector3(1083,0,1010),new Vector3(12,1,4))
+            };
+            var data=NavMeshBuilder.BuildNavMeshData(NavMesh.GetSettingsByIndex(0),sources,
+                new Bounds(new Vector3(1050,0,1000),new Vector3(160,10,50)),Vector3.zero,Quaternion.identity);
+            Assert.That(data,Is.Not.Null);routingNavMesh=NavMesh.AddNavMeshData(data);
+            Assert.That(NavMesh.SamplePosition(new Vector3(1000,1,1000),out var start,2,NavMesh.AllAreas),Is.True);
+            Assert.That(NavMesh.SamplePosition(new Vector3(1083,1,1000),out var arrival,2,NavMesh.AllAreas),Is.True);
+            Assert.That(NavMesh.SamplePosition(new Vector3(1117,1,1000),out var goal,2,NavMesh.AllAreas),Is.True);
+            var path=new NavMeshPath();
+            Assert.That(NavMesh.CalculatePath(arrival.position,goal.position,NavMesh.AllAreas,path)&&path.status==NavMeshPathStatus.PathComplete,Is.True);
+
+            battle.Towns.Clear();
+            for(int i=0;i<7;i++)
+            {
+                Assert.That(NavMesh.SamplePosition(new Vector3(1080+i*.8f,1,1010),out var blocked,2,NavMesh.AllAreas),Is.True);
+                Assert.That(Vector3.Distance(arrival.position,blocked.position),Is.LessThan(Vector3.Distance(arrival.position,goal.position)));
+                Assert.That(NavMesh.CalculatePath(arrival.position,blocked.position,NavMesh.AllAreas,path)&&path.status==NavMeshPathStatus.PathComplete,Is.False);
+                battle.Towns.Add(TownCandidate("near disconnected "+i,blocked.position));
+            }
+            var target=TownCandidate("far reachable",goal.position);battle.Towns.Add(target);
+            InstallSplitSea();naval.Harbors.Clear();
+            var source=Dock("source",1,new Vector3(-20,-.24f,0),start.position);
+            var destination=Dock("destination",-1,new Vector3(-12,-.24f,14),arrival.position);
+            EnableCandidateDock(destination,arrival.position);naval.Harbors.Add(source);naval.Harbors.Add(destination);
+            var planner=new NavalExpeditionCommander(naval,1);
+            PlannerSourceLanding.SetValue(planner,start.position);PlannerSourceBerth.SetValue(planner,new Vector3(-20,-.24f,0));
+            var arguments=new object[]{source,null,null};
+            for(int i=0;i<7;i++)Assert.That((bool)ChooseTarget.Invoke(planner,arguments),Is.False,"A disconnected nearer town is not a legal target.");
+            Assert.That((bool)ChooseTarget.Invoke(planner,arguments),Is.True,"The route budget must postpone, never permanently discard, the eighth town.");
+            Assert.That(arguments[1],Is.SameAs(target));Assert.That(arguments[2],Is.SameAs(destination));
+            // These are planner-only town adapters, not a second simulated match.
+            battle.Towns.Clear();battle.TogglePause();
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsolatedEmptyBoatAllowsPaidLocalTransportAndWaitsForThatBoat()
+        {
+            var home=naval.Harbors.First(h=>h.Owner==1&&!h.IsIsland&&h.CanLaunch);
+            var island=battle.Towns.First(t=>MapLayout.IslandDistance(t.ClaimPoint.x,t.ClaimPoint.z,0)>=0&&t.State.Owner!=1);
+            Assert.That(NavMesh.SamplePosition(home.Landing,out var sourceLanding,3,NavMesh.AllAreas),Is.True);
+            Assert.That(NavMesh.SamplePosition(island.ClaimPoint,out var islandLanding,3,NavMesh.AllAreas),Is.True);
+            BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,sourceLanding.position);
+            InstallSplitSea();naval.Harbors.Clear();
+            var homeBerth=new Vector3(20,-.24f,0);
+            HarborLandingCached.SetValue(home,true);HarborCachedLanding.SetValue(home,sourceLanding.position);HarborCachedBerth.SetValue(home,homeBerth);
+            typeof(Harbor).GetField("<Berth>k__BackingField",PrivateInstance).SetValue(home,homeBerth);
+            var destination=Dock("island destination",-1,new Vector3(12,-.24f,14),islandLanding.position);
+            EnableCandidateDock(destination,islandLanding.position);naval.Harbors.Add(home);naval.Harbors.Add(destination);
+            var isolated=BattleTestScenario.Ship(naval,1,ShipKind.Transport,new Vector3(-20,-.24f,0));
+            Assert.That(SeaNavigation.AreConnected(isolated.transform.position,homeBerth),Is.False);
+            int gold=Harbor.Cost(ShipKind.Transport)+naval.FirstFleetSavingsTargetFor(1);battle.Economy.Gold[1]=gold;
+            while(battle.BattleTime<=battle.AiFirstNavalOffensiveTime)battle.Clock.Advance(1,false,_=>{});
+
+            var planner=new NavalExpeditionCommander(naval,1);Plan.Invoke(planner,null);
+            Assert.That(home.QueueCount,Is.EqualTo(1),"An unusable empty boat must not veto a paid mission in the other ocean.");
+            Assert.That(battle.Economy.Gold[1],Is.EqualTo(gold-Harbor.Cost(ShipKind.Transport)));
+            var wait=typeof(NavalExpeditionCommander).GetMethod("WaitForTransport",PrivateInstance);
+            wait.Invoke(planner,null);
+            Assert.That(PlannerTransport.GetValue(planner),Is.Null,"Waiting must ignore the old boat in the wrong sea component.");
+            Assert.That(home.QueueCount,Is.EqualTo(1),"Waiting must not buy duplicate transports.");
+
+            // Complete the actual paid harbor queue. These synthetic sea adapters
+            // isolate source/boat selection; the full crossing has its own test.
+            home.SimTick(Harbor.TrainTime(ShipKind.Transport)+.1f);
+            var local=naval.Ships.FirstOrDefault(s=>s&&s.Team==1&&s.Kind==ShipKind.Transport&&s!=isolated);
+            Assert.That(local,Is.Not.Null);Assert.That(home.QueueCount,Is.Zero);
+            Assert.That(SeaNavigation.AreConnected(local.transform.position,homeBerth),Is.True);
+            PlannerTroopCursor.SetValue(planner,0);wait.Invoke(planner,null);
+            Assert.That(PlannerTransport.GetValue(planner),Is.SameAs(local),"Choose the newly trained compatible boat even though the isolated boat precedes it in the registry.");
+            Assert.That(planner.IsActive,Is.True);battle.TogglePause();
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator GatheringRecoversFromPreviousBoardingErrorAtTheSource()
+        {
+            var home=naval.Harbors.First(h=>h.Owner==1&&h.CanLaunch);
+            Assert.That(home.TryTransportLanding(out var landing,out var berth),Is.True);
+            var transport=BattleTestScenario.Ship(naval,1,ShipKind.Transport,berth);
+            var troops=BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,landing);
+            Assert.That(transport.TryEmbark(null),Is.False,"A previous failed command must leave a real error on this reusable boat.");
+            Assert.That(transport.LastActionError,Is.Not.Null.And.Not.Empty);
+            var planner=new NavalExpeditionCommander(naval,1);
+            PlannerTransport.SetValue(planner,transport);PlannerSource.SetValue(planner,home);
+            ((List<Soldier>)PlannerTroops.GetValue(planner)).AddRange(troops);
+            typeof(NavalExpeditionCommander).GetMethod("BeginGathering",PrivateInstance).Invoke(planner,null);
+            Assert.That(planner.IsActive,Is.True,"An error from an earlier operation must not abort a new gathering phase.");
+            typeof(NavalExpeditionCommander).GetMethod("Gather",PrivateInstance).Invoke(planner,null);
+            Assert.That(PlannerEmbarkOrdersIssued.GetValue(planner),Is.True,"The new wave must receive real embark orders instead of entering cooldown forever.");
+            Assert.That(transport.LastActionError,Is.Null);Assert.That(planner.Reserves(troops[0]),Is.True);
+            yield return null;
+        }
+
+        static NavMeshBuildSource WalkableBox(Vector3 center,Vector3 size)
+            =>new NavMeshBuildSource{shape=NavMeshBuildSourceShape.Box,size=size,transform=Matrix4x4.TRS(center,Quaternion.identity,Vector3.one),area=0};
+
+        static Settlement TownCandidate(string name,Vector3 point)
+        {
+            var town=new GameObject(name).AddComponent<Settlement>();town.enabled=false;
+            typeof(Settlement).GetField("<State>k__BackingField",PrivateInstance).SetValue(town,new TownState(name,0,-1,-1));
+            typeof(Settlement).GetField("<ClaimPoint>k__BackingField",PrivateInstance).SetValue(town,point);
+            return town;
+        }
+
         static Harbor Dock(string name,int owner,Vector3 berth,Vector3 landing=default)
         {
             var harbor=new GameObject(name).AddComponent<Harbor>();
@@ -237,6 +354,7 @@ namespace RiskAI.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
+            if(routingNavMesh.valid)routingNavMesh.Remove();
             Imported.SetValue(null,previousImported);MapLayout.Configure(previousMap);
             BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
             BattleSession.PlayerCountForNewMatch=previousPlayers;BattleSession.SeedForNewMatch=previousSeed;

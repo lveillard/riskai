@@ -41,7 +41,7 @@ sin introducir excepciones de IA ni cambios de escala.
 
 ## Pruebas automatizadas
 
-Unity **6000.3.23f1**, Windows: **88 casos PlayMode distintos aprobados**
+Unity **6000.3.23f1**, Windows: **91 casos PlayMode distintos aprobados**
 según el resultado más reciente de cada caso, más **3/3 EditMode** de
 argumentos de lanzamiento. No se suman repeticiones como casos nuevos.
 
@@ -59,6 +59,7 @@ argumentos de lanzamiento. No se suman repeticiones como casos nuevos.
 | `RiskAI/Logs/v21-review-fixes-r2.xml` | 1/1; expedición con comandante naval aislado |
 | `RiskAI/Logs/v21-review2-fixes.xml` | 15/16; reserva comprobada demasiado tarde en el fixture |
 | `RiskAI/Logs/v21-review2-fixes-r2.xml` | 2/2; cursor ante cambios de tropa y propietario |
+| `RiskAI/Logs/v21-review3-fixes.xml` | 9/9; frontera de ciudades, barco compatible, error antiguo y expedición completa |
 
 Cobertura: cámara/pausa, ratón, lápiz y touch, selección, guarnición de
 puertos en cuatro mapas, playa/descarga en Europe y New World, navegación
@@ -100,6 +101,16 @@ con aviso al jugador. El embarque comprueba la costa a 5 Hz; sus reintentos
 no relajan la regla de playa. El primer pase comprobaba la reserva después
 de permitir un frame de combate autónomo; el segundo comprueba su ausencia
 de orden inmediatamente después de emitir la formación.
+
+La tercera corrección pasó nueve casos en `v21-review3-fixes.xml` (34,15 s):
+los seis casos existentes de planificación/expedición y tres regresiones
+nuevas. Comprueban que el octavo candidato no queda oculto tras siete ciudades
+de otra isla, que un barco aislado permite fabricar y seleccionar uno local
+pagado, y que un error antiguo de embarque no inutiliza al transporte.
+La primera usa tres componentes NavMesh construidos en el fixture; la segunda
+conserva la cola real y adapta los puntos del puerto a dos mares sintéticos.
+La travesía completa sigue cubierta por un caso separado con movimiento real.
+Total consolidado: 94 casos Unity distintos (91 PlayMode y 3 EditMode).
 
 ## Exportaciones, inspección y rendimiento
 

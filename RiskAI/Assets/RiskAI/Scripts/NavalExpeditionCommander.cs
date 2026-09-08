@@ -27,10 +27,36 @@ namespace RiskAI
         readonly List<Soldier> troops = new List<Soldier>(MaximumTroops);
         readonly List<Soldier> scratchTroops = new List<Soldier>(MaximumTroops);
         struct TargetCandidate { public Settlement Town; public Harbor Harbor; }
+        struct TargetPair : System.IEquatable<TargetPair>
+        {
+            readonly Harbor source,destination;
+            public TargetPair(Harbor embark,Harbor landing){source=embark;destination=landing;}
+            public bool Equals(TargetPair other) => source==other.source&&destination==other.destination;
+            public override bool Equals(object value) => value is TargetPair other&&Equals(other);
+            public override int GetHashCode()
+            {
+                unchecked{return (source?source.GetInstanceID():0)*397^(destination?destination.GetInstanceID():0);}
+            }
+        }
+        sealed class TownDistanceComparer : IComparer<Settlement>
+        {
+            public Vector3 Origin;
+            public int Compare(Settlement left,Settlement right)
+            {
+                int compare=DistanceXZ(left.ClaimPoint,Origin).CompareTo(DistanceXZ(right.ClaimPoint,Origin));
+                return compare!=0?compare:string.CompareOrdinal(left.State.Id,right.State.Id);
+            }
+        }
         readonly List<TargetCandidate> targetCandidates = new List<TargetCandidate>(TargetProbeBudget);
+        // The town frontier deliberately retains every eligible town. Route work
+        // remains bounded by targetCandidates, while its pair cursor can reach a
+        // farther town after nearer ones fail.
+        readonly List<Settlement> targetTownFrontier = new List<Settlement>(64);
+        readonly TownDistanceComparer townDistanceComparer = new TownDistanceComparer();
         readonly HashSet<Harbor> attemptedSources = new HashSet<Harbor>();
         readonly HashSet<Harbor> examinedSources = new HashSet<Harbor>();
         readonly Dictionary<Harbor,int> targetHarborCursors = new Dictionary<Harbor,int>();
+        readonly Dictionary<TargetPair,int> targetTownCursors = new Dictionary<TargetPair,int>();
         readonly List<Soldier> landed = new List<Soldier>(MaximumTroops);
         readonly NavMeshPath landPath = new NavMeshPath();
         Phase phase;
@@ -77,35 +103,26 @@ namespace RiskAI
         {
             if(session.BattleTime<session.AiFirstNavalOffensiveTime||session.BattleTime<retryAt)return;
             if(RecoverLoadedTransport())return;
-            transport=FindTransport();
-            if(!transport)
-            {
-                // Route probes cannot make an expedition viable while the only
-                // possible next step is a transport purchase the team cannot fund.
-                // Keep the existing retry cadence and first-galley reserve.
-                if(HasAnyTransport()){Defer();return;}
-                int transportCost=Harbor.Cost(ShipKind.Transport);
-                int firstFleetReserve=world.FirstFleetSavingsTargetFor(team);
-                if(session.Economy.Gold[team]<transportCost+firstFleetReserve){Defer();return;}
-            }
-            if(!TryChooseSourceAndTroops(out source))
+            transport=null;
+            // Avoid land-route probes when neither a paid replacement nor any
+            // empty transport can possibly start an expedition. An empty
+            // disconnected transport must not veto a local purchase.
+            bool canBuyTransport=CanFundTransportPurchase();
+            if(!canBuyTransport&&!HasEligibleEmptyTransport()){Defer();return;}
+            if(!TryChooseSourceAndTroops(canBuyTransport,out source,out transport))
             {
                 if(SourcePassComplete()){attemptedSources.Clear();examinedSources.Clear();}
                 ClearPlan();retryAt=session.BattleTime+NoPlanRetrySeconds;return;
             }
-            // This source cannot create a transport while it is already training.
-            // Do not spend target/sea route searches until its queue is available.
-            if(!transport&&source.QueueCount>0){Defer();return;}
             if(!TryChooseTarget(source,out target,out destination))
             {
                 attemptedSources.Add(source);Defer();return;
             }
             if(!transport)
             {
-                int transportCost=Harbor.Cost(ShipKind.Transport);
-                int firstFleetReserve=world.FirstFleetSavingsTargetFor(team);
-                // Recheck the state used for the early gate immediately before purchase.
-                if(HasAnyTransport()||source.QueueCount>0||session.Economy.Gold[team]<transportCost+firstFleetReserve){Defer();return;}
+                // Recheck mutable cheap conditions immediately before the normal
+                // paid harbor command.
+                if(!CanFundTransportPurchase()||!CanQueueTransportAt(source)){Defer();return;}
                 if(buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(source.BuildingId,NavalUnitKind.Transport))!=null){Fail();return;}
                 phase=Phase.WaitingForTransport;phaseDeadline=session.BattleTime+Harbor.TrainTime(ShipKind.Transport)+PhaseTimeout;return;
             }
@@ -114,11 +131,11 @@ namespace RiskAI
 
         void WaitForTransport()
         {
-            transport=FindTransport();
-            if(!transport)return;
             // Training does not immobilize the land army. Recheck the available
-            // squad when the paid boat is ready; defenders may have moved on.
+            // squad when a boat in this source's sea component is ready.
             if(!source||source.Owner!=team||!source.TryTransportLanding(out sourceLanding,out sourceTransportBerth)){Fail();return;}
+            transport=FindCompatibleTransport(sourceTransportBerth);
+            if(!transport)return;
             CollectTroops(sourceLanding,troops);
             if(troops.Count<MinimumTroops){Fail();return;}
             plannedGatherDistance=0;
@@ -130,8 +147,11 @@ namespace RiskAI
         void BeginGathering()
         {
             if(!transport||!source||source.Owner!=team||!source.TryTransportLanding(out sourceLanding,out sourceTransportBerth)){Fail();return;}
-            if(DistanceXZ(transport.transform.position,sourceLanding)>Ship.LoadRadius&&!transport.IsAtOrRoutingTo(sourceTransportBerth))transport.MoveTo(sourceTransportBerth);
-            if(!string.IsNullOrEmpty(transport.LastActionError)){Fail();return;}
+            if(DistanceXZ(transport.transform.position,sourceLanding)>Ship.LoadRadius&&!transport.IsAtOrRoutingTo(sourceTransportBerth))
+            {
+                transport.MoveTo(sourceTransportBerth);
+                if(!string.IsNullOrEmpty(transport.LastActionError)){Fail();return;}
+            }
             embarkOrdersIssued=false;phase=Phase.Gathering;phaseDeadline=session.BattleTime+GatherDeadline();
         }
 
@@ -140,8 +160,11 @@ namespace RiskAI
             if(!transport||!transport.IsAlive||!source||source.Owner!=team||!source.TryTransportLanding(out sourceLanding,out sourceTransportBerth)){Fail();return;}
             if(DistanceXZ(transport.transform.position,sourceLanding)>Ship.LoadRadius)
             {
-                if(!transport.IsAtOrRoutingTo(sourceTransportBerth))transport.MoveTo(sourceTransportBerth);
-                if(!string.IsNullOrEmpty(transport.LastActionError)){Fail();return;}
+                if(!transport.IsAtOrRoutingTo(sourceTransportBerth))
+                {
+                    transport.MoveTo(sourceTransportBerth);
+                    if(!string.IsNullOrEmpty(transport.LastActionError)){Fail();return;}
+                }
                 return;
             }
             if(!embarkOrdersIssued)
@@ -226,9 +249,9 @@ namespace RiskAI
             }
         }
 
-        bool TryChooseSourceAndTroops(out Harbor selected)
+        bool TryChooseSourceAndTroops(bool canBuyTransport,out Harbor selected,out Ship selectedTransport)
         {
-            selected=null;if(world.Harbors.Count==0)return false;
+            selected=null;selectedTransport=null;if(world.Harbors.Count==0)return false;
             float best=float.MaxValue;int probes=0;int count=world.Harbors.Count;
             int start=PositiveModulo(sourceHarborCursor,count);sourceHarborCursor=(start+1)%count;
             for(int offset=0;offset<count&&probes<SourceProbeBudget;offset++)
@@ -239,14 +262,15 @@ namespace RiskAI
                 if(attemptedSources.Contains(harbor))continue;
                 probes++;
                 if(!harbor.TryTransportLanding(out var landing,out var berth))continue;
-                // A close walking squad cannot use a boat in another ocean.
-                // Connectivity uses the prepared sea graph, without another A*.
-                if(transport&&!SeaNavigation.AreConnected(transport.transform.position,berth))continue;
+                // Pair the source with the nearest empty transport in its sea
+                // component. Otherwise it needs a legal paid local replacement.
+                Ship sourceTransport=FindCompatibleTransport(berth);
+                if(!sourceTransport&&(!canBuyTransport||!CanQueueTransportAt(harbor)))continue;
                 CollectTroops(landing,scratchTroops);
                 if(scratchTroops.Count<MinimumTroops)continue;
                 float score=0;for(int i=0;i<scratchTroops.Count;i++)score+=DistanceXZ(scratchTroops[i].transform.position,landing);
                 if(score>=best)continue;
-                best=score;selected=harbor;sourceLanding=landing;sourceTransportBerth=berth;troops.Clear();troops.AddRange(scratchTroops);
+                best=score;selected=harbor;selectedTransport=sourceTransport;sourceLanding=landing;sourceTransportBerth=berth;troops.Clear();troops.AddRange(scratchTroops);
             }
             if(selected)plannedGatherDistance=best/Mathf.Max(1,troops.Count);
             return selected;
@@ -288,7 +312,9 @@ namespace RiskAI
                 var harbor=world.Harbors[index];
                 if(!harbor||harbor==embark||!harbor.CanLaunch)continue;
                 probes++;
-                Settlement town=NearestCapturableTown(harbor.Landing);
+                // Advance at discovery, before any route check, so each revisit
+                // tries the next nearest capturable town for this harbor pair.
+                Settlement town=NextTargetTown(embark,harbor);
                 if(town)InsertTargetCandidate(town,harbor,embark.Landing);
             }
             targetHarborCursors[embark]=nextCursor;
@@ -302,15 +328,19 @@ namespace RiskAI
             return false;
         }
 
-        Settlement NearestCapturableTown(Vector3 point)
+        Settlement NextTargetTown(Harbor embark,Harbor destination)
         {
-            Settlement best=null;float distance=float.MaxValue;
+            targetTownFrontier.Clear();townDistanceComparer.Origin=destination.Landing;
             foreach(var town in session.Towns)
             {
-                if(!town||town.State.Owner==team)continue;
-                float next=DistanceXZ(town.ClaimPoint,point);if(next<distance){distance=next;best=town;}
+                if(town&&town.State.Owner!=team)targetTownFrontier.Add(town);
             }
-            return best;
+            targetTownFrontier.Sort(townDistanceComparer);
+            if(targetTownFrontier.Count==0)return null;
+            var pair=new TargetPair(embark,destination);
+            int cursor=targetTownCursors.TryGetValue(pair,out var saved)?PositiveModulo(saved,targetTownFrontier.Count):0;
+            targetTownCursors[pair]=(cursor+1)%targetTownFrontier.Count;
+            return targetTownFrontier[cursor];
         }
 
         void InsertTargetCandidate(Settlement town,Harbor harbor,Vector3 origin)
@@ -364,16 +394,34 @@ namespace RiskAI
             return false;
         }
 
-        Ship FindTransport()
+        bool CanFundTransportPurchase()
         {
-            foreach(var ship in world.Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Transport&&!ship.IsGarrison&&ship.CargoCount==0)return ship;
-            return null;
+            int transportCost=Harbor.Cost(ShipKind.Transport);
+            return session.Economy.Gold[team]>=transportCost+world.FirstFleetSavingsTargetFor(team)&&TeamNavalCount()<Harbor.FleetCapacity;
         }
-
-        bool HasAnyTransport()
+        bool CanQueueTransportAt(Harbor harbor) => harbor&&harbor.Owner==team&&harbor.QueueCount==0;
+        int TeamNavalCount()
         {
-            foreach(var ship in world.Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Transport)return true;
+            int count=world.PendingShips(team);
+            foreach(var ship in world.Ships)if(ship&&ship.IsAlive&&ship.Team==team)count++;
+            return count;
+        }
+        bool HasEligibleEmptyTransport()
+        {
+            foreach(var ship in world.Ships)
+                if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Transport&&!ship.IsGarrison&&ship.CargoCount==0)return true;
             return false;
+        }
+        Ship FindCompatibleTransport(Vector3 berth)
+        {
+            Ship best=null;float distance=float.MaxValue;
+            foreach(var ship in world.Ships)
+            {
+                if(!ship||!ship.IsAlive||ship.Team!=team||ship.Kind!=ShipKind.Transport||ship.IsGarrison||ship.CargoCount!=0||!SeaNavigation.AreConnected(ship.transform.position,berth))continue;
+                float next=DistanceXZ(ship.transform.position,berth);
+                if(next<distance){distance=next;best=ship;}
+            }
+            return best;
         }
 
         float GatherDeadline()

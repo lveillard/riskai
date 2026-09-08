@@ -50,6 +50,7 @@ namespace RiskAI
         public float CaptureProgress => state==null?0:state.Capture;
         public int QueueCount=>queue.Count;
         public const int QueueCapacity = 5;
+        public const int FleetCapacity = 12;
         public int LandQueueCount=>sharesTown&&LinkedTown?LinkedTown.QueueCount:landQueue.Count;
         public UnitKind QueuedLandKind(int index)=>sharesTown&&LinkedTown?LinkedTown.QueuedKind(index):landQueue[index].Kind;
         public float LandTrainingProgress=>sharesTown&&LinkedTown?LinkedTown.TrainingProgress:landQueue.Count==0?0:1-landQueue[0].Remaining/BattleRules.TrainTime(landQueue[0].Kind);
@@ -212,7 +213,7 @@ namespace RiskAI
             if(world.Session.Paused)return "Reanuda la partida para comprar barcos.";
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
             if(queue.Count>=QueueCapacity)return "La cola naval está llena.";
-            if(world.Ships.Count(s=>s&&s.IsAlive&&s.Team==team)+world.PendingShips(team)>=12)return "Límite naval de 12 barcos alcanzado.";
+            if(world.Ships.Count(s=>s&&s.IsAlive&&s.Team==team)+world.PendingShips(team)>=FleetCapacity)return "Límite naval de "+FleetCapacity+" barcos alcanzado.";
             int cost=Cost(kind);if(!world.Session.Economy.Spend(team,cost))return "Oro insuficiente para comprar este barco.";
             queue.Add(new Order{Kind=kind,Team=team,Remaining=TrainTime(kind)});return null;
         }
