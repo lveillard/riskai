@@ -26,7 +26,11 @@ namespace RiskAI
         // handful of commanders, so it cannot survive into a later match.
         readonly List<Soldier> troops = new List<Soldier>(MaximumTroops);
         readonly List<Soldier> scratchTroops = new List<Soldier>(MaximumTroops);
-        readonly List<Settlement> targetCandidates = new List<Settlement>(TargetProbeBudget);
+        struct TargetCandidate { public Settlement Town; public Harbor Harbor; }
+        readonly List<TargetCandidate> targetCandidates = new List<TargetCandidate>(TargetProbeBudget);
+        readonly HashSet<Harbor> attemptedSources = new HashSet<Harbor>();
+        readonly HashSet<Harbor> examinedSources = new HashSet<Harbor>();
+        readonly Dictionary<Harbor,int> targetHarborCursors = new Dictionary<Harbor,int>();
         readonly List<Soldier> landed = new List<Soldier>(MaximumTroops);
         readonly NavMeshPath landPath = new NavMeshPath();
         Phase phase;
@@ -36,7 +40,7 @@ namespace RiskAI
         Ship transport;
         float nextDecision, phaseDeadline, retryAt;
         float plannedSeaDistance, plannedGatherDistance;
-        int sourceHarborCursor, troopCursor, targetHarborCursor, recoveryHarborCursor, recoveryPass;
+        int sourceHarborCursor, troopCursor, recoveryHarborCursor, recoveryPass;
         bool embarkOrdersIssued, sailOrderIssued, attackOrderIssued;
 
         public bool IsActive => phase != Phase.Planning && phase != Phase.Cooldown;
@@ -86,12 +90,16 @@ namespace RiskAI
             }
             if(!TryChooseSourceAndTroops(out source))
             {
+                if(SourcePassComplete()){attemptedSources.Clear();examinedSources.Clear();}
                 ClearPlan();retryAt=session.BattleTime+NoPlanRetrySeconds;return;
             }
             // This source cannot create a transport while it is already training.
             // Do not spend target/sea route searches until its queue is available.
             if(!transport&&source.QueueCount>0){Defer();return;}
-            if(!TryChooseTarget(source,out target,out destination)){Defer();return;}
+            if(!TryChooseTarget(source,out target,out destination))
+            {
+                attemptedSources.Add(source);Defer();return;
+            }
             if(!transport)
             {
                 int transportCost=Harbor.Cost(ShipKind.Transport);
@@ -157,7 +165,15 @@ namespace RiskAI
             // harbor circle. Do not hold the only mission slot until timeout when
             // fewer than a legal wave remain able to board.
             if(viable<MinimumTroops){Fail();return;}
-            if(transport.CargoCount>=MinimumTroops){phase=Phase.Sailing;phaseDeadline=session.BattleTime+SailingDeadline();}
+            if(transport.CargoCount>=MinimumTroops)
+            {
+                // Only people actually aboard can be part of an overseas order.
+                // A full four-unit candidate list may legally leave with two cargo.
+                scratchTroops.Clear();scratchTroops.AddRange(troops);troops.Clear();
+                for(int i=0;i<transport.Cargo.Count;i++)if(transport.Cargo[i])troops.Add(transport.Cargo[i]);
+                for(int i=0;i<scratchTroops.Count;i++)if(!troops.Contains(scratchTroops[i])&&Eligible(scratchTroops[i]))scratchTroops[i].Stop();
+                phase=Phase.Sailing;phaseDeadline=session.BattleTime+SailingDeadline();
+            }
         }
 
         void Sail()
@@ -219,6 +235,8 @@ namespace RiskAI
             {
                 var harbor=world.Harbors[(start+offset)%count];
                 if(!harbor||harbor.Owner!=team)continue;
+                examinedSources.Add(harbor);
+                if(attemptedSources.Contains(harbor))continue;
                 probes++;
                 if(!harbor.TryTransportLanding(out var landing,out var berth))continue;
                 // A close walking squad cannot use a boat in another ocean.
@@ -232,6 +250,12 @@ namespace RiskAI
             }
             if(selected)plannedGatherDistance=best/Mathf.Max(1,troops.Count);
             return selected;
+        }
+
+        bool SourcePassComplete()
+        {
+            foreach(var harbor in world.Harbors)if(harbor&&harbor.Owner==team&&!examinedSources.Contains(harbor))return false;
+            return true;
         }
 
         void CollectTroops(Vector3 landing,List<Soldier> result)
@@ -253,23 +277,25 @@ namespace RiskAI
         {
             selected=null;landing=null;plannedSeaDistance=0;targetCandidates.Clear();
             if(world.Harbors.Count==0)return false;
-            int count=world.Harbors.Count,start=PositiveModulo(targetHarborCursor,count),probes=0;
-            targetHarborCursor=(start+1)%count;
+            int count=world.Harbors.Count;
+            int start=targetHarborCursors.TryGetValue(embark,out var cursor)?PositiveModulo(cursor,count):0;
+            int nextCursor=start,probes=0;
             // Harbor locations are the bounded frontier, so a mission never
             // treats an arbitrary coast pixel as an embarkable destination.
             for(int offset=0;offset<count&&probes<TargetProbeBudget;offset++)
             {
-                var harbor=world.Harbors[(start+offset)%count];
+                int index=(start+offset)%count;nextCursor=(index+1)%count;
+                var harbor=world.Harbors[index];
                 if(!harbor||harbor==embark||!harbor.CanLaunch)continue;
                 probes++;
                 Settlement town=NearestCapturableTown(harbor.Landing);
-                if(town&&!targetCandidates.Contains(town))InsertNearestCandidate(town,embark.Landing);
+                if(town)InsertTargetCandidate(town,harbor,embark.Landing);
             }
+            targetHarborCursors[embark]=nextCursor;
             for(int i=0;i<targetCandidates.Count;i++)
             {
-                var town=targetCandidates[i];
+                var candidate=targetCandidates[i];var town=candidate.Town;var harbor=candidate.Harbor;
                 if(CanWalk(sourceLanding,town.ClaimPoint))continue;
-                var harbor=NearestLandingHarbor(town.ClaimPoint,embark);
                 if(!harbor||!harbor.TryTransportLanding(out var landingPoint,out var transportBerth)||!CanWalk(landingPoint,town.ClaimPoint)||!SeaNavigation.TryBuildPath(sourceTransportBerth,transportBerth,out var seaPath))continue;
                 selected=town;landing=harbor;destinationTransportBerth=transportBerth;plannedSeaDistance=PathDistance(sourceTransportBerth,seaPath,transportBerth);return true;
             }
@@ -287,23 +313,13 @@ namespace RiskAI
             return best;
         }
 
-        void InsertNearestCandidate(Settlement town,Vector3 origin)
+        void InsertTargetCandidate(Settlement town,Harbor harbor,Vector3 origin)
         {
             float distance=(town.ClaimPoint-origin).sqrMagnitude;int insert=targetCandidates.Count;
-            for(int i=0;i<targetCandidates.Count;i++)if(distance<(targetCandidates[i].ClaimPoint-origin).sqrMagnitude){insert=i;break;}
+            for(int i=0;i<targetCandidates.Count;i++)if(distance<(targetCandidates[i].Town.ClaimPoint-origin).sqrMagnitude){insert=i;break;}
             if(insert>=TargetProbeBudget)return;
-            targetCandidates.Insert(insert,town);if(targetCandidates.Count>TargetProbeBudget)targetCandidates.RemoveAt(targetCandidates.Count-1);
-        }
-
-        Harbor NearestLandingHarbor(Vector3 point,Harbor excluded)
-        {
-            Harbor best=null;float distance=float.MaxValue;
-            foreach(var harbor in world.Harbors)
-            {
-                if(!harbor||harbor==excluded||!harbor.TryTransportLanding(out var landing,out _))continue;
-                float next=DistanceXZ(landing,point);if(next<distance){distance=next;best=harbor;}
-            }
-            return best;
+            targetCandidates.Insert(insert,new TargetCandidate{Town=town,Harbor=harbor});
+            if(targetCandidates.Count>TargetProbeBudget)targetCandidates.RemoveAt(targetCandidates.Count-1);
         }
 
         Harbor NearestRecoveryHarbor(Vector3 point)
@@ -396,9 +412,9 @@ namespace RiskAI
                     phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();return;
                 }
             }
-            transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
+            attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
         }
-        void Reset(){transport=null;phase=Phase.Planning;retryAt=session.BattleTime+RetrySeconds;ClearPlan();}
+        void Reset(){attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Planning;retryAt=session.BattleTime+RetrySeconds;ClearPlan();}
         void Defer(){retryAt=session.BattleTime+RetrySeconds;ClearPlan();}
         void ClearPlan()
         {

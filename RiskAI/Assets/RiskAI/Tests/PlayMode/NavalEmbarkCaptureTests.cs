@@ -111,6 +111,56 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator LivingLandGuardianIsNotDisplacedByEnemyGalley()
+        {
+            var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
+            var defender=port.Defender;
+            var enemy=BattleTestScenario.Ship(naval,1,ShipKind.Galley,port.Berth);
+            port.SimTick(.1f);
+            Assert.That(port.Owner,Is.EqualTo(0));
+            Assert.That(port.ClaimZone.Guardian,Is.SameAs(defender));
+            Assert.That(port.NavalDefender,Is.Null);
+            Assert.That(enemy.IsGarrison,Is.False);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator BoardingReportsFailureWhenTheOrderedActorsCannotProgress()
+        {
+            var port=naval.Harbors.First(h=>h.Owner==0);
+            Vector3 start=default;bool found=false;
+            for(int direction=0;direction<8&&!found;direction++)
+            {
+                float angle=direction*Mathf.PI*.25f;
+                var point=port.Landing+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*18f;
+                if(!UnityEngine.AI.NavMesh.SamplePosition(point,out var hit,2f,UnityEngine.AI.NavMesh.AllAreas))continue;
+                var distance=hit.position-port.Berth;distance.y=0;
+                if(distance.magnitude<=Ship.LoadRadius+2f)continue;
+                start=hit.position;found=true;
+            }
+            Assert.That(found,Is.True,"The boarder must begin outside instant embark range.");
+            var ship=BattleTestScenario.Ship(naval,0,ShipKind.Transport,port.Berth);
+            var soldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,start);
+            var controller=Object.FindFirstObjectByType<RtsController>();controller.SelectOnly(soldier);
+            const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;
+            typeof(RtsController).GetMethod("BeginBoarding",flags,null,new[]{typeof(Ship)},null).Invoke(controller,new object[]{ship});
+            var pending=typeof(RtsController).GetField("pendingBoardingTransport",flags);
+            Assert.That(pending.GetValue(controller),Is.SameAs(ship),"Begin with a real planned boarding order.");
+            battle.Commands.Tick();yield return null;
+            // Simulate a movement interruption after the order was accepted.
+            // No successful embark or shore permission is fabricated.
+            soldier.Stop();ship.Stop();
+            var process=typeof(RtsController).GetMethod("ProcessPendingBoarding",flags);
+            process.Invoke(controller,null);
+            float deadline=battle.BattleTime+21f;
+            while(battle.BattleTime<deadline)battle.Clock.Advance(.4f,false,_=>{});
+            process.Invoke(controller,null);
+            Assert.That(pending.GetValue(controller),Is.Null,"A stalled boarding intent must stop retrying forever.");
+            Assert.That(ship.CargoCount,Is.Zero);
+            Assert.That(battle.Messages[0],Does.StartWith("Embarque detenido:"));
+        }
+
+        [UnityTest]
         public IEnumerator GalleyReliefCanSailInsideSharedReliefRadiusBeforeGuardLeaves()
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);

@@ -377,10 +377,6 @@ namespace RiskAI
                 {
                     var candidate=offensiveCandidates[i];
                     hash=hash*31+candidate.Town.GetInstanceID();
-                    hash=hash*31+candidate.Order;
-                    hash=hash*31+(candidate.JoinsCountry?1:0);
-                    hash=hash*31+candidate.Town.State.Owner;
-                    hash=hash*31+candidate.Town.State.Country;
                 }
                 return hash;
             }

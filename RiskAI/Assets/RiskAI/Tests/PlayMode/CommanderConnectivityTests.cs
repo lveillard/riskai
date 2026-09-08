@@ -94,7 +94,14 @@ namespace RiskAI.Tests
             force[11].gameObject.SetActive(false);
             var replacement=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,Sample(mainland.ClaimPoint));
 
+            // Once the opening grace period has elapsed, an ownership update
+            // must not rewind the cursor while the ordered candidate identities
+            // remain the same.
+            battle.Clock.Advance(101f,false,_=>{});
+            mainland.State.Owner=0;
+
             InvokeOffense(false);battle.Commands.Tick();
+            Assert.That(replacement.IsIdle,Is.True,"The newly recruited unit is the reserved roster tail, not part of this wave.");
             yield return null;
             float deadline=Time.realtimeSinceStartup+2;
             var commanded=force.Take(11).Concat(new[]{force[12]}).ToArray();
@@ -104,7 +111,6 @@ namespace RiskAI.Tests
                 Assert.That(unit.Agent.pathStatus,Is.EqualTo(NavMeshPathStatus.PathComplete));
                 Assert.That(Vector3.Distance(unit.Agent.destination,mainland.ClaimPoint),Is.LessThan(5f),"The next decision must resume with the third, reachable candidate.");
             }
-            Assert.That(replacement.IsIdle,Is.True,"The newly recruited unit is the reserved roster tail, not part of this wave.");
         }
 
         void InvokeOffense(bool relaxed)

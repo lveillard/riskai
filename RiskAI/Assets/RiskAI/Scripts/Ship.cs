@@ -170,7 +170,7 @@ namespace RiskAI
             if(pendingShoreUnload&&DistanceXZ(transform.position,pendingShore)<=LoadRadius)
             {
                 if(UnloadAt(pendingShore)&&CargoCount==0)pendingShoreUnload=false;
-                else if(!string.IsNullOrEmpty(LastActionError)){world.Message(LastActionError);pendingShoreUnload=false;}
+                else if(!string.IsNullOrEmpty(LastActionError)){if(Team==0)world.Message(LastActionError);pendingShoreUnload=false;}
             }
             if(target&&!target.CanBeAttacked||target&&target.Team==Team){target=null;route.Clear();routeIndex=0;hasRouteGoal=false;}
             // A garrison can fire and turn in place, but autonomous targeting may

@@ -44,6 +44,9 @@ namespace RiskAI
         float lastSelectTime,lastGroupTime;int lastGroup=-1;UnitKind lastSelectKind;
         LineRenderer hoverRing;
         readonly List<Soldier> pendingBoarders=new();Ship pendingBoardingTransport;Vector3 pendingBoardingLanding;
+        float nextBoardingCheck,nextBoardingRecovery,lastBoardingProgress,previousBoardingDistance;
+        int previousBoarderCount;
+        const float BoardingCheckSeconds=.2f,BoardingStallSeconds=20f;
         public void Initialize(BattleSession battle,Camera camera) { session=battle;cam=camera;gameplayFocus=true;CameraRig=gameObject.AddComponent<RtsCameraRig>();CameraRig.Initialize(camera);inputRouter=new RtsInputRouter(this);var home=session.Towns.FirstOrDefault(t=>t.State.Owner==0&&t.IsCapital);if(home)CameraRig.SetHome(home.transform.position);previousMouse=Pointer;RequestCursorCapture(); }
         bool EffectiveFocus => gameplayFocus&&(Application.isEditor||Application.isFocused);
         bool ConfinedCursorSupported => RtsCameraPolicy.SupportsConfinedCursor(Application.isEditor,Application.platform);
@@ -140,7 +143,12 @@ namespace RiskAI
         {
             get { foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Kind==ShipKind.Transport)return ship;return null; }
         }
-        void CancelPendingBoarding() { pendingBoarders.Clear();pendingBoardingTransport=null;pendingBoardingLanding=Vector3.zero; }
+        void CancelPendingBoarding()
+        {
+            pendingBoarders.Clear();pendingBoardingTransport=null;pendingBoardingLanding=Vector3.zero;
+            nextBoardingCheck=nextBoardingRecovery=lastBoardingProgress=0;
+            previousBoardingDistance=float.PositiveInfinity;previousBoarderCount=0;
+        }
         void CancelBoardingForSelection()
         {
             if(!pendingBoardingTransport)return;
@@ -312,18 +320,45 @@ namespace RiskAI
             if(transport.LastActionError!=null){session.Message(transport.LastActionError);CancelPendingBoarding();return;}
             foreach(var soldier in available)
             {pendingBoarders.Add(soldier);session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z));}
+            lastBoardingProgress=session.BattleTime;previousBoarderCount=pendingBoarders.Count;
+            nextBoardingCheck=session.BattleTime;nextBoardingRecovery=session.BattleTime+1f;
             ShowOrder(landing,false);session.Message("Embarcando: tropas y transporte se reúnen en la costa marcada.");
         }
         void ProcessPendingBoarding()
         {
             if(!pendingBoardingTransport)return;
             if(!IsSelectableShip(pendingBoardingTransport)){CancelPendingBoarding();return;}
+            float now=session.BattleTime;
+            if(now<nextBoardingCheck)return;
+            nextBoardingCheck=now+BoardingCheckSeconds;
+            bool recover=now>=nextBoardingRecovery;
+            if(recover)nextBoardingRecovery=now+1f;
+            string error=null;
+            float distance=pendingBoardingTransport.RemainingRouteDistance;
             for(int i=pendingBoarders.Count-1;i>=0;i--)
             {
                 var soldier=pendingBoarders[i];
-                if(!IsSelectableSoldier(soldier)||soldier.IsGarrison||pendingBoardingTransport.CargoCount>=pendingBoardingTransport.Profile.Capacity||pendingBoardingTransport.TryEmbark(soldier))pendingBoarders.RemoveAt(i);
+                if(!IsSelectableSoldier(soldier)||soldier.IsGarrison||pendingBoardingTransport.CargoCount>=pendingBoardingTransport.Profile.Capacity||pendingBoardingTransport.TryEmbark(soldier))
+                {pendingBoarders.RemoveAt(i);continue;}
+                error=pendingBoardingTransport.LastActionError;
+                var agent=soldier.Agent;
+                var offset=soldier.transform.position-pendingBoardingLanding;offset.y=0;
+                float remaining=agent&&agent.hasPath&&!agent.pathPending?agent.remainingDistance:offset.magnitude;
+                distance+=float.IsNaN(remaining)||float.IsInfinity(remaining)?offset.magnitude:remaining;
+                // Avoidance can stop a boarder just outside a narrow beach. Retry
+                // the already validated landing, without relaxing shore rules.
+                if(recover&&agent&&!agent.pathPending&&agent.velocity.sqrMagnitude<.04f&&offset.sqrMagnitude<=Ship.LoadRadius*Ship.LoadRadius)
+                    session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,pendingBoardingLanding.x,pendingBoardingLanding.y,pendingBoardingLanding.z));
             }
-            if(pendingBoarders.Count==0){session.Message("Embarque terminado: "+pendingBoardingTransport.CargoCount+" / "+pendingBoardingTransport.Profile.Capacity+".");CancelPendingBoarding();}
+            if(pendingBoarders.Count==0)
+            {session.Message("Embarque terminado: "+pendingBoardingTransport.CargoCount+" / "+pendingBoardingTransport.Profile.Capacity+".");CancelPendingBoarding();return;}
+            if(pendingBoarders.Count!=previousBoarderCount||distance<previousBoardingDistance-.1f)lastBoardingProgress=now;
+            previousBoarderCount=pendingBoarders.Count;previousBoardingDistance=distance;
+            if(now-lastBoardingProgress>=BoardingStallSeconds)
+            {
+                session.Message("Embarque detenido: "+(error??"las tropas no pueden avanzar hasta la costa marcada."));
+                CancelPendingBoarding();
+            }
         }
         Vector3 Ground(Vector2 pointer)
         {

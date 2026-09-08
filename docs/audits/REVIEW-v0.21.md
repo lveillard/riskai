@@ -80,3 +80,58 @@ misma máscara de costa antes de hornear; no se cambia la política en esta rond
 La geometría de costa, el comportamiento en ARM y la carga sostenida de unas
 800 unidades siguen pendientes. Los 86 casos Unity consolidados se detallan en [Validación](../VALIDATION-v0.21.md);
 las exportaciones y medidas finales siguen pendientes.
+
+## Ronda 2 · revisión de implementación
+
+Esta ronda compara `060ed60` contra la misma base `c37a36f`. Se leyeron tres
+revisiones actuales, aisladas de la documentación y entre sí:
+
+| Revisor | Informe | Resultado usado |
+|---|---|---|
+| Codex API · Astra (low) | `.tools/v21-review-round2/normal-astra-report.md` | Dos P2: conservar pares puerto/objetivo alternativos y avanzar a otra fuente cuando la primera no puede producir una misión. |
+| Claude-VEI · Opus 5 A | `.tools/v21-review-round2/opus-a-report.json` | Sólo el campo `result`: errores de embarque del jugador sin progreso, tropas no embarcadas incluidas en el ataque, cursor sensible a cambios de propietario y toast de fallos navales visible para el jugador. |
+| Claude-VEI · Opus 5 B | `.tools/v21-review-round2/opus-b-report.json` | Sólo el campo `result`: desacuerdo arena/pintura, coste de sondeos por frame, retención de guardia, barrera de relevo, alcance de galera, cursor de tropas, recuperación y test de guardia terrestre. |
+
+Un intento `codex-vei` terminó con error 401 y otro intento anterior quedó sin
+cuota de API; no se cuentan. No se usó Grok en esta ronda. La revisión vuelve a
+ser estática: no declara tests, builds, rendimiento ni comportamiento ARM para
+este parche.
+
+### Disposición de Root
+
+Se acepta y se está implementando:
+
+- Mantener pares alternativos de puerto y objetivo, probar conectividad marítima
+  y equidad de fuente/recuperación dentro del presupuesto, y avanzar tras un
+  candidato que no pueda producir una misión.
+- Capturar el cargamento real al pasar a navegación y liberar inmediatamente a
+  los rezagados que no embarcaron, para que no reciban una orden de ataque
+  imposible.
+- Hacer que el cursor de objetivos terrestres ignore cambios de propietario no
+  relacionados con la continuidad del cursor.
+- Dar al embarque del jugador progreso finito, reintento y salida con error, con
+  cadencia de 0,2 s y sin repetir sondeos de orilla en cada frame.
+- Filtrar los avisos de fallo de barcos de IA al equipo local correspondiente;
+  no deben aparecer como toasts del jugador humano.
+
+Queda pendiente añadir y ejecutar el caso de una guarnición terrestre viva
+frente a un barco enemigo que intenta tomar el puerto. Es una comprobación de
+invariante de propiedad, no una autorización para desplazar al guardián vivo.
+
+### Rechazos y límites conservados
+
+Se rechaza ampliar el radio de `FindNearbyEnemy`: la consulta de reclamación ya
+incluye alcance y la distancia se comprueba contra `AttackRange`. La retención
+de 7,5 m no se cambia arbitrariamente; el guardián normal es fijado por
+`MaintainHarborGuard` en el atraque en cada tick, y los límites actuales deben
+quedar cubiertos por prueba y documentación.
+
+Se conservan las anclas compartidas como adaptadores intencionales y la ayuda
+por hover solicitada. Las decisiones de pintura de playa y ola mínima siguen
+abiertas para el usuario; esta ronda no las resuelve.
+
+El coste de hornear costa durante el arranque se medirá mediante la fase
+`terrain` de `StartupMetrics`. No se presentan cifras nuevas: Root añadirá los
+números después de ejecutar la medición. Los tests, builds, rendimiento
+sostenido de unas 800 unidades, ARM y geometría visual de costa permanecen
+pendientes.

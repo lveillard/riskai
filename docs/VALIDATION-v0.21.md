@@ -41,7 +41,7 @@ sin introducir excepciones de IA ni cambios de escala.
 
 ## Pruebas automatizadas
 
-Unity **6000.3.23f1**, Windows: **83 casos PlayMode distintos aprobados**
+Unity **6000.3.23f1**, Windows: **88 casos PlayMode distintos aprobados**
 según el resultado más reciente de cada caso, más **3/3 EditMode** de
 argumentos de lanzamiento. No se suman repeticiones como casos nuevos.
 
@@ -57,6 +57,8 @@ argumentos de lanzamiento. No se suman repeticiones como casos nuevos.
 | `RiskAI/Logs/v21-release-fixes.xml` | 16/16; catálogo importado, colas y expedición |
 | `RiskAI/Logs/v21-review-fixes.xml` | 19/20; una expectativa de fixture revisada |
 | `RiskAI/Logs/v21-review-fixes-r2.xml` | 1/1; expedición con comandante naval aislado |
+| `RiskAI/Logs/v21-review2-fixes.xml` | 15/16; reserva comprobada demasiado tarde en el fixture |
+| `RiskAI/Logs/v21-review2-fixes-r2.xml` | 2/2; cursor ante cambios de tropa y propietario |
 
 Cobertura: cámara/pausa, ratón, lápiz y touch, selección, guarnición de
 puertos en cuatro mapas, playa/descarga en Europe y New World, navegación
@@ -89,7 +91,15 @@ terrestre durante la espera, pero el fixture exigía sus dos soldados iniciales.
 La repetición ejecuta sólo el comandante naval, con reloj y movimiento reales,
 y verifica esas identidades. Se conservó la comprobación de que fabricar
 el transporte no reserva a los soldados. No se cuentan como dos casos el
-test de cursor anterior y su extensión para cambios de roster. Total: 86 casos.
+test de cursor anterior y su extensión para cambios de roster. Total anterior: 86 casos. La segunda corrección de revisión suma cinco: 91 casos.
+
+La segunda corrección comprueba fuentes alternativas, pares ciudad/puerto
+que conservan una ruta válida, salida de una ola parcial basada sólo en carga,
+guardia terrestre frente a un barco enemigo y fin del embarque sin progreso
+con aviso al jugador. El embarque comprueba la costa a 5 Hz; sus reintentos
+no relajan la regla de playa. El primer pase comprobaba la reserva después
+de permitir un frame de combate autónomo; el segundo comprueba su ausencia
+de orden inmediatamente después de emitir la formación.
 
 ## Exportaciones, inspección y rendimiento
 
@@ -129,6 +139,19 @@ unidades cae durante la medición. Esto no reproduce 800 unidades sostenidas
 ni mide latencia desde un clic físico. Informes locales:
 `RiskAI/Logs/v21-path-budget-500.log`, `v21-path-budget-1000.log`;
 resumen en `Captures/v21-perf/summary.json`.
+
+Una pasada posterior del commit `060ed60`, con 48 reclutas por bando y
+900 segundos de calentamiento, midió 957→443 unidades en 90 segundos: las
+6 identidades seguidas se movieron, 1305 órdenes aplicadas, ninguna rechazada
+y ninguna pendiente. Registró 22,29 ms de frame medio y 99,95 ms máximo.
+**Es una medición con contención, no aceptación final de rendimiento**: el
+supervisor informó a las 04:18 de unos 0,7 GiB libres mientras compilaba PWA;
+se observaron procesos Rust ajenos durante esta pasada y no se tocaron.
+Se repetirá sólo la aceptación temporal afectada cuando haya memoria estable,
+sin compilación Unity en paralelo. Tampoco son 800 unidades sostenidas: el
+ejército cayó durante el combate. Log: `v21-final-perf-48.log`; contexto en
+`Captures/v21-final-perf-environment.json`. El siguiente parche de revisión
+aún no está incluido en ese ejecutable.
 
 La observación pasiva anterior de v0.20 encontró órdenes aplicadas en
 27–36 ms, pero una muestra de primer movimiento de 1,24 s y rutas pendientes
