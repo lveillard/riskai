@@ -1,5 +1,12 @@
 # Fase 2 · tablet, móvil y navegador
 
+Seguimiento `9fb6beb`: zoom proporcional, modo estratégico desde 84, bordes
+de regiones de hoguera, moneda, cuenta atrás y tres correcciones de autonomía.
+77 casos Unity distintos aprobados; Windows/Web exportados, UI Web revisada
+en escritorio y vertical. El contraste de Reforged actual no resuelve aún el
+selector de capas del motor ni amplía el catálogo. No cierra rendimiento de
+grandes ejércitos ni ARM físico. [Validación](VALIDATION-v0.22-STRATEGY-START.md).
+
 Seguimiento `3b83279`: agua continua y más oscura, atraque explícito, producción
 según propietario y correcciones de combate contrastadas con WC3. Windows/Web
 exportados; 81 casos Unity distintos aprobados en esa revisión. No equivale a

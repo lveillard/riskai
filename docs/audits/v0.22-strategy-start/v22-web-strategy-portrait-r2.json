@@ -1,0 +1,57 @@
+{
+  "viewport": [
+    480,
+    900
+  ],
+  "desktopBrowser": true,
+  "physicalInput": false,
+  "errors": [],
+  "captures": [
+    {
+      "name": "countdown-early",
+      "sinceReadySeconds": 0.986
+    },
+    {
+      "name": "countdown-middle",
+      "sinceReadySeconds": 1.349
+    },
+    {
+      "name": "countdown-late",
+      "sinceReadySeconds": 2.327
+    },
+    {
+      "name": "playing",
+      "sinceReadySeconds": 3.811
+    },
+    {
+      "name": "country-overview",
+      "sinceReadySeconds": 5.632
+    },
+    {
+      "name": "country-closer",
+      "sinceReadySeconds": 6.381
+    },
+    {
+      "name": "country-detail",
+      "sinceReadySeconds": 7.093
+    },
+    {
+      "name": "zoom-step-1",
+      "sinceReadySeconds": 9.32
+    },
+    {
+      "name": "zoom-step-2",
+      "sinceReadySeconds": 10.038
+    },
+    {
+      "name": "zoom-step-3",
+      "sinceReadySeconds": 10.772
+    },
+    {
+      "name": "zoom-step-4",
+      "sinceReadySeconds": 11.376
+    }
+  ],
+  "success": true,
+  "seconds": 23.205
+}

@@ -2,6 +2,10 @@
 
 ## Ronda v0.22 · presentación, caballero y carga
 
+- [x] Retrasar el mapa de colores de zoom 72 a 84, uniformar la respuesta relativa del zoom y dibujar fronteras de grupos de hoguera independientes del dueño. Moneda en HUD y cuenta atrás de 3 s al iniciar desde el menú. 77 casos Unity distintos aprobados, incluyendo repetición del fixture gráfico corregido. [Validación](docs/VALIDATION-v0.22-STRATEGY-START.md).
+- [x] Auditar autonomía de tropas y barcos: corregir seguimiento de identidad reutilizada, recuperación del destino naval de avanzar atacando y respeto del objetivo explícito al recibir daño. [Hallazgos y políticas pendientes](docs/audits/UNIT-AUTONOMY-v0.22.md).
+- [x] Contrastar campos de unidades con Reforged publicado 2.0.4.23745: raíz y tres capas de balance; 16 archivos clave verificados contra CDN. 1180 campos invariantes, 570 dependen de selección/presencia de capa. El selector/fallback del motor continúa pendiente. [Informe](docs/audits/REFORGED-LATEST-INHERITANCE.md).
+- [ ] Elegir e incorporar las ocho unidades que faltan y resolver tres parejas Marine entre modos. Lista presentada al usuario antes de alterar el catálogo. [Costes, vida e identidades](docs/audits/SOURCE-ROSTER-NEXT.md).
 - [x] Mar más oscuro y óptica continua entre fondos; captura de galera/transporte en movimiento sin ondas sobre sus cubiertas. Orden de atraque conserva destino y completa el ajuste local con arbitraje y paso marítimo seguro.
 - [x] Ocultar producción y colas de edificios ajenos/neutrales; actualizar el panel cuando cambia dueño sin reselección.
 - [x] Auditar 69 objetos WC3, armas, habilidades, tecnologías, captura y disponibilidad; distinguir 40 identidades potenciales de 17 reclutables por defecto. Aplicar matriz 7×8, entrega de armas/área, adquisición, entrenamiento explícito de 1 s y transporte n008 con 10 plazas. 81 casos Unity distintos aprobados. [Detalle y procedencia](docs/VALIDATION-v0.22-WATER-COMBAT.md).

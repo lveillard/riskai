@@ -1,0 +1,196 @@
+2.498 [error] Failed to load resource: the server responded with a status of 404 (File not found)
+3.065 [log] [UnityCache] 'http://127.0.0.1:8081/Build/Web-v0.22.data.unityweb' successfully downloaded and stored in the browser cache
+3.952 [log] [UnityMemory] Configuration Parameters - Can be set up in boot.config
+
+3.957 [log]     "memorysetup-allocator-temp-initial-block-size-main=262144"
+
+3.958 [log]     "memorysetup-allocator-temp-initial-block-size-worker=262144"
+
+3.960 [log]     "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+
+3.961 [log]     "memorysetup-temp-allocator-size-audio-worker=65536"
+
+3.967 [log]     "memorysetup-remapper-allocator-initial-capacity=32768"
+
+3.972 [log]     "memorysetup-temp-allocator-size-background-worker=32768"
+
+3.977 [log]     "memorysetup-bucket-allocator-granularity=16"
+
+3.979 [log]     "memorysetup-bucket-allocator-bucket-count=8"
+
+3.980 [log]     "memorysetup-bucket-allocator-block-size=4194304"
+
+3.984 [log]     "memorysetup-bucket-allocator-block-count=1"
+
+3.987 [log]     "memorysetup-main-allocator-block-size=16777216"
+
+3.991 [log]     "memorysetup-thread-allocator-block-size=16777216"
+
+3.993 [log]     "memorysetup-gfx-main-allocator-block-size=16777216"
+
+3.995 [log]     "memorysetup-gfx-thread-allocator-block-size=16777216"
+
+3.998 [log]     "memorysetup-cache-allocator-block-size=4194304"
+
+4.002 [log]     "memorysetup-typetree-allocator-block-size=2097152"
+
+4.004 [log]     "memorysetup-profiler-bucket-allocator-granularity=16"
+
+4.006 [log]     "memorysetup-profiler-bucket-allocator-bucket-count=8"
+
+4.009 [log]     "memorysetup-profiler-bucket-allocator-block-size=4194304"
+
+4.015 [log]     "memorysetup-profiler-bucket-allocator-block-count=1"
+
+4.016 [log]     "memorysetup-profiler-allocator-block-size=16777216"
+
+4.019 [log]     "memorysetup-profiler-editor-allocator-block-size=1048576"
+
+4.024 [log]     "memorysetup-temp-allocator-size-main=4194304"
+
+4.026 [log]     "memorysetup-job-temp-allocator-block-size=2097152"
+
+4.027 [log]     "memorysetup-job-temp-allocator-block-size-background=1048576"
+
+4.030 [log]     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+
+4.114 [log] Input System module state changed to: Initialized.
+
+4.115 [log] [Physics::Module] Initialized fallback backend.
+
+4.115 [log] [Physics::Module] Id: 0xdecafbad
+
+4.117 [log] Loading player data from data.unity3d
+
+4.124 [log] Initialize engine version: 6000.3.23f1 (09d2ecc7fb28)
+
+4.126 [log] Creating WebGL 2.0 context.
+4.150 [log] Renderer: WebKit WebGL
+
+4.150 [log] Vendor:   WebKit
+
+4.150 [log] Version:  OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium))
+
+4.150 [log] GLES:     3
+
+4.150 [log]  EXT_clip_control EXT_color_buffer_float EXT_color_buffer_half_float EXT_conservative_depth EXT_depth_clamp EXT_disjoint_timer_query_webgl2 EXT_float_blend EXT_polygon_offset_clamp EXT_render_snorm EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_texture_norm16 KHR_parallel_shader_compile NV_shader_noperspective_interpolation OES_draw_buffers_indexed OES_sample_variables OES_shader_multisample_interpolation OES_texture_float_linear OVR_multiview2 WEBGL_blend_func_extended WEBGL_clip_cull_distance WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode WEBGL_provoking_vertex WEBGL_stencil_texturing GL_EXT_clip_control GL_EXT_color_buffer_float GL_EXT_color_buffer_half_float GL_EXT_conservative_depth GL_EXT_depth_clamp GL_EXT_disjoint_timer_query_webgl2 GL_EXT_float_blend GL_EXT_polygon_offset_clamp GL_EXT_render_snorm GL_EXT_
+
+4.150 [log] texture_compression_bptc GL_EXT_texture_compression_rgtc GL_EXT_texture_filter_anisotropic GL_EXT_texture_mirror_clamp_to_edge GL_EXT_texture_norm16 GL_KHR_parallel_shader_compile GL_NV_shader_noperspective_interpolation GL_OES_draw_buffers_indexed GL_OES_sample_variables GL_OES_shader_multisample_interpolation GL_OES_texture_float_linear GL_OVR_multiview2 GL_WEBGL_blend_func_extended GL_WEBGL_clip_cull_distance GL_WEBGL_compressed_texture_s3tc GL_WEBGL_compressed_texture_s3tc_srgb GL_WEBGL_debug_renderer_info GL_WEBGL_debug_shaders GL_WEBGL_lose_context GL_WEBGL_multi_draw GL_WEBGL_polygon_mode GL_WEBGL_provoking_vertex GL_WEBGL_stencil_texturing
+
+4.152 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+4.153 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+4.153 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+4.153 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+4.153 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+4.153 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+4.159 [log] OPENGL LOG: Creating OpenGL ES 3.0 graphics device ; Context level  <OpenGL ES 3.0> ; Context handle 1
+
+4.233 [log] [Physics::Module] Selected backend.
+
+4.233 [log] [Physics::Module] Name: PhysX
+
+4.233 [log] [Physics::Module] Id: 0xf2b8ea05
+
+4.234 [log] [Physics::Module] SDK Version: 4.1.2
+
+4.234 [log] [Physics::Module] Integration Version: 1.0.0
+
+4.234 [log] [Physics::Module] Threading Mode: Single-Threaded
+
+4.293 [log] ERROR: Shader
+4.294 [log] Hidden/CoreSRP/CoreCopy shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+
+4.294 [log] ERROR: Shader
+4.294 [log] Hidden/Universal Render Pipeline/StencilDitherMaskSeed shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+
+4.301 [log] ERROR: Shader
+4.301 [log] Hidden/Universal/HDRDebugView shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+
+4.341 [log] Input System initialize...
+
+4.379 [log] UnloadTime: 0.700001 ms
+
+4.393 [log] Audio context resumed after 0.191 seconds.
+7.465 [log] UnloadTime: 1.699999 ms
+
+9.010 [log] RISKAI_STARTUP phase=terrain map=Europe phaseMs=1519.70 totalMs=1519.70 unityAllocatedB=140000721 unityReservedB=160120795 managedB=55246848
+
+9.401 [log] RISKAI_STARTUP phase=buildings map=Europe phaseMs=417.30 totalMs=1937.00 unityAllocatedB=167736765 unityReservedB=191268365 managedB=65839104
+
+14.155 [log] RISKAI_STARTUP phase=navigation map=Europe phaseMs=4755.40 totalMs=6692.40 unityAllocatedB=169745636 unityReservedB=193300112 managedB=65961984
+
+14.471 [log] RISKAI_STARTUP phase=roster_and_ports map=Europe phaseMs=314.70 totalMs=7007.10 unityAllocatedB=201057424 unityReservedB=228330182 managedB=70012928
+
+14.530 [log] RISKAI_STARTUP phase=ground_cover map=Europe phaseMs=60.30 totalMs=7067.40 unityAllocatedB=202518934 unityReservedB=229871264 managedB=73388032
+
+14.557 [log] RISKAI_STARTUP phase=canopy_index map=Europe phaseMs=24.60 totalMs=7092.00 unityAllocatedB=202584474 unityReservedB=229936842 managedB=78036992
+
+14.650 [log] RISKAI_STARTUP phase=territory_atlas map=Europe phaseMs=94.90 totalMs=7186.90 unityAllocatedB=202911930 unityReservedB=230284951 managedB=93564928
+
+14.662 [log] RISKAI_STARTUP phase=ready map=Europe phaseMs=12.60 totalMs=7199.50 unityAllocatedB=203090347 unityReservedB=230466560 managedB=94085120
+
+14.713 [log] RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+
+14.756 [log] RISKAI_PROBE_START phase=setup cpu=n/a gpu=ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Laptop GPU (0x00002C59) Direct3D11 vs_5_0 ps_5_0, D3D11) screen=1280x800 map=Europe seed=19031 players=16 towns=212 camps=69 units=212 warmupRequestedSimSeconds=0.0 warmupBlueAI=False measurementRequestedRealSeconds=60.0 controller=disabled picking=synthetic
+
+14.760 [log] RISKAI_PROBE_FIXTURE player=0 ownedTowns=13 rallyAttempts=6 navPoints=6 spawned=6 mobileBefore=0 mobileAfter=6
+
+14.762 [log] RISKAI_PROBE_FIXTURE player=1 ownedTowns=13 rallyAttempts=6 navPoints=6 spawned=6 mobileBefore=0 mobileAfter=6
+
+14.764 [log] RISKAI_PROBE_FIXTURE player=2 ownedTowns=13 rallyAttempts=6 navPoints=5 spawned=5 mobileBefore=0 mobileAfter=5
+
+14.767 [log] RISKAI_PROBE_FIXTURE player=3 ownedTowns=13 rallyAttempts=6 navPoints=6 spawned=6 mobileBefore=0 mobileAfter=6
+
+14.771 [log] RISKAI_PROBE_FIXTURE player=4 ownedTowns=13 rallyAttempts=6 navPoints=6 spawned=6 mobileBefore=0 mobileAfter=6
+
+14.775 [log] RISKAI_PROBE_FIXTURE player=5 ownedTowns=13 rallyAttempts=6 navPoints=5 spawned=5 mobileBefore=0 mobileAfter=5
+
+14.778 [log] RISKAI_PROBE_FIXTURE player=6 ownedTowns=13 rallyAttempts=6 navPoints=5 spawned=5 mobileBefore=0 mobileAfter=5
+
+14.781 [log] RISKAI_PROBE_FIXTURE player=7 ownedTowns=13 rallyAttempts=6 navPoints=5 spawned=5 mobileBefore=0 mobileAfter=5
+
+14.783 [log] RISKAI_PROBE_FIXTURE player=8 ownedTowns=13 rallyAttempts=6 navPoints=5 spawned=5 mobileBefore=0 mobileAfter=5
+
+14.785 [log] RISKAI_PROBE_FIXTURE player=9 ownedTowns=13 rallyAttempts=6 navPoints=4 spawned=4 mobileBefore=0 mobileAfter=4
+
+14.786 [log] RISKAI_PROBE_FIXTURE player=10 ownedTowns=13 rallyAttempts=6 navPoints=4 spawned=4 mobileBefore=0 mobileAfter=4
+
+14.788 [log] RISKAI_PROBE_FIXTURE player=11 ownedTowns=13 rallyAttempts=6 navPoints=6 spawned=6 mobileBefore=0 mobileAfter=6
+
+14.791 [log] RISKAI_PROBE_FIXTURE player=12 ownedTowns=13 rallyAttempts=6 navPoints=4 spawned=4 mobileBefore=0 mobileAfter=4
+
+14.792 [log] RISKAI_PROBE_FIXTURE player=13 ownedTowns=13 rallyAttempts=6 navPoints=5 spawned=5 mobileBefore=0 mobileAfter=5
+
+14.794 [log] RISKAI_PROBE_FIXTURE player=14 ownedTowns=13 rallyAttempts=6 navPoints=5 spawned=5 mobileBefore=0 mobileAfter=5
+
+14.797 [log] RISKAI_PROBE_FIXTURE player=15 ownedTowns=13 rallyAttempts=6 navPoints=4 spawned=4 mobileBefore=0 mobileAfter=4
+
+14.797 [log] RISKAI_PROBE_FIXTURE cohortSource=recruits tracked=6 reason=none
+
+14.798 [log] RISKAI_PROBE_PHASE phase=fixture-stabilize realSeconds=2.0 fixtureRecruitsPerPlayer=6
+
+15.275 [log] Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+
+15.356 [log] Unloading 170 unused Assets to reduce memory usage. Loaded Objects now: 231341.
+
+15.356 [log] Total: 62.000000 ms (FindLiveObjects: 26.099999 ms CreateObjectMapping: 1.700001 ms MarkObjects: 33.500000 ms  DeleteObjects: 0.700000 ms)
+
+
+16.799 [log] RISKAI_PROBE_PHASE phase=measurement map=Europe seed=19031 unitsInitial=293 tracked=6 warmupCompletedSimSeconds=0.0 warmupBlueAI=false picking=synthetic pointer=viewport-center frameSampler=unscaled_background blueStarts=425@3.8,-56.5;426@17.9,-116.6;427@92.2,-156.3;428@199.7,-285.6;429@102.4,-294.6;430@-115.2,-24.5
+
+46.804 [log] RuntimeDiagnostics 30s avgMs=32.79 maxMs=346.00 managedHeapDeltaB=2498560 gcGen0=0 units=304 simTime=31.5 simTicks=630 commandsPending=0 commandsApplied=74 commandsRejected=0 frames=915 over50ms=68 over100ms=61 over250ms=6 focused=True paused=False focusLost=0 focusRecovered=0 pauseEntered=0 pauseResumed=0 worldTicks=599 worldAvgMs=5.82 worldMaxMs=48.10 worldCommandsAvgMs=0.01 worldCommandsMaxMs=1.00 worldSpatialAvgMs=1.42 worldSpatialMaxMs=6.20 worldSoldiersAvgMs=0.95 worldSoldiersMaxMs=13.00 worldTowersAvgMs=1.59 worldTowersMaxMs=37.20 worldShipsAvgMs=0.01 worldShipsMaxMs=0.20 worldCombatAvgMs=0.03 worldCombatMaxMs=10.90 worldClaimsAvgMs=1.04 worldClaimsMaxMs=7.50 worldRulesAvgMs=0.52 worldRulesMaxMs=15.80 worldAiAvgMs=0.24 worldAiMaxMs=18.80 worldLandAiAvgMs=0.22 worldLandAiMaxMs=18.70 worldNavalAiAvgMs=0.02 worldNavalAiMaxMs=0.30 worldPoolAvgMs=0.01 worldPoolMaxMs=2.40 seaSearches=0 seaSearchAvgMs=0.00 seaSearchMaxMs=0.00 seaExpandedMax=0 seaDirect=0 seaDisconnected=0 seaGridBuildMs=98.70 commandSubmitHuman=74 commandSubmitAi=0 commandApplyHuman=74 commandApplyAi=0 commandRejectHuman=0 commandRejectAi=0 commandQueueMax=6 submitApplyHumanActiveAvgMs=52.32 submitApplyHumanActiveMaxMs=203.00 submitApplyAiActiveAvgMs=0.00 submitApplyAiActiveMaxMs=0.00 commandObservedPauseMs=0.0 firstMoveHumanEligible=34 firstMoveHumanCancelled=0 firstMoveHumanCount=34 firstMoveHumanActiveAvgMs=96.00 firstMoveHumanActiveMaxMs=282.00 humanMoveOutstanding=0 routeReadyHumanObservedCount=34 applyRouteReadyHumanActiveAvgMs=48.79 applyRouteReadyHumanActiveMaxMs=74.00 speedHumanObservedCount=34 submitSpeedHumanActiveAvgMs=95.97 submitSpeedHumanActiveMaxMs=282.00 routeReadySpeedHumanPairedCount=34 routeReadySpeedHumanActiveAvgMs=9.09 routeReadySpeedHumanActiveMaxMs=87.00 speedDirectedHumanPairedCount=34 speedDirectedHumanActiveAvgMs=0.00 speedDirectedHumanActiveMaxMs=0.00 pathPending=0 pathPendingAvgAgeMs=0.0 pathPendingMaxAgeMs=0.0 navIterationsPerFrame=500 unityAllocatedB=209972502
+
+76.802 [log] RuntimeDiagnostics 30s avgMs=37.40 maxMs=280.00 managedHeapDeltaB=933888 gcGen0=0 units=328 simTime=61.5 simTicks=1230 commandsPending=0 commandsApplied=48 commandsRejected=0 frames=802 over50ms=72 over100ms=66 over250ms=4 focused=True paused=False focusLost=0 focusRecovered=0 pauseEntered=0 pauseResumed=0 worldTicks=600 worldAvgMs=5.87 worldMaxMs=36.00 worldCommandsAvgMs=0.00 worldCommandsMaxMs=0.60 worldSpatialAvgMs=1.48 worldSpatialMaxMs=8.60 worldSoldiersAvgMs=0.94 worldSoldiersMaxMs=14.50 worldTowersAvgMs=1.56 worldTowersMaxMs=12.50 worldShipsAvgMs=0.00 worldShipsMaxMs=0.10 worldCombatAvgMs=0.00 worldCombatMaxMs=0.10 worldClaimsAvgMs=1.12 worldClaimsMaxMs=12.20 worldRulesAvgMs=0.56 worldRulesMaxMs=17.30 worldAiAvgMs=0.19 worldAiMaxMs=2.20 worldLandAiAvgMs=0.18 worldLandAiMaxMs=2.20 worldNavalAiAvgMs=0.02 worldNavalAiMaxMs=0.30 worldPoolAvgMs=0.00 worldPoolMaxMs=0.10 seaSearches=0 seaSearchAvgMs=0.00 seaSearchMaxMs=0.00 seaExpandedMax=0 seaDirect=0 seaDisconnected=0 seaGridBuildMs=98.70 commandSubmitHuman=48 commandSubmitAi=0 commandApplyHuman=48 commandApplyAi=0 commandRejectHuman=0 commandRejectAi=0 commandQueueMax=2 submitApplyHumanActiveAvgMs=49.54 submitApplyHumanActiveMaxMs=223.00 submitApplyAiActiveAvgMs=0.00 submitApplyAiActiveMaxMs=0.00 commandObservedPauseMs=0.0 firstMoveHumanEligible=24 firstMoveHumanCancelled=0 firstMoveHumanCount=24 firstMoveHumanActiveAvgMs=116.67 firstMoveHumanActiveMaxMs=554.00 humanMoveOutstanding=0 routeReadyHumanObservedCount=24 applyRouteReadyHumanActiveAvgMs=60.08 applyRouteReadyHumanActiveMaxMs=211.00 speedHumanObservedCount=24 submitSpeedHumanActiveAvgMs=116.67 submitSpeedHumanActiveMaxMs=554.00 routeReadySpeedHumanPairedCount=24 routeReadySpeedHumanActiveAvgMs=21.08 routeReadySpeedHumanActiveMaxMs=202.00 speedDirectedHumanPairedCount=24 speedDirectedHumanActiveAvgMs=0.00 speedDirectedHumanActiveMaxMs=0.00 pathPending=0 pathPendingAvgAgeMs=0.0 pathPendingMaxAgeMs=0.0 navIterationsPerFrame=500 unityAllocatedB=193730117
+
+76.802 [log] RISKAI_PROBE_RESULT phase=measurement valid=True winner=-1 map=Europe seed=19031 warmupRequestedSimSeconds=0.0 warmupCompletedSimSeconds=0.0 measurementRequestedRealSeconds=60.0 simSecondsDelta=59.95 fixtureRecruitsPerPlayer=6 measurementElapsedRealSeconds=60.00 navBudget=500 applied=122 rejected=0 queued=0 unitsInitial=293 unitsFinal=328 probeMovesSubmitted=58 probeDestinationsUnavailable=5 movedUnits=6/6 survivingMovables=2 unmovedSurvivors=0 unmovedIds=none holdRounds=25 holdTimeouts=0 maxDisplacement=19.96 measureFrames=1717 measureFrameAvgMs=34.94 measureFrameMaxMs=346.00 measureOver50ms=140 measureOver100ms=127 measureOver250ms=10 measureFrameSampler=unscaled_background blue=425@3.8,-56.5:11.86;426@17.9,-116.6:10.78;427@92.2,-156.3:19.96;428@199.7,-285.6:11.78;429@102.4,-294.6:11.86;430@-115.2,-24.5:10.78 success=True
+
+76.820 [log] Quitting...
+77.025 [log] [Physics::Module] Cleanup current backend.
+
+77.025 [log] [Physics::Module] Id: 0xf2b8ea05
+
+77.025 [log] Input System module state changed to: ShutdownInProgress.
+
+77.025 [log] Input System module state changed to: Shutdown.
+
+77.034 [log] done!
