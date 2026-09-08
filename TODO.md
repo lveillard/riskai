@@ -26,7 +26,7 @@ se cierran por separado.
 
 - [x] Comprobar gestos de juego en el reproductor Web exportado: área con un contacto y lápiz, doble toque, toque de dos contactos y botón secundario del lápiz mueven unidades reclutadas normalmente. Tarjetas tocables verificadas en escritorio/vertical, layout también horizontal. Es entrada CDP; no se da por probada una tablet física. La reexportación final usa el target WebGL explícito del script y no reproduce los nuevos avisos de sampler.
 - [x] Recuperar retratos individuales, barras de vida y selección por tarjeta del ejército; un solo roster para escritorio y pestaña compacta, incluidos grupos mixtos tierra/mar. Cinco regresiones nuevas; siete casos HUD finales aprobados. Tres revisores Opus5 independientes y seguimientos proporcionales sin P0/P1/P2 abiertos. [Auditoría](docs/audits/ROSTER-v0.21.md).
-- [ ] Selección durante pérdida prolongada de foco: verificar que una referencia conservada por el controlador no represente otra unidad si el pool la reutiliza antes de recuperar foco. La tarjeta antigua ya rechaza esa identidad; el controlador completo no usa handles de vida para todas sus selecciones/grupos.
+- [x] Identidad de selección durante pérdida prolongada de foco corregida en fuente local `f05c586`: selección, grupos y embarques pendientes rechazan otra vida del pool y conservan supervivientes. Unity 55/55 (diez nuevas), tras tres CS1503 corregidos antes de ejecutar; tres contextos independientes Opus5 y seguimientos sin P0/P1/P2 finales. Cierre de fuente/pruebas/revisión; [límites y cierre de exportaciones](docs/audits/SELECTION-LIFETIME-v0.21.md).
 
 [Validación de la ronda](docs/VALIDATION-v0.21.md) · [Objetivo fase 2](docs/PHASE2.md).
 

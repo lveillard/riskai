@@ -1,0 +1,90 @@
+{
+  "buildHead": "f05c586",
+  "physicalHardware": false,
+  "gameplayAccepted": null,
+  "events": [
+    {
+      "capture": "01-recruited-paused",
+      "elapsed": 33.849
+    },
+    {
+      "capture": "02-touch-marquee-held",
+      "elapsed": 34.903
+    },
+    {
+      "capture": "03-touch-selection",
+      "elapsed": 35.793
+    },
+    {
+      "capture": "03b-desktop-card-tap",
+      "elapsed": 37.075
+    },
+    {
+      "capture": "03ba-group-cleared",
+      "elapsed": 37.832
+    },
+    {
+      "capture": "03bb-group-recalled",
+      "elapsed": 38.76
+    },
+    {
+      "capture": "03c-landscape-roster",
+      "elapsed": 40.471
+    },
+    {
+      "capture": "03d-portrait-roster",
+      "elapsed": 41.358
+    },
+    {
+      "capture": "03e-portrait-card-tap",
+      "elapsed": 42.247
+    },
+    {
+      "capture": "04-double-tap-order",
+      "elapsed": 45.233
+    },
+    {
+      "capture": "05-after-double-tap",
+      "elapsed": 50.336
+    },
+    {
+      "capture": "06-two-finger-order",
+      "elapsed": 51.56
+    },
+    {
+      "capture": "07-after-two-finger",
+      "elapsed": 57.249
+    },
+    {
+      "capture": "08-pen-marquee-held",
+      "elapsed": 58.545
+    },
+    {
+      "capture": "09-pen-selection",
+      "elapsed": 59.463
+    },
+    {
+      "capture": "10-pen-barrel-order",
+      "elapsed": 60.26
+    },
+    {
+      "capture": "11-after-pen-barrel",
+      "elapsed": 64.76
+    },
+    {
+      "capture": "12-tablet-landscape-paused",
+      "elapsed": 65.851
+    },
+    {
+      "capture": "13-tablet-portrait-paused",
+      "elapsed": 66.587
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
+  "browser": "152.0.4191.66",
+  "scriptCompleted": true,
+  "seconds": 66.95
+}

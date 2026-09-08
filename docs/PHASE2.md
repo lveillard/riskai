@@ -167,6 +167,14 @@ la aceptación ARM, trackpad y lápiz real sigue pendiente.
 
 ## Estado
 
+La corrección de identidad de selección de la fuente local `f05c586` cubre
+pérdida de foco, reutilización del pool, grupos y embarques pendientes en el
+controlador compartido. La ronda pasó 55/55 pruebas Unity (diez nuevas), tras
+un primer intento sin ejecución por tres CS1503 ya corregidos. Tres contextos
+independientes de claude-vei Opus5 y sus seguimientos no dejan P0/P1/P2;
+no participó Grok. Es evidencia de fuente y pruebas, sin nuevas mediciones
+de rendimiento ni prueba física ARM. [Alcance y cierre de exportaciones](audits/SELECTION-LIFETIME-v0.21.md).
+
 La base de comandos de producción, la propiedad explícita de recursos runtime
 y la sonda opt-in de reinicio están implementadas y cubiertas por las
 evidencias v0.19 documentadas en

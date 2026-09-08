@@ -414,6 +414,23 @@ originales se conservan, incluidos los resultados funcionales y su límite.
 La medición aislada anterior sigue atribuida a `624743c`, cuyo jugador está
 archivado. No certifica el coste del nuevo roster ni una tablet física.
 
+## Identidad de selección · fuente local `f05c586`
+
+La selección, los grupos terrestres/navales y los embarques pendientes
+descartan referencias de otra vida del pool durante pérdida de foco,
+conservando los actores válidos. La ronda Unity pasó **55/55 en 182,843 s**,
+con diez casos nuevos; el primer intento no ejecutó pruebas por tres CS1503
+en restricciones de colección, corregidos después. Tres contextos
+independientes de claude-vei Opus5 y sus seguimientos cerraron los P0/P1/P2;
+no intervino Grok. Las builds Windows/Web de `f05c586` terminaron correctamente.
+La [auditoría de identidad](audits/SELECTION-LIFETIME-v0.21.md) conserva
+evidencia publicada, hashes de 194 archivos y aceptación acotada de las
+exportaciones: retrato/puerto Windows; roster, tarjetas, recuperación de
+grupos y gestos CDP Web. El seguimiento con pulsaciones más largas confirmó
+los dos pasos no establecidos en la primera pasada, sin cambiar el runtime.
+Esta ronda no añade mediciones de rendimiento ni certificación ARM; la
+medición aislada de `624743c` conserva su alcance original.
+
 ## Límites restantes
 
 La separación visual arena/roca/verde no suaviza la geometría escalonada de
