@@ -5,6 +5,15 @@ namespace RiskAI
 {
     public sealed partial class BattleHud
     {
+        /// <summary>Rotate a logical-space symbol before applying the screen-density transform.</summary>
+        public static Matrix4x4 StrategicSymbolMatrix(Matrix4x4 previous,Vector2 point)
+        {
+            var pivot=new Vector3(point.x,point.y,0);
+            // GUIUtility.RotateAroundPivot left-multiplies a screen-space rotation:
+            // its unscaled pivot drifts when the HUD is scaled on high-DPI displays.
+            return previous*Matrix4x4.Translate(pivot)*Matrix4x4.Rotate(Quaternion.Euler(0,0,45))*Matrix4x4.Translate(-pivot);
+        }
+
         void DrawStrategicSymbols()
         {
             float titleLeft=UiViewport.SafeRect.xMin/Scale+12;
@@ -16,7 +25,7 @@ namespace RiskAI
                 var p=cam.WorldToScreenPoint(StrategicMapView.SurfaceAnchor(camp.SpawnPoint))/Scale;float y=height-p.y;
                 if(p.z<=0||y<TopPixels/Scale+4||y>bottom-12)continue;
                 var point=new Vector2(p.x,y);var previous=GUI.matrix;
-                GUIUtility.RotateAroundPivot(45,point);
+                GUI.matrix=StrategicSymbolMatrix(previous,point);
                 RtsSkin.Fill(new Rect(point.x-5,point.y-5,10,10),new Color(.09f,.075f,.035f));
                 RtsSkin.Fill(new Rect(point.x-3,point.y-3,6,6),camp.Selected?Color.white:RtsSkin.Gold);
                 GUI.matrix=previous;

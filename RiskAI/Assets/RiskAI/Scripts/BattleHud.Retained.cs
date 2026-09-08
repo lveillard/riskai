@@ -417,18 +417,22 @@ namespace RiskAI
 
         void BuildOrders(VisualElement root)
         {
-            var grid=new VisualElement { name="HUD direct actions" };RtsUiStyle.Row(grid,true);
-            grid.Add(ActionButton("Mover",RtsHudGlyph.Move,controller.ArmMove));
-            grid.Add(ActionButton("Atacar",RtsHudGlyph.Sword,controller.ArmAttack));
-            grid.Add(ActionButton("Patrullar",RtsHudGlyph.Patrol,controller.ArmPatrol));
-            grid.Add(ActionButton("Detener",RtsHudGlyph.Stop,controller.Stop));
-            grid.Add(ActionButton("Mantener",RtsHudGlyph.Shield,controller.Hold));
-            grid.Add(ActionButton("Centrar",RtsHudGlyph.Focus,controller.FocusSelection));
+            var grid=new VisualElement { name="HUD direct actions" };
+            var row=new VisualElement { name="HUD primary action row" };RtsUiStyle.Row(row);
+            row.style.flexShrink=0;grid.Add(row);
+            row.Add(ActionButton("Mover",RtsHudGlyph.Move,controller.ArmMove));
+            row.Add(ActionButton("Atacar",RtsHudGlyph.Sword,controller.ArmAttack));
+            row.Add(ActionButton("Patrullar",RtsHudGlyph.Patrol,controller.ArmPatrol));
+            row.Add(ActionButton("Detener",RtsHudGlyph.Stop,controller.Stop));
+            row.Add(ActionButton("Mantener",RtsHudGlyph.Shield,controller.Hold));
+            row.Add(ActionButton("Centrar",RtsHudGlyph.Focus,controller.FocusSelection));
             if(controller.Fleet.Count>0)
             {
-                grid.Add(ActionButton("Embarcar",RtsHudGlyph.Board,controller.BoardNearby));
-                grid.Add(ActionButton("Desembarcar",RtsHudGlyph.Unload,controller.UnloadFleet));
-                grid.Add(ActionButton("Puerto",RtsHudGlyph.City,controller.FocusHarbor));
+                row=new VisualElement { name="HUD naval action row" };RtsUiStyle.Row(row);
+                row.style.flexShrink=0;grid.Add(row);
+                row.Add(ActionButton("Embarcar",RtsHudGlyph.Board,controller.BoardNearby));
+                row.Add(ActionButton("Desembarcar",RtsHudGlyph.Unload,controller.UnloadFleet));
+                row.Add(ActionButton("Puerto",RtsHudGlyph.City,controller.FocusHarbor));
             }
             root.Add(grid);
         }

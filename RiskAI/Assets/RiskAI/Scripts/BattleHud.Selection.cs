@@ -33,8 +33,8 @@ namespace RiskAI
         static Button ActionButton(string title,RtsHudGlyph glyph,System.Action action)
         {
             var button=RtsUiStyle.Button("",action,"HUD action "+title);
-            button.tooltip=title;button.style.width=Length.Percent(15.5f);button.style.minWidth=0;
-            button.style.marginRight=2;button.style.marginBottom=5;
+            button.tooltip=title;button.style.flexBasis=0;button.style.flexGrow=1;button.style.minWidth=0;
+            button.style.marginLeft=0;button.style.marginTop=0;button.style.marginRight=2;button.style.marginBottom=5;
             button.style.paddingLeft=1;button.style.paddingRight=1;button.style.paddingTop=3;button.style.paddingBottom=3;
             button.style.height=48;button.style.minHeight=48;button.style.flexShrink=0;button.style.alignItems=Align.Center;
             var icon=new RtsHudIcon(glyph);icon.style.width=24;icon.style.height=24;button.Add(icon);

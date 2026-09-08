@@ -77,6 +77,12 @@ namespace RiskAI.Tests
             var actions=root.Q<VisualElement>("HUD direct actions");Assert.That(actions,Is.Not.Null);
             Assert.That(actions.Query<Button>().ToList().Count,Is.EqualTo(6));
             Assert.That(actions.Query<RtsHudIcon>().ToList().Count,Is.EqualTo(6));
+            var buttons=actions.Query<Button>().ToList();
+            foreach(var button in buttons)
+            {
+                Assert.That(button.worldBound.y,Is.EqualTo(buttons[0].worldBound.y).Within(1),"All six commands must stay on one row.");
+                Assert.That(button.worldBound.xMax,Is.LessThanOrEqualTo(actions.worldBound.xMax+1),"The final command must remain inside the action panel.");
+            }
             var move=root.Q<Button>("HUD action Mover");Assert.That(move.tooltip,Is.EqualTo("Mover"));
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=move;move.SendEvent(evt);}
             Assert.That(controller.MoveCursor,Is.True,"The direct icon must call the existing move action.");

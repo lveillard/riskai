@@ -227,7 +227,7 @@ namespace RiskAI
             var seal=new RtsHeraldicSeal((int)map,accent);seal.style.width=UiViewport.IsCompact?54:50;seal.style.height=UiViewport.IsCompact?66:58;seal.style.marginRight=12;
             var words=new VisualElement();words.style.minWidth=0;words.style.flexShrink=1;
             var titleLabel = RtsUiStyle.Title(title, null, 15);
-            var detail = RtsUiStyle.Label(MapLayout.ScenarioDetail(map), null, 13); detail.style.color = RtsUiStyle.Bronze; detail.style.whiteSpace = WhiteSpace.Normal;
+            var detail = RtsUiStyle.Label(MapLayout.ScenarioDetail(map) + " · máx. " + MapLayout.MaximumPlayersForScenario(map) + " jugadores", null, 13); detail.style.color = RtsUiStyle.Bronze; detail.style.whiteSpace = WhiteSpace.Normal;
             var body = RtsUiStyle.Label(description, null, 12); body.style.color = RtsUiStyle.Muted; body.style.whiteSpace = WhiteSpace.Normal;
             words.Add(titleLabel);words.Add(detail);words.Add(body);
             if(chosen){var selected=RtsUiStyle.Label("ELEGIDO",null,10);selected.style.color=RtsUiStyle.Gold;selected.style.marginTop=5;words.Add(selected);}
