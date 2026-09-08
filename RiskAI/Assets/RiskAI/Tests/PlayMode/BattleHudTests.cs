@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Linq;
 using RiskAI.Core;
-using RiskAI.Core;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -70,6 +69,72 @@ namespace RiskAI.Tests
             var labels=hud.GetComponent<UIDocument>().rootVisualElement.Query<Label>().ToList();
             Assert.That(labels.Any(label=>label.text=="VICTORIA"),Is.True,
                 "A modal already open as help must rebuild as the result sheet when the normal victory rule fires.");
+        }
+
+        [UnityTest]
+        public IEnumerator ArmyRosterShowsPortraitsAndLiveHealthAndSelectsOneUnit()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var home=battle.Towns.First(town=>town.State.Owner==0);
+            var troops=BattleTestScenario.MobileArmy(battle,0,UnitKind.Archer,2,home.ClaimPoint);
+            controller.SelectAll();battle.TogglePause();
+            yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            var cards=root.Query<Button>(className:"riskai-selection-card").ToList();
+            Assert.That(cards.Count,Is.EqualTo(2));
+            Assert.That(cards.All(card=>card.Q<Image>()?.image),Is.True,"Each selected soldier must have its own portrait.");
+            Assert.That(cards.All(card=>card.resolvedStyle.width>=44&&card.resolvedStyle.height>=44),Is.True);
+            var target=troops[1];var card=root.Q<Button>("HUD selected actor "+target.EntityId);
+            target.TakeDamage(50,1);
+            yield return new WaitForSecondsRealtime(.15f);
+            Assert.That(card.Q<VisualElement>("HUD selection health").style.width.value.value,
+                Is.EqualTo(target.Health/target.MaxHealth*100).Within(.01f));
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=card;card.SendEvent(evt);}
+            Assert.That(controller.Selection,Is.EquivalentTo(new[]{target}));
+            Assert.That(controller.Fleet,Is.Empty);
+            yield return null;
+            Assert.That(root.Q<Image>("HUD unit portrait"),Is.Not.Null,"Isolating a card restores full unit details.");
+        }
+
+        [UnityTest]
+        public IEnumerator MixedRosterKeepsSoldiersAndShipsAndSelectsTheShip()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var home=battle.Towns.First(town=>town.State.Owner==0);
+            BattleTestScenario.MobileArmy(battle,0,UnitKind.Archer,2,home.ClaimPoint);
+            var naval=NavalWorld.Current;
+            var ship=BattleTestScenario.Ship(naval,0,ShipKind.Transport,naval.Harbors.First().Berth);
+            controller.SelectAll();controller.SelectShip(ship,true);battle.TogglePause();
+            yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Query<Button>(className:"riskai-selection-card").ToList().Count,Is.EqualTo(3));
+            var card=root.Q<Button>("HUD selected actor "+ship.EntityId);
+            Assert.That(card,Is.Not.Null,"A fleet selection must not hide selected land troops or the ship card.");
+            Assert.That(card.Q<VisualElement>("HUD selection health").style.width.value.value,Is.EqualTo(100));
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=card;card.SendEvent(evt);}
+            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{ship}));
+            Assert.That(controller.Selection,Is.Empty);
+        }
+
+        [UnityTest]
+        public IEnumerator OldRosterCardCannotSelectANewLifetimeOfTheSameView()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var home=battle.Towns.First(town=>town.State.Owner==0);
+            var troops=BattleTestScenario.MobileArmy(battle,0,UnitKind.Archer,2,home.ClaimPoint);
+            controller.SelectAll();battle.TogglePause();
+            yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            var actor=troops[0];int oldId=actor.EntityId;
+            var oldCard=root.Q<Button>("HUD selected actor "+oldId);
+            // Controlled lifetime rollover through the same initializer as SoldierPool.Rent.
+            battle.UnregisterTarget(actor);actor.Initialize(battle,0,UnitKind.Archer);
+            Assert.That(actor.EntityId,Is.Not.EqualTo(oldId));
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=oldCard;oldCard.SendEvent(evt);}
+            Assert.That(controller.Selection.Count,Is.EqualTo(2),"A stale card must not isolate the reused view.");
+            yield return null;
+            Assert.That(root.Q<Button>("HUD selected actor "+oldId),Is.Null);
+            Assert.That(root.Q<Button>("HUD selected actor "+actor.EntityId),Is.Not.Null,"Actor identity must invalidate the retained roster.");
         }
 
         [UnityTearDown]

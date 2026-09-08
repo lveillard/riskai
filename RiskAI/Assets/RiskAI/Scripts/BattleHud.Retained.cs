@@ -100,9 +100,9 @@ namespace RiskAI
             unchecked
             {
                 int key = retainedTab;
-                key = key * 29 + (controller.InspectedTarget ? controller.InspectedTarget.GetInstanceID() : 0);
-                for (int i = 0; i < controller.Selection.Count; i++) key = key * 31 + controller.Selection[i].GetInstanceID();
-                for (int i = 0; i < controller.Fleet.Count; i++) key = key * 37 + controller.Fleet[i].GetInstanceID();
+                key = key * 29 + (controller.InspectedTarget ? controller.InspectedTarget.EntityId : 0);
+                for (int i = 0; i < controller.Selection.Count; i++) key = key * 31 + (controller.Selection[i] ? controller.Selection[i].EntityId : 0);
+                for (int i = 0; i < controller.Fleet.Count; i++) key = key * 37 + (controller.Fleet[i] ? controller.Fleet[i].EntityId : 0);
                 key = key * 41 + (controller.SelectedTown ? controller.SelectedTown.GetInstanceID() : 0);
                 key = key * 43 + (controller.SelectedHarbor ? controller.SelectedHarbor.GetInstanceID() : 0);
                 key = key * 47 + (controller.SelectedCamp ? controller.SelectedCamp.GetInstanceID() : 0);
@@ -249,11 +249,11 @@ namespace RiskAI
 
         void BuildSelectionWithPortrait(VisualElement root)
         {
-            Soldier unit = controller.Selection.Count == 1 ? controller.Selection[0] : controller.InspectedTarget as Soldier;
+            Soldier unit = controller.Selection.Count == 1 && controller.Fleet.Count == 0 ? controller.Selection[0] : controller.InspectedTarget as Soldier;
             if (!unit) { BuildSelection(root);return; }
             var row=new VisualElement();RtsUiStyle.Row(row);row.style.alignItems=Align.FlexStart;
             var frame=RtsUiStyle.Panel("HUD portrait frame");frame.style.paddingLeft=5;frame.style.paddingRight=5;frame.style.paddingTop=10;frame.style.paddingBottom=10;frame.style.marginRight=12;frame.style.flexShrink=0;
-            var portrait = new Image { name = "HUD unit portrait", image = Resources.Load<Texture2D>(PortraitResource(unit.Kind)), scaleMode = ScaleMode.ScaleToFit };
+            var portrait = new Image { name = "HUD unit portrait", image = CachedPortrait(PortraitResource(unit.Kind)), scaleMode = ScaleMode.ScaleToFit };
             portrait.style.width = UiViewport.IsCompact?64:96; portrait.style.height = UiViewport.IsCompact?76:112;
             frame.Add(portrait);row.Add(frame);
             var details=new VisualElement();details.style.flexGrow=1;details.style.minWidth=0;BuildSelection(details);row.Add(details);root.Add(row);
@@ -351,7 +351,9 @@ namespace RiskAI
             }
             if (controller.Fleet.Count > 0)
             {
-                AddTitle(root, controller.Fleet.Count == 1 ? controller.Fleet[0].DisplayName : "FLOTA · " + controller.Fleet.Count + " barcos");
+                int count = controller.Selection.Count + controller.Fleet.Count;
+                AddTitle(root, count == 1 ? controller.Fleet[0].DisplayName : count + " UNIDADES SELECCIONADAS");
+                BuildSelectionRoster(root);
                 if(!wideFooter)AddInfo(root, "Selecciona ÓRDENES para navegar, atacar, detener, embarcar o desembarcar."); return;
             }
             if (controller.InspectedTarget is Soldier inspected)
@@ -369,6 +371,7 @@ namespace RiskAI
                     var unit = controller.Selection[0]; var profile = BattleRules.Profile(unit.Kind);
                     LiveInfo(root,()=>SoldierStats(unit));
                 }
+                else BuildSelectionRoster(root);
                 if(!wideFooter)AddInfo(root, "Selecciona ÓRDENES para mover, atacar, patrullar, detener o mantener."); return;
             }
             AddTitle(root, StrategicMapView.Active ? "TU IMPERIO, DE UN VISTAZO" : "SELECCIONA TROPAS O UN EDIFICIO");
@@ -436,7 +439,7 @@ namespace RiskAI
             button.style.height=height;button.style.minHeight=height;button.style.maxHeight=height;button.style.marginBottom=5;button.style.marginRight=6;
             button.style.flexDirection=FlexDirection.Row;button.style.alignItems=Align.Center;
             button.style.paddingTop=3;button.style.paddingBottom=3;
-            var portrait = new Image { image = Resources.Load<Texture2D>(PortraitResource(kind)), scaleMode = ScaleMode.ScaleToFit };
+            var portrait = new Image { image = CachedPortrait(PortraitResource(kind)), scaleMode = ScaleMode.ScaleToFit };
             portrait.style.width = 36; portrait.style.height = 36; portrait.style.alignSelf = Align.Center;portrait.style.flexShrink=0;portrait.style.marginRight=6;
             var copy = RtsUiStyle.Label(BattleRules.Name(kind) + "\n" + BattleRules.Cost(kind) + " oro · " + BattleRules.Hotkey(kind), null, 12);
             copy.style.whiteSpace = WhiteSpace.Normal;copy.style.flexShrink=1;copy.style.minWidth=0;
@@ -497,7 +500,6 @@ namespace RiskAI
 
         sealed class QueueSlot
         {
-            static readonly Dictionary<string, Texture2D> portraitCache = new Dictionary<string, Texture2D>();
             readonly Settlement town; readonly Harbor harbor; readonly bool naval, showEmpty; readonly int index;
             readonly Button button; readonly Image portrait; readonly NavalQueueIcon navalIcon; readonly Label label; readonly VisualElement progress;
             public QueueSlot(Settlement town, Harbor harbor, bool naval, int index, bool showEmpty, Button button, Image portrait, NavalQueueIcon navalIcon, Label label, VisualElement progress)
@@ -537,13 +539,13 @@ namespace RiskAI
                 progress.style.width = Length.Percent(Mathf.Clamp01(amount) * 100);
             }
 
-            static string PortraitResource(UnitKind kind) => "Portraits/" + (kind == UnitKind.Guard ? "MountedKnight" : BattleRules.Model(kind));
+        }
 
-            static Texture2D CachedPortrait(string resource)
-            {
-                if (!portraitCache.TryGetValue(resource, out var texture)) { texture = Resources.Load<Texture2D>(resource); portraitCache.Add(resource, texture); }
-                return texture;
-            }
+        static readonly Dictionary<string, Texture2D> portraitCache = new Dictionary<string, Texture2D>();
+        static Texture2D CachedPortrait(string resource)
+        {
+            if (!portraitCache.TryGetValue(resource, out var texture)) { texture = Resources.Load<Texture2D>(resource); portraitCache.Add(resource, texture); }
+            return texture;
         }
 
         sealed class NavalQueueIcon : VisualElement
