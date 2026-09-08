@@ -1,5 +1,11 @@
 # Fase 2 · tablet, móvil y navegador
 
+Avance v0.22: guardianes navales, luz de entrenamiento, clasificación de
+playas compartida y animación montada mejorados. 31 casos Unity aprobados;
+la sonda aislada mantiene 900 unidades durante 30 s, con compilación externa.
+La comparación limpia de presupuestos, el combate con carga sostenida y
+los dispositivos ARM físicos siguen abiertos. [Evidencia v0.22](VALIDATION-v0.22.md).
+
 Base cerrada: v0.18, commit cd3ff21. Objetivo activo desde el 7 de septiembre
 de 2026. Primera plataforma de referencia: Chrome en Android; un dispositivo
 concreto todavía no ha sido confirmado.
@@ -218,6 +224,6 @@ La distribución compacta conserva las pestañas y comparte los controles y
 las reglas con escritorio. Adaptar el espacio no implica eliminar la
 identidad visual ni reducir la información disponible en pantallas amplias.
 
-La versión actual se genera en Builds/Windows-v0.21 y Builds/Web-v0.21. Las builds anteriores
+La versión actual se genera en Builds/Windows-v0.22 y Builds/Web-v0.22. Las builds anteriores
 se conservan como referencia local. No se implementan servidor, multijugador, niebla ni héroes en esta
 fase.

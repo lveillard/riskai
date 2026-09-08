@@ -1,0 +1,4180 @@
+{
+  "schemaVersion": 1,
+  "generatedUtc": "2026-09-08T16:07:57.952808+00:00",
+  "runtimeSourceCommit": "8de052e3577c30e186030d244a2d287894fe82f6",
+  "sourceHashScope": "Local Windows working-tree bytes of tracked Unity inputs, scripts and launcher, including local line endings. Four new Unity .meta files have whitespace-only normalization after runtime commit. Build verification predates this normalization.",
+  "unityVersion": "6000.3.23f1",
+  "unityTests": {
+    "distinctPassed": 31,
+    "attempts": [
+      {
+        "file": "tests-r1.xml",
+        "passed": 30,
+        "failed": 1
+      },
+      {
+        "file": "tests-r2.xml",
+        "passed": 1,
+        "failed": 0
+      }
+    ]
+  },
+  "pythonTests": {
+    "command": "python -m unittest discover -s scripts -p test_measure_navigation_ab.py",
+    "passed": 7
+  },
+  "reviews": {
+    "initialImplementers": "3 Astra low agents",
+    "crossReviews": 2,
+    "integrationReview": "root",
+    "knightImplementer": "Terra",
+    "solFallbackUsed": false
+  },
+  "nativePresentation": {
+    "renderPath": "RenderPipeline.StandardRequest, hidden Windows player",
+    "knightFrames": 72,
+    "movingFrames": 23,
+    "windupFrames": 16
+  },
+  "web": {
+    "europeResult": "web-europe.json",
+    "newWorldPortraitResult": "web-newworld-portrait.json",
+    "physicalArm": false,
+    "knownConsoleError": "favicon 404 only"
+  },
+  "navigation": {
+    "functional900Units30Seconds": true,
+    "functionalRunHadExternalContention": true,
+    "cleanBudgetComparisonAccepted": false,
+    "advancedMeasurementAccepted": false,
+    "advancedFixtureFailure": "no-player-zero-mobile-cohort after 900 simulated seconds; two attempts",
+    "defaultBudget": 500,
+    "records": "navigation-attempts.json"
+  },
+  "limits": [
+    "Imported coastline geometry remains angular.",
+    "No clean 500/1000/2000 comparison or accepted advanced-game 90 second measurement.",
+    "Native hidden scene captures do not validate physical input, visible-player FPS or sustained 800-unit combat.",
+    "Web portrait is desktop emulation, not physical ARM."
+  ],
+  "builds": {
+    "Windows-v0.22": [
+      {
+        "path": "Builds/Windows-v0.22/Cinzel-OFL.txt",
+        "bytes": 4392,
+        "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb"
+      },
+      {
+        "path": "Builds/Windows-v0.22/D3D12/D3D12Core.dll",
+        "bytes": 4725304,
+        "sha256": "625bd40005b1c3708695d5256ecf230d278e6b8edba5a88af70f3d91324f3052"
+      },
+      {
+        "path": "Builds/Windows-v0.22/KayKit-LICENSE.txt",
+        "bytes": 891,
+        "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+        "bytes": 7828912,
+        "sha256": "7ccc2fcff211b1be0f498bd537c6575e0a028bd6971cd1812d1884c9840d702d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/EmbedRuntime/MonoPosixHelper.dll",
+        "bytes": 611240,
+        "sha256": "4d882d75accec7054b72498afd7c627efca8824453253fa67e38dceaedaba5df"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/Browsers/Compat.browser",
+        "bytes": 1605,
+        "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/DefaultWsdlHelpGenerator.aspx",
+        "bytes": 60575,
+        "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/machine.config",
+        "bytes": 29066,
+        "sha256": "e91782a27fa39fc6c1d6ee8b08529f5d35052310d0006034b878eb04b8f2af30"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/settings.map",
+        "bytes": 2622,
+        "sha256": "49c6160f9d54af4270a3b4e997fc4a8301f79b9e2070118fa46ddbcbbc44f9a2"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/web.config",
+        "bytes": 11635,
+        "sha256": "cf2b54339e069b9e42f7d6795eecbf562c50c1011f4ca8f65f578fe52d97ff92"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/Browsers/Compat.browser",
+        "bytes": 1605,
+        "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/DefaultWsdlHelpGenerator.aspx",
+        "bytes": 60575,
+        "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/machine.config",
+        "bytes": 33598,
+        "sha256": "e60aec2c5115d65b3acb3c55ea21576dbd770f579166c017125571e46ae560ed"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/settings.map",
+        "bytes": 2622,
+        "sha256": "ce1db1ad8a9512073164e3eccdc193f7eda036e1a9733caec4635de21b2865c8"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/web.config",
+        "bytes": 18802,
+        "sha256": "e38bb8cc68fe5b4edecdfd288d094b9e8ced7629039b2a347682aba0d8bd7492"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/Browsers/Compat.browser",
+        "bytes": 1605,
+        "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/DefaultWsdlHelpGenerator.aspx",
+        "bytes": 60575,
+        "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/machine.config",
+        "bytes": 34056,
+        "sha256": "ee950004b576fb28dc85f4b0435ed04bf96612de2e8b53be84d07afe85a0de6c"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/settings.map",
+        "bytes": 2622,
+        "sha256": "ce1db1ad8a9512073164e3eccdc193f7eda036e1a9733caec4635de21b2865c8"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/web.config",
+        "bytes": 18811,
+        "sha256": "c4cbddd4fd9347b58cc5a72b36dc4ba1ad2bb699e65869d05cd3fb9865f0d824"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/browscap.ini",
+        "bytes": 311984,
+        "sha256": "4ddd50f31fb968f30bedefc253a46dc3f2890192d05cdaa9e0a64a056eee807e"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/config",
+        "bytes": 3815,
+        "sha256": "5776169973a26a387b8b3e5c0f2301a7ab9a6dd7c7d3efa22a96abc47fbf8662"
+      },
+      {
+        "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/mconfig/config.xml",
+        "bytes": 25817,
+        "sha256": "0c56e34c69124510fa8c19e7b4c2ca6c1c4ff460ae19f798dd0ca035809e396d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI \u2014 Dominios v0.22_BurstDebugInformation_DoNotShip/Data/Plugins/x86_64/lib_burst_generated.txt",
+        "bytes": 193489,
+        "sha256": "5ed09573d5536f1e98624dfadb6374a874ca6f6b1b26674610db8e44a7eaa150"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI.exe",
+        "bytes": 667136,
+        "sha256": "82efd5a8c297a5046f6bb72c240dab8972e64003851935eba0a46ad121ce0305"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/app.info",
+        "bytes": 32,
+        "sha256": "eec201eebeeedc7c533ac5a3bfc18358f6fdc5a3f964c54eb152b530dd1d0b0a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/boot.config",
+        "bytes": 156,
+        "sha256": "0303dc6ab87e57bd98f304f0c92affdfc12e506e2c64067ccb9b520eb11e67a3"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/globalgamemanagers",
+        "bytes": 240820,
+        "sha256": "26036f9ca6b4a9d9a57ec16491974e25506e7d7786923b56dba50455aa55c717"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/globalgamemanagers.assets",
+        "bytes": 1161896,
+        "sha256": "f6e63ed212cde3eeca14ec5ffd904fd516cb9efc9a72d51d46b4cf3e0d141fb5"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/globalgamemanagers.assets.resS",
+        "bytes": 6174944,
+        "sha256": "26b24bbd0bdb7017ecbac3b829c0ed7c4848bc343af5702e96ebdb75a7258b04"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/level0",
+        "bytes": 1152,
+        "sha256": "b2402ffea0719079aa86cf4ac99d1511ccb79566de196876e59ccd86a3830480"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/level1",
+        "bytes": 1152,
+        "sha256": "dff12e61009ffa2081b13b5999b771e7cc8ea9c390890c1de24e167d25828226"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Microsoft.CodeAnalysis.CSharp.dll",
+        "bytes": 6098320,
+        "sha256": "e822156145e1add437b1d893c0315257c12e3d5b1b89d83494db6d88d37fe20a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Microsoft.CodeAnalysis.dll",
+        "bytes": 2903440,
+        "sha256": "159f595e313f8cc09bac14588e2466c312f512a4778d9fa2352fcccf2a53aa3d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Mono.Security.dll",
+        "bytes": 241152,
+        "sha256": "82df31404def10ffd69c09e3a8c454e76552f3a37675d1b7b8c743cfd3d1af6f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/mscorlib.dll",
+        "bytes": 4632064,
+        "sha256": "194417662b72e9fdc29df44aa07fb693a9cf2194d84e327231f3eeff1104ae0f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/netstandard.dll",
+        "bytes": 90112,
+        "sha256": "6ae62e082dc494a2433984177f60ca4db5fae69b1f360a8b33754172b310b8c5"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Newtonsoft.Json.dll",
+        "bytes": 691712,
+        "sha256": "a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/RiskAI.Core.dll",
+        "bytes": 28160,
+        "sha256": "f9c0c82b717807eeb85e6b1a1a467d005df266026dbb2652af368151e586b80b"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/RiskAI.Runtime.dll",
+        "bytes": 474112,
+        "sha256": "0c417a12cde07c215c773f2cdbc3c7bc40a3913c230f52c88df938c67316b8c2"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Buffers.dll",
+        "bytes": 4608,
+        "sha256": "762f8fdbe975e05b76be5fe996c53ce7c75e4a2830f2f50b02a5948ef6ba0aeb"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Collections.Immutable.dll",
+        "bytes": 252680,
+        "sha256": "5b1b1c83ba3d135c2fdfe425842fbe9c7432878b7e468623acb554c69b4c130f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.ComponentModel.Composition.dll",
+        "bytes": 257024,
+        "sha256": "9373a420101d4c674b9f74bce93a45c58ddb3548c130d9b65ab87235d0a4ed30"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Configuration.dll",
+        "bytes": 124928,
+        "sha256": "d3acb14b8ebaf7482d2d3e26e8c04685299e2b471a513a30508bd0cab8336354"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Core.dll",
+        "bytes": 1113088,
+        "sha256": "ebf140bf5f8d49ccac20c14935625b0ae0a46c30aa4f90b2808f3b9678822470"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Data.DataSetExtensions.dll",
+        "bytes": 29696,
+        "sha256": "79a01061129709358567a9254684ba52ba66371e01e0354e7fa4852a9f62e59f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Data.dll",
+        "bytes": 2125312,
+        "sha256": "5d0807269bfcf112aa844951232ef105bbb642abb1e14c2e78dd70fb9245e98a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.dll",
+        "bytes": 2641920,
+        "sha256": "9e8a5190797e35428b1ae9bce6d47d39a1dbc3e974f14239e44678913dc6194a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Drawing.dll",
+        "bytes": 489984,
+        "sha256": "76dca8fbe098c285b03de79369f9f2aa141dec44de99ebcc0478c7e762024204"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.EnterpriseServices.dll",
+        "bytes": 44544,
+        "sha256": "d8a3d6c1929ec028793ff07df92781c03ebb38c63005d4c12c35e3116d04fcaf"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.IO.Compression.dll",
+        "bytes": 114688,
+        "sha256": "7370dc2d3a6f02dbda1a69ca596f2ae96fc464809b3bbca6071fc1fc1edfbb2d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.IO.Compression.FileSystem.dll",
+        "bytes": 18432,
+        "sha256": "40ef91246d44d6c4d8a1505e1210b0c54963a12938ba0458959bb064d62f36f4"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Memory.dll",
+        "bytes": 4608,
+        "sha256": "c4f030a2cba7da7cdcf493257c24560e203d355904aee490d645a935842f834a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Net.Http.dll",
+        "bytes": 122880,
+        "sha256": "c46d5b5dc68af8ce1b34e8ace4372b157e2e85ab63d6b5eea938ca71dc7fb064"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Numerics.dll",
+        "bytes": 119296,
+        "sha256": "74f6771aedd33262470e8e653fc0f4e04a659bcdadbeb44b2f8826fba7053f77"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Reflection.Metadata.dll",
+        "bytes": 487696,
+        "sha256": "55ef768ffa305de58e38e15420669258b16f420618eb1f702bddb30e5c797961"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Runtime.CompilerServices.Unsafe.dll",
+        "bytes": 22184,
+        "sha256": "bac58578ec05ecb8c234bf3402a0aa1491a5e437b03008b431e78d663ab52b78"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Runtime.dll",
+        "bytes": 12288,
+        "sha256": "e0a7334b7ba419aaab6bd3bb6992d693e689341a9178172c9bf99c2aa6a085bd"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Runtime.Serialization.dll",
+        "bytes": 934400,
+        "sha256": "2aa92fb930200ddb3c9c3ffaaff39bd6cdc6d689f19614f6c3b84a15060800f0"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Security.dll",
+        "bytes": 320000,
+        "sha256": "95a29120e164e5bdb7ff5dcb2cb4641e5ea0aca7c1ad0854b0e9b2b0ff5abe2d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.ServiceModel.Internals.dll",
+        "bytes": 215040,
+        "sha256": "6738a31088136d38a50354371feb83a4fd1558acca2a5f8b165c34a859e08c47"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Text.Encoding.CodePages.dll",
+        "bytes": 5120,
+        "sha256": "f58f99392c2dfc31d067e320ce7c009e276e6dd5ed7c615cc3895a0609931182"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Threading.Tasks.Extensions.dll",
+        "bytes": 5120,
+        "sha256": "96150abdca5df4446b376560e069d59b3550212deda8cbdd316272f6b834f597"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Transactions.dll",
+        "bytes": 35328,
+        "sha256": "cfac784408e3b7da6c6e94ec04c162c6d902372fab19353c02aeda3464ce185f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Xml.dll",
+        "bytes": 3160064,
+        "sha256": "f90799a0c38f3d45e390f9768ab467bf681a052e1b807f4c59fabef5f7edaffa"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Xml.Linq.dll",
+        "bytes": 136704,
+        "sha256": "ed219710472b837fddf45cc73c912e04b4d6b8ca833ea074ec1f73bc00157b05"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.AI.Navigation.dll",
+        "bytes": 22528,
+        "sha256": "dd4527109fd853932e7496233e3d00e8e69f1135cd6f8ecf807220249b0e3788"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Burst.dll",
+        "bytes": 296960,
+        "sha256": "8cdc85671a965a4a6284169188a0f236590ae0eae59b7db098d1516ba0fc85a6"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Burst.Unsafe.dll",
+        "bytes": 5632,
+        "sha256": "9d9c1ff52411decbee5d9f0d1cd61ebeaa222077aa77a52101ea3debafae98e2"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Collections.dll",
+        "bytes": 432128,
+        "sha256": "005d0ec9881271b75813300edce726ad1b8e9341a1075760a8fc8e39d760a4e3"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Collections.LowLevel.ILSupport.dll",
+        "bytes": 5120,
+        "sha256": "ff50383f807f9692e4913b97e47d86fefcb8faa33d6d48cd3e3fd6fc7ffb448d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.InputSystem.dll",
+        "bytes": 1074176,
+        "sha256": "7c5db2f547398f86085a074f26dd9f7d089b920a700e55c9f64346a7490630c0"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.InputSystem.ForUI.dll",
+        "bytes": 15360,
+        "sha256": "dbb6ff9dccc1ab6ca1bee8855817cfe176da0fd4f9e6a9e5ace8a1c6b0e0ede9"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.InternalAPIEngineBridge.004.dll",
+        "bytes": 4096,
+        "sha256": "a7f68282b6fedb371db82c093c4fe91c3fdb35fb0c5e1547757154c31fa57ce7"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Mathematics.dll",
+        "bytes": 737280,
+        "sha256": "2aa2aae6a3dc60fc99ee7e6c4b9b349371933d9407d4971a3e844ebd08b290b4"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Pipeline.dll",
+        "bytes": 284672,
+        "sha256": "c885537d5928228938b191521fcbc864d6dcc2b123f6a9309cc8d9daa2f47d27"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Pipeline.IlInterpreter.dll",
+        "bytes": 332800,
+        "sha256": "f45abf608343eeef78eecfeea0743c79e29c8c6c9b26e7e384061d3c5b6c02c3"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipeline.Universal.ShaderLibrary.dll",
+        "bytes": 7680,
+        "sha256": "8291572de1e7e79a5c7992def16288ce9d9ee8176da4c636c47cef553d153d10"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Core.Runtime.dll",
+        "bytes": 1131520,
+        "sha256": "fcedf10a4427c62a5d5f9fda85874e2fde377af90eb8a2f34eae99b97bfe5ff7"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Core.Runtime.Shared.dll",
+        "bytes": 4608,
+        "sha256": "a483e174d0089c146a45e465b69eeee7a835f15d525ec63eb7a3427056c39f9b"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Core.ShaderLibrary.dll",
+        "bytes": 3584,
+        "sha256": "24ab3cc009a7d077d7e1ab4b7ef9aecf90cbefd64a755bf4250bcefe1168e9e2"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.GPUDriven.Runtime.dll",
+        "bytes": 220160,
+        "sha256": "70a2f2211425ccf77a620538d7a744fff4142c326a48357f0930def29876768f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll",
+        "bytes": 3584,
+        "sha256": "a2f02ab3690be3c68175e01dff401055f18ab54010ff46ad39d3982a3d41d43e"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.2D.Runtime.dll",
+        "bytes": 216064,
+        "sha256": "ff3b6d7e47494ff8e2d2ba49b113240837631dc32a554e9cf198c5b63ab9dbe6"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Config.Runtime.dll",
+        "bytes": 4096,
+        "sha256": "91d31a3e073738d0911b104a633926c0a02eb6ff104aff0124f5c76947229fc3"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Runtime.dll",
+        "bytes": 698880,
+        "sha256": "3848d011fe963fdd1aae3af9b92be54f22ab0bea1cb179f3df7c7401c5b9c7fd"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Shaders.dll",
+        "bytes": 3584,
+        "sha256": "08fb33e4549c96ae157d9c3c884d5359568ea2e3cb6b408fe6cb19b35f79664e"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.TextMeshPro.dll",
+        "bytes": 435712,
+        "sha256": "2fb9d91b5f936d5926cae37e0a0094a83f9f3feb51ad2bc1a7e4a95fafd0f5c0"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.UnifiedRayTracing.Runtime.dll",
+        "bytes": 88576,
+        "sha256": "c0dd4c67da4cb18691011b7bc123ebbad2c26592924ab9361206a1578964b9cd"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AccessibilityModule.dll",
+        "bytes": 51120,
+        "sha256": "c8249b9ca23640f7959c529d61f2eed1c86b715d364ed17e494cfaa324001e4a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AdaptivePerformanceModule.dll",
+        "bytes": 125352,
+        "sha256": "385cc1158fb02325535a6df613811204afeb7e3f240737a1fc2add0bd976b49e"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AIModule.dll",
+        "bytes": 77224,
+        "sha256": "71f41d664d48128f5135884413f21ea9fa86b6ce9a4f053b5081bf286d7ccb99"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AMDModule.dll",
+        "bytes": 21928,
+        "sha256": "aa68b148f2e74c334ae8bd38ddeaff055730aeada6f809697521ebd8920ce988"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AndroidJNIModule.dll",
+        "bytes": 121776,
+        "sha256": "8e008a125f9cd1417f84780eeb7de840e0f2c749ef92a9d87910637f9b5f9b58"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AnimationModule.dll",
+        "bytes": 225200,
+        "sha256": "e2952b9c0d9405a52f9b0e5cc72fcc14b63f23a20562e354c42ce2697c74836b"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ARModule.dll",
+        "bytes": 25520,
+        "sha256": "b36cde8f19c92faef74723bc362e69de210181323bd55f1c4acefe47f2cda4a4"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AssetBundleModule.dll",
+        "bytes": 41896,
+        "sha256": "8d542e27040bdd47d416a5d9d388059642a18da0dfbf18eb350e17597ca21bad"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AudioModule.dll",
+        "bytes": 142760,
+        "sha256": "e340de4e194c183136a86f45fb17df334435775ed0680679b4c5d8370def04d9"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ClothModule.dll",
+        "bytes": 36272,
+        "sha256": "1b33dd16fe1022981108455221d5d608df9c42f9875a673c1edb39b0a232c3df"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ClusterInputModule.dll",
+        "bytes": 28080,
+        "sha256": "a7fba2eab6ee716d637ecb0f377cefb16979c7c1d26592d48eaa0665d3640fb0"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ClusterRendererModule.dll",
+        "bytes": 26536,
+        "sha256": "d9dbf5f9ab23959510d457a7a263dce628aa6f85490717e322bbed4dacd39c74"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ContentLoadModule.dll",
+        "bytes": 32680,
+        "sha256": "b7292cd077c601278bac76b65efe15df43efc52c13ed4913f8fd9dcaac908016"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.CoreModule.dll",
+        "bytes": 1985968,
+        "sha256": "6e113749845967506284bc65e85d28b527a4c4c99af73f0433af9b4ed5abfbc8"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.CrashReportingModule.dll",
+        "bytes": 26544,
+        "sha256": "8b3141bdc0c6bbef38dc74fa71021c9e54af76b2b1a37b63e49b39cfc9271bd6"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.DirectorModule.dll",
+        "bytes": 41896,
+        "sha256": "ad25a8f620e97ec1962a5cb2d5369485108673922b47b2cadf0b4239c94ce647"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.dll",
+        "bytes": 197544,
+        "sha256": "8f5656476f57134b88f230538fff8abb66eac6bf3ac087daa86d64d88d9d39eb"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.DSPGraphModule.dll",
+        "bytes": 31664,
+        "sha256": "688f7cbed6213df3bd5ce6a5c6dac92b0f3d0530841b88e82c69bce5a2c1827e"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.GameCenterModule.dll",
+        "bytes": 45992,
+        "sha256": "5bb7513b5b76e44f118323fdd27302df224db134bd9c6818f008a3dd6bf95534"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.GIModule.dll",
+        "bytes": 24488,
+        "sha256": "53d4bd69745ee83d5c4f0760f92b9efdb099489fdfc64528af9a1c95b0adfeb8"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.GraphicsStateCollectionSerializerModule.dll",
+        "bytes": 14256,
+        "sha256": "86ea17b6e8515403416ddfa2a08f4658b27d956cc28585f488a85d3e8939a358"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.GridModule.dll",
+        "bytes": 30632,
+        "sha256": "aac2d49a3b8f3d853cd318f0d67cbd8cffbe0f5f8f9ce288aaec85f25f46c5db"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.HierarchyCoreModule.dll",
+        "bytes": 109488,
+        "sha256": "bf800cc45f5c0354f9ad2ea22e0c1463bbfcc111c18247fea92c24baf4f45938"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.HierarchyModule.dll",
+        "bytes": 102312,
+        "sha256": "6a5d008a26eaed4289ffee5deaf6628cd708211674b9fbd2c243c465b022f748"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.HotReloadModule.dll",
+        "bytes": 24488,
+        "sha256": "a58a336e1f65a20fdaa79ef547388367540203ab07d9211d0f322f9fbb202c66"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.IdentifiersModule.dll",
+        "bytes": 16808,
+        "sha256": "9e32c80cb919fa932d33200fc1b840f028d9badd6bafdf540305ee51354d98d1"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ImageConversionModule.dll",
+        "bytes": 31152,
+        "sha256": "48deef77c0900f884d3a62530914188d6916519d415cd5196505a0dd2ba11b2d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.IMGUIModule.dll",
+        "bytes": 214448,
+        "sha256": "59079367d288ee1afc510ae174e6bd3373d44dffdcf39cd6a3d81f4ae72cc6a8"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.InputForUIModule.dll",
+        "bytes": 57768,
+        "sha256": "6b80e1f8e768de2769fe874111c1cb63ab21b8eb662fc0f208f9f45e7aa47625"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.InputLegacyModule.dll",
+        "bytes": 45488,
+        "sha256": "3fe0a3b1c2dcbf8430d053be5523c9db768601624069c593d981fe5d89262c41"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.InputModule.dll",
+        "bytes": 28584,
+        "sha256": "c7555f9e890b65d52806d11be2a18e79ad9e20dd3d9b7950c344b0e98269146b"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.InsightsModule.dll",
+        "bytes": 14256,
+        "sha256": "7823f02c0fd49945db4611a061f76f952f3bea5f1888e8a3ee32432a42564367"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.JSONSerializeModule.dll",
+        "bytes": 27056,
+        "sha256": "7d596dab3f41e563d3cadacff3f9259b662d764a1efcbfeae7ce680f7bb503bd"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.LocalizationModule.dll",
+        "bytes": 27056,
+        "sha256": "d37f7fc4d38c8ea2462194e69b4ea33f88be334a1e7ed222f200f2e707564bad"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.MarshallingModule.dll",
+        "bytes": 83888,
+        "sha256": "2424626f708e2abf2cc58f1fe5e5093805aace99cd4e9f90b52c84ddaec993b3"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.MultiplayerModule.dll",
+        "bytes": 17832,
+        "sha256": "b0e7ca214c64d51d2fd6703aebdad36b2426e6f090ef93038b3bcf08ac7ecd58"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.NVIDIAModule.dll",
+        "bytes": 40880,
+        "sha256": "9401ce6e59d01797ddffc4db283dbd7cc8ed5e9d9516cf536e0ad9a4650d3bed"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ParticleSystemModule.dll",
+        "bytes": 171944,
+        "sha256": "ca47a718f791e2104377e7cfe218210314a957dc1bcfb70102417adb73b4a430"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.PerformanceReportingModule.dll",
+        "bytes": 25008,
+        "sha256": "35e66ed8f5d0fbd8b25479ae75625b4a17cd41519dbf605970db154757c254e2"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.Physics2DModule.dll",
+        "bytes": 586664,
+        "sha256": "a13a44e7344ba20d6fcd5abde493d2a159dcd4010be1a016f6a0eb877f007766"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.PhysicsBackendPhysXModule.dll",
+        "bytes": 14256,
+        "sha256": "33ae23327a5d59ee0743ab0c5df0b0264ccf4f292d2f0807bc8cef40efb5a813"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.PhysicsModule.dll",
+        "bytes": 183720,
+        "sha256": "6112016fb7df440b4af9ff6d1e05cdb1d7f5dae652cf19e3cbdc6a2ca4699d0a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.PropertiesModule.dll",
+        "bytes": 134064,
+        "sha256": "8063760df50b181d9f9c90db6fad2a34c06ef5fb02f26467384b3aec5d14dc76"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.RenderAs2DModule.dll",
+        "bytes": 25520,
+        "sha256": "52c9a1536d88fedc62df201840d435a745c16b6448b86f6e22f91902e4d92c8b"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll",
+        "bytes": 24488,
+        "sha256": "f59d4c5e3c08db5f532117e76b16f5d5c4d5219ba584ee94312bb7d54c399311"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ScreenCaptureModule.dll",
+        "bytes": 26544,
+        "sha256": "f04cdf78234bf6387aabad5aacb327542f5a8bdcca533eff7401c6eee3206e36"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ShaderRuntimeModule.dll",
+        "bytes": 25512,
+        "sha256": "1396cb6600b39b593d0a58221c978d513dd289e1dff71a2eb2c6b2b60d1356e1"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ShaderVariantAnalyticsModule.dll",
+        "bytes": 24488,
+        "sha256": "7a26b6fcc298b6d2251e551b7bc6fc4910cf029c9a0dc0c6cb412b722a7fcf5e"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SharedInternalsModule.dll",
+        "bytes": 38320,
+        "sha256": "8db34acfc413aeb640d9a618cc65964e3c6be6c2dbe3f5f9eb3fa3156fbf34f3"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SpriteMaskModule.dll",
+        "bytes": 28584,
+        "sha256": "c77d26f5ae1ee1cfd733d51fa9b3e44687f47ab49cb8a1e5f951fb326cfe498d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SpriteShapeModule.dll",
+        "bytes": 32688,
+        "sha256": "ad172378591dee76cc2d08d5a004a92ac4ce469fa1cc3a962854e29f04448cca"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.StreamingModule.dll",
+        "bytes": 26024,
+        "sha256": "56877ff28757655ffefa1daf4a4255b668616277c3c84df8f51f0daeecbf4b92"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SubstanceModule.dll",
+        "bytes": 29104,
+        "sha256": "aeddbe082d614d20f56d26a0cb415118c17e76763094cae3ed85567fd0f517ba"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SubsystemsModule.dll",
+        "bytes": 41896,
+        "sha256": "1372e9608f65909baf934b33fb04a8eb55bb386ed9d88e56840fffe9bc7d8b19"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TerrainModule.dll",
+        "bytes": 134056,
+        "sha256": "407e8d6c30c7fefbcc7d888e0086f5ef8743531bfcbbc04bb11762b12558a759"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TerrainPhysicsModule.dll",
+        "bytes": 25520,
+        "sha256": "e8c19bd79f9d840b6ae34ad78adac43581c03dcb9cc375bfdbc682e8a349f4b2"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TextCoreFontEngineModule.dll",
+        "bytes": 81832,
+        "sha256": "1e9ec852583e53600d166d6688c62aa0e29d8ec26ceabfd9aab5319fd098203a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TextCoreTextEngineModule.dll",
+        "bytes": 334760,
+        "sha256": "4345d56bea3d26f7aba127754d95d6a1a9b754491ff5cd01d707e90219eede5b"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TextRenderingModule.dll",
+        "bytes": 39336,
+        "sha256": "41d9b82516a161f4e33b33ec54ccbf4ff520a546dfc0278d9d89342cf48e187f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TilemapModule.dll",
+        "bytes": 58800,
+        "sha256": "742b401342db4188a1d438cf42cff503d927f87182615e52d463ce13bb8d5aef"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TLSModule.dll",
+        "bytes": 32176,
+        "sha256": "e824d1cf3bdf44ae67b05d795e3a64ca351b4e71f283e37ff55c8312f59692b7"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UI.dll",
+        "bytes": 260096,
+        "sha256": "5927e5ad33724b76625611d80822665bce209474e2bafe204ab3f1d12610707d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UIElementsModule.dll",
+        "bytes": 2452392,
+        "sha256": "f791cdee383a20ef998be28112bb4c0600528945289f9138ff4a6d5352946e16"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UIModule.dll",
+        "bytes": 50088,
+        "sha256": "8490946ba29a169115bf4d3e549d42a0a5e9b1c4fb49b28d0dea97b19c21af99"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UmbraModule.dll",
+        "bytes": 24496,
+        "sha256": "1fe54406a037f8f8bf0e4b648137b5d796e92716ee16d9120ded96b023e47f64"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityAnalyticsCommonModule.dll",
+        "bytes": 35752,
+        "sha256": "903a192bf5d0cb1b7c99826ccfd67401161949ecc0eb6c07ee350216526e53c3"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityAnalyticsModule.dll",
+        "bytes": 60848,
+        "sha256": "37c8de9c5b3b5014c491eb70db235bed73cb717c25d2c0a4438f3c9faddf009e"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityConnectModule.dll",
+        "bytes": 27560,
+        "sha256": "d795553835cb0a6bbd2d13ba36799323bfbfbdf6dbe3ed709f490b80d8e8af5a"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityConsentModule.dll",
+        "bytes": 16304,
+        "sha256": "8252eeef40749b9b8d1015569a3dd0148ee5b8c2445821781476165a82713af3"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityCurlModule.dll",
+        "bytes": 26032,
+        "sha256": "4119615947f88d586ca33cc9b217fe2f81ada01e49214d2b9b73b186cd233e41"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestAssetBundleModule.dll",
+        "bytes": 28592,
+        "sha256": "f1498767358fa09c93691d7907f67300ee3bee396413b978e948c83b1e2cf48c"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestAudioModule.dll",
+        "bytes": 28592,
+        "sha256": "fd8d815a45915f17ec9f63fda402769746ea28251a408a5f439c62f4a8af2729"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestModule.dll",
+        "bytes": 70064,
+        "sha256": "9d777e08bfe9b9c12ff69c5bba91a0ec67b6712c03aa62896eb892fa8fbb4009"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestTextureModule.dll",
+        "bytes": 27560,
+        "sha256": "c983a36f4ecf311a8ac2f067a943612bdfdb04dd1d4b0902fe23b8c22b800caa"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestWWWModule.dll",
+        "bytes": 36776,
+        "sha256": "71a0dfa0aecd73f7935d58f90b24ea56adc8c7866495ef3528e1a128f1f36a14"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VectorGraphicsModule.dll",
+        "bytes": 252840,
+        "sha256": "8d8aabf185a7238ac0e205c708305a9d1da2ba6160d497aaac70f439ee1671f6"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VehiclesModule.dll",
+        "bytes": 31656,
+        "sha256": "2946f811e0b6e3ee9748d39b916e78f418a70c4157177efa946b8aeca90ca86d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VFXModule.dll",
+        "bytes": 78248,
+        "sha256": "5c62f2e10b2559ae6333487dfb94c82c2e128a074f4777d9e69a74c8e522ae6e"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VideoModule.dll",
+        "bytes": 49072,
+        "sha256": "33e1f716564b7fc9169c7ad9b4b433b2e7ab3eaf760e83cc658c49bf216dbf51"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VirtualTexturingModule.dll",
+        "bytes": 42920,
+        "sha256": "8a0e54d097692eb82c8863b1d3f2319e1794e43f57b9e4d77a0ea728711173f8"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VRModule.dll",
+        "bytes": 31664,
+        "sha256": "881678fd43267960701bffe14b698fc40fbab28247b675c2e18c5578dcd6c0d2"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.WindModule.dll",
+        "bytes": 26536,
+        "sha256": "3db21bbc42641b0dbfe8cc802045c623bb45ec725e84734114330ac59889c18f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.XRModule.dll",
+        "bytes": 88496,
+        "sha256": "b3f56678282a17a731c9328f1c32d1203f4388fba7188060d9f5cb9b44c198d7"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Plugins/x86_64/lib_burst_generated.dll",
+        "bytes": 446464,
+        "sha256": "5ed114d3f821394d958a921385f1414da3dd9cdf35967ec89bf087cb998b593d"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Resources/unity default resources",
+        "bytes": 5883716,
+        "sha256": "32b58bdb9cf090212b46a8ca7436dcdae89e4ef43e9d55a835233c21d1347734"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/Resources/unity_builtin_extra",
+        "bytes": 397816,
+        "sha256": "03fb33a3885536096b224a3d90fd62b58a735526626cec97e17da416e4f789fe"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/resources.assets",
+        "bytes": 24663640,
+        "sha256": "540a80fff3b6531fbb3390a094af0dba8a2380a7ac798ebf1ad76ad41e0023be"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/resources.assets.resS",
+        "bytes": 70420816,
+        "sha256": "6b3ec910da3369fa347f1ddcbd4a3047b4f7aed465f7fec835e8fee10110ccaf"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/RuntimeInitializeOnLoads.json",
+        "bytes": 4891,
+        "sha256": "37e40f23ab96a9a58c58454f2041e5476407a60aa31816b5c6688b59fd6e8754"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/ScriptingAssemblies.json",
+        "bytes": 4352,
+        "sha256": "90fb6f762a9af3aca504708bcdfbacaddf824f5a855fb9397e11af521f5036f0"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/sharedassets0.assets",
+        "bytes": 7920,
+        "sha256": "bf2864743787655d877f2194da5bd37b4bb2f0e2ac477407360f6f65c6de9977"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/sharedassets0.assets.resS",
+        "bytes": 524288,
+        "sha256": "393efe6399536384aa91bdfc4e64f244b4d3e1fbb6a4ff145c483ffee64ccb36"
+      },
+      {
+        "path": "Builds/Windows-v0.22/RiskAI_Data/sharedassets1.assets",
+        "bytes": 361,
+        "sha256": "dba2d5b3714a0f88ce8d066507f0ddaebfdaa3948ce06b39c59700b56be78d83"
+      },
+      {
+        "path": "Builds/Windows-v0.22/THIRD_PARTY_NOTICES.md",
+        "bytes": 3396,
+        "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f"
+      },
+      {
+        "path": "Builds/Windows-v0.22/UnityCrashHandler64.exe",
+        "bytes": 1669544,
+        "sha256": "4e65cef1be7996ccecec341c11a2f1319c1349b30288bf01455a2494451ddb69"
+      },
+      {
+        "path": "Builds/Windows-v0.22/UnityPlayer.dll",
+        "bytes": 36730288,
+        "sha256": "6aaaa964ebb34fb3d72f14288729e64002e3b917062e313a3452f73a2a9c4cba"
+      }
+    ],
+    "Web-v0.22": [
+      {
+        "path": "Builds/Web-v0.22/Build/Web-v0.22.data.unityweb",
+        "bytes": 45182610,
+        "sha256": "c1a3ed9e26986caa499f29e6bdca2a0ecc178a14b9df1ecde9677dbf18117922"
+      },
+      {
+        "path": "Builds/Web-v0.22/Build/Web-v0.22.framework.js.unityweb",
+        "bytes": 88888,
+        "sha256": "f0c25c68f82c0297e5e8adc4e677c9e7e8f4d896b5cb3b1cdb4b652fa6e3c74f"
+      },
+      {
+        "path": "Builds/Web-v0.22/Build/Web-v0.22.loader.js",
+        "bytes": 47867,
+        "sha256": "a0128a3e91ebc0599384ccd3598c8caadea027687f5625b9d1fcc5acdcf64272"
+      },
+      {
+        "path": "Builds/Web-v0.22/Build/Web-v0.22.wasm.unityweb",
+        "bytes": 12135254,
+        "sha256": "b122537aebcac29379662e15aa560681afd45e6df43cfea4035f8988ae38652c"
+      },
+      {
+        "path": "Builds/Web-v0.22/Cinzel-OFL.txt",
+        "bytes": 4392,
+        "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb"
+      },
+      {
+        "path": "Builds/Web-v0.22/index.html",
+        "bytes": 4938,
+        "sha256": "f4e13c216ab5031e5944b0e2e95889190dd6aaa4d9e69d408a19c741c23e4ed0"
+      },
+      {
+        "path": "Builds/Web-v0.22/KayKit-LICENSE.txt",
+        "bytes": 891,
+        "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629"
+      },
+      {
+        "path": "Builds/Web-v0.22/riskai-pen.js",
+        "bytes": 11720,
+        "sha256": "de87827367c3455505446bcc5f60d8d4b5cc6fe61862a76d463748cea9244e60"
+      },
+      {
+        "path": "Builds/Web-v0.22/THIRD_PARTY_NOTICES.md",
+        "bytes": 3396,
+        "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "path": "Play-RiskAI.cmd",
+      "bytes": 357,
+      "sha256": "969e67a55e2283e42e7a7362394e08dda208d92cdf698b2c450a1e87b6fb4c86"
+    },
+    {
+      "path": "RiskAI/Assets/InputSystem_Actions.inputactions",
+      "bytes": 41005,
+      "sha256": "1c6cbb519d65ecfe19a29231735b7f54741a20ac1a8ad4f46a18e1bfb28a3c39"
+    },
+    {
+      "path": "RiskAI/Assets/InputSystem_Actions.inputactions.meta",
+      "bytes": 376,
+      "sha256": "3b4e424a80f5b4fa76b6abd774884a24285eaa61f22ff9bb20e5ad505fd8b569"
+    },
+    {
+      "path": "RiskAI/Assets/Plugins.meta",
+      "bytes": 169,
+      "sha256": "49bec05e04c5d4e5ba94d48c3fd2e2ab57ed47d60067788495f60331554ba204"
+    },
+    {
+      "path": "RiskAI/Assets/Plugins/WebGL.meta",
+      "bytes": 169,
+      "sha256": "9a0b0a0f5376f321c9fe0c84a121ae3a349dc71ad0f4af8a3c3dc20d31478ab6"
+    },
+    {
+      "path": "RiskAI/Assets/Plugins/WebGL/RiskAIPlatform.jslib",
+      "bytes": 710,
+      "sha256": "a75c23f46e4f65ba5d3c1239b5b13227cec8e41104c4143fca6cd54947eb076e"
+    },
+    {
+      "path": "RiskAI/Assets/Plugins/WebGL/RiskAIPlatform.jslib.meta",
+      "bytes": 59,
+      "sha256": "7f26208ed0e5c1cbba166d8dfd3988f0c0c61dc0b5007fb51215e7062b973aa2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI.meta",
+      "bytes": 172,
+      "sha256": "2c3af6a04928e0ff23e284aa2641b31db28b43d97aabf7bd5b12d3aaa07904fa"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art.meta",
+      "bytes": 172,
+      "sha256": "cf5e1f6f9af16e1f99ff5f1bcf74126fb280ae4e57e8e60b7819cf088dde4152"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/Atmosphere.shader",
+      "bytes": 768,
+      "sha256": "0bfb59e369dc4f0abab9ec80b99d545cae6982cf7d21566c3a71005b582adc02"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/Atmosphere.shader.meta",
+      "bytes": 204,
+      "sha256": "2da1264133710099f908e0a3aab490e7e00bea821984eeabdbdb2b2f07a7c839"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/BiomeFoliage.shader",
+      "bytes": 2446,
+      "sha256": "901d4b078b6139fe6a969f608a6e968df86ccc01aca125432f657ae69fd6a040"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/BiomeFoliage.shader.meta",
+      "bytes": 204,
+      "sha256": "70e7e399376f8c564915664c752f97607ef785044e14397992b8faad5903eee2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/Cascade.shader",
+      "bytes": 1433,
+      "sha256": "eacc930ed4bd377689d2ec1e83764c885ab7beadace0898b9bf54a65ebb196cc"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/Cascade.shader.meta",
+      "bytes": 204,
+      "sha256": "84d739c6555c4d12cc62735c281f834f3890ace9bcd56897558d07b92c4028bd"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/CoastSurface.hlsl",
+      "bytes": 622,
+      "sha256": "29d04ed16380006f7a1c0e9d576311f0390095c5749316dd6d467c631fd3b834"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/CoastSurface.hlsl.meta",
+      "bytes": 158,
+      "sha256": "8c02a2532b416bc62f7f96aca2f8d5b6c2747ad5e712f58c02d0ad4ae963dc5a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/FirFoliage.shader",
+      "bytes": 2440,
+      "sha256": "47d976e7766f978250ea917fa99b3053e44f2e22a7af325f584ec6f0800e81d3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/FirFoliage.shader.meta",
+      "bytes": 204,
+      "sha256": "78f2131b70d48f2458d3478196e1dba95bd9fb531ad7db377b6fadb5719c9610"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/GroundShade.shader",
+      "bytes": 803,
+      "sha256": "7f2fb012a6d997ca4494e17db5015636916fa77c84c0f83b4cf71e69efce55dd"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/GroundShade.shader.meta",
+      "bytes": 204,
+      "sha256": "db7822817c57565e58a3b1bf00a8a06ece793c48ed4406c3e414e8b483379e07"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/ImportedGround.shader",
+      "bytes": 4533,
+      "sha256": "b1176d25dd70054b3ba7c237d6afa7a9a5a2b91307fc368bf6f70eb8a2eb6166"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/ImportedGround.shader.meta",
+      "bytes": 62,
+      "sha256": "ada4004db1a773a43d4a14b7ba1c6474c36c61491783b5d636f982d1b4f4d089"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/ImportedWater.shader",
+      "bytes": 2072,
+      "sha256": "2a304a2bc2c2975708f7b83ac974eb1d2b2d1db8421ce59f61d8afaaf4343a4a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/ImportedWater.shader.meta",
+      "bytes": 62,
+      "sha256": "5443b230c6fff3c39fda64215be5761c04c46ea30a36d3bf338eece5eef36fab"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit.meta",
+      "bytes": 172,
+      "sha256": "c76b4ff718bf231d2f59ea44754095cf934635b99d9e91732a72a528e7c41599"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Knight.fbx",
+      "bytes": 20659324,
+      "sha256": "b25e35cc7eaaa3c7c103f10a4f41fde1cbd81936fede9aa9ae4efbd29d40ba1b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Knight.fbx.meta",
+      "bytes": 2891,
+      "sha256": "452104493c2b9fd981de76204b15467dab33d53713860847b75926ded77385d2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Knight.mat",
+      "bytes": 3911,
+      "sha256": "dfaadfc8da20610a1f746b274f46f778967370815f861b193f1a976e75f6e61f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Knight.mat.meta",
+      "bytes": 188,
+      "sha256": "ee322d0b3e039431cf987df8cbb049807e2aeba764d2367599250e0a9af91387"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/LICENSE.txt",
+      "bytes": 891,
+      "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/LICENSE.txt.meta",
+      "bytes": 158,
+      "sha256": "da3b56590c1de2ffef1c731c4a28d15f58c535d56d1b5c27ed4dbac44809ab20"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Mage.fbx",
+      "bytes": 19502156,
+      "sha256": "93b401d56e2547316f8841a4ac0086011c64d79185c9cb7623567c2dbf125c7d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Mage.fbx.meta",
+      "bytes": 2891,
+      "sha256": "68847b8441cfb83d9b5c26d22718e258abf3ac72ca867333dec3fd5556889fc2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Mage.mat",
+      "bytes": 3908,
+      "sha256": "3f11f4df88e04e1f255756ffd32ac8af9f6ef0fab4c070e90774cdd4e1abd1e0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Mage.mat.meta",
+      "bytes": 188,
+      "sha256": "51d7ba8a1f33c4082426394d9c3690b08beb0847ff3c67a6507733548f3167e3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Medic.mat",
+      "bytes": 3910,
+      "sha256": "0db688540adcae52f127fab5346239063cfa8a084a1878a1feea4194be175336"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Medic.mat.meta",
+      "bytes": 188,
+      "sha256": "b7b94ff11e0c750051a871b430092fb8a36df9a592803514945570a705176a05"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/PROVENANCE.md",
+      "bytes": 734,
+      "sha256": "b16c9e7a6e14226f07a2798420db940fc3c37df79be8b19a271be83ceabc6a78"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/PROVENANCE.md.meta",
+      "bytes": 158,
+      "sha256": "dd501deba28d639908f43474bb534abd770cab0ec6cc76bbb9eb1d1caaed4dcb"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/RogueHooded.fbx",
+      "bytes": 19516300,
+      "sha256": "4a773f074695c6c089cc6f059eed85da080928a4a4137af4e38b177139d4cc27"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/RogueHooded.fbx.meta",
+      "bytes": 2891,
+      "sha256": "f56f8a5ddc16062ba8aefb43cd211daa0591d5fd4fd31343a05828e3efcb123c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/RogueHooded.mat",
+      "bytes": 3915,
+      "sha256": "7e5326122885bc356c5a118943c9eefad770a0c5f4f72b601000ba0dd60f7ba3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/RogueHooded.mat.meta",
+      "bytes": 188,
+      "sha256": "4cb4890958d340859b88df5624f4900c6ec1a495d3cdb42fbf4ca3c32e1aba7b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/RoyalGuard.mat",
+      "bytes": 3924,
+      "sha256": "56329de601eda10bbc1083593a42441ab0c0e4693a0c3eece052b91846a999b5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/RoyalGuard.mat.meta",
+      "bytes": 188,
+      "sha256": "32ef834dc86757cb7d30d58e7f5a2920b8bb41f95476aa99d017e89d72893fe3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/crossbow_2handed.fbx",
+      "bytes": 47068,
+      "sha256": "3e3c0e13bf40cc348f14830252cd2afebcc6e87b730704af9bbb1d775ad64126"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/crossbow_2handed.fbx.meta",
+      "bytes": 2891,
+      "sha256": "24b089a31013b0a0798194eba4d914e5bdaffac2e48a07cb398a0d9c51ace082"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/knight_texture.png",
+      "bytes": 14172,
+      "sha256": "5d250ccc5da020e6126bfa3839f83bd9a465a951ed223e4d13c08b1925e154d4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/knight_texture.png.meta",
+      "bytes": 2652,
+      "sha256": "50bc61859a7c61bcacd6f1db284dbf4a5e8f17ac730956b473b573f109424f59"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/mage_texture.png",
+      "bytes": 16311,
+      "sha256": "ea49f094b960402635fe51db9f1864960c97271b17f2e3554e5aca1b2bbba144"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/mage_texture.png.meta",
+      "bytes": 2652,
+      "sha256": "5887d519f6932371cac515e6ffce6bf84e4404a391155a1ef381868e319415fe"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/rogue_texture.png",
+      "bytes": 16670,
+      "sha256": "a4032e877c3b91939f5cdbb630349c1998fdbc3211bbd587c111125500fe4cc5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/rogue_texture.png.meta",
+      "bytes": 2652,
+      "sha256": "54d678be2647bc79ff4fb9f0516bbdd1e881d79c5bdabc8c0bdfe632b60152e6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/shield_badge.fbx",
+      "bytes": 27596,
+      "sha256": "8ae485d8451075d19ce504489328e7f3e9dea5cddbddee916508321853795604"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/shield_badge.fbx.meta",
+      "bytes": 2891,
+      "sha256": "a063a1459635482be6f7615f8045d46b2abeed568facc46d47632588e62fca10"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/sword_1handed.fbx",
+      "bytes": 28428,
+      "sha256": "311c0a8fbc7ebf038e3a20c0a2cdc3ed35c3e2b8a1bf50417ba49019b79ab02f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/sword_1handed.fbx.meta",
+      "bytes": 2891,
+      "sha256": "08ad839174d76aa673c058d148321c9fb48fea9ccd1e5404895170b90c7ecc39"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/MapSurface.hlsl",
+      "bytes": 1728,
+      "sha256": "8e081d96638c30cf04217d9712b433fcdd1feeba885e1c65e549438ea233f8e0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/MapSurface.hlsl.meta",
+      "bytes": 161,
+      "sha256": "c837103cfdf04ed692910b22b56623c9465481b8bdd632a22bf6e6aa2d96d4b9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/Meadow.shader",
+      "bytes": 7525,
+      "sha256": "425732c12928665a8f01ab94555126317e15d2aede43dfd2829821a477aa40f9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/Meadow.shader.meta",
+      "bytes": 204,
+      "sha256": "0f4d25506df460a95a4f60fa8a1d5c9ee8df9b39e104513093ba39623cf355cb"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/NaturalNoise.hlsl",
+      "bytes": 470,
+      "sha256": "d85ad92dda4edf5b3a49ca062ba25615d493c22dd59bc7b770dfce4cf8bce13f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/NaturalNoise.hlsl.meta",
+      "bytes": 62,
+      "sha256": "2827337d87e51808c9a49b7e3cd2a25c2e6013822453f4f8dabffbb27fa7b784"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/PaintedSurface.shader",
+      "bytes": 3075,
+      "sha256": "44701e1a60c91abd6f7724037638c9a6e3903ca5032b6022ac80c860253841c4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/PaintedSurface.shader.meta",
+      "bytes": 204,
+      "sha256": "1a993661270222aea889eb8598ef2e76f8c8b39c91413591db75bb0541140a6b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/RiverWater.shader",
+      "bytes": 934,
+      "sha256": "26a22a60653d41d1910dddce5d10dc0f6ee6393a80abb1eb07848b2f1e9fd0a2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/RiverWater.shader.meta",
+      "bytes": 204,
+      "sha256": "eaadb35d4b738304c87594a87ac798b426c1a9c1f04d502b5cd30e631d247170"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/TerritoryOverlay.shader",
+      "bytes": 906,
+      "sha256": "9ca79c31088712cf76154064ab26090a11d289a0c545e0b381e9e095021cdbf1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/TerritoryOverlay.shader.meta",
+      "bytes": 62,
+      "sha256": "3aa405e2c3e2bbcee94d1e16768c2696fc2409b851767c9c36790fd7bba8d248"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/TrainingGlow.shader",
+      "bytes": 1227,
+      "sha256": "9fb29e7b779c7db0dcc0fb48beb0d370604e8eb288393778d0ffeabf19f9904a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/TrainingGlow.shader.meta",
+      "bytes": 201,
+      "sha256": "da1777b5d6421c696d1d2bb2956c715eac246572ef36b668658d80967f7bd27d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/UI.meta",
+      "bytes": 169,
+      "sha256": "ca40e4296178d03fc3b40923b205b6d33587f98600af83321d735aea06873a8d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/UI/Cinzel-OFL.txt",
+      "bytes": 4392,
+      "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/UI/Cinzel-OFL.txt.meta",
+      "bytes": 155,
+      "sha256": "9353bd9ccf0356024f16e7fbf9790bc4575a5fdd6da72025b9246486c54a73f5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/UI/WarTableFrame-v20.prompt.txt",
+      "bytes": 1356,
+      "sha256": "9bf97636f3cd6faa3e4d19a5c551dad6bf43f60fd5da762188ac539d4e52d3e6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/UI/WarTableFrame-v20.prompt.txt.meta",
+      "bytes": 155,
+      "sha256": "fb92f2a947ab15c83572d1ae686ef3a59be3f465d83bce01e85e0b0f96e892a6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/UnitTeam.shader",
+      "bytes": 5664,
+      "sha256": "d9d84b3e3c1718f695a50aeeb6e19818edeffff66415aa338c73abe362a132cc"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/UnitTeam.shader.meta",
+      "bytes": 204,
+      "sha256": "15baa6ebeab128d9acb7c5ea42897b113449f30dac995484a6899d0db6149a0a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/WaterSurface.hlsl",
+      "bytes": 3772,
+      "sha256": "0aca6c6ed9097b9b6e2fc43bc87c85ade5fbd6db9042d05a73e439aefb33ac19"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/WaterSurface.hlsl.meta",
+      "bytes": 158,
+      "sha256": "86ef5d40f43a5f4c63976cd9662dc697152ff2dee420e294565943591d2ddb8f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor.meta",
+      "bytes": 172,
+      "sha256": "76d3430e401e77bcaa563f9c014fb757425433cfd3e39de170179e9714c789b9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskAI.Editor.asmdef",
+      "bytes": 301,
+      "sha256": "f7025441c3f6eb4f1c6599555dcfeab21c75cf9e7a562da03c48d085bb765456"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskAI.Editor.asmdef.meta",
+      "bytes": 60,
+      "sha256": "fe68cf319db4c6833d225a857e0de68a02136d1b4c6eb7bdd536c1a82beb0a0f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskArtSetup.cs",
+      "bytes": 6623,
+      "sha256": "5fd8ac8daf2decf61ca9268b95213d3c420a028949837acd1761d7078f70c77c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskArtSetup.cs.meta",
+      "bytes": 59,
+      "sha256": "77e8341bb8a9ef35d732c37ca1071667a80cda0a2ad5bfff4dfa46775d69d47c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskProjectSetup.cs",
+      "bytes": 8185,
+      "sha256": "6a6f526bc6f5813b5435666c3d105dc22db2d21f94eeee649499190758d3103d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskProjectSetup.cs.meta",
+      "bytes": 59,
+      "sha256": "adc64162c7e3a615aee2f3205261caef4dbaa78b9a5589866ed77d2bd7bd21ba"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskVisualReview.cs",
+      "bytes": 3208,
+      "sha256": "619c230e0228a9af13c5987936cf767268788209d394c16d69f4fefd0a9449e7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskVisualReview.cs.meta",
+      "bytes": 59,
+      "sha256": "f5c7779abf5365b3460887b3595965a02da04cb72e59ac90734ee0b17cb3c506"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskWorldArtSetup.cs",
+      "bytes": 2876,
+      "sha256": "835f061f3d22da1e160796614fc560c69a5d842ed85a3847b670c7da013974d9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskWorldArtSetup.cs.meta",
+      "bytes": 59,
+      "sha256": "1e92a663b8406b5b5af2bf362666df710b9243be1edfebc0d91b655a292cec6e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskWorldPreview.cs",
+      "bytes": 4891,
+      "sha256": "b408bf8c50e9d9ac647920616ea7acc79439a042479d59045c270dd37faa41bd"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Editor/RiskWorldPreview.cs.meta",
+      "bytes": 59,
+      "sha256": "1abbde9d07d56abda85be2a17bb7fa2c13d2e124a2cb6c796c7e860f8f9deae3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources.meta",
+      "bytes": 172,
+      "sha256": "4776a7147a59cd31aed5bbb823be197d4d6d6120d80f10e094d4fcaa47feb9e6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Atmosphere.mat",
+      "bytes": 755,
+      "sha256": "8bb33de4074bd3c273272fb2324470182aec9511349c0c2e7e2e536448098319"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Atmosphere.mat.meta",
+      "bytes": 188,
+      "sha256": "6d84e40cdeb15c3b4b9e7e128343a9073583ee2fa5578d07d770f527c0b710df"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/BiomeFoliage.mat",
+      "bytes": 915,
+      "sha256": "0c099faa2bcc926319aae28ef17f5fc1a311bd303364b734738d2f18a56f20c8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/BiomeFoliage.mat.meta",
+      "bytes": 188,
+      "sha256": "c90207966ca6e64168aaabc33976874a5f32d21ad6775bbe06cb8dc58eebdca7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Cascade.mat",
+      "bytes": 752,
+      "sha256": "04eeb60d60d23c21d0cbe9e867b8bf8416e55a4551a7e2c75b4d4ef248daac3c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Cascade.mat.meta",
+      "bytes": 188,
+      "sha256": "03f423cff6760fef14dfaa13aeb161b4503fa79f04e4a4bf83305b390c94b762"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/FirFoliage.mat",
+      "bytes": 913,
+      "sha256": "4a2ad8a9f24560ad00d5f43bda13066f76508e757686c3685f552c820e747a22"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/FirFoliage.mat.meta",
+      "bytes": 188,
+      "sha256": "b4ae8535e93ecc1bbd729d428fbacf7b47b4853966e354aaaba4f2639d1634a1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/GroundShade.mat",
+      "bytes": 774,
+      "sha256": "2549c6b5066ea0a6eaadcc5a30da48e78d8db10fb8c9402d6897da478ffcee3c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/GroundShade.mat.meta",
+      "bytes": 188,
+      "sha256": "eb7bd5119b0f92f6537e05e4aac996e4c7c100f0cacf85bde3a5b3b771a73293"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/ImportedGround.mat",
+      "bytes": 1422,
+      "sha256": "b5b0461e5518f8ff74d1fc57cef4a287b40e62f97afd2538d6c72cf7af004c36"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/ImportedGround.mat.meta",
+      "bytes": 62,
+      "sha256": "c8afba0418c29de4f5171af7690d617099922cea7a29816d437bb55d6098362e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/ImportedWater.mat",
+      "bytes": 787,
+      "sha256": "85b3fb5e15a04cda9e3a35d2e6c2cd04460b5821453b6daff9983ffddaa02999"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/ImportedWater.mat.meta",
+      "bytes": 62,
+      "sha256": "cb3f8dc6f72c1b8f3d5fb4827dfc98e3dc741f6a8414dc57d9909ce3abd931c6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Maps.meta",
+      "bytes": 177,
+      "sha256": "204dd98cc81020c23633526574f566aaed2d5335474271746a7666542139e9bc"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Maps/Europe.json",
+      "bytes": 3162191,
+      "sha256": "20114317b6f15a929f10040fdc1806876af65059394abfb723cd268fe8dd1df6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Maps/Europe.json.meta",
+      "bytes": 159,
+      "sha256": "c6fc49a6daf2ca6b2f8b6029f9a5610e2b1230351c0098886e008d108b29dd1b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Maps/NewWorld.json",
+      "bytes": 6335094,
+      "sha256": "45a55b2e9bbf1ced413cc6c675309bb0bda81861a8c203fc8b3a2caf3405b75a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Maps/NewWorld.json.meta",
+      "bytes": 159,
+      "sha256": "035a4463aad3b73ffc1bf7a8f0c47ff65b5c82bac53caa17a03e0059a30af7ab"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Maps/SourceGeometry.json",
+      "bytes": 4575,
+      "sha256": "913abf5f8fe0f8080f9d28e419d0b96acb2eab6abbe9e16b0373071dc3c859fe"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Maps/SourceGeometry.json.meta",
+      "bytes": 159,
+      "sha256": "1e9d5cfbebda8351ba463daebdfabab20194abad286f3cf9d413a0884cebcf59"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Meadow.mat",
+      "bytes": 1371,
+      "sha256": "f09cd0a47f3953ae9bb6c1c706c9b04bf5fccd4ca651808828d3798236d18ab9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Meadow.mat.meta",
+      "bytes": 188,
+      "sha256": "2a45f454c258152b3ab144287b6116cf2ae1033c1aa32fda731547f55854a569"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted.meta",
+      "bytes": 172,
+      "sha256": "39af67afe047e8993952e19dc50bdde5db413db0ab347efc5ad2dff9849ae9af"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/ArchitectureAtlas.png",
+      "bytes": 2671925,
+      "sha256": "29e08c7898fe2fc2629079a77fb79a80b35642637eebfa84d9be07c88d6f52e8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/ArchitectureAtlas.png.meta",
+      "bytes": 3007,
+      "sha256": "6f20a97666fe7421563a7d21f6ba11092f136025c8f6e25f84d854aa31e1c701"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/BiomeAtlas-v06.png",
+      "bytes": 3495225,
+      "sha256": "f9ae5bbcab767a6bdcd2eaee5660a3b1e8890379ef26a073153b525bb2a0ee10"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/BiomeAtlas-v06.png.meta",
+      "bytes": 3007,
+      "sha256": "194ec2555b09b66db7171c74720a2dcb6d93cc79c0cda29c3102bf4d27fb03a5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/CliffAtlas-v07.png",
+      "bytes": 3422299,
+      "sha256": "bc1a06b831b6525907b53aa5a409b5efb1bf8f77ec951bf6c52708e5e87ba6ca"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/CliffAtlas-v07.png.meta",
+      "bytes": 3007,
+      "sha256": "b0ecf17855f26b9dd9c956f2e3038285c2f0c334db503bbd6bd09348b3bf8bf9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/FirBough-v07.png",
+      "bytes": 2357501,
+      "sha256": "441551be4dc6830b189ae674d0a7c1b1855be7e98cb14bda5f883f5166a8a665"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/FirBough-v07.png.meta",
+      "bytes": 2652,
+      "sha256": "46c26840677e86e7999265600618b6e99420f7ccf8d614824738a740376f100f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/FirBough-v07b.png",
+      "bytes": 1391844,
+      "sha256": "f8e928bdfecfd82ad14efcb1313c225e607d8d6dded3d069cfdafb36ecc66d92"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/FirBough-v07b.png.meta",
+      "bytes": 3007,
+      "sha256": "5be53959a5bfe0a49bed1eeddcf0d9679079a18e46a97e38b9583de12b260cd6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/FoliageAtlas-v08.png",
+      "bytes": 2018616,
+      "sha256": "f7d5e09d4a5baae4e1cde26608785ee4ab9abead2a374b663ae67a60a5f1830c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/FoliageAtlas-v08.png.meta",
+      "bytes": 3007,
+      "sha256": "0447ed13f4db6d56ca6a3c7781363d20dd7776fbc5e11863a38dca0d94c8ed75"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/GroundAtlas.png",
+      "bytes": 3233689,
+      "sha256": "32dd31e33bb0c7b1e7c4c661845947ee9e361e586941fb9691b77c7eebbacc15"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/GroundAtlas.png.meta",
+      "bytes": 3007,
+      "sha256": "9aa3ab43c92d7daf166c5142b97405970c3ad460ef32d1859f40c47a33b25c50"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/StrategicAtlas.png",
+      "bytes": 3308678,
+      "sha256": "6e6ffe5dba1d51e636b56e7f1e73cad1197c4513c4e9b9974a5a41891cb4d1f2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Painted/StrategicAtlas.png.meta",
+      "bytes": 3007,
+      "sha256": "e0a22761a2e976ee9c15fbffaa7b50f7254b4c38ade27ca6de3e96d7f353e156"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/PaintedSurface.mat",
+      "bytes": 1026,
+      "sha256": "45de2b52656e315b27ef354f90c685f45d26a1c5661be257223b4b8a6e036035"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/PaintedSurface.mat.meta",
+      "bytes": 188,
+      "sha256": "eea2733eae25e940dea5b203ff70cd34118976d5d041decd6081c030b430197b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits.meta",
+      "bytes": 172,
+      "sha256": "b06e255b0a7d6b2a0948bc32eee50551696e94a919c5338c6b58ffe149dbfb76"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/Knight.png",
+      "bytes": 24922,
+      "sha256": "c044e458035b3f1f5283dd137ad00261b917265edb214d6b2c64580300f2406c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/Knight.png.meta",
+      "bytes": 2652,
+      "sha256": "f29c8ebd135eb7f577e45b0582fc7abe93c79e11f8123e88e10e523a8fbb2c1a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/Mage.png",
+      "bytes": 20215,
+      "sha256": "dc22a8f4fb9997b0d0f002530ba410070b4cf745e2f930b1be4db48625ead359"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/Mage.png.meta",
+      "bytes": 2652,
+      "sha256": "e05602d3a36b6e786a4263b9e287079f6ae40a95e8f83de7837a45446a6d7a8b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/Medic.png",
+      "bytes": 20705,
+      "sha256": "32f32a2a8f25a2543f6dfb01d82f6871caaf313342654a258fa3390e8a0ab1e0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/Medic.png.meta",
+      "bytes": 2652,
+      "sha256": "3a28aff8ab1209a9928a658d778d8ece52dcb247b2307e29a5ca26ebe9128bf6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/Mortar.png",
+      "bytes": 7377,
+      "sha256": "6dda64601a65fcce4a90738d7038567895ce5158c8c313844849b961217c4bb2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/Mortar.png.meta",
+      "bytes": 2652,
+      "sha256": "8c26c5f02d594b380355a3e473f825053c0484a41be19c4c9e26219ef0016fe1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/MountedKnight.png",
+      "bytes": 11607,
+      "sha256": "2474f4dce5667f954e06ffa2ae1a023033d7eadbd22214d45eea4beb21a6c55b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/MountedKnight.png.meta",
+      "bytes": 2762,
+      "sha256": "aafeb2a37b1c1c642c170339d5ef724b31accfba046d7a962180d31838fc93ea"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/RogueHooded.png",
+      "bytes": 16001,
+      "sha256": "8204c81089789671e1ff4fe843e5062fd6eeed1f04ca5d8df5157e7563d802bd"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/RogueHooded.png.meta",
+      "bytes": 2652,
+      "sha256": "c991b590b5c06c4b1f8ee465d42e9844e4573d4909ec66c74dae35c6df956f50"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/RoyalGuard.png",
+      "bytes": 25074,
+      "sha256": "f6177588c3c3e6165e9f176234b0621873aa398a1adb09da9d4d30068d306ab4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Portraits/RoyalGuard.png.meta",
+      "bytes": 2652,
+      "sha256": "b1d5ef86eae9a1ca2a8c0778dda643232a382ab81ffb5f240f563b8533e000ec"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/RiskAILit.mat",
+      "bytes": 3802,
+      "sha256": "4bc4152b953bbff73db642744a4c1c6b81524afa64ca608a5b133052d3266e0d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/RiskAILit.mat.meta",
+      "bytes": 188,
+      "sha256": "7513e23c207a9a6a33ecdc0e32010f3997746016e84594cec98d2fe9bbd818fc"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/RiskAIRing.mat",
+      "bytes": 2529,
+      "sha256": "6f12f5cab59acb31523f63beb7322e43ce24fac67782043f892d24b8d7d91317"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/RiskAIRing.mat.meta",
+      "bytes": 188,
+      "sha256": "dbb86bf7645ddd81ca5ffc53a23c0a13c3f439d6b6ae7453630c69ced66ccb9b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/RiverWater.mat",
+      "bytes": 755,
+      "sha256": "7eede8f63ba2dbe98934c3562c8519708d717bccb080240a077bdda9f6969eb8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/RiverWater.mat.meta",
+      "bytes": 188,
+      "sha256": "1096889290729e14dd3a9be72b4887a84d2ad7c29e7b8c57554741cf336ef8ff"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/StrategicTerritory.mat",
+      "bytes": 989,
+      "sha256": "e6c529c7beabf37aa867ae18e2ffee526f41ad896e2b9fa3c3f08405872737d8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/StrategicTerritory.mat.meta",
+      "bytes": 185,
+      "sha256": "f6653c0fff9b2ec42ef0185f35bf400b09be967900a1ddfcc427ceb646fc2067"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/TerritoryOverlay.mat",
+      "bytes": 848,
+      "sha256": "3687c49520bf61d57ab2f3cdc4df8dfd34e959e63cd9dd7af0eedb0f1d2cf0ff"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/TerritoryOverlay.mat.meta",
+      "bytes": 193,
+      "sha256": "2af49d5e1ff90c0bf1d9e6a31c15ed2eb1ba6eae96a241e7c08d1131d4f96e00"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/TrainingGlow.mat",
+      "bytes": 568,
+      "sha256": "b77e5de7b286c9529b276ea071bb6c904610320b22cd4eeeb9931baf6425cd69"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/TrainingGlow.mat.meta",
+      "bytes": 185,
+      "sha256": "690f0095fe3ed4bdeeb2f3c6b0ed3861e6760ee8d732712229f5854f014150f4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UI.meta",
+      "bytes": 169,
+      "sha256": "f43ecdf561e2179e88b7a0c86e8561922ca6c4d298ba11ddd2233a9ddecfef30"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UI/CinzelDecorative-Regular.ttf",
+      "bytes": 60408,
+      "sha256": "5b862be329103ad287a10f0a53e27a40e8cc519999253f1a0223e2dc330b10b8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UI/CinzelDecorative-Regular.ttf.meta",
+      "bytes": 478,
+      "sha256": "c9928a5837852d47f38767fa0fabe7b1410ac03900aa092edd3ae1845a132f68"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UI/RiskAIChrome.uss",
+      "bytes": 1056,
+      "sha256": "eebb992579f4f4475cb2bbb26cf5e8caee163db2551035512cee2334549eb159"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UI/RiskAIChrome.uss.meta",
+      "bytes": 333,
+      "sha256": "e7911bad035e1d3ce27b7e1c7cf2bc1f172e365695c56f4da00be0cf1bf5f95f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UI/RiskAITheme.tss",
+      "bytes": 913,
+      "sha256": "ccbbb1db6504a356c6d13f1ca9683f154e1841288cf060cd6fd02fd0f5c24794"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UI/RiskAITheme.tss.meta",
+      "bytes": 333,
+      "sha256": "5b511f8afc934e0b8b9693c2c08c1635ba28ba25d59cca7b11dce964de61c54f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UI/WarTableFrame-v20.png",
+      "bytes": 2595230,
+      "sha256": "a623313abc080a31ccb745a995599c2764eb623a4623855f9437942dbef0f039"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UI/WarTableFrame-v20.png.meta",
+      "bytes": 3000,
+      "sha256": "6faa4820f2141159db4d1d3ad6cb61060ced3762f0c26b9feb40ce309df10899"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UnitTeam.mat",
+      "bytes": 1066,
+      "sha256": "b4cdb8903c0a7b6597dd7c6012c5737b1fd017ff6fb81552c7a8a92467688497"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/UnitTeam.mat.meta",
+      "bytes": 188,
+      "sha256": "5d2af564cb99fa490a8d49b8aa405e466d9541144c7fe63d2994b2c3275112c7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units.meta",
+      "bytes": 172,
+      "sha256": "9223dd670feea739dd93c2e9b6fa203009dcdb8682e5137dd824f381f6c27ac0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/Knight.prefab",
+      "bytes": 8877,
+      "sha256": "f3e05f2f0f17d564e73c1b3d1b9c9f058cb5e4eed52e1b4a6314d2ae6085dba3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/Knight.prefab.meta",
+      "bytes": 154,
+      "sha256": "df35c153de9d109a274c93d2c89b14db2c24cad8e02f57856eadc77f84882729"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/Mage.prefab",
+      "bytes": 7785,
+      "sha256": "69351dea2307b02639ea33ccfdff8b927a981d936412f2e6956166c7dd57b2e0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/Mage.prefab.meta",
+      "bytes": 154,
+      "sha256": "e86193d800e7346d5a359d87bb0d940e954d6ebce1edc7a5d51128422e4474ba"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/Medic.prefab",
+      "bytes": 7790,
+      "sha256": "47c19f87d19e4bdc38d3d75897103b9d28ee70d2107796dd4c71beb64581b6b2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/Medic.prefab.meta",
+      "bytes": 154,
+      "sha256": "fcb896669d060fa2a1b58d931763ec0eb0682db235697ed2d745c6fb407b2e24"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/RogueHooded.prefab",
+      "bytes": 7977,
+      "sha256": "39ffa5d3cd7234292e0afd1bc57a1b8eb9281404414a381e5b07805121bdcf50"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/RogueHooded.prefab.meta",
+      "bytes": 154,
+      "sha256": "33eb768f69089516d52abf977173c3567878dec017a9b1289783a9f2cadc52f0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/RoyalGuard.prefab",
+      "bytes": 9053,
+      "sha256": "1e369c5bb4f4f70a5f7a9caa3fa949d386b3bf9a8fcee015925d34b1d84d22ca"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Resources/Units/RoyalGuard.prefab.meta",
+      "bytes": 154,
+      "sha256": "965fd526dfebd1cbb16fad67d6db216eef08e7d8545dfb3eacf2bae991486421"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scenes.meta",
+      "bytes": 172,
+      "sha256": "8f8c08289f450c3431969e76527404014a7fabbc6c3353a6683a676390445b52"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scenes/FrontEnd.unity",
+      "bytes": 4831,
+      "sha256": "b2de5079bcb867c34d9f1c679cc4aaae539bf63401204d159b3c2530fc60659f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scenes/FrontEnd.unity.meta",
+      "bytes": 152,
+      "sha256": "f7b5315dbbb17f74e41f8ba0e50a832a8ef0f3e25274325184bdbb7724de28f7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scenes/LasMarcas.unity",
+      "bytes": 4827,
+      "sha256": "be8a7d6b2cb0fc0d096d136e1c14709a3ea3706780678a01d44eac199afad8c6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scenes/LasMarcas.unity.meta",
+      "bytes": 155,
+      "sha256": "e2a5f153fca71275d78573f7a293560688d810590cf4d83c33469f9fb605f96e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts.meta",
+      "bytes": 172,
+      "sha256": "7af1c4d6adf0cbf718badbcdb934dd983a502f5946bf60cfef216f7c85ba0e59"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleCommands.cs",
+      "bytes": 13348,
+      "sha256": "c4ad863e65020cf5a8b3e422192da9f0aa8f42713c119b9caf12f40e4bf00b88"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleCommands.cs.meta",
+      "bytes": 251,
+      "sha256": "0132930b15c5155e8ecfc57c203c9c5274c7260ddc0d3b21cc82adbbf57c1aba"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleHud.Retained.cs",
+      "bytes": 44435,
+      "sha256": "76346323dda0cf13cf24b7be2023cd88b1458796a98744e1beea4698b2c0ed52"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleHud.Retained.cs.meta",
+      "bytes": 61,
+      "sha256": "5087dd3096f96de7d854407a4423fc48db445357287021cb5b9d4e4ed68b71b0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleHud.Selection.cs",
+      "bytes": 5202,
+      "sha256": "56b791c8249bb9b2a01aa30059427cd94aa7473fba963b39137daf9a9219cb6f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleHud.Selection.cs.meta",
+      "bytes": 62,
+      "sha256": "046bb17705059299a2a7c4942292eada443daf6047f07d6c9ac922f596ad2f74"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleHud.Strategy.cs",
+      "bytes": 3122,
+      "sha256": "cc1cc1d62a6efdd0850c5a5941678a91b9546f222054f64befbbe18688654b0f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleHud.Strategy.cs.meta",
+      "bytes": 59,
+      "sha256": "a077fb78f60958dfe3258f45c1d67f107335de7aea4708a5f4bf6ea9974b5240"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleHud.cs",
+      "bytes": 15589,
+      "sha256": "dbcf250dcfd128012810fb738f9223432154721b850c72c102797b6fa69073f3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleHud.cs.meta",
+      "bytes": 59,
+      "sha256": "5d5f14c87cce430625cef0dd1e3d2b2b1666638dd9b905dceec9097d430d6098"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleMenu.cs",
+      "bytes": 373,
+      "sha256": "c0515cb2c6487a01a8d518f91d5d767efcc70ff907621b850fd8c9952ff5c1ca"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleMenu.cs.meta",
+      "bytes": 62,
+      "sha256": "9c36efd1e4b3c8a47bd4751fc100ea3f9251071565818b69d4ca8c6d5389f474"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleSession.cs",
+      "bytes": 14457,
+      "sha256": "13005f9e10f9066cab518476c96e99a77403cdb67898e46b198410bb9acfbdee"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleSession.cs.meta",
+      "bytes": 59,
+      "sha256": "254e8f2ee8a2e19fea835c2852ab1e96dea8e0d22201e9a13c9ab72ba0657703"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleWorld.cs",
+      "bytes": 6389,
+      "sha256": "eb64a46d57c1c614d2d3df06e262c1d1255372301653de7740e6801c36c50f86"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleWorld.cs.meta",
+      "bytes": 251,
+      "sha256": "985e1c450a3ed90dbc7ff53161f13273e1e5f18a76ae868c68359d7215855c9f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BiomeVegetation.cs",
+      "bytes": 6185,
+      "sha256": "4668879d3a9ff82497b5fc7748afcc0bf56cbbe20ce9b56a180eef4f53029ebb"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BiomeVegetation.cs.meta",
+      "bytes": 59,
+      "sha256": "0b6de2ba75a399bdad14b8aa8575dfd9c8d9ef3764d99f18499371219cc4c463"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BuildingSelection.cs",
+      "bytes": 2897,
+      "sha256": "b3f60d374aa299e4249ca3ddc53dd2cd89fe24281781d30cdc729a18352b1b7a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BuildingSelection.cs.meta",
+      "bytes": 62,
+      "sha256": "bb7eca0e6d16b0fae999c0cc88abbdcedefde4b65e3bed515e05ba52b443d8d5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BuildingTrainingView.cs",
+      "bytes": 9776,
+      "sha256": "e1c59f362c150f45ab9dd9bd03f5ef52b71ac8f73a09ea8c1c319763dfcb9c6f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BuildingTrainingView.cs.meta",
+      "bytes": 240,
+      "sha256": "21ff5442b8b59f4adc31a5bdf4f4da377f2e5c087de61112abf6c135cc4d264b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CanopyOcclusion.cs",
+      "bytes": 4611,
+      "sha256": "0f4f291f6037bf3b6a9909de647a594d2cb8b5e7d77ba4c3740f90d47f6ab31a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CanopyOcclusion.cs.meta",
+      "bytes": 60,
+      "sha256": "634cafb88aa2a29147e95edf68b4e2212a0510dc4b761ca461574dfc7659a534"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CityClaimZone.cs",
+      "bytes": 9825,
+      "sha256": "5d2c8c1471ad902bbfd7c2e6b7db0d5631351a0dbbb5cb2bd848e11bac965504"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CityClaimZone.cs.meta",
+      "bytes": 59,
+      "sha256": "8d4ef72a5d52f5717aa8cc61fb063a1577c05733d707242f6be1195bd0015b7e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CliffDetails.cs",
+      "bytes": 3874,
+      "sha256": "b9a572d5fe652b3f36a1e61264bd2e45c67f221581d1351b745833e3a30021b4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CliffDetails.cs.meta",
+      "bytes": 59,
+      "sha256": "d2ef140352ffe4661a7682f6d8ec2f96fe55ea8d0b89cde3e7f4cd58d112cfbb"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CombatTarget.cs",
+      "bytes": 1797,
+      "sha256": "96d1f0ecb9226fbb1e5cdcb480723a4da8a55cc670cec355bd7245cab8e51db8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CombatTarget.cs.meta",
+      "bytes": 59,
+      "sha256": "a9144d22e6e179208bb5d41c1c95a7380a26813f9e99383cb8a40d7cfcd39790"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CombatWorld.cs",
+      "bytes": 5367,
+      "sha256": "15bc897a3a1380ff30725fa6098de92afb5034d2a0c76a4d7224186bc4c2b89f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CombatWorld.cs.meta",
+      "bytes": 251,
+      "sha256": "e7f928041206af4f3d26e451a7cfbda191c0b6d928692e91a346312861c9d499"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core.meta",
+      "bytes": 172,
+      "sha256": "4434258f8d171dcf5e7e54e099952234012f99261ee9c36218a1dc15d29c3ae5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/BattleRules.cs",
+      "bytes": 9868,
+      "sha256": "28480c94ee2dbcc30e8331e1c93a76c533b6c13b7f49bd723a2ec5c4e1355ed5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/BattleRules.cs.meta",
+      "bytes": 59,
+      "sha256": "1fb8d9b993db7a3750d030aaa271e5013de58c66de9ab63b14e56e76aee7ce15"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/ClaimRules.cs",
+      "bytes": 2200,
+      "sha256": "2c3c03c7dd3c284970c2e197667b475bd8f895e615472e80509e41fded016fdf"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/ClaimRules.cs.meta",
+      "bytes": 251,
+      "sha256": "8dbfd38bc93e64b9c7573cc1af729c92762bf054ff54efafa563af7fb5fee3ad"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/CombatRules.cs",
+      "bytes": 2314,
+      "sha256": "66a8276a0eaa8c47009ff2ff7c5630cc127a0991194d0926a70673a2060d9c02"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/CombatRules.cs.meta",
+      "bytes": 59,
+      "sha256": "a2dd340c7b7c940f9b5e0d957203eb332ba2689747b7477324552934b8f50e8f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/DirectPointerGesture.cs",
+      "bytes": 8679,
+      "sha256": "b275084e4c13f12872a499a060a073892407e4b79b8d8c64a61b2b0f936e27ce"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/DirectPointerGesture.cs.meta",
+      "bytes": 60,
+      "sha256": "e84b5974b52e2c013f4c1bf551642011cdf471d862eac91943a37c1eac7bb986"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/NavalProfiles.cs",
+      "bytes": 3389,
+      "sha256": "9ae62036ae3415adee5b56553cc999632931ca74c8813b40a394b2810283cc63"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/NavalProfiles.cs.meta",
+      "bytes": 60,
+      "sha256": "c450be83d85b6ae208e07e09c3418fe040811bc66bfa949e62bd3df4136f0fdf"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/PlayerBuildingIntent.cs",
+      "bytes": 4421,
+      "sha256": "9c010805a748eb02f8d58c3e3f93aaa3cf0ae038805f37707c3190acd4802146"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/PlayerBuildingIntent.cs.meta",
+      "bytes": 62,
+      "sha256": "e4573d771565e351d283ec3a16134a296069fff777e23456f17ed1b46a5893a7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/PlayerRules.cs",
+      "bytes": 476,
+      "sha256": "ebe891b5444d7a0b5b612fb16bb468191881b13912f2a85d978e5ad15babfcd3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/PlayerRules.cs.meta",
+      "bytes": 60,
+      "sha256": "df8c0ccfe92225e27c16bdca39175bee8c9ae296c5f9a035bc6dcf27f6a0a10b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/PointerGesture.cs",
+      "bytes": 779,
+      "sha256": "12559730755b75b23c6078572eeeb3af40097d9fad159cc2bc59b9c9cd74f0f6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/PointerGesture.cs.meta",
+      "bytes": 62,
+      "sha256": "3e0adb6842d5e2e5b5da5281f66011bbfd66b486df4d81ba22c88be9696148be"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/ProductionCatalog.cs",
+      "bytes": 1595,
+      "sha256": "074ee0a5460a6a7c3a1d5b4306dbb832ed2a683bce933df8a78c3696f14915b2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/ProductionCatalog.cs.meta",
+      "bytes": 62,
+      "sha256": "f52ef8d3d2684f2522aff8234c0dadc97101fec9def650ffaa32a446ae1664bc"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/ReforgedProfiles.cs",
+      "bytes": 3393,
+      "sha256": "791dbfae9082df2cf5fdb33e393c159352e41541c918cc20c3f65dcfb2d666de"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/ReforgedProfiles.cs.meta",
+      "bytes": 59,
+      "sha256": "db8ed6043f16107620a14341c88793fee1bb2137662ec088421d34a0c720ab8f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/RiskAI.Core.asmdef",
+      "bytes": 138,
+      "sha256": "14262c7bff0e8e7f95ad4d8b1460d4d0c9056ff47a6bceae23cb55a94aa2b5f4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/RiskAI.Core.asmdef.meta",
+      "bytes": 60,
+      "sha256": "e2b6668b29bc061e7000f90743738c2225d11e021679a5c002d70051776b0b93"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/RiskReferenceRules.cs",
+      "bytes": 2019,
+      "sha256": "38f06bb135df468cea54135fa03864f07b1cb44a535e72a21588d2289fdbbdab"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/RiskReferenceRules.cs.meta",
+      "bytes": 59,
+      "sha256": "224e23a45b0fde9d1c243444cf5745796172e9b085c0bfeeeb79995e7cc2231e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/SimClock.cs",
+      "bytes": 1258,
+      "sha256": "e7e5828ee37cb3b382ce4470585e3cb5113e8a34e927476f82ad890af52a0ef5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/SimClock.cs.meta",
+      "bytes": 251,
+      "sha256": "b1ff11e905f55bb0518994e74ff20b879ec0585231a37b6b52ff0d2dc5c85427"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/SourceGeometry.cs",
+      "bytes": 2378,
+      "sha256": "81c4fb1f4d3ae1be53d1bb3b4bbc9a7a50c9e053da3a2f61a64dc8316d0faa45"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/SourceGeometry.cs.meta",
+      "bytes": 60,
+      "sha256": "c5e2d1041e3b107cca8eae09daecbdd31b076815e82f633ffc8780b11fa2ef76"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/StartingAllocation.cs",
+      "bytes": 7952,
+      "sha256": "39e1a06af6f9fd1bde8844fdfa7cf9df0ebb7dd5b64830a83a7ec035373d1d3c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/StartingAllocation.cs.meta",
+      "bytes": 59,
+      "sha256": "729852a0e554307180e8bd122c8a10a71f30cac588f9c9416aa679a004b5b383"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/UnitCommand.cs",
+      "bytes": 695,
+      "sha256": "3f19b321c44c1850c33cb844e28e6014f967b3f9bdfd9d5471f56ef23ee15cba"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/UnitCommand.cs.meta",
+      "bytes": 251,
+      "sha256": "1b6901cb13ca5d77a6bd213c99c9c2553e8896d7dced6fce6bbf70fa147a8127"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CountryCamp.cs",
+      "bytes": 4289,
+      "sha256": "8124769e07adf9f34718109743c1a996dbf00034da2b67b48f62fe5380088cd4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CountryCamp.cs.meta",
+      "bytes": 62,
+      "sha256": "3b6ed9aa33d63a85080203bccccbbeaa5dce9615860a2bfc860cadef9c296f18"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CountryRecruitment.cs",
+      "bytes": 3209,
+      "sha256": "e975f354d54674462407c52f831b0413c3cfd16285d58d6c21e404bf32132e8b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CountryRecruitment.cs.meta",
+      "bytes": 62,
+      "sha256": "e7e8cdaac49763a968f2317aa355b2a8a1eeb73e2f4f31a944de06730345ccc1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/DefenseTower.cs",
+      "bytes": 7260,
+      "sha256": "970b06f5d0745dd8c78978503c552a745dfc91fe3cb8e969a7d13467f8714eba"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/DefenseTower.cs.meta",
+      "bytes": 59,
+      "sha256": "791f7fe8bd8948e96cec77b623479ce2c63245205fc6b1a245a56d0f9739dcf2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/FrontEndController.cs",
+      "bytes": 17059,
+      "sha256": "87e0778b5eeef4de7633010db34ace3a28c9eeaef7b8dc951fa87f8f1f16a10d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/FrontEndController.cs.meta",
+      "bytes": 61,
+      "sha256": "ded368c5e971451dace2b48c2867663db4100b5488feb78fdb0f9f0a313acc3f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/GeneratedResourceOwner.cs",
+      "bytes": 1259,
+      "sha256": "10924a0ec49d50d7f350710564722df8ce87febddba811129dbb8d0d3c5c240c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/GeneratedResourceOwner.cs.meta",
+      "bytes": 60,
+      "sha256": "2b4a26ca59cfee0b2cc75f2585f4894169d54527d5e38db4635660431a83a14f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/GroundCover.cs",
+      "bytes": 8903,
+      "sha256": "a53dc5937f7b05643db0622c8fc279fff842db3e999667337ee312cd7d52183b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/GroundCover.cs.meta",
+      "bytes": 60,
+      "sha256": "1ad263f029227eabfc2d2863fa3617478a483f63de55ba9d9808cc717d81309f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Harbor.cs",
+      "bytes": 21102,
+      "sha256": "76f9ac24284a8a27a94c028c7e038d7039c6e062ec1e80daf3646aa8a4c0c61a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Harbor.cs.meta",
+      "bytes": 59,
+      "sha256": "5fd03b21d75bd8229dbb9abb6c43a51a6bd4ee4687e27b087df5b999e359aa0e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ImportedLandscapeAugment.cs",
+      "bytes": 7466,
+      "sha256": "5508cdac1d84ac48a6ba216c1f9302c0b3d2c422de28d2881fd1c571f051e1f7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ImportedLandscapeAugment.cs.meta",
+      "bytes": 60,
+      "sha256": "49d282849e4b0145cfacfc29c21c8d183b271af1a066fda40dcda19c50bef5fa"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ImportedMapData.cs",
+      "bytes": 9713,
+      "sha256": "a125cff30174859e7a3d30dad50e514c9177f00a8795d45c22eb386c55ae47f1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ImportedMapData.cs.meta",
+      "bytes": 62,
+      "sha256": "9a45ef1d488419d3b8fb682e0f314b9ef1e043a6b166961bac1c87508cf8d832"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ImportedTerrain.cs",
+      "bytes": 10770,
+      "sha256": "f67ef51ac4c879abed4033a1a53450c3d4e65705aefb0246b45254a4e6f9c021"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ImportedTerrain.cs.meta",
+      "bytes": 62,
+      "sha256": "7e9514dd9dcd76611dafb0d76f4cd7c91720c78cc6a0eb69e7870a91b014d540"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/LaunchArguments.cs",
+      "bytes": 1733,
+      "sha256": "b9927eb88e7434b8f01f8ef5431c1a64188f86ca4a149943a3c9443bd903e86b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/LaunchArguments.cs.meta",
+      "bytes": 59,
+      "sha256": "9b6f0ffc996385a5b02b488c3f8f2ef81cc1585b9948f249272a0bb663e96cdc"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/MapLayout.cs",
+      "bytes": 24409,
+      "sha256": "a2cf13d1e218e1a32e9bd34e2cbe201add51c34b3194cc0a9c57d4b07f09e433"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/MapLayout.cs.meta",
+      "bytes": 59,
+      "sha256": "ceb815150a010ba9eee1c380cfa256289ff353ec4f784c18d26b5ac995de86fe"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/MedicSupport.cs",
+      "bytes": 3596,
+      "sha256": "9c44ca508ee0d85809413f95c425145924579bcbc3e3a39f262492644419122c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/MedicSupport.cs.meta",
+      "bytes": 59,
+      "sha256": "41871c671a776503de316d216475d2bab854f9660d5a5e19c36b52f91a517154"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ModelMetrics.cs",
+      "bytes": 3411,
+      "sha256": "81ac0e3829420e53805a48b5e4165a463030d3afd3558698468d62c0a29dbcc3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ModelMetrics.cs.meta",
+      "bytes": 62,
+      "sha256": "5e82a628c2dd21c7db8ac44228ed4cf9fa3ee143b19199843338f53389d75735"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/MountedKnightView.cs",
+      "bytes": 12050,
+      "sha256": "7b3d763db08e1a5b90e6c84c9fee5a998dbbe7f8bed1b8802a7f8042ce120e38"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/MountedKnightView.cs.meta",
+      "bytes": 62,
+      "sha256": "57cbae91d48e0e9d99ae31807503ebbc4f0d493ed3f8639abf3a9ce1c761e5f8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/NavalArt.cs",
+      "bytes": 8719,
+      "sha256": "b5f304be0bef3943b4f72cee9c0ed9434cf7030268a36e9a6e1f2a9402fb19e3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/NavalArt.cs.meta",
+      "bytes": 59,
+      "sha256": "b4ddbc77852d8924de74db467588de40a5e887d1a1beee4eb25d88f79153a175"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/NavalEmbarkZone.cs",
+      "bytes": 1102,
+      "sha256": "0c075946d17b5a57c7bde1f75a0bfa74cf4bb7ac982e6e90e4bef06ca28262b1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/NavalEmbarkZone.cs.meta",
+      "bytes": 60,
+      "sha256": "f0b7cebb2021ccbe78c5bf348e39111aa2200574470c32d01a7458b953b08b02"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/NavalExpeditionCommander.cs",
+      "bytes": 26070,
+      "sha256": "6316f87a8d4c5603955def94a15c46d44ff9f574b6742a040e6edfdc6ed2c314"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/NavalExpeditionCommander.cs.meta",
+      "bytes": 60,
+      "sha256": "72dc2b614407972cf4c522abef4522b437e83f23d75b1276cbdda5142734e1ac"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/NavalWorld.cs",
+      "bytes": 15053,
+      "sha256": "a35cf242a6f65d16bd8a7acc1c6a3375964b29dc8398193ea9ad26be69343f57"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/NavalWorld.cs.meta",
+      "bytes": 59,
+      "sha256": "a1f153f1d4ceaeb116867b68fab3ca1c242f8a143545e3db29b8465059f3e281"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/PlatformPresentation.cs",
+      "bytes": 1798,
+      "sha256": "4491bf0046be8b30ccf8f2c487d074767adefccab51d48782a2959ffec3e5c59"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/PlatformPresentation.cs.meta",
+      "bytes": 59,
+      "sha256": "8ac730d80967163716efde8055dcee621a55313973c4676b409fe1b09019737f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/PlayerBuildingCommands.cs",
+      "bytes": 6258,
+      "sha256": "04710794f86081fd3b186a0cd6351e893cfb14006f0a4ab6ed6d159cf79a990b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/PlayerBuildingCommands.cs.meta",
+      "bytes": 62,
+      "sha256": "42bb80fb365c5bd20f05293a06112b06f6b8994d93952ab999f74887964a7009"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RiskAI.Runtime.asmdef",
+      "bytes": 207,
+      "sha256": "5d4f3b27bbd449364c5c0286daee3e7d8f454a9a58bee8037704955aa1e40c3d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RiskAI.Runtime.asmdef.meta",
+      "bytes": 166,
+      "sha256": "710501e6c3b55e5681b1d537aea5a9614552b7e1feb69406422dae93be8d38b9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RiskBootstrap.cs",
+      "bytes": 7807,
+      "sha256": "3668cd6702c06313b51d164dece85d28ad805ba0c5def6cf544888e44f5264a0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RiskBootstrap.cs.meta",
+      "bytes": 59,
+      "sha256": "6a57dea84ee00c559ea40e35f2deca20d868d3c0d09f60aa80928f4a475daee0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsCameraPolicy.cs",
+      "bytes": 2066,
+      "sha256": "55a74bde4608932a8358547820ca1ef47cf735262ae716d4412973d535388fbd"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsCameraPolicy.cs.meta",
+      "bytes": 84,
+      "sha256": "82ffa4918ad785e8854c3a4de60cdc149a57ca71def360754337e70aa23d7dde"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsCameraRig.cs",
+      "bytes": 7945,
+      "sha256": "b293fb2862ea05aa6b9f9ac5ddc2ad0ad54f1bca1af1e5796e5b2972bb2e292f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsCameraRig.cs.meta",
+      "bytes": 59,
+      "sha256": "68ef23e7bf0b26b2f8f73ed0de2fd563b5fbdce2c08e59c45a8f36fb0ef97eeb"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.BuildingCommands.cs",
+      "bytes": 1109,
+      "sha256": "1c87d0b65495df878ccafaa9583cc290daf69d8d7feb151fc9dee9f7d8fdf58d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.BuildingCommands.cs.meta",
+      "bytes": 59,
+      "sha256": "d71ee64ec6d4187076e8421c9fd77d3d7c17b2a6dd123aba2d6abd5065314d46"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.BuildingSelection.cs",
+      "bytes": 12935,
+      "sha256": "8fec5fa966c7b536729bcc4bef02548f843d5815ae921db48c8010143fb4a6f7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.BuildingSelection.cs.meta",
+      "bytes": 62,
+      "sha256": "4f5a5bb2d666ef34a0a321785fd3493884e366b6d490d89e7103692c1bb6bf3a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.Input.cs",
+      "bytes": 8548,
+      "sha256": "7c2ad28a2144bf4f97ebb7d49b5a5d27296d8c9a7e6684d09b2030af34abf15a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.Input.cs.meta",
+      "bytes": 60,
+      "sha256": "ca41a6b683f3ffdff81362facd6fcb1796db21aa64f39224764b2e7854a82ba8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.cs",
+      "bytes": 41602,
+      "sha256": "a0db1c88e65589a3183c9606ba4272a738b2f75ac7e22f62d52494ae2ad87909"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.cs.meta",
+      "bytes": 59,
+      "sha256": "da9de95058ca5c4f3cf53434ff720bdce8db8f64340de51d3f0c454421fc5e3a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsCursor.cs",
+      "bytes": 1053,
+      "sha256": "a7083e574c5b364fb45062590a6c626de6bbc438911acb273ebc80cba6619fc0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsCursor.cs.meta",
+      "bytes": 59,
+      "sha256": "35a3bde44a32753a96571ceb6c8f235aec4d4de6ee0b858314049508c9eda6c1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsGlyphs.cs",
+      "bytes": 3135,
+      "sha256": "99c01a755d830a60eb748f0a4b6d53f264fa6a00225ec579a0ac962cf2d43e5c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsGlyphs.cs.meta",
+      "bytes": 59,
+      "sha256": "f460c97108ed4ce2342d6bf0188886039ba233281038d5e525f6e9ecbeb8e40c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsInputRouter.cs",
+      "bytes": 9567,
+      "sha256": "bf9618ceac647a9664c56af22003f680f35fe00a4d319f0d17873c9b8b29f5c5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsInputRouter.cs.meta",
+      "bytes": 60,
+      "sha256": "12c2998b8c12ae2c744da79f2027a1418159f5544c80343d66aec2176fbc9d1a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsPicking.cs",
+      "bytes": 4779,
+      "sha256": "85783f0c1e371990d967e6319139a3042b9012b75f126659baf07c9e7574a6ed"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsPicking.cs.meta",
+      "bytes": 59,
+      "sha256": "af272ef5f1d6c654221bc42659795c666d6bf18a7fb84cd667e60de36c487fae"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsRuntimeTooltip.cs",
+      "bytes": 16194,
+      "sha256": "d0ac8610bb038fd7c4f3d29829fea5d4c71a51a9813138fa14a9979b5216dc74"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsRuntimeTooltip.cs.meta",
+      "bytes": 59,
+      "sha256": "d046c028e652cb4c985a0b4dcffdeb4fc3a239a124f1cd82d172acb7296e8b5c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsSkin.cs",
+      "bytes": 5527,
+      "sha256": "e7ab29bb1fa5a04137d09c113094a075b7eda1b977c82d48661a268ceb2f8707"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsSkin.cs.meta",
+      "bytes": 59,
+      "sha256": "3780032d553a0cd35f6c017f74175ef8dcb329541f8e2d303b98f6b3fe40ffbe"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsUiInput.cs",
+      "bytes": 8707,
+      "sha256": "b01594eef0a572e93031303ab1e43de5b456e33ff7ca1c8d2975bb05cf6b025c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsUiInput.cs.meta",
+      "bytes": 61,
+      "sha256": "f82c04dc80800217e96042407a0fee4fc7b26b7bcaa312b53250963ea474b30a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsUiOrnaments.cs",
+      "bytes": 6529,
+      "sha256": "0fff408251f407a48d3cf096f3a91034a4b2f6a465195ad9a11143e66fd66139"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsUiOrnaments.cs.meta",
+      "bytes": 59,
+      "sha256": "b0c7202a0eb28cecee9f211062e82e85ca37c81c631e9d0a478db859b3661322"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeCommandProbe.Sustained.cs",
+      "bytes": 12017,
+      "sha256": "a8275c1b30150d2d08c8fe8ff935c1a8bffdbbf6e40d46d2f984fb9dba031815"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeCommandProbe.Sustained.cs.meta",
+      "bytes": 60,
+      "sha256": "ea8b9304f236f922526edf9013b62199f85986e328e5dc4250f7b8797dffe2b1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeCommandProbe.cs",
+      "bytes": 23141,
+      "sha256": "f634586844114ad1ff01a28eee338985b88a7642d1a17ce0d585a2ac0a02c8e6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeCommandProbe.cs.meta",
+      "bytes": 251,
+      "sha256": "b3096e4640c6aa55475d9c2bac1261321c2f80fc2dc6a2c7ca2deb65f812b6a0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeDiagnostics.cs",
+      "bytes": 13930,
+      "sha256": "da9118d79b14cf2178feba084a2aecaaa9f816f3d34fb33cc151c76637b7b426"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeDiagnostics.cs.meta",
+      "bytes": 59,
+      "sha256": "45d20d42a9c95fb7034146530d9ccb5a9c150f96fd3833565112db808b5fd926"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeFrameProbe.cs",
+      "bytes": 4634,
+      "sha256": "f535f2822ea42e28470a11639c2294ae29703d68c0703d9fca6a4b7d139d2779"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeFrameProbe.cs.meta",
+      "bytes": 60,
+      "sha256": "facc388e7e26d25b0ba14ea87a888ec543ad92d92137efb9640f026316eedb00"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimePresentationCapture.cs",
+      "bytes": 11277,
+      "sha256": "a2351c9789ca46800e4f290008c55fc07c38fbaec0b6d955cc15aa655d5cb48e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimePresentationCapture.cs.meta",
+      "bytes": 60,
+      "sha256": "f3f1ad8cd4661661eccb39d96bf55ebb7fcec1a85369451895ed9c3a24b2e635"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeRestartProbe.cs",
+      "bytes": 6991,
+      "sha256": "80af8b24bcddd36b7e56fef50d36ba8d818d84a8450fdfa7cb66542f5d428557"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeRestartProbe.cs.meta",
+      "bytes": 60,
+      "sha256": "ed092a5ed24ad8be6ca8ca39b527aa6e8cccdfb5464fa5559658849ca239f869"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeUiCapture.cs",
+      "bytes": 7647,
+      "sha256": "908d8305aa8a78d315a8112fedf62d36d053e324850a7b9b7f44a64379cd4f8e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeUiCapture.cs.meta",
+      "bytes": 59,
+      "sha256": "2052392c7160db74d2771a3c9cfaab37b76b55e416b19be49feb504764ff591a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeVisualCapture.cs",
+      "bytes": 20868,
+      "sha256": "91bd8e3ab6b42f2f7d44399e80971c98ffc47bc09cfa465c01f899a52b16fed5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RuntimeVisualCapture.cs.meta",
+      "bytes": 59,
+      "sha256": "503a879bc18fff257ac842f9972b4eac08123dba9188591b8d066ab3ce90f518"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SeaNavigation.cs",
+      "bytes": 17199,
+      "sha256": "0c3e936c46031ac2880ce013b9757a55024302d35c1d5b52c5e54f24fca7374f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SeaNavigation.cs.meta",
+      "bytes": 59,
+      "sha256": "fcf5642d69f8441cb85b4befa4c4bb48c95fbf1038b65b960dec00110695196e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Settlement.cs",
+      "bytes": 15132,
+      "sha256": "f0fcc6090f6db62d3edac41bb7cc9c72b37191af046592d6d636bf1222c62440"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Settlement.cs.meta",
+      "bytes": 59,
+      "sha256": "93d99efb81257b847f04453df0ac80d3637c5f3c4accc8f12495910232cd07a0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Ship.cs",
+      "bytes": 17064,
+      "sha256": "ab8346060df7b90ae8c6154ad098774db27d6d54a9fbb7839ecc5aabcfb5490b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Ship.cs.meta",
+      "bytes": 59,
+      "sha256": "e7163947f9f6001093e0e535f050960d2aee9bfb756f840801054cf93b81c153"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ShoreAccess.cs",
+      "bytes": 8705,
+      "sha256": "477cee3b00a72990da2d21ca16479661c23a07bdabebb4c8e3f617fad277813d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/ShoreAccess.cs.meta",
+      "bytes": 59,
+      "sha256": "d11311567985323bd9676a39eed3b4825e4b1d938c9aeadb4ecf19d3fed03054"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SkirmishCommander.cs",
+      "bytes": 18173,
+      "sha256": "5f095e7f86374105ef59d4a3c34e1c99682756f9e2b8f09947fac540b0e7cec9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SkirmishCommander.cs.meta",
+      "bytes": 251,
+      "sha256": "6405ccf55f3aa296012a5b314e1c7b3e43000f514eb815647b9941708e387a55"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Soldier.cs",
+      "bytes": 30638,
+      "sha256": "5a8b07470d62dfe032c6de0db3e084d403d542f6c2d0cac024463fcc7b6711ff"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Soldier.cs.meta",
+      "bytes": 59,
+      "sha256": "291ec5332dfdf9d90903bdc8c51ad446cc673517bbb6b0c4a3c12937497ced79"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SoldierAnimator.cs",
+      "bytes": 2269,
+      "sha256": "37ab6c408d843f10b1bb1b522598b0ebed1a0036f3c44f4a8050673ad69f09cd"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SoldierAnimator.cs.meta",
+      "bytes": 59,
+      "sha256": "7f765c9fe598f7a57281a2d6c203e1b4674b2e98d1c83202707923e25e8178d7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SoldierPool.cs",
+      "bytes": 2367,
+      "sha256": "69e95ed62363124c06ebe7f3c0775e87c633a049b06e842130caf147ecf67eee"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SoldierPool.cs.meta",
+      "bytes": 251,
+      "sha256": "432e11ec4aff25bd0887b23e0bcbd8af07d2ce38a33221b7e76d2196f6f85938"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SpatialTargetIndex.cs",
+      "bytes": 2730,
+      "sha256": "1cc46e836377a2bc9890a76d265dc12d2eab464f0305cdc9c7d01b89bea82bca"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SpatialTargetIndex.cs.meta",
+      "bytes": 251,
+      "sha256": "f188efc9cbecbbfe21da7bda2046c72baa3fa885b932219b1c0e95d619a31271"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/StartupMetrics.cs",
+      "bytes": 750,
+      "sha256": "07673505f61173286b9bb9fa5f93b9fd488e72a089b66bd3b3797ab9b5e50190"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/StartupMetrics.cs.meta",
+      "bytes": 59,
+      "sha256": "75efd5362ec98f829c642f1829196dd9efba6c83f3a32a24c3a91af220ce6e06"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/StrategicMapView.cs",
+      "bytes": 4539,
+      "sha256": "93ae7113350a109edaebdc61acb8ba95a44d589bb01d6ec7e2621b5f5c70f21e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/StrategicMapView.cs.meta",
+      "bytes": 59,
+      "sha256": "77fd9da8434f54d5e15954db9eaab44c5a274d65b9d71e5030a320b273a18452"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/StrategicTerrain.cs",
+      "bytes": 16496,
+      "sha256": "0c146a405016375a3fa44128a83cba0031a9f1a6ddde5f9a192498e3b4e59c33"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/StrategicTerrain.cs.meta",
+      "bytes": 59,
+      "sha256": "9cc85b1a6f43d162f5439319946b3c41adde8edda596bbdf354ba7a04ae3f290"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/TerrainHydrology.cs",
+      "bytes": 12477,
+      "sha256": "f7077b38ace2d9823f0250f48a945dc22a411210de9060fe0a81f60b13d573cc"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/TerrainHydrology.cs.meta",
+      "bytes": 59,
+      "sha256": "89e71299324a204872529dcf11a9bf0ea9a9cd02b3dba0bc2bc58944abdd3a86"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/TerritoryAtlas.cs",
+      "bytes": 6803,
+      "sha256": "e57b5da932c2f1eca53ae2c38e1e3cb0f14182688abdf884a8ad79068a97aed1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/TerritoryAtlas.cs.meta",
+      "bytes": 59,
+      "sha256": "1b4dfc403a8e39492228ab666e080b67570c0fca463bfc80c22b34e48e59e2db"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/TerritoryMarkers.cs",
+      "bytes": 10849,
+      "sha256": "22765311af9dc7cd9be3f69ab1235a2450f8139e9399a8e445a62061f89b66f5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/TerritoryMarkers.cs.meta",
+      "bytes": 59,
+      "sha256": "ee16c3dc7f2d978f2dce1258bf0f22871151eb61cdea13f4391d3dd195bd0103"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/UiViewport.cs",
+      "bytes": 2759,
+      "sha256": "2f9d0ec00b90953676543f1f9e49db6971488957b74ec5f9beb1b7205249259e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/UiViewport.cs.meta",
+      "bytes": 59,
+      "sha256": "1560ea467a9ddd681e14c039097b8507ed1d5c31c2e7cacef5955e8da416effd"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/UnitTeamColor.cs",
+      "bytes": 3936,
+      "sha256": "65442b9b739c103e6b671b2e06076dad752ef5db18669c7fe8054419d36fece0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/UnitTeamColor.cs.meta",
+      "bytes": 59,
+      "sha256": "4feec51f1d2a5e6e15952376440dd4f6868c7ebd0dd948a364c543fd8ae60073"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/VisualFactory.cs",
+      "bytes": 37411,
+      "sha256": "a7b51edff4fb683ecd26181891c12d869819c989ecb2827920307b1402cb3c6a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/VisualFactory.cs.meta",
+      "bytes": 59,
+      "sha256": "e68c0a6b07066519213e9c88736bfeceb386b33ba87417643ab2e0c3dfa33b69"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/VisualMetrics.cs",
+      "bytes": 725,
+      "sha256": "15e3cbcda0d5d98acf715a014d420f921dbe915a951c3622eb49a0dffd2dcb6b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/VisualMetrics.cs.meta",
+      "bytes": 59,
+      "sha256": "e2ee4f42ba36c976d00ca70e24111a310b536c1cac4aa6cab482449d2f549a1d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/WebPenBridge.cs",
+      "bytes": 4865,
+      "sha256": "1a2fad96b0bac49062678f769763660c60d6a1bd67d87f34ad1c2462832e7b68"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/WebPenBridge.cs.meta",
+      "bytes": 61,
+      "sha256": "4ee76dea2c7b1feb3c0838d03eca5e27a55f3e15840cf3e163f4fbe0f53d8358"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/WorldArt.cs",
+      "bytes": 15947,
+      "sha256": "ec47a2e827e50d996d383a2b6d5dfc10c4d08964be66c10fa1e96a22320a3477"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/WorldArt.cs.meta",
+      "bytes": 59,
+      "sha256": "7a7fab56893b2eaa8183df904d57dd348cc7acb224aa36bf7ba4ff804ac6e663"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/WorldLife.cs",
+      "bytes": 9723,
+      "sha256": "863fb500d42493494588cf8ff7ae719c07abdfb5fba0ee28617a61f97606118c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/WorldLife.cs.meta",
+      "bytes": 59,
+      "sha256": "88120383f5efa5ae823a092adb990a1d973d220ebd2cf8aa52f71bf7b9a58aa4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/StrategicTerritory.shader",
+      "bytes": 2418,
+      "sha256": "2537fb874bb5e35925a7e520b3610832ad08a6f8a837544e9e16756429407fc8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/StrategicTerritory.shader.meta",
+      "bytes": 201,
+      "sha256": "90dfb1cb53b124bfccec6c14514a052ffeac739af7723179a3928b59af83ab89"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests.meta",
+      "bytes": 172,
+      "sha256": "11de6bd32ff61877a73e21540c59c72bff17b66f3cef629a3f635f315305f0c2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor.meta",
+      "bytes": 172,
+      "sha256": "184111cbb52876313661d5bd423ab76eb0b06ffe0bb886de3695d86d6d33ee08"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/AuthoredLayoutTests.cs",
+      "bytes": 3831,
+      "sha256": "501356d3ae4fc83c864a9c76e1dc6e07227873bc0df86736cb8e4e8c7656fd53"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/AuthoredLayoutTests.cs.meta",
+      "bytes": 61,
+      "sha256": "4444f8bf274ccb76c612ad22b4891f53a24b190383d935ea8606f755b213bd6e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/CanopyOcclusionTests.cs",
+      "bytes": 2115,
+      "sha256": "64b9f40fa5c994cda5cc12da7fcdd2caf0587bf005ca8f001e6401ee30e37c14"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/CanopyOcclusionTests.cs.meta",
+      "bytes": 60,
+      "sha256": "5affc72bc43fee3e2da5afe55193424e3afedc48dbe24d44dfdb4583face8aea"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ClaimTransitionTests.cs",
+      "bytes": 1357,
+      "sha256": "b4f5504f53d8b6f068214758c8c52eea2539724e019b2b9aec79ac7bbfd59ba0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ClaimTransitionTests.cs.meta",
+      "bytes": 60,
+      "sha256": "74c0cec2d9777a93bd83b6c35ce79523d04e975f26dd2fc1ca1ef7540833e063"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ClassicExpansionTests.cs",
+      "bytes": 2091,
+      "sha256": "aa6dc0d85329135024c91e565602faec2cdd73eb8ab97b0c297cafb40f4b0d68"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ClassicExpansionTests.cs.meta",
+      "bytes": 60,
+      "sha256": "910a66aaa8418ada90f0e937a7f3aa0e2f9addeedfd2c5b3f41e184b183b61c0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/CombatRulesTests.cs",
+      "bytes": 7158,
+      "sha256": "aca59f1385c6b41f53d8053bfc7915e59ce93fba7bd9fceba6cf8b3b8bf323d6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/CombatRulesTests.cs.meta",
+      "bytes": 59,
+      "sha256": "b436719b689604173ad4a0e2402fd0f9d09b7b3620dab2c54d57303b7e95e9d7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/EconomyCountryTests.cs",
+      "bytes": 7565,
+      "sha256": "3180442bf8a2f0945e70e244591079f738e07c496b53ac45b4f57503483fe24b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/EconomyCountryTests.cs.meta",
+      "bytes": 59,
+      "sha256": "0f48eccc609b428b3070cb87c39bb992fcb247f4aa0c1b7262751bfeb17aa35e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ImportedCameraFramingTests.cs",
+      "bytes": 2536,
+      "sha256": "508022bca0316f71981ba8db92d7d0dca9ebed4427005c6d464d7ce48ec11113"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ImportedCameraFramingTests.cs.meta",
+      "bytes": 62,
+      "sha256": "453095ac9b878f1ef2054dce6a64b6d71c0131847358e7a470eea5dd64836a7e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ImportedGroundDecodingTests.cs",
+      "bytes": 634,
+      "sha256": "63fd58c5d8cb73e765abb3b6798f18527dbd9f74161a2b389559469e98aeb65e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ImportedGroundDecodingTests.cs.meta",
+      "bytes": 62,
+      "sha256": "1eef66bb741154bd1ade3f17528ffc502e606b5548f4df1c2ebb91c0f50b036b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ImportedLandscapeAugmentTests.cs",
+      "bytes": 3218,
+      "sha256": "64278844f7b75e4d83cf709bc5051d3e865be51d79f18f2957e10dada34e09d1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ImportedLandscapeAugmentTests.cs.meta",
+      "bytes": 60,
+      "sha256": "bbaff3d985b40cbc5267fb0fd9f6ac51179d42cca1f91f1684ba3324ca2f60b3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/LaunchArgumentsTests.cs",
+      "bytes": 1255,
+      "sha256": "86858b31575c6d460853ae8446012432b5201ce3d8b803350511739d0260bc5e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/LaunchArgumentsTests.cs.meta",
+      "bytes": 59,
+      "sha256": "7ada38ecc869112a81fdf9d240b9832918bde42c04d9fb8edc3e730dc4dfedfe"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/PlayerRulesTests.cs",
+      "bytes": 2489,
+      "sha256": "54a422a37efa162f12aa5d5d599a9ec49d7b8520491fdfd2b599497848ef58b4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/PlayerRulesTests.cs.meta",
+      "bytes": 60,
+      "sha256": "9abd3a97f43addab0eaf32ee3feaa4af20ab7e5b1d40a11d2935c8f137d7b597"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/PointerGestureTests.cs",
+      "bytes": 9486,
+      "sha256": "439d416bed8069494558ecca476097383447e1e078654ea6c79229318deb16ab"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/PointerGestureTests.cs.meta",
+      "bytes": 62,
+      "sha256": "4393a404008f8c9eb8f1dda6e367cda41cf23df1a242cb48b7657e916041234d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ProductionCatalogTests.cs",
+      "bytes": 1123,
+      "sha256": "def494780e144c7fe7b6c86fd6a1dc6eb615b8890afcec0b2164c46fd6ef8eff"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ProductionCatalogTests.cs.meta",
+      "bytes": 62,
+      "sha256": "6182b86e169cb8e1d5c096e91d1e6081290faab159c203035d9f6a0369e8f0c7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ReforgedCombatTests.cs",
+      "bytes": 1383,
+      "sha256": "8f9f5283ba0ae7b60822a81685ba024fac856e947ef88b0181fdaad6031a013b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/ReforgedCombatTests.cs.meta",
+      "bytes": 59,
+      "sha256": "1da232e73f92c47aacdbaba9161e7270fe7d077f8c46a12456c2a8235a5c57de"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/RiskAI.Tests.asmdef",
+      "bytes": 190,
+      "sha256": "8d0c2fed1e175d73871168e4498ffa5189daa088af623c43739ab653479f72a9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/RiskAI.Tests.asmdef.meta",
+      "bytes": 166,
+      "sha256": "241d18da2eacc23fcc7498d55d712b6825f86e7f730ce6afedcc1f48d067ac07"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/RiskReferenceRulesTests.cs",
+      "bytes": 1394,
+      "sha256": "095a9e4dc41a34c49ba495f91b52eaf8c5f3865aa8e9fe46f387444b34749448"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/RiskReferenceRulesTests.cs.meta",
+      "bytes": 59,
+      "sha256": "50787ced6b0c00e84204a0b66b06117a321df7d11cd06b16cb224a089bae8707"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/RulesTests.cs",
+      "bytes": 1750,
+      "sha256": "517b16d037fecea4613ec4f2a7de5d6ba679d62529b928b8a183cdc895bbe2d5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/RulesTests.cs.meta",
+      "bytes": 59,
+      "sha256": "59eec3dea844c579ef2d9761450226628c8942a7004cfbd7cabee76360271870"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/SimClockTests.cs",
+      "bytes": 2441,
+      "sha256": "e8be86b3d1e60f5f44c2cf2c066b39e3fd48d31ff7408b18defcb61f3d31415d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/SimClockTests.cs.meta",
+      "bytes": 60,
+      "sha256": "4d27abc0139b5af314f1e4e5663d1ee24e42b19a5f9ae56328cd8811e0cbae4b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/SourceGeometryTests.cs",
+      "bytes": 1242,
+      "sha256": "ca0290194e3ef8317f09f617b29d894d7a8d6c7335709a5e4b31b83193498275"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/SourceGeometryTests.cs.meta",
+      "bytes": 60,
+      "sha256": "30a1d2da49af30ce08c6210a32cdf3529166d1d4d76a57fb7ad50ca62b74e988"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/StartingAllocationTests.cs",
+      "bytes": 2991,
+      "sha256": "16f58828f5e342df83d64ae82828c2c2c170af378127920d8b27557b0b780109"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/StartingAllocationTests.cs.meta",
+      "bytes": 59,
+      "sha256": "16e07afd3e6db9ec8b3495ec53a8e6e38358db76eea2a927e96b278f901dfcf6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/TerritoryMarkersTests.cs",
+      "bytes": 447,
+      "sha256": "22abd7a2319f225d7f370f5bc940925864dacf0e9b920567ddde31b91433c200"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/TerritoryMarkersTests.cs.meta",
+      "bytes": 61,
+      "sha256": "0aca1860c9ea6edcce8656926c205d16ffb81f43ef91a394fed2a74cebafb895"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/UiViewportTests.cs",
+      "bytes": 1435,
+      "sha256": "bd7d80f242932fb770b6145a15f808b9693887c121e62edf25d5b74325a927a3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/Editor/UiViewportTests.cs.meta",
+      "bytes": 59,
+      "sha256": "9926fbab0c226d068cda9f0bd5d4195188dd7bb5cb80e439a7f1e3926b702dbc"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode.meta",
+      "bytes": 172,
+      "sha256": "4e790ec87c88745facc28008f24f6451371b7b529cbb2c272a0672484fb09f30"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/AiPacingTests.cs",
+      "bytes": 7523,
+      "sha256": "24c243df7bf2aca7e7e96e4b901750c0e9b69492f962bf073261567e4e8655a1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/AiPacingTests.cs.meta",
+      "bytes": 59,
+      "sha256": "5d6b17ac10d4d8d8e28b921711da765dd84167acef90d21c6eef007f5fe1734c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/BattleHudTests.cs",
+      "bytes": 12764,
+      "sha256": "d477dfe2afc62580feb4ffff732c6366983ba824d667bfd41fa124215069f622"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/BattleHudTests.cs.meta",
+      "bytes": 61,
+      "sha256": "84aa106b9fe91fbd49540a8e24c3f10981b71ece1763cdfd6faad8a5499093c3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/BattleIntegrationTests.cs",
+      "bytes": 23731,
+      "sha256": "a44c941362bc1eea0d65fafceb9791dac7df18b9b431ba72277b6ecadc75decb"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/BattleIntegrationTests.cs.meta",
+      "bytes": 59,
+      "sha256": "d3eef9c0f2be527adf990a22721262d2fbde152704d61300b26a1556ba4829d0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/BattleTestScenario.cs",
+      "bytes": 1253,
+      "sha256": "b6167afa9acad136a51de50423446416d3f62bdec95e284ffa013824071285f6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/BattleTestScenario.cs.meta",
+      "bytes": 60,
+      "sha256": "38a2c70a7428874c70e9b6ebf360f8ab4a026bad11f835d5b877ccf3f7251025"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/BuildingSelectionTests.cs",
+      "bytes": 12877,
+      "sha256": "da3be0845e2be997478e0d9779d9fbc77630aa546ad55103da08d1b7915c4c83"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/BuildingSelectionTests.cs.meta",
+      "bytes": 61,
+      "sha256": "65bfe6623c19443edde13c33e1600922990ed7fea79e1210d2643cf64045e1ae"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CameraUsabilityTests.cs",
+      "bytes": 16952,
+      "sha256": "488dca74c4f2f21e6fc256596c20876b95a1aaf5c85d6bc84667cf9f6e4483be"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CameraUsabilityTests.cs.meta",
+      "bytes": 59,
+      "sha256": "ba2495d88d6f7134cdf5a86a048a447262cc3ddd2de06b8d47d1cd10f82680f7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CityClaimTests.cs",
+      "bytes": 14709,
+      "sha256": "f240985d67836e93b8ca8c86a4f89db10dda9fe76f86ec54535094798ebd2713"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CityClaimTests.cs.meta",
+      "bytes": 59,
+      "sha256": "521c16197cf64256cab7ee6e624957ab56106431e68d7b84821ae66e7e47efc1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CoastSurfaceProbe.shader",
+      "bytes": 675,
+      "sha256": "4c73decafc6bcb7fb6bf932844085a2f0e874e93a2ccff81912d430d7f78d1fc"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CoastSurfaceProbe.shader.meta",
+      "bytes": 201,
+      "sha256": "f4f81149772a902e3bf9b5399db72e7c3323bb650818642c9578cf09288c97a4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CommandFeedbackTests.cs",
+      "bytes": 10785,
+      "sha256": "e75dc8fe2c413ea9f1ffb0196d035462f20b815fed3aaa92e6596017b14256c6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CommandFeedbackTests.cs.meta",
+      "bytes": 59,
+      "sha256": "d014d557e3a8fb159eaa7307d45647babcf022953b44c2605ffe2c2f39c0c825"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CommanderConnectivityTests.cs",
+      "bytes": 8391,
+      "sha256": "f32e7f56073897a1c921b77c5fa44eb2fa5947edb2ac1f303e2373d704f76c82"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CommanderConnectivityTests.cs.meta",
+      "bytes": 60,
+      "sha256": "99d86c1f90ccfc35ec2186aad6d3db95c147a669429ca610985efa8483b74fd6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CommanderDefenseTests.cs",
+      "bytes": 4504,
+      "sha256": "fa2903d5056c5bb9c3e69f0f8dbed5ad96351ab78932cdfc79f9698b801b6225"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CommanderDefenseTests.cs.meta",
+      "bytes": 60,
+      "sha256": "6a7c371b88c663d5fce12ad51d7f5f61a5b59b2643c452869abca1fe50e7c3bb"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CountryCampTests.cs",
+      "bytes": 6762,
+      "sha256": "e4ed70274b7ead1484a9f31e0b98e4d3eebd6a2a5195dd22e96f704aeb100888"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/CountryCampTests.cs.meta",
+      "bytes": 61,
+      "sha256": "3d7db14abacedfd20c9811909500adea84c5433c705de2bd5f9df931204595f0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/DirectPointerInputTests.cs",
+      "bytes": 10684,
+      "sha256": "8d1ba66d9849a17334a46a57ad75aff74f91e2405504727ebc9bc60052f7db31"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/DirectPointerInputTests.cs.meta",
+      "bytes": 61,
+      "sha256": "681f61f7738d5b6e0b3b848f4cfc4253e8ea292fd3056b6cd14e3be05812bd75"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ForestMovementTests.cs",
+      "bytes": 3376,
+      "sha256": "454b6bbeba47363ff860cc4c52f9f35c9f307deb332ea22ad9a9ed1eb2a86247"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ForestMovementTests.cs.meta",
+      "bytes": 60,
+      "sha256": "74f3b9812220e3ede9a076679dac40a3709a2c1d2b5349521d1331394f902aac"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/FrontEndTests.cs",
+      "bytes": 2429,
+      "sha256": "334e1e12567413e932e5c3beb230a17e861ec5403c12a2bcaa77099421a8be4e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/FrontEndTests.cs.meta",
+      "bytes": 59,
+      "sha256": "ae70e2fc80bcc4cb2905d72effec9b94c8f92edb46b2144ef7424b64b2f03838"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/GarrisonAnchorTests.cs",
+      "bytes": 9342,
+      "sha256": "c6981dd42b90ef1653679d4a043400226cb36c2964b1d12aafb4f75f89c98e05"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/GarrisonAnchorTests.cs.meta",
+      "bytes": 60,
+      "sha256": "6c02e13a18abb7d85df15cae9942eac116618067ca0845b686bb75b9243886e1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/GeneratedResourceOwnerTests.cs",
+      "bytes": 4354,
+      "sha256": "43776dd1508c3f826fa064591cd6daa8da47b715b2c748643869aaaa0d67bc7b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/GeneratedResourceOwnerTests.cs.meta",
+      "bytes": 60,
+      "sha256": "bd9fb1a2a898d7ffc9a884b895d754f2952dc2d042d484cd005e7adcb468817c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/HarborEmbarkIndicatorTests.cs",
+      "bytes": 4441,
+      "sha256": "1a13e0bd32a3926c4df5e891fa7bb6081878ce80efc5e4f05a77af62967a33d4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/HarborEmbarkIndicatorTests.cs.meta",
+      "bytes": 59,
+      "sha256": "2000b1d40a42391e63a1c70ed93659c4125f50d8cf7000bfc4574af19d28024c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/HarborPresentationTests.cs",
+      "bytes": 10069,
+      "sha256": "a7575484db1f08eed71d921c3cab679ceb1bc9c7674fc1b188ad170dc4119133"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/HarborPresentationTests.cs.meta",
+      "bytes": 60,
+      "sha256": "480644e431555d25fe6fbb401e2577eaf696d2651493505b5603d62553196fa6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ImportedMapGameplayTests.cs",
+      "bytes": 12988,
+      "sha256": "11539964c5ecaf9c16e3400d0d56ba7b4995d71ae388db1cd388840a55621911"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ImportedMapGameplayTests.cs.meta",
+      "bytes": 60,
+      "sha256": "50592e61263c801115ae716ad7e7df223bd47ccbbb578c1e749598afc79469ac"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ImportedNavalTests.cs",
+      "bytes": 7381,
+      "sha256": "1abae4b6e85aab58a7288b65304005fdb523d026652011031109bb642c4ef9a5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ImportedNavalTests.cs.meta",
+      "bytes": 60,
+      "sha256": "3a6c5f5672c6ef507094112d0c2b7fee315b09203e412b70ea003d6719000e13"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ImportedPortNavalIntegrationTests.cs",
+      "bytes": 3400,
+      "sha256": "d62245184ffabadc2cb1b6d3df902b0e8231d1499aa54af4e72b46b8bcbfa9d5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ImportedPortNavalIntegrationTests.cs.meta",
+      "bytes": 60,
+      "sha256": "985d6e609f92b53fe614f99782e3719e4290580832d319fc8d91cceb2af25f12"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/LegacyPlayModeSetUp.cs",
+      "bytes": 468,
+      "sha256": "afb0ef38e8227045008b968dcd4838311f5d0ace03118d509e0f6c2466865d4f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/LegacyPlayModeSetUp.cs.meta",
+      "bytes": 60,
+      "sha256": "e4491509c914144fa3d0bc755889f3697649f99a26357f993d9196562faf6ca9"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/MapVariantTests.cs",
+      "bytes": 9665,
+      "sha256": "2f20554739b546a1f15e92cc4d008e75802f2503c255db77a55a8a8120e82e6e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/MapVariantTests.cs.meta",
+      "bytes": 60,
+      "sha256": "a113db0d5dfc74c4d231b84b779c4716192429abccc43aa3766de67c0bb2a858"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/MedicSupportTests.cs",
+      "bytes": 5486,
+      "sha256": "bc76d4c754834cf9d9ea78ed11db4d131ee476b04f307cd7a8edb4d8724505aa"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/MedicSupportTests.cs.meta",
+      "bytes": 59,
+      "sha256": "b73d51822ed55183f782472921e56e45789626746140540d854bd75f5b6fc5c1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/MouseCameraInputTests.cs",
+      "bytes": 7704,
+      "sha256": "d279a0da3c70157e0d31bcdf4c337bab88419e164ec6aa1e6683f27e2ff7aa5a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/MouseCameraInputTests.cs.meta",
+      "bytes": 59,
+      "sha256": "2cff3a5c5f46cd9c251b035cae4bc40aa0cd7fc4027da32a6ffe03e29a92b8f1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/NavalEmbarkCaptureTests.cs",
+      "bytes": 20102,
+      "sha256": "83c192601768f9c24607f83ab41e2b43f16e828fdb2fea4ff51f475eb222b2a3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/NavalEmbarkCaptureTests.cs.meta",
+      "bytes": 60,
+      "sha256": "a652c87520fdd875d8d2e29554e8fbe40ceed214358d4ef2fa803324947bc287"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/NavalExpeditionCommanderTests.cs",
+      "bytes": 6798,
+      "sha256": "6406ce8d6250c7018febf3dba72c700c2deaf1239cc5a3679ddd4e1fa20abbfa"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/NavalExpeditionCommanderTests.cs.meta",
+      "bytes": 60,
+      "sha256": "4d2c068de100898882e63e4589464900bd60070200d829cdc9354dd9111cd136"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/NavalGameplayTests.cs",
+      "bytes": 12274,
+      "sha256": "9554876163fd14cf61d9149bc0e38c0ad8fa88705a6cf11920ebe835bfeec2a6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/NavalGameplayTests.cs.meta",
+      "bytes": 59,
+      "sha256": "2b69328cbd6293b2087c651a5db32844b39d14e837a509d614a5c9066f137b00"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/NavalPlannerRoutingTests.cs",
+      "bytes": 25585,
+      "sha256": "8bdf5ff0d06a27034834162921b2163027230e52284e60b078ac5abc15513022"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/NavalPlannerRoutingTests.cs.meta",
+      "bytes": 60,
+      "sha256": "ec33d41df9c469a8c7a6b7ec0a8889aba333f6361d0c354341ce382d0fcbea35"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/PartialPathCommandTests.cs",
+      "bytes": 5156,
+      "sha256": "51707cea711e7096e0ab159cee8933d5f0f860ef38e74fa0933163da73bf1a3d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/PartialPathCommandTests.cs.meta",
+      "bytes": 60,
+      "sha256": "146a487eb7461e288eb20d4a986e825ab6c7e0497c630df2424ae9e449511cc7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/PlayerBuildingCommandsTests.cs",
+      "bytes": 8736,
+      "sha256": "6acfbaac24a528ffbaee731fad57c72cba7889969336aa3fca324ec6a372f328"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/PlayerBuildingCommandsTests.cs.meta",
+      "bytes": 62,
+      "sha256": "6c3141bad0a3031bc3a318fa944be9b2bc64a1db5d76af420c86236ef6a6f57c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/PresentationIsolationTests.cs",
+      "bytes": 6493,
+      "sha256": "dad5c2509b9a85d65222b7838781db82596f8fceedc3f488575384117707e9b8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/PresentationIsolationTests.cs.meta",
+      "bytes": 60,
+      "sha256": "a81e925bcb10743d74525820fc3758426913bdcb2af7fc01e316194decd97be0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RandomStartTests.cs",
+      "bytes": 10294,
+      "sha256": "ac5e199a58fcaac0bb1602ba32aba0f3def1d35aab9506051ba4b7cf0b63c1b3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RandomStartTests.cs.meta",
+      "bytes": 59,
+      "sha256": "897d661eb168640190fed8259663c2223c355ad6f1d4c306d481653c7bb74e1d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RiskAI.PlayTests.asmdef",
+      "bytes": 204,
+      "sha256": "e6f57ba56afa61dc6807e692f68af0c81fe34209a346be9fa992106747c66884"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RiskAI.PlayTests.asmdef.meta",
+      "bytes": 166,
+      "sha256": "785a9c71983d1a715b281adceb67e2fdc7adae62e3a2d1f0fc67c7ea615e09c3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RtsRuntimeTooltipTests.cs",
+      "bytes": 16676,
+      "sha256": "b18ac664a06b30847eef20fd1c253e278cec94e248f41674c7b15840f86d72b5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RtsRuntimeTooltipTests.cs.meta",
+      "bytes": 60,
+      "sha256": "86623e800066958fc8d7c30678e8ac378f3ac9425bdb3fe7cff9b0ebd84c7db1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RtsSelectionLifetimeTests.cs",
+      "bytes": 21641,
+      "sha256": "d988b7d33bf2734fc87b9aac7bc0f10d4e20b77c704f182c7e128ba16b46cf7d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RtsSelectionLifetimeTests.cs.meta",
+      "bytes": 59,
+      "sha256": "9cac325b2dcdd56f92ca9ec82f626c17039dc27253874609cbcdd7507f12ad2f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SharedHarborGarrisonTests.cs",
+      "bytes": 6397,
+      "sha256": "8d8bc1b819395501e5b14355a92ab5b06e79b2f913846ba41693f9ec5bd66ef2"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SharedHarborGarrisonTests.cs.meta",
+      "bytes": 59,
+      "sha256": "d8b1057ea5ddfdcdfc1e44869525ac77793d93786dd8d84ed0e0480b7525861b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ShoreAccessTests.cs",
+      "bytes": 12081,
+      "sha256": "607d088ffdec696859a875270f669fbfe7576167f98d20a99c0d97bf512ff6d8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/ShoreAccessTests.cs.meta",
+      "bytes": 59,
+      "sha256": "e37287c838fb6e27277de512ee3cb44378adbf3d9be7a62daebe86b2b50f84c0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SimulationInfrastructureTests.cs",
+      "bytes": 10901,
+      "sha256": "dcd635db22204996b8e6b284164b46b8e8a4c45d96b3067329666fe5e800675b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SimulationInfrastructureTests.cs.meta",
+      "bytes": 60,
+      "sha256": "9fdcb7b337a36dc23fa8b3aba48c77838aacc4217e718738d5997fd3f40b4ff3"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SixteenPlayerCombatTests.cs",
+      "bytes": 4134,
+      "sha256": "9b2d7d1405b02adb693518ece3566fe60efe6525fdc1e37e0b5e7ed3a3321087"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SixteenPlayerCombatTests.cs.meta",
+      "bytes": 60,
+      "sha256": "18b3341bc9df04416ab09d9f895e4d2a79e6e82e03946562c355f30c0de8bca6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SixteenPlayersGameplayTests.cs",
+      "bytes": 6770,
+      "sha256": "8a742317ff251613fb2692e4b8739524b0ed96710d16c5e309a416a4bac0b6c7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SixteenPlayersGameplayTests.cs.meta",
+      "bytes": 60,
+      "sha256": "12f38db47cdfa9ce82b268bcbd9ac5203fb7866c125e621883cb8066995835c0"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SourceGeometryRuntimeTests.cs",
+      "bytes": 6458,
+      "sha256": "094b788c90a1176b8678dbc094acfcd4f5dc1a88b2b740f89a6f3711c86d77ac"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/SourceGeometryRuntimeTests.cs.meta",
+      "bytes": 60,
+      "sha256": "bf9f61a54d261683a1bb3209f2781402f812e5a14f3077e73486a5f017fc0edb"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/TelemetryCommandTests.cs",
+      "bytes": 13997,
+      "sha256": "03fd8af376b94f1afc577a405b722aa56abedac701cb35bcbf99a07e32002355"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/TelemetryCommandTests.cs.meta",
+      "bytes": 61,
+      "sha256": "18e3cccbb2acb1daee42f54fb2321ba96630d14c9382155116a7556af5ffc36b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/TowerCombatTests.cs",
+      "bytes": 12598,
+      "sha256": "5e05d2b4b40b36612efdcb393b7ea5a1325f0761d37cce2c8cfd8871a051a8d7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/TowerCombatTests.cs.meta",
+      "bytes": 59,
+      "sha256": "8d6909f3f2245221f6a9b694d65276d4126e2b42d7f3e18011f259d22c29a85b"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/TowerDefenseTests.cs",
+      "bytes": 7227,
+      "sha256": "b5e818e5601521058ae7e8849f186e148ce739884de074944e779c41de25ff78"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/TowerDefenseTests.cs.meta",
+      "bytes": 62,
+      "sha256": "b93ff720fcf61d6a4660009063b93ba01cc9c52c5baf5c78495048a7a044f637"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/UIWheelInputTests.cs",
+      "bytes": 9488,
+      "sha256": "955ef265e142f08f2120c25087dafd610b05d2bf44c2bc64b2db39932a7a21f4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/UIWheelInputTests.cs.meta",
+      "bytes": 59,
+      "sha256": "80f6d6a40d8d2b25e536db29a6e4096953bc84b01a6c4937d9efa182854400a1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/WebPenBridgeTests.cs",
+      "bytes": 12318,
+      "sha256": "3492f57b61f55530327342d2013db495ea0fb7eaac166882e301eae8c12ae8c6"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/WebPenBridgeTests.cs.meta",
+      "bytes": 60,
+      "sha256": "91c188bd65f97f3111318250d0530fbad650a75b52edaf59d8444fc2ed36b862"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/link.xml",
+      "bytes": 768,
+      "sha256": "31286819286e0e9483ef12663e6253cb742d68eafce1e7edda86ccc3a3212d30"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/link.xml.meta",
+      "bytes": 155,
+      "sha256": "9e5c866ebf3068eadf492f858c85155b9edf159d93151482392714cb91acdd90"
+    },
+    {
+      "path": "RiskAI/Assets/Scenes.meta",
+      "bytes": 172,
+      "sha256": "92598ef42aeaa7813a50e780bcee1ad6c832b257592d09ffb0e6fb6116bb703f"
+    },
+    {
+      "path": "RiskAI/Assets/Settings.meta",
+      "bytes": 172,
+      "sha256": "73c8e19843240273facb0af6bdbf430d719e397aded705629594060ce25ce7ad"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/DefaultVolumeProfile.asset",
+      "bytes": 24035,
+      "sha256": "463776c51ae49d4fef980e8fd268081b2f505610d79315003faae1acff8f4115"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/DefaultVolumeProfile.asset.meta",
+      "bytes": 189,
+      "sha256": "efbcb026cee6b8e32fdf27018c06b0515296a6ccbb43969e792fea270310700a"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/Mobile_RPAsset.asset",
+      "bytes": 4594,
+      "sha256": "33591ba9f6fe54c065617279d524c9c8fab273da19e7137e339dd61228482044"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/Mobile_RPAsset.asset.meta",
+      "bytes": 189,
+      "sha256": "53ea46647712c615fd1a3f2e0dddfa8559eeedc649e9a1dbf93ff913de28544c"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/Mobile_Renderer.asset",
+      "bytes": 1713,
+      "sha256": "aa93274c9521fa941170becec9e87c5fa36b8587eefd5eeb5c0eed0d1d4b1dbe"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/Mobile_Renderer.asset.meta",
+      "bytes": 189,
+      "sha256": "a148ee2b4987b05b8ff7ae5f9bf84916184f77aefddc821dceb551f5a69f8179"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/PC_RPAsset.asset",
+      "bytes": 4614,
+      "sha256": "78ac86e04100a72389907a816516d19754cf9753d9f2d308277fe5ab9ddef308"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/PC_RPAsset.asset.meta",
+      "bytes": 189,
+      "sha256": "bb469b9b6f318e9e9bed29c3b2e73e79371c04743c6f95dd6603941f1cd3e53e"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/PC_Renderer.asset",
+      "bytes": 3439,
+      "sha256": "3d0b01d8ded3327263b6690be128a3de58d17c514943ae42fe743a3e084a9c79"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/PC_Renderer.asset.meta",
+      "bytes": 189,
+      "sha256": "b5df8ddb2708c6ed4c133a5ff9ee95a75cc20e4ee3ed6181366a61aedbaf31ec"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/UniversalRenderPipelineGlobalSettings.asset",
+      "bytes": 26137,
+      "sha256": "55b973c63908ffe32f953e20f5c5a885914061c4b26862a0da3bb889bdf31e14"
+    },
+    {
+      "path": "RiskAI/Assets/Settings/UniversalRenderPipelineGlobalSettings.asset.meta",
+      "bytes": 189,
+      "sha256": "f61661d8bc8dbe531daf09f6211ef978c7ba145c9207c8e76524396ae0722d7c"
+    },
+    {
+      "path": "RiskAI/Assets/WebGLTemplates.meta",
+      "bytes": 169,
+      "sha256": "b26e3202c461c4e6871eda86b7dbc4b6771c8d1507c5cf5d03ed5fdad3ad300a"
+    },
+    {
+      "path": "RiskAI/Assets/WebGLTemplates/RiskAI.meta",
+      "bytes": 169,
+      "sha256": "360d73553dc52ed5584624c4c1d3df64dfead00180842124c3bebbb88df1eda9"
+    },
+    {
+      "path": "RiskAI/Assets/WebGLTemplates/RiskAI/index.html",
+      "bytes": 4950,
+      "sha256": "73a1d56a6462930e65bfeedf8c97db601c50014a86748fca5b47f855eae37443"
+    },
+    {
+      "path": "RiskAI/Assets/WebGLTemplates/RiskAI/index.html.meta",
+      "bytes": 152,
+      "sha256": "6d03677ac65ed396287fced5a76ffe2ea706b4b2fa82f4fa5e1c51e27e89b211"
+    },
+    {
+      "path": "RiskAI/Assets/WebGLTemplates/RiskAI/riskai-pen.js",
+      "bytes": 11720,
+      "sha256": "de87827367c3455505446bcc5f60d8d4b5cc6fe61862a76d463748cea9244e60"
+    },
+    {
+      "path": "RiskAI/Assets/WebGLTemplates/RiskAI/riskai-pen.js.meta",
+      "bytes": 152,
+      "sha256": "fd775f34a65a447365c6ed085057ba7dde8b8a343b2dd0af458f72a9eef89fb6"
+    },
+    {
+      "path": "RiskAI/Packages/manifest.json",
+      "bytes": 502,
+      "sha256": "db553cadd4a22093eea9cf98127199ced262c7351e7345d55a12cc07e01fa937"
+    },
+    {
+      "path": "RiskAI/Packages/packages-lock.json",
+      "bytes": 7106,
+      "sha256": "99ed08573a7cc1d7f685cb8704c64bfe66db54da0a1c0495cf5966a35b32ed85"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/AudioManager.asset",
+      "bytes": 413,
+      "sha256": "aeedeb3243f07b61dbbe854aa08b5ef6f0b5274dd9852ad9f6129dde3e105a31"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/ClusterInputManager.asset",
+      "bytes": 114,
+      "sha256": "40e65dd214bf254955d2c8829ca8ce2130fd3510485560ce012e9a1ddd93e623"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/DynamicsManager.asset",
+      "bytes": 1254,
+      "sha256": "b7c9a9dc08b98990109d4346f68745e15e238de400f96c583e53e1c83c743a78"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/EditorBuildSettings.asset",
+      "bytes": 510,
+      "sha256": "ddf5e6267fa5a7e3503abe09988d775f178437f70360e31afe774672b3167631"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/EditorSettings.asset",
+      "bytes": 1010,
+      "sha256": "3e09dd5894bc55e144baf64ff8e985c835c8965fc5e346f8b25c34eac0de48ea"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/GraphicsSettings.asset",
+      "bytes": 2615,
+      "sha256": "ae2a91ead67d92f14aa4c72ff26fed54eeebecbe2574754356000bee67bb14ab"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/InputManager.asset",
+      "bytes": 9731,
+      "sha256": "7a1bb836a1008d26d0860d143e9d9df7ca41731d30a72901b518063819c62df2"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/MemorySettings.asset",
+      "bytes": 1192,
+      "sha256": "1e8379a461b10ae09f3f696911088c16875d63e87ed5f2d95df9e1892703f9fd"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/MultiplayerManager.asset",
+      "bytes": 157,
+      "sha256": "aba89fd1a1ddad182727ad82727e536d27372e90328a8196da2a4560398983dd"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/NavMeshAreas.asset",
+      "bytes": 1308,
+      "sha256": "80106cfa7e6181a1928b142c075f3e510d527441e3d79bc83590e4ac91e7cd66"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/PackageManagerSettings.asset",
+      "bytes": 1003,
+      "sha256": "a7dabba589abe7fc2b45bd3d3fba3fe9be97043492703f716da2d9131c13a807"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/Physics2DSettings.asset",
+      "bytes": 2028,
+      "sha256": "d57a0fe55659c33879e8b70bc01c5ea9cdf082069dab649905c6c5138531e6eb"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/PresetManager.asset",
+      "bytes": 146,
+      "sha256": "29c125923fe6e29f90190d4fce1c82d660e7051546e2c9d02908d18c9cf2436c"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/ProjectSettings.asset",
+      "bytes": 25672,
+      "sha256": "75625dab74b6ba768c639b0c56fedaede514bff93de023a02281533e7a96ad23"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/ProjectVersion.txt",
+      "bytes": 85,
+      "sha256": "ccbded48add235cebc157983154aaa49ed9035f56398fcb5e2b41bae3ebd2b66"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/QualitySettings.asset",
+      "bytes": 3757,
+      "sha256": "91733261fbff8c1c1d64024f730ddf4cde0780bdfe3102b09765ce14a1c725cf"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/SceneTemplateSettings.json",
+      "bytes": 3535,
+      "sha256": "bb9098b3bfcde78d93e264b96f7b77b5430e64e8c57a7aad7f5a5d9c3945e16a"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/ShaderGraphSettings.asset",
+      "bytes": 556,
+      "sha256": "cdba1e5d65bcf6e3269d76ed3e60b6c21f98322002996642c9d74f1eb89f6b91"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/TagManager.asset",
+      "bytes": 657,
+      "sha256": "23fc56b484aa3d7edf5914cd3591f7a823ccef5e3f3496f8a51f30388ead63dc"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/TimeManager.asset",
+      "bytes": 202,
+      "sha256": "1a83e54adbbda7c9f4851103a0c6ab7f6448a3343d4ea5b7620452fa08416ecd"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/URPProjectSettings.asset",
+      "bytes": 411,
+      "sha256": "596d5c8bf4f957b03684c949bebc252ae1918f25415a1147a00684c4b086efda"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/UnityConnectSettings.asset",
+      "bytes": 1063,
+      "sha256": "11251dae0356b6f43dd2c67bb511f6b7ecda4e5de425186bba3297e6f3dc1c6f"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/VFXManager.asset",
+      "bytes": 308,
+      "sha256": "f066c6483919961332415ee64204f74fe52f38c02e82892eb02b7a5b2e381f0e"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/VersionControlSettings.asset",
+      "bytes": 188,
+      "sha256": "e7bda45bf7a394745fee1316e6c71fa676004d591ad1f3aa247fd3e4ceb86071"
+    },
+    {
+      "path": "RiskAI/ProjectSettings/XRSettings.asset",
+      "bytes": 158,
+      "sha256": "edd2beb4a2e388312b4b7da241aa51070434005d82c59363f1237dd2e567585f"
+    },
+    {
+      "path": "scripts/Unity.ps1",
+      "bytes": 1332,
+      "sha256": "0dc35246835fb5a27b3bbf1e120e7c11bb17dc970627e0ed876db861242afe53"
+    },
+    {
+      "path": "scripts/audit_reforged_units.py",
+      "bytes": 28557,
+      "sha256": "addc9da62a9d46514f1539b705f145cc8fe2cab6b33f9165895eefc477b215cc"
+    },
+    {
+      "path": "scripts/check_browser_pen.py",
+      "bytes": 4781,
+      "sha256": "5a70a3d2817157c097747ba0591b084895af4ddcea593340258b085259d0559d"
+    },
+    {
+      "path": "scripts/check_web_player.py",
+      "bytes": 9948,
+      "sha256": "eb446482533c8446278eef222436d5e6778d73511278e818def712ad4525844f"
+    },
+    {
+      "path": "scripts/check_web_ui.py",
+      "bytes": 9745,
+      "sha256": "3e09557ee3c6e4f9a59f357ca1fe0b812a9fc5d2f39ffcace84750c6bdcd6e57"
+    },
+    {
+      "path": "scripts/export_playable_risk_maps.py",
+      "bytes": 32810,
+      "sha256": "f4447cc16d3f7ed88380b7c98612b456df5a0413c9fb3c6a0c64af15d686e560"
+    },
+    {
+      "path": "scripts/extract_map_members.py",
+      "bytes": 2354,
+      "sha256": "b7ad55011ba578e8bac13a1c7d39705261012c632d4b8f688c9c8613ceff679b"
+    },
+    {
+      "path": "scripts/extract_reforged_v3.py",
+      "bytes": 2368,
+      "sha256": "283cac673ad6e5bfa09aebfabf3cc210ce255a28ed85706005e9a949545fedc5"
+    },
+    {
+      "path": "scripts/extract_risk_circles.py",
+      "bytes": 11750,
+      "sha256": "60f17f7d8bec0d567c3f4b3537353e9f597f753eb60d2d25cbf884702e98167a"
+    },
+    {
+      "path": "scripts/extract_risk_placements.py",
+      "bytes": 8763,
+      "sha256": "e1689600ff0173cea9fd429f87d852bb7a9236684d508ff591f022863f0f5fcc"
+    },
+    {
+      "path": "scripts/extract_world_jass_placements.py",
+      "bytes": 5094,
+      "sha256": "c3ead5cac3b839755f33b6754b8510e7d6ecae3f007941ae04448fca2e68fa34"
+    },
+    {
+      "path": "scripts/measure_navigation_ab.py",
+      "bytes": 9784,
+      "sha256": "26b315d6f2436daf9d6a0c0d65edda76bfc36e1995d1d4cc53003a6fef8cea35"
+    },
+    {
+      "path": "scripts/observe_runtime.py",
+      "bytes": 13983,
+      "sha256": "3a04db7c9598ceee9ba093d8a18077d705ee3c7224e19c0b1b6dd484bbb7d800"
+    },
+    {
+      "path": "scripts/serve_web.py",
+      "bytes": 1917,
+      "sha256": "f6a1182ed66ec9a608e1609dde108662516b79d752c64972c542560bdd7fae36"
+    },
+    {
+      "path": "scripts/test_browser_pen.cjs",
+      "bytes": 10151,
+      "sha256": "c169876bb5aeb719a6043fdbb3bc53547c148409dc0fbda578520732569356be"
+    },
+    {
+      "path": "scripts/test_measure_navigation_ab.py",
+      "bytes": 2927,
+      "sha256": "7058a1dde883fa950fb843d3f46cff3716bf5db92c070ba5e0ccb58cf12ce228"
+    },
+    {
+      "path": "scripts/test_observe_runtime.py",
+      "bytes": 4762,
+      "sha256": "5f96424dcf2604875641ce3f5acef1bb110733c44e81168eeff18c479aae6882"
+    },
+    {
+      "path": "scripts/test_serve_web.py",
+      "bytes": 1746,
+      "sha256": "42d9ad980527e79b06d675585f400dba35554bdaef121513b43cc2360cbdf622"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/audits/v0.22/classic-guard-idle.webp",
+      "bytes": 248870,
+      "sha256": "5db538f56771f04119a42e64e085237d2d95930d346c7870ec1621da19a70055"
+    },
+    {
+      "path": "docs/audits/v0.22/classic-guard-selected.webp",
+      "bytes": 250030,
+      "sha256": "04cb615363b3fda16111593e64f581f4d188f4ba70f3e3f8bcf896450be8dece"
+    },
+    {
+      "path": "docs/audits/v0.22/classic-port-training.webp",
+      "bytes": 317430,
+      "sha256": "485dc72c086b59c24b56856fc5ef8dbc27f0fe6d727f54fcf5b326fad6167e07"
+    },
+    {
+      "path": "docs/audits/v0.22/classic-town-idle.webp",
+      "bytes": 506230,
+      "sha256": "d38ec52f7d617781ad5a7c1495b940e078204fb721b90fd5d9d31885e09edc5f"
+    },
+    {
+      "path": "docs/audits/v0.22/classic-town-training.webp",
+      "bytes": 506560,
+      "sha256": "ba7e12d43fd9249833864eb352f5b507213a2efe18b0c034a4eaddd64b20c286"
+    },
+    {
+      "path": "docs/audits/v0.22/europe-guard-selected.webp",
+      "bytes": 216414,
+      "sha256": "47d7f7cafab5997327d056d7b06a6c0d10e3b1b4d05b77457c04e6a50d9a88a7"
+    },
+    {
+      "path": "docs/audits/v0.22/europe-shore-green.webp",
+      "bytes": 231528,
+      "sha256": "9e7962c31c5556f8b54311f2ad4a45e17c971d1677bea84a06b86bcc7c7bc571"
+    },
+    {
+      "path": "docs/audits/v0.22/europe-shore-rock.webp",
+      "bytes": 360374,
+      "sha256": "98bac6931dc049b4b3591192d04543b8ada72741c19bdf75a4e85a9434ee6e48"
+    },
+    {
+      "path": "docs/audits/v0.22/europe-shore-sand.webp",
+      "bytes": 312544,
+      "sha256": "ce1a10b3344993d84a55dbf431ec7348a4214c04221b068729226c023a44984c"
+    },
+    {
+      "path": "docs/audits/v0.22/europe-town-training.webp",
+      "bytes": 348700,
+      "sha256": "3f928c6f78baeb5d5bd554ee5dc25436dc43b57d9f4c74551146325348ce945e"
+    },
+    {
+      "path": "docs/audits/v0.22/knight-animation.gif",
+      "bytes": 1923113,
+      "sha256": "f5ac6c5f72e1d706f0cfeb10fd25e1fdcad1bed48dcc7bb68255a17d74d775b1"
+    },
+    {
+      "path": "docs/audits/v0.22/knight-animation.webp",
+      "bytes": 1477632,
+      "sha256": "f935b8a9a156a666abdacd96a4e1bc3d3227f0ac095bb5752c378fe1e7655dbf"
+    },
+    {
+      "path": "docs/audits/v0.22/knight-capture.json",
+      "bytes": 6033,
+      "sha256": "78af7089f5fcc9e9ad67455ff213df0e83ff37b36db9d58400001096e0e2a2f0"
+    },
+    {
+      "path": "docs/audits/v0.22/knight-contact-sheet.webp",
+      "bytes": 618350,
+      "sha256": "d6c4b50a3f7da53693968059fea0494061432dde5bf49ec782dd1f654ea68b08"
+    },
+    {
+      "path": "docs/audits/v0.22/navigation-attempts.json",
+      "bytes": 5494,
+      "sha256": "a67d73e4d9eb1e28d67204d9068fe709089eface38256fdffc57b8617c1cb859"
+    },
+    {
+      "path": "docs/audits/v0.22/navigation-preflight-report.json",
+      "bytes": 221,
+      "sha256": "768f02f77506156bf4368adfadadd52daef349cf57b693a4061d0b8fdadde455"
+    },
+    {
+      "path": "docs/audits/v0.22/newworld-shore-green.webp",
+      "bytes": 51138,
+      "sha256": "1fc9b74107f5ce56082bda89a2796411f2e474c457f2c4539fda4232c90432ed"
+    },
+    {
+      "path": "docs/audits/v0.22/newworld-shore-rock.webp",
+      "bytes": 105324,
+      "sha256": "5c7890c89fbd6772b2bff2c1cfa639789f26bf2f17863244f16dd4a7ea21212a"
+    },
+    {
+      "path": "docs/audits/v0.22/newworld-shore-sand.webp",
+      "bytes": 169334,
+      "sha256": "7fcfe6f1d2246a8062a0fd86c00c5af941dc0ee55731108cc77b609486b7b57a"
+    },
+    {
+      "path": "docs/audits/v0.22/tests-r1.xml",
+      "bytes": 66535,
+      "sha256": "2be565addbbac3d51d69fb6f9de66319bfefae287a4a7ed0d0867387ba300acc"
+    },
+    {
+      "path": "docs/audits/v0.22/tests-r2.xml",
+      "bytes": 3488,
+      "sha256": "957f6f9f761536a2861b8215ed3007a9b70a0c0e5b412504998a1dbc5676abe9"
+    },
+    {
+      "path": "docs/audits/v0.22/web-europe.json",
+      "bytes": 831,
+      "sha256": "1898c25ee71993e1fa4a7ee9eee3d5170a06b0ad41e8e8030709f208e4f5c700"
+    },
+    {
+      "path": "docs/audits/v0.22/web-europe.webp",
+      "bytes": 215208,
+      "sha256": "c7cb71807607baa744b7408c759ce203086b16c96c1e3f05f083fcfddb9a102f"
+    },
+    {
+      "path": "docs/audits/v0.22/web-newworld-portrait.json",
+      "bytes": 829,
+      "sha256": "ffdfd6cfc24cd51b54e43be9f2fb821ef324d8bc6771954ebeebf66e694d7268"
+    },
+    {
+      "path": "docs/audits/v0.22/web-newworld-portrait.webp",
+      "bytes": 166824,
+      "sha256": "797a5bbafc9a57216c1649310e68bfdbdab5f1a84fcdff7b4ad7284146e3217c"
+    }
+  ]
+}
