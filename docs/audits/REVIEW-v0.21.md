@@ -210,3 +210,34 @@ en Edge mostró agua, intersección de orilla y puerto en su lago, además de
 compra pagada y layout compacto. Evidencia: `Captures/v21-web-water`.
 La geometría de costa conserva su silueta escalonada; esto corrige el agua
 invisible, sin presentar una mejora geométrica inexistente.
+
+
+## Ronda 6 · observaciones de movimiento
+
+Tres contextos independientes Astra low revisaron `15e5be3` contra
+`bf2435e`, con rutas explícitas para diagnóstico, su fixture, lector pasivo y
+documentación. Sus informes A/B/C fueron limpios y Root los leyó completos:
+`.tools/v21-review-round6/astra-a-report.md`, `astra-b-report.md` y
+`astra-c-report.md`. Los tres pertenecen al proveedor heredado de la sesión;
+no se afirma diversidad de cuentas. No hubo llamadas a Grok.
+
+La implementación conserva los predicados de movimiento y añade intervalos
+observados por orden: aplicación→ruta no pendiente, envío→velocidad,
+ruta→velocidad cuando ambos eventos están ordenados, y velocidad→condición
+dirigida anterior. El número de observaciones abiertas sobrevive al consumo
+de ventanas y se cierra al completar, sustituir, detener o retirar la unidad.
+Los contadores no atribuyen por sí solos coste a NavMesh o evitación.
+
+La compilación real encontró accesos internos desde el ensamblado de tests,
+no detectados por las revisiones estáticas. La siguiente ejecución encontró
+un tick automático adicional y la actualización diferida de la velocidad de
+NavMesh en el fixture. `624743c` corrigió exclusivamente esas pruebas; los
+seis casos pasaron en 25,15 s. Los mismos tres revisores inspeccionaron de
+forma independiente ese delta proporcional y emitieron seguimientos limpios
+(`astra-a-followup.md`, `astra-b-followup.md`, `astra-c-followup.md`), leídos
+por Root. Las revisiones estáticas no sustituyeron la compilación ni los tests.
+
+Se mantienen los límites: muestras de velocidad, no desplazamiento por orden;
+la prueba de velocidad contraria es controlada; pausa comprueba el reloj
+compartido y su observador, no una expedición completa pausada. Los resultados
+con carga externa siguen marcados como contención y no certifican ARM.

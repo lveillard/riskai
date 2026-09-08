@@ -4,7 +4,7 @@ Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcra
 
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
-La v0.21 corrige cámara en pausa, rueda sobre paneles y selección rectangular de edificios propios. Unifica la propiedad y producción del puerto e incorpora expediciones de IA que compran un transporte, embarcan, cruzan y desembarcan. Conserva el HUD de madera y metal con pestañas compactas. Windows y Web están exportados y comprobados visualmente; 94 casos Unity cubren los cambios. La costa geométrica y el rendimiento en hardware ARM siguen pendientes: [Validación v0.21](docs/VALIDATION-v0.21.md) · [Fase 2](docs/PHASE2.md).
+La v0.21 corrige cámara en pausa, rueda sobre paneles y selección rectangular de edificios propios. Unifica la propiedad y producción del puerto e incorpora expediciones de IA que compran un transporte, embarcan, cruzan y desembarcan. Conserva el HUD de madera y metal con pestañas compactas. Windows y Web están exportados y comprobados visualmente; 100 casos Unity cubren los cambios; los contadores nuevos separan ruta y comienzo del movimiento. La costa geométrica y el rendimiento en hardware ARM siguen pendientes: [Validación v0.21](docs/VALIDATION-v0.21.md) · [Fase 2](docs/PHASE2.md).
 
 ![v0.21: puerto, entrenamiento y colas](docs/images/v0.21-harbor.png)
 

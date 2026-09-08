@@ -41,7 +41,7 @@ sin introducir excepciones de IA ni cambios de escala.
 
 ## Pruebas automatizadas
 
-Unity **6000.3.23f1**, Windows: **91 casos PlayMode distintos aprobados**
+Unity **6000.3.23f1**, Windows: **97 casos PlayMode distintos aprobados**
 según el resultado más reciente de cada caso, más **3/3 EditMode** de
 argumentos de lanzamiento. No se suman repeticiones como casos nuevos.
 
@@ -60,6 +60,8 @@ argumentos de lanzamiento. No se suman repeticiones como casos nuevos.
 | `RiskAI/Logs/v21-review2-fixes.xml` | 15/16; reserva comprobada demasiado tarde en el fixture |
 | `RiskAI/Logs/v21-review2-fixes-r2.xml` | 2/2; cursor ante cambios de tropa y propietario |
 | `RiskAI/Logs/v21-review3-fixes.xml` | 9/9; frontera de ciudades, barco compatible, error antiguo y expedición completa |
+| `RiskAI/Logs/v21-movement-stages-r2.xml` | 4/6; dos problemas de fixture corregidos |
+| `RiskAI/Logs/v21-movement-stages-r3.xml` | 6/6; etapas de movimiento, pausa y cancelación |
 
 Cobertura: cámara/pausa, ratón, lápiz y touch, selección, guarnición de
 puertos en cuatro mapas, playa/descarga en Europe y New World, navegación
@@ -240,13 +242,76 @@ presenta como corrección completa del retraso ni como 800 unidades sostenidas.
 La aceptación temporal sin contención sigue pendiente, sin repetir suites
 funcionales que ya pasaron.
 
+Otra repetición de esa misma build, `v21-perf-quiet.log`, comenzó con
+8,50 GiB libres y sin compilador observado. Durante la pasada reaparecieron
+compiladores ajenos; el mínimo fue 4,96 GiB. La RAM se mantuvo recuperada,
+pero la carga externa impide llamarla una línea base aislada. Midió
+972→383 unidades, 1258 órdenes aplicadas, ninguna rechazada/pendiente,
+6/6 identidades con movimiento, 21,88 ms medios y 99,90 ms máximo.
+No se vuelve a repetir a ciegas la misma sonda mientras siga ese solapamiento.
+
+La revisión del contador aclaró que «primer movimiento» exige velocidad
+hacia el destino final, no cualquier inicio de movimiento. Un rodeo ya
+iniciado puede prolongarlo. La instrumentación posterior `15e5be3` separa
+ruta no pendiente observada, velocidad horizontal y velocidad dirigida,
+con intervalos emparejados por orden. No se infiere un coste de evitación
+restando promedios de muestras diferentes. Los seis casos dirigidos pasaron en 25,15 s con el fixture corregido
+`624743c`; el código de juego no cambió entre esas repeticiones. La primera
+compilación falló por acceso interno desde el ensamblado de tests. Después
+se corrigieron dos supuestos del fixture: un tick automático adicional y
+la velocidad solicitada a NavMesh, que se aplica en su siguiente actualización.
+La prueba de velocidad opuesta usa muestras controladas y no se presenta
+como una escena de evitación natural. Las nuevas exportaciones se cierran
+por separado.
+
 La observación pasiva anterior de v0.20 encontró órdenes aplicadas en
 27–36 ms, pero una muestra de primer movimiento de 1,24 s y rutas pendientes
 hasta 800 ms. Los picos de 23–26 s coincidían con cambios de foco y no quedan
 explicados por los tiempos de tick registrados. Las mediciones anteriores
 no se atribuyen al parche nuevo.
 
-La comprobación del servidor local de gzip/MIME pasó con
+Las exportaciones con la instrumentación `624743c` terminaron: Windows
+206.882.216 bytes (`v21-windows-stages.log`) y Web 57.415.347 bytes
+(`v21-web-stages.log`). La presentación no cambió frente a las capturas
+`a4060df`; la nueva aceptación del jugador verifica los contadores añadidos.
+El editor Windows había quedado abierto por omitir `-quit` en el lanzador
+de esa comprobación; se cerraron sólo ese proceso propio y sus importadores
+verificados después de `RISKAI_BUILD_OK`. Web incluyó `-quit` y salió con 0.
+
+La sonda Windows `v21-perf-stages.log` comprobó esos contadores en la
+partida avanzada: 937→468 unidades, 966 órdenes aplicadas, 0 rechazadas o
+pendientes y 6/6 identidades que se movieron. Sólo una seguía viva al final;
+13 intentos de destino no encontraron un punto válido y no enviaron orden.
+La media de frame fue 20,74 ms y el máximo 97,14 ms. Se conserva como
+**diagnóstico con contención**: RAM inicial 7,85 GiB, mínimo 2,53 GiB,
+compilación ajena observada. No demuestra 800 unidades sostenidas.
+
+| Ventana a 1×: unidades al final | Aplicación→ruta observada, media/máximo | Ruta→velocidad, media/máximo | Velocidad→condición dirigida, media/máximo |
+| --- | --- | --- | --- |
+| 748 | 85,87 / 392,37 ms | 39,32 / 91,39 ms | 3,58 / 174,44 ms |
+| 583 | 59,85 / 309,26 ms | 23,88 / 104,79 ms | 0 / 0 ms |
+
+Los intervalos se emparejan por orden; los conteos pueden diferir por
+cancelación o cambio de ventana. La primera fila contiene 60 observaciones
+de ruta y 59 de velocidad. No se suman máximos ni se atribuye toda la espera
+a evitación. Las muestras muestran por qué hace falta comparar navegación
+con posiciones/carga controladas antes de cambiar el presupuesto compartido.
+Evidencia: `Captures/v21-perf-stages-summary.json` y su registro de entorno.
+
+El smoke Web final `Captures/v21-web-stages` también pasó: Europe, semilla
+19031, 16 bandos, 60 s, 293→328 unidades, 127 órdenes aplicadas, ninguna
+rechazada/pendiente y 6/6 identidades con movimiento. Cinco destinos de la
+sonda no eran transitables; sólo dos unidades seguidas sobrevivieron. Los
+campos de etapas llegaron a la consola IL2CPP y la captura final se
+inspeccionó. No hubo excepciones JavaScript; quedan el 404 del favicon y los
+tres diagnósticos de shaders auxiliares ya descritos. La sonda reportó
+28,21 ms medios/57 ms máximo, sin que esta ejecución corta en Edge/NVIDIA
+certifique una tablet, ARM o una partida de 800 unidades. No se ejecutó en
+paralelo con un jugador nativo ni con una compilación Unity propia.
+
+El lector pasivo pasó 7/7 casos (`scripts/test_observe_runtime.py`) y su ruta
+por defecto vuelve a coincidir con el lanzador v0.21. La comprobación del
+servidor local de gzip/MIME pasó con
 `python scripts/test_serve_web.py` (1/1). La invocación inicial por nombre de
 módulo desde la raíz falló por importación; ejecutar el script desde su ruta
 resolvió el lanzador sin modificar el test.
