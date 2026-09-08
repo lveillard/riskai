@@ -65,13 +65,13 @@ namespace RiskAI
         void LateUpdate()
         {
             if(!cam)return;float dt=Mathf.Min(Time.unscaledDeltaTime,.05f);
-            cam.orthographicSize=Mathf.SmoothDamp(cam.orthographicSize,TargetZoom,ref zoomVelocity,.10f,200,dt);
+            cam.orthographicSize=RtsCameraPolicy.SmoothZoom(cam.orthographicSize,TargetZoom,ref zoomVelocity,dt);
             focus=Vector3.SmoothDamp(focus,Clamp(targetFocus),ref panVelocity,.1f,FocusSpeedCap,dt);Apply();
             if(anchorZoom)
             {
                 // Keep the original surface point under the cursor, including on cliff edges.
                 Vector3 delta=zoomAnchor-AtHeight(anchorScreen,zoomAnchor.y);focus=Clamp(focus+delta);targetFocus=Clamp(targetFocus+delta);Apply();
-                if(Mathf.Abs(cam.orthographicSize-TargetZoom)<.01f)anchorZoom=false;
+                if(Mathf.Abs(Mathf.Log(cam.orthographicSize/TargetZoom))<.0001f)anchorZoom=false;
             }
         }
         Vector3 AtHeight(Vector2 screen,float height)

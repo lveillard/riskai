@@ -13,8 +13,8 @@ namespace RiskAI
         readonly List<Soldier> cargo=new List<Soldier>();
         readonly List<Vector3> route=new List<Vector3>();
         NavalWorld world;int routeIndex;float nextAttack,nextTargetPath,simDelta,nextSense,lastRouteProgressAt;
-        Vector3 routeGoal;
-        bool hasRouteGoal;
+        Vector3 routeGoal, attackMoveGoal;
+        bool hasRouteGoal, hasAttackMoveGoal;
         readonly List<CombatTarget> nearby = new List<CombatTarget>(48);
         CombatTarget target;
         bool attackMoveOrder;
@@ -84,7 +84,7 @@ namespace RiskAI
             if(!IsAlive||!SeaNavigation.TryBuildPath(transform.position,point,out var next)){LastActionError="No hay una ruta marítima hasta ese destino.";return;}
             if(!TryLeaveHarborGuard(point))return;
             orderedHarbor=null;
-            route.Clear();route.AddRange(next);routeIndex=0;routeGoal=point;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;pendingShoreUnload=false;
+            route.Clear();route.AddRange(next);routeIndex=0;routeGoal=point;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=point;pendingShoreUnload=false;
         }
         public void SailToHarbor(Harbor harbor)
         {
@@ -120,9 +120,9 @@ namespace RiskAI
                 if(!TryLeaveHarborGuard(ocean))return;
             }
             orderedHarbor=null;
-            route.Clear();route.AddRange(next);routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=next.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=true;nextTargetPath=0;pendingShoreUnload=false;
+            route.Clear();route.AddRange(next);routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=next.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;pendingShoreUnload=false;
         }
-        public void Stop(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;pendingShoreUnload=false;}
+        public void Stop(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;pendingShoreUnload=false;}
         /// <summary>Queues a source-style unload at a validated shore after sailing there.</summary>
         public string SailToShore(Vector3 shore)
         {
@@ -132,7 +132,7 @@ namespace RiskAI
             if(!SeaNavigation.TryNearestOcean(landing,ShoreBerthSearchRadius,out var berth)||!SeaNavigation.TryBuildPath(transform.position,berth,out var path))return LastActionError="No hay una ruta marítima segura hasta esa playa.";
             if(!TryLeaveHarborGuard(berth))return LastActionError;
             orderedHarbor=null;
-            route.Clear();route.AddRange(path);routeIndex=0;routeGoal=berth;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;
+            route.Clear();route.AddRange(path);routeIndex=0;routeGoal=berth;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
             pendingShore=landing;pendingShoreUnload=true;return null;
         }
         public bool TryEmbark(Soldier soldier)
@@ -187,14 +187,18 @@ namespace RiskAI
                 if(UnloadAt(pendingShore)&&CargoCount==0)pendingShoreUnload=false;
                 else if(!string.IsNullOrEmpty(LastActionError)){if(Team==0)world.Message(LastActionError);pendingShoreUnload=false;}
             }
-            if(target&&!target.CanBeAttacked||target&&target.Team==Team){target=null;route.Clear();routeIndex=0;hasRouteGoal=false;}
+            if(!object.ReferenceEquals(target,null)&&(!target||!target.CanBeAttacked||target.Team==Team))
+            {
+                target=null;
+                if(!ResumeAttackMove())ClearRoute();
+            }
             // A garrison can fire and turn in place, but autonomous targeting may
             // not move it off the same fixed anchor used by the capture circle.
             if(IsGarrison&&target&&DistanceXZ(transform.position,target.transform.position)>AttackRange)target=null;
             if(!target&&Kind==ShipKind.Galley&&world.Session.BattleTime>=nextSense&&(attackMoveOrder||routeIndex>=route.Count)){nextSense=world.Session.BattleTime+.2f;target=FindNearbyEnemy();}
             if(target&&DistanceXZ(transform.position,target.transform.position)<=AttackRange&&Visible(target))
             {
-                route.Clear();routeIndex=0;Face(target.transform.position);
+                Face(target.transform.position);
                 if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Profile),Team,this,SourceWeapons.For((NavalUnitKind)Kind,AttackType));}
             }
             else if(!IsGarrison&&target&&world.Session.BattleTime>=nextTargetPath)
@@ -223,7 +227,12 @@ namespace RiskAI
         {
             Vector3 destination=route[routeIndex];Vector3 direction=destination-transform.position;direction.y=0;
             float beforeDistance=direction.magnitude;
-            if(beforeDistance<RouteArrivalDistance){routeIndex++;NoteRouteProgress();return;}
+            if(beforeDistance<RouteArrivalDistance)
+            {
+                routeIndex++;NoteRouteProgress();
+                if(routeIndex>=route.Count&&hasAttackMoveGoal&&DistanceXZ(transform.position,attackMoveGoal)<1)hasAttackMoveGoal=false;
+                return;
+            }
             Vector3 separation=Vector3.zero;
             foreach(var other in world.Ships)if(other&&other!=this)
             {
@@ -244,10 +253,22 @@ namespace RiskAI
         void NoteRouteAccepted(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;}
         void NoteRouteProgress(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;}
         bool RouteHasStalled()=>world&&world.Session!=null&&world.Session.BattleTime-lastRouteProgressAt>RouteStallSeconds;
+        bool ResumeAttackMove()
+        {
+            if(!attackMoveOrder||!hasAttackMoveGoal)return false;
+            if(DistanceXZ(transform.position,attackMoveGoal)<RouteArrivalDistance)
+            {
+                hasAttackMoveGoal=false;ClearRoute();return true;
+            }
+            if(!SeaNavigation.TryBuildPath(transform.position,attackMoveGoal,out var resumed))return false;
+            route.Clear();route.AddRange(resumed);routeIndex=0;routeGoal=attackMoveGoal;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;
+            return true;
+        }
+        void ClearRoute(){route.Clear();routeIndex=0;hasRouteGoal=false;}
         internal void BindHarborGuard(Harbor harbor)
         {
             if(!harbor||Kind!=ShipKind.Galley)return;
-            harborGuard=harbor;orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;
+            harborGuard=harbor;orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
             MaintainHarborGuard();
         }
         internal void ReleaseHarborGuard(Harbor harbor)
@@ -279,10 +300,10 @@ namespace RiskAI
         public override void TakeDamage(float damage,int attacker,CombatTarget source=null)
         {
             if(!IsAlive||damage<=0||float.IsNaN(damage)||float.IsInfinity(damage)||attacker==Team)return;
-            if(Kind==ShipKind.Galley&&source&&source.IsAlive&&(attackMoveOrder||routeIndex>=route.Count)){target=source;nextTargetPath=0;}
+            if(Kind==ShipKind.Galley&&source&&source.IsAlive&&!target&&(attackMoveOrder||routeIndex>=route.Count)){target=source;nextTargetPath=0;}
             Health=Mathf.Max(0,Health-damage);if(IsAlive)return;
             foreach(var soldier in cargo.ToArray())if(soldier)soldier.DestroyEmbarked(attacker);
-            cargo.Clear();route.Clear();routeIndex=0;hasRouteGoal=false;target=null;orderedHarbor=null;ReleaseHarborGuard(harborGuard);
+            cargo.Clear();route.Clear();routeIndex=0;hasRouteGoal=false;hasAttackMoveGoal=false;target=null;orderedHarbor=null;ReleaseHarborGuard(harborGuard);
             world.Ships.Remove(this);world.Session.UnregisterTarget(this);
             if(PlayerRules.IsPlayer(attacker)&&attacker<world.Session.PlayerCount){world.Session.Kills[attacker]++;world.Session.Economy.GrantBounty(attacker,Profile.PointValue);}
             VisualFactory.Impact(AimPoint,new Color(.72f,.78f,.86f),.75f);Destroy(gameObject);

@@ -11,6 +11,8 @@ namespace RiskAI
         RtsUiRuntime retainedUi;
         VisualElement retainedRoot, header, footer, context, wideContext, modal;
         Label goldLabel, citiesLabel, populationLabel, roundLabel;
+        VisualElement startCountdown;
+        Label startCountdownNumber;
         Button pauseButton;
         readonly List<QueueSlot> queueSlots = new List<QueueSlot>(20);
         int retainedTab;
@@ -51,6 +53,7 @@ namespace RiskAI
         void RefreshRetainedUi()
         {
             if (!retainedUi || !session || !controller) return;
+            RefreshStartCountdown();
             int modalKind=ModalKind;
             int contextKey = ContextKey();
             bool orientationChanged = lastPortrait != UiViewport.IsPortrait;
@@ -77,8 +80,8 @@ namespace RiskAI
             if (citiesLabel != null) citiesLabel.text = CitiesText;
             if (populationLabel != null) populationLabel.text = hud.MobilePopulation0 + " MÓVILES · " + hud.GarrisonPopulation0 + " GUARDIAS";
             if (roundLabel != null) roundLabel.text = "RONDA " + hud.Round + " · " + Mathf.CeilToInt(BattleRules.RoundSeconds - hud.RoundElapsed) + " s";
-            if (pauseButton != null) pauseButton.text = session.Paused ? "Continuar" : "Pausa";
-            if (modalPauseButton != null) modalPauseButton.text = session.Paused ? "CONTINUAR" : "PAUSA";
+            if (pauseButton != null) { pauseButton.text = session.Paused ? "Continuar" : "Pausa";pauseButton.SetEnabled(!session.IsStarting); }
+            if (modalPauseButton != null) { modalPauseButton.text = session.Paused ? "CONTINUAR" : "PAUSA";modalPauseButton.SetEnabled(!session.IsStarting); }
             for(int i=0;i<liveContext.Count;i++)liveContext[i]();
             UpdateQueueSlots();
             UpdateRankingLabels();
@@ -134,7 +137,27 @@ namespace RiskAI
             BuildFooter(retainedRoot);
             if (MinimapVisible) BuildMinimapHitOverlay(retainedRoot);
             if (lastModalKind!=0) BuildModal(retainedRoot);
+            BuildStartCountdown(retainedRoot);
             retainedUi.SetContent(retainedRoot);
+        }
+
+        void BuildStartCountdown(VisualElement root)
+        {
+            startCountdown=RtsUiStyle.Panel("Match start countdown");startCountdown.pickingMode=PickingMode.Ignore;
+            startCountdown.style.position=Position.Absolute;startCountdown.style.left=Length.Percent(50);
+            startCountdown.style.top=Length.Percent(34);startCountdown.style.width=236;startCountdown.style.marginLeft=-118;
+            startCountdown.style.alignItems=Align.Center;startCountdown.style.paddingTop=14;startCountdown.style.paddingBottom=14;
+            var title=RtsUiStyle.Label("LA CONQUISTA EMPIEZA EN",null,12);title.pickingMode=PickingMode.Ignore;
+            startCountdown.Add(title);
+            startCountdownNumber=RtsUiStyle.Title("3","Countdown number",48);startCountdownNumber.pickingMode=PickingMode.Ignore;
+            startCountdown.Add(startCountdownNumber);root.Add(startCountdown);RefreshStartCountdown();
+        }
+
+        void RefreshStartCountdown()
+        {
+            if(startCountdown==null)return;
+            startCountdown.style.display=session.IsStarting?DisplayStyle.Flex:DisplayStyle.None;
+            if(session.IsStarting)startCountdownNumber.text=Mathf.CeilToInt(session.StartCountdownRemaining).ToString();
         }
 
         void BuildHeader(VisualElement root)
@@ -150,7 +173,7 @@ namespace RiskAI
         {
             RtsUiStyle.Row(header);
             var title = RtsUiStyle.Title("DOMINIOS", null, 17); header.Add(title);
-            goldLabel = HeaderLabel(hud.Gold + " ORO · +" + hud.Income); goldLabel.name="HUD gold";goldLabel.style.color=RtsUiStyle.Gold;goldLabel.style.flexGrow=1; header.Add(goldLabel);
+            AddGoldDisplay(header);
             citiesLabel = HeaderLabel(hud.OwnedTowns + " / " + MapLayout.Towns.Length + " CIUDADES");citiesLabel.style.flexGrow=1; header.Add(citiesLabel);
             populationLabel = HeaderLabel(hud.MobilePopulation0 + " MÓVILES · " + hud.GarrisonPopulation0 + " GUARDIAS");populationLabel.style.flexGrow=1; header.Add(populationLabel);
             roundLabel = HeaderLabel("RONDA " + hud.Round); roundLabel.style.flexGrow = 1; header.Add(roundLabel);
@@ -163,7 +186,7 @@ namespace RiskAI
         void BuildCompactHeader()
         {
             var top = new VisualElement(); RtsUiStyle.Row(top);
-            goldLabel = HeaderLabel(hud.Gold + " ORO · +" + hud.Income); goldLabel.name="HUD gold"; goldLabel.style.flexGrow = 1; top.Add(goldLabel);
+            AddGoldDisplay(top);
             citiesLabel = HeaderLabel(CitiesText); citiesLabel.style.flexGrow = 1; top.Add(citiesLabel);
             if(UiViewport.IsPortrait)top.Add(HeaderButton("Mapa", ToggleMinimap));
             top.Add(HeaderButton("Menú", OpenMenu)); header.Add(top);
@@ -545,6 +568,13 @@ namespace RiskAI
                 progress.style.width = Length.Percent(Mathf.Clamp01(amount) * 100);
             }
 
+        }
+        void AddGoldDisplay(VisualElement parent)
+        {
+            var row=new VisualElement { name="Gold resource",tooltip="Oro disponible · ingresos de la próxima ronda" };
+            RtsUiStyle.Row(row);row.style.flexGrow=1;row.style.marginLeft=8;row.Add(new RtsGoldIcon());
+            goldLabel=HeaderLabel(hud.Gold+" ORO · +"+hud.Income);goldLabel.name="HUD gold";
+            goldLabel.style.color=RtsUiStyle.Gold;goldLabel.style.marginLeft=3;row.Add(goldLabel);parent.Add(row);
         }
 
         static readonly Dictionary<string, Texture2D> portraitCache = new Dictionary<string, Texture2D>();

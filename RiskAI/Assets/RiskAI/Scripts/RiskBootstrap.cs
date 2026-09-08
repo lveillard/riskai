@@ -97,6 +97,7 @@ namespace RiskAI
             gameObject.AddComponent<StrategicMapView>().Initialize(session,camera,terrain.transform);
             startup.Mark("territory_atlas");
             gameObject.AddComponent<BattleHud>().Initialize(session,controller,camera);
+            if(BattleSession.CountdownForNewMatch)session.BeginStartCountdown();
             startup.Mark("ready");
         }
     }

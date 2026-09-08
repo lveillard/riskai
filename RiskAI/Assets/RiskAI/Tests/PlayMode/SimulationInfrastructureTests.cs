@@ -108,6 +108,33 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator FollowStopsWhenItsEntityDiesAndDoesNotAttachToThePooledReplacement()
+        {
+            var follower = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, new Vector3(-30, 0, -16));
+            var leader = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, new Vector3(-28, 0, -16));
+            StopBackgroundUnits(follower, leader);
+            int retiredId = leader.EntityId;
+            GameObject pooledObject = leader.gameObject;
+            Vector3 leaderPosition = leader.transform.position;
+
+            follower.Follow(leader);
+            Assert.That(follower.IsIdle, Is.False);
+            leader.TakeDamage(10000, 1);
+            Assert.That(battle.FindTarget(retiredId), Is.Null);
+
+            yield return new WaitForSecondsRealtime(.3f);
+            Assert.That(follower.IsIdle, Is.True, "Follow must end as soon as the stored entity identity leaves the battle.");
+
+            yield return new WaitForSecondsRealtime(1.5f);
+            var replacement = battle.Spawn(0, UnitKind.Footman, leaderPosition + Vector3.right * 4);
+            Assert.That(replacement, Is.Not.Null);
+            Assert.That(replacement.gameObject, Is.SameAs(pooledObject), "The fixture must exercise reuse of the followed GameObject.");
+            Assert.That(replacement.EntityId, Is.Not.EqualTo(retiredId));
+            yield return new WaitForSecondsRealtime(.3f);
+            Assert.That(follower.IsIdle, Is.True, "A pooled actor with a fresh identity must not inherit the old Follow order.");
+        }
+
+        [UnityTest]
         public IEnumerator SourceWeaponDeliveryControlsImpactInsteadOfDamageCategory()
         {
             battle.Combat.PresentationEnabled = false;

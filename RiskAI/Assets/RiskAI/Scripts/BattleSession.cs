@@ -19,6 +19,8 @@ namespace RiskAI
         public static AiDifficulty DifficultyForNewMatch = AiDifficulty.Relaxed;
         public static int SeedForNewMatch = System.Environment.TickCount & int.MaxValue;
         public static int PlayerCountForNewMatch = PlayerRules.MaxPlayers;
+        // Frontend opts real matches in; isolated simulation fixtures do not wait.
+        public static bool CountdownForNewMatch;
         public int Seed { get; private set; }
         public int PlayerCount { get; private set; }
         public StartLayout Layout { get; private set; }
@@ -61,7 +63,12 @@ namespace RiskAI
         int nextEntityId;
         System.Action<float> tickWorld;
         public int Winner { get; private set; } = -1;
-        public bool Paused { get; private set; }
+        bool manuallyPaused;
+        int countdownStartFrame;
+        double countdownLastTime;
+        public float StartCountdownRemaining { get; private set; }
+        public bool IsStarting => StartCountdownRemaining>0;
+        public bool Paused => manuallyPaused || IsStarting;
         public bool AiEnabled = true;
         System.Random combatRandom;
         public float RollDamage(UnitProfile profile)=>profile.RollDamage(combatRandom);
@@ -139,10 +146,28 @@ namespace RiskAI
             for(int i=0;i<Units.Count;i++) if(Units[i]) Units[i].SetSimulationPaused(suspended);
         }
         public void Message(string message) { Messages.Insert(0, message); if (Messages.Count > 5) Messages.RemoveAt(5); }
-        public void TogglePause() { if (Winner >= 0) return; Paused = !Paused; SuspendMovement(Paused); }
+        public void TogglePause() { if (Winner >= 0 || IsStarting) return; manuallyPaused = !manuallyPaused; SuspendMovement(Paused); }
+
+        public void BeginStartCountdown(float seconds=3)
+        {
+            if(Clock.TickCount>0 || Winner>=0 || seconds<=0 || float.IsNaN(seconds) || float.IsInfinity(seconds))return;
+            StartCountdownRemaining=seconds;countdownStartFrame=Time.frameCount;
+            countdownLastTime=Time.realtimeSinceStartupAsDouble;SuspendMovement(true);
+        }
 
         void Update()
         {
+            if(IsStarting)
+            {
+                // The scene-building frame may be long. Show the first number before
+                // consuming real time, and never feed pre-match time into simulation.
+                if(Time.frameCount==countdownStartFrame)return;
+                double now=Time.realtimeSinceStartupAsDouble;
+                StartCountdownRemaining=Mathf.Max(0,StartCountdownRemaining-(float)(now-countdownLastTime));
+                countdownLastTime=now;
+                if(!IsStarting)SuspendMovement(Paused);
+                return;
+            }
             Clock.Advance(Time.deltaTime, Paused || Winner >= 0, tickWorld);
         }
         internal void TickRules(float delta)

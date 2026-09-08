@@ -72,6 +72,7 @@ namespace RiskAI.Tests
         {
             var document=hud.GetComponent<UIDocument>();Assert.That(document,Is.Not.Null);
             var gold=document.rootVisualElement.Q<Label>("HUD gold");Assert.That(gold,Is.Not.Null,"The retained header needs a stable gold label for model-driven refresh verification.");
+            Assert.That(document.rootVisualElement.Q<RtsGoldIcon>("Gold coin icon"),Is.Not.Null);
             long tickBefore=battle.Clock.TickCount;
             int granted=997;battle.Economy.Grant(0,granted-battle.Economy.Gold[0]);
             if(!battle.Paused)battle.TogglePause();

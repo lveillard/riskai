@@ -136,6 +136,39 @@ namespace RiskAI.Tests
    yield return new WaitForSecondsRealtime(1.6f);
    Assert.That(coastal.Health,Is.LessThan(before),"The galley should resolve a projectile against its coastal target.");
   }
+  [UnityTest] public IEnumerator GalleyAttackMoveResumesItsOriginalDestinationAfterCombat()
+  {
+   var home=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
+   var destination=naval.Harbors.Where(h=>h!=home&&h.CanLaunch).OrderBy(h=>(h.Berth-home.Berth).sqrMagnitude).First();
+   var galley=BattleTestScenario.Ship(naval,0,ShipKind.Galley,home.Berth);
+   var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,home.Landing);
+   foreach(var tower in battle.Towers.ToArray())if(tower)tower.gameObject.SetActive(false);
+   foreach(var ship in naval.Ships.ToArray())if(ship&&ship!=galley)ship.gameObject.SetActive(false);
+   foreach(var unit in battle.Units.ToArray())if(unit&&unit!=enemy)unit.gameObject.SetActive(false);
+   enemy.HoldPosition();galley.MoveTo(destination.Berth,true);
+   Assert.That(galley.LastActionError,Is.Null);
+   Assert.That(galley.IsAtOrRoutingTo(destination.Berth),Is.True);
+   battle.Spatial.Rebuild(battle.Targets,battle.Units);galley.SimTick(.05f);
+   Assert.That(galley.CurrentTarget,Is.SameAs(enemy),"Attack-move must interrupt for a nearby enemy.");
+
+   enemy.TakeDamage(10000,galley.Team,galley);galley.SimTick(.05f);
+   Assert.That(galley.CurrentTarget,Is.Null);
+   Assert.That(galley.IsAtOrRoutingTo(destination.Berth),Is.True,"After combat the ship must resume the destination saved by attack-move.");
+   yield return null;
+  }
+  [UnityTest] public IEnumerator GalleyDamageReactionKeepsAnExplicitAttackTarget()
+  {
+   var home=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
+   var galley=BattleTestScenario.Ship(naval,0,ShipKind.Galley,home.Berth);
+   var orderedTarget=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,home.Landing);
+   var attacker=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,home.Landing+Vector3.right*1.5f);
+   orderedTarget.HoldPosition();attacker.HoldPosition();galley.Attack(orderedTarget);
+   Assert.That(galley.CurrentTarget,Is.SameAs(orderedTarget));
+
+   galley.TakeDamage(1,attacker.Team,attacker);
+   Assert.That(galley.CurrentTarget,Is.SameAs(orderedTarget),"Retaliation must not replace a living explicit attack target.");
+   yield return null;
+  }
   [UnityTest] public IEnumerator RiverHasDownhillBedAndIslandsAreSeparateLandmasses()
   {
    for(int i=0;i<TerrainHydrology.Samples.Length-1;i++)

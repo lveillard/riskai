@@ -15,7 +15,7 @@ namespace RiskAI
         public int SurfaceCount { get; private set; }
         public TerritoryAtlas Atlas { get; private set; }
         public int SelectedCountry { get; private set; }=-1;
-        public float EnterZoom => 72;
+        public float EnterZoom => 84;
         Camera cam; int tacticalMask; Color tacticalBackground;
         Material strategic,inspection;GameObject inspectionRoot;
         float nextRefresh;

@@ -4,6 +4,36 @@ using UnityEngine.UIElements;
 
 namespace RiskAI
 {
+    /// <summary>Shared retained coin mark; sharp at every UI scale without an emoji font.</summary>
+    public sealed class RtsGoldIcon : VisualElement
+    {
+        public RtsGoldIcon()
+        {
+            name="Gold coin icon";tooltip="Oro";pickingMode=PickingMode.Ignore;
+            style.width=23;style.height=23;style.flexShrink=0;
+            generateVisualContent+=Paint;
+        }
+        void Paint(MeshGenerationContext context)
+        {
+            var p=context.painter2D;var r=contentRect;
+            var center=r.center;float radius=Mathf.Min(r.width,r.height)*.37f;
+            Ring(p,center+new Vector2(1,2),radius,new Color(.48f,.27f,.055f),new Color(.23f,.13f,.04f));
+            Ring(p,center,radius,new Color(.92f,.66f,.17f),new Color(1f,.84f,.39f));
+            Ring(p,center,radius*.69f,new Color(.82f,.51f,.095f),new Color(.64f,.37f,.055f));
+            RtsOrnamentDrawing.Diamond(p,center,radius*.4f,new Color(1,.84f,.38f));
+        }
+        static void Ring(Painter2D p,Vector2 center,float radius,Color fill,Color edge)
+        {
+            p.fillColor=fill;p.strokeColor=edge;p.lineWidth=1;p.BeginPath();
+            for(int i=0;i<24;i++)
+            {
+                float angle=i*Mathf.PI/12;var point=center+new Vector2(Mathf.Cos(angle),Mathf.Sin(angle))*radius;
+                if(i==0)p.MoveTo(point);else p.LineTo(point);
+            }
+            p.ClosePath();p.Fill();p.Stroke();
+        }
+    }
+
     // One shared nine-sliced material texture, with retained vector fallback.
     // No Update loop, per-panel texture allocation or gameplay dependency.
     public sealed class RtsOrnamentPanel : VisualElement

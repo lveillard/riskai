@@ -74,6 +74,11 @@ namespace RiskAI
             BattleSession.SeedForNewMatch = seed;
             BattleSession.ModeForNewMatch = BattleSession.VictoryMode.Conquest;
             ImportedLandscapeAugment.Enabled = sourceMountains;
+            BattleSession.CountdownForNewMatch = true;
+            foreach(var argument in LaunchArguments.Get())
+                if(argument.StartsWith("--riskai-capture",StringComparison.OrdinalIgnoreCase) ||
+                    argument.StartsWith("--riskai-probe",StringComparison.OrdinalIgnoreCase))
+                    BattleSession.CountdownForNewMatch=false;
             StartCoroutine(LoadBattlefield());
         }
 

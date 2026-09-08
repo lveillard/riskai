@@ -9,7 +9,7 @@ namespace RiskAI
     public sealed class Soldier : CombatTarget
     {
         enum OrderMode { Idle, Move, AttackMove, Attack, Hold, Patrol, Follow }
-        struct Order { public Vector3 Point; public OrderMode Mode; public Soldier Target; }
+        struct Order { public Vector3 Point; public OrderMode Mode; public int TargetId; }
         public UnitKind Kind { get; private set; }
         public int OriginCountry { get; set; } = -1;
         public override float MaxHealth => BattleRules.Health(Kind);
@@ -32,7 +32,7 @@ namespace RiskAI
         public Transform LeftLeg, RightLeg, Weapon;
         internal BattleSession session;
         CombatTarget target, strikeTarget;
-        Soldier followTarget;
+        int followTargetId;
         LineRenderer ring;
         SoldierAnimator visualAnimator;
         OrderMode mode;
@@ -59,7 +59,7 @@ namespace RiskAI
             session=battle; Team=team; Kind=kind; Health=MaxHealth; OriginCountry=-1;
             Garrison=null; simulationPaused=false; enabled=true;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
-            mode=OrderMode.Idle; target=strikeTarget=followTarget=null; orders.Clear();
+            mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; orders.Clear();
             nextPath=nextAttack=attackFlash=stalled=0; strikeAt=-1; wasFighting=false;
             humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
             bool first=!Agent;
@@ -120,7 +120,7 @@ namespace RiskAI
         internal void ReleaseGarrison(CityClaimZone zone)
         {
             if(Garrison!=zone)return;
-            Garrison=null; orders.Clear(); CancelStrike(); target=followTarget=null; mode=OrderMode.Idle;
+            Garrison=null; orders.Clear(); CancelStrike(); target=null; followTargetId=0; mode=OrderMode.Idle;
             anchor=destination=transform.position; nextSense=0; wasFighting=false;
             if(!Agent || !Agent.enabled)return;
             Agent.updatePosition=true; Agent.updateRotation=true;
@@ -185,7 +185,7 @@ namespace RiskAI
         {
             ClearHumanMoveTelemetry(true);
             CancelStrike(); mode = order.Mode; destination = order.Point; patrolOrigin = anchor = transform.position;
-            target = null; followTarget = order.Target; stalled = 0; nextSense = 0; wasFighting = false;
+            target = null; followTargetId = order.TargetId; stalled = 0; nextSense = 0; wasFighting = false;
             ResumePath();
         }
         void ResumePath()
@@ -209,19 +209,19 @@ namespace RiskAI
         public void Attack(CombatTarget enemy)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !enemy || enemy.Team == Team || !Agent.enabled || !Agent.isOnNavMesh) return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false;
+            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); followTargetId=0; mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false;
         }
         public void Follow(Soldier ally)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !ally || ally == this || ally.Team != Team) return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); Apply(new Order { Mode = OrderMode.Follow, Target = ally });
+            orders.Clear(); ClearHumanMoveTelemetry(true); Apply(new Order { Mode = OrderMode.Follow, TargetId = ally.EntityId });
         }
         public void Stop() => Stand(OrderMode.Idle);
         public void HoldPosition() => Stand(OrderMode.Hold);
         void Stand(OrderMode orderMode)
         {
             if(IsGarrison)return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = followTarget = null; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false;
+            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false;
             if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); Agent.isStopped = false; }
         }
         void Complete(bool failed=false)
@@ -424,7 +424,8 @@ namespace RiskAI
             Agent.isStopped = false;
             if (mode == OrderMode.Follow)
             {
-                if (!followTarget) { Complete(); return; }
+                var followTarget = session.FindTarget(followTargetId) as Soldier;
+                if (!followTarget || !followTarget.IsAlive || followTarget.Team != Team) { followTargetId = 0; Complete(); return; }
                 if (session.BattleTime >= nextPath) { nextPath = session.BattleTime + .2f; Agent.stoppingDistance = 2; RequestAutonomousPath(followTarget.transform.position); }
                 if (followTarget.CurrentTarget && Vector3.Distance(transform.position, followTarget.CurrentTarget.transform.position) < 9) SetTarget(followTarget.CurrentTarget);
                 return;
