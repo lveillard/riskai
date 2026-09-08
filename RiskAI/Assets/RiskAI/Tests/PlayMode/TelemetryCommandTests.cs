@@ -96,6 +96,126 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator MovementStagesObserveRealNavigationAndSurviveWindowConsumption()
+        {
+            battle.enabled = false;
+            var home = battle.Towns.First(town => town.State.Owner == 0);
+            var human = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, ClearDestination(home.Rally));
+            human.HoldPosition();
+            var start = human.transform.position;
+            var destination = ClearDestination(start);
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, human.EntityId, UnitCommandKind.Move,
+                destination.x, destination.y, destination.z)), Is.True);
+            battle.Commands.Tick();
+
+            var applied = battle.Commands.ConsumeTelemetry();
+            Assert.That(applied.HumanMoveOutstanding, Is.EqualTo(1));
+            Assert.That(applied.HumanRouteReadyCount, Is.Zero, "Application alone is not an observed route.");
+            Assert.That(battle.Commands.ConsumeTelemetry().HumanMoveOutstanding, Is.EqualTo(1));
+            float deadline = Time.realtimeSinceStartup + 4;
+            while (Vector3.Distance(start, human.transform.position) < 1 && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+                Step();
+            }
+            Assert.That(Vector3.Distance(start, human.transform.position), Is.GreaterThanOrEqualTo(1),
+                "The real NavMeshAgent must move; writing counters is not the acceptance condition.");
+            var motion = battle.Commands.ConsumeTelemetry();
+            Assert.That(motion.HumanRouteReadyCount, Is.EqualTo(1));
+            Assert.That(motion.HumanSpeedCount, Is.EqualTo(1));
+            Assert.That(motion.HumanFirstMoveCount, Is.EqualTo(1));
+            Assert.That(motion.HumanRouteToSpeedCount, Is.EqualTo(1));
+            Assert.That(motion.HumanSpeedToDirectedCount, Is.EqualTo(1));
+            Assert.That(motion.HumanMoveOutstanding, Is.Zero);
+            Assert.That(motion.HumanSubmitToSpeedMilliseconds, Is.LessThanOrEqualTo(motion.HumanFirstMoveMilliseconds + .01));
+            Assert.That(motion.HumanApplyToRouteMilliseconds, Is.GreaterThanOrEqualTo(0));
+            Assert.That(motion.HumanRouteToSpeedMilliseconds, Is.GreaterThanOrEqualTo(0));
+            Assert.That(motion.HumanSpeedToDirectedMilliseconds, Is.GreaterThanOrEqualTo(0));
+            var cleared = battle.Commands.ConsumeTelemetry();
+            Assert.That(cleared.HumanRouteReadyCount + cleared.HumanSpeedCount + cleared.HumanFirstMoveCount, Is.Zero);
+        }
+
+        [UnityTest]
+        public IEnumerator OutstandingMovementClearsOnceOnHoldAndDisable()
+        {
+            battle.enabled = false;
+            var home = battle.Towns.First(town => town.State.Owner == 0);
+            var first = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, ClearDestination(home.Rally));
+            var second = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, ClearDestination(home.Rally));
+            foreach (var unit in new[] { first, second })
+            {
+                unit.HoldPosition();
+                var destination = ClearDestination(unit.transform.position);
+                Assert.That(battle.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Move,
+                    destination.x, destination.y, destination.z)), Is.True);
+            }
+            battle.Commands.Tick();
+            Assert.That(battle.Commands.ConsumeTelemetry().HumanMoveOutstanding, Is.EqualTo(2));
+            first.HoldPosition();
+            first.HoldPosition();
+            second.gameObject.SetActive(false);
+            var cancelled = battle.Commands.ConsumeTelemetry();
+            Assert.That(cancelled.HumanFirstMoveCancelled, Is.EqualTo(2));
+            Assert.That(cancelled.HumanMoveOutstanding, Is.Zero);
+            Assert.That(cancelled.HumanSpeedCount, Is.Zero);
+            Assert.That(battle.Commands.ConsumeTelemetry().HumanMoveOutstanding, Is.Zero);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator SpeedObservationDoesNotWaitForVelocityTowardTheFinalDestination()
+        {
+            battle.enabled = false;
+            var home = battle.Towns.First(town => town.State.Owner == 0);
+            var human = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, ClearDestination(home.Rally));
+            human.HoldPosition();
+            var destination = ClearDestination(human.transform.position);
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, human.EntityId, UnitCommandKind.Move,
+                destination.x, destination.y, destination.z)), Is.True);
+            battle.Commands.Tick();
+            human.Agent.isStopped = true;
+            float deadline = Time.realtimeSinceStartup + 3;
+            while (human.Agent.pathPending && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(human.Agent.pathPending, Is.False);
+            Assert.That(human.Agent.hasPath, Is.True);
+            var toward = destination - human.transform.position;
+            toward.y = 0;
+            toward.Normalize();
+            // Controlled velocity observations distinguish the two predicates; this
+            // is not a claim that the fixture generated a natural detour or crowd.
+            human.Agent.velocity = -toward;
+            Assert.That(Vector3.Dot(human.Agent.velocity, toward), Is.LessThan(0));
+            human.SimTick((float)SimClock.StepSeconds);
+            var away = battle.Commands.ConsumeTelemetry();
+            Assert.That(away.HumanSpeedCount, Is.EqualTo(1));
+            Assert.That(away.HumanFirstMoveCount, Is.Zero);
+            Assert.That(away.HumanMoveOutstanding, Is.EqualTo(1));
+            human.Agent.velocity = toward;
+            human.SimTick((float)SimClock.StepSeconds);
+            var directed = battle.Commands.ConsumeTelemetry();
+            Assert.That(directed.HumanSpeedCount, Is.Zero, "The first-speed observation must not be counted twice.");
+            Assert.That(directed.HumanFirstMoveCount, Is.EqualTo(1));
+            Assert.That(directed.HumanSpeedToDirectedCount, Is.EqualTo(1));
+            Assert.That(directed.HumanMoveOutstanding, Is.Zero);
+        }
+
+        [UnityTest]
+        public IEnumerator MovementStageActiveTimeExcludesAnObservedPause()
+        {
+            double start = Time.realtimeSinceStartupAsDouble;
+            battle.TogglePause();
+            battle.Commands.SetTelemetryPauseState(true);
+            double before = battle.Commands.HumanMoveActiveSeconds(start, 0);
+            yield return new WaitForSecondsRealtime(.15f);
+            double during = battle.Commands.HumanMoveActiveSeconds(start, 0);
+            Assert.That(during, Is.EqualTo(before).Within(.01), "Observed pause must not age any paired movement stage.");
+            battle.TogglePause();
+            battle.Commands.SetTelemetryPauseState(false);
+            var telemetry = battle.Commands.ConsumeTelemetry();
+            Assert.That(telemetry.ObservedPauseMilliseconds, Is.GreaterThanOrEqualTo(140));
+        }
+
         static Vector3 ClearDestination(Vector3 origin)
         {
             var directions = new[] { Vector3.forward, Vector3.back, Vector3.right, Vector3.left };

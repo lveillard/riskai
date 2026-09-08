@@ -1,6 +1,6 @@
 # Observing a live RiskAI runtime log
 
-The v0.19 player keeps this passive reader compatible. Diagnostics also report
+The v0.21 player keeps this passive reader compatible. Diagnostics also report
 `unityAllocatedB` (Unity's tracked allocated memory, not total process/WASM
 memory). Startup emits `RISKAI_STARTUP` phase timings with allocated, reserved
 and managed memory; these separate map generation, navigation and UI startup
@@ -35,13 +35,13 @@ From the repository root:
 
 ```powershell
 python scripts/observe_runtime.py
-python scripts/observe_runtime.py RiskAI/Logs/v17-opened.log --last 5
+python scripts/observe_runtime.py RiskAI/Logs/v21-opened.log --last 5
 python scripts/observe_runtime.py --follow --duration 90
 python scripts/observe_runtime.py --json
 ```
 
 The positional path is optional and defaults to
-`RiskAI/Logs/v17-opened.log`, written by `Play-RiskAI.cmd`. `--follow` polls once per second; `--duration`
+`RiskAI/Logs/v21-opened.log`, written by `Play-RiskAI.cmd`. `--follow` polls once per second; `--duration`
 bounds it for scripts or a short observation. With `--json --follow`, each
 new record is emitted as one JSON Lines object. Snapshot JSON includes the latest
 diagnostic windows and recent rejection/route events.
@@ -101,6 +101,35 @@ also include:
   per-unit snapshot at report time, with age measured in simulation time. They
   do not count all pending routes that occurred during the 30-second window.
   `navIterationsPerFrame` reports the active Unity asynchronous path budget.
+
+## Movement stages added in v0.21
+
+`humanMoveOutstanding` is the number of eligible movement observations still
+open, even across report windows. Cancellation or completion closes one;
+reading a report does not reset this live count.
+
+- `routeReadyHumanObservedCount`, `applyRouteReadyHumanActiveAvgMs/MaxMs`: application
+  to the first simulation-tick observation of a non-pending route. This is
+  not the exact solver completion timestamp and does not imply a complete
+  reachable path.
+- `speedHumanObservedCount`, `submitSpeedHumanActiveAvgMs/MaxMs`: accepted
+  submission to the first horizontal speed above 0.2 units/s, regardless of
+  whether that velocity points toward the final destination.
+- `routeReadySpeedHumanPairedCount`, `routeReadySpeedHumanActiveAvgMs/MaxMs`: paired
+  interval on the same command, only when a route-ready observation occurred
+  before or alongside its first speed crossing.
+- `speedDirectedHumanPairedCount`, `speedDirectedHumanActiveAvgMs/MaxMs`:
+  paired interval from first speed crossing to the original direction-qualified
+  first-move condition. A detour may move away from the destination initially.
+
+The original `firstMoveHuman*` fields remain compatible. Both old and new
+observations are sampled in the simulation tick and exclude only observed
+pauses. They are velocity observations, not per-command transform displacement.
+Counts can land in different reporting windows; do not subtract independently
+averaged stages or compare them to all applied commands (which include Hold).
+Desired/actual velocity and navigation traces are still needed before assigning
+post-route delay specifically to avoidance. No movement or navigation budget is
+changed by these counters.
 
 ## Reading limits
 
