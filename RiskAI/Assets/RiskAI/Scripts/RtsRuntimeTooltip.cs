@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.UIElements;
 
 namespace RiskAI
@@ -12,6 +14,8 @@ namespace RiskAI
     public sealed class RtsRuntimeTooltip : IDisposable
     {
         const long DelayMilliseconds = 350;
+        const long HoldMilliseconds = 500;
+        const float HoldSlop = 12f;
         const float Offset = 14f;
         const float Edge = 8f;
         const float MaximumWidth = 320f;
@@ -23,6 +27,14 @@ namespace RiskAI
         string pendingText;
         Vector2 pointerPosition;
         bool disposed;
+        int holdPointer = -1;
+        int suppressedPointer = -1;
+        Vector2 holdPosition;
+        PointerCancelEvent cancelPress;
+        ButtonControl holdPress;
+        TouchControl holdTouch;
+        VisualElement captureTarget;
+        bool dispatchingCancel;
 
         public RtsRuntimeTooltip(VisualElement rootVisualElement)
         {
@@ -49,38 +61,197 @@ namespace RiskAI
             label.style.paddingBottom = 6;
             root.Add(label);
 
-            root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+            root.RegisterCallback<PointerMoveEvent>(OnPointerMove,TrickleDown.TrickleDown);
             root.RegisterCallback<PointerOverEvent>(OnPointerOver);
             root.RegisterCallback<PointerDownEvent>(OnPointerDown,TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerUpEvent>(OnPointerUp,TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerCancelEvent>(OnPointerCancel,TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerCaptureOutEvent>(OnCaptureOut,TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerCaptureEvent>(OnCapture,TrickleDown.TrickleDown);
+            root.RegisterCallback<ClickEvent>(OnClick,TrickleDown.TrickleDown);
             root.RegisterCallback<WheelEvent>(OnWheel,TrickleDown.TrickleDown);
             label.RegisterCallback<GeometryChangedEvent>(OnGeometry);
             root.RegisterCallback<PointerLeaveEvent>(OnPointerLeave);
             root.RegisterCallback<DetachFromPanelEvent>(OnDetach);
+            Application.focusChanged += OnFocusChanged;
+            InputSystem.onAfterUpdate += OnAfterInputUpdate;
         }
 
         /// <summary>Call before a HUD SetContent rebuild clears its tooltip-bearing descendants.</summary>
-        public void SetContentChanged() => Hide();
+        public void SetContentChanged() => CancelHold();
 
         void OnPointerMove(PointerMoveEvent evt)
         {
-            if(!SupportsHover(evt.pointerType)) return;
+            if(evt.pointerId == holdPointer)
+            {
+                if(evt.pressedButtons != 1 || ((Vector2)evt.position-holdPosition).sqrMagnitude > HoldSlop*HoldSlop)
+                    EndHold(); // Leave native drag/scroll handling intact.
+                return;
+            }
+            if(!SupportsHover(evt.pointerType) || evt.pressedButtons != 0 || holdPointer >= 0) return;
             SetPending(evt.target as VisualElement, evt.position);
         }
 
         void OnPointerOver(PointerOverEvent evt)
         {
-            if(!SupportsHover(evt.pointerType)) return;
+            if(!SupportsHover(evt.pointerType) || evt.pressedButtons != 0 || holdPointer >= 0) return;
             SetPending(evt.target as VisualElement, evt.position);
         }
 
-        void OnPointerDown(PointerDownEvent evt) => Hide();
-        void OnWheel(WheelEvent evt) => Hide();
-        void OnGeometry(GeometryChangedEvent evt) => Place();
-        void OnTargetDetached(DetachFromPanelEvent evt) => Hide();
-        void OnPointerLeave(PointerLeaveEvent evt) => Hide();
-        void OnDetach(DetachFromPanelEvent evt) => Hide();
+        void OnPointerDown(PointerDownEvent evt)
+        {
+            bool anotherHold = holdPointer >= 0;
+            CancelHold();
+            if(evt.pointerId == suppressedPointer) suppressedPointer = -1;
+            if(anotherHold || evt.button != 0 || evt.pressedButtons != 1 ||
+                (evt.pointerType != UnityEngine.UIElements.PointerType.touch && evt.pointerType != UnityEngine.UIElements.PointerType.pen)) return;
+            var target = evt.target as VisualElement;
+            if(string.IsNullOrWhiteSpace(ResolveText(target)) || ContactCount() > 1) return;
+            holdPointer = evt.pointerId;
+            holdPosition = evt.position;
+            FindHeldControl(evt.pointerType);
+            cancelPress = PointerCancelEvent.GetPooled(evt);
+            if(HasBarrel(holdPress?.device as Pen))
+            {
+                // Default UI bindings do not expose barrel buttons. Reject a
+                // modified tip press before it arms the target's Clickable.
+                evt.StopImmediatePropagation();
+                CancelHold();
+                return;
+            }
+            SetPending(target, evt.position, HoldMilliseconds);
+        }
 
-        void SetPending(VisualElement target, Vector2 position)
+        void OnPointerUp(PointerUpEvent evt)
+        {
+            if(evt.pointerId == suppressedPointer) evt.StopImmediatePropagation();
+            if(evt.pointerId == holdPointer) EndHold();
+        }
+
+        void OnClick(ClickEvent evt)
+        {
+            if(evt.pointerId == suppressedPointer) evt.StopImmediatePropagation();
+        }
+
+        void OnPointerCancel(PointerCancelEvent evt)
+        {
+            if(!dispatchingCancel && evt.pointerId == holdPointer) EndHold();
+        }
+
+        void OnCaptureOut(PointerCaptureOutEvent evt)
+        {
+            if(!dispatchingCancel && evt.pointerId == holdPointer) EndHold();
+        }
+
+        void OnCapture(PointerCaptureEvent evt)
+        {
+            if(evt.pointerId != holdPointer || dispatchingCancel) return;
+            UnwatchCapture();
+            captureTarget = evt.target as VisualElement;
+            if(captureTarget == null || captureTarget == root) { captureTarget = null; return; }
+            // Captured pointer events skip ancestors in runtime UI Toolkit.
+            // Observe the owner's target phase without changing native capture.
+            captureTarget.RegisterCallback<PointerMoveEvent>(OnPointerMove,TrickleDown.TrickleDown);
+            captureTarget.RegisterCallback<PointerUpEvent>(OnPointerUp,TrickleDown.TrickleDown);
+            captureTarget.RegisterCallback<PointerCancelEvent>(OnPointerCancel,TrickleDown.TrickleDown);
+        }
+
+        void UnwatchCapture()
+        {
+            if(captureTarget == null) return;
+            captureTarget.UnregisterCallback<PointerMoveEvent>(OnPointerMove,TrickleDown.TrickleDown);
+            captureTarget.UnregisterCallback<PointerUpEvent>(OnPointerUp,TrickleDown.TrickleDown);
+            captureTarget.UnregisterCallback<PointerCancelEvent>(OnPointerCancel,TrickleDown.TrickleDown);
+            captureTarget = null;
+        }
+
+        void OnWheel(WheelEvent evt) => CancelHold();
+        void OnGeometry(GeometryChangedEvent evt) => Place();
+        void OnTargetDetached(DetachFromPanelEvent evt) => CancelHold();
+        void OnPointerLeave(PointerLeaveEvent evt) { if(!dispatchingCancel) EndHold(); }
+        void OnDetach(DetachFromPanelEvent evt) => CancelHold();
+        void OnFocusChanged(bool focused) { if(!focused) CancelHold(); }
+
+        void OnAfterInputUpdate()
+        {
+            if(holdPointer < 0) return;
+            // A second finger may land outside this panel. InputSystem also maps
+            // canceled contacts to pointer-up, so observe cancellation before UI dispatch.
+            if(ContactCount() > 1 || (holdPress != null && !holdPress.device.added) ||
+                (holdTouch != null && holdTouch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Canceled) ||
+                HasBarrel(holdPress?.device as Pen))
+                CancelHold();
+        }
+
+        static bool HasBarrel(Pen pen) => pen != null &&
+            (pen.firstBarrelButton.isPressed || pen.secondBarrelButton.isPressed ||
+             pen.thirdBarrelButton.isPressed || pen.fourthBarrelButton.isPressed);
+
+        static int ContactCount()
+        {
+            int count = 0;
+            foreach(var device in InputSystem.devices)
+            {
+                if(device is Touchscreen screen)
+                    foreach(var touch in screen.touches) { if(touch.press.isPressed) count++; }
+                else if(device is Pen pen && pen.tip.isPressed) count++;
+            }
+            return count;
+        }
+
+        void FindHeldControl(string pointerType)
+        {
+            foreach(var device in InputSystem.devices)
+            {
+                if(pointerType == UnityEngine.UIElements.PointerType.touch && device is Touchscreen screen)
+                    foreach(var touch in screen.touches)
+                        if(touch.press.isPressed) { holdTouch = touch; holdPress = touch.press; return; }
+                if(pointerType == UnityEngine.UIElements.PointerType.pen && device is Pen pen && pen.tip.isPressed)
+                { holdPress = pen.tip; return; }
+            }
+        }
+
+        void CancelNativePress()
+        {
+            if(cancelPress == null) return;
+            var cancellation = cancelPress;
+            cancelPress = null;
+            suppressedPointer = holdPointer;
+            dispatchingCancel = true;
+            try
+            {
+                // Clickable invokes on pointer-up, whereas ClickDetector independently
+                // synthesizes ClickEvent in PostDispatch. A real cancel resets both,
+                // including when this helper is disposed before the physical release.
+                if(root.panel != null)
+                {
+                    var capture = root.panel.GetCapturingElement(holdPointer) as VisualElement;
+                    cancellation.target = capture ?? (pendingTarget?.panel == root.panel ? pendingTarget : root);
+                    ((VisualElement)cancellation.target).SendEvent(cancellation);
+                }
+            }
+            finally { dispatchingCancel = false; cancellation.Dispose(); }
+        }
+
+        void CancelHold()
+        {
+            if(dispatchingCancel) return;
+            CancelNativePress();
+            EndHold();
+        }
+
+        void EndHold()
+        {
+            UnwatchCapture();
+            holdPointer = -1;
+            holdPress = null;
+            holdTouch = null;
+            cancelPress?.Dispose();
+            cancelPress = null;
+            Hide();
+        }
+
+        void SetPending(VisualElement target, Vector2 position, long delay = DelayMilliseconds)
         {
             pointerPosition=position;
             if(target==pendingTarget&&pendingText!=null)
@@ -102,13 +273,18 @@ namespace RiskAI
             pendingTarget = target;
             pendingTarget.RegisterCallback<DetachFromPanelEvent>(OnTargetDetached);
             pendingText = text;
-            pendingShow = root.schedule.Execute(ShowPending).StartingIn(DelayMilliseconds);
+            pendingShow = root.schedule.Execute(ShowPending).StartingIn(delay);
         }
 
         void ShowPending()
         {
             pendingShow = null;
             if(disposed || pendingTarget == null || pendingTarget.panel!=root.panel || !root.Contains(pendingTarget) || string.IsNullOrWhiteSpace(pendingText)) return;
+            if(holdPointer >= 0)
+            {
+                if(holdPress != null && !holdPress.isPressed) { EndHold(); return; }
+                CancelNativePress();
+            }
             label.style.maxWidth=Mathf.Max(1,Mathf.Min(MaximumWidth,root.worldBound.width-Edge*2));
             label.text = pendingText;
             label.BringToFront();
@@ -164,10 +340,17 @@ namespace RiskAI
         {
             if(disposed) return;
             disposed = true;
-            Hide();
-            root.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
+            CancelHold();
+            Application.focusChanged -= OnFocusChanged;
+            InputSystem.onAfterUpdate -= OnAfterInputUpdate;
+            root.UnregisterCallback<PointerMoveEvent>(OnPointerMove,TrickleDown.TrickleDown);
             root.UnregisterCallback<PointerOverEvent>(OnPointerOver);
             root.UnregisterCallback<PointerDownEvent>(OnPointerDown,TrickleDown.TrickleDown);
+            root.UnregisterCallback<PointerUpEvent>(OnPointerUp,TrickleDown.TrickleDown);
+            root.UnregisterCallback<PointerCancelEvent>(OnPointerCancel,TrickleDown.TrickleDown);
+            root.UnregisterCallback<PointerCaptureOutEvent>(OnCaptureOut,TrickleDown.TrickleDown);
+            root.UnregisterCallback<PointerCaptureEvent>(OnCapture,TrickleDown.TrickleDown);
+            root.UnregisterCallback<ClickEvent>(OnClick,TrickleDown.TrickleDown);
             root.UnregisterCallback<WheelEvent>(OnWheel,TrickleDown.TrickleDown);
             label.UnregisterCallback<GeometryChangedEvent>(OnGeometry);
             root.UnregisterCallback<PointerLeaveEvent>(OnPointerLeave);
