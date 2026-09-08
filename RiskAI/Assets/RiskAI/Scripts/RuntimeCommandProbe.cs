@@ -166,10 +166,10 @@ namespace RiskAI
 
             // Spawn only after warmup/stabilization, so tracked player units do not
             // alter the advanced-state simulation that the warmup intends to create.
-            var tracked = SpawnPlayerArchers(session,options.RecruitsPerPlayer);
+            var tracked = SpawnPlayerArchers(session,options.RecruitsPerPlayer,out var fixtureError);
             if (tracked.Count == 0)
             {
-                Finish(false, $"phase=fixture valid=false reason=no-player-zero-mobile-cohort map={BattleSession.MapForNewMatch} seed={session.Seed} warmupCompletedSimSeconds={warmupCompleted:F1}");
+                Finish(false, $"phase=fixture valid=false reason={fixtureError} map={BattleSession.MapForNewMatch} seed={session.Seed} warmupCompletedSimSeconds={warmupCompleted:F1}");
                 yield break;
             }
             // Let the scene and the synthetic cohort render before sampling. Without
@@ -253,6 +253,7 @@ namespace RiskAI
             RecordDisplacement(tracked);
             if (diagnostics) diagnostics.EndProbeMeasurement();
             float simulationDelta = session.BattleTime - simulationAtStart;
+            float measurementElapsedRealSeconds = Time.realtimeSinceStartup - realtimeAtStart;
             long applied = session.Commands.AppliedCount - appliedAtStart;
             long rejected = session.Commands.RejectedCount - rejectedAtStart;
             int moved = 0, survivingMovables = 0, unmovedSurvivors = 0;
@@ -272,13 +273,15 @@ namespace RiskAI
                 }
             }
 
-            bool completedMeasurement = session.Winner < 0 && simulationDelta > 30f && submittedMoves > 0;
+            bool completedMeasurement = session.Winner < 0 && simulationDelta > 30f && submittedMoves > 0 &&
+                measurementElapsedRealSeconds >= options.MeasurementRealtimeSeconds;
             bool passed = completedMeasurement && simulationDelta > 30f && applied > 10 && tracked.Count > 0 &&
-                moved >= 1 && survivingMovables >= 1 && unmovedSurvivors == 0;
+                moved >= 1 && survivingMovables >= 1 && unmovedSurvivors == 0 && rejected == 0 && session.Commands.PendingCount == 0;
             Finish(passed,
                 $"phase=measurement valid={completedMeasurement} winner={session.Winner} map={BattleSession.MapForNewMatch} seed={session.Seed} " +
                 $"warmupRequestedSimSeconds={options.WarmupSimulationSeconds:F1} warmupCompletedSimSeconds={warmupCompleted:F1} " +
                 $"measurementRequestedRealSeconds={options.MeasurementRealtimeSeconds:F1} simSecondsDelta={simulationDelta:F2} fixtureRecruitsPerPlayer={options.RecruitsPerPlayer} " +
+                $"measurementElapsedRealSeconds={measurementElapsedRealSeconds:F2} navBudget={NavMesh.pathfindingIterationsPerFrame} " +
                 $"applied={applied} rejected={rejected} queued={session.Commands.PendingCount} unitsInitial={unitsInitial} unitsFinal={session.Units.Count} " +
                 $"probeMovesSubmitted={submittedMoves} probeDestinationsUnavailable={unavailableDestinations} " +
                 $"movedUnits={moved}/{tracked.Count} survivingMovables={survivingMovables} unmovedSurvivors={unmovedSurvivors} unmovedIds={(unmoved.Length > 0 ? unmoved.ToString() : "none")} " +
@@ -334,25 +337,76 @@ namespace RiskAI
             return true;
         }
 
-        static List<TrackedUnit> SpawnPlayerArchers(BattleSession session,int recruitsPerPlayer)
+        static List<TrackedUnit> SpawnPlayerArchers(BattleSession session,int recruitsPerPlayer,out string error)
         {
+            error = null;
             var result = new List<TrackedUnit>(6);
             var directions = new[] { Vector3.right, Vector3.forward, Vector3.left, Vector3.back };
             var ownedTowns = new List<Settlement>();
             for(int player=0;player<session.PlayerCount;player++)
             {
+                int mobileBefore = CountEligibleProbeMobiles(session, player);
+                int rallyAttempts = 0, navPoints = 0, spawned = 0;
                 ownedTowns.Clear();
                 foreach(var town in session.Towns)if(town&&town.State.Owner==player)ownedTowns.Add(town);
                 for(int index=0;index<recruitsPerPlayer&&ownedTowns.Count>0;index++)
                 {
                     var town=ownedTowns[index%ownedTowns.Count];
+                    rallyAttempts++;
                     if(!TryFindLandNavMeshPoint(town.Rally,out var spawn))continue;
+                    navPoints++;
                     var soldier=session.Spawn(player,UnitKind.Archer,spawn);
-                    if(!soldier||soldier.IsGarrison)continue;
+                    if(soldier)spawned++;
+                    if(!IsEligibleProbeMobile(soldier, player))continue;
                     if(player==0&&result.Count<6)result.Add(new TrackedUnit{Soldier=soldier,EntityId=soldier.EntityId,Start=soldier.transform.position,Direction=directions[index%directions.Length]});
                 }
+                Debug.Log($"RISKAI_PROBE_FIXTURE player={player} ownedTowns={ownedTowns.Count} rallyAttempts={rallyAttempts} navPoints={navPoints} spawned={spawned} mobileBefore={mobileBefore} mobileAfter={CountEligibleProbeMobiles(session, player)}");
             }
+
+            // Losing cities does not imply losing every mobile troop. Follow real
+            // survivors instead of creating a new faction or changing ownership.
+            string cohortSource = "recruits";
+            if (result.Count == 0)
+            {
+                cohortSource = "survivors";
+                var survivors = new List<Soldier>();
+                foreach (var soldier in session.Units)
+                    if (IsEligibleProbeMobile(soldier, 0)) survivors.Add(soldier);
+                survivors.Sort((a, b) => a.EntityId.CompareTo(b.EntityId));
+                for (int i = 0; i < survivors.Count && result.Count < 6; i++)
+                {
+                    var soldier = survivors[i];
+                    result.Add(new TrackedUnit { Soldier = soldier, EntityId = soldier.EntityId,
+                        Start = soldier.transform.position, Direction = directions[i % directions.Length] });
+                }
+            }
+            if (result.Count == 0)
+                error = HasPlayerPresence(session, 0) ? "player-zero-no-eligible-land-cohort" : "player-zero-eliminated";
+            Debug.Log($"RISKAI_PROBE_FIXTURE cohortSource={cohortSource} tracked={result.Count} reason={error ?? "none"}");
             return result;
+        }
+
+        static bool IsEligibleProbeMobile(Soldier soldier, int player) =>
+            soldier && soldier.Team == player && soldier.IsAlive && soldier.isActiveAndEnabled &&
+            !soldier.IsGarrison && soldier.Agent && soldier.Agent.enabled && soldier.Agent.isOnNavMesh;
+
+        static int CountEligibleProbeMobiles(BattleSession session, int player)
+        {
+            int count = 0;
+            foreach (var soldier in session.Units) if (IsEligibleProbeMobile(soldier, player)) count++;
+            return count;
+        }
+
+        static bool HasPlayerPresence(BattleSession session, int player)
+        {
+            foreach (var town in session.Towns) if (town && town.State.Owner == player) return true;
+            foreach (var soldier in session.Units) if (soldier && soldier.Team == player && soldier.IsAlive) return true;
+            if (session.Naval)
+            {
+                foreach (var ship in session.Naval.Ships) if (ship && ship.Team == player && ship.IsAlive) return true;
+                foreach (var harbor in session.Naval.Harbors) if (harbor && harbor.Owner == player) return true;
+            }
+            return false;
         }
 
         static int SubmitHolds(BattleSession session, List<TrackedUnit> tracked)

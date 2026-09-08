@@ -32,6 +32,7 @@ def main():
                         help='Unity asynchronous NavMesh path budget for the controlled A/B probe.')
     parser.add_argument('--warmup', type=int, default=0)
     parser.add_argument('--probe', action='store_true')
+    parser.add_argument('--sustained', action='store_true', help='Use the shared controlled 900-unit navigation workload with --probe.')
     parser.add_argument('--restart', action='store_true')
     parser.add_argument('--headed', action='store_true')
     parser.add_argument('--suppress-draws', action='store_true',
@@ -41,6 +42,8 @@ def main():
     args = parser.parse_args()
     if args.probe and args.restart:
         parser.error('Choose one measurement type per browser session.')
+    if args.sustained and (not args.probe or args.warmup or args.map != 'europe'):
+        parser.error('--sustained requires --probe --map europe and no warmup.')
     if args.probe and args.seconds <= 30:
         parser.error('The shared runtime probe requires more than 30 simulation seconds; use --seconds 60 or longer.')
     if args.suppress_draws and not args.probe:
@@ -58,13 +61,15 @@ def main():
     if args.probe:
         query.update({'riskai-probe': 1, 'riskai-probe-seconds': args.seconds,
                       'riskai-probe-recruits': args.recruits, 'riskai-probe-warmup': args.warmup})
+    if args.sustained:
+        query['riskai-probe-sustained'] = 1
     if args.restart:
         query.update({'riskai-restart-probe': 1, 'riskai-restart-cycles': 3})
     url = args.url.rstrip('/') + '/?' + urlencode(query)
     report = {'url': url, 'desktop_browser': True, 'physical_arm': False,
               'viewport': [args.width, args.height], 'device_scale_factor': args.dpr,
               'draws_suppressed': args.suppress_draws, 'overview': args.overview,
-              'path_budget': args.path_budget}
+              'path_budget': args.path_budget, 'sustained_navigation': args.sustained}
     started = time.monotonic()
     with (args.output / 'console.log').open('w', encoding='utf-8') as log, sync_playwright() as p:
         browser = p.chromium.launch(channel='msedge', headless=not args.headed)

@@ -103,6 +103,7 @@ namespace RiskAI.Tests
             var battle=BattleSession.Current; battle.AiEnabled=false;
             var controller=Object.FindFirstObjectByType<RtsController>(); if(controller)controller.enabled=false;
             yield return null;
+            AssertCoastalMeshesMatchCpu(map);
             var naval=NavalWorld.Current;
             var port=naval.Harbors.FirstOrDefault(h=>h.IsImportedPort&&h.CanLaunch);
             Assert.That(port,Is.Not.Null,map+" must have an imported launchable port.");
@@ -135,6 +136,52 @@ namespace RiskAI.Tests
             Assert.That(unloadTransport.UnloadAt(shore),Is.False,"UnloadAt must apply the same shared shore rule as embark.");
             Assert.That(unloadTransport.CargoCount,Is.EqualTo(1));
             SceneManager.SetActiveScene(previous); yield return SceneManager.UnloadSceneAsync(scene); scene=default;
+        }
+
+        static void AssertCoastalMeshesMatchCpu(ScenarioMap map)
+        {
+            var data=MapLayout.Imported;
+            Assert.That(data.CoastGeometry.MovedVertexCount,Is.GreaterThan(0),map+" must actually round coastal corners.");
+            int landChecks=0,waterChecks=0,collisionChecks=0;
+            Physics.SyncTransforms();
+            foreach(var filter in Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None))
+            {
+                var mesh=filter.sharedMesh;
+                if(!mesh||(mesh.name!="Imported land chunk"&&mesh.name!="Imported water chunk"))continue;
+                bool water=mesh.name=="Imported water chunk";
+                var vertices=mesh.vertices;var triangles=mesh.triangles;
+                if((water?waterChecks:landChecks)<32)
+                    for(int t=0;t<triangles.Length;t+=3)
+                    {
+                        var a=vertices[triangles[t]];var b=vertices[triangles[t+1]];var c=vertices[triangles[t+2]];
+                        if(!Rounded(data,a)&&!Rounded(data,b)&&!Rounded(data,c))continue;
+                        var sample=(a+b+c)/3f;
+                        float height=water?data.WaterAt(sample.x,sample.z):data.HeightAt(sample.x,sample.z);
+                        Assert.That(height,Is.EqualTo(sample.y).Within(.001f),map+" deformed render triangle agrees with CPU height");
+                        if(water){if(++waterChecks>=32)break;}else if(++landChecks>=32)break;
+                    }
+                if(water||collisionChecks>=32)continue;
+                var collider=filter.GetComponent<MeshCollider>();if(!collider)continue;
+                CollectionAssert.AreEqual(vertices,collider.sharedMesh.vertices,"Render and navigation use identical deformed vertices.");
+                var navigation=collider.sharedMesh.triangles;
+                for(int t=0;t<navigation.Length;t+=3)
+                {
+                    var a=vertices[navigation[t]];var b=vertices[navigation[t+1]];var c=vertices[navigation[t+2]];
+                    if(!Rounded(data,a)&&!Rounded(data,b)&&!Rounded(data,c))continue;
+                    var sample=(a+b+c)/3f;
+                    Assert.That(collider.Raycast(new Ray(sample+Vector3.up*5,Vector3.down),out var hit,10),Is.True,"Deformed navigation triangle must remain in its collider.");
+                    Assert.That(hit.point.y,Is.EqualTo(data.HeightAt(hit.point.x,hit.point.z)).Within(.001f),map+" collider and CPU sample agree at rounded shore");
+                    if(++collisionChecks>=32)break;
+                }
+                if(landChecks>=32&&waterChecks>=32&&collisionChecks>=32)break;
+            }
+            Assert.That(landChecks,Is.GreaterThan(0));Assert.That(waterChecks,Is.GreaterThan(0));Assert.That(collisionChecks,Is.GreaterThan(0));
+        }
+        static bool Rounded(ImportedMapData data,Vector3 point)
+        {
+            int x=Mathf.Clamp(Mathf.RoundToInt((point.x-data.originX)/data.cellSize),0,data.width-1);
+            int z=Mathf.Clamp(Mathf.RoundToInt((point.z-data.originZ)/data.cellSize),0,data.height-1);
+            return data.CoastGeometry.Offset(x,z).sqrMagnitude>.0001f;
         }
 
         bool FindBeachShore(out Vector3 shore,out Vector3 water)

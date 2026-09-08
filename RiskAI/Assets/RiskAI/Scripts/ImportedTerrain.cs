@@ -23,16 +23,15 @@ namespace RiskAI
         static void CreateChunk(Transform root,ImportedTerrainResources resources,ImportedMapData data,int sx,int sz,int nx,int nz,Material ground,Material water)
         {
             var vertices=new Vector3[(nx+1)*(nz+1)];var colors=new Color[vertices.Length];
-            // This is a static material-only shore band.  It preserves the W3E
-            // mesh, collision and land flags while avoiding a hard tile tint at
-            // a one-cell water boundary.
+            // All three meshes share the bounded coastal vertex deformation;
+            // ImportedMapData resolves these same triangles for CPU queries.
             var shoreBand=new Vector3[vertices.Length];
             var triangles=new List<int>(nx*nz*6);var walkable=new List<int>(nx*nz*6);
             var seaVertices=new List<Vector3>();var seaColors=new List<Color>();var seaTriangles=new List<int>();
             for(int z=0;z<=nz;z++)for(int x=0;x<=nx;x++)
             {
                 int ix=sx+x,iz=sz+z,source=iz*data.width+ix,index=z*(nx+1)+x;
-                float wx=data.originX+ix*data.cellSize,wz=data.originZ+iz*data.cellSize;
+                var point=data.TerrainVertex(ix,iz);float wx=point.x,wz=point.y;
                 vertices[index]=new Vector3(wx,data.heightSamples[source],wz);
                 colors[index]=GroundTint(data.tileSamples[source],wx,wz);
                 colors[index].a=ImportedLandscapeAugment.Enabled?ImportedLandscapeAugment.RockSnowWeightAt(data,wx,wz):0;
@@ -41,7 +40,8 @@ namespace RiskAI
                 if(x==nx||z==nz)continue;
                 int b=index+nx+1;
                 AddQuad(triangles,index,b,index+1,b+1);
-                if(data.IsLand(wx+data.cellSize*.5f,wz+data.cellSize*.5f))AddQuad(walkable,index,b,index+1,b+1);
+                var center=(point+data.TerrainVertex(ix+1,iz)+data.TerrainVertex(ix,iz+1)+data.TerrainVertex(ix+1,iz+1))*.25f;
+                if(data.IsLand(center.x,center.y))AddQuad(walkable,index,b,index+1,b+1);
                 if(data.landSamples[source]+data.landSamples[source+1]+data.landSamples[source+data.width]+data.landSamples[source+data.width+1]<4)
                 {
                     int n=seaVertices.Count;
@@ -49,7 +49,8 @@ namespace RiskAI
                     {
                         int offset=(corner%2)*data.width+corner/2;
                         int k=source+offset,cx=k%data.width,cz=k/data.width;
-                        seaVertices.Add(new Vector3(data.originX+cx*data.cellSize,data.waterSamples[k],data.originZ+cz*data.cellSize));
+                        var waterPoint=data.TerrainVertex(cx,cz);
+                        seaVertices.Add(new Vector3(waterPoint.x,data.waterSamples[k],waterPoint.y));
                         seaColors.Add(new Color(1,1,1,Mathf.Clamp01((data.waterSamples[k]-data.heightSamples[k])/3f)));
                     }
                     AddQuad(seaTriangles,n,n+1,n+2,n+3);
