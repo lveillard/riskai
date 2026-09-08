@@ -76,8 +76,9 @@ namespace RiskAI
             ImportedLandscapeAugment.Enabled = sourceMountains;
             BattleSession.CountdownForNewMatch = true;
             foreach(var argument in LaunchArguments.Get())
-                if(argument.StartsWith("--riskai-capture",StringComparison.OrdinalIgnoreCase) ||
-                    argument.StartsWith("--riskai-probe",StringComparison.OrdinalIgnoreCase))
+                if(argument.StartsWith("--riskai-",StringComparison.OrdinalIgnoreCase) &&
+                    (argument.IndexOf("capture",StringComparison.OrdinalIgnoreCase)>=0 ||
+                     argument.IndexOf("probe",StringComparison.OrdinalIgnoreCase)>=0))
                     BattleSession.CountdownForNewMatch=false;
             StartCoroutine(LoadBattlefield());
         }
