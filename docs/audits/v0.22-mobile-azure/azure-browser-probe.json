@@ -1,0 +1,35 @@
+{
+  "url": "https://riskai-demo.spaincentral.cloudapp.azure.com/?riskai-seed=19031&riskai-players=16&riskai-path-budget=500&riskai-map=europe&riskai-play=1&riskai-probe=1&riskai-probe-seconds=60&riskai-probe-recruits=6&riskai-probe-warmup=0",
+  "desktop_browser": true,
+  "physical_arm": false,
+  "viewport": [
+    1280,
+    800
+  ],
+  "device_scale_factor": 1,
+  "draws_suppressed": false,
+  "overview": false,
+  "path_budget": 500,
+  "sustained_navigation": false,
+  "minimap_hidden": false,
+  "browser": "152.0.4191.66",
+  "loader_seconds": 8.121,
+  "battle_ready_seconds": 17.37,
+  "canvas": {
+    "width": 1280,
+    "height": 800,
+    "cssWidth": 1280,
+    "cssHeight": 800,
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Laptop GPU (0x00002C59) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "heapBytes": 400949248
+  },
+  "probe_results": [
+    "RISKAI_PROBE_RESULT phase=measurement valid=True winner=-1 map=Europe seed=19031 warmupRequestedSimSeconds=0.0 warmupCompletedSimSeconds=0.0 measurementRequestedRealSeconds=60.0 simSecondsDelta=60.05 fixtureRecruitsPerPlayer=6 measurementElapsedRealSeconds=60.01 navBudget=500 applied=175 rejected=0 queued=0 unitsInitial=293 unitsFinal=232 probeMovesSubmitted=66 probeDestinationsUnavailable=5 movedUnits=6/6 survivingMovables=1 unmovedSurvivors=0 unmovedIds=none holdRounds=27 holdTimeouts=0 maxDisplacement=19.97 measureFrames=2069 measureFrameAvgMs=29.01 measureFrameMaxMs=59.00 measureOver50ms=2 measureOver100ms=0 measureOver250ms=0 measureFrameSampler=unscaled_background blue=425@3.8,-56.5:6.48;426@17.9,-116.6:6.35;427@92.2,-156.3:19.97;428@199.7,-285.6:10.92;429@102.4,-294.6:6.48;430@-115.2,-24.5:7.39 success=True\n"
+  ],
+  "success": true,
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "seconds": 80.291
+}

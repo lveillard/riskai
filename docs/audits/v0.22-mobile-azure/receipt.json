@@ -1,0 +1,78 @@
+{
+  "sourceRevision": "413c435",
+  "activeRelease": "/srv/riskai/releases/20260908T225132Z-413c435",
+  "previousRelease": "/srv/riskai/releases/20260908T201807Z",
+  "archiveSha256": "5f333befc6edb45a488ce85687a8ea7216528e209cf356b8b106151fafddf0fb",
+  "filesVerifiedByServer": 10,
+  "filesVerifiedByPublicHttps": 10,
+  "latestDistinctUnityPassed": 96,
+  "physicalMobileTested": false,
+  "evidence": {
+    "azure-browser-probe.json": {
+      "bytes": 1860,
+      "sha256": "3e0b3ae50d9c08547619d4945238c8044ab38b8e8c81d5e6595056b01acf188b"
+    },
+    "build-manifest.json": {
+      "bytes": 36840,
+      "sha256": "2bdf32b08a005a2e631f3c636f649ec065d100ca28a75142de8d62ab08980129"
+    },
+    "landscape-browser.json": {
+      "bytes": 445,
+      "sha256": "32b01722c49b599db91a0455b84862b09c92112fb26bdc9943d71e4207124b79"
+    },
+    "landscape-review.jpg": {
+      "bytes": 110552,
+      "sha256": "b307f01e4272494388282a141a53e9173f37de6b3690e232bafaaef9195e67d1"
+    },
+    "loading-portrait.png": {
+      "bytes": 117332,
+      "sha256": "274e2f5e15ddc94100e38354047d9d77f7c902655415c3f9d5a7eb17df84f0b7"
+    },
+    "portrait-browser.json": {
+      "bytes": 445,
+      "sha256": "30b08922a0e18e7261d0a3a9dae93bfea911025ba261049aabb433710b9aba19"
+    },
+    "portrait-review.jpg": {
+      "bytes": 272631,
+      "sha256": "4f624a47cf3feb356c80bdd02f331ecec223fe5d4f4cd52af1530a615544c895"
+    },
+    "public-verification.json": {
+      "bytes": 6103,
+      "sha256": "7e5f97f3b3584fb07c0c39008c91b94f81bc6da5c0d1bb4d8e19fec32f8dc9f4"
+    },
+    "test-summary.json": {
+      "bytes": 10580,
+      "sha256": "2c79088a2a904ea3472276a24cbad43eb81898cb755c9114491bfd71c9f86eb7"
+    },
+    "v22-tests-mobile-edit-r1.xml": {
+      "bytes": 31910,
+      "sha256": "60622952f9dbe019d7647d5896921bd8073f520ba7e2914fc36e9bc288d21a9c"
+    },
+    "v22-tests-mobile-hud-r3.xml": {
+      "bytes": 23195,
+      "sha256": "c558f94880d0f64858057bdb4528b9f73121e3a06f631e239d4e23b8d40e1cf9"
+    },
+    "v22-tests-mobile-markers-r1.xml": {
+      "bytes": 5997,
+      "sha256": "4a05f64efd755a2ba505e8822c3c215675425a686e31f5c558f1f48e850c2ba1"
+    },
+    "v22-tests-mobile-play-r1.xml": {
+      "bytes": 108548,
+      "sha256": "16dd222d0e2d51d6744242b182c51d9f9d3859a7d459480d520d34153f9aaa47"
+    },
+    "v22-tests-mobile-play-r2.xml": {
+      "bytes": 41765,
+      "sha256": "ceea65a79101a0fbf1fb843fbfc7a3bdff29bf70912959811d3701e0579bf4bd"
+    }
+  },
+  "buildLogs": {
+    "v22-windows-mobile-r2.log": {
+      "sha256": "22eda5f3291300bfeecec51d836684635f93a8452bffe6358ca0897c778999d9",
+      "successMarker": true
+    },
+    "v22-web-mobile-r2.log": {
+      "sha256": "869c839cc8134143e0af3d79f9c131dc0683213c88173e5685d2a2a07152ffbd",
+      "successMarker": true
+    }
+  }
+}

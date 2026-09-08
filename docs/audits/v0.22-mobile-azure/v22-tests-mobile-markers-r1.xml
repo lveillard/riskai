@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Passed" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 22:35:25Z" end-time="2026-09-08 22:35:26Z" duration="0.0994569">
+  <test-suite type="TestSuite" id="1000" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="119" result="Passed" start-time="2026-09-08 22:35:25Z" end-time="2026-09-08 22:35:26Z" duration="0.099457" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1156" name="RiskAI.Tests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.Tests.dll" runstate="Runnable" testcasecount="119" result="Passed" start-time="2026-09-08 22:35:25Z" end-time="2026-09-08 22:35:26Z" duration="0.081829" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="39208" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1157" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="119" result="Passed" start-time="2026-09-08 22:35:25Z" end-time="2026-09-08 22:35:26Z" duration="0.077130" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1158" name="Tests" fullname="RiskAI.Tests" runstate="Runnable" testcasecount="119" result="Passed" start-time="2026-09-08 22:35:25Z" end-time="2026-09-08 22:35:26Z" duration="0.072811" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1136" name="TerritoryMarkersTests" fullname="RiskAI.Tests.TerritoryMarkersTests" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-08 22:35:26Z" end-time="2026-09-08 22:35:26Z" duration="0.068023" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1141" name="InternalPostsHideWhenAdjacentCitiesShareAnOwner" fullname="RiskAI.Tests.TerritoryMarkersTests.InternalPostsHideWhenAdjacentCitiesShareAnOwner" methodname="InternalPostsHideWhenAdjacentCitiesShareAnOwner" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" seed="1683512442" result="Passed" start-time="2026-09-08 22:35:26Z" end-time="2026-09-08 22:35:26Z" duration="0.028485" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1140" name="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" fullname="RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 22:35:26Z" end-time="2026-09-08 22:35:26Z" duration="0.016276" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1137" name="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(1.0f)" fullname="RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(1.0f)" methodname="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" seed="1352497769" result="Passed" start-time="2026-09-08 22:35:26Z" end-time="2026-09-08 22:35:26Z" duration="0.011046" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1138" name="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(2.0f)" fullname="RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(2.0f)" methodname="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" seed="1516689913" result="Passed" start-time="2026-09-08 22:35:26Z" end-time="2026-09-08 22:35:26Z" duration="0.000150" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1139" name="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(3.0f)" fullname="RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(3.0f)" methodname="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" seed="1797428007" result="Passed" start-time="2026-09-08 22:35:26Z" end-time="2026-09-08 22:35:26Z" duration="0.000078" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
