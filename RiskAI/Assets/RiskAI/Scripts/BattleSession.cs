@@ -28,9 +28,9 @@ namespace RiskAI
         public AiDifficulty Difficulty { get; private set; }
         public string DifficultyName => Difficulty == AiDifficulty.Relaxed ? "Relajado" : "Estándar";
         public float AiInterval => Difficulty == AiDifficulty.Relaxed ? 12f : 7f;
-        public float AiFirstRecruitmentTime => Difficulty == AiDifficulty.Relaxed ? 30f : 14f;
-        public float AiFirstOffensiveTime => Difficulty == AiDifficulty.Relaxed ? 120f : 35f;
-        public float AiFirstNavalOffensiveTime => Difficulty == AiDifficulty.Relaxed ? 120f : 45f;
+        public float AiFirstRecruitmentTime => 0f;
+        public float AiFirstOffensiveTime => 0f;
+        public float AiFirstNavalOffensiveTime => 0f;
         public VictoryMode Mode { get; set; }
         public int VictoryTarget => Towns.Count == 0 ? 0 : RiskReferenceRules.CalculateCityCountWin(Towns.Count, .6);
         public static BattleSession Current { get; private set; }
@@ -60,6 +60,9 @@ namespace RiskAI
         // rescanning every entity for every potential winner on every simulation tick.
         int[] ownedTownCounts;
         bool[] playerPresence;
+        bool[] eliminatedPlayers;
+        public event System.Action<int> PlayerEliminated;
+        public bool IsPlayerEliminated(int team) => team >= 0 && team < PlayerCount && eliminatedPlayers != null && eliminatedPlayers[team];
         int nextEntityId;
         System.Action<float> tickWorld;
         public int Winner { get; private set; } = -1;
@@ -80,9 +83,9 @@ namespace RiskAI
         {
             if (World != null) return;
             Current = this; Mode = ModeForNewMatch; Layout = LayoutForNewMatch; Difficulty = DifficultyForNewMatch; Seed = SeedForNewMatch;
-            PlayerCount = Mathf.Clamp(PlayerCountForNewMatch, 2, Mathf.Min(PlayerRules.MaxPlayers, Mathf.Max(2, MapLayout.Towns.Length)));
+            PlayerCount = Mathf.Clamp(PlayerCountForNewMatch, 2, PlayerRules.MaximumPlayersForCityCount(MapLayout.Towns.Length));
             Economy = new Economy(PlayerCount); Kills = new int[PlayerCount]; VictoryProgress = new float[PlayerCount];
-            ownedTownCounts = new int[PlayerCount]; playerPresence = new bool[PlayerCount];
+            ownedTownCounts = new int[PlayerCount]; playerPresence = new bool[PlayerCount]; eliminatedPlayers = new bool[PlayerCount];
             combatRandom = new System.Random(Seed ^ 0x2945);
             Clock = new SimClock();
             Combat = new CombatWorld(this);
@@ -173,11 +176,20 @@ namespace RiskAI
         internal void TickRules(float delta)
         {
             if (Paused || Winner >= 0) return;
+            BuildVictorySnapshot();
+            for (int team = 0; team < PlayerCount; team++)
+            {
+                if (playerPresence[team] || eliminatedPlayers[team]) continue;
+                eliminatedPlayers[team] = true;
+                Message(VisualFactory.TeamName(team) + " ha sido eliminado.");
+                PlayerEliminated?.Invoke(team);
+            }
             if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro"); CountryReinforcements(); }
             Reinforcements.Tick(delta);
             BuildVictorySnapshot();
             for (int team = 0; team < PlayerCount; team++)
             {
+                if (eliminatedPlayers[team]) continue;
                 VictoryProgress[team] = Mode == VictoryMode.Conquest && ownedTownCounts[team] >= VictoryTarget
                     ? VictoryProgress[team] + delta : 0;
                 if (VictoryProgress[team] >= BattleRules.VictoryHoldSeconds || OtherPlayersEliminated(team))
@@ -233,6 +245,7 @@ namespace RiskAI
 
         public Soldier Spawn(int team, UnitKind kind, Vector3 position, int originCountry = -1)
         {
+            if (IsPlayerEliminated(team)) return null;
             if (!NavMesh.SamplePosition(position, out var hit, 10, NavMesh.AllAreas)) return null;
             var soldier=SoldierPool.Rent(team,kind,hit.position);
             soldier.OriginCountry=originCountry;

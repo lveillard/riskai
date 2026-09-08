@@ -48,7 +48,7 @@ namespace RiskAI.Tests
             Pump(UiViewport.WorldRect.center);
         }
 
-        [UnityTest] public IEnumerator PausedRightAndMiddleDragsMoveCameraWithoutIssuingOrders()
+        [UnityTest] public IEnumerator PausedRightDragPansAndMiddleDragOrbitsWithoutIssuingOrders()
         {
             var point=UiViewport.WorldRect.center;
             controller.SelectOnly(battle.Units.First(unit=>unit.Team==0));
@@ -57,11 +57,16 @@ namespace RiskAI.Tests
             long applied=battle.Commands.AppliedCount;
             foreach(ushort button in new ushort[]{2,4})
             {
-                var before=controller.CameraRig.FocusPoint;
+                var before=controller.CameraRig.FocusPoint;var rotation=Camera.main.transform.rotation;
                 Pump(point,button);
                 Pump(point+Vector2.right*40,button);
                 Assert.That(controller.CameraDragging,Is.True,"Both mouse drag gestures must survive paused frames.");
-                Assert.That(Vector3.Distance(before,controller.CameraRig.FocusPoint),Is.GreaterThan(.1f));
+                if(button==2)Assert.That(Vector3.Distance(before,controller.CameraRig.FocusPoint),Is.GreaterThan(.1f));
+                else
+                {
+                    Assert.That(controller.CameraRig.FocusPoint,Is.EqualTo(before));
+                    Assert.That(Quaternion.Angle(rotation,Camera.main.transform.rotation),Is.GreaterThan(1));
+                }
                 Pump(point+Vector2.right*40);
                 Assert.That(controller.CameraDragging,Is.False);
             }

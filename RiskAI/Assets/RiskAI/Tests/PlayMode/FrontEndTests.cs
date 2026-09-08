@@ -33,6 +33,38 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator MapDefaultsFollowCapacityUntilPlayerCountIsAdjusted()
+        {
+            var previous=SceneManager.GetActiveScene();var scene=SceneManager.CreateScene("Frontend player capacity");
+            SceneManager.SetActiveScene(scene);
+            var savedMap=BattleSession.MapForNewMatch;
+            BattleSession.MapForNewMatch=ScenarioMap.Classic;
+            var menu=new GameObject("Player capacity setup").AddComponent<FrontEndController>();
+            yield return null;
+            const System.Reflection.BindingFlags flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            var count=typeof(FrontEndController).GetField("selectedPlayers",flags);
+            var map=typeof(FrontEndController).GetMethod("SelectMap",flags);
+            var adjust=typeof(FrontEndController).GetMethod("AdjustPlayers",flags);
+            Assert.That(count.GetValue(menu),Is.EqualTo(11));
+            map.Invoke(menu,new object[]{ScenarioMap.Riverlands});
+            Assert.That(count.GetValue(menu),Is.EqualTo(14));
+            map.Invoke(menu,new object[]{ScenarioMap.Europe});
+            Assert.That(count.GetValue(menu),Is.EqualTo(16));
+            adjust.Invoke(menu,new object[]{-1});
+            Assert.That(count.GetValue(menu),Is.EqualTo(15));
+            map.Invoke(menu,new object[]{ScenarioMap.Classic});
+            Assert.That(count.GetValue(menu),Is.EqualTo(11),"Manual selection clamps to the smaller map.");
+            map.Invoke(menu,new object[]{ScenarioMap.NewWorld});
+            Assert.That(count.GetValue(menu),Is.EqualTo(11),"A larger map preserves the manually adjusted count.");
+            adjust.Invoke(menu,new object[]{-20});
+            Assert.That(count.GetValue(menu),Is.EqualTo(2));
+            adjust.Invoke(menu,new object[]{30});
+            Assert.That(count.GetValue(menu),Is.EqualTo(16));
+            BattleSession.MapForNewMatch=savedMap;
+            SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);
+        }
+
+        [UnityTest]
         public IEnumerator ReservedHudBandsExcludeWorldInputAtRuntime()
         {
             UiViewport.SetHudHeights(44,232);

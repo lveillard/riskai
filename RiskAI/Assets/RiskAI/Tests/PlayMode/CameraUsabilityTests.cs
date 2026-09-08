@@ -69,6 +69,40 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest] public IEnumerator OrbitKeepsFocusCentredClampsPitchAndResetRestoresRotation()
+        {
+            var rig=Object.FindFirstObjectByType<RtsCameraRig>();var camera=Camera.main;
+            var focus=rig.FocusPoint;
+            rig.Orbit(new Vector2(100,100000));
+            Assert.That(camera.transform.eulerAngles.x,Is.EqualTo(35).Within(.01));
+            Assert.That(Quaternion.Angle(camera.transform.rotation,RtsCameraRig.DefaultRotation),Is.GreaterThan(1));
+            Assert.That(rig.FocusPoint,Is.EqualTo(focus));
+            var projected=camera.WorldToScreenPoint(focus);
+            Assert.That(Vector2.Distance(projected,UiViewport.WorldRect.center),Is.LessThan(.1f));
+            rig.Orbit(new Vector2(0,-100000));
+            Assert.That(camera.transform.eulerAngles.x,Is.EqualTo(80).Within(.01));
+            rig.ResetView();
+            Assert.That(Quaternion.Angle(camera.transform.rotation,RtsCameraRig.DefaultRotation),Is.LessThan(.01f));
+            yield return null;
+        }
+
+        [UnityTest] public IEnumerator StrategicSymbolUsesTerrainAnchorAcrossZoomAndRotation()
+        {
+            var rig=Object.FindFirstObjectByType<RtsCameraRig>();var camera=Camera.main;
+            var camp=battle.Camps[0];
+            var anchor=StrategicMapView.SurfaceAnchor(camp.SpawnPoint+Vector3.up*12);
+            Assert.That(anchor.x,Is.EqualTo(camp.SpawnPoint.x).Within(.001));
+            Assert.That(anchor.z,Is.EqualTo(camp.SpawnPoint.z).Within(.001));
+            foreach(float zoom in new[]{120f,180f,240f})
+            {
+                camera.orthographicSize=zoom;rig.CancelMotion();rig.SetHome(camp.SpawnPoint);
+                rig.Orbit(new Vector2(55,0));
+                var screen=camera.WorldToScreenPoint(anchor);
+                Assert.That(Vector3.Distance(rig.Ground(screen),anchor),Is.LessThan(.12f),"A marker ray must meet the rendered terrain directly beneath the symbol.");
+            }
+            yield return null;
+        }
+
         [UnityTest] public IEnumerator FocusPointProjectsToPlayableAreaCenter()
         {
             var rig=Object.FindFirstObjectByType<RtsCameraRig>();

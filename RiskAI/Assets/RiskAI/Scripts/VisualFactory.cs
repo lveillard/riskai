@@ -123,13 +123,14 @@ namespace RiskAI
         {
             if (impactPool != null) impactPool.Forget(pulse);
         }
+        // Warcraft III patch 1.29 player palette; preserve the legacy blue/red swap.
         static readonly Color[] PlayerColors = {
-            new Color(.17f,.55f,.95f), new Color(.85f,.22f,.19f), new Color(.08f,.82f,.73f), new Color(.65f,.26f,.85f),
-            new Color(.95f,.81f,.10f), new Color(1,.45f,.08f), new Color(.30f,.78f,.20f), new Color(.96f,.38f,.68f),
-            new Color(.48f,.61f,.70f), new Color(.59f,.32f,.15f), new Color(.10f,.39f,.25f), new Color(.25f,.28f,.72f),
-            new Color(.75f,.58f,.94f), new Color(.98f,.64f,.45f), new Color(.58f,.62f,.13f), new Color(.39f,.85f,.96f)
+            new Color32(0,66,255,255), new Color32(255,3,3,255), new Color32(28,230,185,255), new Color32(84,0,129,255),
+            new Color32(255,252,1,255), new Color32(254,138,14,255), new Color32(32,192,0,255), new Color32(229,91,176,255),
+            new Color32(149,150,151,255), new Color32(126,191,241,255), new Color32(16,98,70,255), new Color32(78,42,4,255),
+            new Color32(155,0,0,255), new Color32(0,0,195,255), new Color32(0,234,255,255), new Color32(190,0,254,255)
         };
-        static readonly string[] PlayerColorNames = {"Azul","Carmesí","Turquesa","Violeta","Oro","Naranja","Verde","Rosa","Acero","Cobre","Bosque","Índigo","Lavanda","Coral","Oliva","Celeste"};
+        static readonly string[] PlayerColorNames = {"Azul","Rojo","Turquesa","Violeta","Amarillo","Naranja","Verde","Rosa","Gris","Azul claro","Verde oscuro","Marrón","Granate","Azul marino","Cian","Magenta"};
         public static Color TeamColor(int team) => PlayerRules.IsPlayer(team)?PlayerColors[team]:Color.white;
         public static string TeamName(int team) => !PlayerRules.IsPlayer(team)?"Neutral":(team==0?"Tú":"IA "+team)+" · "+PlayerColorNames[team];
         public static Material Mat(Color color)

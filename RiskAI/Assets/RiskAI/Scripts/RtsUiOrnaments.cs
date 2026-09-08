@@ -4,6 +4,53 @@ using UnityEngine.UIElements;
 
 namespace RiskAI
 {
+    public enum RtsHudGlyph { City,Sword,Shield,Move,Patrol,Stop,Focus,Board,Unload }
+
+    /// <summary>Small vector marks shared by resource counts, rankings and direct commands.</summary>
+    public sealed class RtsHudIcon : VisualElement
+    {
+        readonly RtsHudGlyph glyph;
+        public RtsHudIcon(RtsHudGlyph glyph)
+        {
+            this.glyph=glyph;name="HUD icon "+glyph;pickingMode=PickingMode.Ignore;
+            style.width=24;style.height=24;style.flexShrink=0;generateVisualContent+=Paint;
+        }
+        void Paint(MeshGenerationContext context)
+        {
+            var p=context.painter2D;var r=contentRect;
+            if(r.width<2||r.height<2)return;
+            Vector2 At(float x,float y)=>new Vector2(r.x+x*r.width,r.y+y*r.height);
+            void Line(float x,float y,float xx,float yy)=>RtsOrnamentDrawing.Line(p,At(x,y),At(xx,yy),RtsUiStyle.Gold,1.7f);
+            void Box(float x,float y,float w,float h)=>RtsOrnamentDrawing.Box(p,r.x+x*r.width,r.y+y*r.height,w*r.width,h*r.height,RtsUiStyle.Gold);
+            void Arrow(float y,bool right)
+            {
+                float end=right?.83f:.17f,start=right?.17f:.83f,back=right?.65f:.35f;
+                Line(start,y,end,y);Line(end,y,back,y-.17f);Line(end,y,back,y+.17f);
+            }
+            switch(glyph)
+            {
+                case RtsHudGlyph.City:
+                    Box(.15f,.36f,.7f,.48f);Box(.15f,.16f,.17f,.27f);Box(.42f,.16f,.16f,.27f);Box(.68f,.16f,.17f,.27f);
+                    RtsOrnamentDrawing.Box(p,r.x+r.width*.43f,r.y+r.height*.56f,r.width*.14f,r.height*.28f,new Color(.07f,.08f,.07f));break;
+                case RtsHudGlyph.Sword:
+                    Line(.23f,.8f,.8f,.18f);Line(.19f,.6f,.42f,.83f);Line(.8f,.18f,.61f,.24f);Line(.8f,.18f,.76f,.4f);break;
+                case RtsHudGlyph.Shield:
+                    p.strokeColor=RtsUiStyle.Gold;p.lineWidth=1.7f;p.BeginPath();p.MoveTo(At(.2f,.15f));p.LineTo(At(.8f,.15f));
+                    p.LineTo(At(.76f,.59f));p.LineTo(At(.5f,.87f));p.LineTo(At(.24f,.59f));p.ClosePath();p.Stroke();Line(.5f,.2f,.5f,.7f);break;
+                case RtsHudGlyph.Move:Arrow(.5f,true);break;
+                case RtsHudGlyph.Patrol:Arrow(.29f,true);Arrow(.71f,false);break;
+                case RtsHudGlyph.Stop:Box(.23f,.23f,.54f,.54f);break;
+                case RtsHudGlyph.Focus:
+                    Line(.12f,.12f,.35f,.12f);Line(.12f,.12f,.12f,.35f);Line(.88f,.12f,.65f,.12f);Line(.88f,.12f,.88f,.35f);
+                    Line(.12f,.88f,.35f,.88f);Line(.12f,.88f,.12f,.65f);Line(.88f,.88f,.65f,.88f);Line(.88f,.88f,.88f,.65f);
+                    RtsOrnamentDrawing.Diamond(p,At(.5f,.5f),r.width*.12f,RtsUiStyle.Gold);break;
+                case RtsHudGlyph.Board:case RtsHudGlyph.Unload:
+                    Line(.13f,.68f,.28f,.85f);Line(.28f,.85f,.72f,.85f);Line(.72f,.85f,.87f,.68f);
+                    Arrow(.35f,glyph==RtsHudGlyph.Board);break;
+            }
+        }
+    }
+
     /// <summary>Shared retained coin mark; sharp at every UI scale without an emoji font.</summary>
     public sealed class RtsGoldIcon : VisualElement
     {

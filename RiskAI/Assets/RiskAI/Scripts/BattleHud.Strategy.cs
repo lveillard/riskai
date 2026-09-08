@@ -11,7 +11,7 @@ namespace RiskAI
             foreach(var camp in session.Camps)
             {
                 if(!camp)continue;
-                var p=cam.WorldToScreenPoint(camp.SpawnPoint)/Scale;float y=height-p.y;
+                var p=cam.WorldToScreenPoint(StrategicMapView.SurfaceAnchor(camp.SpawnPoint))/Scale;float y=height-p.y;
                 if(p.z<=0||y<TopPixels/Scale+4||y>bottom-12)continue;
                 var point=new Vector2(p.x,y);var previous=GUI.matrix;
                 GUIUtility.RotateAroundPivot(45,point);
@@ -38,7 +38,7 @@ namespace RiskAI
         }
         void MapSymbol(Vector3 world,int owner,string icon,bool selected,string name)
         {
-            var p=cam.WorldToScreenPoint(world)/Scale;float y=height-p.y;
+            var p=cam.WorldToScreenPoint(StrategicMapView.SurfaceAnchor(world))/Scale;float y=height-p.y;
             if(p.z<=0||p.x<5||p.x>width-5||y<TopPixels/Scale+4||y>bottom-10)return;
             var rect=new Rect(p.x-5,y-5,10,10);
             RtsSkin.Fill(new Rect(rect.x-2,rect.y-2,14,14),new Color(.025f,.04f,.04f));

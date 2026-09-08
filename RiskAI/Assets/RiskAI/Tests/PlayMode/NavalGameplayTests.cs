@@ -19,6 +19,30 @@ namespace RiskAI.Tests
    new GameObject("Naval test bootstrap").AddComponent<RiskBootstrap>();battle=BattleSession.Current;battle.AiEnabled=false;
    Object.FindFirstObjectByType<RtsController>().enabled=false;naval=NavalWorld.Current;yield return null;
   }
+  [UnityTest] public IEnumerator LastTransportAndCargoKeepPlayerAliveUntilSunk()
+  {
+   var home=naval.Harbors.First(h=>h.Owner==1);
+   var transport=BattleTestScenario.Ship(naval,1,ShipKind.Transport,home.Berth);
+   var cargo=BattleTestScenario.MobileArmy(battle,1,UnitKind.Archer,1,home.Landing)[0];
+   Assert.That(transport.TryEmbark(cargo),Is.True);
+   foreach(var town in battle.Towns)if(town.State.Owner==1)town.State.Owner=-1;
+   foreach(var harbor in naval.Harbors)if(harbor.Owner==1)harbor.State.Owner=-1;
+   foreach(var unit in battle.Units.ToArray())if(unit&&unit.Team==1&&unit!=cargo)unit.TakeDamage(10000,0);
+   foreach(var ship in naval.Ships.ToArray())if(ship&&ship.Team==1&&ship!=transport)ship.TakeDamage(10000,0);
+   int announcements=0;battle.PlayerEliminated+=team=>{if(team==1)announcements++;};
+   var tick=typeof(BattleSession).GetMethod("TickRules",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
+   tick.Invoke(battle,new object[]{.1f});
+   Assert.That(battle.IsPlayerEliminated(1),Is.False);
+   Assert.That(announcements,Is.Zero);
+   Assert.That(transport.CargoCount,Is.EqualTo(1));
+   transport.TakeDamage(10000,0);
+   tick.Invoke(battle,new object[]{.1f});tick.Invoke(battle,new object[]{.1f});
+   Assert.That(battle.IsPlayerEliminated(1),Is.True);
+   Assert.That(announcements,Is.EqualTo(1));
+   Assert.That(naval.Spawn(1,ShipKind.Transport,home.Berth),Is.Null);
+   Assert.That(battle.Spawn(1,UnitKind.Archer,home.Landing),Is.Null);
+   yield return null;
+  }
   [UnityTest] public IEnumerator TransportActuallySailsAndDisembarkedTroopsCaptureIsland()
   {
    var home=naval.Harbors.First(h=>h.State.Owner==0);var island=naval.Harbors.First(h=>h.IsIsland);
@@ -67,13 +91,11 @@ namespace RiskAI.Tests
    BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,city.Rally);
    battle.Economy.Gold[1]=Harbor.Cost(ShipKind.Galley);
    battle.AiEnabled=true;
-   naval.SimTick(.05f);
-   Assert.That(naval.PendingShips(1),Is.Zero,"The naval grace period must still apply.");
-   while(battle.BattleTime<battle.AiFirstNavalOffensiveTime+.1f)battle.Clock.Advance(.4,false,_=>{});
+   while(battle.BattleTime<.2f)battle.Clock.Advance(.05f,false,_=>{});
    battle.Commander.Tick(.05f);
    Assert.That(battle.Economy.Gold[1],Is.EqualTo(Harbor.Cost(ShipKind.Galley)),"The army must leave savings for the first purchased ship.");
    naval.SimTick(.05f);
-   Assert.That(naval.PendingShips(1),Is.EqualTo(1));
+   Assert.That(naval.PendingShips(1),Is.EqualTo(1),"The first naval decision buys immediately when savings are ready.");
    Assert.That(naval.Ships,Is.Empty,"Buying a ship must not bypass its training queue.");
    Assert.That(battle.Economy.Gold[1],Is.Zero);
    battle.AiEnabled=false;

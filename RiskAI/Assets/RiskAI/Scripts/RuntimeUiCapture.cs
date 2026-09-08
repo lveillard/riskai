@@ -61,18 +61,13 @@ namespace RiskAI
             session.TogglePause();
             yield return Settle();
             yield return Capture("selection");
-            if(UiViewport.IsCompact)ActivateButton("HUD tab 2");
             yield return Settle();
             yield return Capture("production");
             if(UiViewport.IsCompact)
             {
                 ScrollToEnd("HUD context");yield return Settle();yield return Capture("production-more");
             }
-            if(UiViewport.IsCompact)ActivateButton("HUD tab 1");
-            else
-            {
-                foreach(var unit in session.Units)if(unit&&unit.Team==0){controller.SelectOnly(unit);controller.Focus(unit.transform.position);break;}
-            }
+            foreach(var unit in session.Units)if(unit&&unit.Team==0){controller.SelectOnly(unit);controller.Focus(unit.transform.position);break;}
             yield return Settle();
             yield return Capture("orders");
             controller.HelpVisible=true;
@@ -94,7 +89,7 @@ namespace RiskAI
                 commands.Execute(harbor.Owner,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Transport));
                 session.TogglePause();
                 controller.SelectHarbor(harbor);controller.Focus(harbor.Landing);
-                yield return Settle();if(UiViewport.IsCompact)ActivateButton("HUD tab 0");yield return Settle();
+                yield return Settle();
                 yield return Capture("port-queues");
                 break;
             }

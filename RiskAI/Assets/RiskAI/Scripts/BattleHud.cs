@@ -19,10 +19,14 @@ namespace RiskAI
         float nextCanopyCheck;
         long lastHudTick = -1;
         bool hudDirty = true;
+        readonly Queue<int> eliminationNotices = new Queue<int>();
+        int announcedPlayer = -1;
+        float announcementUntil;
         Vector2 MousePoint => new Vector2(controller.Pointer.x / Scale, (Screen.height - controller.Pointer.y) / Scale);
         public void Initialize(BattleSession battle, RtsController input, Camera camera)
         {
             session = battle; controller = input; cam = camera;
+            session.PlayerEliminated += OnPlayerEliminated;
             RefreshHudSnapshot();ConfigureViewport();InitializeRetainedUi();
         }
         void LateUpdate()
@@ -55,6 +59,7 @@ namespace RiskAI
         void MarkHudDirty() { hudDirty = true; }
         void OnDestroy()
         {
+            if (session) session.PlayerEliminated -= OnPlayerEliminated;
             if(minimapTexture)Destroy(minimapTexture);
             DisposeMinimapMarkers();
             UiViewport.ResetHudHeights();
@@ -91,6 +96,26 @@ namespace RiskAI
                 var r = new Rect(UiViewport.SafeRect.xMin/Scale+16, bottom - 28 - i * 23, Mathf.Min(680,UiViewport.LogicalWidth-32), 22); RtsSkin.Fill(r, new Color(.035f, .04f, .03f, .83f));
                 Label(r.x + 7, r.y, r.width - 12, session.Messages[i], RtsSkin.Small);
             }
+            DrawEliminationNotice();
+        }
+        void OnPlayerEliminated(int player) => eliminationNotices.Enqueue(player);
+
+        void DrawEliminationNotice()
+        {
+            if (Time.unscaledTime >= announcementUntil)
+            {
+                announcedPlayer = eliminationNotices.Count > 0 ? eliminationNotices.Dequeue() : -1;
+                announcementUntil = Time.unscaledTime + (announcedPlayer >= 0 ? 5 : 0);
+            }
+            int player = announcedPlayer >= 0 ? announcedPlayer : session.IsPlayerEliminated(0) ? 0 : -1;
+            if (player < 0) return;
+            string message = player == 0 ? "DERROTA · Has sido eliminado. La partida continúa."
+                : VisualFactory.TeamName(player) + " ha sido eliminado.";
+            float noticeWidth = Mathf.Min(460, UiViewport.LogicalWidth - 24);
+            var rect = new Rect(UiViewport.SafeRect.center.x / Scale - noticeWidth * .5f, TopPixels / Scale + 12, noticeWidth, 54);
+            RtsSkin.Fill(rect, new Color(.035f, .04f, .03f, .95f));
+            RtsSkin.Fill(new Rect(rect.x, rect.y, 4, rect.height), VisualFactory.TeamColor(player));
+            Text(new Rect(rect.x + 12, rect.y + 7, rect.width - 24, rect.height - 14), message, RtsSkin.WrappedText);
         }
         void DrawWorld()
         {

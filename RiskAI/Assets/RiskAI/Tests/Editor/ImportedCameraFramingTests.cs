@@ -17,6 +17,7 @@ namespace RiskAI.Tests
             {
                 MapLayout.Configure(scenario);
                 foreach(float aspect in new[]{16f/9f,21f/9f,9f/16f})
+                foreach(float yaw in new[]{0f,45f,135f,270f})
                 {
                     var camera=go.AddComponent<Camera>();
                     camera.fieldOfView=44;camera.aspect=aspect;
@@ -24,6 +25,7 @@ namespace RiskAI.Tests
                     var rig=go.AddComponent<RtsCameraRig>();rig.Initialize(camera);
                     rig.SetHome(MapLayout.PlayableCenter);
                     Assert.That(Vector3.Dot(rig.FocusPoint-camera.transform.position,camera.transform.forward),Is.EqualTo(RtsCameraRig.DefaultZoom/Mathf.Tan(camera.fieldOfView*.5f*Mathf.Deg2Rad)).Within(.001f));
+                    rig.Orbit(new Vector2(yaw*Mathf.Max(1,Mathf.Min(Screen.width,Screen.height))/180f,0));
                     rig.FrameMap();camera.orthographicSize=rig.TargetZoom;rig.SetHome(MapLayout.PlayableCenter);
                     float left=RtsCameraRig.MapFramePaddingPixels,right=Screen.width-RtsCameraRig.MapFramePaddingPixels;
                     float bottom=BattleHud.BottomPixels+RtsCameraRig.MapFramePaddingPixels,top=Screen.height-BattleHud.TopPixels-RtsCameraRig.MapFramePaddingPixels;

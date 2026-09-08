@@ -48,6 +48,8 @@ namespace RiskAI
         int offensiveCandidateSignature;
         bool hasOffensiveCandidateCursor;
         bool openingDecision = true;
+        bool openingOffensivePending = true;
+        const float OpeningOffensiveWindow = 5f;
         int recruitsOrdered;
         static readonly UnitKind[] RecruitmentCycle = {
             UnitKind.Archer, UnitKind.Archer, UnitKind.Footman,
@@ -85,11 +87,17 @@ namespace RiskAI
 
         public void Tick(float delta)
         {
-            if (!session.AiEnabled || session.Paused || session.Winner >= 0) return;
+            if (!session.AiEnabled || session.Paused || session.Winner >= 0 || session.IsPlayerEliminated(team)) return;
             if (session.BattleTime >= nextDefenseDecision)
             {
                 nextDefenseDecision=AdvanceSchedule(nextDefenseDecision,DefenseDecisionSeconds,session.BattleTime);
                 DecideDefense();
+                // Give the first mobile recruit a prompt departure, then return
+                // to the normal decision cadence. Bound retries on isolated land.
+                if (openingOffensivePending && !openingDecision &&
+                    session.BattleTime <= session.AiFirstRecruitmentTime + OpeningOffensiveWindow &&
+                    session.BattleTime >= session.AiFirstOffensiveTime)
+                    IssueOffensiveOrders(session.Difficulty == BattleSession.AiDifficulty.Relaxed);
             }
             if (session.BattleTime < nextDecision) return;
             Decide();
@@ -286,10 +294,13 @@ namespace RiskAI
 
         void IssueOffensiveOrders(bool relaxed)
         {
+            // Keep unassigned mobile reserves available while a post is under attack.
+            if(threats.Count>0)return;
             active.Clear();
             foreach(var unit in session.Units)
                 if(IsMobileDefender(unit) && (unit.IsIdle || unit.IsHolding) && !defenseAssignments.ContainsKey(unit.EntityId))active.Add(unit);
-            if(active.Count<(relaxed?2:3))return;
+            int minimumWave=openingOffensivePending?1:relaxed?2:3;
+            if(active.Count<minimumWave)return;
 
             int reserve=active.Count>=4?1:0;
             int count=Mathf.Min(active.Count-reserve,relaxed?8:12);
@@ -326,7 +337,6 @@ namespace RiskAI
                 offensiveCandidateCursor=0;offensiveCandidateSignature=signature;hasOffensiveCandidateCursor=true;
             }
             int pathBudget=OffensivePathBudget;
-            int minimumWave=relaxed?2:3;
             Settlement target=null;
             reachable.Clear();
             int candidate=offensiveCandidateCursor;
@@ -350,6 +360,7 @@ namespace RiskAI
             {
                 offensiveCandidateCursor=0;hasOffensiveCandidateCursor=false;
                 BattleSession.GiveFormation(reachable,target.ClaimPoint,true,false);
+                openingOffensivePending=false;
             }
             else offensiveCandidateCursor=candidate>=offensiveCandidates.Count?0:candidate;
         }

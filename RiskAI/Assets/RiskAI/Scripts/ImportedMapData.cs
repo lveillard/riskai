@@ -50,12 +50,19 @@ namespace RiskAI
         [Serializable] sealed class CensusCity { public bool port; }
         [Serializable] sealed class Census { public CensusCity[] cities; public Country[] countries; }
         static readonly string[] censusDescriptions=new string[4];
+        static readonly Census[] censuses=new Census[4];
+        static Census ReadCensus(ScenarioMap scenario)
+        {
+            int index=(int)scenario;
+            return censuses[index] ?? (censuses[index]=JsonUtility.FromJson<Census>(LoadSource(scenario).text));
+        }
+        public static int ScenarioCityCount(ScenarioMap scenario) => ReadCensus(scenario).cities.Length;
         // Read only the source metadata once. Setup does not instantiate or sculpt terrain.
         public static string ScenarioDetail(ScenarioMap scenario)
         {
             int index=(int)scenario;
             if(censusDescriptions[index]!=null)return censusDescriptions[index];
-            var census=JsonUtility.FromJson<Census>(LoadSource(scenario).text);
+            var census=ReadCensus(scenario);
             int ports=0;foreach(var city in census.cities)if(city.port)ports++;
             return censusDescriptions[index]=census.cities.Length+" ciudades · "+census.countries.Length+" grupos · "+ports+" puertos";
         }

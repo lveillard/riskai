@@ -4,6 +4,8 @@ namespace RiskAI.Core
     public static class PlayerRules
     {
         public const int MaxPlayers = 16;
+        public const int MinimumCitiesPerPlayer = 3;
+        public static int MaximumPlayersForCityCount(int cityCount) => System.Math.Min(MaxPlayers, System.Math.Max(0, cityCount) / MinimumCitiesPerPlayer);
         public const int NeutralTeam = MaxPlayers;
         public const int NeutralOwner = -1;
         public static bool IsPlayer(int team) => team >= 0 && team < MaxPlayers;

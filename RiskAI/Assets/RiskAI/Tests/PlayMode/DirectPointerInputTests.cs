@@ -95,6 +95,33 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator ThreeFingerDragOrbitsAndFocusCancellationQuarantinesHeldTouches()
+        {
+            Touchscreen touch=null;
+            try
+            {
+                touch=InputSystem.AddDevice<Touchscreen>("Three finger orbit");controller.SendMessage("OnApplicationFocus",true);
+                var center=UiViewport.WorldRect.center;var camera=Camera.main;
+                var before=camera.transform.rotation;var zoom=controller.CameraRig.TargetZoom;var focus=controller.CameraRig.FocusPoint;
+                Pump(touch,
+                    new TouchState { touchId=201,position=center+Vector2.left*40,phase=UnityEngine.InputSystem.TouchPhase.Began },
+                    new TouchState { touchId=202,position=center,phase=UnityEngine.InputSystem.TouchPhase.Began },
+                    new TouchState { touchId=203,position=center+Vector2.right*40,phase=UnityEngine.InputSystem.TouchPhase.Began });
+                Pump(touch,new TouchState { touchId=201,position=center+new Vector2(20,30),phase=UnityEngine.InputSystem.TouchPhase.Moved });
+                Assert.That(Quaternion.Angle(before,camera.transform.rotation),Is.GreaterThan(1));
+                Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(zoom));Assert.That(controller.CameraRig.FocusPoint,Is.EqualTo(focus));
+                Assert.That(controller.Dragging,Is.False);
+                controller.SendMessage("OnApplicationFocus",false);controller.SendMessage("OnApplicationFocus",true);
+                before=camera.transform.rotation;
+                Pump(touch,new TouchState { touchId=201,position=center+new Vector2(90,60),phase=UnityEngine.InputSystem.TouchPhase.Moved });
+                Assert.That(camera.transform.rotation,Is.EqualTo(before));
+                Assert.That(BattleSession.Current.Commands.PendingCount,Is.Zero);
+            }
+            finally { if(touch!=null)InputSystem.RemoveDevice(touch); }
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator PenTipDragUsesSharedAreaSelectionPath()
         {
             Pen pen=null;

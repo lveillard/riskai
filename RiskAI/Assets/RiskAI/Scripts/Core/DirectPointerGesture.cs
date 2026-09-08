@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RiskAI.Core
 {
-    public enum DirectPointerActionKind { PrimaryTap, AreaBegin, AreaUpdate, AreaEnd, AreaCancel, Context, Pan, Pinch }
+    public enum DirectPointerActionKind { PrimaryTap, AreaBegin, AreaUpdate, AreaEnd, AreaCancel, Context, Pan, Pinch, Orbit }
 
     /// <summary>Engine-free screen point used by deterministic pointer arbitration.</summary>
     public readonly struct PointerPoint
@@ -51,7 +51,7 @@ namespace RiskAI.Core
         DeferredTap deferred;
         PointerPoint lastCenter,initialCenter;
         float lastDistance,initialDistance;
-        bool area,twoPointer,twoMoved,retiredTwo,cancelledGesture,blockedUntilAllReleased;
+        bool threePointer,area,twoPointer,twoMoved,retiredTwo,cancelledGesture,blockedUntilAllReleased;
 
         public bool Active => contacts.Count>0||deferred.Valid||retiredTwo||blockedUntilAllReleased;
         public int ContactCount => contacts.Count;
@@ -66,7 +66,14 @@ namespace RiskAI.Core
                 blockedUntilAllReleased=true;
                 return;
             }
-            if(contacts.Count>=2)
+            if(contacts.Count==2)
+            {
+                actions.RemoveAll(action=>action.Kind!=DirectPointerActionKind.AreaCancel);
+                contacts[id]=new Contact { Start=position,Position=position,StartedAt=now };
+                deferred.Valid=false;area=false;twoPointer=false;threePointer=true;
+                lastCenter=ComputeCenter();return;
+            }
+            if(contacts.Count>=3)
             {
                 if(area)actions.Add(new DirectPointerAction(DirectPointerActionKind.AreaCancel,position,position));
                 actions.RemoveAll(action=>action.Kind!=DirectPointerActionKind.AreaCancel);
@@ -92,6 +99,13 @@ namespace RiskAI.Core
         {
             if(!contacts.TryGetValue(id,out var contact)||retiredTwo||blockedUntilAllReleased)return;
             contact.Position=position;contacts[id]=contact;
+            if(threePointer)
+            {
+                var center=ComputeCenter();
+                if(PointerPoint.SqrDistance(center,lastCenter)>.01f)
+                    actions.Add(new DirectPointerAction(DirectPointerActionKind.Orbit,center,lastCenter));
+                lastCenter=center;return;
+            }
             if(twoPointer)
             {
                 ComputePair(out var center,out var distance);
@@ -127,8 +141,9 @@ namespace RiskAI.Core
         {
             if(!contacts.TryGetValue(id,out var contact))return;
             if(cancelled)cancelledGesture=true;
-            if(blockedUntilAllReleased)
+            if(blockedUntilAllReleased||threePointer)
             {
+                blockedUntilAllReleased=true;
                 contacts.Remove(id);
                 if(contacts.Count==0)ResetContacts();
                 return;
@@ -163,7 +178,12 @@ namespace RiskAI.Core
         public void Cancel() { contacts.Clear();actions.Clear();deferred.Valid=false;ResetContacts(); }
         void ResetContacts(bool clearContacts=true)
         {
-            if(clearContacts)contacts.Clear();area=false;twoPointer=false;twoMoved=false;retiredTwo=false;cancelledGesture=false;blockedUntilAllReleased=false;
+            if(clearContacts)contacts.Clear();area=false;threePointer=false;twoPointer=false;twoMoved=false;retiredTwo=false;cancelledGesture=false;blockedUntilAllReleased=false;
+        }
+        PointerPoint ComputeCenter()
+        {
+            float x=0,y=0;foreach(var contact in contacts.Values){x+=contact.Position.X;y+=contact.Position.Y;}
+            return new PointerPoint(x/contacts.Count,y/contacts.Count);
         }
         void ComputePair(out PointerPoint center,out float distance)
         {

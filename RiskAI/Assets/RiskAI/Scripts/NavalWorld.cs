@@ -103,7 +103,7 @@ namespace RiskAI
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
         public Ship Spawn(int team,ShipKind kind,Vector3 point)
         {
-            if(!SeaNavigation.HasClearance(point))return null;
+            if(Session.IsPlayerEliminated(team) || !SeaNavigation.HasClearance(point))return null;
             var go=new GameObject(kind==ShipKind.Galley?"Galera":"Transporte");go.transform.SetParent(transform,false);go.transform.position=new Vector3(point.x,-.24f,point.z);
             var ship=go.AddComponent<Ship>();ship.Initialize(this,team,kind);Ships.Add(ship);Session.RegisterTarget(ship);return ship;
         }
@@ -225,6 +225,7 @@ namespace RiskAI
         }
         void RunAiDecision(int team)
         {
+            if (Session.IsPlayerEliminated(team)) return;
             int fleet=PendingShips(team);
             foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team)fleet++;
             // Each AI still receives one decision every 18 simulation seconds, but

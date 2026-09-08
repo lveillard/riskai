@@ -18,7 +18,7 @@
 <body>
   <canvas id="game" tabindex="0" aria-label="RiskAI. Conquista ciudades y controla territorios."></canvas>
   <div id="safe"></div>
-  <div id="cover"><div class="card"><h1>DOMINIOS</h1><p id="status">Preparando RiskAI…</p><progress id="progress" value="0" max="1" aria-label="Descarga del juego"></progress><p id="hint">Ratón, dedos o lápiz. Elige mapa y jugadores al terminar la carga.</p><button id="retry" hidden>Volver a intentar</button></div></div>
+  <div id="cover"><div class="card"><h1>DOMINIOS</h1><p id="status">Preparando RiskAI…</p><progress id="progress" value="0" max="1" aria-label="Descarga del juego"></progress><p id="hint">Elige mapa y jugadores al terminar la carga.</p><button id="retry" hidden>Volver a intentar</button></div></div>
   <script src="riskai-pen.js"></script>
   <script>
     const canvas=document.getElementById('game'),cover=document.getElementById('cover'),status=document.getElementById('status'),progress=document.getElementById('progress');
@@ -48,7 +48,7 @@
     const config={
       dataUrl:'Build/{{{ DATA_FILENAME }}}',frameworkUrl:'Build/{{{ FRAMEWORK_FILENAME }}}',codeUrl:'Build/{{{ CODE_FILENAME }}}',
       streamingAssetsUrl:'StreamingAssets',companyName:'RiskAI',productName:'RiskAI · Dominios',productVersion:'{{{ PRODUCT_VERSION }}}',
-      devicePixelRatio:Math.min(window.devicePixelRatio||1,1.5),
+      devicePixelRatio:Math.min(window.devicePixelRatio||1,2),
       showBanner:(message,type)=>{if(type==='error')console.error(message);else console.warn(message);}
     };
     const loader=document.createElement('script');loader.src='Build/{{{ LOADER_FILENAME }}}';

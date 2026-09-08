@@ -16,12 +16,18 @@ namespace RiskAI
         public static Vector2 PlayableMin => IsImported ? new Vector2(Imported.PlayableMinX, Imported.PlayableMinZ) : new Vector2(-HalfWidth, -HalfDepth);
         public static Vector2 PlayableMax => IsImported ? new Vector2(Imported.PlayableMaxX, Imported.PlayableMaxZ) : new Vector2(HalfWidth, HalfDepth);
         public static Vector3 PlayableCenter => new Vector3((PlayableMin.x + PlayableMax.x) * .5f, 0, (PlayableMin.y + PlayableMax.y) * .5f);
-        public static string MapName => IsImported ? Imported.name : IsExpanded ? "Cuatro Riberas" : "Las Marcas";
+        public static string MapName => IsImported ? (Scenario == ScenarioMap.Europe ? "Europe" : "New World") : IsExpanded ? "Cuatro Riberas" : "Las Marcas";
         public static string ScenarioDetail(ScenarioMap scenario)
         {
             if (scenario == ScenarioMap.Classic) return ClassicPads.Length + " ciudades · " + ClassicCountries.Length + " grupos";
             if (scenario == ScenarioMap.Riverlands) return ExpandedPads.Length + " ciudades · " + ExpandedCountries.Length + " grupos";
             return ImportedMapData.ScenarioDetail(scenario);
+        }
+        public static int MaximumPlayersForScenario(ScenarioMap scenario)
+        {
+            int cities = scenario == ScenarioMap.Classic ? ClassicPads.Length
+                : scenario == ScenarioMap.Riverlands ? ExpandedPads.Length : ImportedMapData.ScenarioCityCount(scenario);
+            return PlayerRules.MaximumPlayersForCityCount(cities);
         }
         static readonly int[] ClassicMainlandHarborX = { -58, -37, -3, 22, 43 };
         static readonly int[] ExpandedMainlandHarborX = { -54, -41, -19, 20, 43 };

@@ -42,10 +42,7 @@ namespace RiskAI.Tests
             controller.SelectTown(town);
             yield return null;yield return null;
             var root=hud.GetComponent<UIDocument>().rootVisualElement;
-            var productionTab=root.Q<Button>("HUD tab 2");
-            if(productionTab!=null)
-                using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=productionTab;productionTab.SendEvent(evt);}
-            yield return null;
+            Assert.That(root.Q<VisualElement>("HUD tabs"),Is.Null,"Production is shown directly without a tab change.");
             Assert.That(root.Q<Button>("Recruit Archer"),Is.Not.Null);
             town.State.Owner=1;
             yield return null;yield return null;
@@ -65,6 +62,25 @@ namespace RiskAI.Tests
             yield return null;
             Assert.That(root.Q<Button>("Build ship Galley"),Is.Null);
             Assert.That(root.Q<Button>("Recruit MarinePrivate"),Is.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator SelectedArmyExposesSixDirectVectorActionsAndLiveResourceIcons()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var town=battle.Towns.First(item=>item.State.Owner==0);
+            var troops=BattleTestScenario.MobileArmy(battle,0,UnitKind.Archer,2,town.ClaimPoint);
+            controller.SelectOnly(troops[0]);
+            yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Q<VisualElement>("HUD tabs"),Is.Null);
+            var actions=root.Q<VisualElement>("HUD direct actions");Assert.That(actions,Is.Not.Null);
+            Assert.That(actions.Query<Button>().ToList().Count,Is.EqualTo(6));
+            Assert.That(actions.Query<RtsHudIcon>().ToList().Count,Is.EqualTo(6));
+            var move=root.Q<Button>("HUD action Mover");Assert.That(move.tooltip,Is.EqualTo("Mover"));
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=move;move.SendEvent(evt);}
+            Assert.That(controller.MoveCursor,Is.True,"The direct icon must call the existing move action.");
+            Assert.That(root.Q<Image>("HUD unit portrait"),Is.Not.Null);
         }
 
         [UnityTest]

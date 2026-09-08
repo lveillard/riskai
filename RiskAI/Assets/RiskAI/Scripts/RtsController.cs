@@ -177,7 +177,7 @@ namespace RiskAI
         CountryCamp PickCamp(Vector2 pointer)
         {
             CountryCamp best=null;float distance=StrategicMapView.Active?10*BattleHud.Scale:24;
-            foreach(var camp in session.Camps)if(camp){var p=cam.WorldToScreenPoint(camp.transform.position+Vector3.up*.7f);float d=Vector2.Distance(pointer,p);if(p.z>0&&d<distance){best=camp;distance=d;}}
+            foreach(var camp in session.Camps)if(camp){var p=cam.WorldToScreenPoint(StrategicMapView.Active?StrategicMapView.SurfaceAnchor(camp.SpawnPoint):camp.SpawnPoint+Vector3.up*.7f);float d=Vector2.Distance(pointer,p);if(p.z>0&&d<distance){best=camp;distance=d;}}
             return best;
         }
         public void SelectShip(Ship ship,bool append=false)
@@ -624,7 +624,11 @@ namespace RiskAI
                 }
                 else if(mouse.middleButton.isPressed || mouse.rightButton.isPressed && secondaryGesture.Dragging)
                 {
-                    if((point-previousMouse).sqrMagnitude>.001f)CameraRig.Drag(previousMouse,point);
+                    if((point-previousMouse).sqrMagnitude>.001f)
+                    {
+                        if(mouse.middleButton.isPressed)CameraRig.Orbit(point-previousMouse);
+                        else CameraRig.Drag(previousMouse,point);
+                    }
                     previousMouse=point;
                 }
                 else
