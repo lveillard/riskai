@@ -431,6 +431,17 @@ los dos pasos no establecidos en la primera pasada, sin cambiar el runtime.
 Esta ronda no añade mediciones de rendimiento ni certificación ARM; la
 medición aislada de `624743c` conserva su alcance original.
 
+## Ayuda táctil · `376d588`
+
+La ronda de ayuda táctil `376d588` aprobó 35/35 casos, incluidos 15 nuevos;
+se confirmó que Unity los descubrió y ejecutó. Windows/Web exportados y
+comprobados: mantener una tarjeta conserva la selección al soltar; el toque
+corto posterior funciona. Mantener Transporte en una partida viva conservó
+4 de oro/0 barcos en cola, y el toque corto posterior produjo 2 de oro/1 barco.
+La [auditoría de tooltips](audits/TOUCH-TOOLTIPS-v0.21.md) conserva intentos
+incompletos, revisiones, capturas y límites. La entrada fue sintética, no ARM
+ni lápiz físico; no hay nueva medición de rendimiento.
+
 ## Límites restantes
 
 La separación visual arena/roca/verde no suaviza la geometría escalonada de

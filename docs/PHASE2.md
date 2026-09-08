@@ -18,6 +18,7 @@ capturas, población, cámara por mapa ni frecuencia de simulación.
 | Toque de dos dedos | Una orden contextual al soltar, sin desplazamiento previo. |
 | Doble toque de un dedo/lápiz | Orden contextual conservando la selección previa. |
 | Botón secundario del lápiz, si se expone | Orden contextual. |
+| Pulsación larga sobre UI con ayuda | Muestra el tooltip; soltar no activa el botón. |
 | Ratón | Mantiene clics, doble selección, rueda, arrastre derecho y teclado. |
 | Trackpad | Usa los eventos de ratón/rueda/botón que entregue el sistema operativo. |
 
@@ -166,6 +167,13 @@ Cambiar el tamaño del navegador no prueba rotación ni hardware físico;
 la aceptación ARM, trackpad y lápiz real sigue pendiente.
 
 ## Estado
+
+La ayuda de la UI se puede consultar con dedo o punta del lápiz manteniendo
+500 ms, sin ejecutar la acción al soltar. Fuente y builds `376d588`:
+35/35 pruebas dirigidas (15 nuevas), tres revisiones independientes Codex API
+y comprobación del reproductor Web en escritorio/vertical. Una compra naval
+real conservó oro y cola al consultar ayuda y compró con el siguiente toque
+corto. [Evidencia y límites físicos](audits/TOUCH-TOOLTIPS-v0.21.md).
 
 La corrección de identidad de selección de la fuente local `f05c586` cubre
 pérdida de foco, reutilización del pool, grupos y embarques pendientes en el

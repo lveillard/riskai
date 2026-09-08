@@ -1,0 +1,70 @@
+{
+  "buildHead": "376d588eea687ee8358f6fa894d7774a6c7509f0",
+  "physicalHardware": false,
+  "gameplayAccepted": null,
+  "events": [
+    {
+      "capture": "01-recruited-paused",
+      "elapsed": 38.057
+    },
+    {
+      "capture": "02-touch-marquee-held",
+      "elapsed": 39.887
+    },
+    {
+      "capture": "03-touch-selection",
+      "elapsed": 40.996
+    },
+    {
+      "capture": "04-desktop-help-held",
+      "elapsed": 42.449
+    },
+    {
+      "capture": "04-desktop-help-released",
+      "elapsed": 44.166
+    },
+    {
+      "capture": "05-desktop-short-tap",
+      "elapsed": 45.538
+    },
+    {
+      "capture": "06-mouse-hover",
+      "elapsed": 47.87
+    },
+    {
+      "capture": "07-pen-tip-help-held",
+      "elapsed": 49.926
+    },
+    {
+      "capture": "07b-pen-tip-help-released",
+      "elapsed": 51.731
+    },
+    {
+      "capture": "08-drag-cancels-help",
+      "elapsed": 54.616
+    },
+    {
+      "capture": "09-portrait-before",
+      "elapsed": 57.62
+    },
+    {
+      "capture": "10-portrait-help-held",
+      "elapsed": 58.99
+    },
+    {
+      "capture": "10-portrait-help-released",
+      "elapsed": 59.855
+    },
+    {
+      "capture": "11-portrait-short-tap",
+      "elapsed": 61.313
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
+  "browser": "152.0.4191.66",
+  "scriptCompleted": true,
+  "seconds": 61.759
+}

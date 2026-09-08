@@ -1,0 +1,1833 @@
+{
+  "baseline": "4f1a30ffb79bae78696bad464fedf36f32301b66",
+  "attempts": [
+    {
+      "suffix": "r1",
+      "result": "incomplete: new fixture ignored due malformed GUID",
+      "existingTests": {
+        "total": "20",
+        "passed": "20",
+        "failed": "0",
+        "skipped": "0"
+      },
+      "newTestsRun": 0,
+      "expectedNewTests": 11,
+      "artifacts": [
+        {
+          "path": "RiskAI/Logs/v21-touch-tooltip-r1.log",
+          "bytes": 698725,
+          "sha256": "85597938e0998ec2a2aeae4d4b29a7a4609f128b6511c0a7845c006147024098"
+        },
+        {
+          "path": "RiskAI/Logs/v21-touch-tooltip-r1.xml",
+          "bytes": 44276,
+          "sha256": "259e30b5b6da80c3a96c17c4fd13c27f01bb18ef50cbf6b2eff24405e46509b2"
+        },
+        {
+          "path": ".tools/v21-touch-tooltip/source-r1.json",
+          "bytes": 981,
+          "sha256": "56fff97f1c21a28348691152b05334cf7eb0c04a50fec39e89d61a11121cb9ff"
+        }
+      ]
+    },
+    {
+      "suffix": "r2",
+      "result": "compile failed before tests: ambiguous PenButton between InputSystem and UIElements",
+      "fix": "Test alias: using PenButton = UnityEngine.InputSystem.PenButton; no runtime change from reviewed r2",
+      "artifacts": [
+        {
+          "path": "RiskAI/Logs/v21-touch-tooltip-r2.log",
+          "bytes": 66034,
+          "sha256": "87e5d0df1ccc56d31783b0b354043ae18fb74ac3d30adc630859caa350b7e95f"
+        },
+        {
+          "path": ".tools/v21-touch-tooltip/source-r2.json",
+          "bytes": 1157,
+          "sha256": "87eecee543f1174dd1e25369fd907d49476fc641b1ba7309bcbfb907824027d5"
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "name": "a",
+      "file": {
+        "path": ".tools/v21-touch-tooltip/review-a.md",
+        "bytes": 6017,
+        "sha256": "3145a643f96a33dbe5417d05a7283721e84c5a8bd95ff940ce08140e8ed96563"
+      },
+      "content": "# Independent adversarial review A \u2014 frozen r1\n\nReviewed the complete packet-r1.txt (requirements, diff against baseline4f1a30f, all six source/test files). All six current files match source-r1.json SHA-256 values. No source changes, Unity runs, builds, browser launches, other reviewer reports, or subagents were used. Tests have **not** been run; conclusions below are static findings.\n\n## Findings\n\n### P2 \u2014 Button capture bypasses the movement/slop cancellation\n\n**File/method:** `RiskAI/Assets/RiskAI/Scripts/RtsRuntimeTooltip.cs:63`, `OnPointerMove` at lines 81\u201386, `ShowPending` at lines 241\u2013248.\n\n**Reachable sequence:** In the existing attached-panel fixture, touch down at the middle of its 200-pixel-wide Button; move horizontally by 20 panel pixels while remaining inside the same Button; keep the contact down beyond 500 ms. Help must remain hidden because displacement exceeds HoldSlop=12. Instead the pending help is recognized and cancels the Button press.\n\nThe Button's native Clickable captures the pointer on down. Unity 6000.3.23f1's `EventDispatchUtilities.DispatchToCapturingElement` calls propagation with `isCapturingTarget=true`; both normal and compatibility-event propagation explicitly skip ancestor trickle-down callbacks and ancestor bubble callbacks. Therefore the root's `OnPointerMove` never sees this movement. No pointer leave or capture transfer occurs in the sequence above. `ShowPending` checks only whether the physical control remains pressed, so it accepts the displaced contact.\n\nThis also makes root-only tracking an unreliable observer of button changes while capture remains active. Attach the required tracking to the actual capture target, or otherwise observe motion for the identified physical contact without taking native ownership. Keep the cancellation and cleanup lifetime explicit.\n\n**Coverage hole:** `DragBeforeThresholdCancelsHelpAndAllowsNativeScroll` puts the Button inside a ScrollView. Native scrolling can transfer capture to the content container, allowing the separate `OnCaptureOut` path to cancel the hold. That does not test whether the root actually sees captured movement. Add a real InputSystem movement case inside a standalone Button that keeps capture, including a movement below/above the threshold.\n\n### P2 \u2014 Cancellation-count assertions observe an ancestor that does not receive captured cancellation\n\n**File/method:** `RiskAI/Assets/RiskAI/Tests/PlayMode/RtsRuntimeTooltipTests.cs:76` (`SetUp`), line 123 (`HeldTouchShowsHelpWithoutActionAndNextTapStillWorks`), line 160 (`SecondContactOutsidePanelContentCancelsPendingHelp`).\n\n`cancellations` is incremented only by a root trickle-down callback. Production `CancelNativePress` explicitly assigns the currently capturing Button as the cancellation target (lines 191\u2013193). The same Unity capture dispatch rules skip the root callback. Consequently that counter stays zero for a normal captured Button, even when the PointerCancelEvent correctly reaches Clickable and ClickDetector. The held-touch test demands exactly one, and the second-contact test demands at least one; these assertions should fail on the intended native path. In the held-touch case, the premature failure also prevents exercising the later release and next-tap assertions.\n\nCount cancellation at the actual capture target or assert the resulting native state and action counts. Preserve the physical-input-to-attached-panel path. This is a test defect, not evidence that sending the cancellation itself fails.\n\n## Supporting engine references\n\n- Exact installed editor version from ProjectVersion.txt: **6000.3.23f1**. Confirmed capture ancestor-skipping against the exact reference-source tag: <https://github.com/Unity-Technologies/UnityCsReference/blob/6000.3.23f1/Modules/UIElements/Core/Events/EventDispatchUtilities.cs>.\n- Also inspected the 6000.3 branch versions of `Clickable.cs`, `Events/PointerEvents.cs`, `ClickDetector.cs`, `Controls/ScrollView.cs`, `VisualElement.cs`, and `Events/EventCallbackRegistry.cs`. Clickable captures on down; PointerCancelEvent clears ClickDetector state and releases direct-device capture; ScrollView explicitly subscribes to a captured descendant's move/up callbacks. These files were not independently byte-matched to the installed engine binaries.\n\n## Assessment and limits\n\nNo concrete P0/P1 finding identified. Existing test design usefully queues actual InputSystem device events into an attached runtime panel and checks both Button actions and ClickEvent counts. The long-hold, short-tap, scroll, cancellation, disabled-button, pen and hover cases are meaningful in principle, subject to the broken cancellation counter above and execution results.\n\nRoot capture-out notifications can end tracking after an ordinary captured release; therefore missing root pointer-up delivery alone is not reported as a separate stale-state bug. Native cancellation has the appropriate Clickable/ClickDetector intent. Disabled descendants can still be observed by an enabled ancestor callback under the inspected dispatcher; lack of IncludeDisabled on this enabled root is not itself a defect.\n\nCoverage still does not establish focus-loss behavior in the tooltip helper, pending (pre-recognition) disposal/detachment, device removal, root detach/reattach, simultaneous live tooltip roots, or movement after recognition. DirectPointerInputTests sends controller methods directly and does not establish tooltip focus cancellation or combined attached UI/world action ownership. Tests exercise pen hold and barrel-only behavior but not a short pen tap or adding the barrel during a tip hold.\n\nPer-update work is gated by an active hold; while active it scans devices and touchscreen slots. The inspected loops introduce no obvious per-frame allocation or unbounded history, but no profiler/performance run was performed. No gameplay/map changes were present in the packet diff. Hardware, Unity execution, focus/event timing, and complete suite behavior remain unverified.\n"
+    },
+    {
+      "name": "a",
+      "file": {
+        "path": ".tools/v21-touch-tooltip/followup-a-r2.md",
+        "bytes": 3142,
+        "sha256": "676661734802d912e1809d2a5d8e04957e16e3c30078cf9abac592029829fd2b"
+      },
+      "content": "# Review A \u2014 proportional r2 follow-up\n\n**Clean within the changed scope: both review-A r1 P2 findings are resolved statically. No remaining concrete P0/P1/P2/P3 finding identified in this follow-up. Runtime acceptance remains pending.**\n\nReviewed packet-r2 requirements, changed tooltip source and complete new fixture, and source-r2.json. All seven current source/meta files match the frozen SHA-256 manifest; unchanged supporting files retain their r1 hashes. No source edits, tests/builds, browser launches, or other reviewers' reports were used.\n\n## Reconciliation\n\n- **Captured movement:** `OnCapture` now observes move/up/cancel on the actual capture owner without taking capture. `UnwatchCapture` is called by `EndHold`, covering the normal end and cancellation/disposal paths. The new standalone-Button tests explicitly assert retained native capture, then exercise 20-pixel movement (help canceled) and 6-pixel movement (help recognized and release action suppressed). These directly cover the r1 failure rather than relying on a ScrollView capture transfer. Existing stationary-hold coverage remains.\n- **Cancellation observer:** the fixture now counts PointerCancelEvent at the Button in the trickle-down phase. This target receives the captured cancellation, fixing the root-only observer error. The action/click counts and subsequent-tap assertions remain meaningful.\n- **Changed pen behavior:** the helper reads all four physical barrel buttons both at tip-down and while a hold is tracked. New queued-PenState cases cover simultaneous tip/barrel input plus a subsequent ordinary pen tap, and adding barrel four during a captured tip hold followed by barrel release while the tip remains down. These preserve the real InputSystem-to-attached-panel path.\n\nConfirmed that the exact Unity **6000.3.23f1** `CaptureEvents.cs` gives PointerCaptureEvent both trickle-down and bubbling propagation, so the root registration can discover the Button owner. Reference: <https://github.com/Unity-Technologies/UnityCsReference/blob/6000.3.23f1/Modules/UIElements/Core/Events/CaptureEvents.cs>. The capture-specific PointerEvent dispatch behavior established in r1 still applies. Also checked the local installed InputSystem `Pen.cs`: third/fourth barrel controls and `PenButton.BarrelFourth` exist.\n\n## Validation limits\n\nThe fixture contains 15 UnityTest cases; its included meta GUID is now a syntactically valid 32-digit hexadecimal GUID. This inspection cannot prove Unity imports/discovers or executes them. Parent reports that r1 ran 20 existing cases but ignored this new fixture due to its former invalid meta GUID; that is **not** evidence for these new tests or the r2 change. No new test pass is inferred here.\n\nThe unchanged r1 coverage limits remain; this follow-up does not claim hardware/focus-loss, multiple live roots, device-removal, root detach/reattach, or profiler validation. It specifically closes my two capture-related review findings and examines the newly added physical-barrel handling. Actual r2 compilation, discovery of all 15 fixture cases, and execution results are still required from parent validation.\n"
+    },
+    {
+      "name": "b",
+      "file": {
+        "path": ".tools/v21-touch-tooltip/review-b.md",
+        "bytes": 7036,
+        "sha256": "c3914543590412adfe37c5f86d7dc11e2d377d165248618bfc0b9cd48fe9b96d"
+      },
+      "content": "# Independent review B \u2014 packet r1\n\nReviewed the entire `packet-r1.txt` against its stated requirements and baseline `4f1a30ffb79bae78696bad464fedf36f32301b66`. The implementation change is in `RtsRuntimeTooltip.cs`; the other supplied production sources establish runtime ownership and the native Button implementation. No Unity run, build, browser, source edits, or other review reports were used. The conclusions below are source-derived, not claims of passing or failing executed tests. Project version is Unity `6000.3.23f1`.\n\n## P2 \u2014 Captured button movement bypasses the hold slop check\n\n**Location:** `RiskAI/Assets/RiskAI/Scripts/RtsRuntimeTooltip.cs:63`, `OnPointerMove` at line 81, and `ShowPending` at line 240.\n\n**Reachable scenario:** Press a normal tooltip-bearing button with a touch or pen tip, move horizontally 20\u201340 panel pixels while remaining within the button, and keep the tip down past 500 ms. A button outside a ScrollView makes this especially straightforward. The movement should cancel recognition under the explicit 12-pixel hold-slop rule. Instead, the timer remains armed, shows the help at the original position, and cancels the otherwise native button press. Moving entirely off the button but staying within the root has the same root-observation problem.\n\n**Evidence:** `RtsUiStyle.Button` creates `RtsOrnamentButton`, which inherits Unity `Button` and its `Clickable`. Unity's `Clickable.ProcessDownEvent` captures the pointer. In Unity 6000.3, `EventDispatchUtilities.DispatchToCapturingElement` calls `PropagateEvent(..., isCapturingTarget: true)`. Both propagation implementations explicitly skip ancestor trickle callbacks during capture and only invoke bubble callbacks on the capturing target. Registering `OnPointerMove` on the root with `TrickleDown` therefore does not observe the moves after the button captures. `OnAfterInputUpdate` checks contacts/cancellation/device removal but never movement, and `ShowPending` checks only whether the physical press remains held. Nothing else enforces the slop in this scenario.\n\nThe existing `DragBeforeThresholdCancelsHelpAndAllowsNativeScroll` test does not isolate this defect: ScrollView installs its own callbacks on the captured target, can steal the capture as scrolling begins, and the tooltip then ends through `OnCaptureOut`. A non-scroll captured-button movement test is needed, and movement observation must continue while the descendant owns capture without taking native scroll ownership.\n\n## P2 \u2014 Cancellation assertions observe the wrong element and should fail on native capture\n\n**Location:** `RiskAI/Assets/RiskAI/Tests/PlayMode/RtsRuntimeTooltipTests.cs:76`, `HeldTouchShowsHelpWithoutActionAndNextTapStillWorks` at line 123, and `SecondContactOutsidePanelContentCancelsPendingHelp` at line 160.\n\nThe tests count `PointerCancelEvent` using a root trickle callback, then require exactly one cancellation after a recognized hold and at least one after the second contact. `CancelNativePress` deliberately targets `root.panel.GetCapturingElement(holdPointer)`, which is the pressed Button. Under the capture dispatch rules above, the cancellation reaches the button's `Clickable` but skips the root callback. The counter therefore remains zero for the primary cancellation that these assertions are intended to verify. This is an assertion-design error even when the button's native cancellation and click suppression work correctly.\n\nObserve cancellation at the capturing button with a suitable callback phase, or verify the externally meaningful release/action and capture state. Keep the actual InputSystem-to-attached-panel input path. This also demonstrates why changing the root callback to trickle-down is insufficient to solve captured movement.\n\n## Additional coverage limits and reviewed behavior\n\n- The new fixture does exercise queued Touchscreen/Mouse/Pen input through an attached UIDocument and InputSystemUIInputModule, and counts both `Button.clicked` actions and `ClickEvent`; this is meaningful integration coverage. Validation has not run.\n- There is no tooltip test for application focus loss, input-device removal, pending disposal, root/panel detachment and reattachment, or multiple simultaneous runtime roots. The focus-cancellation case in `DirectPointerInputTests` exercises the controller through `SendMessage` and does not invoke or verify `RtsRuntimeTooltip.OnFocusChanged`. These are unverified requirements, not independently proven runtime bugs.\n- Disabled descendant buttons are not, by themselves, a demonstrated dispatch defect: Unity's callback registry checks the current callback element's `enabledInHierarchy`. The enabled root can receive the initial down even when its target is disabled. The dedicated disabled-button integration test still needs to be run.\n- Native cancellation is a sound mechanism for resetting both `Clickable` and `ClickDetector` in the ordinary captured-button hold case: `Clickable.ProcessCancelEvent` clears active state and releases capture; `PointerCancelEvent.PostDispatch` cancels click tracking. This review found no evidence that a straightforward recognized hold must fire a release action.\n- Global subscriptions are removed by `Dispose`; `RtsUiRuntime.OnDestroy` calls it. The input-update callback returns immediately when no hold is active. Its active scan is proportional to connected devices/touch slots; no per-frame allocation or material performance regression was established from this source.\n\n## Engine evidence consulted\n\n- `https://raw.githubusercontent.com/Unity-Technologies/UnityCsReference/6000.3/Modules/UIElements/Core/Events/EventDispatchUtilities.cs` \u2014 capture dispatch and skipped ancestor callbacks.\n- `https://raw.githubusercontent.com/Unity-Technologies/UnityCsReference/6000.3/Modules/UIElements/Core/Clickable.cs` \u2014 native pointer capture and cancellation.\n- `https://raw.githubusercontent.com/Unity-Technologies/UnityCsReference/6000.3/Modules/UIElements/Core/ClickDetector.cs` \u2014 independent click synthesis/reset.\n- `https://raw.githubusercontent.com/Unity-Technologies/UnityCsReference/6000.3/Modules/UIElements/Core/Events/PointerEvents.cs` \u2014 cancellation post-dispatch and direct-manipulation capture release.\n- `https://raw.githubusercontent.com/Unity-Technologies/UnityCsReference/6000.3/Modules/UIElements/Core/Events/EventCallbackRegistry.cs` \u2014 disabled callback filtering.\n- `https://raw.githubusercontent.com/Unity-Technologies/UnityCsReference/6000.3/Modules/UIElements/Core/Controls/ScrollView.cs` \u2014 callbacks installed on a captured target.\n- Local package `com.unity.ugui@27635d171b1a`, `Runtime/UGUI/EventSystem/UIElements/PanelEventHandler.cs` \u2014 InputSystem/EventSystem forwarding to toolkit pointer events.\n\nThe online engine references use the 6000.3 branch rather than a pinned editor-revision source dump. The capture behavior is explicit there; executing the supplied integration tests and the added non-scroll movement scenario on the installed editor remains the final confirmation.\n"
+    },
+    {
+      "name": "b",
+      "file": {
+        "path": ".tools/v21-touch-tooltip/followup-b-r2.md",
+        "bytes": 4334,
+        "sha256": "3e8afec462bc6e80966d3fcc3393e958da6837239325a8e4f5c9f6a0ed83a795"
+      },
+      "content": "# Independent review B \u2014 proportional r2 follow-up\n\n**Result: both of my r1 P2 findings are resolved in the reviewed source. No additional concrete P0/P1/P2/P3 finding in this bounded follow-up. Runtime validation remains outstanding.**\n\nReviewed the r2 packet's production delta, the complete revised tooltip implementation and fixture, and its `.meta`, using `source-r2.json` as the frozen source manifest. Did not read another review, edit production/test sources, or run Unity/tests/builds. Production tooltip hash: `d0ac8610bb038fd7c4f3d29829fea5d4c71a51a9813138fa14a9979b5216dc74`; fixture hash: `2a61ad740a4c2f6ceceb3690da0b621df47b0172d69afd461a502f4ce205959a`.\n\n## Reconciliation\n\n1. **Captured movement bypassed the root slop callback \u2014 resolved.** `OnCapture` now observes the capture owner's target phase for move/up/cancel events. Unity's `PointerCaptureEventBase` derives from `EventBase` and explicitly bubbles and trickles, so the root can receive the capture notification even though subsequent captured pointer events skip ancestor callbacks. The installed target-phase move callback can enforce `HoldSlop` before the native Clickable's bubble callback. `EndHold` calls `UnwatchCapture`, with matching callback phases, and does not steal or release capture for ordinary movement. The new `CapturedButtonMovementBeyondSlopCancelsHelpWithoutTakingCapture` test isolates the original non-scroll-button scenario: it checks native capture before/after movement, hidden help after the deadline, no synthetic cancellation, and exactly one native action/click on release. The complementary small-movement test checks recognition, native capture release, and zero release actions.\n\n2. **Cancellation-count assertions observed the wrong element \u2014 resolved.** The fixture now registers its cancellation observer on `button` with `TrickleDown`, where it receives the event before Clickable's bubble callback stops propagation. This matches `CancelNativePress` targeting the actual capture owner. The tests continue to assert externally meaningful action and click counts as well as cancellation counts.\n\n## Additional delta checked\n\n- Physical pen barrel state is now checked at initial tip down and during the active hold. The initial combined press is stopped before the Button is armed; a barrel added during an existing tip hold cancels the native press. The local Input System package provides all four referenced barrel controls and `PenButton.BarrelFourth`. New tests cover simultaneous tip/first-barrel, addition of the fourth barrel while captured, no rearming when that barrel is released while the tip remains held, and a usable subsequent short tip press after the initial combination.\n- `EndHold` removes the temporary capture-owner callbacks for normal release, slop cancellation, explicit cancellation and disposal. The existing `dispatchingCancel` guard also covers the newly installed target-phase cancel callback, so recognition's own synthetic cancellation does not immediately hide the help.\n- Fixture setup now resets its counters and virtual-device references between tests. The packet contains 15 `[UnityTest]` cases in the new fixture. The `.meta` contains a syntactically valid 32-hex-character GUID, `2c8b879d714d41d9a538c902ea8a31cf`.\n\n## Limits\n\nThe parent reports that the r1 run executed 20 existing tests while Unity ignored the new fixture because of its invalid GUID. That is not evidence of tooltip-fixture coverage or success. The r2 run must establish that all 15 new cases are discovered and executed, not merely that the existing suite stays green.\n\nThe lifecycle coverage limits from my r1 review remain: no direct tooltip tests for application focus loss, device removal, disposal before recognition, root/panel detach/reattach, or simultaneous runtime roots. The controller's `SendMessage` focus test does not validate this helper's focus callback. These are unverified requirements, not demonstrated defects in the r2 delta.\n\nEngine basis is the Unity 6000.3 source cited in my r1 report, plus `https://raw.githubusercontent.com/Unity-Technologies/UnityCsReference/6000.3/Modules/UIElements/Core/Events/CaptureEvents.cs` for capture-notification propagation. These are branch sources rather than a pinned editor-revision dump; execution on the installed editor remains necessary.\n"
+    },
+    {
+      "name": "c",
+      "file": {
+        "path": ".tools/v21-touch-tooltip/review-c.md",
+        "bytes": 7291,
+        "sha256": "7b21fe0004b34fa6136a58446d4b72166ca00ae4741933bc8f8cf3f2127d580d"
+      },
+      "content": "Independent review C of frozen packet r1 against baseline 4f1a30f. Read all 1,998 lines of packet-r1.txt and source-r1.json. No Unity tests, builds, or browser sessions were run, and no other reviewer verdicts were read. Verdict: two concrete P2 findings; no P0/P1 found.\n\n1. **P2 \u2014 movement beyond the hold slop is invisible while a normal button owns capture.** `RtsRuntimeTooltip.cs:63,81-90`, constructor / `OnPointerMove`, and `ShowPending` at line 241.\n\n   Reproduction through the existing attached fixture: press the enabled 200-pixel-wide button near its center, move horizontally 30 pixels within that same button before 500 ms, keep the tip/finger down beyond 500 ms, then release. `Clickable.ProcessDownEvent` captures the pointer. Unity 6000.3.23f1's `EventDispatchUtilities.DispatchToCapturingElement` propagates with `isCapturingTarget=true`; both propagation implementations explicitly skip ancestor trickle callbacks during capture. Consequently the root's `OnPointerMove` never evaluates `HoldSlop`, while neither root leave nor capture loss occurs. `ShowPending` checks only that the physical press remains down, recognizes this moved gesture as a hold, displays help at the original position, and cancels its native release. This violates the deliberate stationary hold / drag cancellation requirement.\n\n   The ScrollView test does not cover this: Unity's ScrollView registers movement callbacks directly on the capturing child and can transfer capture to its content container, producing `PointerCaptureOutEvent` and ending the tooltip hold indirectly. A horizontal movement inside a vertically scrolling view, or movement on a button outside a ScrollView, still exposes the defect. Observe movement at the actual capture owner (with correct registration/cleanup) or through another reliable route, and add a real Input System regression for movement that stays within the same captured button without a capture transfer.\n\n2. **P2 \u2014 cancellation assertions count on a root that cannot receive the cancellation.** `RtsRuntimeTooltipTests.cs:76,123,160`, `SetUp`, `HeldTouchShowsHelpWithoutActionAndNextTapStillWorks`, and `SecondContactOutsidePanelContentCancelsPendingHelp`.\n\n   `SetUp` increments `cancellations` only in a root trickle callback. In both tested sequences the enabled button holds pointer capture when `CancelNativePress` sends the pooled cancel to that capturing button. The same exact-version dispatch rules above bypass the root, so the counter stays zero despite the native cancel reaching `Clickable` and `ClickDetector`. The held-touch test therefore has an invalid `cancellations == 1` assertion; the second-contact test likewise expects at least one root-observed cancel without a route for that cancel. This is a source-predicted assertion failure, not a claimed executed result. Register the observation on the button/capture owner, while keeping the existing physical-release action/count and subsequent-tap assertions.\n\nSupporting source inspected at the project's exact Unity version (ProjectVersion.txt: 6000.3.23f1):\n\n- https://github.com/Unity-Technologies/UnityCsReference/blob/6000.3.23f1/Modules/UIElements/Core/Events/EventDispatchUtilities.cs \u2014 `DispatchToCapturingElement`, both `HandleEventAcrossPropagationPath` implementations; capture bypasses ancestor callbacks, including trickle callbacks.\n- https://github.com/Unity-Technologies/UnityCsReference/blob/6000.3.23f1/Modules/UIElements/Core/Clickable.cs \u2014 `ProcessDownEvent` captures, `OnPointerCancel` / `ProcessCancelEvent` disarm the active button.\n- https://github.com/Unity-Technologies/UnityCsReference/blob/6000.3.23f1/Modules/UIElements/Core/Events/PointerEvents.cs \u2014 `PointerCancelEvent.PostDispatch` resets click tracking, releases direct pointer capture, and clears cached pointer targets.\n- https://github.com/Unity-Technologies/UnityCsReference/blob/6000.3.23f1/Modules/UIElements/Core/ClickDetector.cs \u2014 independently resets click synthesis on cancel.\n- https://github.com/Unity-Technologies/UnityCsReference/blob/6000.3.23f1/Modules/UIElements/Core/Controls/ScrollView.cs \u2014 `OnPointerCapture` attaches move/up callbacks directly to the captured child; movement can transfer capture.\n- https://github.com/Unity-Technologies/UnityCsReference/blob/6000.3.23f1/Modules/UIElements/Core/Events/EventCallbackRegistry.cs \u2014 enabled checks apply to the current callback element, so an enabled root can observe an event aimed at a disabled descendant.\n\nOther assessment and limits, separate from the two findings:\n\n- Sending a real pooled `PointerCancelEvent` copied from the original down is supported by the native sources for resetting both `Clickable` and independent `ClickDetector` state. Suppressing only root up/click would not have been sufficient under capture, but this implementation also cancels natively. Subsequent down clears `suppressedPointer` for that pointer ID. No separate release-click leak was established for the ordinary recognized hold, content rebuild, or disposal paths.\n- Disabled-button help is plausible through the enabled root; the default callback registration on that root does not itself exclude disabled descendants. Native disabled buttons do not become enabled. The attached disabled test meaningfully exercises this.\n- The local package's `DefaultInputActions.inputactions` binds `<Pen>/position` and `<Pen>/tip`, but its RightClick/MiddleClick bindings are mouse-only. `RtsUiRuntime.EnsureEventSystem` and the fixture both use `AssignDefaultActions`. `ExtendedPointerEventData.ReadDeviceState` does not populate barrel state, and `PanelEventHandler.PointerEvent.Read` builds `pressedButtons` from the delivered button actions. Thus the barrel-only part of `PenTipHoldSuppressesReleaseButBarrelDoesNotStartHelp` does not establish that a barrel event is routed and rejected; no such UI button event is bound. A concurrent barrel press while the tip is held also remains invisible to the current `pressedButtons == 1` checks and `OnAfterInputUpdate`. Add physical tip-plus-barrel coverage if barrel use is intended to cancel/prevent an existing tip hold. I have not treated the baseline's missing barrel binding by itself as a new runtime defect, or assumed the requirement forbids all hover help whenever a barrel is held.\n- Multi-contact detection polls all devices while a hold is active, including contacts outside the content. This is bounded by device/contact slots and returns immediately when idle. No per-frame visual-tree scan or per-frame label allocation was introduced.\n- Lifecycle hooks cover target detach, root detach, content rebuild, disposal, and application focus loss in source. Coverage is incomplete: no tooltip focus-loss test, no pending-hold root detach/re-attach test, no pending disposal test, and no recovery tap after cancellation/rebuild/disabled help. The controller focus test in DirectPointerInputTests does not validate the tooltip hook. The tests also lack the capture-preserving motion scenario in finding 1 and a combined UI-origin hold/world-action-count check. These are unverified paths rather than additional proven runtime failures.\n- Existing hover text-resolution/placement behavior and world input code are not changed by the packet. No map or game-rule change was found.\n"
+    },
+    {
+      "name": "c",
+      "file": {
+        "path": ".tools/v21-touch-tooltip/followup-c-r2.md",
+        "bytes": 3972,
+        "sha256": "79630a9a013ca5e2eb1926d35b08bd054091dae7d1fe31fc0aac18065085b733"
+      },
+      "content": "Independent reviewer C follow-up on frozen packet-r2.txt and source-r2.json. Verdict: clean for this proportional source review; both of my r1 P2 findings are resolved. No new concrete P0/P1/P2/P3 finding established.\n\n- **r1 movement/capture finding resolved:** `RtsRuntimeTooltip.OnCapture` now observes `PointerCaptureEvent` at the root and installs move/up/cancel callbacks directly on the capture owner in trickle phase. Those callbacks run before the native Clickable's target bubble handlers; `EndHold` calls `UnwatchCapture` on movement cancellation, ordinary release, capture loss, rebuild, and disposal. The tooltip does not take capture for tracking. The new `CapturedButtonMovementBeyondSlopCancelsHelpWithoutTakingCapture` physically moves 20 pixels inside the same captured button, asserts that capture remains with the button, requires hidden help and zero native cancellations, and verifies the normal release counts. `CapturedButtonSmallMovementStillAllowsDeliberateHelp` checks the complementary 6-pixel motion, recognized help, native cancellation, capture release, and zero release actions.\n- **r1 cancellation-observation finding resolved:** the fixture's cancellation counter is now a trickle callback on the button itself. It can observe `CancelNativePress` delivered to the captured button. The held-touch and outside-second-contact assertions no longer rely on an ancestor receiving captured pointer events. Counters and device fields are also reset in setup.\n- **Earlier pen coverage concern addressed:** `HasBarrel` reads all four physical barrel controls rather than relying on the default UI action bindings. `OnPointerDown` rejects an already-modified tip before Clickable arms; `OnAfterInputUpdate` cancels a tracked tip when a barrel is added. The new tests cover simultaneous tip/first-barrel plus a subsequent usable tip tap, and fourth-barrel addition during captured tip hold followed by barrel release while the tip remains held. They retain native action/ClickEvent assertions. The original barrel-only test still does not prove a UI barrel button binding exists; the new physical guards make such a binding unnecessary for these tooltip cases.\n\nThis review read the complete revised tooltip and fixture source from the frozen packet, its baseline diff and corrected meta, and reconciled the unchanged source hashes with r1. I additionally checked Unity 6000.3.23f1 `CaptureEvents.cs`: `PointerCaptureEventBase` derives from `EventBase`, uses trickle/bubble propagation, and does not use the pointer-capture-exclusive dispatch path. This supports the root observer used to install the target callbacks. The r1 exact-version Clickable, PointerEvents, ClickDetector, and EventDispatchUtilities evidence continues to apply.\n\nExact-version capture reference: https://github.com/Unity-Technologies/UnityCsReference/blob/6000.3.23f1/Modules/UIElements/Core/Events/CaptureEvents.cs\n\nValidation limits: I ran no Unity tests, builds, or browser sessions and read no other reviewer verdicts. The fixture contains 15 `[UnityTest]` cases, and the frozen `.meta` now has a syntactically valid 32-hex-character GUID (`2c8b879d714d41d9a538c902ea8a31cf`). Neither observation proves Unity discovers or passes the fixture. Per the parent's supplied validation status, r1 ran 20 existing passing cases while the new fixture was silently ignored because of its malformed meta; those results are not evidence for the tooltip fixture. Discovery and execution of all 15 revised cases remain pending.\n\nThe proportional follow-up does not close the previously stated untested paths: actual tooltip application-focus loss, pending-hold root detach/re-attach, pending disposal, recovery taps after each lifecycle cancellation, and a combined UI-origin hold/world-command-count integration case. No concrete failure in those paths was established here. No platform/device execution was performed, so physical pen and touch hardware behavior remains unverified.\n"
+    }
+  ],
+  "sourceHead": "376d588eea687ee8358f6fa894d7774a6c7509f0",
+  "recordedAt": "2026-09-08T13:04:20.537928+00:00",
+  "testResult": {
+    "result": "Passed",
+    "total": "35",
+    "passed": "35",
+    "failed": "0",
+    "skipped": "0",
+    "duration": "89.3953915"
+  },
+  "tests": [
+    {
+      "fullname": "RiskAI.Tests.BattleHudTests.AppendingFriendlyLandSelectionReplacesEnemyInspection",
+      "result": "Passed",
+      "duration": "5.709361"
+    },
+    {
+      "fullname": "RiskAI.Tests.BattleHudTests.ArmyRosterShowsPortraitsAndLiveHealthAndSelectsOneUnit",
+      "result": "Passed",
+      "duration": "3.572560"
+    },
+    {
+      "fullname": "RiskAI.Tests.BattleHudTests.DifferentArmiesWithTheSameLegacyHashRebuildTheRoster",
+      "result": "Passed",
+      "duration": "3.034591"
+    },
+    {
+      "fullname": "RiskAI.Tests.BattleHudTests.GoldHeaderRefreshesAfterGrantWhilePausedBeforeNextSimulationTick",
+      "result": "Passed",
+      "duration": "2.981250"
+    },
+    {
+      "fullname": "RiskAI.Tests.BattleHudTests.HelpSheetIsReplacedByActualVictoryResult",
+      "result": "Passed",
+      "duration": "2.942572"
+    },
+    {
+      "fullname": "RiskAI.Tests.BattleHudTests.MixedRosterKeepsSoldiersAndShipsAndSelectsTheShip",
+      "result": "Passed",
+      "duration": "3.208746"
+    },
+    {
+      "fullname": "RiskAI.Tests.BattleHudTests.OldRosterCardCannotSelectANewLifetimeOfTheSameView",
+      "result": "Passed",
+      "duration": "3.122691"
+    },
+    {
+      "fullname": "RiskAI.Tests.BuildingSelectionTests.AreaSelectionIncludesOwnBuildingsOnly",
+      "result": "Passed",
+      "duration": "3.510895"
+    },
+    {
+      "fullname": "RiskAI.Tests.BuildingSelectionTests.GroupRecruitQueuesOneUnitAtTheShortestOwnTownQueue",
+      "result": "Passed",
+      "duration": "3.669207"
+    },
+    {
+      "fullname": "RiskAI.Tests.BuildingSelectionTests.ImportedPortBoxSelectionAcceptsBothHouseAndBerth",
+      "result": "Passed",
+      "duration": "3.775639"
+    },
+    {
+      "fullname": "RiskAI.Tests.BuildingSelectionTests.ImportedPortHasOneBuildingSelectionIdentity",
+      "result": "Passed",
+      "duration": "3.786241"
+    },
+    {
+      "fullname": "RiskAI.Tests.BuildingSelectionTests.NearbyTownGroupKeepsOwnVisibleCitiesWithinTheSelectionRadius",
+      "result": "Passed",
+      "duration": "4.035348"
+    },
+    {
+      "fullname": "RiskAI.Tests.BuildingSelectionTests.RoofHouseAndTowerPickTheSameSettlementAndRingCoversBoth",
+      "result": "Passed",
+      "duration": "4.416012"
+    },
+    {
+      "fullname": "RiskAI.Tests.DirectPointerInputTests.BarrelPressCancelsPenMarqueeBeforeContext",
+      "result": "Passed",
+      "duration": "3.952165"
+    },
+    {
+      "fullname": "RiskAI.Tests.DirectPointerInputTests.EnhancedTouchDragUsesSharedAreaSelectionPath",
+      "result": "Passed",
+      "duration": "3.671389"
+    },
+    {
+      "fullname": "RiskAI.Tests.DirectPointerInputTests.PausedTwoFingerTouchPansAndPinchesWithoutCommands",
+      "result": "Passed",
+      "duration": "3.714869"
+    },
+    {
+      "fullname": "RiskAI.Tests.DirectPointerInputTests.PenTipDragUsesSharedAreaSelectionPath",
+      "result": "Passed",
+      "duration": "3.489005"
+    },
+    {
+      "fullname": "RiskAI.Tests.DirectPointerInputTests.UiOriginTouchAndFocusCancelledTouchNeverResumeWorldGesture",
+      "result": "Passed",
+      "duration": "3.379290"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.AddingBarrelDuringCapturedTipHoldCancelsHelpAndLateAction",
+      "result": "Passed",
+      "duration": "1.639818"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.CanceledInputContactCannotShowHelpOrActivate",
+      "result": "Passed",
+      "duration": "0.832370"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.CapturedButtonMovementBeyondSlopCancelsHelpWithoutTakingCapture",
+      "result": "Passed",
+      "duration": "0.849769"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.CapturedButtonSmallMovementStillAllowsDeliberateHelp",
+      "result": "Passed",
+      "duration": "0.850165"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.ContentRebuildCancelsPendingPressAndReusedButtonDoesNotClickLate",
+      "result": "Passed",
+      "duration": "0.849630"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.DetachAfterHelpAndReattachCannotLeakReleaseClick",
+      "result": "Passed",
+      "duration": "0.866374"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.DisabledButtonCanExplainWithoutBecomingActionable",
+      "result": "Passed",
+      "duration": "0.824703"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.DisposeAfterHelpClearsNativeClickStateBeforeRelease",
+      "result": "Passed",
+      "duration": "0.858136"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.DragBeforeThresholdCancelsHelpAndAllowsNativeScroll",
+      "result": "Passed",
+      "duration": "0.902754"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.HeldTouchShowsHelpWithoutActionAndNextTapStillWorks",
+      "result": "Passed",
+      "duration": "1.613175"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.MouseAndPenHoverStillShowHelpAndSourceRemovalHidesIt",
+      "result": "Passed",
+      "duration": "1.621309"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.PenTipAndBarrelTogetherCannotOpenHelpOrActivate",
+      "result": "Passed",
+      "duration": "0.857164"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.PenTipHoldSuppressesReleaseButBarrelDoesNotStartHelp",
+      "result": "Passed",
+      "duration": "1.616680"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.SecondContactOutsidePanelContentCancelsPendingHelp",
+      "result": "Passed",
+      "duration": "0.850118"
+    },
+    {
+      "fullname": "RiskAI.Tests.RtsRuntimeTooltipTests.ShortTouchTapInvokesButtonAndClickOnce",
+      "result": "Passed",
+      "duration": "0.832450"
+    },
+    {
+      "fullname": "RiskAI.Tests.UIWheelInputTests.MouseWheelScrollsHudMenuBothDirectionsWithoutMapZoom",
+      "result": "Passed",
+      "duration": "3.458122"
+    },
+    {
+      "fullname": "RiskAI.Tests.UIWheelInputTests.RuntimeTooltipShowsOnHoverAndHidesWhenItsSourceIsRemoved",
+      "result": "Passed",
+      "duration": "4.006745"
+    }
+  ],
+  "sourceManifest": [
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsRuntimeTooltip.cs",
+      "sha256": "d0ac8610bb038fd7c4f3d29829fea5d4c71a51a9813138fa14a9979b5216dc74"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsUiInput.cs",
+      "sha256": "b01594eef0a572e93031303ab1e43de5b456e33ff7ca1c8d2975bb05cf6b025c"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsUiOrnaments.cs",
+      "sha256": "0fff408251f407a48d3cf096f3a91034a4b2f6a465195ad9a11143e66fd66139"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RtsRuntimeTooltipTests.cs",
+      "sha256": "b18ac664a06b30847eef20fd1c253e278cec94e248f41674c7b15840f86d72b5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RtsRuntimeTooltipTests.cs.meta",
+      "sha256": "86623e800066958fc8d7c30678e8ac378f3ac9425bdb3fe7cff9b0ebd84c7db1"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/UIWheelInputTests.cs",
+      "sha256": "955ef265e142f08f2120c25087dafd610b05d2bf44c2bc64b2db39932a7a21f4"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/DirectPointerInputTests.cs",
+      "sha256": "8d1ba66d9849a17334a46a57ad75aff74f91e2405504727ebc9bc60052f7db31"
+    }
+  ],
+  "reviewProvenance": [
+    {
+      "file": "C:\\Users\\lveil\\.codex-azure\\sessions\\2026\\09\\08\\rollout-2026-09-08T14-27-36-01a080fc-f043-70c2-bf89-de1abf46ad5e.jsonl",
+      "id": "01a080fc-f043-70c2-bf89-de1abf46ad5e",
+      "model_provider": "azure",
+      "source": {
+        "subagent": {
+          "thread_spawn": {
+            "parent_thread_id": "01a0807e-1360-7622-b458-f88f40d7f9c1",
+            "depth": 1,
+            "agent_path": "/root/tooltip_review_a",
+            "agent_nickname": "Beauvoir",
+            "agent_role": null
+          }
+        }
+      },
+      "cwd": "C:\\Users\\lveil\\Desktop\\Projects\\riskai",
+      "model": "gpt-6-astra",
+      "effort": "medium"
+    },
+    {
+      "file": "C:\\Users\\lveil\\.codex-azure\\sessions\\2026\\09\\08\\rollout-2026-09-08T14-27-55-01a080fd-3ac4-7ad3-83d2-dfffba02c5a8.jsonl",
+      "id": "01a080fd-3ac4-7ad3-83d2-dfffba02c5a8",
+      "model_provider": "azure",
+      "source": {
+        "subagent": {
+          "thread_spawn": {
+            "parent_thread_id": "01a0807e-1360-7622-b458-f88f40d7f9c1",
+            "depth": 1,
+            "agent_path": "/root/tooltip_review_b",
+            "agent_nickname": "Euler",
+            "agent_role": null
+          }
+        }
+      },
+      "cwd": "C:\\Users\\lveil\\Desktop\\Projects\\riskai",
+      "model": "gpt-6-astra",
+      "effort": "medium"
+    },
+    {
+      "file": "C:\\Users\\lveil\\.codex-azure\\sessions\\2026\\09\\08\\rollout-2026-09-08T14-29-24-01a080fe-99e1-7741-814c-b6f249da0d5f.jsonl",
+      "id": "01a080fe-99e1-7741-814c-b6f249da0d5f",
+      "model_provider": "azure",
+      "source": {
+        "subagent": {
+          "thread_spawn": {
+            "parent_thread_id": "01a0807e-1360-7622-b458-f88f40d7f9c1",
+            "depth": 1,
+            "agent_path": "/root/tooltip_review_c",
+            "agent_nickname": "Maxwell",
+            "agent_role": null
+          }
+        }
+      },
+      "cwd": "C:\\Users\\lveil\\Desktop\\Projects\\riskai",
+      "model": "gpt-6-astra",
+      "effort": "medium"
+    }
+  ],
+  "runtimeUnchangedSinceReviewedR2": true,
+  "physicalHardwareValidated": false,
+  "performanceRerun": false,
+  "reviewNote": "Three isolated API/Azure gpt-6-astra medium contexts reviewed r1 and r2. R3 only adds test PenButton alias after compile failure; 35/35 actual cases,15new.",
+  "builds": {
+    "windows": {
+      "success": true,
+      "fileCount": 185,
+      "bytesHashed": 207094688,
+      "log": {
+        "path": "RiskAI/Logs/v21-touch-tooltip-windows-r3.log",
+        "bytes": 485928,
+        "sha256": "814a549cad160c011dbc601600c45cc168f6e61916091a4c21ad4c9ad6937624"
+      }
+    },
+    "web": {
+      "success": true,
+      "fileCount": 9,
+      "bytesHashed": 57438558,
+      "log": {
+        "path": "RiskAI/Logs/v21-touch-tooltip-web-r3.log",
+        "bytes": 389544,
+        "sha256": "1c662aa0e88ca1ca326362cefa1c77a5d90e6c11db60994f96ba60782562d2b0"
+      }
+    }
+  },
+  "exportFiles": [
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/Cinzel-OFL.txt",
+      "bytes": 4392,
+      "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/D3D12/D3D12Core.dll",
+      "bytes": 4725304,
+      "sha256": "625bd40005b1c3708695d5256ecf230d278e6b8edba5a88af70f3d91324f3052"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/KayKit-LICENSE.txt",
+      "bytes": 891,
+      "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+      "bytes": 7828912,
+      "sha256": "7ccc2fcff211b1be0f498bd537c6575e0a028bd6971cd1812d1884c9840d702d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/EmbedRuntime/MonoPosixHelper.dll",
+      "bytes": 611240,
+      "sha256": "4d882d75accec7054b72498afd7c627efca8824453253fa67e38dceaedaba5df"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/Browsers/Compat.browser",
+      "bytes": 1605,
+      "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/DefaultWsdlHelpGenerator.aspx",
+      "bytes": 60575,
+      "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/machine.config",
+      "bytes": 29066,
+      "sha256": "e91782a27fa39fc6c1d6ee8b08529f5d35052310d0006034b878eb04b8f2af30"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/settings.map",
+      "bytes": 2622,
+      "sha256": "49c6160f9d54af4270a3b4e997fc4a8301f79b9e2070118fa46ddbcbbc44f9a2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/web.config",
+      "bytes": 11635,
+      "sha256": "cf2b54339e069b9e42f7d6795eecbf562c50c1011f4ca8f65f578fe52d97ff92"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/Browsers/Compat.browser",
+      "bytes": 1605,
+      "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/DefaultWsdlHelpGenerator.aspx",
+      "bytes": 60575,
+      "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/machine.config",
+      "bytes": 33598,
+      "sha256": "e60aec2c5115d65b3acb3c55ea21576dbd770f579166c017125571e46ae560ed"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/settings.map",
+      "bytes": 2622,
+      "sha256": "ce1db1ad8a9512073164e3eccdc193f7eda036e1a9733caec4635de21b2865c8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/web.config",
+      "bytes": 18802,
+      "sha256": "e38bb8cc68fe5b4edecdfd288d094b9e8ced7629039b2a347682aba0d8bd7492"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/Browsers/Compat.browser",
+      "bytes": 1605,
+      "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/DefaultWsdlHelpGenerator.aspx",
+      "bytes": 60575,
+      "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/machine.config",
+      "bytes": 34056,
+      "sha256": "ee950004b576fb28dc85f4b0435ed04bf96612de2e8b53be84d07afe85a0de6c"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/settings.map",
+      "bytes": 2622,
+      "sha256": "ce1db1ad8a9512073164e3eccdc193f7eda036e1a9733caec4635de21b2865c8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/web.config",
+      "bytes": 18811,
+      "sha256": "c4cbddd4fd9347b58cc5a72b36dc4ba1ad2bb699e65869d05cd3fb9865f0d824"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/browscap.ini",
+      "bytes": 311984,
+      "sha256": "4ddd50f31fb968f30bedefc253a46dc3f2890192d05cdaa9e0a64a056eee807e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/config",
+      "bytes": 3815,
+      "sha256": "5776169973a26a387b8b3e5c0f2301a7ab9a6dd7c7d3efa22a96abc47fbf8662"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/mconfig/config.xml",
+      "bytes": 25817,
+      "sha256": "0c56e34c69124510fa8c19e7b4c2ca6c1c4ff460ae19f798dd0ca035809e396d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI \u2014 Dominios v0.21_BurstDebugInformation_DoNotShip/Data/Plugins/x86_64/lib_burst_generated.txt",
+      "bytes": 193489,
+      "sha256": "d0a08777213e85e04599f804932b0f75b82091f215d4de588af0347b14c1b153"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI.exe",
+      "bytes": 667136,
+      "sha256": "82efd5a8c297a5046f6bb72c240dab8972e64003851935eba0a46ad121ce0305"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/app.info",
+      "bytes": 32,
+      "sha256": "d49ca39312fd3a9955448e0f6ebb9b0da5d18a027eaf34a314fc15bf6977ce31"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/boot.config",
+      "bytes": 156,
+      "sha256": "79a46042e5a48bc5e17b37380446b90f5aa0e7aaf14b1f83d4ab8fc3d185e87d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/globalgamemanagers",
+      "bytes": 240692,
+      "sha256": "48ae28f94c17f34892bbc89199ee5c9254098f35d90e4554a6648ccf8be2efa4"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/globalgamemanagers.assets",
+      "bytes": 1161752,
+      "sha256": "819eef9227f46af29842fc3aa1632fb2a0d1e1e78dcaa1b749a7c97a0b4301fe"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/globalgamemanagers.assets.resS",
+      "bytes": 6174944,
+      "sha256": "26b24bbd0bdb7017ecbac3b829c0ed7c4848bc343af5702e96ebdb75a7258b04"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/level0",
+      "bytes": 1152,
+      "sha256": "b2402ffea0719079aa86cf4ac99d1511ccb79566de196876e59ccd86a3830480"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/level1",
+      "bytes": 1152,
+      "sha256": "6b9e409f47ab95872295376d8246dd3e948437850b892487cbdee61b146701df"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Microsoft.CodeAnalysis.CSharp.dll",
+      "bytes": 6098320,
+      "sha256": "e822156145e1add437b1d893c0315257c12e3d5b1b89d83494db6d88d37fe20a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Microsoft.CodeAnalysis.dll",
+      "bytes": 2903440,
+      "sha256": "159f595e313f8cc09bac14588e2466c312f512a4778d9fa2352fcccf2a53aa3d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Mono.Security.dll",
+      "bytes": 241152,
+      "sha256": "82df31404def10ffd69c09e3a8c454e76552f3a37675d1b7b8c743cfd3d1af6f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/mscorlib.dll",
+      "bytes": 4632064,
+      "sha256": "194417662b72e9fdc29df44aa07fb693a9cf2194d84e327231f3eeff1104ae0f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/netstandard.dll",
+      "bytes": 90112,
+      "sha256": "6ae62e082dc494a2433984177f60ca4db5fae69b1f360a8b33754172b310b8c5"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Newtonsoft.Json.dll",
+      "bytes": 691712,
+      "sha256": "a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/RiskAI.Core.dll",
+      "bytes": 28160,
+      "sha256": "f9c0c82b717807eeb85e6b1a1a467d005df266026dbb2652af368151e586b80b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/RiskAI.Runtime.dll",
+      "bytes": 452096,
+      "sha256": "54e7c89173e3a5c3efcc31e0379d7583432d6349f2eb848c0488f3c852aac002"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Buffers.dll",
+      "bytes": 4608,
+      "sha256": "762f8fdbe975e05b76be5fe996c53ce7c75e4a2830f2f50b02a5948ef6ba0aeb"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Collections.Immutable.dll",
+      "bytes": 252680,
+      "sha256": "5b1b1c83ba3d135c2fdfe425842fbe9c7432878b7e468623acb554c69b4c130f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.ComponentModel.Composition.dll",
+      "bytes": 257024,
+      "sha256": "9373a420101d4c674b9f74bce93a45c58ddb3548c130d9b65ab87235d0a4ed30"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Configuration.dll",
+      "bytes": 124928,
+      "sha256": "d3acb14b8ebaf7482d2d3e26e8c04685299e2b471a513a30508bd0cab8336354"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Core.dll",
+      "bytes": 1113088,
+      "sha256": "ebf140bf5f8d49ccac20c14935625b0ae0a46c30aa4f90b2808f3b9678822470"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Data.DataSetExtensions.dll",
+      "bytes": 29696,
+      "sha256": "79a01061129709358567a9254684ba52ba66371e01e0354e7fa4852a9f62e59f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Data.dll",
+      "bytes": 2125312,
+      "sha256": "5d0807269bfcf112aa844951232ef105bbb642abb1e14c2e78dd70fb9245e98a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.dll",
+      "bytes": 2641920,
+      "sha256": "9e8a5190797e35428b1ae9bce6d47d39a1dbc3e974f14239e44678913dc6194a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Drawing.dll",
+      "bytes": 489984,
+      "sha256": "76dca8fbe098c285b03de79369f9f2aa141dec44de99ebcc0478c7e762024204"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.EnterpriseServices.dll",
+      "bytes": 44544,
+      "sha256": "d8a3d6c1929ec028793ff07df92781c03ebb38c63005d4c12c35e3116d04fcaf"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.IO.Compression.dll",
+      "bytes": 114688,
+      "sha256": "7370dc2d3a6f02dbda1a69ca596f2ae96fc464809b3bbca6071fc1fc1edfbb2d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.IO.Compression.FileSystem.dll",
+      "bytes": 18432,
+      "sha256": "40ef91246d44d6c4d8a1505e1210b0c54963a12938ba0458959bb064d62f36f4"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Memory.dll",
+      "bytes": 4608,
+      "sha256": "c4f030a2cba7da7cdcf493257c24560e203d355904aee490d645a935842f834a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Net.Http.dll",
+      "bytes": 122880,
+      "sha256": "c46d5b5dc68af8ce1b34e8ace4372b157e2e85ab63d6b5eea938ca71dc7fb064"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Numerics.dll",
+      "bytes": 119296,
+      "sha256": "74f6771aedd33262470e8e653fc0f4e04a659bcdadbeb44b2f8826fba7053f77"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Reflection.Metadata.dll",
+      "bytes": 487696,
+      "sha256": "55ef768ffa305de58e38e15420669258b16f420618eb1f702bddb30e5c797961"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Runtime.CompilerServices.Unsafe.dll",
+      "bytes": 22184,
+      "sha256": "bac58578ec05ecb8c234bf3402a0aa1491a5e437b03008b431e78d663ab52b78"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Runtime.dll",
+      "bytes": 12288,
+      "sha256": "e0a7334b7ba419aaab6bd3bb6992d693e689341a9178172c9bf99c2aa6a085bd"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Runtime.Serialization.dll",
+      "bytes": 934400,
+      "sha256": "2aa92fb930200ddb3c9c3ffaaff39bd6cdc6d689f19614f6c3b84a15060800f0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Security.dll",
+      "bytes": 320000,
+      "sha256": "95a29120e164e5bdb7ff5dcb2cb4641e5ea0aca7c1ad0854b0e9b2b0ff5abe2d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.ServiceModel.Internals.dll",
+      "bytes": 215040,
+      "sha256": "6738a31088136d38a50354371feb83a4fd1558acca2a5f8b165c34a859e08c47"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Text.Encoding.CodePages.dll",
+      "bytes": 5120,
+      "sha256": "f58f99392c2dfc31d067e320ce7c009e276e6dd5ed7c615cc3895a0609931182"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Threading.Tasks.Extensions.dll",
+      "bytes": 5120,
+      "sha256": "96150abdca5df4446b376560e069d59b3550212deda8cbdd316272f6b834f597"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Transactions.dll",
+      "bytes": 35328,
+      "sha256": "cfac784408e3b7da6c6e94ec04c162c6d902372fab19353c02aeda3464ce185f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Xml.dll",
+      "bytes": 3160064,
+      "sha256": "f90799a0c38f3d45e390f9768ab467bf681a052e1b807f4c59fabef5f7edaffa"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Xml.Linq.dll",
+      "bytes": 136704,
+      "sha256": "ed219710472b837fddf45cc73c912e04b4d6b8ca833ea074ec1f73bc00157b05"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.AI.Navigation.dll",
+      "bytes": 22528,
+      "sha256": "dd4527109fd853932e7496233e3d00e8e69f1135cd6f8ecf807220249b0e3788"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Burst.dll",
+      "bytes": 296960,
+      "sha256": "8cdc85671a965a4a6284169188a0f236590ae0eae59b7db098d1516ba0fc85a6"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Burst.Unsafe.dll",
+      "bytes": 5632,
+      "sha256": "9d9c1ff52411decbee5d9f0d1cd61ebeaa222077aa77a52101ea3debafae98e2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Collections.dll",
+      "bytes": 432128,
+      "sha256": "005d0ec9881271b75813300edce726ad1b8e9341a1075760a8fc8e39d760a4e3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Collections.LowLevel.ILSupport.dll",
+      "bytes": 5120,
+      "sha256": "ff50383f807f9692e4913b97e47d86fefcb8faa33d6d48cd3e3fd6fc7ffb448d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.InputSystem.dll",
+      "bytes": 1074176,
+      "sha256": "7c5db2f547398f86085a074f26dd9f7d089b920a700e55c9f64346a7490630c0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.InputSystem.ForUI.dll",
+      "bytes": 15360,
+      "sha256": "dbb6ff9dccc1ab6ca1bee8855817cfe176da0fd4f9e6a9e5ace8a1c6b0e0ede9"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.InternalAPIEngineBridge.004.dll",
+      "bytes": 4096,
+      "sha256": "a7f68282b6fedb371db82c093c4fe91c3fdb35fb0c5e1547757154c31fa57ce7"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Mathematics.dll",
+      "bytes": 737280,
+      "sha256": "2aa2aae6a3dc60fc99ee7e6c4b9b349371933d9407d4971a3e844ebd08b290b4"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Pipeline.dll",
+      "bytes": 284672,
+      "sha256": "c885537d5928228938b191521fcbc864d6dcc2b123f6a9309cc8d9daa2f47d27"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Pipeline.IlInterpreter.dll",
+      "bytes": 332800,
+      "sha256": "f45abf608343eeef78eecfeea0743c79e29c8c6c9b26e7e384061d3c5b6c02c3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipeline.Universal.ShaderLibrary.dll",
+      "bytes": 7680,
+      "sha256": "8291572de1e7e79a5c7992def16288ce9d9ee8176da4c636c47cef553d153d10"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Core.Runtime.dll",
+      "bytes": 1131520,
+      "sha256": "fcedf10a4427c62a5d5f9fda85874e2fde377af90eb8a2f34eae99b97bfe5ff7"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Core.Runtime.Shared.dll",
+      "bytes": 4608,
+      "sha256": "a483e174d0089c146a45e465b69eeee7a835f15d525ec63eb7a3427056c39f9b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Core.ShaderLibrary.dll",
+      "bytes": 3584,
+      "sha256": "24ab3cc009a7d077d7e1ab4b7ef9aecf90cbefd64a755bf4250bcefe1168e9e2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.GPUDriven.Runtime.dll",
+      "bytes": 220160,
+      "sha256": "70a2f2211425ccf77a620538d7a744fff4142c326a48357f0930def29876768f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll",
+      "bytes": 3584,
+      "sha256": "a2f02ab3690be3c68175e01dff401055f18ab54010ff46ad39d3982a3d41d43e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.2D.Runtime.dll",
+      "bytes": 216064,
+      "sha256": "ff3b6d7e47494ff8e2d2ba49b113240837631dc32a554e9cf198c5b63ab9dbe6"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Config.Runtime.dll",
+      "bytes": 4096,
+      "sha256": "91d31a3e073738d0911b104a633926c0a02eb6ff104aff0124f5c76947229fc3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Runtime.dll",
+      "bytes": 698880,
+      "sha256": "3848d011fe963fdd1aae3af9b92be54f22ab0bea1cb179f3df7c7401c5b9c7fd"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Shaders.dll",
+      "bytes": 3584,
+      "sha256": "08fb33e4549c96ae157d9c3c884d5359568ea2e3cb6b408fe6cb19b35f79664e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.TextMeshPro.dll",
+      "bytes": 435712,
+      "sha256": "2fb9d91b5f936d5926cae37e0a0094a83f9f3feb51ad2bc1a7e4a95fafd0f5c0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.UnifiedRayTracing.Runtime.dll",
+      "bytes": 88576,
+      "sha256": "c0dd4c67da4cb18691011b7bc123ebbad2c26592924ab9361206a1578964b9cd"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AccessibilityModule.dll",
+      "bytes": 51120,
+      "sha256": "c8249b9ca23640f7959c529d61f2eed1c86b715d364ed17e494cfaa324001e4a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AdaptivePerformanceModule.dll",
+      "bytes": 125352,
+      "sha256": "385cc1158fb02325535a6df613811204afeb7e3f240737a1fc2add0bd976b49e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AIModule.dll",
+      "bytes": 77224,
+      "sha256": "71f41d664d48128f5135884413f21ea9fa86b6ce9a4f053b5081bf286d7ccb99"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AMDModule.dll",
+      "bytes": 21928,
+      "sha256": "aa68b148f2e74c334ae8bd38ddeaff055730aeada6f809697521ebd8920ce988"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AndroidJNIModule.dll",
+      "bytes": 121776,
+      "sha256": "8e008a125f9cd1417f84780eeb7de840e0f2c749ef92a9d87910637f9b5f9b58"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AnimationModule.dll",
+      "bytes": 225200,
+      "sha256": "e2952b9c0d9405a52f9b0e5cc72fcc14b63f23a20562e354c42ce2697c74836b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ARModule.dll",
+      "bytes": 25520,
+      "sha256": "b36cde8f19c92faef74723bc362e69de210181323bd55f1c4acefe47f2cda4a4"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AssetBundleModule.dll",
+      "bytes": 41896,
+      "sha256": "8d542e27040bdd47d416a5d9d388059642a18da0dfbf18eb350e17597ca21bad"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AudioModule.dll",
+      "bytes": 142760,
+      "sha256": "e340de4e194c183136a86f45fb17df334435775ed0680679b4c5d8370def04d9"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ClothModule.dll",
+      "bytes": 36272,
+      "sha256": "1b33dd16fe1022981108455221d5d608df9c42f9875a673c1edb39b0a232c3df"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ClusterInputModule.dll",
+      "bytes": 28080,
+      "sha256": "a7fba2eab6ee716d637ecb0f377cefb16979c7c1d26592d48eaa0665d3640fb0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ClusterRendererModule.dll",
+      "bytes": 26536,
+      "sha256": "d9dbf5f9ab23959510d457a7a263dce628aa6f85490717e322bbed4dacd39c74"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ContentLoadModule.dll",
+      "bytes": 32680,
+      "sha256": "b7292cd077c601278bac76b65efe15df43efc52c13ed4913f8fd9dcaac908016"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.CoreModule.dll",
+      "bytes": 1985968,
+      "sha256": "6e113749845967506284bc65e85d28b527a4c4c99af73f0433af9b4ed5abfbc8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.CrashReportingModule.dll",
+      "bytes": 26544,
+      "sha256": "8b3141bdc0c6bbef38dc74fa71021c9e54af76b2b1a37b63e49b39cfc9271bd6"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.DirectorModule.dll",
+      "bytes": 41896,
+      "sha256": "ad25a8f620e97ec1962a5cb2d5369485108673922b47b2cadf0b4239c94ce647"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.dll",
+      "bytes": 197544,
+      "sha256": "8f5656476f57134b88f230538fff8abb66eac6bf3ac087daa86d64d88d9d39eb"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.DSPGraphModule.dll",
+      "bytes": 31664,
+      "sha256": "688f7cbed6213df3bd5ce6a5c6dac92b0f3d0530841b88e82c69bce5a2c1827e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.GameCenterModule.dll",
+      "bytes": 45992,
+      "sha256": "5bb7513b5b76e44f118323fdd27302df224db134bd9c6818f008a3dd6bf95534"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.GIModule.dll",
+      "bytes": 24488,
+      "sha256": "53d4bd69745ee83d5c4f0760f92b9efdb099489fdfc64528af9a1c95b0adfeb8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.GraphicsStateCollectionSerializerModule.dll",
+      "bytes": 14256,
+      "sha256": "86ea17b6e8515403416ddfa2a08f4658b27d956cc28585f488a85d3e8939a358"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.GridModule.dll",
+      "bytes": 30632,
+      "sha256": "aac2d49a3b8f3d853cd318f0d67cbd8cffbe0f5f8f9ce288aaec85f25f46c5db"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.HierarchyCoreModule.dll",
+      "bytes": 109488,
+      "sha256": "bf800cc45f5c0354f9ad2ea22e0c1463bbfcc111c18247fea92c24baf4f45938"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.HierarchyModule.dll",
+      "bytes": 102312,
+      "sha256": "6a5d008a26eaed4289ffee5deaf6628cd708211674b9fbd2c243c465b022f748"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.HotReloadModule.dll",
+      "bytes": 24488,
+      "sha256": "a58a336e1f65a20fdaa79ef547388367540203ab07d9211d0f322f9fbb202c66"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.IdentifiersModule.dll",
+      "bytes": 16808,
+      "sha256": "9e32c80cb919fa932d33200fc1b840f028d9badd6bafdf540305ee51354d98d1"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ImageConversionModule.dll",
+      "bytes": 31152,
+      "sha256": "48deef77c0900f884d3a62530914188d6916519d415cd5196505a0dd2ba11b2d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.IMGUIModule.dll",
+      "bytes": 214448,
+      "sha256": "59079367d288ee1afc510ae174e6bd3373d44dffdcf39cd6a3d81f4ae72cc6a8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.InputForUIModule.dll",
+      "bytes": 57768,
+      "sha256": "6b80e1f8e768de2769fe874111c1cb63ab21b8eb662fc0f208f9f45e7aa47625"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.InputLegacyModule.dll",
+      "bytes": 45488,
+      "sha256": "3fe0a3b1c2dcbf8430d053be5523c9db768601624069c593d981fe5d89262c41"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.InputModule.dll",
+      "bytes": 28584,
+      "sha256": "c7555f9e890b65d52806d11be2a18e79ad9e20dd3d9b7950c344b0e98269146b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.InsightsModule.dll",
+      "bytes": 14256,
+      "sha256": "7823f02c0fd49945db4611a061f76f952f3bea5f1888e8a3ee32432a42564367"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.JSONSerializeModule.dll",
+      "bytes": 27056,
+      "sha256": "7d596dab3f41e563d3cadacff3f9259b662d764a1efcbfeae7ce680f7bb503bd"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.LocalizationModule.dll",
+      "bytes": 27056,
+      "sha256": "d37f7fc4d38c8ea2462194e69b4ea33f88be334a1e7ed222f200f2e707564bad"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.MarshallingModule.dll",
+      "bytes": 83888,
+      "sha256": "2424626f708e2abf2cc58f1fe5e5093805aace99cd4e9f90b52c84ddaec993b3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.MultiplayerModule.dll",
+      "bytes": 17832,
+      "sha256": "b0e7ca214c64d51d2fd6703aebdad36b2426e6f090ef93038b3bcf08ac7ecd58"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.NVIDIAModule.dll",
+      "bytes": 40880,
+      "sha256": "9401ce6e59d01797ddffc4db283dbd7cc8ed5e9d9516cf536e0ad9a4650d3bed"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ParticleSystemModule.dll",
+      "bytes": 171944,
+      "sha256": "ca47a718f791e2104377e7cfe218210314a957dc1bcfb70102417adb73b4a430"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.PerformanceReportingModule.dll",
+      "bytes": 25008,
+      "sha256": "35e66ed8f5d0fbd8b25479ae75625b4a17cd41519dbf605970db154757c254e2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.Physics2DModule.dll",
+      "bytes": 586664,
+      "sha256": "a13a44e7344ba20d6fcd5abde493d2a159dcd4010be1a016f6a0eb877f007766"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.PhysicsBackendPhysXModule.dll",
+      "bytes": 14256,
+      "sha256": "33ae23327a5d59ee0743ab0c5df0b0264ccf4f292d2f0807bc8cef40efb5a813"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.PhysicsModule.dll",
+      "bytes": 183720,
+      "sha256": "6112016fb7df440b4af9ff6d1e05cdb1d7f5dae652cf19e3cbdc6a2ca4699d0a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.PropertiesModule.dll",
+      "bytes": 134064,
+      "sha256": "8063760df50b181d9f9c90db6fad2a34c06ef5fb02f26467384b3aec5d14dc76"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.RenderAs2DModule.dll",
+      "bytes": 25520,
+      "sha256": "52c9a1536d88fedc62df201840d435a745c16b6448b86f6e22f91902e4d92c8b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll",
+      "bytes": 24488,
+      "sha256": "f59d4c5e3c08db5f532117e76b16f5d5c4d5219ba584ee94312bb7d54c399311"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ScreenCaptureModule.dll",
+      "bytes": 26544,
+      "sha256": "f04cdf78234bf6387aabad5aacb327542f5a8bdcca533eff7401c6eee3206e36"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ShaderRuntimeModule.dll",
+      "bytes": 25512,
+      "sha256": "1396cb6600b39b593d0a58221c978d513dd289e1dff71a2eb2c6b2b60d1356e1"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ShaderVariantAnalyticsModule.dll",
+      "bytes": 24488,
+      "sha256": "7a26b6fcc298b6d2251e551b7bc6fc4910cf029c9a0dc0c6cb412b722a7fcf5e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SharedInternalsModule.dll",
+      "bytes": 38320,
+      "sha256": "8db34acfc413aeb640d9a618cc65964e3c6be6c2dbe3f5f9eb3fa3156fbf34f3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SpriteMaskModule.dll",
+      "bytes": 28584,
+      "sha256": "c77d26f5ae1ee1cfd733d51fa9b3e44687f47ab49cb8a1e5f951fb326cfe498d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SpriteShapeModule.dll",
+      "bytes": 32688,
+      "sha256": "ad172378591dee76cc2d08d5a004a92ac4ce469fa1cc3a962854e29f04448cca"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.StreamingModule.dll",
+      "bytes": 26024,
+      "sha256": "56877ff28757655ffefa1daf4a4255b668616277c3c84df8f51f0daeecbf4b92"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SubstanceModule.dll",
+      "bytes": 29104,
+      "sha256": "aeddbe082d614d20f56d26a0cb415118c17e76763094cae3ed85567fd0f517ba"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SubsystemsModule.dll",
+      "bytes": 41896,
+      "sha256": "1372e9608f65909baf934b33fb04a8eb55bb386ed9d88e56840fffe9bc7d8b19"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TerrainModule.dll",
+      "bytes": 134056,
+      "sha256": "407e8d6c30c7fefbcc7d888e0086f5ef8743531bfcbbc04bb11762b12558a759"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TerrainPhysicsModule.dll",
+      "bytes": 25520,
+      "sha256": "e8c19bd79f9d840b6ae34ad78adac43581c03dcb9cc375bfdbc682e8a349f4b2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TextCoreFontEngineModule.dll",
+      "bytes": 81832,
+      "sha256": "1e9ec852583e53600d166d6688c62aa0e29d8ec26ceabfd9aab5319fd098203a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TextCoreTextEngineModule.dll",
+      "bytes": 334760,
+      "sha256": "4345d56bea3d26f7aba127754d95d6a1a9b754491ff5cd01d707e90219eede5b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TextRenderingModule.dll",
+      "bytes": 39336,
+      "sha256": "41d9b82516a161f4e33b33ec54ccbf4ff520a546dfc0278d9d89342cf48e187f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TilemapModule.dll",
+      "bytes": 58800,
+      "sha256": "742b401342db4188a1d438cf42cff503d927f87182615e52d463ce13bb8d5aef"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TLSModule.dll",
+      "bytes": 32176,
+      "sha256": "e824d1cf3bdf44ae67b05d795e3a64ca351b4e71f283e37ff55c8312f59692b7"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UI.dll",
+      "bytes": 260096,
+      "sha256": "5927e5ad33724b76625611d80822665bce209474e2bafe204ab3f1d12610707d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UIElementsModule.dll",
+      "bytes": 2452392,
+      "sha256": "f791cdee383a20ef998be28112bb4c0600528945289f9138ff4a6d5352946e16"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UIModule.dll",
+      "bytes": 50088,
+      "sha256": "8490946ba29a169115bf4d3e549d42a0a5e9b1c4fb49b28d0dea97b19c21af99"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UmbraModule.dll",
+      "bytes": 24496,
+      "sha256": "1fe54406a037f8f8bf0e4b648137b5d796e92716ee16d9120ded96b023e47f64"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityAnalyticsCommonModule.dll",
+      "bytes": 35752,
+      "sha256": "903a192bf5d0cb1b7c99826ccfd67401161949ecc0eb6c07ee350216526e53c3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityAnalyticsModule.dll",
+      "bytes": 60848,
+      "sha256": "37c8de9c5b3b5014c491eb70db235bed73cb717c25d2c0a4438f3c9faddf009e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityConnectModule.dll",
+      "bytes": 27560,
+      "sha256": "d795553835cb0a6bbd2d13ba36799323bfbfbdf6dbe3ed709f490b80d8e8af5a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityConsentModule.dll",
+      "bytes": 16304,
+      "sha256": "8252eeef40749b9b8d1015569a3dd0148ee5b8c2445821781476165a82713af3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityCurlModule.dll",
+      "bytes": 26032,
+      "sha256": "4119615947f88d586ca33cc9b217fe2f81ada01e49214d2b9b73b186cd233e41"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestAssetBundleModule.dll",
+      "bytes": 28592,
+      "sha256": "f1498767358fa09c93691d7907f67300ee3bee396413b978e948c83b1e2cf48c"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestAudioModule.dll",
+      "bytes": 28592,
+      "sha256": "fd8d815a45915f17ec9f63fda402769746ea28251a408a5f439c62f4a8af2729"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestModule.dll",
+      "bytes": 70064,
+      "sha256": "9d777e08bfe9b9c12ff69c5bba91a0ec67b6712c03aa62896eb892fa8fbb4009"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestTextureModule.dll",
+      "bytes": 27560,
+      "sha256": "c983a36f4ecf311a8ac2f067a943612bdfdb04dd1d4b0902fe23b8c22b800caa"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestWWWModule.dll",
+      "bytes": 36776,
+      "sha256": "71a0dfa0aecd73f7935d58f90b24ea56adc8c7866495ef3528e1a128f1f36a14"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VectorGraphicsModule.dll",
+      "bytes": 252840,
+      "sha256": "8d8aabf185a7238ac0e205c708305a9d1da2ba6160d497aaac70f439ee1671f6"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VehiclesModule.dll",
+      "bytes": 31656,
+      "sha256": "2946f811e0b6e3ee9748d39b916e78f418a70c4157177efa946b8aeca90ca86d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VFXModule.dll",
+      "bytes": 78248,
+      "sha256": "5c62f2e10b2559ae6333487dfb94c82c2e128a074f4777d9e69a74c8e522ae6e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VideoModule.dll",
+      "bytes": 49072,
+      "sha256": "33e1f716564b7fc9169c7ad9b4b433b2e7ab3eaf760e83cc658c49bf216dbf51"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VirtualTexturingModule.dll",
+      "bytes": 42920,
+      "sha256": "8a0e54d097692eb82c8863b1d3f2319e1794e43f57b9e4d77a0ea728711173f8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VRModule.dll",
+      "bytes": 31664,
+      "sha256": "881678fd43267960701bffe14b698fc40fbab28247b675c2e18c5578dcd6c0d2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.WindModule.dll",
+      "bytes": 26536,
+      "sha256": "3db21bbc42641b0dbfe8cc802045c623bb45ec725e84734114330ac59889c18f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.XRModule.dll",
+      "bytes": 88496,
+      "sha256": "b3f56678282a17a731c9328f1c32d1203f4388fba7188060d9f5cb9b44c198d7"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Plugins/x86_64/lib_burst_generated.dll",
+      "bytes": 446464,
+      "sha256": "5ed114d3f821394d958a921385f1414da3dd9cdf35967ec89bf087cb998b593d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Resources/unity default resources",
+      "bytes": 5883716,
+      "sha256": "32b58bdb9cf090212b46a8ca7436dcdae89e4ef43e9d55a835233c21d1347734"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Resources/unity_builtin_extra",
+      "bytes": 397816,
+      "sha256": "03fb33a3885536096b224a3d90fd62b58a735526626cec97e17da416e4f789fe"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/resources.assets",
+      "bytes": 24655560,
+      "sha256": "d67d14256bf8a602788ff3bd8cefb13223926cdc479e0f9fe8abc4291df8ce69"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/resources.assets.resS",
+      "bytes": 70420816,
+      "sha256": "51b5dc2383860a386ec83c1160cecf56e93752a74c9e22fcf9afcbe575327a08"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/RuntimeInitializeOnLoads.json",
+      "bytes": 4725,
+      "sha256": "422441c1b0275d8aa83bb585c9394eaa1bb3463b65d9131fa78fd3a75b034641"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/ScriptingAssemblies.json",
+      "bytes": 4352,
+      "sha256": "90fb6f762a9af3aca504708bcdfbacaddf824f5a855fb9397e11af521f5036f0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/sharedassets0.assets",
+      "bytes": 7920,
+      "sha256": "bf2864743787655d877f2194da5bd37b4bb2f0e2ac477407360f6f65c6de9977"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/sharedassets0.assets.resS",
+      "bytes": 524288,
+      "sha256": "393efe6399536384aa91bdfc4e64f244b4d3e1fbb6a4ff145c483ffee64ccb36"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/sharedassets1.assets",
+      "bytes": 361,
+      "sha256": "5c087080b9fa856ba193797d4473187118842497a705c54e3d8f2a28c073e20d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/THIRD_PARTY_NOTICES.md",
+      "bytes": 3396,
+      "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/UnityCrashHandler64.exe",
+      "bytes": 1669544,
+      "sha256": "4e65cef1be7996ccecec341c11a2f1319c1349b30288bf01455a2494451ddb69"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/UnityPlayer.dll",
+      "bytes": 36730288,
+      "sha256": "6aaaa964ebb34fb3d72f14288729e64002e3b917062e313a3452f73a2a9c4cba"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Build/Web-v0.21.data.unityweb",
+      "bytes": 45172765,
+      "sha256": "43cf28255bde220dad26325114aa84d9bc667f98e82a7e0e0a5e30b3cc73323d"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Build/Web-v0.21.framework.js.unityweb",
+      "bytes": 88914,
+      "sha256": "70026dcd97df7664560eea9f9f126c2b90f6262b1c1a97ee10f1e1968403ab30"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Build/Web-v0.21.loader.js",
+      "bytes": 47867,
+      "sha256": "e3deaf5e034517f130d3a8520b59d318cf4e70138386f3e8e4c57528dacf4909"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Build/Web-v0.21.wasm.unityweb",
+      "bytes": 12103675,
+      "sha256": "1a4e7b737e8faf03b868cecf0bbed9ac076458d82f0822a7c440769a96a4a038"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Cinzel-OFL.txt",
+      "bytes": 4392,
+      "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/index.html",
+      "bytes": 4938,
+      "sha256": "d55527dfa82af3c4a0978e67cc02eabedca877c3ce30f52151df9f5fa2f9a913"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/KayKit-LICENSE.txt",
+      "bytes": 891,
+      "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/riskai-pen.js",
+      "bytes": 11720,
+      "sha256": "de87827367c3455505446bcc5f60d8d4b5cc6fe61862a76d463748cea9244e60"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/THIRD_PARTY_NOTICES.md",
+      "bytes": 3396,
+      "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f"
+    }
+  ],
+  "buildProvenance": "Explicit Win64/WebGL build invocations after source commit376d588, with frozen source manifest verified. Player has no embedded git stamp; file hashes bind the tested exports.",
+  "previousExports": "Builds/Archive-v0.21-f05c586 (194previous files verified; Captures/v21-f05c586-archive.json)",
+  "publishedArtifacts": [
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/tests.xml",
+      "bytes": 55329,
+      "sha256": "352ea4def7e9d10db7574b863b74aee5c915893bc922d9782bbb42cfd98e0119"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/web-result.json",
+      "bytes": 1445,
+      "sha256": "7260f296d5bb303b04e2b8d0c1fdb26892a0f4d54fc4d2197cde6159840422cb"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/production-result.json",
+      "bytes": 671,
+      "sha256": "a4e5998466ba356d7066d7a0d24faaafd1cbc01bde9d1798221a0559576514d8"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/check-web.py",
+      "bytes": 5472,
+      "sha256": "6df60503554016956c4a89ea70898fd18c60b017801b61217f041f8e494eb4ca"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/check-production.py",
+      "bytes": 3609,
+      "sha256": "09c911b296c2638d75a92e9e971b58db111e29c08ac69d2cd98a7381839641e0"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/desktop-help.webp",
+      "bytes": 235200,
+      "sha256": "923ca1769b72a33d5e2b483081850b188ca61baebb625aa2877645d5ede69773"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/desktop-release.webp",
+      "bytes": 234226,
+      "sha256": "543c5127ec39da4ea0e0c403b6f365c2e03e67dfd4fafeb911ca57b2e9f0b176"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/desktop-tap.webp",
+      "bytes": 236228,
+      "sha256": "73007777f09238a6031adbe218d4c54f8de35e817641c0f0393454ff0c5952e4"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/pen-help.webp",
+      "bytes": 235150,
+      "sha256": "bbef6772a5a587de048844e1a2970751de157693aad275f31908d1cf2a7cde32"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/portrait-help.webp",
+      "bytes": 116224,
+      "sha256": "dbd36a1cce385bcc89987fd5ebf3b9b7c0c4e06e963489000685151962044f45"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/portrait-release.webp",
+      "bytes": 115730,
+      "sha256": "6de1779692aaf1baae19cf330f1e78ed69cd0bb94ffa565f63b13f9f534a2a3c"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/portrait-tap.webp",
+      "bytes": 117474,
+      "sha256": "15300aaa597a5ef5027d15811015d2fb3b66119f65c208a0e8bf7b99b2a90f38"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/production-help.webp",
+      "bytes": 191176,
+      "sha256": "9a175eaa19b50f74f029ce6b027ad99ced29f349447dfc653c7b7d8120542c35"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/production-release.webp",
+      "bytes": 190474,
+      "sha256": "f7ae2fce168354ec4f50ca1c0c31d28192c8de3991254619a82905644bd824bd"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/production-tap.webp",
+      "bytes": 191078,
+      "sha256": "f7126b93cdbe694ae65cb07e9caa81507a022e9078d8f15accf1ce6542f695a8"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/windows-portrait.webp",
+      "bytes": 279692,
+      "sha256": "40fe1520e3b4cf18834b707de5d4dec7f827827d9e86e3fe07a7745880a0393a"
+    },
+    {
+      "path": "docs/audits/touch-tooltips-v0.21/windows-port.webp",
+      "bytes": 203928,
+      "sha256": "1e41da2130ba7d08e27888230fc368a6ee40f5c914476c36719844eeb702d938"
+    }
+  ],
+  "rawArtifacts": [
+    {
+      "path": "RiskAI/Logs/v21-touch-tooltip-r3.xml",
+      "bytes": 55811,
+      "sha256": "4500185c5922e7788ffe2722ae9681a02cd8a91be43035ff5257267db3dce8b7"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/result.json",
+      "bytes": 1514,
+      "sha256": "d5595401cd5559028331bc454fad315e2c456a6c7b247b663350a00b4c950b63"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip-production/result.json",
+      "bytes": 700,
+      "sha256": "66da2738ec047bc349075e401ca00b7b62df92340fda3d0b9b5fd5425cd64e46"
+    },
+    {
+      "path": ".tools/v21-touch-tooltip/check-web.py",
+      "bytes": 5508,
+      "sha256": "ef2f78956de957281b2e5021ccb4a4021d60ea0baa532c6b256ed037850cbbb7"
+    },
+    {
+      "path": ".tools/v21-touch-tooltip/check-web-production.py",
+      "bytes": 3616,
+      "sha256": "74c5ceb246da8e17192a0a8205321783f67f7608805fee1a79e019004921584c"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/04-desktop-help-held.png",
+      "bytes": 1829618,
+      "sha256": "0c5c962bf1e08e03e89b0f29f66a9ca04f416e92d9082d3c7d0901f2ab71bf27"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/04-desktop-help-released.png",
+      "bytes": 1830812,
+      "sha256": "50ba0a45d08778be6da36ffce1c458acf87711fa7421d897b041b940f84e9f42"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/05-desktop-short-tap.png",
+      "bytes": 1842218,
+      "sha256": "82a23db26edc70b66c1c71f96bfb220ec17b6e17c14db8c2dd5170697820f770"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/07-pen-tip-help-held.png",
+      "bytes": 1828992,
+      "sha256": "3f59a9a0f8b9e94fbb0dcfd5a40bd99515f2551e336a7eafd64600d3cdb2abfd"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/10-portrait-help-held.png",
+      "bytes": 1024617,
+      "sha256": "2a2280040e55b3694def1e2b17daa81eef5dd4379e2d872b83c6b2d869e53564"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/10-portrait-help-released.png",
+      "bytes": 1027412,
+      "sha256": "163df3c24af216af551b14d109a4ba878255af6984c312c4819e47d886a47ecd"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/11-portrait-short-tap.png",
+      "bytes": 1035840,
+      "sha256": "035a82cceec2732082d963a9cb519b162259f21627d5a659f4d757a48da0ee9d"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip-production/02-transport-help-held.png",
+      "bytes": 1650956,
+      "sha256": "a0f649ddfc683250119dd052850b6e496d6f75e42b9096409624f8ddafdb2988"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip-production/03-transport-help-released.png",
+      "bytes": 1650072,
+      "sha256": "18ad6593c7aba8ba60949fa1a9634d277423b225e7c90e523076227d45cd27cb"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip-production/04-transport-short-tap.png",
+      "bytes": 1649701,
+      "sha256": "0a95d407e7ce008007ae792533b40108649813662e530a6bb85808c7119475a2"
+    },
+    {
+      "path": "Captures/v21-touch-tooltip-native/v20-orders.png",
+      "bytes": 2228593,
+      "sha256": "518f91a388396f3b334286199250e9b1bf0be2b2da24d30621780fa08b6b00e2"
+    },
+    {
+      "path": "Captures/v21-touch-tooltip-native/v20-port-queues.png",
+      "bytes": 1777172,
+      "sha256": "947916cba507fdf7d1a69b0287724fa414b4e539912a35467dc2b7b62e4db3e7"
+    },
+    {
+      "path": "RiskAI/Logs/v21-touch-tooltip-r3.log",
+      "bytes": 666756,
+      "sha256": "0755d497f8ff47bad96c214099e5c050a28295e75d063b4b151c527a00b8871b"
+    },
+    {
+      "path": "RiskAI/Logs/v21-touch-tooltip-native.log",
+      "bytes": 10221,
+      "sha256": "6cebada84a052c5f399f8ffba156495aa0b99eab19c602e69c1ad95a698dc174"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/console.log",
+      "bytes": 9741,
+      "sha256": "2a84808cec6c932628e36afc1274139284fdccafc9506ca622ef841361b3561d"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip-production/console.log",
+      "bytes": 7741,
+      "sha256": "e0d7f73b2090a3bc0f2f0196669a1d93e3456d49788f5af05dfdc49a37466a59"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/06-mouse-hover.png",
+      "bytes": 1829351,
+      "sha256": "500084da5dedeb689024658b9a72f34680a2c847386d671a6a54bc2b8d95a872"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/07b-pen-tip-help-released.png",
+      "bytes": 1830796,
+      "sha256": "1e8cec128940c479262a32fdf3bf964f54ab46722af9c7e6f797382867fbfe72"
+    },
+    {
+      "path": "Captures/v21-web-touch-tooltip/08-drag-cancels-help.png",
+      "bytes": 1831020,
+      "sha256": "9a38fd9a3399d02f441e4c68767b5efd409146eb6a106eb28d69810d96fcb2a6"
+    }
+  ],
+  "webAcceptance": {
+    "browser": "Edge152.0.4191.66",
+    "scriptExitCodes": [
+      0,
+      0
+    ],
+    "method": "Root visual inspection of actual exported Unity; synthetic CDP touch/pen/mouse, no Unity-state injection",
+    "desktop": [
+      "two paid archers retained after held touch help",
+      "next short tap isolates one",
+      "mouse hover preserved",
+      "pen-tip hold shows help; release retains two",
+      "drag cancels help"
+    ],
+    "portrait": [
+      "tooltip fits viewport",
+      "held release retains two",
+      "next short tap isolates one"
+    ],
+    "production": {
+      "unpaused": true,
+      "ownedPort": "Finland174",
+      "affordableTransportCost": 2,
+      "goldBefore": 4,
+      "goldAfterHelpRelease": 4,
+      "queuedBefore": 0,
+      "queuedAfterHelpRelease": 0,
+      "goldAfterShortTap": 2,
+      "queuedAfterShortTap": 1
+    },
+    "pageErrors": [],
+    "existingDiagnostics": {
+      "favicon404": true,
+      "auxiliaryShaders": 3,
+      "invalidInternalformatWarnings": 6,
+      "samplerMismatch": 0
+    }
+  },
+  "nativeAcceptance": {
+    "captureCompleteMarker": true,
+    "imagesWritten": 7,
+    "inspected": [
+      "portrait/stats",
+      "naval catalog and queues"
+    ],
+    "scope": "Opt-in rendering fixture; controller Update disabled. Does not establish native physical touch/pen input. No exit code directly observed."
+  }
+}
