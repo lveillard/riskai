@@ -7,7 +7,9 @@ namespace RiskAI
     {
         void DrawStrategicSymbols()
         {
-            Label(22,TopPixels/Scale+8,650,"VISTA ESTRATÉGICA · rombos: hogueras · acerca la rueda para combatir",RtsSkin.Small);
+            float titleLeft=UiViewport.SafeRect.xMin/Scale+12;
+            Label(titleLeft,TopPixels/Scale+8,UiViewport.LogicalWidth-24,
+                UiViewport.IsCompact?"VISTA ESTRATÉGICA · ◇ hogueras":"VISTA ESTRATÉGICA · rombos: hogueras · acerca el mapa para combatir",RtsSkin.Small);
             foreach(var camp in session.Camps)
             {
                 if(!camp)continue;

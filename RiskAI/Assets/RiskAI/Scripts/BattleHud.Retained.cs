@@ -174,7 +174,7 @@ namespace RiskAI
         {
             header = RtsUiStyle.Panel("HUD header"); header.style.position = Position.Absolute;
             header.style.left = 0; header.style.top = 0; header.style.right = 0; header.style.height = HeaderHeight;
-            header.style.paddingLeft = 6; header.style.paddingRight = 6; header.style.paddingTop = 2; header.style.paddingBottom = 2;
+            header.style.paddingLeft = 6; header.style.paddingRight = 6; header.style.paddingTop = UiViewport.IsPortrait?1:2; header.style.paddingBottom = UiViewport.IsPortrait?1:2;
             if (!UiViewport.IsCompact) BuildWideHeader(); else BuildCompactHeader();
             root.Add(header);
         }
@@ -198,6 +198,11 @@ namespace RiskAI
             var top = new VisualElement(); RtsUiStyle.Row(top);top.style.height=UiViewport.IsPortrait?40:38;top.style.flexShrink=0;
             AddGoldDisplay(top);
             citiesLabel=AddMetric(top,RtsHudGlyph.City,CitiesText,"Ciudades controladas / total");
+            if(!UiViewport.IsPortrait)
+            {
+                AddPopulationDisplay(top);
+                roundLabel=HeaderLabel("RONDA "+hud.Round);top.Add(roundLabel);
+            }
             if(UiViewport.IsPortrait)top.Add(HeaderButton("Mapa", ToggleMinimap));
             top.Add(HeaderButton("Menú", OpenMenu)); header.Add(top);
             if (UiViewport.IsPortrait)
@@ -207,7 +212,6 @@ namespace RiskAI
                 AddPopulationDisplay(lower);
                 header.Add(lower);
             }
-            else { roundLabel = null; populationLabel = null; guardsLabel=null; }
         }
 
         Label HeaderLabel(string text)
