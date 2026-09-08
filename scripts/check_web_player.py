@@ -123,6 +123,11 @@ def main():
                         raise TimeoutError('The battlefield never emitted RISKAI_STARTUP phase=ready.')
                     page.wait_for_timeout(500)
                 report['battle_ready_seconds'] = round(time.monotonic()-started, 3)
+                if not args.probe and not args.restart:
+                    # A synthetic browser pointer starts at (0,0), which triggers edge
+                    # panning while the unattended smoke capture waits for its frame.
+                    page.mouse.move(args.width * .5, args.height * .4)
+                    page.evaluate('window.riskaiInstance.SendMessage("RiskAI · Bootstrap", "FocusHome")')
             if args.overview:
                 page.evaluate('window.riskaiInstance.SendMessage("RiskAI · Bootstrap", "FrameMap")')
             page.wait_for_timeout(2000)

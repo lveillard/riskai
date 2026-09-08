@@ -23,6 +23,10 @@ namespace RiskAI
         public bool IsIdle => !IsGarrison && isActiveAndEnabled && mode == OrderMode.Idle && !target && Agent && Agent.enabled && !Agent.hasPath;
         public NavMeshAgent Agent { get; private set; }
         public CombatTarget CurrentTarget => target;
+        // Presentation-only projection of the strike already scheduled by SimTick.
+        // It does not schedule, cancel, or resolve combat.
+        public float StrikeWindupProgress => strikeAt < 0 || !strikeTarget || !session ? -1 :
+            Mathf.Clamp01(1-(strikeAt-session.BattleTime)/Mathf.Max(.001f,BattleRules.AttackPoint(Kind)));
         public bool IsHolding => !IsGarrison && isActiveAndEnabled && mode==OrderMode.Hold && !target && Agent && Agent.enabled;
         public string OrderLabel => IsGarrison ? "Guarnición · mantiene el edificio" : target ? "En combate" : mode == OrderMode.Move ? "Moviendo" : mode == OrderMode.AttackMove ? "Avanzando y atacando" : mode == OrderMode.Hold ? "Manteniendo posición" : mode == OrderMode.Patrol ? "Patrullando" : mode == OrderMode.Follow ? "Siguiendo" : "Preparado";
         public Transform LeftLeg, RightLeg, Weapon;

@@ -595,7 +595,7 @@ namespace RiskAI
             if(Hovered)
             {
                 hoverRing.transform.position=Hovered.transform.position;
-                hoverRing.transform.localScale=Vector3.one*(Hovered is DefenseTower?1.15f:Hovered is Ship ship?(ship.IsGarrison?.9f:1.6f):.47f);
+                hoverRing.transform.localScale=Vector3.one*(Hovered is DefenseTower?1.15f:Hovered is Ship?ShipAppearance.SelectionRadius:.47f);
                 hoverRing.startColor=hoverRing.endColor=Hovered.Team==0?new Color(.65f,1,.65f):new Color(1,.3f,.2f);
             }
             Vector3 pan=key==null?Vector3.zero:new Vector3((key.rightArrowKey.isPressed?1:0)-(key.leftArrowKey.isPressed?1:0),0,(key.upArrowKey.isPressed?1:0)-(key.downArrowKey.isPressed?1:0));

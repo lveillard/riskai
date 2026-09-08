@@ -13,7 +13,7 @@ namespace RiskAI
     /// An explicitly enabled desktop/browser smoke probe for diagnosing live-player responsiveness.
     /// It is deliberately absent unless the player is launched with --riskai-probe.
     /// </summary>
-    public sealed class RuntimeCommandProbe : MonoBehaviour
+    public sealed partial class RuntimeCommandProbe : MonoBehaviour
     {
         const string Flag = "--riskai-probe";
         const string WarmupFlag = "--riskai-probe-warmup";
@@ -91,6 +91,9 @@ namespace RiskAI
 
         IEnumerator Start()
         {
+            // An explicitly launched background probe must advance the setup scene
+            // before a BattleSession exists, including when its window is hidden.
+            Application.runInBackground = true;
             if (!TryReadOptions(out var options, out var optionError))
             {
                 Finish(false, "phase=arguments valid=false reason=" + optionError);
@@ -100,6 +103,17 @@ namespace RiskAI
             // The front-end owns no session. This persistent probe waits through its async scene transition.
             while (!BattleSession.Current) yield return null;
             var session = BattleSession.Current;
+
+            if (HasExactFlag("--riskai-probe-sustained"))
+            {
+                if (options.WarmupSimulationSeconds != 0 || options.MeasurementRealtimeSeconds < 30)
+                {
+                    Finish(false, "phase=arguments valid=false reason=sustained-requires-no-warmup-and-at-least-30-seconds");
+                    yield break;
+                }
+                yield return RunSustained(session, options.MeasurementRealtimeSeconds);
+                yield break;
+            }
 
             Application.runInBackground = true;
             if (session.Paused) session.TogglePause();
@@ -170,6 +184,8 @@ namespace RiskAI
                 Finish(false,"phase=fixture valid=false reason=cohort-lost-during-stabilization");yield break;
             }
             int unitsInitial = session.Units.Count;
+            var diagnostics = FindFirstObjectByType<RuntimeDiagnostics>();
+            if (diagnostics) diagnostics.BeginProbeMeasurement();
             long appliedAtStart = session.Commands.AppliedCount;
             long rejectedAtStart = session.Commands.RejectedCount;
             float simulationAtStart = session.BattleTime;
@@ -235,6 +251,7 @@ namespace RiskAI
             }
 
             RecordDisplacement(tracked);
+            if (diagnostics) diagnostics.EndProbeMeasurement();
             float simulationDelta = session.BattleTime - simulationAtStart;
             long applied = session.Commands.AppliedCount - appliedAtStart;
             long rejected = session.Commands.RejectedCount - rejectedAtStart;

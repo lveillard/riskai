@@ -7,6 +7,7 @@ namespace RiskAI
         public static void Create(Transform root)
         {
             var resources=GeneratedResourceOwner.For(root);
+            ShoreAccess.BakeSurface(root);
             // Sub-metre sampling keeps the bevel and river banks continuous with the walkable surface.
             const int nx=360,nz=400;
             var vertices=new Vector3[(nx+1)*(nz+1)];var triangles=new List<int>(nx*nz*6);
@@ -75,7 +76,7 @@ namespace RiskAI
             for(int i=0;i<58;i++)
             {
                 float x=(-70+(float)random.NextDouble()*140)*MapLayout.Spacing,z=MapLayout.Coast(x)-.5f-(float)random.NextDouble()*1.5f;
-                if(z>MapLayout.HalfDepth)continue;WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z)-.04f,z),.65f+(float)random.NextDouble()*1.2f,i);
+                if(z>MapLayout.HalfDepth||ShoreAccess.SurfaceWeights(x,z).y<.55f)continue;WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z)-.04f,z),.65f+(float)random.NextDouble()*1.2f,i);
             }
             for(int i=0;i<55;i++)
             {

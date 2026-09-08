@@ -182,7 +182,7 @@ namespace RiskAI
                 route.Clear();routeIndex=0;Face(target.transform.position);
                 if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireProjectile(AimPoint,target.AimPoint,target,world.Session.RollDamage(Profile),Team,this,AttackType);}
             }
-            else if(target&&world.Session.BattleTime>=nextTargetPath)
+            else if(!IsGarrison&&target&&world.Session.BattleTime>=nextTargetPath)
             {
                 if(SeaNavigation.TryNearestOcean(target.transform.position,8,out var ocean)&&SeaNavigation.TryBuildPath(transform.position,ocean,out var next))
                 {
@@ -191,7 +191,7 @@ namespace RiskAI
                 else nextTargetPath=world.Session.BattleTime+.7f;
                 if(routeIndex<route.Count)Advance();
             }
-            else if(routeIndex<route.Count)Advance();
+            else if(!IsGarrison&&routeIndex<route.Count)Advance();
         }
         CombatTarget FindNearbyEnemy()
         {

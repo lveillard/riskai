@@ -11,6 +11,7 @@ namespace RiskAI
         public static void Create(Transform root)
         {
             var data=MapLayout.Imported;
+            ShoreAccess.BakeSurface(root);
             var resources=root.gameObject.AddComponent<ImportedTerrainResources>();
             Material ground=Resources.Load<Material>("ImportedGround"),water=Resources.Load<Material>("ImportedWater");
             const int chunk=32;
@@ -36,7 +37,7 @@ namespace RiskAI
                 colors[index]=GroundTint(data.tileSamples[source],wx,wz);
                 colors[index].a=ImportedLandscapeAugment.Enabled?ImportedLandscapeAugment.RockSnowWeightAt(data,wx,wz):0;
                 var coast=ShoreAccess.SurfaceWeights(wx,wz);
-                shoreBand[index]=new Vector3(ShoreBand(data,ix,iz),coast.x,coast.y);
+                shoreBand[index]=new Vector3(ShoreAccess.ShoreBandWeight(wx,wz),coast.x,coast.y);
                 if(x==nx||z==nz)continue;
                 int b=index+nx+1;
                 AddQuad(triangles,index,b,index+1,b+1);
@@ -64,20 +65,6 @@ namespace RiskAI
             var renderer=surface.AddComponent<MeshRenderer>();renderer.sharedMaterial=water;renderer.shadowCastingMode=ShadowCastingMode.Off;
         }
         static void AddQuad(List<int> target,int a,int b,int c,int d){target.Add(a);target.Add(b);target.Add(c);target.Add(c);target.Add(b);target.Add(d);}
-        static float ShoreBand(ImportedMapData data,int x,int z)
-        {
-            int index=z*data.width+x;
-            if(data.landSamples[index]==0)return 0;
-            // A direct (including diagonal) water neighbour gives one source
-            // cell of blended bank.  It does not infer or move a coastline.
-            for(int dz=-1;dz<=1;dz++)for(int dx=-1;dx<=1;dx++)
-            {
-                if(dx==0&&dz==0)continue;
-                int nx=x+dx,nz=z+dz;
-                if(nx>=0&&nx<data.width&&nz>=0&&nz<data.height&&data.landSamples[nz*data.width+nx]==0)return 1;
-            }
-            return 0;
-        }
         static Color GroundTint(int tile,float x,float z)
         {
             Color tint=GroundColors[Mathf.Min(ImportedMapData.GroundTileIndex(tile),GroundColors.Length-1)];

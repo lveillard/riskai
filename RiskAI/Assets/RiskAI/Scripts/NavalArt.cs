@@ -43,7 +43,7 @@ namespace RiskAI
             else for(int i=0;i<6;i++)Block(root,"Transport cargo hold",new(-.85f+i%3*.85f,.88f,-1.15f+i/3*.8f),new(.68f,.55f,.62f));
             Beam(root,new(0,.65f,length*.35f),new(0,1.05f,length*.58f),.13f,new Color(1.6f,1.15f,.4f));
             var collider=ship.gameObject.AddComponent<BoxCollider>();collider.center=new(0,1.3f,0);collider.size=new(width,3,length*.82f);collider.isTrigger=true;
-            var visual=ship.gameObject.AddComponent<ShipAppearance>();visual.Initialize(ship,root,VisualFactory.Ring(ship.transform,1.5f,.07f,new Color(.5f,1,.55f)));
+            var visual=ship.gameObject.AddComponent<ShipAppearance>();visual.Initialize(ship,root,VisualFactory.Ring(ship.transform,ShipAppearance.SelectionRadius,.09f,new Color(.5f,1,.55f)));
         }
         static void Sail(Transform root,GeneratedResourceOwner resources,int team,bool war)
         {
@@ -88,8 +88,9 @@ namespace RiskAI
     }
     public sealed class ShipAppearance:MonoBehaviour
     {
+        public const float SelectionRadius = 4.3f;
         Ship ship;Transform model;LineRenderer ring;public void Initialize(Ship s,Transform m,LineRenderer r){ship=s;model=m;ring=r;ring.enabled=false;}
-        void LateUpdate(){if(!ship)return;ring.enabled=ship.Selected;ring.transform.localScale=Vector3.one*(ship.IsGarrison?.6f:1f);model.localPosition=Vector3.up*(.025f+Mathf.Sin(Time.time*1.9f+GetInstanceID())*.045f);model.localRotation=Quaternion.Euler(Mathf.Sin(Time.time*1.2f)*.7f,0,Mathf.Sin(Time.time*1.6f)*1.2f);}
+        void LateUpdate(){if(!ship)return;ring.enabled=ship.Selected;ring.transform.localScale=Vector3.one;model.localPosition=Vector3.up*(.025f+Mathf.Sin(Time.time*1.9f+GetInstanceID())*.045f);model.localRotation=Quaternion.Euler(Mathf.Sin(Time.time*1.2f)*.7f,0,Mathf.Sin(Time.time*1.6f)*1.2f);}
     }
     public sealed class HarborAppearance:MonoBehaviour
     {

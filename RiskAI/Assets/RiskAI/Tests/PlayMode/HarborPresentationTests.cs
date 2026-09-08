@@ -69,6 +69,32 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator TrainingSpillsWarmLightForEitherQueueAndResetsAcrossReuse()
+        {
+            var harbor=naval.Harbors.First(item=>item.Owner==0&&!item.IsImportedPort);
+            var view=harbor.GetComponentInChildren<BuildingTrainingView>(true);
+            view.SetActivity(true,false,1f);
+            var spill=view.GetComponentsInChildren<MeshRenderer>().First(item=>item.name=="Training threshold light spill");
+            var opening=view.GetComponentsInChildren<MeshRenderer>().First(item=>item.name=="Training doorway glow");
+            var warm=opening.sharedMaterial;
+            Assert.That(warm.color.r,Is.GreaterThan(warm.color.b));
+            var mesh=spill.GetComponent<MeshFilter>().sharedMesh;
+            Assert.That(mesh.bounds.max.z,Is.GreaterThan(2f),"Light extends out from the threshold into the approach.");
+            Assert.That(mesh.colors.Any(color=>color.a==0),Is.True,"Spill fades at its edge.");
+            var openingPosition=opening.transform.position;
+            view.SetActivity(false,true,4f);
+            Assert.That(opening.sharedMaterial,Is.SameAs(warm),"Naval-only queues use the same warm entrance light.");
+            Assert.That(opening.transform.position,Is.EqualTo(openingPosition),"Breathing must not move light into the opaque gate.");
+            view.SetActivity(false,false,4f);
+            Assert.That(view.gameObject.activeSelf,Is.False);
+            view.SetActivity(true,true,0f);
+            Assert.That(view.gameObject.activeSelf,Is.True);
+            Assert.That(view.GetComponentsInChildren<MeshRenderer>().Count(item=>item.name==spill.name),Is.EqualTo(1),"Reusing the cue does not accumulate spill geometry.");
+            view.SetActivity(false,false,0f);
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator TrainingCuesUseAuthoredScaledEntrancesWithoutMovingSpawnEntries()
         {
             var town=battle.Towns.First(item=>item.State.Owner==0);

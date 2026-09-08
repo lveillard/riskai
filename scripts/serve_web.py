@@ -31,7 +31,7 @@ class UnityHandler(http.server.SimpleHTTPRequestHandler):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--directory', type=Path, default=Path(__file__).resolve().parents[1] / 'Builds' / 'Web-v0.21')
+    parser.add_argument('--directory', type=Path, default=Path(__file__).resolve().parents[1] / 'Builds' / 'Web-v0.22')
     parser.add_argument('--bind', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8080)
     args = parser.parse_args()
