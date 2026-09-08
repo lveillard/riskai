@@ -50,15 +50,15 @@ Shader "RiskAI/StrategicTerritory"
                 // The immutable group channel joins all cities sharing one camp,
                 // independently of the live ownership palette. Approximately one
                 // screen pixel on each side stays legible at strategic zoom.
-                float2 borderStep=max(_Regions_TexelSize.xy,fwidth(uv)*.65);
+                float2 borderStep=max(_Regions_TexelSize.xy,fwidth(uv)*1.15);
                 float2 withinCell=frac(uv/_Regions_TexelSize.xy);
-                float2 feather=max(fwidth(uv)*1.25,float2(.000001,.000001));
+                float2 feather=max(fwidth(uv)*1.8,float2(.000001,.000001));
                 float2 positive=1-smoothstep(0,feather,(1-withinCell)*_Regions_TexelSize.xy);
                 float2 negative=1-smoothstep(0,feather,withinCell*_Regions_TexelSize.xy);
                 float border=max(max(CountryEdge(uv+float2(borderStep.x,0),country)*positive.x,CountryEdge(uv-float2(borderStep.x,0),country)*negative.x),
                                  max(CountryEdge(uv+float2(0,borderStep.y),country)*positive.y,CountryEdge(uv-float2(0,borderStep.y),country)*negative.y));
                 border*=step(.5,country);
-                color=lerp(color,half3(.075,.095,.09),border*.68);
+                color=lerp(color,half3(.075,.095,.09),border*.85);
                 return half4(color,1);
             }
             ENDHLSL

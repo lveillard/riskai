@@ -74,7 +74,9 @@ namespace RiskAI
         {
             // Retained UI owns every interactive panel. IMGUI remains only for world-space
             // presentation, the selection rectangle and the transitional minimap renderer.
-            DrawWorld();
+            // World labels are drawn by IMGUI after retained panels; keep them
+            // from covering the start countdown's title and number.
+            if(!session.IsStarting)DrawWorld();
             if (MinimapVisible)
             {
                 DrawMinimap(MinimapRect());
