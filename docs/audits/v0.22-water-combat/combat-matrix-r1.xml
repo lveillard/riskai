@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="15" result="Passed" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.0668275">
+  <test-suite type="TestSuite" id="1000" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="99" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.066828" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1129" name="RiskAI.Tests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.Tests.dll" runstate="Runnable" testcasecount="99" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.053543" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="62120" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1130" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="99" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.052380" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1131" name="Tests" fullname="RiskAI.Tests" runstate="Runnable" testcasecount="99" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.051497" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1017" name="CombatRulesSourceTests" fullname="RiskAI.Tests.CombatRulesSourceTests" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.039945" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1026" name="AppendedCategoriesRetainExistingEnumIdentities" fullname="RiskAI.Tests.CombatRulesSourceTests.AppendedCategoriesRetainExistingEnumIdentities" methodname="AppendedCategoriesRetainExistingEnumIdentities" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="895409887" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.014479" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1025" name="EveryAttackRowMatchesAllEightExtractedMapColumns" fullname="RiskAI.Tests.CombatRulesSourceTests.EveryAttackRowMatchesAllEightExtractedMapColumns" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.010449" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1018" name="EveryAttackRowMatchesAllEightExtractedMapColumns(Normal,&quot;Normal&quot;)" fullname="RiskAI.Tests.CombatRulesSourceTests.EveryAttackRowMatchesAllEightExtractedMapColumns(Normal,&quot;Normal&quot;)" methodname="EveryAttackRowMatchesAllEightExtractedMapColumns" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="2102102791" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.004382" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1019" name="EveryAttackRowMatchesAllEightExtractedMapColumns(Piercing,&quot;Pierce&quot;)" fullname="RiskAI.Tests.CombatRulesSourceTests.EveryAttackRowMatchesAllEightExtractedMapColumns(Piercing,&quot;Pierce&quot;)" methodname="EveryAttackRowMatchesAllEightExtractedMapColumns" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="1303410775" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000472" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1020" name="EveryAttackRowMatchesAllEightExtractedMapColumns(Siege,&quot;Siege&quot;)" fullname="RiskAI.Tests.CombatRulesSourceTests.EveryAttackRowMatchesAllEightExtractedMapColumns(Siege,&quot;Siege&quot;)" methodname="EveryAttackRowMatchesAllEightExtractedMapColumns" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="1749171813" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000357" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1021" name="EveryAttackRowMatchesAllEightExtractedMapColumns(Magic,&quot;Magic&quot;)" fullname="RiskAI.Tests.CombatRulesSourceTests.EveryAttackRowMatchesAllEightExtractedMapColumns(Magic,&quot;Magic&quot;)" methodname="EveryAttackRowMatchesAllEightExtractedMapColumns" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="1217902445" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000260" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1022" name="EveryAttackRowMatchesAllEightExtractedMapColumns(Chaos,&quot;Chaos&quot;)" fullname="RiskAI.Tests.CombatRulesSourceTests.EveryAttackRowMatchesAllEightExtractedMapColumns(Chaos,&quot;Chaos&quot;)" methodname="EveryAttackRowMatchesAllEightExtractedMapColumns" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="27688894" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000257" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1023" name="EveryAttackRowMatchesAllEightExtractedMapColumns(Hero,&quot;Hero&quot;)" fullname="RiskAI.Tests.CombatRulesSourceTests.EveryAttackRowMatchesAllEightExtractedMapColumns(Hero,&quot;Hero&quot;)" methodname="EveryAttackRowMatchesAllEightExtractedMapColumns" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="380184628" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000256" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1024" name="EveryAttackRowMatchesAllEightExtractedMapColumns(Spells,&quot;Spells&quot;)" fullname="RiskAI.Tests.CombatRulesSourceTests.EveryAttackRowMatchesAllEightExtractedMapColumns(Spells,&quot;Spells&quot;)" methodname="EveryAttackRowMatchesAllEightExtractedMapColumns" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="185278749" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000272" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1028" name="ExistingNegativeArmorCurveRetainsItsGeometricSeriesAndFiniteLimit" fullname="RiskAI.Tests.CombatRulesSourceTests.ExistingNegativeArmorCurveRetainsItsGeometricSeriesAndFiniteLimit" methodname="ExistingNegativeArmorCurveRetainsItsGeometricSeriesAndFiniteLimit" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="963670145" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000773" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1027" name="NumericArmorCoefficientMatchesOwnedRocBaselineAndComposesWithMapMatrix" fullname="RiskAI.Tests.CombatRulesSourceTests.NumericArmorCoefficientMatchesOwnedRocBaselineAndComposesWithMapMatrix" methodname="NumericArmorCoefficientMatchesOwnedRocBaselineAndComposesWithMapMatrix" classname="RiskAI.Tests.CombatRulesSourceTests" runstate="Runnable" seed="1656661023" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000806" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1029" name="CombatRulesTests" fullname="RiskAI.Tests.CombatRulesTests" classname="RiskAI.Tests.CombatRulesTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.006456" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1031" name="ArmorReducesBySixPercentPerPoint" fullname="RiskAI.Tests.CombatRulesTests.ArmorReducesBySixPercentPerPoint" methodname="ArmorReducesBySixPercentPerPoint" classname="RiskAI.Tests.CombatRulesTests" runstate="Runnable" seed="1609171701" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000471" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1030" name="DamageBonusesFollowWarcraftTableOrder" fullname="RiskAI.Tests.CombatRulesTests.DamageBonusesFollowWarcraftTableOrder" methodname="DamageBonusesFollowWarcraftTableOrder" classname="RiskAI.Tests.CombatRulesTests" runstate="Runnable" seed="263935376" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000440" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1033" name="ExtractedReforgedProfilesUseMapAttackAndDefenseTypes" fullname="RiskAI.Tests.CombatRulesTests.ExtractedReforgedProfilesUseMapAttackAndDefenseTypes" methodname="ExtractedReforgedProfilesUseMapAttackAndDefenseTypes" classname="RiskAI.Tests.CombatRulesTests" runstate="Runnable" seed="779496212" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.002810" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1034" name="MortarUsesSiegeProfileAndCanRecruitWithoutUpgrade" fullname="RiskAI.Tests.CombatRulesTests.MortarUsesSiegeProfileAndCanRecruitWithoutUpgrade" methodname="MortarUsesSiegeProfileAndCanRecruitWithoutUpgrade" classname="RiskAI.Tests.CombatRulesTests" runstate="Runnable" seed="201352422" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000513" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1032" name="UphillMissChanceOnlyAppliesToPiercingAtTheThreshold" fullname="RiskAI.Tests.CombatRulesTests.UphillMissChanceOnlyAppliesToPiercingAtTheThreshold" methodname="UphillMissChanceOnlyAppliesToPiercingAtTheThreshold" classname="RiskAI.Tests.CombatRulesTests" runstate="Runnable" seed="385001016" result="Passed" start-time="2026-09-08 19:01:46Z" end-time="2026-09-08 19:01:46Z" duration="0.000241" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

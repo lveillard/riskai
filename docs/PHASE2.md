@@ -1,5 +1,11 @@
 # Fase 2 · tablet, móvil y navegador
 
+Seguimiento `3b83279`: agua continua y más oscura, atraque explícito, producción
+según propietario y correcciones de combate contrastadas con WC3. Windows/Web
+exportados; 81 casos Unity distintos aprobados en esa revisión. No equivale a
+paridad completa con el motor original ni cierra el rendimiento pendiente.
+[Agua, combate y límites de la fuente](VALIDATION-v0.22-WATER-COMBAT.md).
+
 Avance v0.22: guardianes navales, luz de entrenamiento, playas compartidas y
 animación montada mejorados. El seguimiento `61f386d` completa el suavizado
 acotado de esquinas de costa de Europe/NewWorld: máximo 0,512 m, protección

@@ -2,6 +2,10 @@
 
 ## Ronda v0.22 · presentación, caballero y carga
 
+- [x] Mar más oscuro y óptica continua entre fondos; captura de galera/transporte en movimiento sin ondas sobre sus cubiertas. Orden de atraque conserva destino y completa el ajuste local con arbitraje y paso marítimo seguro.
+- [x] Ocultar producción y colas de edificios ajenos/neutrales; actualizar el panel cuando cambia dueño sin reselección.
+- [x] Auditar 69 objetos WC3, armas, habilidades, tecnologías, captura y disponibilidad; distinguir 40 identidades potenciales de 17 reclutables por defecto. Aplicar matriz 7×8, entrega de armas/área, adquisición, entrenamiento explícito de 1 s y transporte n008 con 10 plazas. 81 casos Unity distintos aprobados. [Detalle y procedencia](docs/VALIDATION-v0.22-WATER-COMBAT.md).
+- [ ] Completar paridad WC3: contrastar herencia con Reforged 2.0.2.22796, incorporar el catálogo y los modos originales restantes, resolver curación/tecnologías y reglas del motor. Mantener identificadas las adaptaciones locales y las cifras históricas no verificadas.
 - [x] Separar selección/hover del círculo de ocupación naval y detener la persecución del guardián cuando pierde línea de tiro. Anclas duales conservadas.
 - [x] Luz cálida visible en puerta y umbral por encima de los escalones; misma presentación para colas terrestres/navales y pausa/reutilización.
 - [x] Campo de arena/roca compartido entre CPU y shaders, probado en GPU en los cuatro mapas. Textura de playa, piedra y agua somera; embarque/desembarque real verificado en Europe/NewWorld.
