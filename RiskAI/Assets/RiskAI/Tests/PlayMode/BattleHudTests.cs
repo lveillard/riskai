@@ -34,6 +34,40 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator ProductionFollowsSelectedBuildingOwnershipWithoutReselecting()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var town=battle.Towns.First(item=>item.State.Owner==0&&!item.IsPort);
+            if(!battle.Paused)battle.TogglePause();
+            controller.SelectTown(town);
+            yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            var productionTab=root.Q<Button>("HUD tab 2");
+            if(productionTab!=null)
+                using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=productionTab;productionTab.SendEvent(evt);}
+            yield return null;
+            Assert.That(root.Q<Button>("Recruit Archer"),Is.Not.Null);
+            town.State.Owner=1;
+            yield return null;yield return null;
+            Assert.That(root.Q<Button>("Recruit Archer"),Is.Null,"Enemy ownership must remove production even when the selected object is unchanged.");
+            town.State.Owner=PlayerRules.NeutralOwner;
+            yield return null;
+            Assert.That(root.Q<Button>("Recruit Archer"),Is.Null);
+            town.State.Owner=0;
+            yield return null;
+            Assert.That(root.Q<Button>("Recruit Archer"),Is.Not.Null,"Capturing the selected city restores its production.");
+
+            var harbor=battle.Naval.Harbors.First(item=>item.Owner==0);
+            controller.SelectHarbor(harbor);
+            yield return null;
+            Assert.That(root.Q<Button>("Build ship Galley"),Is.Not.Null);
+            harbor.State.Owner=1;
+            yield return null;
+            Assert.That(root.Q<Button>("Build ship Galley"),Is.Null);
+            Assert.That(root.Q<Button>("Recruit MarinePrivate"),Is.Null);
+        }
+
+        [UnityTest]
         public IEnumerator GoldHeaderRefreshesAfterGrantWhilePausedBeforeNextSimulationTick()
         {
             var document=hud.GetComponent<UIDocument>();Assert.That(document,Is.Not.Null);

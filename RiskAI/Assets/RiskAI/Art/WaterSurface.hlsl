@@ -5,10 +5,11 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
 #include "MapSurface.hlsl"
 #include "NaturalNoise.hlsl"
+#include "WaterOptics.hlsl"
 float WaterHash(float2 p){return frac(sin(dot(p,float2(127.1,311.7)))*43758.5453);}
 float WaterNoise(float2 p){float2 a=floor(p),f=frac(p);f=f*f*(3-2*f);return lerp(lerp(WaterHash(a),WaterHash(a+float2(1,0)),f.x),lerp(WaterHash(a+float2(0,1)),WaterHash(a+1),f.x),f.y);}
 // Shared opaque bed and optics for river and sea; no painted coastline or mouth disc.
-half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow,float rapids)
+half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow,float rapids,float coastalWeight)
 {
  float2 uv=screen.xy/_ScaledScreenParams.xy;
  float raw=SampleSceneDepth(uv);
@@ -31,17 +32,14 @@ half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow
  // A continuous geographical tint also covers the far sea beyond the rendered bed.
  // Actual scene depth still controls transmission, contact foam and water/land intersections.
  #if defined(RISK_IMPORTED_WATER)
- float opticalDepth=.4+depth*(3.8+swell*2.4);
+ float opticalDepth=RiskImportedOpticalDepth(coastalWeight,swell);
  #else
  float coast=max(0,RiskShore(p/max(1,_RiskMapScale))*_RiskMapScale);
  float channel=max(0,-RiskRiverDistance(p));
  float opticalDepth=.4+max(coast*.65,channel*.50);
  #endif
- half3 tint=lerp(half3(.024,.235,.225),half3(.012,.073,.19),1-exp(-opticalDepth*.24));
  half3 bottom=SampleSceneColor(uv);
- // Limit deep transmission so independently tessellated river/sea beds cannot
- // print a lighting seam through their shared surface. Shallows stay transparent.
- half3 c=lerp(bottom,tint,1-exp(-depth*4.8));
+ half3 c=RiskWaterBodyColor(bottom,depth,opticalDepth);
  c=lerp(c,half3(.22,.38,.48),fresnel*.45);
  c+=(a*b*.5+.5)*half3(.003,.009,.014);
  c+=pow(saturate((a+b)*.5),7)*exp(-depth*.8)*half3(.065,.095,.058);
@@ -59,6 +57,11 @@ half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow
  float foam=pow(wave,12)*(1-smoothstep(.08,.65,depth))*smoothstep(.005,.07,depth)*broken*.58;
  foam+=rapids*pow(WaterNoise(p*float2(3,1.4)-drift*2.5),5)*.28;
  c=lerp(c,half3(.62,.77,.70),saturate(foam));
- return half4(c,smoothstep(0,.18,depth));
+ return half4(c,RiskWaterContactOpacity(depth));
+}
+// Existing authored rivers/sea keep their geographical optical-depth adapter.
+half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow,float rapids)
+{
+ return RiskWater(world,screen,surfaceNormal,riverFlow,rapids,0);
 }
 #endif

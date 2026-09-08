@@ -20,15 +20,15 @@ Shader "RiskAI/ImportedWater"
    V Vert(A a){V o;VertexPositionInputs p=GetVertexPositionInputs(a.p.xyz);o.p=p.positionCS;o.w=p.positionWS;o.fog=ComputeFogFactor(o.p.z);o.depth=a.color.a;return o;}
    half4 Frag(V i):SV_Target
    {
-    half4 color=RiskWater(i.w,i.p,float3(0,1,0),0,0);
+    float3 coast=RiskCoastSurface(i.w.xz);
+    half4 color=RiskWater(i.w,i.p,float3(0,1,0),0,0,coast.b);
     // The source coast field also softens the water side of the bank. This
     // touches existing water fragments only: no new water coverage or depth.
-    float3 coast=RiskCoastSurface(i.w.xz);
     float2 warped=NaturalWarp(i.w.xz);
     half washNoise=NaturalNoise(warped*.67+float2(_Time.y*.018,-_Time.y*.025));
     half shallow=coast.b*(1-smoothstep(.15,.95,i.depth));
     half sand=RiskSandBlend(coast.r);
-    half3 shallows=lerp(half3(.065,.215,.205),half3(.20,.32,.255),sand);
+    half3 shallows=lerp(half3(.065,.215,.205),half3(.20,.32,.255),sand)*.88;
     color.rgb=lerp(color.rgb,shallows,shallow*(.46+washNoise*.22));
     // A sparse wash on the water side breaks long straight-looking optical
     // edges without a solid white contour or foam across open/deep water.

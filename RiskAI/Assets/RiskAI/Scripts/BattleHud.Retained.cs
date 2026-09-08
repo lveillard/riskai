@@ -104,11 +104,11 @@ namespace RiskAI
             {
                 int key = retainedTab;
                 key = key * 29 + (controller.InspectedTarget ? controller.InspectedTarget.EntityId : 0);
-                key = key * 41 + (controller.SelectedTown ? controller.SelectedTown.GetInstanceID() : 0);
-                key = key * 43 + (controller.SelectedHarbor ? controller.SelectedHarbor.GetInstanceID() : 0);
+                key = key * 41 + (controller.SelectedTown ? controller.SelectedTown.GetInstanceID() * 17 + controller.SelectedTown.State.Owner : 0);
+                key = key * 43 + (controller.SelectedHarbor ? controller.SelectedHarbor.GetInstanceID() * 17 + controller.SelectedHarbor.Owner : 0);
                 key = key * 47 + (controller.SelectedCamp ? controller.SelectedCamp.GetInstanceID() : 0);
-                for (int i = 0; i < controller.SelectedTowns.Count; i++) key = key * 53 + controller.SelectedTowns[i].GetInstanceID();
-                for (int i = 0; i < controller.SelectedHarbors.Count; i++) key = key * 59 + controller.SelectedHarbors[i].GetInstanceID();
+                for (int i = 0; i < controller.SelectedTowns.Count; i++) key = key * 53 + controller.SelectedTowns[i].GetInstanceID() * 17 + controller.SelectedTowns[i].State.Owner;
+                for (int i = 0; i < controller.SelectedHarbors.Count; i++) key = key * 59 + controller.SelectedHarbors[i].GetInstanceID() * 17 + controller.SelectedHarbors[i].Owner;
                 return key;
             }
         }
@@ -341,13 +341,13 @@ namespace RiskAI
             if (controller.SelectedTown && !controller.SelectedHarbor)
             {
                 var town = controller.SelectedTown; AddTitle(root, town.DisplayName);
-                LiveInfo(root,()=>town?VisualFactory.TeamName(town.State.Owner)+" · "+town.QueueCount+" / 5 · "+(town.QueueCount>0?BattleRules.Name(town.TrainingKind):"cola vacía"):"Ciudad retirada");
+                LiveInfo(root,()=>town?VisualFactory.TeamName(town.State.Owner)+(town.State.Owner==0?" · "+town.QueueCount+" / 5 · "+(town.QueueCount>0?BattleRules.Name(town.TrainingKind):"cola vacía"):""):"Ciudad retirada");
                 QueueLabels(root, town, false); return;
             }
             if (controller.SelectedHarbor)
             {
                 var harbor = controller.SelectedHarbor; AddTitle(root, harbor.DisplayName);
-                LiveInfo(root,()=>harbor?"PUERTO · "+VisualFactory.TeamName(harbor.Owner)+" · tierra "+harbor.LandQueueCount+" / 5 · barcos "+harbor.QueueCount+" / 5":"Puerto retirado");
+                LiveInfo(root,()=>harbor?"PUERTO · "+VisualFactory.TeamName(harbor.Owner)+(harbor.Owner==0?" · tierra "+harbor.LandQueueCount+" / 5 · barcos "+harbor.QueueCount+" / 5":""):"Puerto retirado");
                 QueueLabels(root, harbor, false); return;
             }
             if (controller.Fleet.Count > 0)
@@ -398,14 +398,17 @@ namespace RiskAI
 
         void BuildProduction(VisualElement root)
         {
+            bool ownTown=false, ownHarbor=false;
+            foreach(var town in controller.SelectedTowns) if(town && town.State.Owner==0) { ownTown=true; break; }
+            foreach(var harbor in controller.SelectedHarbors) if(harbor && harbor.Owner==0) { ownHarbor=true; break; }
             if (controller.SelectedTowns.Count + controller.SelectedHarbors.Count > 1)
                 root.tooltip = "Cada compra se añade una vez a la cola compatible más corta.";
-            if (controller.SelectedTowns.Count > 0)
+            if (ownTown)
             {
                 AddTitle(root, "EJÉRCITO");
                 UnitButtons(root, ProductionCatalog.SettlementUnits);
             }
-            if (controller.SelectedHarbors.Count > 0)
+            if (ownHarbor)
             {
                 AddTitle(root, "MARINA"); UnitButtons(root, ProductionCatalog.HarborUnits);
                 var ships = new VisualElement(); RtsUiStyle.Row(ships, true);
@@ -468,6 +471,7 @@ namespace RiskAI
         void QueueLabels(VisualElement root, Settlement town, bool includeStatus = true)
         {
             if (!town) return;
+            if(town.State.Owner!=0) { if(includeStatus) AddInfo(root,town.DisplayName+" · "+VisualFactory.TeamName(town.State.Owner)); return; }
             if (includeStatus) LiveInfo(root,()=>town?town.DisplayName+" · "+town.QueueCount+" / 5":"Ciudad retirada");
             var strip = new VisualElement(); RtsUiStyle.Row(strip, true); root.Add(strip);
             for (int i = 0; i < 5; i++) AddQueueSlot(strip, town, null, false, i, wideFooter);
@@ -477,6 +481,7 @@ namespace RiskAI
         void QueueLabels(VisualElement root, Harbor harbor, bool includeStatus = true)
         {
             if (!harbor) return;
+            if(harbor.Owner!=0) { if(includeStatus) AddInfo(root,harbor.DisplayName+" · "+VisualFactory.TeamName(harbor.Owner)); return; }
             if(includeStatus) LiveInfo(root,()=>harbor?harbor.DisplayName+" · tierra "+harbor.LandQueueCount+" / 5 · barcos "+harbor.QueueCount+" / 5":"Puerto retirado");
             var queues = new VisualElement(); RtsUiStyle.Row(queues, true); queues.style.alignItems=Align.FlexStart; root.Add(queues);
             var land = new VisualElement(); RtsUiStyle.Row(land, true); queues.Add(land);

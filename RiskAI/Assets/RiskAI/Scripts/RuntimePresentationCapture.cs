@@ -48,6 +48,13 @@ namespace RiskAI
             if (!battle.Paused) battle.TogglePause();
             battle.Economy.Grant(0, 1000);
             foreach (var argument in LaunchArguments.Get())
+                if (argument == "--riskai-capture-ships")
+                {
+                    yield return CaptureShips(battle,input);
+                    Application.Quit();
+                    yield break;
+                }
+            foreach (var argument in LaunchArguments.Get())
                 if (argument == "--riskai-capture-knight")
                 {
                     yield return CaptureKnight(battle, input);
@@ -129,6 +136,34 @@ namespace RiskAI
             input.CameraRig.ResetView();
             input.CameraRig.Focus(position);
             input.CameraRig.ZoomAt(3, new Vector2(Screen.width * .5f, Screen.height * .55f));
+        }
+
+        IEnumerator CaptureShips(BattleSession battle,RtsController input)
+        {
+            var min=MapLayout.PlayableMin;var max=MapLayout.PlayableMax;
+            for(float z=min.y+30;z<max.y-50;z+=20)
+            for(float x=min.x+30;x<max.x-40;x+=20)
+            {
+                var start=new Vector3(x,-.24f,z);var other=start+Vector3.right*10;
+                var end=start+Vector3.forward*28;var otherEnd=other+Vector3.forward*28;
+                if(!SeaNavigation.ClearSegment(start,end)||!SeaNavigation.ClearSegment(other,otherEnd))continue;
+                bool nearPort=false;
+                foreach(var port in battle.Naval.Harbors)if(Vector3.Distance(port.Berth,start)<40){nearPort=true;break;}
+                if(nearPort)continue;
+                var galley=battle.Naval.Spawn(0,ShipKind.Galley,start);
+                var transport=battle.Naval.Spawn(0,ShipKind.Transport,other);
+                if(!galley||!transport)continue;
+                input.Clear();Frame(input,start+new Vector3(5,0,7));
+                galley.MoveTo(end);transport.MoveTo(otherEnd);
+                battle.TogglePause();
+                yield return Capture("ships-underway-0");
+                yield return Capture("ships-underway-1");
+                float distance=Vector3.Distance(galley.transform.position,start);
+                float cargoDistance=Vector3.Distance(transport.transform.position,other);
+                Debug.Log((distance>2&&cargoDistance>2?"RISKAI_PRESENTATION_OK: ":"RISKAI_PRESENTATION_FAILED: ")+"ships galleyMoved="+distance+" transportMoved="+cargoDistance);
+                yield break;
+            }
+            Debug.LogError("RISKAI_PRESENTATION_FAILED: no open sea fixture");
         }
 
         IEnumerator Capture(string name)
