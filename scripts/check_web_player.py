@@ -33,6 +33,7 @@ def main():
     parser.add_argument('--warmup', type=int, default=0)
     parser.add_argument('--probe', action='store_true')
     parser.add_argument('--sustained', action='store_true', help='Use the shared controlled 900-unit navigation workload with --probe.')
+    parser.add_argument('--hide-minimap', action='store_true', help='Diagnostic only: compare the same workload using the normal minimap visibility toggle.')
     parser.add_argument('--restart', action='store_true')
     parser.add_argument('--headed', action='store_true')
     parser.add_argument('--suppress-draws', action='store_true',
@@ -44,6 +45,8 @@ def main():
         parser.error('Choose one measurement type per browser session.')
     if args.sustained and (not args.probe or args.warmup or args.map != 'europe'):
         parser.error('--sustained requires --probe --map europe and no warmup.')
+    if args.hide_minimap and not args.probe:
+        parser.error('--hide-minimap requires --probe.')
     if args.probe and args.seconds <= 30:
         parser.error('The shared runtime probe requires more than 30 simulation seconds; use --seconds 60 or longer.')
     if args.suppress_draws and not args.probe:
@@ -69,7 +72,8 @@ def main():
     report = {'url': url, 'desktop_browser': True, 'physical_arm': False,
               'viewport': [args.width, args.height], 'device_scale_factor': args.dpr,
               'draws_suppressed': args.suppress_draws, 'overview': args.overview,
-              'path_budget': args.path_budget, 'sustained_navigation': args.sustained}
+              'path_budget': args.path_budget, 'sustained_navigation': args.sustained,
+              'minimap_hidden': args.hide_minimap}
     started = time.monotonic()
     with (args.output / 'console.log').open('w', encoding='utf-8') as log, sync_playwright() as p:
         browser = p.chromium.launch(channel='msedge', headless=not args.headed)
@@ -133,6 +137,8 @@ def main():
                     # panning while the unattended smoke capture waits for its frame.
                     page.mouse.move(args.width * .5, args.height * .4)
                     page.evaluate('window.riskaiInstance.SendMessage("RiskAI · Bootstrap", "FocusHome")')
+            if args.hide_minimap:
+                page.evaluate('window.riskaiInstance.SendMessage("RiskAI · Bootstrap", "ToggleMinimap")')
             if args.overview:
                 page.evaluate('window.riskaiInstance.SendMessage("RiskAI · Bootstrap", "FrameMap")')
             page.wait_for_timeout(2000)

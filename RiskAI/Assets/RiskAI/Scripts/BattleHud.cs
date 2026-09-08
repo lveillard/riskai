@@ -56,6 +56,7 @@ namespace RiskAI
         void OnDestroy()
         {
             if(minimapTexture)Destroy(minimapTexture);
+            DisposeMinimapMarkers();
             UiViewport.ResetHudHeights();
         }
         static void Text(Rect r, string text, GUIStyle style = null) => GUI.Label(r, text, style ?? RtsSkin.Text);
@@ -138,18 +139,7 @@ namespace RiskAI
             RtsSkin.Frame(new Rect(r.x-3,r.y-3,r.width+6,r.height+6));
             if (!minimapTexture) { const int resolution=192; minimapTexture = new Texture2D(resolution,resolution,TextureFormat.RGBA32,false); for (int ix=0;ix<resolution;ix++) for(int iz=0;iz<resolution;iz++){float x=Mathf.Lerp(MapLayout.PlayableMin.x,MapLayout.PlayableMax.x,(ix+.5f)/resolution),z=Mathf.Lerp(MapLayout.PlayableMin.y,MapLayout.PlayableMax.y,(iz+.5f)/resolution);float h=MapLayout.Height(x,z); minimapTexture.SetPixel(ix,iz,MapLayout.IsLand(x,z)?Color.Lerp(new Color(.24f,.38f,.20f),new Color(.56f,.63f,.30f),Mathf.Clamp01(h/6.2f)):new Color(.10f,.25f,.34f));} minimapTexture.Apply(); minimapTexture.filterMode=FilterMode.Point; }
             GUI.DrawTexture(r,minimapTexture,ScaleMode.StretchToFill,false);
-            foreach(var town in session.Towns)
-            {
-                float marker=Mathf.Clamp(35f/Mathf.Sqrt(MapLayout.Towns.Length),2,8);
-                var p=MapPoint(town.transform.position,r);RtsSkin.Fill(new Rect(p.x-marker*.5f,p.y-marker*.5f,marker,marker),VisualFactory.TeamColor(town.State.Owner));
-                if(town.Defense.IsAlive)Outline(new Rect(p.x-marker*.5f-2,p.y-marker*.5f-2,marker+4,marker+4),new Color(.83f,.76f,.48f));
-            }
-            foreach(var unit in session.Units) {if(!unit||!unit.IsAlive)continue;var p=MapPoint(unit.transform.position,r);RtsSkin.Fill(new Rect(p.x-1,p.y-1,2.5f,2.5f),unit.Selected?Color.white:VisualFactory.TeamColor(unit.Team));}
-            if(NavalWorld.Current)
-            {
-                foreach(var harbor in NavalWorld.Current.Harbors){var p=MapPoint(harbor.Landing,r);Outline(new Rect(p.x-3,p.y-3,6,6),VisualFactory.TeamColor(harbor.Owner));}
-                foreach(var ship in NavalWorld.Current.Ships){if(!ship||!ship.IsAlive)continue;var p=MapPoint(ship.transform.position,r);RtsSkin.Fill(new Rect(p.x-2,p.y-2,4,4),ship.Selected?Color.white:VisualFactory.TeamColor(ship.Team));}
-            }
+            DrawMinimapMarkers(r);
             Vector2[] corners={new Vector2(0,BottomPixels),new Vector2(Screen.width,BottomPixels),new Vector2(Screen.width,Screen.height-TopPixels),new Vector2(0,Screen.height-TopPixels)};
             GUI.BeginGroup(r);
             for(int c=0;c<4;c++)
