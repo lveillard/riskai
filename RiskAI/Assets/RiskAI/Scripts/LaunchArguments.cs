@@ -29,7 +29,7 @@ namespace RiskAI
                 switch(key)
                 {
                     case "riskai-map":case "riskai-seed":case "riskai-players":
-                    case "riskai-probe-seconds":case "riskai-probe-warmup":case "riskai-probe-recruits":case "riskai-restart-cycles":
+                    case "riskai-probe-seconds":case "riskai-probe-warmup":case "riskai-probe-recruits":case "riskai-restart-cycles":case "riskai-path-budget":
                         args.Add("--"+key);args.Add(value);break;
                     case "riskai-probe":case "riskai-probe-warmup-commander":case "riskai-frame-trace":case "riskai-restart-probe":case "riskai-play":
                         if(value=="1"||value=="true")args.Add("--"+key);break;

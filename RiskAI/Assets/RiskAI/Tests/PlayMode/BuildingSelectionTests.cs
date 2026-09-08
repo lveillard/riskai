@@ -87,10 +87,24 @@ namespace RiskAI.Tests
         {
             var port=NavalWorld.Current.Harbors.Where(h=>h.IsImportedPort)
                 .OrderByDescending(h=>(h.transform.position-h.LinkedTown.transform.position).sqrMagnitude).First();
+            var nearbyPorts=NavalWorld.Current.Harbors.Where(h=>h.IsImportedPort&&h!=port)
+                .OrderBy(h=>(h.transform.position-port.transform.position).sqrMagnitude).Take(2).ToArray();
+            Assert.That(nearbyPorts.Length,Is.EqualTo(2));
+            foreach(var harbor in NavalWorld.Current.Harbors)harbor.State.Owner=1;
+            port.State.Owner=0;nearbyPorts[0].State.Owner=1;nearbyPorts[1].State.Owner=-1;
             var focus=(port.transform.position+port.LinkedTown.transform.position)*.5f;
             var cameraObject=new GameObject("Imported port box camera");var boxCamera=cameraObject.AddComponent<Camera>();
             boxCamera.transform.position=focus+new Vector3(0,52,-72);boxCamera.transform.LookAt(focus+Vector3.up*2);boxCamera.fieldOfView=58;boxCamera.nearClipPlane=.1f;boxCamera.farClipPlane=1000;
             controller.Initialize(battle,boxCamera);
+            var ownershipPoints=nearbyPorts.Select(h=>ScreenPoint(boxCamera,BuildingSelection.Bounds(h).center))
+                .Append(ScreenPoint(boxCamera,BuildingSelection.Bounds(port).center)).ToArray();
+            var ownershipRect=Rect.MinMaxRect(ownershipPoints.Min(point=>point.x)-5,ownershipPoints.Min(point=>point.y)-5,
+                ownershipPoints.Max(point=>point.x)+5,ownershipPoints.Max(point=>point.y)+5);
+            BoxSelect(ownershipRect);
+            Assert.That(controller.SelectedHarbors,Is.EqualTo(new[]{port}),"A building area must include the own port and exclude enemy and neutral ports.");
+            BoxSelect(new Rect(0,0,1,1),true);
+            Assert.That(controller.SelectedHarbors,Is.EqualTo(new[]{port}),"Shift-selecting empty terrain must preserve the existing selection.");
+            controller.Clear();
             var house=ScreenPoint(boxCamera,BuildingSelection.Bounds(port.LinkedTown).center);
             var berth=ScreenPoint(boxCamera,BuildingSelection.Bounds(port).center);
             Assert.That(Vector2.Distance(house,berth),Is.GreaterThan(10),"The fixture needs distinct city-house and berth footprints.");
@@ -104,16 +118,42 @@ namespace RiskAI.Tests
             Object.Destroy(cameraObject);yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator AreaSelectionIncludesOwnBuildingsOnly()
+        {
+            var towns=battle.Towns.Where(t=>t&&!t.IsPort).ToArray();
+            Assert.That(towns.Length,Is.GreaterThanOrEqualTo(3));
+            var own=towns[0];
+            var nearby=towns.Where(t=>t!=own).OrderBy(t=>(t.transform.position-own.transform.position).sqrMagnitude).Take(2).ToArray();
+            var enemy=nearby[0];var neutral=nearby[1];
+            foreach(var town in battle.Towns)if(town&&!town.IsPort)town.State.Owner=1;
+            own.State.Owner=0;enemy.State.Owner=1;neutral.State.Owner=-1;
+            foreach(var harbor in NavalWorld.Current.Harbors)harbor.State.Owner=1;
+
+            var focus=(own.transform.position+enemy.transform.position+neutral.transform.position)/3f;
+            var cameraObject=new GameObject("Ownership area selection camera");var areaCamera=cameraObject.AddComponent<Camera>();
+            areaCamera.transform.position=focus+new Vector3(0,42,-58);areaCamera.transform.LookAt(focus);areaCamera.fieldOfView=70;
+            controller.Initialize(battle,areaCamera);
+            var points=new[]{ScreenPoint(areaCamera,BuildingSelection.Bounds(own).center),ScreenPoint(areaCamera,BuildingSelection.Bounds(enemy).center),ScreenPoint(areaCamera,BuildingSelection.Bounds(neutral).center)};
+            var left=points.Min(point=>point.x)-5;var bottom=points.Min(point=>point.y)-5;
+            var right=points.Max(point=>point.x)+5;var top=points.Max(point=>point.y)+5;
+            BoxSelect(Rect.MinMaxRect(left,bottom,right,top));
+
+            Assert.That(controller.SelectedTowns,Is.EqualTo(new[]{own}),"Area selection must ignore enemy and neutral buildings.");
+            Assert.That(controller.SelectedHarbors,Is.Empty);
+            Object.Destroy(cameraObject);yield return null;
+        }
+
         static Vector2 ScreenPoint(Camera camera,Vector3 point)
         {
             var screen=camera.WorldToScreenPoint(point);Assert.That(screen.z,Is.GreaterThan(0));
             return new Vector2(screen.x,Screen.height-screen.y);
         }
         static Rect RectAt(Vector2 point)=>new Rect(point.x-3,point.y-3,6,6);
-        void BoxSelect(Rect rect)
+        void BoxSelect(Rect rect,bool append=false)
         {
             typeof(RtsController).GetMethod("SelectBuildingsIn",BindingFlags.Instance|BindingFlags.NonPublic)
-                .Invoke(controller,new object[]{rect,false});
+                .Invoke(controller,new object[]{rect,append});
         }
 
         [UnityTest]

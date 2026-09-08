@@ -1,0 +1,1537 @@
+{
+  "sourceHead": "f05c586c8804b792b0a42f6873779428f885e159",
+  "recordedAt": "2026-09-08T10:29:06.565046+00:00",
+  "provenance": "Preserved explicit Win64/WebGL build invocation logs after local source commit; all 13 frozen review/test source hashes match. Export has no embedded git stamp; hashes bind the existing tested bytes.",
+  "unity": "6000.3.23f1",
+  "tests": {
+    "total": "55",
+    "passed": "55",
+    "failed": "0",
+    "skipped": "0",
+    "duration": "182.8430159"
+  },
+  "reviewedSource": [
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.cs",
+      "sha256": "90b4c204b08aa4f0fb69448c7a023671ef6dd5f139c95e578f54b34e9b912c49"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.Input.cs",
+      "sha256": "7c2ad28a2144bf4f97ebb7d49b5a5d27296d8c9a7e6684d09b2030af34abf15a"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.BuildingSelection.cs",
+      "sha256": "8fec5fa966c7b536729bcc4bef02548f843d5815ae921db48c8010143fb4a6f7"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/RtsController.BuildingCommands.cs",
+      "sha256": "1c87d0b65495df878ccafaa9583cc290daf69d8d7feb151fc9dee9f7d8fdf58d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/RtsSelectionLifetimeTests.cs",
+      "sha256": "d988b7d33bf2734fc87b9aac7bc0f10d4e20b77c704f182c7e128ba16b46cf7d"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleSession.cs",
+      "sha256": "13005f9e10f9066cab518476c96e99a77403cdb67898e46b198410bb9acfbdee"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/CombatTarget.cs",
+      "sha256": "96d1f0ecb9226fbb1e5cdcb480723a4da8a55cc670cec355bd7245cab8e51db8"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Core/SimClock.cs",
+      "sha256": "e7e5828ee37cb3b382ce4470585e3cb5113e8a34e927476f82ad890af52a0ef5"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/SoldierPool.cs",
+      "sha256": "69e95ed62363124c06ebe7f3c0775e87c633a049b06e842130caf147ecf67eee"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Soldier.cs",
+      "sha256": "1a185dfd7f2ee60fa843cbafee2d40b87113fce7ae914ed6a79176adc88e2c8e"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/Ship.cs",
+      "sha256": "326249eec9d003a920d74946be497c9aed33f50120f4187843f55b245eb59c81"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Scripts/BattleHud.Selection.cs",
+      "sha256": "56b791c8249bb9b2a01aa30059427cd94aa7473fba963b39137daf9a9219cb6f"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Tests/PlayMode/BattleTestScenario.cs",
+      "sha256": "b6167afa9acad136a51de50423446416d3f62bdec95e284ffa013824071285f6"
+    }
+  ],
+  "reviews": [
+    {
+      "reviewer": "a",
+      "phase": "review",
+      "session": "a97065f4-ab26-4daf-b6d3-6375f08b5bf9",
+      "actualModel": "claude-opus-5",
+      "result": "## Review: v21 selection lifetime\n\nRead the packet in full (2693 lines). The core design \u2014 object-keyed identity records + one compaction pass, purge at every command/selection entry point plus before `Update`'s focus early-return \u2014 is sound and meets the stated requirements. `PurgeStaleSelection` (`RtsController.cs:497-530`) is linear per list, allocation-free (dictionary swap, no LINQ), and control-group recall correctly prunes by `SoldierRef.Matches`/`ShipRef.Matches` before selecting. Findings below.\n\n### P2-1 \u2014 `RtsController.Clear()` can drop a listed live actor without deselecting it\n`RtsController.cs:533-541`:\n```\nforeach(var unit in Selection)if(OwnsIdentity(unit))unit.Select(false);\nforeach(var ship in Fleet)if(OwnsIdentity(ship))ship.Select(false);\nClearSelectionLists();\n```\n`Clear()` gates deselection on ownership but never purges first, so an entry present in the public list with **no** identity record is silently discarded with its ring left on. Baseline (`RtsController.cs` @@ line 176-177 of the diff) deselected every non-null entry.\n\nReachable exactly in the scenario this delta targets \u2014 controller disabled/unfocused, so no `Update` purge has recorded the entry:\n```\ncontroller.Selection.Add(liveUnit);   // same public-list edit as PublicListEditsAfterPoolReuseDoNotRebindTheStaleActor\ncontroller.Clear();                   // or Escape, SelectTown(null), SelectBuildingsIn with append=false\n```\n`liveUnit.Selected` stays `true` while it is no longer selected; the ring persists until that actor is selected and deselected again. Note the sibling method already does it right: `RtsController.BuildingSelection.cs:1277-1282` (`ClearMobileAndCamp`) calls `PurgeStaleSelection()` before the identical `OwnsIdentity` loop \u2014 which both establishes identities for unknown live entries and drops stale ones. `Clear()` should do the same. This is a behavior regression, not a stale-actor risk: a pool-reused actor is correctly *not* deselected either way (`Soldier.Initialize` \u2192 `Select(false)`, `Soldier.cs:1874`).\n\n### P2-2 \u2014 Regression coverage misses three behaviors the delta rewrote\n`RtsSelectionLifetimeTests.cs` exercises real death \u2192 delayed `SoldierPool.Retire`/`Rent` \u2192 surviving selection \u2192 soldier group recall, with a genuine `Is.SameAs(actor)` reuse assertion (line 1595) \u2014 that part is solid. Not covered:\n- **Friendly append/toggle**, which the delta rewrote from `Selection.Contains`/`Remove` to `IsSelected`/`RemoveSelected` (`RtsController.Input.cs:1131`, `RtsController.cs:553`). No test shift-clicks a selected unit or ship to deselect it, so an ownership-gate mistake there would pass.\n- **Naval control-group recall**: `ShipRef`, `shipGroups[i]`, and `shipStored.RemoveAll(...)` (`RtsController.cs:926,934-938`) are never executed; `ControlGroupRecallSkipsAStoredActorThatThePoolReused` stores only soldiers, and `DestroyedShipLeavesTheFleetBeforeFleetCommandsRun` never touches groups. Land/naval grouping is an explicit requirement.\n- **`Clear()`'s new ownership gate** \u2014 no test asserts `Selected` state after `Clear()`, which is why P2-1 is invisible to this suite.\n\n### P3-1 \u2014 Duplicate stale entry swallows a deliberate re-add\n`PurgeStaleSelection` line 507: an entry with a *recorded* id is dropped when the id differs. If the reused object appears twice in `Selection` (one legacy entry plus a caller intentionally re-adding the now-live rented actor, before any purge), the single map key holds the old id, so **both** occurrences are dropped and the live actor is not selected. All in-controller paths purge before adding, so this needs an external double `Selection.Add`; low reachability.\n\n### P3-2 \u2014 Minor cost notes (no regression)\n`RemoveSelected` (`RtsController.cs:485-489,559-563`) allocates a closure per call via `RemoveAll`; not on a per-frame path. `CancelBoardingForSelection` (line 619) is now an explicit nested loop, O(|Selection|\u00d7|pendingBoarders|), but `pendingBoarders` is capped at `Ship.LoadOrderLimit` (10) and the baseline `pendingBoarders.Contains(unit)` had the same complexity.\n\n### Checked and clean\nEvery `Selection`/`Fleet`-reading command entry point purges: `Stop`/`Hold`/`Arm*`/`OrderAt`/`ExecuteArmedPointer`/`ContextAction`/`MoveFleetToHarbor`/`BoardNearby`/`UnloadFleet`/`Focus*`/`SelectUnits`/`SelectShips`/`SelectShip`/`SelectPrimaryUnit`. `ProcessPendingBoarding` runs before the purge in `Update` but is independently guarded by `boarder.Matches` (line 809). `BattleHud.AddSelectionCard`'s `SameLiveActor()` id capture blocks HUD clicks on a replacement (line 2604-2613). Destroyed ships fall out via the Unity-null branch of `IsSelectableShip`, consistent with ships not being pooled. No maps/rules/camera/multiplayer changes; `Selection`/`Fleet` remain plain public lists.\n\n### Uncertainty\n`BattleSession.Spawn/FindTarget/Commands.AppliedCount`, `UiViewport`, `SimClock` and `NavalWorld.Spawn` are not in the packet, so I could not verify the tests compile or that `Pump` reliably produces `wasPressedThisFrame` for the group hotkeys; per instructions I assumed nothing about execution results.",
+      "path": ".tools/v21-selection-lifetime/review-a.json",
+      "bytes": 7239,
+      "sha256": "68b1350a4126221b951b114e5eaf7b4514d96115330e0110a55664c543c4c000"
+    },
+    {
+      "reviewer": "b",
+      "phase": "review",
+      "session": "ef16a18c-0279-4c2c-84f9-7bd37a41267a",
+      "actualModel": "claude-opus-5",
+      "result": "## Verdict\n\nNo provable P0/P1 correctness defect in the delta. The ownership invariant holds: after any `PurgeStaleSelection()`, `selectionIds`/`fleetIds` contain exactly the surviving list entries (the dict swap discards everything else), so `IsSelected`, `OwnsIdentity` and `AddSelected`'s `ContainsKey` guard are all consistent, and every public/HUD-callable command that reads `Selection`/`Fleet` purges first. Findings below are coverage and hygiene.\n\n### Reachability audit (basis for \"no P0/P1\")\n- Command entry points that submit orders or touch actors all purge before use: `Stop`, `Hold`, `ArmAttack/Move/Patrol`, `OrderAt`, `BoardNearby`, `UnloadFleet`, `MoveFleetToHarbor`, `FocusSelection`, `FocusFleet`, `ExecuteArmedPointer`, `ContextAction`, `SelectPrimaryUnit`, `SelectShip`, `SelectUnits`, `SelectShips`. `Clear`/`ClearMobileAndCamp` drop everything and deselect only owned actors, so a rented-back view keeps its own ring.\n- `Update` (RtsController.cs:857) purges before the `!EffectiveFocus` and `HelpVisible/ScoreboardVisible/Winner` early returns, satisfying the \"Update is skipped\" requirement.\n- `ProcessPendingBoarding` runs before the purge but every branch is gated on `boarder.Matches` first, with `||` short-circuit, so the re-submitted recovery `UnitCommand` at RtsController.cs:819 cannot reach a rented actor.\n- Cleanup is a single stable compaction per list plus a `Dictionary.Clear`/swap \u2014 linear, no per-frame allocation.\n\n### P1 \u2014 `pendingBoarders` identity purge is untested, though \"delayed boarding orders\" is an explicit requirement\n`RtsController.PurgeStaleSelection` (RtsController.cs:527-529) and `ProcessPendingBoarding` (RtsController.cs:808-809) are the only code paths protecting a pool-reused view from inheriting a delayed boarding order, and `RtsSelectionLifetimeTests` has no fixture that starts a boarding (`BeginBoarding`/`BoardNearby`) at all. The reachable scenario the tests do not pin: select troops, right-click a Transport (`ContextAction` \u2192 `BeginBoarding`), lose focus, kill and re-rent a boarder via `KillAndReuse`, then let `ProcessPendingBoarding` reach its 1 s recovery window \u2014 nothing in the suite would fail if `boarder.Matches` were removed from RtsController.cs:809 or if line 528 were dropped.\n\n### P2 \u2014 naval control-group recall (`ShipRef.Matches`) has no coverage\n`shipStored.RemoveAll(entry=>!entry.Matches)` (RtsController.cs:936) is new and unexercised. `DestroyedShipLeavesTheFleetBeforeFleetCommandsRun` covers only the `Fleet` purge, never `shipGroups`; `ControlGroupRecallSkipsAStoredActorThatThePoolReused` stores a group with no ships (`Fleet` empty), so the ship branch at RtsController.cs:934-938 never executes with a stored member. Deleting that `RemoveAll` would leave the suite green while a destroyed galley re-entered the fleet on Ctrl-recall.\n\n### P2 \u2014 friendly append/toggle semantics changed, untested\n`SelectPrimaryUnit` (RtsController.Input.cs:1131) moved from `Selection.Contains(unit)`/`Selection.Remove(unit)` to `IsSelected(unit)`/`RemoveSelected(unit)`, and `ContextAction` (RtsController.Input.cs:1176) from `Selection.Contains(ally)` to `IsSelected(ally)`. Both are equivalent only because the purge at the head of each method guarantees every listed entry owns an identity \u2014 a non-obvious invariant with no test. No fixture performs a shift-append toggle or a right-click Follow on a selected ally.\n\n### P3 \u2014 nits\n- `RemoveSelected(Soldier)` / `RemoveSelected(Ship)` (RtsController.cs:487, 561) allocate a closure per call via `RemoveAll(listed=>listed==unit)` where `Remove` would do; not on a per-frame path.\n- `CancelBoardingForSelection` (RtsController.cs:619) is a nested `Selection` \u00d7 `pendingBoarders` scan. Complexity is unchanged from baseline (`pendingBoarders.Contains` inside the same loop) and `pendingBoarders` is bounded by `Ship.LoadOrderLimit` = 10, so this is not a regression against the \"no nested selection scans\" clause, only the least tidy spot in the delta.\n- `groups`/`shipGroups` retain `SoldierRef`/`ShipRef` wrappers for destroyed or recycled actors until that group is next recalled. Pre-existing in shape; bounded by 9 groups.\n\n### Stated uncertainty\n`CombatTarget.EntityId` assignment is not in the packet, so I verified only that `Soldier.Initialize` calls `session.RegisterTarget(this)` (Soldier.cs:1859) and that `KillAndReuse` asserts a changed id; I could not independently confirm that a re-registered pooled view always receives a fresh id. If it did not, every `Matches`/`OwnsIdentity` check would silently pass \u2014 that assumption is the load-bearing one for the whole design.",
+      "path": ".tools/v21-selection-lifetime/review-b.json",
+      "bytes": 6731,
+      "sha256": "80ce12909cab144ee9bfa384fe4a592b2117e113b87665aa9a7cd72fdbc2ff5e"
+    },
+    {
+      "reviewer": "c",
+      "phase": "review",
+      "session": "effed2d4-0ad9-4f36-b70a-b56878d4adb2",
+      "actualModel": "claude-opus-5",
+      "result": "## Review: v0.2.1 selection lifetime (baseline 2a45dcd)\n\nRead the packet in full (2693 lines). No P0/P1 correctness defects found: every mutation of `Selection`/`Fleet` and every command-issuing entry point purges before use, `PurgeStaleSelection` is a single stable compaction per list with no LINQ/closure allocation, and the identity maps are rebuilt from list contents only (double-buffered swap), so orphaned records cannot accumulate. Findings below.\n\n### P2 \u2014 `Clear()` and `ClearMobileAndCamp()` are asymmetric; `Clear()` can leak a selection ring\n`RtsController.cs:533` `Clear()` deselects only `if(OwnsIdentity(unit))` but, unlike `RtsController.BuildingSelection.cs:1273` `ClearMobileAndCamp()` (which calls `PurgeStaleSelection()` first, `:1279`), it never purges. An entry appended straight to the public `Selection`/`Fleet` list \u2014 which the design explicitly supports (`:479-482` comment, and `RtsSelectionLifetimeTests.PublicListEditsAfterPoolReuseDoNotRebindTheStaleActor:1662-1664` exercises exactly this) \u2014 has no id record, so `OwnsIdentity` is false and `unit.Select(false)` is skipped; `ClearSelectionLists()` then drops it. If any caller pairs `Selection.Add(u)` with `u.Select(true)`, the ring stays lit permanently after Escape/`Clear()`. Baseline deselected unconditionally (`foreach(var u in Selection)if(u)u.Select(false)`), so this is a behavioural narrowing. Reachable path: external append \u2192 `Clear()` (Escape at `:899`, `SelectCamp`, `PrimaryTap` inspect branches at Input.cs:1106-1107) with no intervening `Update`. Fix is one line: purge at the top of `Clear()`, mirroring `ClearMobileAndCamp`, which re-takes identity for unknown live entries. Uncertainty stated precisely: the packet contains no caller that does `Add` + `Select(true)`, so I cannot prove an in-tree trigger; the divergence between two otherwise identical methods is the concrete evidence.\n\n### P2 \u2014 Named requirement \"delayed boarding orders\" has no test\n`pendingBoarders` was converted to `List<SoldierRef>` (`:442`), with match checks at `ProcessPendingBoarding:808-809`, `CancelBoardingForSelection:619` and the purge tail `:527-529`. No fixture in `RtsSelectionLifetimeTests.cs` starts a boarding (`BeginBoarding`/`BoardNearby`), kills a pending boarder, returns it through the pool, and asserts the rented-back actor is neither re-issued the landing `Move` at `:819` nor embarked by `TryEmbark` at `:809`. That is the one scenario in the requirements where a stale entry survives across many frames by design (the boarding loop is driven from `Update` *before* the purge, `:859-863`), and it is the only converted data structure with zero coverage. Regression here would be silent.\n\n### P2 \u2014 Naval control groups are untested\n`shipGroups` was converted to `List<ShipRef>` with `RemoveAll(entry=>!entry.Matches)` and `SelectShips(...,true)` at `:934-938`. `ControlGroupRecallSkipsAStoredActorThatThePoolReused:1679` only stores/recalls soldiers; `DestroyedShipLeavesTheFleetBeforeFleetCommandsRun:1711` never touches groups. Land/naval grouping and \"valid group recall\" are explicit requirements; the ship half of the recall path (including the append semantics that keep recalled ships additive to recalled units) has no assertion.\n\n### P3 \u2014 Friendly append/toggle not covered after the `Contains`\u2192`IsSelected` swap\n`SelectPrimaryUnit:1131` and `SelectShip:553` changed toggle-off from `Selection.Contains(unit)`/`Fleet.Contains(ship)` to `IsSelected(...)`, which now additionally requires an id record. Correct as written (both call `PurgeStaleSelection()` first, which records unknown live entries), but no test shift-clicks a selected unit/ship to deselect it, so a future change that drops either purge would silently break shift-toggle.\n\n### P3 \u2014 Minor, non-blocking\n- `CancelBoardingForSelection:619` is a nested `Selection \u00d7 pendingBoarders` scan. Bounded by `Ship.LoadOrderLimit=10` and identical in complexity to the baseline `pendingBoarders.Contains(unit)`, so not a regression, but it is the only remaining nested selection scan.\n- `RemoveSelected` (`:485`, `:559`) uses `RemoveAll` with a capturing lambda \u2014 one delegate allocation per call. Not per-frame (only toggle-off paths), but `Selection.Remove(unit)` plus map removal would be allocation-free.\n- Post-purge, the `OwnsIdentity` guards in `ClearMobileAndCamp:1280-1281` are always true and are dead weight; harmless, but they obscure that `Clear()`'s identical-looking guards are *not* redundant (see P2 above).\n\nNot assessed: callers of `RtsController.Selection`/`Fleet` outside the five files in the packet (only `BattleHud.Selection.cs` is included; its card click path is correctly guarded by `SameLiveActor()` at `:2604`/`:2610`). Tests were not executed.",
+      "path": ".tools/v21-selection-lifetime/review-c.json",
+      "bytes": 6872,
+      "sha256": "fb0ea7c989df012ef91054e30a8895f1520cd48f0a6b09e2682dd7637dc1a380"
+    },
+    {
+      "reviewer": "a",
+      "phase": "followup",
+      "session": "a97065f4-ab26-4daf-b6d3-6375f08b5bf9",
+      "actualModel": "claude-opus-5",
+      "result": "Read the full follow-up delta (679 lines) including the added `BattleSession`/`CombatTarget`/`SimClock` dependencies.\n\n## Reconciliation of my original findings\n\n**P2-1 (`Clear()` dropped an externally-listed live actor without clearing its ring) \u2014 fixed.** `RtsController.cs` `Clear()` now calls `PurgeStaleSelection()` first, then deselects every surviving entry unconditionally (delta lines 57-59); `ClearMobileAndCamp` was aligned the same way (delta lines 84-88). The gating is now in the right place: purge drops replaced actors (id mismatch, `continue` without touching `Select`) and records an identity for unknown-but-live externally listed entries, so exactly the owned set is released. The unconditional `unit.Select(false)` loops are null-safe because purge's new `if(!unit)continue` removes destroyed entries in the same call. `ClearReleasesAnExternallyListedActorButNotAReplacedOne` covers precisely this (`troops[1].Selected` false, `reused.Selected` false, and the replaced actor still ordinary-selectable afterwards).\n\n**P2-2 (coverage gaps) \u2014 closed.** `FriendlyAppendToggleTracksIdentityAcrossPoolReuse` drives the real `SelectPrimaryUnit` (reflection on the private method, not an id swap) and asserts a stale entry cannot turn an append into a deselect. `NavalGroupRecallAndAppendToggleFollowShipIdentity` finally exercises `ShipRef`/`shipGroups` pruning plus ship append/toggle. `ClearReleasesAnExternallyListedActorButNotAReplacedOne` covers the `Clear()` gate. The two new boarding fixtures (`PendingBoardingDropsAReusedBoarderInsteadOfLandingOrLoadingIt`, `EmbarkedSelectedActorIsReleasedFromTheSelection`) exercise real `BeginBoarding`/`TryEmbark` with `Commands.AppliedCount`/`RejectedCount` held constant \u2014 genuine assertions, not reflection id swaps.\n\n**P3-1 (duplicate stale entry) \u2014 unchanged, still open.** `PurgeStaleSelection` keys the identity map by object, so if the same reused object appears twice in `Selection` (a legacy entry plus an external re-add of the now-live rented actor before any purge), the single key holds the old id and both occurrences are dropped. Needs an external double `Selection.Add`; every in-controller path purges before adding. No test covers it. Still P3.\n\n## Remaining findings\n\n**P3-2 (new, minor) \u2014 purge writes to actors it does not own.** `PurgeStaleSelection` line 22/37: an entry with *no* prior record establishes `id=unit.EntityId`, so if it is also unselectable it takes the `unit.Select(false)` branch. That deselects an actor this controller never selected (external `Selection.Add` of a dead/embarked/agent-disabled soldier). Harmless in practice \u2014 every path that makes a soldier unselectable (`Soldier.TakeDamage`, `Ship.TryEmbark`, `Soldier.Initialize`) already calls `Select(false)` \u2014 so I found no reachable state where the ring is actually on. Noted for completeness only.\n\n**No P0/P1/P2 remaining.** Requirements still hold: purge stays one linear compaction pass per list with the dictionary swap and no LINQ/allocation; `Selection`/`Fleet` remain plain public lists; pooled-rent identity comes from `CombatTarget.EntityId` re-issued in `BattleSession.RegisterTarget` (line 467-468), which confirms the reuse assumption the design rests on; ships still `Destroy` and fall out via the Unity-null branch.\n\n## Honest limits\n\n55/55 passing is evidence only for the assertions written. Two caveats: `reused.Selected` being false after `Clear()` is satisfied by `Soldier.Initialize`'s own `Select(false)`, not by `Clear()`, so that assertion would not detect a regression in the drop path; and the duplicate-entry case above is unasserted. `BattleCommands`, `NavalWorld.Spawn`, `Harbor`, `UiViewport` and `RiskBootstrap` are still outside the packet, so I verified test intent, not their runtime preconditions.",
+      "path": ".tools/v21-selection-lifetime/followup-a.json",
+      "bytes": 5594,
+      "sha256": "8227e85a2eacb12a734639a470df318c159f52b240723ca99b682bba18e41d5b"
+    },
+    {
+      "reviewer": "b",
+      "phase": "followup",
+      "session": "ef16a18c-0279-4c2c-84f9-7bd37a41267a",
+      "actualModel": "claude-opus-5",
+      "result": "## Reconciliation\n\nAll three coverage gaps from my first review are now closed by fixtures that drive the real paths, not reflection-swapped ids:\n\n- **P1 (boarding)** \u2192 `PendingBoardingDropsAReusedBoarderInsteadOfLandingOrLoadingIt` runs a real `BeginBoarding(Ship)` (private, invoked via reflection but with real actors), asserts a landing order was actually queued, then kills/re-rents through `KillAndReuse` and pumps six stall-recovery cycles. It pins the things that matter: `CargoCount == 0`, `AppliedCount`/`RejectedCount` unchanged, `replacement.IsIdle`, and the \"Embarque terminado\" resolution. Removing `boarder.Matches` from `ProcessPendingBoarding` or line 528 of the purge would now fail this.\n- **P2 (naval group recall)** \u2192 `NavalGroupRecallAndAppendToggleFollowShipIdentity` stores a real Ctrl-group with two ships, destroys the galley, yields a frame so `Destroy` lands, and recalls. `ShipRef.Matches` is genuinely exercised.\n- **P2 (append/toggle)** \u2192 `FriendlyAppendToggleTracksIdentityAcrossPoolReuse` and the ship half of the naval test cover both `IsSelected`/`RemoveSelected` toggle paths, including that a stale entry does not turn an append into a deselection.\n\n## Review of the new code\n\nThe purge reorder is correct and closes a hole I did not raise. Splitting the two drop reasons \u2014 `unit.EntityId != id` (replaced: drop silently, its state is not ours) before `!IsSelectableSoldier(unit)` (same actor left play: `Select(false)`, then drop) \u2014 is the right precedence. A replaced view can never have its ring cleared by the old owner, and an actor that dies or embarks no longer leaks a ring.\n\n`Clear()`/`ClearMobileAndCamp()` purging first and then deselecting unconditionally is safe: after the purge every remaining entry is non-null and owned, so the unguarded `unit.Select(false)` cannot NRE. It also fixes a real prior asymmetry \u2014 an actor appended straight to the public `Selection` list previously kept its ring through `Clear()` because `OwnsIdentity` was false. `ClearReleasesAnExternallyListedActorButNotAReplacedOne` asserts exactly that, and additionally that the replaced actor stays an ordinary selectable unit afterwards (`SelectOnly(reused)` \u2192 `Hold()` \u2192 `AppliedCount+1`).\n\n`CombatTarget.EntityId` is now visible: `RegisterTarget` assigns `++nextEntityId` whenever the id is 0 or the entity table no longer maps that id to this object, and `UnregisterTarget` removes the id on death. Since `Soldier.TakeDamage` unregisters before the pool retire and `Initialize` re-registers, a rented view always receives a fresh monotonic id. This confirms the load-bearing assumption I flagged as unverified; it is no longer an open risk.\n\n## Remaining\n\n**Clean.** No P0/P1/P2 remaining.\n\n**P3 (nit, unchanged):** `RemoveSelected(Soldier/Ship)` still allocates a predicate closure via `RemoveAll(listed=>listed==unit)` where `Remove` suffices; not on a per-frame path. `Clear()` now purges and is itself called from `SelectUnits`/`SelectShips`/`SelectShip` after those already purged, so a selection change makes two linear passes \u2014 still allocation-free and linear.\n\n## Honest limits\n\n- The 55/55 result is evidence only for the assertions above; I take the noted first-attempt CS1503 compile failure at face value and read the constraint changes (`Does.Contain` \u2192 `Has.Member`) as the fix, which is a test-only change.\n- `StrategicMapView` is not in either packet. If it deactivates tactical actors, the new `Select(false)` branch fires on map entry. Dropping them from the list was already the baseline behavior, so this is not a regression against the reviewed delta, but I could not verify the ring behavior on returning to the tactical view.",
+      "path": ".tools/v21-selection-lifetime/followup-b.json",
+      "bytes": 5491,
+      "sha256": "3c6ee9d359ee7bedb75ac10ad6c4d5b72092393ec0cc58db88cb1ff79087f199"
+    },
+    {
+      "reviewer": "c",
+      "phase": "followup",
+      "session": "effed2d4-0ad9-4f36-b70a-b56878d4adb2",
+      "actualModel": "claude-opus-5",
+      "result": "Read the follow-up delta in full (679 lines), including the added `BattleSession`/`CombatTarget`/`SimClock` dependencies.\n\n## Reconciliation of my original findings\n\n- **P2 `Clear()` asymmetry \u2014 fixed.** `RtsController.Clear()` now calls `PurgeStaleSelection()` first and then deselects every surviving entry unconditionally (`:57-59`). Purge guarantees survivors are non-null (`if(!unit)continue`, `:15`) and identity-owned, so the unguarded `unit.Select(false)` cannot NRE and cannot touch a replaced actor. `ClearMobileAndCamp` was aligned identically (`:84-88`). `ClearReleasesAnExternallyListedActorButNotAReplacedOne` asserts exactly the two halves I raised: `troops[1].Selected==false` after an external `Selection.Add` + `Clear()`, and `reused.Selected==false` for the pool-replaced entry, plus that the replacement is afterwards an ordinary selectable unit (`AppliedCount==applied+1`, `reused.IsHolding`).\n- **P2 boarding coverage \u2014 closed.** `PendingBoardingDropsAReusedBoarderInsteadOfLandingOrLoadingIt` drives the real `BeginBoarding(Ship)` entry, kills and re-rents the boarder while unfocused, then pumps six real boarding cadences and asserts `CargoCount==0`, `replacement.IsIdle`, and both `AppliedCount`/`RejectedCount` unchanged \u2014 i.e. neither the landing `Move` nor the stall-recovery re-issue reaches the replacement, and the queue resolves (\"Embarque terminado\") rather than stalling.\n- **P2 naval groups \u2014 closed.** `NavalGroupRecallAndAppendToggleFollowShipIdentity` stores a mixed group via real `Ctrl+1`, exercises `SelectShip` append-toggle both ways, destroys the galley, and recalls. Note the recall reaches `shipGroups` only because `groups[i]` is also written (empty list) on store; that gating (`groups.TryGetValue` wrapping the ship branch) is unchanged from baseline and the test does cover it.\n- **P3 append/toggle \u2014 closed** by `FriendlyAppendToggleTracksIdentityAcrossPoolReuse`, including the key case that a stale entry must not turn an append into a deselection.\n\n## Remaining findings\n\n**P3 \u2014 the new `Select(false)` in `PurgeStaleSelection` is near-unreachable for ships.** `Ship.TakeDamage` ends in `Destroy(gameObject)`, so a dead ship fails `if(!ship)continue` (`:34`) and never reaches `ship.Select(false)` (`:37`). It is reachable only for a still-live object that is deactivated or changes team. Harmless, but the ship branch carries no covering assertion; `DestroyedShipLeavesTheFleetBeforeFleetCommandsRun` exits through the null path.\n\n**P3 \u2014 `EmbarkedSelectedActorIsReleasedFromTheSelection` is weak evidence for the new deselect path.** `Ship.TryEmbark` already calls `soldier.Select(false)` before deactivating, so `passenger.Selected==false` would hold with or without line `:22`. The list-membership half of that test is meaningful; the ring half is not.\n\n**P3 \u2014 double purge per selection operation.** `SelectUnits`/`SelectShips`/`SelectShip` purge and then call `Clear()`, which now purges again. Both passes are O(n) and allocation-free (dictionary double-buffer, `RemoveRange`), so this is redundancy, not a per-frame cost.\n\nNo P0/P1/P2 remain in the changed code.\n\n**Limits.** I reviewed only this delta against my prior context; the 55/55 result is evidence solely for the assertions quoted above, and the reported first-attempt `CS1503` compile failure is consistent with the `Does.Contain`\u2192`Has.Member` constraint fixes in this delta. Callers of `Selection`/`Fleet` outside the files supplied across both packets remain unassessed.",
+      "path": ".tools/v21-selection-lifetime/followup-c.json",
+      "bytes": 5301,
+      "sha256": "3797376cffa89fa647309a820ba320f10582c6e85ea42529e1d448050dbe3579"
+    }
+  ],
+  "builds": {
+    "windows": {
+      "success": true,
+      "fileCount": 185,
+      "hashedBytes": 207090560,
+      "log": {
+        "path": "RiskAI/Logs/v21-lifetime-windows-build.log",
+        "bytes": 520867,
+        "sha256": "c3d843612c56d8f5eaef6c998d875e3ddc6d1f2d3cfbb5f43bba7677c106a2f8"
+      }
+    },
+    "web": {
+      "success": true,
+      "fileCount": 9,
+      "hashedBytes": 57435975,
+      "log": {
+        "path": "RiskAI/Logs/v21-lifetime-web-build.log",
+        "bytes": 389341,
+        "sha256": "fb88da650296c769cd0f7565604227b7a527ee624669063159d912cfd48cc0c4"
+      }
+    }
+  },
+  "files": [
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/Cinzel-OFL.txt",
+      "bytes": 4392,
+      "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/D3D12/D3D12Core.dll",
+      "bytes": 4725304,
+      "sha256": "625bd40005b1c3708695d5256ecf230d278e6b8edba5a88af70f3d91324f3052"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/KayKit-LICENSE.txt",
+      "bytes": 891,
+      "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+      "bytes": 7828912,
+      "sha256": "7ccc2fcff211b1be0f498bd537c6575e0a028bd6971cd1812d1884c9840d702d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/EmbedRuntime/MonoPosixHelper.dll",
+      "bytes": 611240,
+      "sha256": "4d882d75accec7054b72498afd7c627efca8824453253fa67e38dceaedaba5df"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/Browsers/Compat.browser",
+      "bytes": 1605,
+      "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/DefaultWsdlHelpGenerator.aspx",
+      "bytes": 60575,
+      "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/machine.config",
+      "bytes": 29066,
+      "sha256": "e91782a27fa39fc6c1d6ee8b08529f5d35052310d0006034b878eb04b8f2af30"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/settings.map",
+      "bytes": 2622,
+      "sha256": "49c6160f9d54af4270a3b4e997fc4a8301f79b9e2070118fa46ddbcbbc44f9a2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/2.0/web.config",
+      "bytes": 11635,
+      "sha256": "cf2b54339e069b9e42f7d6795eecbf562c50c1011f4ca8f65f578fe52d97ff92"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/Browsers/Compat.browser",
+      "bytes": 1605,
+      "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/DefaultWsdlHelpGenerator.aspx",
+      "bytes": 60575,
+      "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/machine.config",
+      "bytes": 33598,
+      "sha256": "e60aec2c5115d65b3acb3c55ea21576dbd770f579166c017125571e46ae560ed"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/settings.map",
+      "bytes": 2622,
+      "sha256": "ce1db1ad8a9512073164e3eccdc193f7eda036e1a9733caec4635de21b2865c8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.0/web.config",
+      "bytes": 18802,
+      "sha256": "e38bb8cc68fe5b4edecdfd288d094b9e8ced7629039b2a347682aba0d8bd7492"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/Browsers/Compat.browser",
+      "bytes": 1605,
+      "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/DefaultWsdlHelpGenerator.aspx",
+      "bytes": 60575,
+      "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/machine.config",
+      "bytes": 34056,
+      "sha256": "ee950004b576fb28dc85f4b0435ed04bf96612de2e8b53be84d07afe85a0de6c"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/settings.map",
+      "bytes": 2622,
+      "sha256": "ce1db1ad8a9512073164e3eccdc193f7eda036e1a9733caec4635de21b2865c8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/4.5/web.config",
+      "bytes": 18811,
+      "sha256": "c4cbddd4fd9347b58cc5a72b36dc4ba1ad2bb699e65869d05cd3fb9865f0d824"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/browscap.ini",
+      "bytes": 311984,
+      "sha256": "4ddd50f31fb968f30bedefc253a46dc3f2890192d05cdaa9e0a64a056eee807e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/config",
+      "bytes": 3815,
+      "sha256": "5776169973a26a387b8b3e5c0f2301a7ab9a6dd7c7d3efa22a96abc47fbf8662"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/MonoBleedingEdge/etc/mono/mconfig/config.xml",
+      "bytes": 25817,
+      "sha256": "0c56e34c69124510fa8c19e7b4c2ca6c1c4ff460ae19f798dd0ca035809e396d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI \u2014 Dominios v0.21_BurstDebugInformation_DoNotShip/Data/Plugins/x86_64/lib_burst_generated.txt",
+      "bytes": 193489,
+      "sha256": "d0a08777213e85e04599f804932b0f75b82091f215d4de588af0347b14c1b153"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI.exe",
+      "bytes": 667136,
+      "sha256": "82efd5a8c297a5046f6bb72c240dab8972e64003851935eba0a46ad121ce0305"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/app.info",
+      "bytes": 32,
+      "sha256": "d49ca39312fd3a9955448e0f6ebb9b0da5d18a027eaf34a314fc15bf6977ce31"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/boot.config",
+      "bytes": 156,
+      "sha256": "c04e6712c151f6ca45caec7a18e1ae519bbaa5d86dde5ef3b2e6456c1c14e737"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/globalgamemanagers",
+      "bytes": 240660,
+      "sha256": "ad1fcc91bf5c6102de6a2d353a04e1f1b7f057c49cee6bc929ee35ff4dc8fb93"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/globalgamemanagers.assets",
+      "bytes": 1161752,
+      "sha256": "819eef9227f46af29842fc3aa1632fb2a0d1e1e78dcaa1b749a7c97a0b4301fe"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/globalgamemanagers.assets.resS",
+      "bytes": 6174944,
+      "sha256": "26b24bbd0bdb7017ecbac3b829c0ed7c4848bc343af5702e96ebdb75a7258b04"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/level0",
+      "bytes": 1152,
+      "sha256": "b2402ffea0719079aa86cf4ac99d1511ccb79566de196876e59ccd86a3830480"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/level1",
+      "bytes": 1152,
+      "sha256": "6b9e409f47ab95872295376d8246dd3e948437850b892487cbdee61b146701df"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Microsoft.CodeAnalysis.CSharp.dll",
+      "bytes": 6098320,
+      "sha256": "e822156145e1add437b1d893c0315257c12e3d5b1b89d83494db6d88d37fe20a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Microsoft.CodeAnalysis.dll",
+      "bytes": 2903440,
+      "sha256": "159f595e313f8cc09bac14588e2466c312f512a4778d9fa2352fcccf2a53aa3d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Mono.Security.dll",
+      "bytes": 241152,
+      "sha256": "82df31404def10ffd69c09e3a8c454e76552f3a37675d1b7b8c743cfd3d1af6f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/mscorlib.dll",
+      "bytes": 4632064,
+      "sha256": "194417662b72e9fdc29df44aa07fb693a9cf2194d84e327231f3eeff1104ae0f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/netstandard.dll",
+      "bytes": 90112,
+      "sha256": "6ae62e082dc494a2433984177f60ca4db5fae69b1f360a8b33754172b310b8c5"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Newtonsoft.Json.dll",
+      "bytes": 691712,
+      "sha256": "a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/RiskAI.Core.dll",
+      "bytes": 28160,
+      "sha256": "f9c0c82b717807eeb85e6b1a1a467d005df266026dbb2652af368151e586b80b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/RiskAI.Runtime.dll",
+      "bytes": 448000,
+      "sha256": "5134b07c66ec04d293ea21abd649623c7ac50fd1b671ddf36dc1881eb7f41fc3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Buffers.dll",
+      "bytes": 4608,
+      "sha256": "762f8fdbe975e05b76be5fe996c53ce7c75e4a2830f2f50b02a5948ef6ba0aeb"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Collections.Immutable.dll",
+      "bytes": 252680,
+      "sha256": "5b1b1c83ba3d135c2fdfe425842fbe9c7432878b7e468623acb554c69b4c130f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.ComponentModel.Composition.dll",
+      "bytes": 257024,
+      "sha256": "9373a420101d4c674b9f74bce93a45c58ddb3548c130d9b65ab87235d0a4ed30"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Configuration.dll",
+      "bytes": 124928,
+      "sha256": "d3acb14b8ebaf7482d2d3e26e8c04685299e2b471a513a30508bd0cab8336354"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Core.dll",
+      "bytes": 1113088,
+      "sha256": "ebf140bf5f8d49ccac20c14935625b0ae0a46c30aa4f90b2808f3b9678822470"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Data.DataSetExtensions.dll",
+      "bytes": 29696,
+      "sha256": "79a01061129709358567a9254684ba52ba66371e01e0354e7fa4852a9f62e59f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Data.dll",
+      "bytes": 2125312,
+      "sha256": "5d0807269bfcf112aa844951232ef105bbb642abb1e14c2e78dd70fb9245e98a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.dll",
+      "bytes": 2641920,
+      "sha256": "9e8a5190797e35428b1ae9bce6d47d39a1dbc3e974f14239e44678913dc6194a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Drawing.dll",
+      "bytes": 489984,
+      "sha256": "76dca8fbe098c285b03de79369f9f2aa141dec44de99ebcc0478c7e762024204"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.EnterpriseServices.dll",
+      "bytes": 44544,
+      "sha256": "d8a3d6c1929ec028793ff07df92781c03ebb38c63005d4c12c35e3116d04fcaf"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.IO.Compression.dll",
+      "bytes": 114688,
+      "sha256": "7370dc2d3a6f02dbda1a69ca596f2ae96fc464809b3bbca6071fc1fc1edfbb2d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.IO.Compression.FileSystem.dll",
+      "bytes": 18432,
+      "sha256": "40ef91246d44d6c4d8a1505e1210b0c54963a12938ba0458959bb064d62f36f4"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Memory.dll",
+      "bytes": 4608,
+      "sha256": "c4f030a2cba7da7cdcf493257c24560e203d355904aee490d645a935842f834a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Net.Http.dll",
+      "bytes": 122880,
+      "sha256": "c46d5b5dc68af8ce1b34e8ace4372b157e2e85ab63d6b5eea938ca71dc7fb064"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Numerics.dll",
+      "bytes": 119296,
+      "sha256": "74f6771aedd33262470e8e653fc0f4e04a659bcdadbeb44b2f8826fba7053f77"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Reflection.Metadata.dll",
+      "bytes": 487696,
+      "sha256": "55ef768ffa305de58e38e15420669258b16f420618eb1f702bddb30e5c797961"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Runtime.CompilerServices.Unsafe.dll",
+      "bytes": 22184,
+      "sha256": "bac58578ec05ecb8c234bf3402a0aa1491a5e437b03008b431e78d663ab52b78"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Runtime.dll",
+      "bytes": 12288,
+      "sha256": "e0a7334b7ba419aaab6bd3bb6992d693e689341a9178172c9bf99c2aa6a085bd"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Runtime.Serialization.dll",
+      "bytes": 934400,
+      "sha256": "2aa92fb930200ddb3c9c3ffaaff39bd6cdc6d689f19614f6c3b84a15060800f0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Security.dll",
+      "bytes": 320000,
+      "sha256": "95a29120e164e5bdb7ff5dcb2cb4641e5ea0aca7c1ad0854b0e9b2b0ff5abe2d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.ServiceModel.Internals.dll",
+      "bytes": 215040,
+      "sha256": "6738a31088136d38a50354371feb83a4fd1558acca2a5f8b165c34a859e08c47"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Text.Encoding.CodePages.dll",
+      "bytes": 5120,
+      "sha256": "f58f99392c2dfc31d067e320ce7c009e276e6dd5ed7c615cc3895a0609931182"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Threading.Tasks.Extensions.dll",
+      "bytes": 5120,
+      "sha256": "96150abdca5df4446b376560e069d59b3550212deda8cbdd316272f6b834f597"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Transactions.dll",
+      "bytes": 35328,
+      "sha256": "cfac784408e3b7da6c6e94ec04c162c6d902372fab19353c02aeda3464ce185f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Xml.dll",
+      "bytes": 3160064,
+      "sha256": "f90799a0c38f3d45e390f9768ab467bf681a052e1b807f4c59fabef5f7edaffa"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/System.Xml.Linq.dll",
+      "bytes": 136704,
+      "sha256": "ed219710472b837fddf45cc73c912e04b4d6b8ca833ea074ec1f73bc00157b05"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.AI.Navigation.dll",
+      "bytes": 22528,
+      "sha256": "dd4527109fd853932e7496233e3d00e8e69f1135cd6f8ecf807220249b0e3788"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Burst.dll",
+      "bytes": 296960,
+      "sha256": "8cdc85671a965a4a6284169188a0f236590ae0eae59b7db098d1516ba0fc85a6"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Burst.Unsafe.dll",
+      "bytes": 5632,
+      "sha256": "9d9c1ff52411decbee5d9f0d1cd61ebeaa222077aa77a52101ea3debafae98e2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Collections.dll",
+      "bytes": 432128,
+      "sha256": "005d0ec9881271b75813300edce726ad1b8e9341a1075760a8fc8e39d760a4e3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Collections.LowLevel.ILSupport.dll",
+      "bytes": 5120,
+      "sha256": "ff50383f807f9692e4913b97e47d86fefcb8faa33d6d48cd3e3fd6fc7ffb448d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.InputSystem.dll",
+      "bytes": 1074176,
+      "sha256": "7c5db2f547398f86085a074f26dd9f7d089b920a700e55c9f64346a7490630c0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.InputSystem.ForUI.dll",
+      "bytes": 15360,
+      "sha256": "dbb6ff9dccc1ab6ca1bee8855817cfe176da0fd4f9e6a9e5ace8a1c6b0e0ede9"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.InternalAPIEngineBridge.004.dll",
+      "bytes": 4096,
+      "sha256": "a7f68282b6fedb371db82c093c4fe91c3fdb35fb0c5e1547757154c31fa57ce7"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Mathematics.dll",
+      "bytes": 737280,
+      "sha256": "2aa2aae6a3dc60fc99ee7e6c4b9b349371933d9407d4971a3e844ebd08b290b4"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Pipeline.dll",
+      "bytes": 284672,
+      "sha256": "c885537d5928228938b191521fcbc864d6dcc2b123f6a9309cc8d9daa2f47d27"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.Pipeline.IlInterpreter.dll",
+      "bytes": 332800,
+      "sha256": "f45abf608343eeef78eecfeea0743c79e29c8c6c9b26e7e384061d3c5b6c02c3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipeline.Universal.ShaderLibrary.dll",
+      "bytes": 7680,
+      "sha256": "8291572de1e7e79a5c7992def16288ce9d9ee8176da4c636c47cef553d153d10"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Core.Runtime.dll",
+      "bytes": 1131520,
+      "sha256": "fcedf10a4427c62a5d5f9fda85874e2fde377af90eb8a2f34eae99b97bfe5ff7"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Core.Runtime.Shared.dll",
+      "bytes": 4608,
+      "sha256": "a483e174d0089c146a45e465b69eeee7a835f15d525ec63eb7a3427056c39f9b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Core.ShaderLibrary.dll",
+      "bytes": 3584,
+      "sha256": "24ab3cc009a7d077d7e1ab4b7ef9aecf90cbefd64a755bf4250bcefe1168e9e2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.GPUDriven.Runtime.dll",
+      "bytes": 220160,
+      "sha256": "70a2f2211425ccf77a620538d7a744fff4142c326a48357f0930def29876768f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll",
+      "bytes": 3584,
+      "sha256": "a2f02ab3690be3c68175e01dff401055f18ab54010ff46ad39d3982a3d41d43e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.2D.Runtime.dll",
+      "bytes": 216064,
+      "sha256": "ff3b6d7e47494ff8e2d2ba49b113240837631dc32a554e9cf198c5b63ab9dbe6"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Config.Runtime.dll",
+      "bytes": 4096,
+      "sha256": "91d31a3e073738d0911b104a633926c0a02eb6ff104aff0124f5c76947229fc3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Runtime.dll",
+      "bytes": 698880,
+      "sha256": "3848d011fe963fdd1aae3af9b92be54f22ab0bea1cb179f3df7c7401c5b9c7fd"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Shaders.dll",
+      "bytes": 3584,
+      "sha256": "08fb33e4549c96ae157d9c3c884d5359568ea2e3cb6b408fe6cb19b35f79664e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.TextMeshPro.dll",
+      "bytes": 435712,
+      "sha256": "2fb9d91b5f936d5926cae37e0a0094a83f9f3feb51ad2bc1a7e4a95fafd0f5c0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/Unity.UnifiedRayTracing.Runtime.dll",
+      "bytes": 88576,
+      "sha256": "c0dd4c67da4cb18691011b7bc123ebbad2c26592924ab9361206a1578964b9cd"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AccessibilityModule.dll",
+      "bytes": 51120,
+      "sha256": "c8249b9ca23640f7959c529d61f2eed1c86b715d364ed17e494cfaa324001e4a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AdaptivePerformanceModule.dll",
+      "bytes": 125352,
+      "sha256": "385cc1158fb02325535a6df613811204afeb7e3f240737a1fc2add0bd976b49e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AIModule.dll",
+      "bytes": 77224,
+      "sha256": "71f41d664d48128f5135884413f21ea9fa86b6ce9a4f053b5081bf286d7ccb99"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AMDModule.dll",
+      "bytes": 21928,
+      "sha256": "aa68b148f2e74c334ae8bd38ddeaff055730aeada6f809697521ebd8920ce988"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AndroidJNIModule.dll",
+      "bytes": 121776,
+      "sha256": "8e008a125f9cd1417f84780eeb7de840e0f2c749ef92a9d87910637f9b5f9b58"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AnimationModule.dll",
+      "bytes": 225200,
+      "sha256": "e2952b9c0d9405a52f9b0e5cc72fcc14b63f23a20562e354c42ce2697c74836b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ARModule.dll",
+      "bytes": 25520,
+      "sha256": "b36cde8f19c92faef74723bc362e69de210181323bd55f1c4acefe47f2cda4a4"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AssetBundleModule.dll",
+      "bytes": 41896,
+      "sha256": "8d542e27040bdd47d416a5d9d388059642a18da0dfbf18eb350e17597ca21bad"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.AudioModule.dll",
+      "bytes": 142760,
+      "sha256": "e340de4e194c183136a86f45fb17df334435775ed0680679b4c5d8370def04d9"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ClothModule.dll",
+      "bytes": 36272,
+      "sha256": "1b33dd16fe1022981108455221d5d608df9c42f9875a673c1edb39b0a232c3df"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ClusterInputModule.dll",
+      "bytes": 28080,
+      "sha256": "a7fba2eab6ee716d637ecb0f377cefb16979c7c1d26592d48eaa0665d3640fb0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ClusterRendererModule.dll",
+      "bytes": 26536,
+      "sha256": "d9dbf5f9ab23959510d457a7a263dce628aa6f85490717e322bbed4dacd39c74"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ContentLoadModule.dll",
+      "bytes": 32680,
+      "sha256": "b7292cd077c601278bac76b65efe15df43efc52c13ed4913f8fd9dcaac908016"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.CoreModule.dll",
+      "bytes": 1985968,
+      "sha256": "6e113749845967506284bc65e85d28b527a4c4c99af73f0433af9b4ed5abfbc8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.CrashReportingModule.dll",
+      "bytes": 26544,
+      "sha256": "8b3141bdc0c6bbef38dc74fa71021c9e54af76b2b1a37b63e49b39cfc9271bd6"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.DirectorModule.dll",
+      "bytes": 41896,
+      "sha256": "ad25a8f620e97ec1962a5cb2d5369485108673922b47b2cadf0b4239c94ce647"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.dll",
+      "bytes": 197544,
+      "sha256": "8f5656476f57134b88f230538fff8abb66eac6bf3ac087daa86d64d88d9d39eb"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.DSPGraphModule.dll",
+      "bytes": 31664,
+      "sha256": "688f7cbed6213df3bd5ce6a5c6dac92b0f3d0530841b88e82c69bce5a2c1827e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.GameCenterModule.dll",
+      "bytes": 45992,
+      "sha256": "5bb7513b5b76e44f118323fdd27302df224db134bd9c6818f008a3dd6bf95534"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.GIModule.dll",
+      "bytes": 24488,
+      "sha256": "53d4bd69745ee83d5c4f0760f92b9efdb099489fdfc64528af9a1c95b0adfeb8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.GraphicsStateCollectionSerializerModule.dll",
+      "bytes": 14256,
+      "sha256": "86ea17b6e8515403416ddfa2a08f4658b27d956cc28585f488a85d3e8939a358"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.GridModule.dll",
+      "bytes": 30632,
+      "sha256": "aac2d49a3b8f3d853cd318f0d67cbd8cffbe0f5f8f9ce288aaec85f25f46c5db"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.HierarchyCoreModule.dll",
+      "bytes": 109488,
+      "sha256": "bf800cc45f5c0354f9ad2ea22e0c1463bbfcc111c18247fea92c24baf4f45938"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.HierarchyModule.dll",
+      "bytes": 102312,
+      "sha256": "6a5d008a26eaed4289ffee5deaf6628cd708211674b9fbd2c243c465b022f748"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.HotReloadModule.dll",
+      "bytes": 24488,
+      "sha256": "a58a336e1f65a20fdaa79ef547388367540203ab07d9211d0f322f9fbb202c66"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.IdentifiersModule.dll",
+      "bytes": 16808,
+      "sha256": "9e32c80cb919fa932d33200fc1b840f028d9badd6bafdf540305ee51354d98d1"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ImageConversionModule.dll",
+      "bytes": 31152,
+      "sha256": "48deef77c0900f884d3a62530914188d6916519d415cd5196505a0dd2ba11b2d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.IMGUIModule.dll",
+      "bytes": 214448,
+      "sha256": "59079367d288ee1afc510ae174e6bd3373d44dffdcf39cd6a3d81f4ae72cc6a8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.InputForUIModule.dll",
+      "bytes": 57768,
+      "sha256": "6b80e1f8e768de2769fe874111c1cb63ab21b8eb662fc0f208f9f45e7aa47625"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.InputLegacyModule.dll",
+      "bytes": 45488,
+      "sha256": "3fe0a3b1c2dcbf8430d053be5523c9db768601624069c593d981fe5d89262c41"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.InputModule.dll",
+      "bytes": 28584,
+      "sha256": "c7555f9e890b65d52806d11be2a18e79ad9e20dd3d9b7950c344b0e98269146b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.InsightsModule.dll",
+      "bytes": 14256,
+      "sha256": "7823f02c0fd49945db4611a061f76f952f3bea5f1888e8a3ee32432a42564367"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.JSONSerializeModule.dll",
+      "bytes": 27056,
+      "sha256": "7d596dab3f41e563d3cadacff3f9259b662d764a1efcbfeae7ce680f7bb503bd"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.LocalizationModule.dll",
+      "bytes": 27056,
+      "sha256": "d37f7fc4d38c8ea2462194e69b4ea33f88be334a1e7ed222f200f2e707564bad"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.MarshallingModule.dll",
+      "bytes": 83888,
+      "sha256": "2424626f708e2abf2cc58f1fe5e5093805aace99cd4e9f90b52c84ddaec993b3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.MultiplayerModule.dll",
+      "bytes": 17832,
+      "sha256": "b0e7ca214c64d51d2fd6703aebdad36b2426e6f090ef93038b3bcf08ac7ecd58"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.NVIDIAModule.dll",
+      "bytes": 40880,
+      "sha256": "9401ce6e59d01797ddffc4db283dbd7cc8ed5e9d9516cf536e0ad9a4650d3bed"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ParticleSystemModule.dll",
+      "bytes": 171944,
+      "sha256": "ca47a718f791e2104377e7cfe218210314a957dc1bcfb70102417adb73b4a430"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.PerformanceReportingModule.dll",
+      "bytes": 25008,
+      "sha256": "35e66ed8f5d0fbd8b25479ae75625b4a17cd41519dbf605970db154757c254e2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.Physics2DModule.dll",
+      "bytes": 586664,
+      "sha256": "a13a44e7344ba20d6fcd5abde493d2a159dcd4010be1a016f6a0eb877f007766"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.PhysicsBackendPhysXModule.dll",
+      "bytes": 14256,
+      "sha256": "33ae23327a5d59ee0743ab0c5df0b0264ccf4f292d2f0807bc8cef40efb5a813"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.PhysicsModule.dll",
+      "bytes": 183720,
+      "sha256": "6112016fb7df440b4af9ff6d1e05cdb1d7f5dae652cf19e3cbdc6a2ca4699d0a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.PropertiesModule.dll",
+      "bytes": 134064,
+      "sha256": "8063760df50b181d9f9c90db6fad2a34c06ef5fb02f26467384b3aec5d14dc76"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.RenderAs2DModule.dll",
+      "bytes": 25520,
+      "sha256": "52c9a1536d88fedc62df201840d435a745c16b6448b86f6e22f91902e4d92c8b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll",
+      "bytes": 24488,
+      "sha256": "f59d4c5e3c08db5f532117e76b16f5d5c4d5219ba584ee94312bb7d54c399311"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ScreenCaptureModule.dll",
+      "bytes": 26544,
+      "sha256": "f04cdf78234bf6387aabad5aacb327542f5a8bdcca533eff7401c6eee3206e36"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ShaderRuntimeModule.dll",
+      "bytes": 25512,
+      "sha256": "1396cb6600b39b593d0a58221c978d513dd289e1dff71a2eb2c6b2b60d1356e1"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.ShaderVariantAnalyticsModule.dll",
+      "bytes": 24488,
+      "sha256": "7a26b6fcc298b6d2251e551b7bc6fc4910cf029c9a0dc0c6cb412b722a7fcf5e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SharedInternalsModule.dll",
+      "bytes": 38320,
+      "sha256": "8db34acfc413aeb640d9a618cc65964e3c6be6c2dbe3f5f9eb3fa3156fbf34f3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SpriteMaskModule.dll",
+      "bytes": 28584,
+      "sha256": "c77d26f5ae1ee1cfd733d51fa9b3e44687f47ab49cb8a1e5f951fb326cfe498d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SpriteShapeModule.dll",
+      "bytes": 32688,
+      "sha256": "ad172378591dee76cc2d08d5a004a92ac4ce469fa1cc3a962854e29f04448cca"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.StreamingModule.dll",
+      "bytes": 26024,
+      "sha256": "56877ff28757655ffefa1daf4a4255b668616277c3c84df8f51f0daeecbf4b92"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SubstanceModule.dll",
+      "bytes": 29104,
+      "sha256": "aeddbe082d614d20f56d26a0cb415118c17e76763094cae3ed85567fd0f517ba"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.SubsystemsModule.dll",
+      "bytes": 41896,
+      "sha256": "1372e9608f65909baf934b33fb04a8eb55bb386ed9d88e56840fffe9bc7d8b19"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TerrainModule.dll",
+      "bytes": 134056,
+      "sha256": "407e8d6c30c7fefbcc7d888e0086f5ef8743531bfcbbc04bb11762b12558a759"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TerrainPhysicsModule.dll",
+      "bytes": 25520,
+      "sha256": "e8c19bd79f9d840b6ae34ad78adac43581c03dcb9cc375bfdbc682e8a349f4b2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TextCoreFontEngineModule.dll",
+      "bytes": 81832,
+      "sha256": "1e9ec852583e53600d166d6688c62aa0e29d8ec26ceabfd9aab5319fd098203a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TextCoreTextEngineModule.dll",
+      "bytes": 334760,
+      "sha256": "4345d56bea3d26f7aba127754d95d6a1a9b754491ff5cd01d707e90219eede5b"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TextRenderingModule.dll",
+      "bytes": 39336,
+      "sha256": "41d9b82516a161f4e33b33ec54ccbf4ff520a546dfc0278d9d89342cf48e187f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TilemapModule.dll",
+      "bytes": 58800,
+      "sha256": "742b401342db4188a1d438cf42cff503d927f87182615e52d463ce13bb8d5aef"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.TLSModule.dll",
+      "bytes": 32176,
+      "sha256": "e824d1cf3bdf44ae67b05d795e3a64ca351b4e71f283e37ff55c8312f59692b7"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UI.dll",
+      "bytes": 260096,
+      "sha256": "5927e5ad33724b76625611d80822665bce209474e2bafe204ab3f1d12610707d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UIElementsModule.dll",
+      "bytes": 2452392,
+      "sha256": "f791cdee383a20ef998be28112bb4c0600528945289f9138ff4a6d5352946e16"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UIModule.dll",
+      "bytes": 50088,
+      "sha256": "8490946ba29a169115bf4d3e549d42a0a5e9b1c4fb49b28d0dea97b19c21af99"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UmbraModule.dll",
+      "bytes": 24496,
+      "sha256": "1fe54406a037f8f8bf0e4b648137b5d796e92716ee16d9120ded96b023e47f64"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityAnalyticsCommonModule.dll",
+      "bytes": 35752,
+      "sha256": "903a192bf5d0cb1b7c99826ccfd67401161949ecc0eb6c07ee350216526e53c3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityAnalyticsModule.dll",
+      "bytes": 60848,
+      "sha256": "37c8de9c5b3b5014c491eb70db235bed73cb717c25d2c0a4438f3c9faddf009e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityConnectModule.dll",
+      "bytes": 27560,
+      "sha256": "d795553835cb0a6bbd2d13ba36799323bfbfbdf6dbe3ed709f490b80d8e8af5a"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityConsentModule.dll",
+      "bytes": 16304,
+      "sha256": "8252eeef40749b9b8d1015569a3dd0148ee5b8c2445821781476165a82713af3"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityCurlModule.dll",
+      "bytes": 26032,
+      "sha256": "4119615947f88d586ca33cc9b217fe2f81ada01e49214d2b9b73b186cd233e41"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestAssetBundleModule.dll",
+      "bytes": 28592,
+      "sha256": "f1498767358fa09c93691d7907f67300ee3bee396413b978e948c83b1e2cf48c"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestAudioModule.dll",
+      "bytes": 28592,
+      "sha256": "fd8d815a45915f17ec9f63fda402769746ea28251a408a5f439c62f4a8af2729"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestModule.dll",
+      "bytes": 70064,
+      "sha256": "9d777e08bfe9b9c12ff69c5bba91a0ec67b6712c03aa62896eb892fa8fbb4009"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestTextureModule.dll",
+      "bytes": 27560,
+      "sha256": "c983a36f4ecf311a8ac2f067a943612bdfdb04dd1d4b0902fe23b8c22b800caa"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.UnityWebRequestWWWModule.dll",
+      "bytes": 36776,
+      "sha256": "71a0dfa0aecd73f7935d58f90b24ea56adc8c7866495ef3528e1a128f1f36a14"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VectorGraphicsModule.dll",
+      "bytes": 252840,
+      "sha256": "8d8aabf185a7238ac0e205c708305a9d1da2ba6160d497aaac70f439ee1671f6"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VehiclesModule.dll",
+      "bytes": 31656,
+      "sha256": "2946f811e0b6e3ee9748d39b916e78f418a70c4157177efa946b8aeca90ca86d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VFXModule.dll",
+      "bytes": 78248,
+      "sha256": "5c62f2e10b2559ae6333487dfb94c82c2e128a074f4777d9e69a74c8e522ae6e"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VideoModule.dll",
+      "bytes": 49072,
+      "sha256": "33e1f716564b7fc9169c7ad9b4b433b2e7ab3eaf760e83cc658c49bf216dbf51"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VirtualTexturingModule.dll",
+      "bytes": 42920,
+      "sha256": "8a0e54d097692eb82c8863b1d3f2319e1794e43f57b9e4d77a0ea728711173f8"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.VRModule.dll",
+      "bytes": 31664,
+      "sha256": "881678fd43267960701bffe14b698fc40fbab28247b675c2e18c5578dcd6c0d2"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.WindModule.dll",
+      "bytes": 26536,
+      "sha256": "3db21bbc42641b0dbfe8cc802045c623bb45ec725e84734114330ac59889c18f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Managed/UnityEngine.XRModule.dll",
+      "bytes": 88496,
+      "sha256": "b3f56678282a17a731c9328f1c32d1203f4388fba7188060d9f5cb9b44c198d7"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Plugins/x86_64/lib_burst_generated.dll",
+      "bytes": 446464,
+      "sha256": "5ed114d3f821394d958a921385f1414da3dd9cdf35967ec89bf087cb998b593d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Resources/unity default resources",
+      "bytes": 5883716,
+      "sha256": "32b58bdb9cf090212b46a8ca7436dcdae89e4ef43e9d55a835233c21d1347734"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/Resources/unity_builtin_extra",
+      "bytes": 397816,
+      "sha256": "03fb33a3885536096b224a3d90fd62b58a735526626cec97e17da416e4f789fe"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/resources.assets",
+      "bytes": 24655560,
+      "sha256": "5a34e25da485a0f9eeb95cb01cf11acbade4f24889866b4575bb612305c424cc"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/resources.assets.resS",
+      "bytes": 70420816,
+      "sha256": "51b5dc2383860a386ec83c1160cecf56e93752a74c9e22fcf9afcbe575327a08"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/RuntimeInitializeOnLoads.json",
+      "bytes": 4725,
+      "sha256": "422441c1b0275d8aa83bb585c9394eaa1bb3463b65d9131fa78fd3a75b034641"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/ScriptingAssemblies.json",
+      "bytes": 4352,
+      "sha256": "90fb6f762a9af3aca504708bcdfbacaddf824f5a855fb9397e11af521f5036f0"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/sharedassets0.assets",
+      "bytes": 7920,
+      "sha256": "bf2864743787655d877f2194da5bd37b4bb2f0e2ac477407360f6f65c6de9977"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/sharedassets0.assets.resS",
+      "bytes": 524288,
+      "sha256": "393efe6399536384aa91bdfc4e64f244b4d3e1fbb6a4ff145c483ffee64ccb36"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/RiskAI_Data/sharedassets1.assets",
+      "bytes": 361,
+      "sha256": "5c087080b9fa856ba193797d4473187118842497a705c54e3d8f2a28c073e20d"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/THIRD_PARTY_NOTICES.md",
+      "bytes": 3396,
+      "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/UnityCrashHandler64.exe",
+      "bytes": 1669544,
+      "sha256": "4e65cef1be7996ccecec341c11a2f1319c1349b30288bf01455a2494451ddb69"
+    },
+    {
+      "platform": "windows",
+      "path": "Builds/Windows-v0.21/UnityPlayer.dll",
+      "bytes": 36730288,
+      "sha256": "6aaaa964ebb34fb3d72f14288729e64002e3b917062e313a3452f73a2a9c4cba"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Build/Web-v0.21.data.unityweb",
+      "bytes": 45170812,
+      "sha256": "9b9af0b741aabfef430ebd9656e84764329a7e3adfceb19365fbddd776b8ba72"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Build/Web-v0.21.framework.js.unityweb",
+      "bytes": 88911,
+      "sha256": "5d70480ff2f7f7a2b60f286b948a2d048d704c261a03867d60c86ea4028a7900"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Build/Web-v0.21.loader.js",
+      "bytes": 47867,
+      "sha256": "097d9cdd352f8595417d05f293fa4b1c5f21bb42e3e1c29aec7447ff5a48937e"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Build/Web-v0.21.wasm.unityweb",
+      "bytes": 12103048,
+      "sha256": "f0986f275499acbe76887218dd85f17dffee262c2cf033e2a43f8291a7b468d8"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/Cinzel-OFL.txt",
+      "bytes": 4392,
+      "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/index.html",
+      "bytes": 4938,
+      "sha256": "d55527dfa82af3c4a0978e67cc02eabedca877c3ce30f52151df9f5fa2f9a913"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/KayKit-LICENSE.txt",
+      "bytes": 891,
+      "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/riskai-pen.js",
+      "bytes": 11720,
+      "sha256": "de87827367c3455505446bcc5f60d8d4b5cc6fe61862a76d463748cea9244e60"
+    },
+    {
+      "platform": "web",
+      "path": "Builds/Web-v0.21/THIRD_PARTY_NOTICES.md",
+      "bytes": 3396,
+      "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "RiskAI/Logs/v21-selection-lifetime-tests-r2.xml",
+      "bytes": 117759,
+      "sha256": "361f56e0de9d012ad81902f1469078a00ecc00b11401edaa0db3b3e3ef380d54"
+    },
+    {
+      "path": "RiskAI/Logs/v21-selection-lifetime-tests-r2.log",
+      "bytes": 1813678,
+      "sha256": "f676590ff8faa61406e53d54c423d434350e1b49524761feb1bbe968546246cf"
+    },
+    {
+      "path": "RiskAI/Logs/v21-selection-lifetime-tests.log",
+      "bytes": 71524,
+      "sha256": "34988cee8bc4ae4c3064957935763dde7b548d193045723cc79e7de1d956a771"
+    },
+    {
+      "path": "RiskAI/Logs/v21-lifetime-native.log",
+      "bytes": 10217,
+      "sha256": "79b9156fe8a790543251ab2efb59225ac1e285c8e946c945f68ba3be00f1c7ea"
+    },
+    {
+      "path": "Captures/v21-web-lifetime-final/result.json",
+      "bytes": 1878,
+      "sha256": "4b29b03255217fc8605f42aa4dd3fbc468dfd097407da34fa8d501a4e969a5ce"
+    },
+    {
+      "path": "Captures/v21-web-lifetime-final/console.log",
+      "bytes": 11736,
+      "sha256": "2d6aa0d60ea3b7bc3cac7c4aaafe8bc9d487b443abdd4b873fbcb4e7bed64f06"
+    },
+    {
+      "path": "Captures/v21-web-lifetime-final/result.json",
+      "bytes": 1878,
+      "sha256": "4b29b03255217fc8605f42aa4dd3fbc468dfd097407da34fa8d501a4e969a5ce"
+    },
+    {
+      "path": "Captures/v21-web-lifetime-final/console.log",
+      "bytes": 11736,
+      "sha256": "2d6aa0d60ea3b7bc3cac7c4aaafe8bc9d487b443abdd4b873fbcb4e7bed64f06"
+    },
+    {
+      "path": "Captures/v21-web-lifetime-followup/result.json",
+      "bytes": 1149,
+      "sha256": "4f87c92f076601d2a0c3c5f00260f48cc296d6efdbcad577ef7db5fb3f55b015"
+    },
+    {
+      "path": "Captures/v21-web-lifetime-followup/console.log",
+      "bytes": 9733,
+      "sha256": "dc09c253e1ee2d4e2d1466554e6da7bca9af809e2f362f05e7eb44ac545ff84a"
+    },
+    {
+      "path": ".tools/v21-web-lifetime-final.py",
+      "bytes": 6464,
+      "sha256": "4390ffe30f398cc0e0782dd5ce07d8d6f8e4925b73cf864776f540cbcb1093ef"
+    },
+    {
+      "path": ".tools/v21-web-lifetime-followup.py",
+      "bytes": 4931,
+      "sha256": "bb4572874e5170f207eb7d32455a50bda2c7269f5dfb164e210110bea97c5005"
+    },
+    {
+      "path": "docs/audits/selection-lifetime-v0.21/tests.xml",
+      "bytes": 116773,
+      "sha256": "02745cb138cfaef08e5b06a61fad019f54c71311a0a5f5f382e8eacd3d377da1"
+    },
+    {
+      "path": "docs/audits/selection-lifetime-v0.21/web-first-pass.json",
+      "bytes": 1789,
+      "sha256": "33a52259f148e1ca529c7e44fcd243f2a6889f271fdbce6daa2a0377291430d2"
+    },
+    {
+      "path": "docs/audits/selection-lifetime-v0.21/web-followup.json",
+      "bytes": 1096,
+      "sha256": "490dd7978efff0d86a464039c88d8beb783b8eb88c68ce82fd4c7a9c09161d0b"
+    },
+    {
+      "path": "docs/audits/selection-lifetime-v0.21/web-first-pass.py",
+      "bytes": 6418,
+      "sha256": "973af0d7557e20f3af1370b481b33c65bbfe73da1644cd8e68a5279030bdf56b"
+    },
+    {
+      "path": "docs/audits/selection-lifetime-v0.21/web-followup.py",
+      "bytes": 4901,
+      "sha256": "692d8a7dc2a0c11520636b9efea3c8b63da5de864223831300499dc868fd33af"
+    }
+  ],
+  "physicalArmValidated": false,
+  "performanceRerun": false,
+  "nativeAcceptance": {
+    "captureCompleted": true,
+    "imagesWritten": 7,
+    "imagesInspected": [
+      "v20-orders.png",
+      "v20-port-queues.png"
+    ],
+    "findings": "Single portrait/stats and common Marine catalog with two five-slot queues render correctly. Fixture uses gameplay APIs and disables controller Update; it is not physical-input or pooled-focus acceptance.",
+    "exitCodeObserved": false,
+    "processExited": true
+  },
+  "webAcceptance": {
+    "browser": "Edge 152.0.4191.66",
+    "input": "Synthetic browser CDP; ordinary paid recruitment; no injected Unity state",
+    "firstPass": "Completed 20 captures. Two archers selected by touch and pen; portrait card isolates one; double tap and two-contact tap move both; pen barrel starts both, one survivor remains in final capture. Desktop card and group recall were not established in this pass.",
+    "followup": "Completed 11 captures with key overlap spanning frames and 200ms touch contact. Desktop touch and mouse card each isolate one; group recall restores two after clear and after card selection. Two remain visible after switching browser pages; this does not establish OS focus loss or pool reuse.",
+    "pageErrors": [],
+    "consoleErrors": [
+      "favicon404"
+    ],
+    "samplerMismatchWarnings": 0,
+    "unsupportedAuxiliaryShaderDiagnostics": 3,
+    "invalidInternalformatWarnings": 6,
+    "physicalHardware": false,
+    "poolReuseDuringFocusLossInExportVerified": false,
+    "limits": "Timing adjusted only in followup harness. No proof that all short physical taps succeed; no new runtime fix or performance certification."
+  },
+  "publishedImages": [
+    {
+      "source": {
+        "path": "Captures/v21-lifetime-native/v20-orders.png",
+        "bytes": 2228894,
+        "sha256": "b984474f6c8461d98c7eb1aecaf8e7c2d731247597d86a355bb3d77e68baa866"
+      },
+      "image": {
+        "path": "docs/audits/selection-lifetime-v0.21/windows-portrait.webp",
+        "bytes": 279698,
+        "sha256": "da0c8caea38f77cd209691181939b75bdcdfa6db536513a46c40b3f2e8672823"
+      }
+    },
+    {
+      "source": {
+        "path": "Captures/v21-lifetime-native/v20-port-queues.png",
+        "bytes": 1772648,
+        "sha256": "0b0ce611afc208fed0257be7d41549e6f5cbebd1ebae6590380485ce6813490b"
+      },
+      "image": {
+        "path": "docs/audits/selection-lifetime-v0.21/windows-port.webp",
+        "bytes": 203564,
+        "sha256": "46029d6edbce1adc920355cd89cfacc25d19a82f22efc9af6ae1f69d77c2bed8"
+      }
+    },
+    {
+      "source": {
+        "path": "Captures/v21-web-lifetime-followup/05-desktop-card-touch.png",
+        "bytes": 1842203,
+        "sha256": "9b80f32186bcc1c6fc51a35416e6591e30d230391b0be17ee97480a34104d7fe"
+      },
+      "image": {
+        "path": "docs/audits/selection-lifetime-v0.21/web-desktop-touch.webp",
+        "bytes": 235924,
+        "sha256": "72666d41eb366a6555fd6ce8737352ae9754c4369c022018c17ffdaefcc69a8c"
+      }
+    },
+    {
+      "source": {
+        "path": "Captures/v21-web-lifetime-followup/07-group-recalled.png",
+        "bytes": 1831357,
+        "sha256": "45ea04f9f5043432a57002df7c9e151621516ccfd241ba5c41ab0389c24486d2"
+      },
+      "image": {
+        "path": "docs/audits/selection-lifetime-v0.21/web-group-recall.webp",
+        "bytes": 234386,
+        "sha256": "31a42b94c33611972d706a71fc0a814210d1ae36ef7367366a7c67b87ccbfd0f"
+      }
+    },
+    {
+      "source": {
+        "path": "Captures/v21-web-lifetime-followup/08-desktop-card-mouse.png",
+        "bytes": 1842343,
+        "sha256": "1bff414cda9eabdf61d194a04f8cdf3fa9c51e65498332ea2c9a2babc680ca7f"
+      },
+      "image": {
+        "path": "docs/audits/selection-lifetime-v0.21/web-mouse-card.webp",
+        "bytes": 236306,
+        "sha256": "8729da8af71db16e91d219d2c16f563497bcbefd11cd7b8aafb28d69e5ce3f80"
+      }
+    },
+    {
+      "source": {
+        "path": "Captures/v21-web-lifetime-final/03d-portrait-roster.png",
+        "bytes": 1027305,
+        "sha256": "d15b40ecc8ba618952725791b31569dc25da3b19002c17f80298e4c2938292de"
+      },
+      "image": {
+        "path": "docs/audits/selection-lifetime-v0.21/web-portrait-roster.webp",
+        "bytes": 115750,
+        "sha256": "e088e04663f57209833edb5f4987bf6eccff7b41e14bb38d5cccc28ebcaf7f80"
+      }
+    },
+    {
+      "source": {
+        "path": "Captures/v21-web-lifetime-final/03e-portrait-card-tap.png",
+        "bytes": 1035638,
+        "sha256": "d956b495bdb748fe6d1456b0d35eca3d355ca3e419edb4a0bedb0232f6d5733f"
+      },
+      "image": {
+        "path": "docs/audits/selection-lifetime-v0.21/web-portrait-card.webp",
+        "bytes": 117368,
+        "sha256": "1fd355e035ddfc2052a50f2324aa1f7903774d77e0c484019473a72d8b7e991b"
+      }
+    },
+    {
+      "source": {
+        "path": "Captures/v21-web-lifetime-final/03c-landscape-roster.png",
+        "bytes": 992291,
+        "sha256": "bcb65d1ac817090401ff751dca5606806cdd59fde23f20d53cc2574ba139ebfc"
+      },
+      "image": {
+        "path": "docs/audits/selection-lifetime-v0.21/web-landscape-roster.webp",
+        "bytes": 129654,
+        "sha256": "d529c418b5de1725f951c7f22fe1af4bd6c2b88466380b30e2f180187294a099"
+      }
+    }
+  ],
+  "priorArchive": {
+    "path": "Builds/Archive-v0.21-edbc79e",
+    "sourceHead": "edbc79e67498c327e03361a61d7ac722c0c594c7",
+    "verifiedFiles": 194,
+    "allHashesMatch": true
+  }
+}

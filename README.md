@@ -1,12 +1,12 @@
-# RiskAI · v0.20
+# RiskAI · v0.21
 
 Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP y arte propio/CC0. Abre **Play-RiskAI.cmd** para jugar la compilación local. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`.
 
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
-La v0.20 recupera el carácter de RTS del menú y HUD: marcos propios de madera y metal, títulos dorados, retratos y selección junto a órdenes/producción en escritorio. En pantallas compactas conserva las pestañas y comparte los mismos controles y reglas. La build Windows está comprobada; la validación Web y los límites de hardware se documentan en [Validación v0.20](docs/VALIDATION-v0.20.md) y [Fase 2](docs/PHASE2.md).
+La v0.21 corrige cámara en pausa, rueda sobre paneles y selección rectangular de edificios propios. Unifica la propiedad y producción del puerto e incorpora expediciones de IA que compran un transporte, embarcan, cruzan y desembarcan. Conserva el HUD de madera y metal con pestañas compactas. Windows y Web están exportados y comprobados visualmente; 100 casos Unity cubren los cambios; los contadores nuevos separan ruta y comienzo del movimiento. La costa geométrica y el rendimiento en hardware ARM siguen pendientes: [Validación v0.21](docs/VALIDATION-v0.21.md) · [Fase 2](docs/PHASE2.md).
 
-![v0.20: menú previo](docs/images/v0.20-menu.png)
+![v0.21: puerto, entrenamiento y colas](docs/images/v0.21-harbor.png)
 
 ## Escenarios y reglas comunes
 
@@ -21,7 +21,7 @@ Los cuatro mapas comparten ángulo, zoom inicial, mínimo, sensibilidad, cámara
 
 ![v0.18: vista estratégica](docs/images/v0.18-strategic.png)
 
-Cada jugador empieza con 4 de oro. Las ciudades al azar reparten el mismo número por equipo y dejan el resto neutral. Cada ciudad y puesto tiene un defensor retenido. Una guarnición sólo puede salir si un aliado elegible dentro de su círculo toma el relevo; una orden inválida conserva al defensor. Los barcos mantienen su propia prioridad de sucesión en el atraque marítimo.
+Cada jugador empieza con 4 de oro. Las ciudades al azar reparten el mismo número por equipo y dejan el resto neutral. Cada ciudad y puesto tiene un defensor retenido. Una guarnición sólo puede salir si un aliado elegible dentro de su círculo toma el relevo; una orden inválida conserva al defensor. El puerto comparte un único guardián terrestre o naval y la misma sucesión; cada tipo usa su ancla física. Un barco guardián habilita la producción, y un guardián vivo conserva su puesto.
 
 El límite es uniforme: **100 tropas móviles por equipo**, excluidas las guarniciones, en todos los escenarios. Los encargos pendientes cuentan para ese límite. La victoria exige mantener `ceil(ciudades × 0,60)` durante 20 s: 20 ciudades en Las Marcas, 27 en Cuatro Riberas, 128 en Europe y 176 en New World. El último jugador con puestos o tropas también vence; eliminar a una IA no concluye una partida con más rivales.
 
@@ -31,7 +31,7 @@ Cada 60 segundos, conservar al menos una ciudad concede 4 de oro base más 1 por
 
 ## Selección, colas y estrategia
 
-La caja de selección prioriza tropas móviles y, cuando no las contiene, permite seleccionar edificios. Shift añade. Un doble clic en una ciudad propia agrupa ciudades propias cercanas y visibles. Casa y torre remiten al mismo puesto y el anillo de selección cubre su huella. Los puertos importados conservan una única identidad de selección.
+La caja de selección prioriza tropas móviles y, cuando no las contiene, permite seleccionar edificios propios. Shift añade. Un doble clic en una ciudad propia agrupa ciudades propias cercanas y visibles. Casa y torre remiten al mismo puesto y el anillo de selección cubre su huella. Los puertos importados conservan una única identidad de selección.
 
 La selección múltiple muestra las colas de cada edificio y permite cancelar encargos concretos. Una compra añade una unidad total a la cola compatible más corta; no multiplica coste ni unidades por los edificios seleccionados. Las ciudades y los puertos mantienen colas independientes de tierra y mar.
 
@@ -74,13 +74,13 @@ Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. La batalla está en `Ass
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
 .\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
-.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.20/RiskAI.exe
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.21/RiskAI.exe
 .\scripts\Unity.ps1 -Action BuildWeb   # Requiere Web Build Support del mismo editor
 ```
 
 Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map classic`, `riverlands`, `europe` o `newworld`.
 
-Tras exportar Web, `python scripts/serve_web.py` sirve la build v0.20 en
+Tras exportar Web, `python scripts/serve_web.py` sirve la build v0.21 en
 `http://127.0.0.1:8080`. Para probar desde una tablet en la misma red, usa
 `--bind 0.0.0.0` y la IP local del equipo. Las utilidades
 `check_web_player.py` y `check_web_ui.py` conservan resultados, consola y

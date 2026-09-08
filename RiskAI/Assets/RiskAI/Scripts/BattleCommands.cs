@@ -19,6 +19,8 @@ namespace RiskAI
         readonly BattleSession session;
         readonly Queue<QueuedCommand> queue = new Queue<QueuedCommand>(256);
         CommandTelemetry telemetry;
+        // Live lifecycle count; unlike interval aggregates, ConsumeTelemetry does not reset it.
+        long humanMoveOutstanding;
         bool telemetryPaused;
         double telemetryPauseStartedAt, observedPausedSeconds, pausedSecondsAtLastConsume;
         public int PendingCount => queue.Count;
@@ -44,6 +46,7 @@ namespace RiskAI
         {
             var snapshot = telemetry;
             double pausedNow = ObservedPausedSeconds();
+            snapshot.HumanMoveOutstanding = humanMoveOutstanding;
             snapshot.ObservedPauseMilliseconds = (pausedNow - pausedSecondsAtLastConsume) * 1000.0;
             pausedSecondsAtLastConsume = pausedNow;
             telemetry = default;
@@ -145,7 +148,39 @@ namespace RiskAI
             telemetry.HumanFirstMoveMilliseconds += milliseconds;
             if (milliseconds > telemetry.HumanFirstMoveMaxMilliseconds) telemetry.HumanFirstMoveMaxMilliseconds = milliseconds;
         }
-        internal void RecordHumanFirstMoveEligible() { telemetry.HumanFirstMoveEligible++; }
+        internal double HumanMoveActiveSeconds(double submittedAt, double pausedSecondsAtSubmit) =>
+            System.Math.Max(0, Time.realtimeSinceStartupAsDouble - submittedAt - (ObservedPausedSeconds() - pausedSecondsAtSubmit));
+
+        // Stages are simulation-tick observations, not exact NavMesh solver completion times.
+        // Each interval is paired on one command; stage counts may fall in different report windows.
+        internal void RecordHumanRouteReady(double applyToRouteSeconds)
+        {
+            telemetry.HumanRouteReadyCount++;
+            AccumulateStage(applyToRouteSeconds, ref telemetry.HumanApplyToRouteMilliseconds, ref telemetry.HumanApplyToRouteMaxMilliseconds);
+        }
+        internal void RecordHumanSpeed(double submitToSpeedSeconds, double routeToSpeedSeconds)
+        {
+            telemetry.HumanSpeedCount++;
+            AccumulateStage(submitToSpeedSeconds, ref telemetry.HumanSubmitToSpeedMilliseconds, ref telemetry.HumanSubmitToSpeedMaxMilliseconds);
+            if (routeToSpeedSeconds >= 0)
+            {
+                telemetry.HumanRouteToSpeedCount++;
+                AccumulateStage(routeToSpeedSeconds, ref telemetry.HumanRouteToSpeedMilliseconds, ref telemetry.HumanRouteToSpeedMaxMilliseconds);
+            }
+        }
+        internal void RecordHumanSpeedToDirected(double seconds)
+        {
+            telemetry.HumanSpeedToDirectedCount++;
+            AccumulateStage(seconds, ref telemetry.HumanSpeedToDirectedMilliseconds, ref telemetry.HumanSpeedToDirectedMaxMilliseconds);
+        }
+        static void AccumulateStage(double seconds, ref double total, ref double maximum)
+        {
+            double milliseconds = System.Math.Max(0, seconds) * 1000.0;
+            total += milliseconds;
+            if (milliseconds > maximum) maximum = milliseconds;
+        }
+        internal void RecordHumanMoveEnded() { humanMoveOutstanding--; }
+        internal void RecordHumanFirstMoveEligible() { telemetry.HumanFirstMoveEligible++; humanMoveOutstanding++; }
         internal void RecordHumanFirstMoveCancelled() { telemetry.HumanFirstMoveCancelled++; }
 
         void RecordApplied(int playerId, double elapsedSeconds, double observedPauseSeconds)
@@ -180,6 +215,12 @@ namespace RiskAI
         public double HumanSubmitToApplyMilliseconds, HumanSubmitToApplyMaxMilliseconds;
         public double AiSubmitToApplyMilliseconds, AiSubmitToApplyMaxMilliseconds;
         public double HumanFirstMoveMilliseconds, HumanFirstMoveMaxMilliseconds;
+        public long HumanMoveOutstanding;
+        public long HumanRouteReadyCount, HumanSpeedCount, HumanRouteToSpeedCount, HumanSpeedToDirectedCount;
+        public double HumanApplyToRouteMilliseconds, HumanApplyToRouteMaxMilliseconds;
+        public double HumanSubmitToSpeedMilliseconds, HumanSubmitToSpeedMaxMilliseconds;
+        public double HumanRouteToSpeedMilliseconds, HumanRouteToSpeedMaxMilliseconds;
+        public double HumanSpeedToDirectedMilliseconds, HumanSpeedToDirectedMaxMilliseconds;
         public double ObservedPauseMilliseconds;
     }
 }

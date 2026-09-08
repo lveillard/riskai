@@ -151,6 +151,18 @@ namespace RiskAI
         }
         /// <summary>Builds static clearance edges and ocean components during map setup.</summary>
         public static void Prepare()=>CurrentGrid();
+
+        /// <summary>Static connectivity filter for AI planning, without building
+        /// a route. Orders still construct and validate their actual segments.</summary>
+        public static bool AreConnected(Vector3 from,Vector3 to)
+        {
+            if(!HasClearance(from)||!HasClearance(to))return false;
+            var grid=CurrentGrid();int start=NearestOcean(from,grid),goal=NearestOcean(to,grid);
+            if(start>=0&&goal>=0&&grid.Component(start)==grid.Component(goal))return true;
+            // Exact endpoints can share a short channel missed by coarse cells;
+            // retain the same direct-segment exception as TryBuildPath.
+            return ClearSegment(from,to);
+        }
         static Grid CurrentGrid()
         {
             bool imported=MapLayout.IsImported;float cellSize=imported?ImportedCellSize:ClassicCellSize;

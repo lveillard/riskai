@@ -9,7 +9,7 @@ namespace RiskAI.Editor
 {
     public static class RiskProjectSetup
     {
-        const string Version="0.20";
+        const string Version="0.21";
         const string FrontEndScenePath="Assets/RiskAI/Scenes/FrontEnd.unity";
         const string ScenePath="Assets/RiskAI/Scenes/LasMarcas.unity";
         [MenuItem("RiskAI/Prepare playable scene")]

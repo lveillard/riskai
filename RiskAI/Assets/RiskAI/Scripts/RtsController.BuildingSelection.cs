@@ -85,10 +85,12 @@ namespace RiskAI
         {
             if (SelectedCamp) SelectedCamp.Select(false);
             SelectedCamp = null;
-            foreach (var unit in Selection) if (unit) unit.Select(false);
-            Selection.Clear();
-            foreach (var ship in Fleet) if (ship) ship.Select(false);
-            Fleet.Clear();
+            // Purging first leaves only actors this selection still owns, so every
+            // remaining ring is cleared and a replaced actor keeps its own state.
+            PurgeStaleSelection();
+            foreach (var unit in Selection) unit.Select(false);
+            foreach (var ship in Fleet) ship.Select(false);
+            ClearSelectionLists();
             InspectedTarget = null;
         }
 
@@ -134,9 +136,9 @@ namespace RiskAI
 
         void SelectBuildingsIn(Rect rect, bool append)
         {
-            var towns = session.Towns.Where(t => t && !t.Port && InSelection(t, rect)).ToList();
+            var towns = session.Towns.Where(t => t && !t.Port && t.State.Owner == 0 && InSelection(t, rect)).ToList();
             var harbors = (NavalWorld.Current
-                ? NavalWorld.Current.Harbors.Where(h => h && InSelection(h, rect))
+                ? NavalWorld.Current.Harbors.Where(h => h && h.Owner == 0 && InSelection(h, rect))
                 : Enumerable.Empty<Harbor>()).ToList();
             // Shift-dragging empty terrain must leave the prior selection intact.
             if (towns.Count == 0 && harbors.Count == 0)

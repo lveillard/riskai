@@ -24,6 +24,8 @@ namespace RiskAI
         float nextRetainedLabelRefresh;
         readonly List<Label> rankingLabels = new List<Label>();
         readonly List<System.Action> liveContext = new List<System.Action>();
+        readonly List<int> retainedRosterIds = new List<int>();
+        int retainedSoldierCount;
         Button modalPauseButton;
         float lastDensity;
         bool wideFooter;
@@ -59,7 +61,7 @@ namespace RiskAI
                 BuildRetainedUi(false);
                 return;
             }
-            if (retainedContextKey != contextKey)
+            if (retainedContextKey != contextKey || RosterChanged())
             {
                 retainedContextKey = contextKey;
                 RebuildContext();
@@ -86,6 +88,7 @@ namespace RiskAI
         {
             if (context == null) return;
             context.Clear(); queueSlots.Clear(); liveContext.Clear();
+            RememberRoster();
             if (wideFooter) { wideContext.Clear(); BuildWideContext(context, wideContext); }
             else BuildContext(context);
         }
@@ -100,9 +103,7 @@ namespace RiskAI
             unchecked
             {
                 int key = retainedTab;
-                key = key * 29 + (controller.InspectedTarget ? controller.InspectedTarget.GetInstanceID() : 0);
-                for (int i = 0; i < controller.Selection.Count; i++) key = key * 31 + controller.Selection[i].GetInstanceID();
-                for (int i = 0; i < controller.Fleet.Count; i++) key = key * 37 + controller.Fleet[i].GetInstanceID();
+                key = key * 29 + (controller.InspectedTarget ? controller.InspectedTarget.EntityId : 0);
                 key = key * 41 + (controller.SelectedTown ? controller.SelectedTown.GetInstanceID() : 0);
                 key = key * 43 + (controller.SelectedHarbor ? controller.SelectedHarbor.GetInstanceID() : 0);
                 key = key * 47 + (controller.SelectedCamp ? controller.SelectedCamp.GetInstanceID() : 0);
@@ -126,7 +127,7 @@ namespace RiskAI
             liveContext.Clear(); rankingLabels.Clear(); modalPauseButton=null;
             lastCompact = UiViewport.IsCompact; lastPortrait = UiViewport.IsPortrait;
             lastModalKind=ModalKind;
-            retainedContextKey = ContextKey(); lastScreen = new Vector2(Screen.width, Screen.height); lastSafe = UiViewport.SafeRect; lastDensity=UiViewport.Scale; nextRetainedLabelRefresh = Time.unscaledTime;
+            retainedContextKey = ContextKey(); RememberRoster(); lastScreen = new Vector2(Screen.width, Screen.height); lastSafe = UiViewport.SafeRect; lastDensity=UiViewport.Scale; nextRetainedLabelRefresh = Time.unscaledTime;
             retainedRoot = new VisualElement { name = "Battle retained UI", pickingMode = PickingMode.Ignore };
             retainedRoot.style.flexGrow = 1;
             BuildHeader(retainedRoot);
@@ -209,14 +210,14 @@ namespace RiskAI
             {
                 var tabs = new VisualElement { name = "HUD tabs" }; RtsUiStyle.Row(tabs); tabs.style.marginBottom = 4;tabs.style.flexShrink=0;
                 Tab(tabs, 0, "Selección"); Tab(tabs, 1, "Órdenes"); Tab(tabs, 2, "Crear"); footer.Add(tabs);
-                context = new ScrollView(ScrollViewMode.Vertical) { name = "HUD context" }; context.style.flexGrow = 1;context.style.minHeight=0;
+                context = new ScrollView(ScrollViewMode.Vertical) { name = "HUD context" }; context.style.flexGrow = 1;context.style.minHeight=0; RtsUiStyle.ConfigureScroll((ScrollView)context);
                 wideContext = null;
             }
             else
             {
                 var columns = new VisualElement { name = "HUD wide columns" }; RtsUiStyle.Row(columns); columns.style.flexGrow = 1;columns.style.minHeight=0;columns.style.alignItems=Align.Stretch;
-                context = new ScrollView(ScrollViewMode.Vertical) { name = "HUD selection column" }; context.style.width = Length.Percent(43); context.style.flexShrink = 0;
-                wideContext = new ScrollView(ScrollViewMode.Vertical) { name = "HUD contextual column" }; wideContext.style.flexGrow = 1;wideContext.style.minWidth=0; wideContext.style.marginLeft = 16;
+                context = new ScrollView(ScrollViewMode.Vertical) { name = "HUD selection column" }; context.style.width = Length.Percent(43); context.style.flexShrink = 0; RtsUiStyle.ConfigureScroll((ScrollView)context);
+                wideContext = new ScrollView(ScrollViewMode.Vertical) { name = "HUD contextual column" }; wideContext.style.flexGrow = 1;wideContext.style.minWidth=0; wideContext.style.marginLeft = 16; RtsUiStyle.ConfigureScroll((ScrollView)wideContext);
                 wideContext.style.paddingLeft=14;wideContext.style.borderLeftWidth=1;wideContext.style.borderLeftColor=RtsUiStyle.Bronze;
                 ((ScrollView)context).horizontalScrollerVisibility=ScrollerVisibility.Hidden;
                 ((ScrollView)wideContext).horizontalScrollerVisibility=ScrollerVisibility.Hidden;
@@ -249,11 +250,11 @@ namespace RiskAI
 
         void BuildSelectionWithPortrait(VisualElement root)
         {
-            Soldier unit = controller.Selection.Count == 1 ? controller.Selection[0] : controller.InspectedTarget as Soldier;
+            Soldier unit = controller.Selection.Count == 1 && controller.Fleet.Count == 0 ? controller.Selection[0] : controller.InspectedTarget as Soldier;
             if (!unit) { BuildSelection(root);return; }
             var row=new VisualElement();RtsUiStyle.Row(row);row.style.alignItems=Align.FlexStart;
             var frame=RtsUiStyle.Panel("HUD portrait frame");frame.style.paddingLeft=5;frame.style.paddingRight=5;frame.style.paddingTop=10;frame.style.paddingBottom=10;frame.style.marginRight=12;frame.style.flexShrink=0;
-            var portrait = new Image { name = "HUD unit portrait", image = Resources.Load<Texture2D>(PortraitResource(unit.Kind)), scaleMode = ScaleMode.ScaleToFit };
+            var portrait = new Image { name = "HUD unit portrait", image = CachedPortrait(PortraitResource(unit.Kind)), scaleMode = ScaleMode.ScaleToFit };
             portrait.style.width = UiViewport.IsCompact?64:96; portrait.style.height = UiViewport.IsCompact?76:112;
             frame.Add(portrait);row.Add(frame);
             var details=new VisualElement();details.style.flexGrow=1;details.style.minWidth=0;BuildSelection(details);row.Add(details);root.Add(row);
@@ -337,7 +338,7 @@ namespace RiskAI
                 for (int i = 0; i < controller.SelectedHarbors.Count; i++) QueueLabels(root, controller.SelectedHarbors[i]);
                 return;
             }
-            if (controller.SelectedTown)
+            if (controller.SelectedTown && !controller.SelectedHarbor)
             {
                 var town = controller.SelectedTown; AddTitle(root, town.DisplayName);
                 LiveInfo(root,()=>town?VisualFactory.TeamName(town.State.Owner)+" · "+town.QueueCount+" / 5 · "+(town.QueueCount>0?BattleRules.Name(town.TrainingKind):"cola vacía"):"Ciudad retirada");
@@ -351,7 +352,9 @@ namespace RiskAI
             }
             if (controller.Fleet.Count > 0)
             {
-                AddTitle(root, controller.Fleet.Count == 1 ? controller.Fleet[0].DisplayName : "FLOTA · " + controller.Fleet.Count + " barcos");
+                int count = controller.Selection.Count + controller.Fleet.Count;
+                AddTitle(root, count == 1 ? controller.Fleet[0].DisplayName : count + " UNIDADES SELECCIONADAS");
+                BuildSelectionRoster(root);
                 if(!wideFooter)AddInfo(root, "Selecciona ÓRDENES para navegar, atacar, detener, embarcar o desembarcar."); return;
             }
             if (controller.InspectedTarget is Soldier inspected)
@@ -369,6 +372,7 @@ namespace RiskAI
                     var unit = controller.Selection[0]; var profile = BattleRules.Profile(unit.Kind);
                     LiveInfo(root,()=>SoldierStats(unit));
                 }
+                else BuildSelectionRoster(root);
                 if(!wideFooter)AddInfo(root, "Selecciona ÓRDENES para mover, atacar, patrullar, detener o mantener."); return;
             }
             AddTitle(root, StrategicMapView.Active ? "TU IMPERIO, DE UN VISTAZO" : "SELECCIONA TROPAS O UN EDIFICIO");
@@ -395,20 +399,20 @@ namespace RiskAI
         void BuildProduction(VisualElement root)
         {
             if (controller.SelectedTowns.Count + controller.SelectedHarbors.Count > 1)
-                AddInfo(root, "Cada compra se añade una vez a la cola compatible más corta.");
-            if (controller.SelectedTown || controller.SelectedTowns.Count > 0)
+                root.tooltip = "Cada compra se añade una vez a la cola compatible más corta.";
+            if (controller.SelectedTowns.Count > 0)
             {
                 AddTitle(root, "EJÉRCITO");
                 UnitButtons(root, ProductionCatalog.SettlementUnits);
             }
-            if (controller.SelectedHarbor || controller.SelectedHarbors.Count > 0)
+            if (controller.SelectedHarbors.Count > 0)
             {
                 AddTitle(root, "MARINA"); UnitButtons(root, ProductionCatalog.HarborUnits);
                 var ships = new VisualElement(); RtsUiStyle.Row(ships, true);
                 foreach (var ship in ProductionCatalog.HarborShips)
                 {
                     var profile = Harbor.Profile((ShipKind)ship);
-                    ships.Add(GridButton(profile.Name + " · " + profile.Cost + " oro", () => controller.BuyShip((ShipKind)ship)));
+                    ships.Add(ShipButton((ShipKind)ship, profile.Name + " · " + profile.Cost + " oro", () => controller.BuyShip((ShipKind)ship)));
                 }
                 root.Add(ships);
             }
@@ -436,7 +440,7 @@ namespace RiskAI
             button.style.height=height;button.style.minHeight=height;button.style.maxHeight=height;button.style.marginBottom=5;button.style.marginRight=6;
             button.style.flexDirection=FlexDirection.Row;button.style.alignItems=Align.Center;
             button.style.paddingTop=3;button.style.paddingBottom=3;
-            var portrait = new Image { image = Resources.Load<Texture2D>(PortraitResource(kind)), scaleMode = ScaleMode.ScaleToFit };
+            var portrait = new Image { image = CachedPortrait(PortraitResource(kind)), scaleMode = ScaleMode.ScaleToFit };
             portrait.style.width = 36; portrait.style.height = 36; portrait.style.alignSelf = Align.Center;portrait.style.flexShrink=0;portrait.style.marginRight=6;
             var copy = RtsUiStyle.Label(BattleRules.Name(kind) + "\n" + BattleRules.Cost(kind) + " oro · " + BattleRules.Hotkey(kind), null, 12);
             copy.style.whiteSpace = WhiteSpace.Normal;copy.style.flexShrink=1;copy.style.minWidth=0;
@@ -448,6 +452,16 @@ namespace RiskAI
             var button = RtsUiStyle.Button(text, action);
             if (UiViewport.IsCompact) button.style.width = Length.Percent(46);
             else button.style.minWidth = 126;
+            return button;
+        }
+
+        static Button ShipButton(ShipKind kind, string text, System.Action action)
+        {
+            var button = RtsUiStyle.Button("", action, "Build ship " + kind);
+            if (UiViewport.IsCompact) button.style.width = Length.Percent(46); else button.style.minWidth = 126;
+            var icon = new NavalQueueIcon(); icon.style.width = 30; icon.style.height = 22; icon.style.alignSelf = Align.Center;
+            var label = RtsUiStyle.Label(text, null, 11); label.style.whiteSpace = WhiteSpace.Normal; label.style.unityTextAlign = TextAnchor.MiddleCenter;
+            icon.SetKind(kind); button.Add(icon); button.Add(label); button.tooltip = text;
             return button;
         }
 
@@ -487,7 +501,6 @@ namespace RiskAI
 
         sealed class QueueSlot
         {
-            static readonly Dictionary<string, Texture2D> portraitCache = new Dictionary<string, Texture2D>();
             readonly Settlement town; readonly Harbor harbor; readonly bool naval, showEmpty; readonly int index;
             readonly Button button; readonly Image portrait; readonly NavalQueueIcon navalIcon; readonly Label label; readonly VisualElement progress;
             public QueueSlot(Settlement town, Harbor harbor, bool naval, int index, bool showEmpty, Button button, Image portrait, NavalQueueIcon navalIcon, Label label, VisualElement progress)
@@ -527,13 +540,13 @@ namespace RiskAI
                 progress.style.width = Length.Percent(Mathf.Clamp01(amount) * 100);
             }
 
-            static string PortraitResource(UnitKind kind) => "Portraits/" + (kind == UnitKind.Guard ? "MountedKnight" : BattleRules.Model(kind));
+        }
 
-            static Texture2D CachedPortrait(string resource)
-            {
-                if (!portraitCache.TryGetValue(resource, out var texture)) { texture = Resources.Load<Texture2D>(resource); portraitCache.Add(resource, texture); }
-                return texture;
-            }
+        static readonly Dictionary<string, Texture2D> portraitCache = new Dictionary<string, Texture2D>();
+        static Texture2D CachedPortrait(string resource)
+        {
+            if (!portraitCache.TryGetValue(resource, out var texture)) { texture = Resources.Load<Texture2D>(resource); portraitCache.Add(resource, texture); }
+            return texture;
         }
 
         sealed class NavalQueueIcon : VisualElement
@@ -585,7 +598,7 @@ namespace RiskAI
             modal.style.backgroundColor = new Color(.01f, .02f, .03f, .88f); modal.style.paddingLeft = UiViewport.IsCompact ? 12 : 80; modal.style.paddingRight = UiViewport.IsCompact ? 12 : 80;
             modal.style.paddingTop = UiViewport.IsCompact ? 14 : 48; modal.style.paddingBottom = UiViewport.IsCompact ? 14 : 48;
             var panel = RtsUiStyle.Panel("HUD modal panel"); panel.style.flexGrow = 1;
-            var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "HUD modal scroll" }; scroll.style.flexGrow = 1;scroll.style.minHeight=0; panel.Add(scroll);
+            var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "HUD modal scroll" }; scroll.style.flexGrow = 1;scroll.style.minHeight=0; RtsUiStyle.ConfigureScroll(scroll); panel.Add(scroll);
             if (session.Winner >= 0) BuildResult(scroll);
             else if (controller.ScoreboardVisible || menuTab == 2) BuildRanking(scroll);
             else BuildHelp(scroll);
@@ -621,7 +634,7 @@ namespace RiskAI
                 panel.Add(RtsUiStyle.Button(controller.EdgePan ? "PANEO EN BORDES: ACTIVO" : "PANEO EN BORDES: INACTIVO", () => { controller.EdgePan = !controller.EdgePan; BuildRetainedUi(false); }));
                 panel.Add(RtsUiStyle.Button("VELOCIDAD CÁMARA −", () => { controller.CameraRig.PanSpeed = Mathf.Max(.5f, controller.CameraRig.PanSpeed - .2f); BuildRetainedUi(false); }));
                 panel.Add(RtsUiStyle.Button("VELOCIDAD CÁMARA +", () => { controller.CameraRig.PanSpeed = Mathf.Min(3f, controller.CameraRig.PanSpeed + .2f); BuildRetainedUi(false); }));
-                AddInfo(panel, "Rendimiento: " + RuntimeDiagnostics.LatestAverageMs.ToString("F1") + " ms medio · " + RuntimeDiagnostics.LatestMaximumMs.ToString("F1") + " ms máximo · " + RuntimeDiagnostics.LatestUnits + " unidades · " + (RuntimeDiagnostics.LatestUnityAllocatedBytes/1048576f).ToString("F0") + " MB Unity.");
+                AddInfo(panel, RuntimeDiagnostics.LatestReport == null ? "Recogiendo muestra de rendimiento…" : "Rendimiento: " + RuntimeDiagnostics.LatestAverageMs.ToString("F1") + " ms medio · " + RuntimeDiagnostics.LatestMaximumMs.ToString("F1") + " ms máximo · " + RuntimeDiagnostics.LatestUnits + " unidades · " + (RuntimeDiagnostics.LatestUnityAllocatedBytes/1048576f).ToString("F0") + " MB Unity.");
                 panel.Add(RtsUiStyle.Button("NUEVA PARTIDA · ELEGIR MAPA", FrontEndController.Open));
             }
         }

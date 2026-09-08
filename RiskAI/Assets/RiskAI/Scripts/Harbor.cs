@@ -14,8 +14,10 @@ namespace RiskAI
         readonly List<LandOrder> landQueue=new List<LandOrder>();
         NavalWorld world;TownState state;int lastOwner;
         CityClaimZone claimZone;LineRenderer claimRing,selectionRing,navalClaimRing;
-        Ship navalDefender;
+        Ship navalDefender=>claimZone?.NavalDefender;
         bool sharesTown,canLaunch;
+        bool transportLandingCached;
+        Vector3 cachedTransportLanding, cachedTransportBerth;
         string launchBlockReason;
         public Settlement LinkedTown { get; private set; }
         public BuildingId BuildingId { get; private set; }
@@ -48,6 +50,7 @@ namespace RiskAI
         public float CaptureProgress => state==null?0:state.Capture;
         public int QueueCount=>queue.Count;
         public const int QueueCapacity = 5;
+        public const int FleetCapacity = 12;
         public int LandQueueCount=>sharesTown&&LinkedTown?LinkedTown.QueueCount:landQueue.Count;
         public UnitKind QueuedLandKind(int index)=>sharesTown&&LinkedTown?LinkedTown.QueuedKind(index):landQueue[index].Kind;
         public float LandTrainingProgress=>sharesTown&&LinkedTown?LinkedTown.TrainingProgress:landQueue.Count==0?0:1-landQueue[0].Remaining/BattleRules.TrainTime(landQueue[0].Kind);
@@ -63,11 +66,12 @@ namespace RiskAI
 
         public void Initialize(NavalWorld naval,BuildingId buildingId,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth)
         {
+            transportLandingCached=false;cachedTransportLanding=default;cachedTransportBerth=default;
             sharesTown=false;canLaunch=SeaNavigation.HasClearance(berth);launchBlockReason=canLaunch?null:"El puerto no tiene una salida marítima segura.";
             world=naval;BuildingId=buildingId;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;landRally=LandEntry;lastOwner=Owner;
             var entrance=NavalArt.CreateHarbor(this);
             trainingView=BuildingTrainingView.Create(transform,entrance);
-            claimZone=new CityClaimZone(Landing);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));claimRing.transform.position=Landing;
+            claimZone=new CityClaimZone(Landing);claimZone.AttachHarbor(this);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));claimRing.transform.position=Landing;
             var towerObject=new GameObject("Torre de "+name);towerObject.transform.SetParent(transform,false);
             Vector3 direction=Berth-Landing;direction.y=0;direction=direction.sqrMagnitude>.001f?direction.normalized:Vector3.forward;
             // Opposite the harbormaster's house, with a clear silhouette and landing corridor.
@@ -81,8 +85,10 @@ namespace RiskAI
         }
         internal void InitializeImported(NavalWorld naval,BuildingId buildingId,Settlement town,Vector3 berth,string unavailableReason)
         {
+            transportLandingCached=false;cachedTransportLanding=default;cachedTransportBerth=default;
             world=naval;BuildingId=buildingId;DisplayName=town.DisplayName;LinkedTown=town;state=town.State;claimZone=town.ClaimZone;Defense=town.Defense;
             Landing=town.ClaimPoint;Berth=berth;lastOwner=Owner;sharesTown=true;
+            claimZone.AttachHarbor(this);
             canLaunch=string.IsNullOrEmpty(unavailableReason)&&SeaNavigation.HasClearance(berth);
             launchBlockReason=canLaunch?null:unavailableReason??"El puerto no tiene una salida marítima segura.";
             town.Port=this;
@@ -111,15 +117,35 @@ namespace RiskAI
         }
         public bool IsEmbarkZone(Vector3 point)
         {
-            return MapLayout.IsLand(point.x,point.z)&&FlatDistance(point,Landing)<=EmbarkRadius*EmbarkRadius;
+            return FlatDistance(point,Landing)<=EmbarkRadius*EmbarkRadius&&ShoreAccess.TryLanding(point,out _,out _);
         }
-        internal bool IsInBerthCircle(Vector3 point)=>FlatDistance(point,Berth)<=BerthRadius*BerthRadius;
+        public bool TryTransportLanding(out Vector3 landing,out Vector3 berth)
+        {
+            if(transportLandingCached){landing=cachedTransportLanding;berth=cachedTransportBerth;return true;}
+            berth=default;
+            if(!CanLaunch||!ShoreAccess.TryLanding(Landing,out landing,out _))
+            {landing=default;return false;}
+            // The guard/spawn berth may be farther offshore. Cargo needs its
+            // own approach inside the same loading range used by the player.
+            if(!SeaNavigation.TryNearestOcean(landing,Ship.LoadRadius-.45f,out berth))return false;
+            cachedTransportLanding=landing;cachedTransportBerth=berth;transportLandingCached=true;return true;
+        }
+        internal bool IsInBerthCircle(Vector3 point)=>FlatDistance(point,Berth)<=ClaimRules.CircleRadius*ClaimRules.CircleRadius;
         public bool IsShipDocked(Ship ship)=>ship&&FlatDistance(ship.transform.position,Berth)<=BerthRadius*BerthRadius;
         public bool HasLivingDefender=>Defender&&Defender.IsAlive;
         public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Kind==ShipKind.Galley&&
             navalDefender.Team==Owner&&IsShipDocked(navalDefender)?navalDefender:null;
         public bool HasNavalDefender=>NavalDefender;
         public LineRenderer NavalClaimRing=>navalClaimRing;
+        /// <summary>One post, owner and living guardian, for imported and authored ports.</summary>
+        internal int StepClaim(float delta)
+        {
+            var previous=Defender;
+            int owner=claimZone.Step(world.Session,Owner,delta);
+            state.Capture=claimZone.Progress;state.Capturing=claimZone.CapturingTeam;state.Contested=claimZone.Contested;
+            if(Defender&&Defender!=previous)Defender.HoldPosition();
+            return owner;
+        }
         public void Select(bool selected)
         {
             Selected=selected;
@@ -147,37 +173,23 @@ namespace RiskAI
             }
             if(sharesTown&&LinkedTown)LinkedTown.SetNavalClaimVisual(navalGuard);
         }
-        /// <summary>Called after land claim resolution; a live land defender always wins.</summary>
-        public int ResolveNavalOwner(int previousOwner)
-        {
-            if(HasLivingDefender){SetNavalDefender(null);return previousOwner;}
-            var successor=FindDockedSuccessor(previousOwner,null,false);
-            SetNavalDefender(successor);
-            return successor?successor.Team:PlayerRules.NeutralOwner;
-        }
         internal bool TryReleaseNavalDefenderForOrder(Ship departing)
         {
             if(navalDefender!=departing)return true;
-            if(HasLivingDefender&&Defender.Team==departing.Team){SetNavalDefender(null);return true;}
-            if(claimZone!=null&&claimZone.TryAssignCircleReplacement(world.Session,departing.Team))
-            {
-                SetNavalDefender(null);
-                return true;
-            }
-            var successor=FindDockedSuccessor(departing.Team,departing,true);
-            if(!successor)return false;
-            SetNavalDefender(successor);
-            return true;
+            return claimZone.TryReleaseGuardianForOrder(world.Session,departing);
         }
-        Ship FindDockedSuccessor(int owner,Ship excluded,bool alliesOnly)
+        internal Ship FindDockedSuccessor(int owner,Ship excluded,bool alliesOnly)
         {
             if(!world)return null;
             Ship best=null;float bestDistance=float.MaxValue;
             foreach(var ship in world.Ships)
             {
-                if(!ship||ship==excluded||!ship.IsAlive||ship.Kind!=ShipKind.Galley||!IsShipDocked(ship))continue;
+                if(!ship||ship==excluded||!ship.IsAlive||ship.Kind!=ShipKind.Galley||
+                    ship.Garrison&&ship.Garrison!=this)continue;
                 if(alliesOnly&&ship.Team!=owner)continue;
                 float distance=FlatDistance(ship.transform.position,Berth);
+                float radius=alliesOnly?ClaimRules.ReliefRadius:ship.Team==owner?ClaimRules.ProtectionRadius:ClaimRules.TakeoverRadius;
+                if(distance>radius*radius)continue;
                 if(ClaimRules.BetterCandidate(PlayerRules.ToCombatTeam(owner),ship.Team,distance,ship.EntityId,
                     best?best.Team:-1,bestDistance,best?best.EntityId:0))
                 {
@@ -189,11 +201,7 @@ namespace RiskAI
         }
         void SetNavalDefender(Ship ship)
         {
-            if(navalDefender==ship){if(ship)ship.BindHarborGuard(this);return;}
-            var previous=navalDefender;navalDefender=null;
-            if(previous)previous.ReleaseHarborGuard(this);
-            navalDefender=ship;
-            if(ship)ship.BindHarborGuard(this);
+            claimZone.SetNavalDefender(ship,this);
         }
         public string Buy(ShipKind kind,int team=0)
         {
@@ -205,7 +213,7 @@ namespace RiskAI
             if(world.Session.Paused)return "Reanuda la partida para comprar barcos.";
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
             if(queue.Count>=QueueCapacity)return "La cola naval está llena.";
-            if(world.Ships.Count(s=>s&&s.IsAlive&&s.Team==team)+world.PendingShips(team)>=12)return "Límite naval de 12 barcos alcanzado.";
+            if(world.Ships.Count(s=>s&&s.IsAlive&&s.Team==team)+world.PendingShips(team)>=FleetCapacity)return "Límite naval de "+FleetCapacity+" barcos alcanzado.";
             int cost=Cost(kind);if(!world.Session.Economy.Spend(team,cost))return "Oro insuficiente para comprar este barco.";
             queue.Add(new Order{Kind=kind,Team=team,Remaining=TrainTime(kind)});return null;
         }
@@ -265,7 +273,6 @@ namespace RiskAI
         {
             if(!world||world.Session.Paused||world.Session.Winner>=0)return;
             if(navalDefender&&navalDefender.Team!=Owner)SetNavalDefender(null);
-            if(sharesTown&&HasLivingDefender)SetNavalDefender(null);
             if(Owner!=lastOwner)
             {
                 RefundQueue();RefundLandQueue();
@@ -274,11 +281,7 @@ namespace RiskAI
             }
             if(!sharesTown&&state!=null)
             {
-                var previous=claimZone.Defender;int owner=claimZone.Step(world.Session,state.Owner,delta);
-                state.Capture=claimZone.Progress;state.Capturing=claimZone.CapturingTeam;state.Contested=claimZone.Contested;
-                if(claimZone.Defender&&claimZone.Defender!=previous)claimZone.Defender.HoldPosition();
-                if(!HasLivingDefender)owner=ResolveNavalOwner(state.Owner);
-                else SetNavalDefender(null);
+                int owner=StepClaim(delta);
                 if(owner!=state.Owner){state.Owner=owner;Captured();}
                 claimRing.startColor=claimRing.endColor=state.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,state.Capture*.65f);
             }

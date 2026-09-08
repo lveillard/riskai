@@ -1,6 +1,6 @@
 # Observing a live RiskAI runtime log
 
-The v0.19 player keeps this passive reader compatible. Diagnostics also report
+The v0.21 player keeps this passive reader compatible. Diagnostics also report
 `unityAllocatedB` (Unity's tracked allocated memory, not total process/WASM
 memory). Startup emits `RISKAI_STARTUP` phase timings with allocated, reserved
 and managed memory; these separate map generation, navigation and UI startup
@@ -35,13 +35,13 @@ From the repository root:
 
 ```powershell
 python scripts/observe_runtime.py
-python scripts/observe_runtime.py RiskAI/Logs/v17-opened.log --last 5
+python scripts/observe_runtime.py RiskAI/Logs/v21-opened.log --last 5
 python scripts/observe_runtime.py --follow --duration 90
 python scripts/observe_runtime.py --json
 ```
 
 The positional path is optional and defaults to
-`RiskAI/Logs/v17-opened.log`, written by `Play-RiskAI.cmd`. `--follow` polls once per second; `--duration`
+`RiskAI/Logs/v21-opened.log`, written by `Play-RiskAI.cmd`. `--follow` polls once per second; `--duration`
 bounds it for scripts or a short observation. With `--json --follow`, each
 new record is emitted as one JSON Lines object. Snapshot JSON includes the latest
 diagnostic windows and recent rejection/route events.
@@ -102,6 +102,35 @@ also include:
   do not count all pending routes that occurred during the 30-second window.
   `navIterationsPerFrame` reports the active Unity asynchronous path budget.
 
+## Movement stages added in v0.21
+
+`humanMoveOutstanding` is the number of eligible movement observations still
+open, even across report windows. Cancellation or completion closes one;
+reading a report does not reset this live count.
+
+- `routeReadyHumanObservedCount`, `applyRouteReadyHumanActiveAvgMs/MaxMs`: application
+  to the first simulation-tick observation of a non-pending route. This is
+  not the exact solver completion timestamp and does not imply a complete
+  reachable path.
+- `speedHumanObservedCount`, `submitSpeedHumanActiveAvgMs/MaxMs`: accepted
+  submission to the first horizontal speed above 0.2 units/s, regardless of
+  whether that velocity points toward the final destination.
+- `routeReadySpeedHumanPairedCount`, `routeReadySpeedHumanActiveAvgMs/MaxMs`: paired
+  interval on the same command, only when a route-ready observation occurred
+  before or alongside its first speed crossing.
+- `speedDirectedHumanPairedCount`, `speedDirectedHumanActiveAvgMs/MaxMs`:
+  paired interval from first speed crossing to the original direction-qualified
+  first-move condition. A detour may move away from the destination initially.
+
+The original `firstMoveHuman*` fields remain compatible. Both old and new
+observations are sampled in the simulation tick and exclude only observed
+pauses. They are velocity observations, not per-command transform displacement.
+Counts can land in different reporting windows; do not subtract independently
+averaged stages or compare them to all applied commands (which include Hold).
+Desired/actual velocity and navigation traces are still needed before assigning
+post-route delay specifically to avoidance. No movement or navigation budget is
+changed by these counters.
+
 ## Reading limits
 
 A diagnostic row covers a 30-second window. Its averages and maxima describe
@@ -139,3 +168,28 @@ warmup requests more NavMesh work per rendered frame and must not be presented
 as normal-speed pointer latency. The same seed/configuration does not guarantee
 identical battles: Unity movement is still frame-dependent. This is a controlled
 load probe, not a replay or a substitute for testing real mouse/touch input.
+
+## NavMesh path-budget A/B
+
+The desktop player accepts `--riskai-path-budget`, clamped to `100..2000`, and
+reports the applied value as `RISKAI_NAV_BUDGET` and
+`navIterationsPerFrame`. To compare the current budget with a larger budget,
+run the same controlled probe twice and change only the final value. Keep the
+same seed, map, players, warmup, duration, and recruit fixture. Record
+`unitsInitial` from `RISKAI_PROBE_PHASE phase=measurement`, the final unit
+count, and external load. Movement is not deterministic, so unequal battles
+make this an exploratory comparison; do not discard inconvenient runs or
+attribute every difference to the budget (fixture target: roughly 600 units):
+
+```powershell
+& ./Builds/Windows-v0.21/RiskAI.exe -screen-width 1600 -screen-height 900 -screen-fullscreen 0 --riskai-map europe --riskai-players 16 --riskai-seed 160212 --riskai-probe --riskai-probe-warmup 900 --riskai-probe-warmup-commander --riskai-probe-recruits 24 --riskai-probe-seconds 90 --riskai-path-budget 500 -logFile ./RiskAI/Logs/path-budget-500.log
+& ./Builds/Windows-v0.21/RiskAI.exe -screen-width 1600 -screen-height 900 -screen-fullscreen 0 --riskai-map europe --riskai-players 16 --riskai-seed 160212 --riskai-probe --riskai-probe-warmup 900 --riskai-probe-warmup-commander --riskai-probe-recruits 24 --riskai-probe-seconds 90 --riskai-path-budget 1000 -logFile ./RiskAI/Logs/path-budget-1000.log
+```
+
+Compare `firstMoveHumanActive*Ms`, `pathPending*`, frame thresholds, and the
+world phase timings. The first exploratory Windows runs are documented in
+[VALIDATION-v0.21](VALIDATION-v0.21.md); unequal battles and external load
+prevent attributing their differences solely to this budget. The default
+remains 500. The browser probe exposes the
+same switch through `scripts/check_web_player.py --path-budget 500` or
+`--path-budget 1000`; keep its other options identical for that A/B.

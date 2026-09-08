@@ -1,5 +1,35 @@
 # RiskAI — decisiones y siguientes pasos
 
+## Ronda v0.21 · feedback de la partida, adicional a fase 2
+
+Registro del feedback del 8 de septiembre. Estas tareas se mantienen junto
+al objetivo activo de tablet/Web; no quedan sustituidas por él.
+Las revisiones estáticas no sustituyen las pruebas. Tras tres rondas se han
+aprobado 100 casos Unity distintos; exportaciones y evidencia del último parche
+se cierran por separado.
+
+- [x] Corregir arrastre derecho en pausa, conservar rueda de cámara y cancelar gestos pendientes al pausar/reanudar. Regresión Unity aprobada; cámara en pausa comprobada también en el reproductor Web.
+- [x] Selección rectangular sólo de edificios propios, incluidos puertos; Shift conserva la selección al arrastrar vacío. Regresión Unity aprobada.
+- [x] Verificar rueda sobre ranking y catálogo de producción en el reproductor Web real, incluida ventana 390×844; el mapa no recibe ese zoom. Entrada CDP, dispositivo físico pendiente.
+- [x] Iconos de fragata/transporte en compras y colas; ayuda sólo en tooltip, sin explicación permanente. Pulsación larga compartida en `376d588`: 35/35 pruebas (15 nuevas), tres revisiones independientes y comprobación Web de tarjetas y compra naval sin gasto al consultar ayuda; dispositivo físico pendiente. [Evidencia](docs/audits/TOUCH-TOOLTIPS-v0.21.md).
+- [x] Un solo defensor y propietario por puerto; el barco guardián habilita producción mediante los mismos comandos que el resto. Se conserva la prioridad de un guardián vivo y las anclas duales; escaneo `Contested`, prioridad terrestre viva y sucesión naval aprobados en Unity.
+- [ ] Eliminar interferencia entre círculo de selección, hover y círculo del guardián naval; mantener el barco anclado al disparar. Comparar visualmente al seleccionar/mover. Las anclas terrestre/atraque son adaptadores intencionales y no se unifican por apariencia.
+- [x] Ampliar ligeramente el margen de relevo de guarnición, especialmente para caballeros; misma tolerancia terrestre y naval (2,0 frente a radio pintado 1,55). La prueba pasó navegando desde más de 5 m; no fue necesario ampliar el radio naval.
+- [ ] Entrenamiento con luz visible saliendo de la puerta y umbral, compartida entre edificios/colas. Cambio de presentación pendiente de inspección.
+- [x] Evitar que la IA reenvíe tropas a ciudades inaccesibles por tierra. El filtro por tropa queda implementado; cursor estable frente a cambios de roster/propietario validado; el umbral de ola mínima queda para decisión aparte.
+- [x] IA con expediciones marítimas reales: comprar transporte, reunir tropas móviles, embarcar, navegar, desembarcar en una zona válida y atacar/capturar. Corregir pares puerto/objetivo alternativos, conectividad y equidad de fuente/recuperación, caché/precálculo de atraques, snapshot del cargamento real y liberación de rezagados; el embarque del jugador necesita progreso finito, reintento a 0,2 s sin sondeos por frame, y los fallos navales de IA deben quedar en el equipo local. Regresiones aprobadas, incluida expedición completa. La tercera ronda añade continuidad hasta ciudades más lejanas, barco compatible por fuente y recuperación de errores antiguos. Sin teletransportar carga. [Auditorías navales](docs/audits/NAVAL-v0.21.md) · [Revisión de ronda 1](docs/audits/REVIEW-v0.21.md) · [Revisión Grok](docs/audits/GROK-v0.21.md).
+- [x] Corregir agua invisible en Web: el perfil Mobile aporta profundidad y color opaco al shader compartido. Tres revisiones independientes limpias y comprobación visual del lago en el reproductor Web `a4060df`. Android físico sin validar.
+- [ ] Costa más natural: playas de desembarco, tramos rocosos y verdes no embarcables, con clasificación compartida entre representación y reglas. El horizonte debe recibir UV1; el test de orilla ya separa terreno fuente de la aserción de política. Geometría visual y alineación arena pintada/validada siguen abiertas; no elegir política todavía. El coste de bake de costa se medirá en `StartupMetrics`/fase `terrain`.
+- [ ] Investigar retraso de órdenes en partida avanzada sin cerrar la sesión. La sonda de presupuesto sigue en 500 hasta tener medición reproducible; caché/precálculo de atraques aceptado para corregir picos de planificación. El arranque de terreno se medirá con `StartupMetrics`; la pasada `060ed60` de 957→443 unidades queda marcada con contención de RAM y se repetirá sólo la medición afectada. La repetición `a4060df` (1008→511) también coincidió con carga externa: órdenes sin cola, primer movimiento máximo 1086 ms en la ventana de 834 unidades. Contadores de ruta observada, inicio de velocidad y velocidad dirigida añadidos; seis pruebas dirigidas aprobadas. Etapas observadas en Windows `624743c`: la primera ventana de carga llega a 392 ms desde aplicación hasta ruta no pendiente, más espera hasta velocidad; hubo compilación ajena. La medición posterior sin contención (`624743c`, 903→349) completó 109 movimientos observados: máximo envío→velocidad 437 ms, aplicación→ruta 351 ms. Comparar presupuesto NavMesh con carga/posiciones controladas antes de cambiar el valor compartido; esta pasada no fue un A/B. Picos navales, carga sostenida de 800 y comportamiento ARM pendientes. Medidas v0.20: unas 500 unidades, envío→aplicación 27–36 ms, una muestra de primer movimiento 1,24 s y rutas pendientes hasta 800 ms. Separar navegación de picos de frame de 23–26 s antes de atribuirlos a simulación o renderizado; la sesión v0.20 ya terminó.
+- [x] Exportar Windows/Web `624743c`, comprobar contadores en ambos jugadores y actualizar launcher/lector de logs. 100 casos Unity distintos y ocho Python aprobados. Capturas e informes publicados con procedencia.
+- [x] Completar la medición acotada de rendimiento con memoria recuperada: Windows `624743c`, 903→349 unidades, 90 s a 1×, 988 órdenes aplicadas/0 rechazadas/0 pendientes al cerrar; 126 muestras de entorno sin compilador/sonda competidora y mínimo 7,97 GiB libres. Envío→velocidad máximo 437,03 ms; la mayor espera posterior a aplicación está hasta observar la ruta. [Datos y límites](docs/audits/PERFORMANCE-v0.21.json). Esta ejecución completa la medición pendiente; no certifica 800 unidades sostenidas, clic físico o ARM, ni resuelve todo el retraso o la fase 2. No se cambió el presupuesto ni se repitieron suites sin cambios.
+
+- [x] Comprobar gestos de juego en el reproductor Web exportado: área con un contacto y lápiz, doble toque, toque de dos contactos y botón secundario del lápiz mueven unidades reclutadas normalmente. Tarjetas tocables verificadas en escritorio/vertical, layout también horizontal. Es entrada CDP; no se da por probada una tablet física. La reexportación final usa el target WebGL explícito del script y no reproduce los nuevos avisos de sampler.
+- [x] Recuperar retratos individuales, barras de vida y selección por tarjeta del ejército; un solo roster para escritorio y pestaña compacta, incluidos grupos mixtos tierra/mar. Cinco regresiones nuevas; siete casos HUD finales aprobados. Tres revisores Opus5 independientes y seguimientos proporcionales sin P0/P1/P2 abiertos. [Auditoría](docs/audits/ROSTER-v0.21.md).
+- [x] Identidad de selección durante pérdida prolongada de foco corregida en fuente local `f05c586`: selección, grupos y embarques pendientes rechazan otra vida del pool y conservan supervivientes. Unity 55/55 (diez nuevas), tras tres CS1503 corregidos antes de ejecutar; tres contextos independientes Opus5 y seguimientos sin P0/P1/P2 finales. Cierre de fuente/pruebas/revisión; [límites y cierre de exportaciones](docs/audits/SELECTION-LIFETIME-v0.21.md).
+
+[Validación de la ronda](docs/VALIDATION-v0.21.md) · [Objetivo fase 2](docs/PHASE2.md).
+
 ## v0.20 · recuperar identidad RTS
 
 - [x] Recuperar marcos propios, materiales, títulos y retratos sin duplicar UI ni reglas por plataforma.
@@ -9,7 +39,7 @@
 - [x] Instalar Web Build Support y comprobar el primer reproductor real; detectado y corregido en fuente el stripping de Collider al crear la batalla.
 - [x] Verificar la exportación Web final con batallas, comandos, tres reinicios Europe/NewWorld y lápiz/toque sintéticos dentro de Unity.
 - [ ] Mejorar y atribuir el coste Web: Europe táctico sin compilador externo midió 37,20 ms medios/62 ms máximo; vista estratégica 28,35/56 ms. Las pasadas bajo carga tenían fuertes picos y omitir draws no los eliminó. Seguir con trazas de CPU del navegador; no presentar esto como rendimiento ARM validado.
-- [ ] Mostrar «recogiendo muestra» en el menú de rendimiento hasta tener el primer informe; los ceros iniciales no son una medición.
+- [x] Mostrar «recogiendo muestra» en el menú de rendimiento hasta tener el primer informe; los ceros iniciales no son una medición.
 
 [Capturas, pruebas y límites v0.20](docs/VALIDATION-v0.20.md).
 

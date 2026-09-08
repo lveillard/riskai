@@ -89,7 +89,7 @@ namespace RiskAI
     public sealed class ShipAppearance:MonoBehaviour
     {
         Ship ship;Transform model;LineRenderer ring;public void Initialize(Ship s,Transform m,LineRenderer r){ship=s;model=m;ring=r;ring.enabled=false;}
-        void LateUpdate(){if(!ship)return;ring.enabled=ship.Selected;model.localPosition=Vector3.up*(.025f+Mathf.Sin(Time.time*1.9f+GetInstanceID())*.045f);model.localRotation=Quaternion.Euler(Mathf.Sin(Time.time*1.2f)*.7f,0,Mathf.Sin(Time.time*1.6f)*1.2f);}
+        void LateUpdate(){if(!ship)return;ring.enabled=ship.Selected;ring.transform.localScale=Vector3.one*(ship.IsGarrison?.6f:1f);model.localPosition=Vector3.up*(.025f+Mathf.Sin(Time.time*1.9f+GetInstanceID())*.045f);model.localRotation=Quaternion.Euler(Mathf.Sin(Time.time*1.2f)*.7f,0,Mathf.Sin(Time.time*1.6f)*1.2f);}
     }
     public sealed class HarborAppearance:MonoBehaviour
     {

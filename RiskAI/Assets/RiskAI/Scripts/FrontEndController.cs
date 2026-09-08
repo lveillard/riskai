@@ -138,11 +138,12 @@ namespace RiskAI
             if(!UiViewport.IsCompact){var seal=new RtsHeraldicSeal(2,RtsUiStyle.Gold);seal.style.width=62;seal.style.height=62;seal.style.marginRight=18;titleRow.Add(seal);}
             var title = RtsUiStyle.Title("DOMINIOS", null, UiViewport.IsCompact ? 24 : 34);
             title.style.flexGrow = 1; titleRow.Add(title);
-            var version = RtsUiStyle.Label("v0.20 · CONQUISTA", null, UiViewport.IsCompact ? 11 : 13); version.style.marginLeft = 8; titleRow.Add(version); header.Add(titleRow);
+            var version = RtsUiStyle.Label("v"+Application.version+" · CONQUISTA", null, UiViewport.IsCompact ? 11 : 13); version.style.marginLeft = 8; titleRow.Add(version); header.Add(titleRow);
             var description = RtsUiStyle.Label("RISKAI  ·  Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.", null, 14); description.style.whiteSpace = WhiteSpace.Normal;description.style.color=RtsUiStyle.Muted; header.Add(description);
             root.Add(header);
 
             var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "Front end scroll" };
+            RtsUiStyle.ConfigureScroll(scroll);
             scroll.horizontalScrollerVisibility=ScrollerVisibility.Hidden;
             scroll.contentContainer.style.minWidth=0;
             // Percentage width can include the vertical scroller itself. Bind to

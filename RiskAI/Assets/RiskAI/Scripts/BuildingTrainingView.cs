@@ -63,7 +63,9 @@ namespace RiskAI
 
         void Build()
         {
-            landMaterial = VisualFactory.EmissiveMat(new Color(1f, .39f, .08f), .48f);
+            // Emissive materials are cached by VisualFactory, so every doorway shares
+            // the same warm/naval cue without adding realtime lights per building.
+            landMaterial = VisualFactory.EmissiveMat(new Color(1f, .39f, .08f), .90f);
             navalMaterial = VisualFactory.EmissiveMat(new Color(.18f, .63f, 1f), .35f);
             var pivot = new GameObject("Training door pivot");
             pivot.transform.SetParent(transform, false);
@@ -71,11 +73,14 @@ namespace RiskAI
             warmSeams = new GameObject("Training gate glow").transform;
             warmSeams.SetParent(doorPivot, false);
 
-            // These slits illuminate the art's existing door leaves; they do not add a second doorway.
+            // The inset glow reads as light coming from the existing doorway and its
+            // threshold; it does not add a second doorway or alter the authored anchor.
+            var opening = VisualFactory.Shape(warmSeams, PrimitiveType.Cube, "Training doorway glow", new Vector3(0, .60f, .012f), new Vector3(.40f, 1.00f, .012f), new Color(1f, .39f, .08f));
             var left = VisualFactory.Shape(warmSeams, PrimitiveType.Cube, "Training gate seam left", new Vector3(-.24f, .63f, .016f), new Vector3(.035f, 1.03f, .018f), new Color(1f, .39f, .08f));
             var right = VisualFactory.Shape(warmSeams, PrimitiveType.Cube, "Training gate seam right", new Vector3(.24f, .63f, .016f), new Vector3(.035f, 1.03f, .018f), new Color(1f, .39f, .08f));
             var lintel = VisualFactory.Shape(warmSeams, PrimitiveType.Cube, "Training gate lintel glow", new Vector3(0, 1.12f, .016f), new Vector3(.55f, .035f, .018f), new Color(1f, .39f, .08f));
-            warmRenderers = new[] { left.GetComponent<Renderer>(), right.GetComponent<Renderer>(), lintel.GetComponent<Renderer>() };
+            var threshold = VisualFactory.Shape(warmSeams, PrimitiveType.Cube, "Training threshold glow", new Vector3(0, .08f, .025f), new Vector3(.50f, .035f, .12f), new Color(1f, .39f, .08f));
+            warmRenderers = new[] { opening.GetComponent<Renderer>(), left.GetComponent<Renderer>(), right.GetComponent<Renderer>(), lintel.GetComponent<Renderer>(), threshold.GetComponent<Renderer>() };
             seamBaseScale = warmSeams.localScale;
             foreach (var renderer in GetComponentsInChildren<Renderer>())
             {

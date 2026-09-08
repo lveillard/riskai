@@ -17,11 +17,16 @@ namespace RiskAI
         Vector3 garrisonAnchor;
         bool hasGarrisonAnchor;
         public float HalfExtent { get; }
-        public Soldier Defender { get; private set; }
+        CombatTarget guardian;
+        Harbor harbor;
+        public Soldier Defender { get=>guardian as Soldier; private set=>guardian=value; }
+        public Ship NavalDefender=>guardian as Ship;
+        public CombatTarget Guardian=>guardian&&guardian.IsAlive?guardian:null;
         public bool Contested { get; private set; }
         public float Progress => 0;
         public int CapturingTeam => -1;
         public CityClaimZone(Vector3 center, float halfExtent = DefaultHalfExtent) { Center = center; HalfExtent = halfExtent; }
+        internal void AttachHarbor(Harbor port) { harbor=port; }
         internal bool TryGetGarrisonAnchor(out Vector3 anchor)
         {
             if (hasGarrisonAnchor)
@@ -51,6 +56,10 @@ namespace RiskAI
             float friendlyDistance = float.MaxValue, enemyDistance = float.MaxValue;
             Contested = false;
             if (Defender && (!IsEligible(Defender) || Defender.Garrison != this)) Defender = null;
+            if (NavalDefender)
+            {
+                if (!harbor || !harbor.HasNavalDefender) SetNavalDefender(null,harbor);
+            }
             for (int i = 0; soldiers != null && i < soldiers.Count; i++)
             {
                 var unit = soldiers[i] as Soldier;
@@ -70,13 +79,18 @@ namespace RiskAI
                     { enemy = unit; enemyDistance = distance; }
                 }
             }
-            if (Defender) return owner;
+            // A living guardian holds ownership, but enemies in the capture area
+            // still make the post contested for visuals and combat decisions.
+            if (Defender || NavalDefender) return owner;
             // A living allied replacement has priority, even when an enemy is closer.
             // The nearest enemy inherits an undefended post; otherwise it becomes neutral.
-            var successor = friendly ? friendly : enemy;
-            if (!successor) { return -1; }
-            SetDefender(successor);
-            return Defender && PlayerRules.IsPlayer(successor.Team) ? successor.Team : PlayerRules.NeutralOwner;
+            CombatTarget successor = friendly ? friendly : enemy;
+            float distanceSquared=friendly?friendlyDistance:enemyDistance;
+            var ship=harbor?harbor.FindDockedSuccessor(owner,null,false):null;
+            if(ship&&ClaimRules.BetterCandidate(ownerTeam,ship.Team,FlatDistance(ship.transform.position,harbor.Berth),ship.EntityId,
+                successor?successor.Team:-1,distanceSquared,successor?successor.EntityId:0))successor=ship;
+            if (!successor) return PlayerRules.NeutralOwner;
+            return TrySetGuardian(successor) && PlayerRules.IsPlayer(successor.Team) ? successor.Team : PlayerRules.NeutralOwner;
         }
         public void SetDefender(Soldier defender)
         {
@@ -94,10 +108,28 @@ namespace RiskAI
             }
             if (!IsEligible(defender) || defender.IsGarrison && defender.Garrison != this || !defender.BindGarrison(this)) return false;
             var previous = Defender;
+            var previousShip = NavalDefender;
             Defender = defender;
             if (previous) previous.ReleaseGarrison(this);
+            if (previousShip) previousShip.ReleaseHarborGuard(previousShip.Garrison);
             Contested=false;
             return true;
+        }
+        internal void SetNavalDefender(Ship ship,Harbor harbor)
+        {
+            if(ship&&(!ship.IsAlive||ship.Kind!=ShipKind.Galley||ship.Garrison&&ship.Garrison!=harbor))return;
+            var previousShip=NavalDefender;
+            if(previousShip==ship)return;
+            // Land and sea are movement adapters for one logical garrison slot.
+            // Clearing a naval candidate must never erase a valid land defender.
+            if(!ship)
+            {
+                if(previousShip){guardian=null;previousShip.ReleaseHarborGuard(harbor);}
+                return;
+            }
+            if(Defender)Defender.ReleaseGarrison(this);
+            if(previousShip)previousShip.ReleaseHarborGuard(harbor);
+            guardian=ship;ship.BindHarborGuard(harbor);Contested=false;
         }
         internal bool CanReleaseDefenderForOrder(BattleSession session, Soldier defender)
         {
@@ -105,25 +137,27 @@ namespace RiskAI
         }
         internal bool TryReleaseDefenderForOrder(BattleSession session, Soldier defender)
         {
-            if (Defender != defender) return false;
-            var replacement = FindCircleReplacement(session, defender.Team, defender);
-            return replacement && TrySetDefender(replacement);
+            return TryReleaseGuardianForOrder(session,defender);
         }
-        // Port ships use this same exact land-circle rule before a naval guard can leave.
-        internal bool TryAssignCircleReplacement(BattleSession session, int team)
+        internal bool TryReleaseGuardianForOrder(BattleSession session,CombatTarget departing)
         {
-            if (Defender && IsEligible(Defender) && Defender.Team == team) return true;
-            if (Defender) return false;
-            var replacement = FindCircleReplacement(session, team, null);
-            return replacement && TrySetDefender(replacement);
+            if(guardian!=departing||!departing)return false;
+            var replacement=FindCircleReplacement(session,departing.Team,departing);
+            return replacement&&TrySetGuardian(replacement);
         }
-        Soldier FindCircleReplacement(BattleSession session, int team, Soldier excluded)
+        bool TrySetGuardian(CombatTarget candidate)
+        {
+            if(candidate is Soldier soldier)return TrySetDefender(soldier);
+            if(candidate is Ship ship&&harbor){SetNavalDefender(ship,harbor);return guardian==ship;}
+            return false;
+        }
+        CombatTarget FindCircleReplacement(BattleSession session, int team, CombatTarget excluded)
         {
             if (!session) return null;
-            session.Spatial.Query(Center, ClaimRules.CircleRadius, nearby);
+            session.Spatial.Query(Center, ClaimRules.ReliefRadius, nearby);
             Soldier best = null;
             float bestDistance = float.MaxValue;
-            float radiusSquared = ClaimRules.CircleRadius * ClaimRules.CircleRadius;
+            float radiusSquared = ClaimRules.ReliefRadius * ClaimRules.ReliefRadius;
             for (int i = 0; i < nearby.Count; i++)
             {
                 var unit = nearby[i] as Soldier;
@@ -138,8 +172,12 @@ namespace RiskAI
                     bestDistance = distance;
                 }
             }
+            var ship=harbor?harbor.FindDockedSuccessor(team,excluded as Ship,true):null;
+            if(ship&&ClaimRules.BetterCandidate(team,ship.Team,FlatDistance(ship.transform.position,harbor.Berth),ship.EntityId,
+                best?best.Team:-1,bestDistance,best?best.EntityId:0))return ship;
             return best;
         }
+        static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
         static bool IsEligible(Soldier unit) => unit && unit.isActiveAndEnabled && unit.IsAlive &&
             unit.Agent && unit.Agent.enabled && unit.Agent.isOnNavMesh &&
             (PlayerRules.IsPlayer(unit.Team) || unit.Team == PlayerRules.NeutralTeam);

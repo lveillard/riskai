@@ -18,6 +18,7 @@ capturas, población, cámara por mapa ni frecuencia de simulación.
 | Toque de dos dedos | Una orden contextual al soltar, sin desplazamiento previo. |
 | Doble toque de un dedo/lápiz | Orden contextual conservando la selección previa. |
 | Botón secundario del lápiz, si se expone | Orden contextual. |
+| Pulsación larga sobre UI con ayuda | Muestra el tooltip; soltar no activa el botón. |
 | Ratón | Mantiene clics, doble selección, rueda, arrastre derecho y teclado. |
 | Trackpad | Usa los eventos de ratón/rueda/botón que entregue el sistema operativo. |
 
@@ -43,8 +44,11 @@ orden. Se cancela el estado pendiente al perder foco o abrir un modal.
 4. Exportación Web con plantilla propia, densidad de canvas acotada,
    diagnóstico por fases de arranque y pruebas de partidas/reinicios. Medir
    en navegador real antes de reducir geometría o presupuesto de navegación.
-5. Revisiones adversariales Grok 4.6, corrección, pruebas Windows/Web y
-   documentación de las limitaciones de hardware realmente disponible.
+5. Revisiones adversariales independientes, corrección, pruebas Windows/Web y
+   documentación de las limitaciones de hardware realmente disponible. Para
+   v0.21 se usan tres contextos aislados de Astra/Opus; por instrucción del
+   usuario del 8 de septiembre, Grok 4.6 queda reservado a revisiones esenciales
+   debido a su cuota restante.
 
 ## Producción y comandos locales
 
@@ -142,7 +146,42 @@ con su alcance.
 [Limitaciones](https://docs.unity3d.com/6000.3/Documentation/Manual/webgl-technical-overview.html),
 [memoria](https://docs.unity3d.com/6000.3/Documentation/Manual/webgl-memory.html).
 
+## Avance v0.21
+
+La corrección compartida de ratón mantiene rueda sobre el HUD y cámara en
+pausa. Windows y Web incluyen el mismo catálogo de Marines/barcos, sus
+colas y el comandante de expediciones navales. Web se ha inspeccionado en
+Edge con entradas CDP y ventanas de escritorio y 390×844; el perfil Mobile
+proporciona ahora las texturas de profundidad y color requeridas por el
+agua. Esta corrección añade trabajo de renderizado que debe medirse; no
+certifica rendimiento en Android. La evidencia actual y las limitaciones
+están en [Validación v0.21](VALIDATION-v0.21.md).
+
+La comprobación posterior del reproductor Web verifica órdenes reales con
+entrada CDP: selección por área táctil y de lápiz, doble toque, toque de dos
+contactos y botón secundario del lápiz. El ejército recupera sus retratos,
+vida y selección individual en el mismo panel de escritorio y compacto.
+La fuente `edbc79e` se exportó para Windows/Web y se inspeccionó en tamaños
+1600×900, 1024×768 y 768×1024. [Evidencia y límites](audits/ROSTER-v0.21.md).
+Cambiar el tamaño del navegador no prueba rotación ni hardware físico;
+la aceptación ARM, trackpad y lápiz real sigue pendiente.
+
 ## Estado
+
+La ayuda de la UI se puede consultar con dedo o punta del lápiz manteniendo
+500 ms, sin ejecutar la acción al soltar. Fuente y builds `376d588`:
+35/35 pruebas dirigidas (15 nuevas), tres revisiones independientes Codex API
+y comprobación del reproductor Web en escritorio/vertical. Una compra naval
+real conservó oro y cola al consultar ayuda y compró con el siguiente toque
+corto. [Evidencia y límites físicos](audits/TOUCH-TOOLTIPS-v0.21.md).
+
+La corrección de identidad de selección de la fuente local `f05c586` cubre
+pérdida de foco, reutilización del pool, grupos y embarques pendientes en el
+controlador compartido. La ronda pasó 55/55 pruebas Unity (diez nuevas), tras
+un primer intento sin ejecución por tres CS1503 ya corregidos. Tres contextos
+independientes de claude-vei Opus5 y sus seguimientos no dejan P0/P1/P2;
+no participó Grok. Es evidencia de fuente y pruebas, sin nuevas mediciones
+de rendimiento ni prueba física ARM. [Alcance y cierre de exportaciones](audits/SELECTION-LIFETIME-v0.21.md).
 
 La base de comandos de producción, la propiedad explícita de recursos runtime
 y la sonda opt-in de reinicio están implementadas y cubiertas por las
@@ -179,6 +218,6 @@ La distribución compacta conserva las pestañas y comparte los controles y
 las reglas con escritorio. Adaptar el espacio no implica eliminar la
 identidad visual ni reducir la información disponible en pantallas amplias.
 
-La v0.20 Windows se genera en Builds/Windows-v0.20. Las builds anteriores
+La versión actual se genera en Builds/Windows-v0.21 y Builds/Web-v0.21. Las builds anteriores
 se conservan como referencia local. No se implementan servidor, multijugador, niebla ni héroes en esta
 fase.

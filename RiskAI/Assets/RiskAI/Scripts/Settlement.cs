@@ -97,6 +97,7 @@ namespace RiskAI
 
         public string Recruit(UnitKind kind, int team = 0)
         {
+            if(IsPort)return "Este puerto sólo recluta Marines.";
             if(!ProductionCatalog.AllowsSettlementUnit(kind))return "Esta ciudad sólo recluta tropas regulares.";
             return QueueRecruit(kind,team);
         }
@@ -218,8 +219,7 @@ namespace RiskAI
             if (session.Paused || session.Winner >= 0) return;
             int previousOwner = State.Owner;
             Soldier previousDefender = Defender;
-            int nextOwner = ClaimZone.Step(session, State.Owner, delta);
-            if(!Defender && IsPort && Port)nextOwner=Port.ResolveNavalOwner(previousOwner);
+            int nextOwner = IsPort && Port ? Port.StepClaim(delta) : ClaimZone.Step(session, State.Owner, delta);
             State.Capture = ClaimZone.Progress; State.Capturing = ClaimZone.CapturingTeam; State.Contested = ClaimZone.Contested;
             if (Defender && Defender != previousDefender) Defender.HoldPosition();
             if (nextOwner != previousOwner) { State.Owner = nextOwner; Captured(); }

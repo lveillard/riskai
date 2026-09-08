@@ -10,7 +10,7 @@ namespace RiskAI
         Vector2 areaPointer;
         bool areaPointerActive;
 
-        internal bool AcceptsDirectPointerInput => session && EffectiveFocus && !session.Paused && session.Winner < 0 && !HelpVisible && !ScoreboardVisible;
+        internal bool AcceptsDirectPointerInput => session && EffectiveFocus && session.Winner < 0 && !HelpVisible && !ScoreboardVisible;
         internal bool BlocksWorldInput(Vector2 screen) => !InsideScreen(screen) || OverHud(screen);
         internal bool ShiftHeld => Shift;
 
@@ -93,11 +93,12 @@ namespace RiskAI
 
         void SelectPrimaryUnit(Soldier unit, bool append, bool desktopDoubleSelect)
         {
+            PurgeStaleSelection();
             var key=UnityEngine.InputSystem.Keyboard.current;
             bool controlSelect=desktopDoubleSelect&&key!=null&&(key.leftCtrlKey.isPressed||key.rightCtrlKey.isPressed);
             bool sameType = controlSelect || desktopDoubleSelect && Time.unscaledTime - lastSelectTime < .3f && lastSelectKind == unit.Kind;
             if (sameType) SelectUnits(session.Units.Where(candidate => candidate.Team == 0 && candidate.Kind == unit.Kind && !candidate.IsGarrison && OnScreen(candidate)), append);
-            else if (append && Selection.Contains(unit)) { Selection.Remove(unit); unit.Select(false); }
+            else if (append && IsSelected(unit)) { RemoveSelected(unit); unit.Select(false); }
             else SelectUnits(new[] { unit }, append);
             if (unit.IsGarrison && !sameType) session.Message("El defensor puede salir si un aliado ocupa su círculo como relevo.");
             lastSelectTime = Time.unscaledTime; lastSelectKind = unit.Kind;
@@ -106,6 +107,7 @@ namespace RiskAI
         internal void ExecuteArmedPointer(Vector2 point)
         {
             if (BlocksWorldInput(point) || session.Paused || session.Winner >= 0) { CancelCursor(); return; }
+            PurgeStaleSelection();
             if (UnloadCursor)
             {
                 var shore = Ground(point);
@@ -126,6 +128,7 @@ namespace RiskAI
         internal void ContextAction(Vector2 point)
         {
             if (BlocksWorldInput(point) || OrderCursor || session.Paused || session.Winner >= 0) { if (OrderCursor) CancelCursor(); return; }
+            PurgeStaleSelection();
             var clickedEnemy = RtsPicking.Target(session, cam, point, -1); var enemy = AttackRecipient(clickedEnemy);
             var ally = RtsPicking.Target(session, cam, point, 1) as Soldier; var town = RtsPicking.Town(session, cam, point); var harbor = RtsPicking.Harbor(session, cam, point);
             var ownShip = RtsPicking.Target(session, cam, point, 1) as Ship;
@@ -140,7 +143,7 @@ namespace RiskAI
             }
             else if (ownShip && ownShip.Kind == ShipKind.Transport && Selection.Count > 0) BeginBoarding(ownShip);
             else if (harbor && Fleet.Count > 0) MoveFleetToHarbor(harbor);
-            else if (ally && !Selection.Contains(ally) && Selection.Count > 0)
+            else if (ally && !IsSelected(ally) && Selection.Count > 0)
             {
                 CancelBoardingForSelection();
                 foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Follow, targetId: ally.EntityId));

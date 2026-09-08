@@ -37,6 +37,7 @@ namespace RiskAI
         // These fields are observational only: direct player moves are timed from accepted command submit to first observed velocity.
         double humanMoveSubmittedAt = -1;
         double humanMovePausedSecondsAtSubmit;
+        double humanMoveAppliedActiveSeconds, humanMoveRouteActiveSeconds = -1, humanMoveSpeedActiveSeconds = -1;
         Vector3 humanMoveDestination;
         bool humanMoveRouteResolved;
         float pathPendingSince = -1;
@@ -50,6 +51,7 @@ namespace RiskAI
 
         public void Initialize(BattleSession battle, int team, UnitKind kind)
         {
+            ClearHumanMoveTelemetry(true);
             session=battle; Team=team; Kind=kind; Health=MaxHealth; OriginCountry=-1;
             Garrison=null; simulationPaused=false; enabled=true;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
@@ -146,14 +148,21 @@ namespace RiskAI
             humanMovePausedSecondsAtSubmit = pausedSecondsAtSubmit;
             humanMoveDestination = Agent && Agent.enabled ? Agent.destination : fallbackDestination;
             humanMoveRouteResolved = false;
+            humanMoveAppliedActiveSeconds = session.Commands.HumanMoveActiveSeconds(submittedAt, pausedSecondsAtSubmit);
+            humanMoveRouteActiveSeconds = humanMoveSpeedActiveSeconds = -1;
             session.Commands.RecordHumanFirstMoveEligible();
         }
         void ClearHumanMoveTelemetry(bool cancelled)
         {
-            if (humanMoveSubmittedAt >= 0 && cancelled && session != null) session.Commands.RecordHumanFirstMoveCancelled();
+            if (humanMoveSubmittedAt >= 0 && session != null)
+            {
+                if (cancelled) session.Commands.RecordHumanFirstMoveCancelled();
+                session.Commands.RecordHumanMoveEnded();
+            }
             humanMoveSubmittedAt = -1;
             humanMoveRouteResolved = false;
         }
+        void OnDisable() { ClearHumanMoveTelemetry(true); }
         public void MoveTo(Vector3 point, bool attackMove, bool append) => TryMoveTo(point,attackMove,append);
         public bool TryMoveTo(Vector3 point,bool attackMove,bool append) => Issue(point,attackMove?OrderMode.AttackMove:OrderMode.Move,append);
         public bool Patrol(Vector3 point, bool append) => Issue(point, OrderMode.Patrol, append);
@@ -291,14 +300,28 @@ namespace RiskAI
             if(IsGarrison)Agent.isStopped=true;
             if (humanMoveSubmittedAt >= 0)
             {
-                if (!Agent.pathPending) humanMoveRouteResolved = true;
+                double activeSeconds = session.Commands.HumanMoveActiveSeconds(humanMoveSubmittedAt, humanMovePausedSecondsAtSubmit);
+                // First observed non-pending state; this does not timestamp the actual solver completion.
+                if (!Agent.pathPending && !humanMoveRouteResolved)
+                {
+                    humanMoveRouteResolved = true;
+                    humanMoveRouteActiveSeconds = activeSeconds;
+                    session.Commands.RecordHumanRouteReady(activeSeconds - humanMoveAppliedActiveSeconds);
+                }
                 Vector3 toward = humanMoveDestination - transform.position;
                 toward.y = 0;
                 Vector3 velocity = Agent.velocity;
                 velocity.y = 0;
+                if (humanMoveSpeedActiveSeconds < 0 && velocity.sqrMagnitude > .04f)
+                {
+                    humanMoveSpeedActiveSeconds = activeSeconds;
+                    session.Commands.RecordHumanSpeed(activeSeconds,
+                        humanMoveRouteActiveSeconds >= 0 ? activeSeconds - humanMoveRouteActiveSeconds : -1);
+                }
                 if (humanMoveRouteResolved && velocity.sqrMagnitude > .04f &&
                     (toward.sqrMagnitude < .25f || Vector3.Dot(velocity, toward) > 0))
                 {
+                    session.Commands.RecordHumanSpeedToDirected(activeSeconds - humanMoveSpeedActiveSeconds);
                     session.Commands.RecordHumanFirstMotion(humanMoveSubmittedAt, humanMovePausedSecondsAtSubmit);
                     ClearHumanMoveTelemetry(false);
                 }
