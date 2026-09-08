@@ -132,8 +132,17 @@ namespace RiskAI.Tests
             var root=hud.GetComponent<UIDocument>().rootVisualElement;
             var actor=troops[0];int oldId=actor.EntityId;
             var oldCard=root.Q<Button>("HUD selected actor "+oldId);
-            // Controlled lifetime rollover through the same initializer as SoldierPool.Rent.
-            battle.UnregisterTarget(actor);actor.Initialize(battle,0,UnitKind.Archer);
+            // Use the real death, delayed pool return and spawn path while keeping
+            // the old button attached until the next rendered HUD frame.
+            Vector3 point=actor.transform.position;
+            actor.TakeDamage(actor.MaxHealth+1,1);
+            Assert.That(battle.FindTarget(oldId),Is.Null);
+            battle.TogglePause();
+            for(int i=0;i<40;i++)battle.Clock.Advance(SimClock.StepSeconds,false,battle.World.Tick);
+            Assert.That(actor.gameObject.activeSelf,Is.False,"The dead actor must reach the pool before rent.");
+            var replacement=battle.Spawn(0,UnitKind.Archer,point);
+            battle.TogglePause();
+            Assert.That(replacement,Is.SameAs(actor),"This fixture must actually reuse the old view.");
             Assert.That(actor.EntityId,Is.Not.EqualTo(oldId));
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=oldCard;oldCard.SendEvent(evt);}
             Assert.That(controller.Selection.Count,Is.EqualTo(2),"A stale card must not isolate the reused view.");
@@ -160,6 +169,27 @@ namespace RiskAI.Tests
             var root=hud.GetComponent<UIDocument>().rootVisualElement;
             Assert.That(root.Query<Button>(className:"riskai-selection-card").ToList().Count,Is.EqualTo(2));
             Assert.That(root.Q<Image>("HUD unit portrait"),Is.Null,"The enemy portrait must not wrap the friendly army roster.");
+        }
+
+        [UnityTest]
+        public IEnumerator DifferentArmiesWithTheSameLegacyHashRebuildTheRoster()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var home=battle.Towns.First(town=>town.State.Owner==0);
+            var troops=BattleTestScenario.MobileArmy(battle,0,UnitKind.Archer,34,home.ClaimPoint);
+            controller.SelectAll();battle.TogglePause();
+            yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Query<Button>(className:"riskai-selection-card").ToList().Count,Is.EqualTo(34),"Scrolling must retain every selected actor.");
+            var select=typeof(RtsController).GetMethod("SelectUnits",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
+            var first=new[]{troops[0],troops[33]};var second=new[]{troops[1],troops[2]};
+            Assert.That(first[0].EntityId*31+first[1].EntityId,Is.EqualTo(second[0].EntityId*31+second[1].EntityId),"Fixture establishes the old hash collision using real allocated ids.");
+            select.Invoke(controller,new object[]{first,false});yield return null;
+            Assert.That(root.Q<Button>("HUD selected actor "+first[0].EntityId),Is.Not.Null);
+            select.Invoke(controller,new object[]{second,false});yield return null;
+            Assert.That(root.Q<Button>("HUD selected actor "+first[0].EntityId),Is.Null);
+            Assert.That(root.Q<Button>("HUD selected actor "+second[0].EntityId),Is.Not.Null);
+            Assert.That(root.Q<Button>("HUD selected actor "+second[1].EntityId),Is.Not.Null);
         }
 
         [UnityTearDown]

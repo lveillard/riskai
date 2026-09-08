@@ -6,6 +6,30 @@ namespace RiskAI
 {
     public sealed partial class BattleHud
     {
+        // A polynomial hash can collide for different, valid army selections.
+        // Compare ordered identities exactly, without allocating during refresh.
+        bool RosterChanged()
+        {
+            if (retainedSoldierCount != controller.Selection.Count ||
+                retainedRosterIds.Count != controller.Selection.Count + controller.Fleet.Count) return true;
+            int index = 0;
+            foreach (var unit in controller.Selection)
+                if (retainedRosterIds[index++] != RosterIdentity(unit)) return true;
+            foreach (var ship in controller.Fleet)
+                if (retainedRosterIds[index++] != RosterIdentity(ship)) return true;
+            return false;
+        }
+
+        void RememberRoster()
+        {
+            retainedSoldierCount = controller.Selection.Count;
+            retainedRosterIds.Clear();
+            foreach (var unit in controller.Selection) retainedRosterIds.Add(RosterIdentity(unit));
+            foreach (var ship in controller.Fleet) retainedRosterIds.Add(RosterIdentity(ship));
+        }
+
+        static int RosterIdentity(CombatTarget actor) => actor ? actor.EntityId : 0;
+
         // The same roster lives in the desktop selection column and compact tab.
         // Its parent ScrollView handles overflow; no selected units are omitted.
         void BuildSelectionRoster(VisualElement root)

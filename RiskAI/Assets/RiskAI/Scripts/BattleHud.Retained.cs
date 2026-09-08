@@ -24,6 +24,8 @@ namespace RiskAI
         float nextRetainedLabelRefresh;
         readonly List<Label> rankingLabels = new List<Label>();
         readonly List<System.Action> liveContext = new List<System.Action>();
+        readonly List<int> retainedRosterIds = new List<int>();
+        int retainedSoldierCount;
         Button modalPauseButton;
         float lastDensity;
         bool wideFooter;
@@ -59,7 +61,7 @@ namespace RiskAI
                 BuildRetainedUi(false);
                 return;
             }
-            if (retainedContextKey != contextKey)
+            if (retainedContextKey != contextKey || RosterChanged())
             {
                 retainedContextKey = contextKey;
                 RebuildContext();
@@ -86,6 +88,7 @@ namespace RiskAI
         {
             if (context == null) return;
             context.Clear(); queueSlots.Clear(); liveContext.Clear();
+            RememberRoster();
             if (wideFooter) { wideContext.Clear(); BuildWideContext(context, wideContext); }
             else BuildContext(context);
         }
@@ -101,8 +104,6 @@ namespace RiskAI
             {
                 int key = retainedTab;
                 key = key * 29 + (controller.InspectedTarget ? controller.InspectedTarget.EntityId : 0);
-                for (int i = 0; i < controller.Selection.Count; i++) key = key * 31 + (controller.Selection[i] ? controller.Selection[i].EntityId : 0);
-                for (int i = 0; i < controller.Fleet.Count; i++) key = key * 37 + (controller.Fleet[i] ? controller.Fleet[i].EntityId : 0);
                 key = key * 41 + (controller.SelectedTown ? controller.SelectedTown.GetInstanceID() : 0);
                 key = key * 43 + (controller.SelectedHarbor ? controller.SelectedHarbor.GetInstanceID() : 0);
                 key = key * 47 + (controller.SelectedCamp ? controller.SelectedCamp.GetInstanceID() : 0);
@@ -126,7 +127,7 @@ namespace RiskAI
             liveContext.Clear(); rankingLabels.Clear(); modalPauseButton=null;
             lastCompact = UiViewport.IsCompact; lastPortrait = UiViewport.IsPortrait;
             lastModalKind=ModalKind;
-            retainedContextKey = ContextKey(); lastScreen = new Vector2(Screen.width, Screen.height); lastSafe = UiViewport.SafeRect; lastDensity=UiViewport.Scale; nextRetainedLabelRefresh = Time.unscaledTime;
+            retainedContextKey = ContextKey(); RememberRoster(); lastScreen = new Vector2(Screen.width, Screen.height); lastSafe = UiViewport.SafeRect; lastDensity=UiViewport.Scale; nextRetainedLabelRefresh = Time.unscaledTime;
             retainedRoot = new VisualElement { name = "Battle retained UI", pickingMode = PickingMode.Ignore };
             retainedRoot.style.flexGrow = 1;
             BuildHeader(retainedRoot);
