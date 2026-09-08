@@ -31,8 +31,30 @@ namespace RiskAI
         public Vector2 Pointer => UnityEngine.InputSystem.Pointer.current == null ? Vector2.zero : UnityEngine.InputSystem.Pointer.current.position.ReadValue();
         Vector2 AreaEndPoint => areaPointerActive?areaPointer:Pointer;
         public Rect SelectionRect => Rect.MinMaxRect(Mathf.Min(DragStart.x,AreaEndPoint.x),Screen.height-Mathf.Max(DragStart.y,AreaEndPoint.y),Mathf.Max(DragStart.x,AreaEndPoint.x),Screen.height-Mathf.Min(DragStart.y,AreaEndPoint.y));
-        readonly Dictionary<int,List<Soldier>> groups=new Dictionary<int,List<Soldier>>();
-        readonly Dictionary<int,List<Ship>> shipGroups=new Dictionary<int,List<Ship>>();
+        // Pooled soldiers come back as a different actor in the same object, so
+        // every ownership record keeps the simulation identity it was taken with.
+        readonly struct SoldierRef
+        {
+            public readonly Soldier Unit;public readonly int Id;
+            public SoldierRef(Soldier unit){Unit=unit;Id=unit?unit.EntityId:0;}
+            public bool Matches => Unit&&Unit.EntityId==Id;
+        }
+        readonly struct ShipRef
+        {
+            public readonly Ship Vessel;public readonly int Id;
+            public ShipRef(Ship vessel){Vessel=vessel;Id=vessel?vessel.EntityId:0;}
+            public bool Matches => Vessel&&Vessel.EntityId==Id;
+        }
+        // Identities are keyed by actor object, not by list position: reordering or
+        // an external add/remove on the public lists cannot re-key a known record.
+        Dictionary<Soldier,int> selectionIds=new Dictionary<Soldier,int>();
+        Dictionary<Soldier,int> nextSelectionIds=new Dictionary<Soldier,int>();
+        Dictionary<Ship,int> fleetIds=new Dictionary<Ship,int>();
+        Dictionary<Ship,int> nextFleetIds=new Dictionary<Ship,int>();
+        readonly HashSet<Soldier> selectionLookup=new HashSet<Soldier>();
+        readonly HashSet<Ship> fleetLookup=new HashSet<Ship>();
+        readonly Dictionary<int,List<SoldierRef>> groups=new Dictionary<int,List<SoldierRef>>();
+        readonly Dictionary<int,List<ShipRef>> shipGroups=new Dictionary<int,List<ShipRef>>();
         BattleSession session;Camera cam;Vector2 previousMouse;
         public RtsCameraRig CameraRig { get; private set; }
         bool pressedWorld;
@@ -43,7 +65,7 @@ namespace RiskAI
         bool observedPause;
         float lastSelectTime,lastGroupTime;int lastGroup=-1;UnitKind lastSelectKind;
         LineRenderer hoverRing;
-        readonly List<Soldier> pendingBoarders=new();Ship pendingBoardingTransport;Vector3 pendingBoardingLanding;
+        readonly List<SoldierRef> pendingBoarders=new();Ship pendingBoardingTransport;Vector3 pendingBoardingLanding;
         float nextBoardingCheck,nextBoardingRecovery,lastBoardingProgress,previousBoardingDistance;
         int previousBoarderCount;
         const float BoardingCheckSeconds=.2f,BoardingStallSeconds=20f;
@@ -80,11 +102,74 @@ namespace RiskAI
         }
         public bool OverHud(Vector2 screen) => RtsUiInput.BlocksWorld(screen) || HelpVisible || ScoreboardVisible || session.Winner>=0;
         bool Shift => Keyboard.current!=null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+        // Selection/Fleet stay plain public lists; the identity maps record which
+        // actor each listed object was taken with. A pooled reuse therefore drops
+        // the entry instead of inheriting the previous owner's orders, and a
+        // record is never re-taken from an actor that is already known here.
+        void AddSelected(Soldier unit) { Selection.Add(unit);if(unit&&!selectionIds.ContainsKey(unit))selectionIds[unit]=unit.EntityId; }
+        void AddSelected(Ship ship) { Fleet.Add(ship);if(ship&&!fleetIds.ContainsKey(ship))fleetIds[ship]=ship.EntityId; }
+        void RemoveSelected(Soldier unit)
+        {
+            Selection.RemoveAll(listed=>listed==unit);
+            if(unit)selectionIds.Remove(unit);
+        }
+        void ClearSelectionLists() { Selection.Clear();selectionIds.Clear();Fleet.Clear();fleetIds.Clear(); }
+        bool OwnsIdentity(Soldier unit) => unit&&selectionIds.TryGetValue(unit,out int id)&&id==unit.EntityId;
+        bool OwnsIdentity(Ship ship) => ship&&fleetIds.TryGetValue(ship,out int id)&&id==ship.EntityId;
+        /// <summary>
+        /// Drops entries whose actor died, left play or was reused by the pool.
+        /// One stable compaction pass over each list; no repeated element shifting.
+        /// </summary>
+        internal void PurgeStaleSelection()
+        {
+            nextSelectionIds.Clear();
+            int write=0;
+            for(int i=0;i<Selection.Count;i++)
+            {
+                var unit=Selection[i];
+                if(!unit)continue;
+                // An object appended straight to the public list is an unknown
+                // actor and establishes its own identity; a recorded one keeps it.
+                int id=selectionIds.TryGetValue(unit,out int recorded)?recorded:unit.EntityId;
+                // A replaced actor is only dropped: its own state is not this
+                // selection's to touch. The same actor leaving play is released.
+                if(unit.EntityId!=id)continue;
+                if(!IsSelectableSoldier(unit)){unit.Select(false);continue;}
+                nextSelectionIds[unit]=id;
+                Selection[write++]=unit;
+            }
+            if(write<Selection.Count)Selection.RemoveRange(write,Selection.Count-write);
+            (selectionIds,nextSelectionIds)=(nextSelectionIds,selectionIds);
+            nextFleetIds.Clear();
+            write=0;
+            for(int i=0;i<Fleet.Count;i++)
+            {
+                var ship=Fleet[i];
+                if(!ship)continue;
+                int id=fleetIds.TryGetValue(ship,out int recorded)?recorded:ship.EntityId;
+                if(ship.EntityId!=id)continue;
+                if(!IsSelectableShip(ship)){ship.Select(false);continue;}
+                nextFleetIds[ship]=id;
+                Fleet[write++]=ship;
+            }
+            if(write<Fleet.Count)Fleet.RemoveRange(write,Fleet.Count-write);
+            (fleetIds,nextFleetIds)=(nextFleetIds,fleetIds);
+            write=0;
+            for(int i=0;i<pendingBoarders.Count;i++)if(pendingBoarders[i].Matches)pendingBoarders[write++]=pendingBoarders[i];
+            if(write<pendingBoarders.Count)pendingBoarders.RemoveRange(write,pendingBoarders.Count-write);
+        }
+        bool IsSelected(Soldier unit) => OwnsIdentity(unit)&&Selection.Contains(unit);
+        bool IsSelected(Ship ship) => OwnsIdentity(ship)&&Fleet.Contains(ship);
         public void Clear()
         {
             if(SelectedCamp)SelectedCamp.Select(false);SelectedCamp=null;
-            foreach(var u in Selection)if(u)u.Select(false);Selection.Clear();
-            foreach(var ship in Fleet)if(ship)ship.Select(false);Fleet.Clear();
+            // Purge first: it drops replaced actors and lets an actor listed by an
+            // external caller establish its identity, so nothing owned by this
+            // selection is released without also clearing its ring.
+            PurgeStaleSelection();
+            foreach(var unit in Selection)unit.Select(false);
+            foreach(var ship in Fleet)ship.Select(false);
+            ClearSelectionLists();
             ClearSelectedBuildings();
             InspectedTarget=null;
         }
@@ -98,25 +183,37 @@ namespace RiskAI
         public void SelectShip(Ship ship,bool append=false)
         {
             if(!ship||!ship.IsAlive||ship.Team!=0)return;
-            if(append&&Fleet.Contains(ship)){Fleet.Remove(ship);ship.Select(false);return;}
+            PurgeStaleSelection();
+            if(append&&IsSelected(ship)){RemoveSelected(ship);ship.Select(false);return;}
             if(!append)Clear();
             if(SelectedCamp)SelectedCamp.Select(false);SelectedCamp=null;
             ClearSelectedBuildings();InspectedTarget=null;
-            if(!Fleet.Contains(ship))Fleet.Add(ship);ship.Select(true);
+            if(!IsSelected(ship))AddSelected(ship);ship.Select(true);
+        }
+        void RemoveSelected(Ship ship)
+        {
+            Fleet.RemoveAll(listed=>listed==ship);
+            if(ship)fleetIds.Remove(ship);
         }
         void SelectUnits(IEnumerable<Soldier> units,bool append=false)
         {
-            var list=units.Where(IsSelectableSoldier).ToList();if(!append)Clear();
+            var list=units.Where(IsSelectableSoldier).ToList();PurgeStaleSelection();if(!append)Clear();
             if(SelectedCamp)SelectedCamp.Select(false);SelectedCamp=null;
             ClearSelectedBuildings();InspectedTarget=null;
-            foreach(var u in list)if(!Selection.Contains(u)){Selection.Add(u);u.Select(true);}
+            // Purged entries are identity-checked already, so a set membership
+            // test keeps large selections linear instead of rescanning per unit.
+            selectionLookup.Clear();foreach(var current in Selection)selectionLookup.Add(current);
+            foreach(var u in list)if(selectionLookup.Add(u)){AddSelected(u);u.Select(true);}
+            selectionLookup.Clear();
         }
         void SelectShips(IEnumerable<Ship> ships,bool append=false)
         {
-            if(!append)Clear();
+            PurgeStaleSelection();if(!append)Clear();
             if(SelectedCamp)SelectedCamp.Select(false);SelectedCamp=null;
             ClearSelectedBuildings();InspectedTarget=null;
-            foreach(var ship in ships)if(IsSelectableShip(ship)&&!Fleet.Contains(ship)){Fleet.Add(ship);ship.Select(true);}
+            fleetLookup.Clear();foreach(var current in Fleet)fleetLookup.Add(current);
+            foreach(var ship in ships)if(IsSelectableShip(ship)&&fleetLookup.Add(ship)){AddSelected(ship);ship.Select(true);}
+            fleetLookup.Clear();
         }
         public void SelectAll()
         {
@@ -132,11 +229,11 @@ namespace RiskAI
         public void CancelCursor() { AttackCursor=MoveCursor=PatrolCursor=UnloadCursor=false; }
         static CombatTarget AttackRecipient(CombatTarget target) => target is DefenseTower tower ? tower.Guardian : target;
         bool HasSelection => Selection.Count>0||Fleet.Count>0;
-        public void ArmAttack() { CancelCursor();if(HasSelection)AttackCursor=true; }
-        public void ArmMove() { CancelCursor();if(HasSelection)MoveCursor=true; }
-        public void ArmPatrol() { CancelCursor();if(HasSelection)PatrolCursor=true; }
-        public void Stop() { if(session.Paused||session.Winner>=0)return;CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Stop));foreach(var ship in Fleet)if(IsSelectableShip(ship))ship.Stop();CancelCursor(); }
-        public void Hold() { if(session.Paused||session.Winner>=0)return;CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Hold));foreach(var ship in Fleet)if(IsSelectableShip(ship))ship.Stop();CancelCursor(); }
+        public void ArmAttack() { CancelCursor();PurgeStaleSelection();if(HasSelection)AttackCursor=true; }
+        public void ArmMove() { CancelCursor();PurgeStaleSelection();if(HasSelection)MoveCursor=true; }
+        public void ArmPatrol() { CancelCursor();PurgeStaleSelection();if(HasSelection)PatrolCursor=true; }
+        public void Stop() { if(session.Paused||session.Winner>=0)return;PurgeStaleSelection();CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Stop));foreach(var ship in Fleet)if(IsSelectableShip(ship))ship.Stop();CancelCursor(); }
+        public void Hold() { if(session.Paused||session.Winner>=0)return;PurgeStaleSelection();CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Hold));foreach(var ship in Fleet)if(IsSelectableShip(ship))ship.Stop();CancelCursor(); }
         static bool IsSelectableSoldier(Soldier unit) => unit&&unit.Team==0&&unit.IsAlive&&unit.isActiveAndEnabled&&unit.Agent&&unit.Agent.enabled;
         static bool IsSelectableShip(Ship ship) => ship&&ship.Team==0&&ship.IsAlive&&ship.isActiveAndEnabled;
         Ship SelectedTransport
@@ -152,8 +249,8 @@ namespace RiskAI
         void CancelBoardingForSelection()
         {
             if(!pendingBoardingTransport)return;
-            if(Fleet.Contains(pendingBoardingTransport)){CancelPendingBoarding();return;}
-            foreach(var unit in Selection)if(pendingBoarders.Contains(unit)){CancelPendingBoarding();return;}
+            if(IsSelected(pendingBoardingTransport)){CancelPendingBoarding();return;}
+            foreach(var unit in Selection)foreach(var boarder in pendingBoarders)if(boarder.Matches&&boarder.Unit==unit){CancelPendingBoarding();return;}
         }
 
         public void Recruit(UnitKind kind)
@@ -179,6 +276,7 @@ namespace RiskAI
         public void Focus(Vector3 position) => CameraRig.Focus(position);
         public void FocusSelection()
         {
+            PurgeStaleSelection();
             Vector3 center=Vector3.zero;int count=0;
             foreach(var unit in Selection)if(IsSelectableSoldier(unit)){center+=unit.transform.position;count++;}
             foreach(var ship in Fleet)if(IsSelectableShip(ship)){center+=ship.transform.position;count++;}
@@ -188,6 +286,7 @@ namespace RiskAI
         }
         public void FocusFleet()
         {
+            PurgeStaleSelection();
             Vector3 center=Vector3.zero;int count=0;
             foreach(var ship in Fleet)if(IsSelectableShip(ship)){center+=ship.transform.position;count++;}
             if(count>0)Focus(center/count);
@@ -206,6 +305,7 @@ namespace RiskAI
         public void BoardNearby()
         {
             if(session.Paused||session.Winner>=0)return;
+            PurgeStaleSelection();
             var transport=SelectedTransport;if(!transport){session.Message("Selecciona un transporte para embarcar.");return;}
             var boarders=session.Units.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison&&FlatDistance(u.transform.position,transport.transform.position)<=Ship.LoadRadius*Ship.LoadRadius)
                 .OrderBy(u=>FlatDistance(u.transform.position,transport.transform.position)).Take(Ship.LoadOrderLimit).ToList();
@@ -215,6 +315,7 @@ namespace RiskAI
         public void UnloadFleet()
         {
             if(session.Paused||session.Winner>=0)return;
+            PurgeStaleSelection();
             var naval=NavalWorld.Current;if(!naval)return;
             Ship anchor=null;foreach(var selected in Fleet)if(IsSelectableShip(selected)){anchor=selected;break;}
             if(!anchor)return;
@@ -239,8 +340,8 @@ namespace RiskAI
         public void OrderAt(Vector3 point,bool attack=false)
         {
             if(session.Paused||session.Winner>=0)return;
+            PurgeStaleSelection();
             CancelBoardingForSelection();
-            Selection.RemoveAll(u=>!IsSelectableSoldier(u));Fleet.RemoveAll(s=>!IsSelectableShip(s));
             bool issued=false,attemptedGuardOrder=false;
             var kind=PatrolCursor?UnitCommandKind.Patrol:attack?UnitCommandKind.AttackMove:UnitCommandKind.Move;
             // Guards are submitted ahead of the formation. A successful command
@@ -299,6 +400,7 @@ namespace RiskAI
         }
         void MoveFleetToHarbor(Harbor harbor)
         {
+            PurgeStaleSelection();
             if(!harbor||Fleet.Count==0)return;
             CancelBoardingForSelection();
             foreach(var ship in Fleet)if(IsSelectableShip(ship)){ship.SailToHarbor(harbor);Feedback(ship.LastActionError);}
@@ -319,7 +421,7 @@ namespace RiskAI
             transport.MoveTo(berth);
             if(transport.LastActionError!=null){session.Message(transport.LastActionError);CancelPendingBoarding();return;}
             foreach(var soldier in available)
-            {pendingBoarders.Add(soldier);session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z));}
+            {pendingBoarders.Add(new SoldierRef(soldier));session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z));}
             lastBoardingProgress=session.BattleTime;previousBoarderCount=pendingBoarders.Count;
             nextBoardingCheck=session.BattleTime;nextBoardingRecovery=session.BattleTime+1f;
             ShowOrder(landing,false);session.Message("Embarcando: tropas y transporte se reúnen en la costa marcada.");
@@ -337,8 +439,8 @@ namespace RiskAI
             float distance=pendingBoardingTransport.RemainingRouteDistance;
             for(int i=pendingBoarders.Count-1;i>=0;i--)
             {
-                var soldier=pendingBoarders[i];
-                if(!IsSelectableSoldier(soldier)||soldier.IsGarrison||pendingBoardingTransport.CargoCount>=pendingBoardingTransport.Profile.Capacity||pendingBoardingTransport.TryEmbark(soldier))
+                var boarder=pendingBoarders[i];var soldier=boarder.Unit;
+                if(!boarder.Matches||!IsSelectableSoldier(soldier)||soldier.IsGarrison||pendingBoardingTransport.CargoCount>=pendingBoardingTransport.Profile.Capacity||pendingBoardingTransport.TryEmbark(soldier))
                 {pendingBoarders.RemoveAt(i);continue;}
                 error=pendingBoardingTransport.LastActionError;
                 var agent=soldier.Agent;
@@ -390,6 +492,9 @@ namespace RiskAI
         {
             if(session&&!session.Paused&&session.Winner<0)ProcessPendingBoarding();
             AnimateOrderMarker();
+            // Ownership is released before any focus/modal early return: a dead
+            // or pool-reused actor must never stay listed while input is idle.
+            PurgeStaleSelection();
             if(!EffectiveFocus)
             {
                 ReleaseCursor();CameraDragging=false;Dragging=false;pressedWorld=false;previousMouse=Pointer;
@@ -399,8 +504,6 @@ namespace RiskAI
             SyncPauseInput();
             ApplyCursorCapture();
             var mouse=Mouse.current;var key=Keyboard.current;
-            Selection.RemoveAll(u=>!IsSelectableSoldier(u));
-            Fleet.RemoveAll(s=>!IsSelectableShip(s));
             if(key!=null)
             {
             if(key.f1Key.wasPressedThisFrame)HelpVisible=!HelpVisible;
@@ -450,11 +553,23 @@ namespace RiskAI
             if(key.spaceKey.wasPressedThisFrame){if(Fleet.Count>0)FocusFleet();else FocusSelection();}
             for(int i=1;i<=9;i++)if(key[(Key)((int)Key.Digit1+i-1)].wasPressedThisFrame)
             {
-                if(key.leftCtrlKey.isPressed||key.rightCtrlKey.isPressed){groups[i]=Selection.Where(IsSelectableSoldier).ToList();shipGroups[i]=Fleet.Where(IsSelectableShip).ToList();}
+                if(key.leftCtrlKey.isPressed||key.rightCtrlKey.isPressed)
+                {
+                    PurgeStaleSelection();
+                    groups[i]=Selection.Where(IsSelectableSoldier).Select(u=>new SoldierRef(u)).ToList();
+                    shipGroups[i]=Fleet.Where(IsSelectableShip).Select(s=>new ShipRef(s)).ToList();
+                }
                 else if(groups.TryGetValue(i,out var stored))
                 {
-                    SelectUnits(stored);
-                    if(shipGroups.TryGetValue(i,out var shipStored))SelectShips(shipStored,true);
+                    // A stored actor that died and came back from the pool is a
+                    // different unit: recall keeps only the recorded identities.
+                    stored.RemoveAll(entry=>!entry.Matches);
+                    SelectUnits(stored.Select(entry=>entry.Unit));
+                    if(shipGroups.TryGetValue(i,out var shipStored))
+                    {
+                        shipStored.RemoveAll(entry=>!entry.Matches);
+                        SelectShips(shipStored.Select(entry=>entry.Vessel),true);
+                    }
                     if(lastGroup==i&&Time.unscaledTime-lastGroupTime<.35f&&Selection.Count>0)Focus(Selection.Aggregate(Vector3.zero,(v,u)=>v+u.transform.position)/Selection.Count);
                     lastGroup=i;lastGroupTime=Time.unscaledTime;
                 }

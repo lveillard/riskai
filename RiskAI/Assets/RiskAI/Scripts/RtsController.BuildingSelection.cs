@@ -85,10 +85,12 @@ namespace RiskAI
         {
             if (SelectedCamp) SelectedCamp.Select(false);
             SelectedCamp = null;
-            foreach (var unit in Selection) if (unit) unit.Select(false);
-            Selection.Clear();
-            foreach (var ship in Fleet) if (ship) ship.Select(false);
-            Fleet.Clear();
+            // Purging first leaves only actors this selection still owns, so every
+            // remaining ring is cleared and a replaced actor keeps its own state.
+            PurgeStaleSelection();
+            foreach (var unit in Selection) unit.Select(false);
+            foreach (var ship in Fleet) ship.Select(false);
+            ClearSelectionLists();
             InspectedTarget = null;
         }
 
