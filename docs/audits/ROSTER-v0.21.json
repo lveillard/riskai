@@ -1,0 +1,164 @@
+{
+  "sourceHead": "edbc79e67498c327e03361a61d7ac722c0c594c7",
+  "reviewedAt": "2026-09-08T05:30:49.597982+00:00",
+  "reviewMethod": "Root visual inspection of actual exported players; synthetic browser CDP input, no injected game state; native opt-in UI fixture uses gameplay APIs.",
+  "native": {
+    "exit": 0,
+    "captureMarker": true,
+    "imagesWritten": 7,
+    "imagesInspected": [
+      "v20-orders.png",
+      "v20-port-queues.png"
+    ],
+    "findings": "Individual portrait/stats visible; port has common Marine catalog and two five-slot queues with naval icons. Does not directly prove multi-unit roster."
+  },
+  "webFirstExport": {
+    "exportLog": "RiskAI/Logs/v21-roster-web-build.log",
+    "functional": {
+      "touchAreaSelects2": true,
+      "desktopCardIsolates1": true,
+      "landscapeRosterVisible": true,
+      "portraitRosterVisible": true,
+      "portraitCardIsolates1": true,
+      "doubleTapMoves2": true,
+      "twoContactTapMoves2": true,
+      "penAreaSelects2": true,
+      "penBarrelStartsBothMoving": true,
+      "oneSurvivorReachesPenTarget": true
+    },
+    "limits": [
+      "The other archer died after pen order; do not report two arrivals.",
+      "250 WebGL sampler mismatch warnings starting before roster display; explicit-target re-export did not reproduce them, see webFinalExport.",
+      "No physical touch, pen, trackpad, rotation or ARM acceptance; no performance claim."
+    ],
+    "pageErrors": [],
+    "consoleErrors": [
+      "favicon404"
+    ],
+    "rendererWarnings": {
+      "samplerMismatch": 250,
+      "unsupportedAuxiliaryShaders": 3
+    }
+  },
+  "artifacts": [
+    {
+      "path": "Captures/v21-web-roster-final/result.json",
+      "sha256": "83c67c36a25b596500f3af7f0c9da9d5f2a9bee0317736711c95af6d79d82181",
+      "bytes": 1721
+    },
+    {
+      "path": "Captures/v21-web-roster-final/console.log",
+      "sha256": "80333b3a61bac10addeb25a28e556e5a2b8ce3d1c8c72876ad7edd96cc6b56f8",
+      "bytes": 49840
+    },
+    {
+      "path": "RiskAI/Logs/v21-roster-native.log",
+      "sha256": "32caa50de39f48dedf5b2010c48d4c2b09528fe0768ddafb812f0b37cfccfc2f",
+      "bytes": 10214
+    },
+    {
+      "path": "RiskAI/Logs/v21-roster-windows-build-final.log",
+      "sha256": "7580203426ba8d929db07fec2ffe5191770fcd67dbfa55ad8b6c56eb8d812eae",
+      "bytes": 561212
+    },
+    {
+      "path": "Captures/v21-roster-release-tests.json",
+      "sha256": "7f63eb7f51ce911119090112cadf195d8f98499593568b8a82ca9e52ad961aa1",
+      "bytes": 18520
+    },
+    {
+      "path": "Captures/v21-web-roster-target/result.json",
+      "sha256": "9ea2f8d1f73fe33d580e57f0de80daa6ccdff04056cb4946c5dc6efd85ac5ab7",
+      "bytes": 965
+    },
+    {
+      "path": "Captures/v21-web-roster-target/console.log",
+      "sha256": "44dfbca5c69eb2b007603a44fabed50d4e2c48216bcccf8fb98b78417027ab91",
+      "bytes": 9734
+    },
+    {
+      "path": "RiskAI/Logs/v21-roster-web-build-target.log",
+      "sha256": "bb8df59e4096a8cc7f352066974e7e640639930af1e76b7ee970581a162988d0",
+      "bytes": 406524
+    },
+    {
+      "path": "Captures/v21-roster-release-build.json",
+      "sha256": "ab75b6da3dfb5fa70ec9a2e7a7b02b365d0962849f29d49c52a580c55c1c5b62",
+      "bytes": 43527
+    },
+    {
+      "path": "Captures/v21-roster-reviewed.json",
+      "sha256": "f7b60b2617a9c9166d13e02eb965d5cb7e576da167c5879c12efc42eba004614",
+      "bytes": 4063
+    }
+  ],
+  "webFinalExport": {
+    "exportLog": "RiskAI/Logs/v21-roster-web-build-target.log",
+    "sourceHead": "edbc79e",
+    "bytesReported": 57416742,
+    "reviewedAt": "2026-09-08T05:30:49.597982+00:00",
+    "rootVisualAcceptance": true,
+    "scope": [
+      "Touch area selects two paid archers",
+      "Two portrait/health cards visible",
+      "Touching card isolates one unit on desktop and portrait",
+      "Shared roster visible at1600x900,1024x768,768x1024"
+    ],
+    "pageErrors": [],
+    "consoleErrors": [
+      "favicon404"
+    ],
+    "samplerMismatchWarnings": 0,
+    "unsupportedAuxiliaryShaders": 3,
+    "limits": [
+      "No full gesture repeat after target-only re-export; same-source first export and prior624743c gesture evidence preserved.",
+      "Not physical ARM/tablet/pen or trackpad acceptance.",
+      "Functional only, no timing claim; external compiler active during this work."
+    ]
+  },
+  "testRuns": [
+    {
+      "path": "RiskAI/Logs/v21-roster-tests.xml",
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "sha256": "5afd5ce9288c02f1a219922ca5f3b2450bf9a86ef9493fd0299435c7357a4ddb"
+    },
+    {
+      "path": "RiskAI/Logs/v21-roster-tests-r2.xml",
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "sha256": "5a0ab8de53c38528dbc7f1b90c28bd515a2a52e13746568b1b6b00d68646e580"
+    },
+    {
+      "path": "RiskAI/Logs/v21-roster-tests-r3.xml",
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "sha256": "980774593647c257bd9a79dcefb085da5d3988be6e071f6ccf8f98a4fb2a6e45"
+    },
+    {
+      "path": "RiskAI/Logs/v21-roster-tests-r4.xml",
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "sha256": "132275f10bf885accd13febbc4727fcea48dd30471e67facdfcedaf66e36b9a8"
+    }
+  ],
+  "testsDistinctCumulative": 105,
+  "all105ExecutedAtHead": false,
+  "reviews": {
+    "profile": "claude-vei",
+    "model": "claude-opus-5",
+    "independentContexts": 3,
+    "finalSourceHead": "edbc79e",
+    "openP0P1P2": 0,
+    "sourceReports": [
+      ".tools/v21-review-roster/opus-a-final.json",
+      ".tools/v21-review-roster/opus-b-final.json",
+      ".tools/v21-review-roster/opus-c-final.json"
+    ],
+    "limits": "See ROSTER-v0.21.md for reconciled P3 context."
+  }
+}

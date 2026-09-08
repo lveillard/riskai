@@ -156,6 +156,15 @@ agua. Esta corrección añade trabajo de renderizado que debe medirse; no
 certifica rendimiento en Android. La evidencia actual y las limitaciones
 están en [Validación v0.21](VALIDATION-v0.21.md).
 
+La comprobación posterior del reproductor Web verifica órdenes reales con
+entrada CDP: selección por área táctil y de lápiz, doble toque, toque de dos
+contactos y botón secundario del lápiz. El ejército recupera sus retratos,
+vida y selección individual en el mismo panel de escritorio y compacto.
+La fuente `edbc79e` se exportó para Windows/Web y se inspeccionó en tamaños
+1600×900, 1024×768 y 768×1024. [Evidencia y límites](audits/ROSTER-v0.21.md).
+Cambiar el tamaño del navegador no prueba rotación ni hardware físico;
+la aceptación ARM, trackpad y lápiz real sigue pendiente.
+
 ## Estado
 
 La base de comandos de producción, la propiedad explícita de recursos runtime

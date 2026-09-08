@@ -24,6 +24,10 @@ se cierran por separado.
 - [x] Exportar Windows/Web `624743c`, comprobar contadores en ambos jugadores y actualizar launcher/lector de logs. 100 casos Unity distintos y ocho Python aprobados. Capturas e informes publicados con procedencia.
 - [x] Completar la medición acotada de rendimiento con memoria recuperada: Windows `624743c`, 903→349 unidades, 90 s a 1×, 988 órdenes aplicadas/0 rechazadas/0 pendientes al cerrar; 126 muestras de entorno sin compilador/sonda competidora y mínimo 7,97 GiB libres. Envío→velocidad máximo 437,03 ms; la mayor espera posterior a aplicación está hasta observar la ruta. [Datos y límites](docs/audits/PERFORMANCE-v0.21.json). Esta ejecución completa la medición pendiente; no certifica 800 unidades sostenidas, clic físico o ARM, ni resuelve todo el retraso o la fase 2. No se cambió el presupuesto ni se repitieron suites sin cambios.
 
+- [x] Comprobar gestos de juego en el reproductor Web exportado: área con un contacto y lápiz, doble toque, toque de dos contactos y botón secundario del lápiz mueven unidades reclutadas normalmente. Tarjetas tocables verificadas en escritorio/vertical, layout también horizontal. Es entrada CDP; no se da por probada una tablet física. La reexportación final usa el target WebGL explícito del script y no reproduce los nuevos avisos de sampler.
+- [x] Recuperar retratos individuales, barras de vida y selección por tarjeta del ejército; un solo roster para escritorio y pestaña compacta, incluidos grupos mixtos tierra/mar. Cinco regresiones nuevas; siete casos HUD finales aprobados. Tres revisores Opus5 independientes y seguimientos proporcionales sin P0/P1/P2 abiertos. [Auditoría](docs/audits/ROSTER-v0.21.md).
+- [ ] Selección durante pérdida prolongada de foco: verificar que una referencia conservada por el controlador no represente otra unidad si el pool la reutiliza antes de recuperar foco. La tarjeta antigua ya rechaza esa identidad; el controlador completo no usa handles de vida para todas sus selecciones/grupos.
+
 [Validación de la ronda](docs/VALIDATION-v0.21.md) · [Objetivo fase 2](docs/PHASE2.md).
 
 ## v0.20 · recuperar identidad RTS

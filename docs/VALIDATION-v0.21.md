@@ -381,6 +381,39 @@ propio salió y su PID dejó de existir. Se conserva la aceptación funcional
 anterior: no hubo recompilación ni nuevas rondas de revisión del código sin
 cambios.
 
+## Roster recuperado y gestos Web · fuente `edbc79e`
+
+La selección múltiple vuelve a mostrar retratos, vida y tarjetas que aíslan
+una unidad al pulsarlas. Escritorio y pantalla compacta construyen el mismo
+panel, incluyendo tropas y barcos. Se corrigieron inspección anterior,
+refresco cuadrático, ancho efectivo de salud y colisiones entre identidades
+ordenadas. Tres revisores Opus5 independientes y sus seguimientos cerraron
+los P0/P1/P2 del delta; el informe conserva los límites de menor prioridad.
+
+Hay 105 casos Unity distintos aprobados en la evidencia acumulada; cinco
+son nuevos de roster. No son 105 casos ejecutados en este commit: el ajuste
+intermedio pasó 17 pruebas de HUD/entrada/producción y el último delta pasó
+siete de HUD, con muerte y retorno real al pool, selección mixta y un grupo
+de 34 actores. El índice conserva la procedencia por caso.
+
+Las builds finales Windows/Web de `edbc79e` se comprobaron. Windows generó
+siete capturas visibles; Web mostró el roster y selección individual mediante
+toque en 1600×900 y 768×1024, además del layout 1024×768. La comprobación Web
+anterior de esa misma fuente verificó selección por área táctil y de lápiz,
+movimiento por doble toque, dos contactos y botón secundario del lápiz.
+
+La primera exportación Web omitía el argumento de target que ya usa el
+script del repo y produjo 250 avisos de sampler/textura antes del roster.
+Se archivó y repitió la exportación con `-buildTarget WebGL`; la comprobación
+afectada dejó de mostrar esos avisos. Quedan tres diagnósticos de shaders
+auxiliares y favicon 404; no hubo excepciones JavaScript. Los archivos
+originales se conservan, incluidos los resultados funcionales y su límite.
+
+[Revisión, capturas y procedencia](audits/ROSTER-v0.21.md) ·
+[Resumen verificable](audits/ROSTER-v0.21.json).
+La medición aislada anterior sigue atribuida a `624743c`, cuyo jugador está
+archivado. No certifica el coste del nuevo roster ni una tablet física.
+
 ## Límites restantes
 
 La separación visual arena/roca/verde no suaviza la geometría escalonada de
