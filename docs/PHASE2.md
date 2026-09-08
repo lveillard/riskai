@@ -145,6 +145,17 @@ con su alcance.
 [Limitaciones](https://docs.unity3d.com/6000.3/Documentation/Manual/webgl-technical-overview.html),
 [memoria](https://docs.unity3d.com/6000.3/Documentation/Manual/webgl-memory.html).
 
+## Avance v0.21
+
+La corrección compartida de ratón mantiene rueda sobre el HUD y cámara en
+pausa. Windows y Web incluyen el mismo catálogo de Marines/barcos, sus
+colas y el comandante de expediciones navales. Web se ha inspeccionado en
+Edge con entradas CDP y ventanas de escritorio y 390×844; el perfil Mobile
+proporciona ahora las texturas de profundidad y color requeridas por el
+agua. Esta corrección añade trabajo de renderizado que debe medirse; no
+certifica rendimiento en Android. La evidencia actual y las limitaciones
+están en [Validación v0.21](VALIDATION-v0.21.md).
+
 ## Estado
 
 La base de comandos de producción, la propiedad explícita de recursos runtime
@@ -182,6 +193,6 @@ La distribución compacta conserva las pestañas y comparte los controles y
 las reglas con escritorio. Adaptar el espacio no implica eliminar la
 identidad visual ni reducir la información disponible en pantallas amplias.
 
-La v0.20 Windows se genera en Builds/Windows-v0.20. Las builds anteriores
+La versión actual se genera en Builds/Windows-v0.21 y Builds/Web-v0.21. Las builds anteriores
 se conservan como referencia local. No se implementan servidor, multijugador, niebla ni héroes en esta
 fase.

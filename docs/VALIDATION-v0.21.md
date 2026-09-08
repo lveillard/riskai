@@ -114,6 +114,63 @@ Total consolidado: 94 casos Unity distintos (91 PlayMode y 3 EditMode).
 
 ## Exportaciones, inspección y rendimiento
 
+El ejecutable Windows del commit `49a2e28` se generó correctamente:
+206.879.656 bytes según `v21-windows-r4.log`. El smoke nativo creó Europe
+con 16 jugadores y verificó diagnósticos de colas (cinco navales y una de
+Marines), pero **no produjo capturas desde la ventana oculta**: el log
+`v21-r4-europe-capture.log` contiene `Failed to capture screen shot` y el
+directorio está vacío. No se cuenta como aceptación visual del nuevo
+binario, ni se presenta su comparación de frames como rendimiento final.
+No apareció un diálogo de permisos ni se ha establecido una interacción
+exclusiva del usuario necesaria para continuar.
+
+Las imágenes nativas anteriores de `Captures/v21-final-europe` y
+`Captures/v21-final-ui-phone` pertenecen a `060ed60`, a 1600×900 y 390×844.
+Se inspeccionaron catálogo portuario, colas e interfaz compacta; no son
+capturas de un teléfono físico. Los cambios posteriores son de planificación,
+embarque, errores y un límite naval compartido; no cambiaron arte ni layouts.
+Se conserva la procedencia anterior sin atribuir las imágenes al binario
+nuevo. La aceptación Web posterior se detalla a continuación.
+
+La exportación Web `49a2e28` se comprobó en Edge 152.0.4191.66 mediante
+entrada CDP al jugador Unity real: el lápiz inició Europe con 16 bandos,
+rueda cambió zoom en pausa, arrastre derecho movió cámara y el central
+invirtió ese desplazamiento; dos dedos cambiaron encuadre/zoom. El contador
+de ronda permaneció en 59 s. La rueda del ranking mostró filas inferiores y
+volvió al principio, manteniendo el mapa detrás. F3 seleccionó un puerto
+propio; W descontó dos de oro y agregó un transporte a la cola. A 390×844
+se inspeccionaron las pestañas y el catálogo de Marines. Evidencia:
+`Captures/v21-web-final-ui`; el helper local es una extensión de
+`scripts/check_web_ui.py` que añade el argumento Europe y eventos normales
+de teclado/ratón, sin modificar estado interno de Unity.
+
+Esa inspección detectó **agua invisible** pese al smoke `success=true`:
+el perfil Mobile elegido para WebGL/Android no proporcionaba las texturas
+de profundidad/color que consume el shader. `a4060df` habilita ambas sin
+cambiar la regla de costa ni duplicar el agua. Su exportación Web terminó
+con 57.414.383 bytes (`v21-web-water.log`). La repetición visual en
+`Captures/v21-web-water` muestra el lago y la orilla alrededor de Finland 174,
+compra pagada y adaptación compacta. La silueta escalonada sigue pendiente.
+La consola no registró excepciones JavaScript; sí conserva tres diagnósticos
+de shaders auxiliares no soportados (CoreCopy, StencilDitherMaskSeed y
+HDRDebugView). El éxito del helper no certifica todos los shaders ni sustituye
+la inspección visual. No se hizo una medición física de tablet o stylus.
+
+La exportación Windows de `a4060df` terminó con 206.879.462 bytes
+(`v21-windows-water.log`). La repetición con ventana visible generó las
+16 imágenes de `Captures/v21-native-visible` y salió normalmente. Se
+inspeccionaron puerto, iconos, colas y agua; el fallo de captura oculto del
+commit anterior permanece registrado y no cuenta como aceptación visual.
+Las imágenes son de una escena preparada por la sonda: no prueban por sí
+solas el funcionamiento de una expedición de IA durante una partida libre.
+
+En Web, `Captures/v21-web-port-scroll` muestra además la rueda dentro del
+catálogo de producción a 390×844: desplaza el panel hasta fragata/transporte
+sin mover el mapa. El tooltip aparece al pasar por transporte. Son eventos
+CDP dentro del reproductor exportado, no una prueba de dispositivo físico.
+
+![Catálogo naval compacto, rueda y tooltip en Web](images/v0.21-web-compact.png)
+
 La primera exportación Windows terminó correctamente (206.875.846 bytes).
 Las capturas Europe de `Captures/v21-europe` detectaron que el HUD trataba
 el alias terrestre del puerto como ciudad: mostraba el catálogo regular
@@ -164,11 +221,35 @@ ejército cayó durante el combate. Log: `v21-final-perf-48.log`; contexto en
 `Captures/v21-final-perf-environment.json`. El siguiente parche de revisión
 aún no está incluido en ese ejecutable.
 
+La repetición visible de `a4060df` (`v21-final-perf-recovered.log`) completó
+900 s simulados y 90 s medidos: 1008→511 unidades, 1325 órdenes aplicadas,
+0 rechazadas/pendientes y 6/6 identidades con movimiento. Frame medio
+20,00 ms, máximo 72,14 ms, 29 frames >50 ms y ninguno >100 ms.
+**Sigue marcada con contención**: empezó con 5,74 GiB libres, pero la RAM
+bajó hasta 1,04 GiB y volvió a recuperarse; hubo compilación ajena durante la
+pasada. No se cerraron procesos compartidos. Contexto completo en
+`Captures/v21-final-perf-recovered-environment.jsonl`.
+
+La ventana que terminó con 834 unidades registra envío→aplicación humano
+28,69 ms de media/57,35 ms máximo y primer movimiento 227,09/1086,11 ms.
+Con 651 unidades, este último fue 135,63/569,90 ms. Las órdenes no se
+acumulan en la cola, pero todavía hay demoras hasta moverse. Un muestreo
+`pathPending=0` cada 30 s no descarta esperas transitorias entre muestras;
+la métrica actual tampoco separa cálculo de ruta y evitación local. No se
+presenta como corrección completa del retraso ni como 800 unidades sostenidas.
+La aceptación temporal sin contención sigue pendiente, sin repetir suites
+funcionales que ya pasaron.
+
 La observación pasiva anterior de v0.20 encontró órdenes aplicadas en
 27–36 ms, pero una muestra de primer movimiento de 1,24 s y rutas pendientes
 hasta 800 ms. Los picos de 23–26 s coincidían con cambios de foco y no quedan
 explicados por los tiempos de tick registrados. Las mediciones anteriores
 no se atribuyen al parche nuevo.
+
+La comprobación del servidor local de gzip/MIME pasó con
+`python scripts/test_serve_web.py` (1/1). La invocación inicial por nombre de
+módulo desde la raíz falló por importación; ejecutar el script desde su ruta
+resolvió el lanzador sin modificar el test.
 
 ## Límites restantes
 

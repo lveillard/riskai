@@ -92,8 +92,8 @@ revisiones actuales, aisladas de la documentación y entre sí:
 | Claude-VEI · Opus 5 A | `.tools/v21-review-round2/opus-a-report.json` | Sólo el campo `result`: errores de embarque del jugador sin progreso, tropas no embarcadas incluidas en el ataque, cursor sensible a cambios de propietario y toast de fallos navales visible para el jugador. |
 | Claude-VEI · Opus 5 B | `.tools/v21-review-round2/opus-b-report.json` | Sólo el campo `result`: desacuerdo arena/pintura, coste de sondeos por frame, retención de guardia, barrera de relevo, alcance de galera, cursor de tropas, recuperación y test de guardia terrestre. |
 
-Un intento `codex-vei` terminó con error 401 y otro intento anterior quedó sin
-cuota de API; no se cuentan. No se usó Grok en esta ronda. La revisión vuelve a
+Un intento `codex-vei` terminó con error 401 y otro intento anterior alcanzó un
+límite de frecuencia de API; no se cuentan. No se usó Grok en esta ronda. La revisión vuelve a
 ser estática: no declara tests, builds, rendimiento ni comportamiento ARM para
 este parche.
 
@@ -167,3 +167,46 @@ nueve casos dirigidos (incluida la expedición completa) en
 `RiskAI/Logs/v21-review3-fixes.xml`, 34,15 s. Total consolidado: 94 casos
 Unity distintos. Las decisiones de playa y ola mínima siguen pendientes y
 estas correcciones no alteran sus reglas.
+
+
+## Ronda 4 · revisión proporcional del cambio final
+
+Tres contextos nuevos Astra low (C, D y E) revisaron `49a2e28` contra
+`c4f5476`, limitados a los tres archivos C# cambiados y sus consumidores.
+Los tres informes resultaron limpios, sin hallazgos accionables:
+`.tools/v21-review-round4/astra-c-report.md`, `astra-d-report.md` y
+`astra-e-report.md`. Root leyó los informes completos. Son revisores del
+mismo proveedor heredado, aislados entre sí; no se presenta diversidad de
+proveedores que no se haya comprobado.
+
+Los intentos A y B se detuvieron al advertir que un diff sin filtro había
+incluido texto de auditoría previo. No se cuentan como revisiones ciegas ni
+como aprobaciones; D y E los sustituyeron sin superar tres revisores a la
+vez. La instrucción corregida exige rutas C# explícitas. C confirmó que
+sólo había visto nombres de archivos en el resumen, sin leer los informes.
+
+Esta ronda es estática y proporcional al cambio: no repite la inspección
+amplia de código sin cambios, no sustituye las nueve pruebas dirigidas
+aprobadas y no certifica exportaciones, tiempos de frame ni tablet física.
+
+
+## Ronda 5 · dependencias del agua en el perfil móvil
+
+La inspección del jugador Web `49a2e28` encontró agua invisible: la consola
+no emitía un error del shader de agua, pero Finland 174 aparecía sobre el
+lecho verde. El perfil Mobile seleccionado por WebGL/Android tenía apagadas
+las texturas de profundidad y color opaco que lee `WaterSurface.hlsl`.
+`a4060df` activa esas dos dependencias compartidas; no cambia shaders,
+geografía, navegación ni reglas y conserva escala de render y MSAA.
+
+Tres revisores Astra low aislados inspeccionaron sólo ese delta y sus
+consumidores concretos; los tres informes fueron limpios y Root los leyó:
+`.tools/v21-review-round5/astra-a-report.md`, `astra-b-report.md` y
+`astra-c-report.md`. Son tres contextos del proveedor heredado, sin informes
+ajenos ni diff de auditoría. Reconocen el coste real de producir las texturas,
+sin atribuir tiempos de GPU ni rendimiento ARM a una inspección estática.
+La exportación Web del arreglo terminó (57.414.383 bytes). La repetición
+en Edge mostró agua, intersección de orilla y puerto en su lago, además de
+compra pagada y layout compacto. Evidencia: `Captures/v21-web-water`.
+La geometría de costa conserva su silueta escalonada; esto corrige el agua
+invisible, sin presentar una mejora geométrica inexistente.
