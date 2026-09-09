@@ -20,6 +20,7 @@ La exportación pública permanece en `20260909T091323Z-966b9a9`. Estas observac
 | ABBA, sombras dinámicas de unidades apagadas | Normal: 54,01 / 48,16 ms (media 51,09); sombras apagadas: 53,44 / 49,83 ms (media 51,64) | No hay ahorro repetible. Se apagaron 13.344 casters de 1.112 soldados, preservando las sombras pintadas; draw calls y batches siguieron cerca de 3.651 / 2.880. |
 | ABBA, modelos de unidad ocultos | Normal: 51,82 / 44,49 ms (media 48,16); modelos ocultos: 36,57 / 34,67 ms (media 35,62) | Ahorro de 9,82–15,25 ms con 900/900 unidades móviles y cero rechazos. Draw calls bajan 3.649→3.459, batches 2.872→2.688 y vértices 392.320→276.663. |
 | ABBA, animación legacy congelada | Normal: 45,56 / 44,30 ms (media 44,93); animación congelada: 43,44 / 42,18 ms (media 42,81) | Ahorro repetible de 2,12 ms (~4,7 %). Se congelaron 1.112 `Animation` y sus controladores, manteniendo iguales mallas, draw calls, batches, vértices, rutas y órdenes. |
+| ABBA, skins horneadas a malla estática | Normal: 36,76 / 41,64 ms (media 39,20); estática: 33,33 / 33,35 ms | La variante llega al límite de 30 FPS, pero crea 6.672 mallas para 1.112 soldados y aumenta el heap 459→647 MiB. Draw calls, batches y vértices permanecen iguales. Es evidencia del coste skinned, no una solución publicable. |
 
 ## Correcciones metodológicas
 
@@ -31,17 +32,18 @@ La exportación pública permanece en `20260909T091323Z-966b9a9`. Estas observac
 - El contador de draw calls interceptados incluye toda la ejecución, no solo la ventana de medida.
 - La prueba de animación desactiva tanto `Animation` legacy como `SoldierAnimator` y `MountedKnightView`; desactivar sólo el controlador no habría aislado la evaluación de pose.
 - Ocultar renderers también puede alterar culling y actualización de bounds. El ahorro de modelos demuestra que la presentación visible es material, pero aún no atribuye el coste sólo a skinning o sólo a geometría.
+- La prueba de skins hornea seis fuentes skinned por soldado y queda limitada por el objetivo de 30 FPS. Confirma que el camino de renderer skinned importa, pero no permite cuantificar su ahorro total por debajo de 33,33 ms y cambia la memoria de forma inaceptable.
 
 ## Conclusión actual
 
-La presentación de modelos visibles es el bloque dominante encontrado en este fixture: retirarla ahorra aproximadamente 12,5 ms/frame de media. La animación legacy explica aproximadamente 2,1 ms de ese camino, por lo que queda una parte mayor de culling, actualización de bounds, skinning y preparación/envío de render sin separar.
+La presentación de modelos visibles es el bloque dominante encontrado en este fixture: retirarla ahorra aproximadamente 12,5 ms/frame de media. La animación legacy explica aproximadamente 2,1 ms de ese camino. Cada soldado tiene seis fuentes `SkinnedMeshRenderer`; congelarlas y convertirlas en estáticas alcanza el presupuesto de 30 FPS, aunque la prueba usa 188 MiB extra y por eso no puede convertirse directamente en producto.
 
-Reducir píxeles no ayuda y WebGL mantiene este trabajo en el hilo principal. Actualización de `NavMeshAgent`, evitación local e IMGUI/minimapa continúan sin cuantificar de forma repetida, pero no son el siguiente candidato de producto mientras el modelo visible conserve esa señal.
+Reducir píxeles no ayuda y WebGL mantiene este trabajo en el hilo principal. El candidato de producto es un proxy estático compartido por arquetipo y equipo para unidades lejanas, con pocos renderers; nunca una malla horneada por instancia. Actualización de `NavMeshAgent`, evitación local e IMGUI/minimapa continúan sin cuantificar de forma repetida.
 
 ## Próximos pasos por prioridad
 
-1. Comparar `SkinnedMeshRenderer` congelado con una malla estática equivalente: misma pose, materiales, submeshes y transforms. No cambiar batching o instancing en esta prueba. Separará el camino skinned de dibujo/culling de geometría equivalente.
-2. Convertir sólo el ahorro que se confirme en LOD de producto: modelo completo cerca, detalle estático o simplificado lejos, y conservar simulación, selección y respuesta de ataque. Repetir ABBA y una prueba en móvil físico.
+1. Construir y medir un LOD real: modelo completo cerca; proxy estático compartido por arquetipo/equipo lejos. El proxy debe mantener selección, anillo, barra de vida y simulación, y reducir de seis renderers skinned a pocos renderers compartidos.
+2. Repetir ABBA y una prueba en móvil físico, incluyendo heap, draw calls, batches, vértices, rutas, selección y combate. No sumar ahorros de experimentos diferentes.
 3. Aislar UI y después minimapa con intervenciones ABBA, sin sumar ahorros entre intervenciones.
 4. Si un bloque sigue ambiguo, ampliar los markers de PlayerLoop disponibles para Animation, AI/NavMesh, culling y GUI. No usar Deep Profile ni serializar durante el intervalo.
 5. Mantener constantes semilla, cámara, cohort, rutas, presupuesto de NavMesh y duración. Registrar trabajo útil, no solo ms: unidades movidas, rutas pendientes, latencia y órdenes rechazadas.

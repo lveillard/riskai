@@ -34,5 +34,10 @@ namespace RiskAI.Tests
             var args=LaunchArguments.FromUrl("https://localhost/?riskai-probe-disable-unit-animation=1&disable-unit-animation=1");
             CollectionAssert.AreEqual(new[]{"--riskai-probe-disable-unit-animation"},args);
         }
+        [Test] public void UnitSkinBakeDiagnosticIsOptInAndKeepsTheBrowserContractNarrow()
+        {
+            var args=LaunchArguments.FromUrl("https://localhost/?riskai-probe-bake-unit-skins=true&bake-unit-skins=true");
+            CollectionAssert.AreEqual(new[]{"--riskai-probe-bake-unit-skins"},args);
+        }
     }
 }

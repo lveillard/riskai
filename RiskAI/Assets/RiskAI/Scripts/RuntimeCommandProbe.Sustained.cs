@@ -109,7 +109,15 @@ namespace RiskAI
                 Debug.Log($"RISKAI_PROBE_PRESENTATION unitModelRenderers=false changedRenderers={hiddenRenderers} " +
                     $"soldiers={session.Units.Count} ships={(session.Naval ? session.Naval.Ships.Count : 0)} groundShadows=retained");
             }
-            if (HasExactFlag("--riskai-probe-disable-unit-animation"))
+            if (HasExactFlag("--riskai-probe-bake-unit-skins"))
+            {
+                var animationResult = DisableUnitAnimation(session);
+                var bakeResult = BakeUnitSkins(session);
+                Debug.Log($"RISKAI_PROBE_PRESENTATION unitSkins=static changedLegacyAnimations={animationResult.LegacyAnimations} " +
+                    $"changedControllers={animationResult.Controllers} skinnedSources={bakeResult.SkinnedSources} " +
+                    $"staticReplacements={bakeResult.StaticReplacements} bakedVertices={bakeResult.Vertices} renderers=retained");
+            }
+            else if (HasExactFlag("--riskai-probe-disable-unit-animation"))
             {
                 var result = DisableUnitAnimation(session);
                 Debug.Log($"RISKAI_PROBE_PRESENTATION unitAnimation=false changedLegacyAnimations={result.LegacyAnimations} " +
@@ -252,6 +260,13 @@ namespace RiskAI
             public int Controllers;
         }
 
+        struct SkinBakeResult
+        {
+            public int SkinnedSources;
+            public int StaticReplacements;
+            public int Vertices;
+        }
+
         // Freeze every unit in its current valid pose while keeping the model, material,
         // transform and battle simulation live. SoldierAnimator and MountedKnightView
         // are disabled too, otherwise their Update methods would restart or alter a pose.
@@ -278,6 +293,51 @@ namespace RiskAI
                     if (!knightView.enabled) continue;
                     knightView.enabled = false;
                     result.Controllers++;
+                }
+            }
+            return result;
+        }
+
+        // This is deliberately a measurement substitute, not a product LOD. Every
+        // enabled SkinnedMeshRenderer gets one baked mesh with the same material array
+        // and transform after animation is frozen. The later ABBA must still report
+        // batches and draw calls: changing renderer type can affect Unity batching.
+        static SkinBakeResult BakeUnitSkins(BattleSession session)
+        {
+            var result = new SkinBakeResult();
+            foreach (var root in UnitRoots(session))
+            {
+                foreach (var skinned in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                {
+                    if (!skinned.enabled) continue;
+                    result.SkinnedSources++;
+                    var baked = new Mesh { name = "Probe baked unit skin" };
+                    skinned.BakeMesh(baked);
+                    if (baked.vertexCount == 0)
+                    {
+                        Destroy(baked);
+                        continue;
+                    }
+                    var source = skinned.gameObject;
+                    var replacement = new GameObject("Probe static unit skin");
+                    replacement.layer = source.layer;
+                    replacement.transform.SetParent(source.transform.parent, false);
+                    replacement.transform.localPosition = source.transform.localPosition;
+                    replacement.transform.localRotation = source.transform.localRotation;
+                    replacement.transform.localScale = source.transform.localScale;
+                    replacement.AddComponent<MeshFilter>().sharedMesh = baked;
+                    var renderer = replacement.AddComponent<MeshRenderer>();
+                    renderer.sharedMaterials = skinned.sharedMaterials;
+                    renderer.shadowCastingMode = skinned.shadowCastingMode;
+                    renderer.receiveShadows = skinned.receiveShadows;
+                    renderer.lightProbeUsage = skinned.lightProbeUsage;
+                    renderer.reflectionProbeUsage = skinned.reflectionProbeUsage;
+                    renderer.motionVectorGenerationMode = skinned.motionVectorGenerationMode;
+                    renderer.allowOcclusionWhenDynamic = skinned.allowOcclusionWhenDynamic;
+                    renderer.renderingLayerMask = skinned.renderingLayerMask;
+                    skinned.enabled = false;
+                    result.StaticReplacements++;
+                    result.Vertices += baked.vertexCount;
                 }
             }
             return result;
