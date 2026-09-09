@@ -16,6 +16,7 @@ La exportación pública permanece en `20260909T091323Z-966b9a9`. Estas observac
 | Sin llamadas WebGL de dibujo | 39,14 ms en una pasada válida | El camino de dibujo merece investigación, pero la intercepción también cambia el trabajo de CPU y no prueba un límite de GPU. |
 | Presupuesto NavMesh 100 | 46,86 ms; rutas pendientes hasta 2.750 ms; 699 unidades moviéndose de media | Reduce trabajo útil y empeora respuesta; no es una mejora equivalente. |
 | Perfil CPU Edge | 59,7 s muestreados; funciones WASM anónimas dominantes; `bufferSubData` ~0,675 s | El tiempo ocurre en WASM/Unity, no en layout/CSS; la release no conserva símbolos para nombrar subsistemas. |
+| PlayerLoop local, 900 unidades | Main Thread ~65,3 ms/frame; 3.651 draw calls; 2.880 batches; 50 SetPass; 392.417 vértices | WebGL ejecuta en un hilo principal. La presión principal es CPU de preparación/envío de render y batches, no fill-rate. |
 
 ## Correcciones metodológicas
 
@@ -29,7 +30,7 @@ La exportación pública permanece en `20260909T091323Z-966b9a9`. Estas observac
 
 ## Conclusión actual
 
-No está identificado todavía el subsistema dominante. Sabemos que la mayor parte del tiempo queda fuera de `World.Tick` y que reducir píxeles no ayuda. Las hipótesis abiertas, sin orden de culpabilidad, son:
+No está identificado todavía un subsistema único. Sabemos que la mayor parte del tiempo queda fuera de `World.Tick`, que reducir píxeles no ayuda y que el hilo principal procesa miles de batches por frame. Las hipótesis abiertas, sin orden de culpabilidad, son:
 
 1. Evaluación de `Animation` legacy y skinning de unidades.
 2. Actualización de `NavMeshAgent` y evitación local fuera del tick instrumentado.
@@ -39,17 +40,20 @@ No está identificado todavía el subsistema dominante. Sabemos que la mayor par
 
 ## Próximos pasos por prioridad
 
-1. Crear una build local de diagnóstico y capturar 2–5 segundos estables de PlayerLoop/Profiler con marcadores inclusivos de Animation, AI/NavMesh, Render/Culling, sombras, IMGUI y GC. No usar Deep Profile ni serializar durante el intervalo.
-2. Validar que el propio profiling no altera de forma material frame time, ticks, unidades móviles ni latencia de ruta.
-3. Aplicar interruptores diagnósticos locales, uno por vez y en orden ABBA, sobre el bloque que destaque:
+1. Reducir batches de entidades repetidas con un experimento local de sombras dinámicas desactivadas para tropas/barcos, conservando las sombras pintadas. Medir draw calls, batches y trabajo útil con el mismo fixture.
+2. Aplicar LOD de presentación a unidades lejanas: primero sombra dinámica y detalle de animación; después malla/impostor. Mantener simulación y selección intactas.
+3. Aislar UI y después minimapa con intervenciones ABBA, sin sumar ahorros entre intervenciones.
+4. Si un bloque sigue ambiguo, ampliar los markers de PlayerLoop disponibles para Animation, AI/NavMesh, culling y GUI. No usar Deep Profile ni serializar durante el intervalo.
+5. Validar que el propio profiling no altera de forma material frame time, ticks, unidades móviles ni latencia de ruta.
+6. Aplicar interruptores diagnósticos locales, uno por vez y en orden ABBA, sobre el bloque que destaque:
    - sombras desactivadas;
    - UI completa, después solo minimapa;
    - evaluación de `Animation` realmente congelada;
    - cámara/mundo sin render;
    - evitación de agentes manteniendo rutas.
-4. Mantener constantes semilla, cámara, cohort, rutas, presupuesto de NavMesh y duración. Registrar trabajo útil, no solo ms: unidades movidas, rutas pendientes, latencia y órdenes rechazadas.
-5. Solo después de localizar el bloque dominante, implementar una optimización de producto y repetir el mismo ABBA más una prueba en dispositivo móvil real.
+7. Mantener constantes semilla, cámara, cohort, rutas, presupuesto de NavMesh y duración. Registrar trabajo útil, no solo ms: unidades movidas, rutas pendientes, latencia y órdenes rechazadas.
+8. Solo después de localizar el bloque dominante, implementar una optimización de producto y repetir el mismo ABBA más una prueba en dispositivo móvil real.
 
 ## Herramienta disponible
 
-`scripts/check_web_player.py` admite ahora `--browser-metrics` y `--cpu-profile` para conservar métricas del hilo principal y un perfil CPU de Edge junto con la evidencia del probe.
+`scripts/check_web_player.py` admite `--browser-metrics`, `--cpu-profile` y `--frame-trace` para conservar métricas del hilo principal, un perfil CPU de Edge y los counters de PlayerLoop disponibles junto con la evidencia del probe.
