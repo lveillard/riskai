@@ -24,6 +24,7 @@ Shader "RiskAI/Meadow"
    int _RiskCityCount;
    #include "MapSurface.hlsl"
    #include "NaturalNoise.hlsl"
+   #include "CoastSurface.hlsl"
    struct A {float4 p:POSITION;float3 n:NORMAL;float2 coast:TEXCOORD1;};
    struct V {float4 p:SV_POSITION;float3 w:TEXCOORD0;half fog:TEXCOORD1;float3 n:TEXCOORD2;float river:TEXCOORD3;float2 coast:TEXCOORD4;};
    V Vert(A a){V o;VertexPositionInputs p=GetVertexPositionInputs(a.p.xyz);o.p=p.positionCS;o.w=p.positionWS;o.n=TransformObjectToWorldNormal(a.n);o.fog=ComputeFogFactor(o.p.z);o.river=RiskRiverDistance(o.w.xz);o.coast=a.coast;return o;}
@@ -73,8 +74,9 @@ Shader "RiskAI/Meadow"
     float foot=(1-smoothstep(.65,1.9,i.w.y))*smoothstep(.04,.28,i.w.y)*(1-smoothstep(.75,.96,n.y));
     color=lerp(color,RockTile(p*.28,float2(0,0))*half3(.9,.94,.87),max(foot,court*.22));
     float beach=1-smoothstep(.2,3.3,-RiskShore(b)+(noise-.5)*.7);
-    half3 bank=lerp(color*half3(.9,1.04,.91),RockTile(p*.22,float2(0,0))*half3(.90,.97,.99),i.coast.y);
-    bank=lerp(bank,Biome(p*.19,float2(0,.5))*half3(1.04,1.02,.83),i.coast.x);
+    float3 coast=RiskCoastSurface(p);
+    half3 bank=lerp(color*half3(.9,1.04,.91),RockTile(p*.22,float2(0,0))*half3(.90,.97,.99),coast.g);
+    bank=lerp(bank,Biome(p*.19,float2(0,.5))*half3(1.04,1.02,.83),RiskSandBlend(coast.r));
     color=lerp(color,bank,beach);
     float rock=1-smoothstep(12,19,length((b-float2(57,-40))*float2(1,.95))+(noise-.5)*5);
     color=lerp(color,Tile(p*.13,float2(0,0))*half3(.72,.88,1.05),rock);

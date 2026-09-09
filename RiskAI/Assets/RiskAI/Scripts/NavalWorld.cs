@@ -87,7 +87,13 @@ namespace RiskAI
             if(!found)berth=new Vector3(probe.x,-.24f,probe.z);
             var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;
             var harbor=go.AddComponent<Harbor>();
-            harbor.InitializeImported(this,new BuildingId(BuildingKind.Harbor,"imported/"+town.State.Id),town,berth,found?null:"El puerto no tiene una salida marítima segura.");Harbors.Add(harbor);AddEmbarkZone(harbor);
+            harbor.InitializeImported(this,new BuildingId(BuildingKind.Harbor,"imported/"+town.State.Id),town,berth,found?null:"El puerto no tiene una salida marítima segura.");
+            // The imported map supplies a city-to-claim quay, while the safe naval
+            // berth may be farther offshore. Join both anchors with the same deck
+            // primitive used by authored harbors so the usable berth stays visible.
+            NavalArt.CreatePierDeck(harbor.transform,town.ClaimPoint+Vector3.up*.15f,berth+Vector3.up*.15f,
+                3.15f,"Harbor berth pier",false,true,.03f);
+            Harbors.Add(harbor);AddEmbarkZone(harbor);
         }
         void AddHarbor(BuildingId buildingId,string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
         {
@@ -103,7 +109,7 @@ namespace RiskAI
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
         public Ship Spawn(int team,ShipKind kind,Vector3 point)
         {
-            if(!SeaNavigation.HasClearance(point))return null;
+            if(Session.IsPlayerEliminated(team) || !SeaNavigation.HasClearance(point))return null;
             var go=new GameObject(kind==ShipKind.Galley?"Galera":"Transporte");go.transform.SetParent(transform,false);go.transform.position=new Vector3(point.x,-.24f,point.z);
             var ship=go.AddComponent<Ship>();ship.Initialize(this,team,kind);Ships.Add(ship);Session.RegisterTarget(ship);return ship;
         }
@@ -225,6 +231,7 @@ namespace RiskAI
         }
         void RunAiDecision(int team)
         {
+            if (Session.IsPlayerEliminated(team)) return;
             int fleet=PendingShips(team);
             foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team)fleet++;
             // Each AI still receives one decision every 18 simulation seconds, but

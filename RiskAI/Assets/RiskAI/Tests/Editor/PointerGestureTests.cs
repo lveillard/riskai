@@ -59,12 +59,27 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void ThirdFingerCancelsGestureWithoutPrimaryOrContext()
+        public void ThirdFingerWaitsForMotionWithoutPrimaryOrContext()
         {
             var gesture=new DirectPointerGesture();var actions=new List<DirectPointerAction>();
             gesture.Begin(1,new PointerPoint(10,10),1);gesture.Begin(2,new PointerPoint(30,10),1.01f);gesture.Begin(3,new PointerPoint(50,10),1.02f);
             gesture.Advance(2);gesture.Drain(actions.Add);
-            Assert.That(actions,Is.Empty);Assert.That(gesture.Active,Is.True,"A third active contact must block the recognizer until all contacts lift.");
+            Assert.That(actions,Is.Empty);Assert.That(gesture.Active,Is.True,"A three-finger gesture remains owned until all contacts lift.");
+        }
+
+        [Test]
+        public void ThreeFingerDragOnlyOrbitsAndLiftQuarantinesRemainingContacts()
+        {
+            var gesture=new DirectPointerGesture();var actions=new List<DirectPointerAction>();
+            gesture.Begin(1,new PointerPoint(10,10),1);gesture.Move(1,new PointerPoint(30,10));
+            gesture.Begin(2,new PointerPoint(50,10),1.01f);gesture.Begin(3,new PointerPoint(70,10),1.02f);
+            gesture.Move(1,new PointerPoint(60,40));gesture.Drain(actions.Add);
+            Assert.That(actions.Select(action=>action.Kind),Is.EqualTo(new[]{DirectPointerActionKind.AreaCancel,DirectPointerActionKind.Orbit}));
+            Assert.That(actions.Last().Position.X-actions.Last().Previous.X,Is.EqualTo(10).Within(.001));
+            actions.Clear();gesture.End(3,new PointerPoint(70,10),1.03f,true);
+            gesture.Move(1,new PointerPoint(100,90));gesture.Move(2,new PointerPoint(120,90));
+            gesture.End(1,new PointerPoint(100,90),1.04f);gesture.End(2,new PointerPoint(120,90),1.05f);
+            gesture.Advance(2);gesture.Drain(actions.Add);Assert.That(actions,Is.Empty);Assert.That(gesture.Active,Is.False);
         }
 
         [Test]

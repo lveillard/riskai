@@ -1,0 +1,42 @@
+{
+  "host": "azureuser@68.221.185.54",
+  "build": "C:\\Users\\lveil\\Desktop\\Projects\\riskai\\Builds\\Web-v0.23",
+  "config": {
+    "current": "/srv/riskai/current",
+    "release_id": "20260909T091323Z-966b9a9",
+    "archive_sha256": "b4b2aca71ac8712678b006c3b477371b92bafaa250ab996ef1db3330757506f0",
+    "manifest": {
+      "release-20260909T091323Z-966b9a9/Build/Web-v0.23.data.unityweb": "777dcfa67c4979b30533a73e7ee5ed2c539256670c7471dc983c9f8d3ba2263b",
+      "release-20260909T091323Z-966b9a9/Build/Web-v0.23.framework.js.unityweb": "2c4d27b9a65528e5fd751f577501b0de323005e10af56c24f66d725246853341",
+      "release-20260909T091323Z-966b9a9/Build/Web-v0.23.loader.js": "f5bb1eaf5ae8388247490ad3a92bee12d7da72f7e4ff681f59c94c0e37a47513",
+      "release-20260909T091323Z-966b9a9/Build/Web-v0.23.wasm.unityweb": "8f678829d098a2a28d4d8eaae62a150f770065704cbaf76c1c713955d63f363d",
+      "release-20260909T091323Z-966b9a9/Cinzel-OFL.txt": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb",
+      "release-20260909T091323Z-966b9a9/index.html": "951ae209a2be7ec4c9c2c661ce6d94265452d7446f53f500869e9c981e8addee",
+      "release-20260909T091323Z-966b9a9/KayKit-LICENSE.txt": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629",
+      "release-20260909T091323Z-966b9a9/riskai-pen.js": "de87827367c3455505446bcc5f60d8d4b5cc6fe61862a76d463748cea9244e60",
+      "release-20260909T091323Z-966b9a9/THIRD_PARTY_NOTICES.md": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f",
+      "index.html": "e0cdf4675c4bd78374c5fa5bbb1b43d38c8c9b782cbae9726ad299c46141a9b4"
+    },
+    "expected_previous": "/srv/riskai/releases/20260909T012000Z-f69b7f0",
+    "archive": "/tmp/riskai-upload-vPMMgiGY.tar"
+  },
+  "activated": true,
+  "previous": "/srv/riskai/releases/20260909T012000Z-f69b7f0",
+  "rollback_ssh_argv": [
+    "ssh",
+    "-i",
+    "C:\\Users\\lveil\\.ssh\\riskai_azure_demo_ed25519",
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "StrictHostKeyChecking=yes",
+    "-o",
+    "UserKnownHostsFile=C:\\Users\\lveil\\Desktop\\Projects\\riskai\\.tools\\v22-validation\\azure_known_hosts",
+    "-o",
+    "ConnectTimeout=20",
+    "azureuser@68.221.185.54",
+    "sudo -n ln -s /srv/riskai/releases/20260909T012000Z-f69b7f0 /srv/riskai/rollback-20260909T091323Z-966b9a9 && sudo -n mv -Tf /srv/riskai/rollback-20260909T091323Z-966b9a9 /srv/riskai/current"
+  ],
+  "current": "/srv/riskai/releases/20260909T091323Z-966b9a9",
+  "files_verified": 10
+}

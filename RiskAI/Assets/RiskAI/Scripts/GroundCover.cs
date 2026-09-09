@@ -20,7 +20,10 @@ namespace RiskAI
         {
             new Color(.30f, .40f, .15f),
             new Color(.39f, .46f, .18f),
-            new Color(.46f, .48f, .22f)
+            new Color(.46f, .48f, .22f),
+            new Color(.43f, .37f, .16f),
+            new Color(.50f, .43f, .20f),
+            new Color(.34f, .34f, .14f)
         };
 
         readonly List<Mesh> meshes = new List<Mesh>();
@@ -58,7 +61,8 @@ namespace RiskAI
                 float z = Mathf.Lerp(min.y, max.y, Next(random));
                 if (!AcceptPatch(x, z) || !SuitableGround(x, z) || !ClearOfPosts(session, x, z)) continue;
 
-                int material = random.Next(Colors.Length);
+                bool dry=MapLayout.Scenario==ScenarioMap.Classic&&z<-43*MapLayout.Spacing;
+                int material = (dry?3:0)+random.Next(3);
                 int cellX = Mathf.FloorToInt(x / CellSize), cellZ = Mathf.FloorToInt(z / CellSize);
                 long key = CellKey(cellX, cellZ, material);
                 if (!groups.TryGetValue(key, out var mesh)) groups.Add(key, mesh = new CellMesh());
@@ -70,7 +74,7 @@ namespace RiskAI
             {
                 var source = pair.Value;
                 if (source.Vertices.Count == 0) continue;
-                int material = (int)(pair.Key & 3L);
+                int material = (int)(pair.Key & 7L);
                 var mesh = new Mesh { name = "Original meadow cover mesh" };
                 if (source.Vertices.Count > ushort.MaxValue) mesh.indexFormat = IndexFormat.UInt32;
                 mesh.SetVertices(source.Vertices);
@@ -95,13 +99,14 @@ namespace RiskAI
         static float Next(System.Random random) => (float)random.NextDouble();
 
         static long CellKey(int x, int z, int material)
-            => ((long)x << 34) ^ ((long)(uint)z << 2) ^ (uint)material;
+            => ((long)x << 35) ^ ((long)(uint)z << 3) ^ (uint)material;
 
         static bool AcceptPatch(float x, float z)
         {
             float noise = Mathf.PerlinNoise(x * .075f + 17.3f * ((int)MapLayout.Scenario + 1), z * .075f + 9.7f);
             // Narrow absences make irregular meadows while keeping the cover sparse
             // and leaving enough possible placements for the source-scale maps.
+            if(MapLayout.Scenario==ScenarioMap.Classic&&z<-43*MapLayout.Spacing)return noise>=.44f&&noise<=.86f;
             return noise >= .32f && noise <= .94f;
         }
 

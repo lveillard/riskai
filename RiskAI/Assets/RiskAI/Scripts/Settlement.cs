@@ -28,7 +28,18 @@ namespace RiskAI
         public UnitKind TrainingKind => queue.Count == 0 ? UnitKind.Footman : queue[0].Kind;
         public LineRenderer Ring { get; private set; }
         bool navalClaimVisual;
-        public bool Selected;
+        bool selected;
+        public bool Selected
+        {
+            get=>selected;
+            set
+            {
+                selected=value;
+                if(SelectionRing)SelectionRing.enabled=value;
+                if(rallyRing)rallyRing.enabled=value&&State!=null&&State.Owner==0;
+                if(Ring)Ring.widthMultiplier=value?.10f:.065f;
+            }
+        }
         public bool Building => project != BuildingProject.None;
         public string ProjectName => project == BuildingProject.Tower ? "Torre de guardia" : "Mejora de ciudad";
         public float ProjectProgress => Building ? 1 - projectRemaining / BattleRules.ConstructionSeconds : 0;
@@ -55,7 +66,17 @@ namespace RiskAI
             ClaimPoint = sourceClaim ?? MapLayout.Point(claimProbe.x, claimProbe.z);
             ClaimZone = new CityClaimZone(ClaimPoint);
             session.Towns.Add(this); session.Economy.Towns.Add(State);
-            flag = VisualFactory.Town(transform, owner, capital && !MapLayout.IsImported);
+            BuildingEntranceAnchor entrance;
+            if(IsPort)
+            {
+                var visual=NavalArt.CreateHarborBuilding(transform,owner,transform.position,ClaimPoint-transform.position,true);
+                flag=visual.Flag;entrance=visual.Entrance;
+            }
+            else
+            {
+                flag = VisualFactory.Town(transform, owner, capital && !MapLayout.IsImported);
+                entrance=BuildingEntranceAnchor.Find(transform);
+            }
             Ring = VisualFactory.Ring(transform, CityClaimZone.DefaultHalfExtent, .055f, new Color(.5f,1,.55f));
             Ring.transform.position = ClaimPoint; Ring.enabled=false;
             var towerObject = new GameObject("Torre de " + displayName);
@@ -67,7 +88,7 @@ namespace RiskAI
             var rallyObject = new GameObject("Punto de reunión"); rallyObject.transform.SetParent(transform, false);
             rallyRing = VisualFactory.Ring(rallyObject.transform, .6f, .09f, new Color(.8f, 1, .5f));
             rallyObject.transform.position = Rally; rallyRing.enabled = false;
-            trainingView=BuildingTrainingView.Create(transform,BuildingEntranceAnchor.Find(transform));
+            trainingView=BuildingTrainingView.Create(transform,entrance);
         }
 
         Vector3 ImportedTowerPoint()

@@ -16,12 +16,18 @@ namespace RiskAI
         public static Vector2 PlayableMin => IsImported ? new Vector2(Imported.PlayableMinX, Imported.PlayableMinZ) : new Vector2(-HalfWidth, -HalfDepth);
         public static Vector2 PlayableMax => IsImported ? new Vector2(Imported.PlayableMaxX, Imported.PlayableMaxZ) : new Vector2(HalfWidth, HalfDepth);
         public static Vector3 PlayableCenter => new Vector3((PlayableMin.x + PlayableMax.x) * .5f, 0, (PlayableMin.y + PlayableMax.y) * .5f);
-        public static string MapName => IsImported ? Imported.name : IsExpanded ? "Cuatro Riberas" : "Las Marcas";
+        public static string MapName => IsImported ? (Scenario == ScenarioMap.Europe ? "Europe" : "New World") : IsExpanded ? "Cuatro Riberas" : "Las Marcas";
         public static string ScenarioDetail(ScenarioMap scenario)
         {
             if (scenario == ScenarioMap.Classic) return ClassicPads.Length + " ciudades · " + ClassicCountries.Length + " grupos";
             if (scenario == ScenarioMap.Riverlands) return ExpandedPads.Length + " ciudades · " + ExpandedCountries.Length + " grupos";
             return ImportedMapData.ScenarioDetail(scenario);
+        }
+        public static int MaximumPlayersForScenario(ScenarioMap scenario)
+        {
+            int cities = scenario == ScenarioMap.Classic ? ClassicPads.Length
+                : scenario == ScenarioMap.Riverlands ? ExpandedPads.Length : ImportedMapData.ScenarioCityCount(scenario);
+            return PlayerRules.MaximumPlayersForCityCount(cities);
         }
         static readonly int[] ClassicMainlandHarborX = { -58, -37, -3, 22, 43 };
         static readonly int[] ExpandedMainlandHarborX = { -54, -41, -19, 20, 43 };
@@ -61,6 +67,18 @@ namespace RiskAI
         public static Vector4[] Islands { get; private set; }
         public static City[] Towns { get; private set; }
 
+        // One authored record supplies both the town and its terrain clearing.
+        // Coordinates cannot drift between a rendered city and a separate pad list.
+        readonly struct AuthoredCity
+        {
+            readonly string id,name;readonly float x,z;readonly int owner,region,country;readonly bool capital;
+            public AuthoredCity(string id,string name,float x,float z,int owner,int region,int country,bool capital=false)
+            {this.id=id;this.name=name;this.x=x;this.z=z;this.owner=owner;this.region=region;this.country=country;this.capital=capital;}
+            public Vector2 Pad=>new Vector2(x,z);
+            public City Build()=>new City(id,name,x,z,owner,region,country,capital);
+        }
+        static readonly AuthoredCity[] ClassicCityCatalog=BuildClassicCatalog();
+        static readonly AuthoredCity[] ExpandedCityCatalog=BuildExpandedCatalog();
         static readonly Country[] ClassicCountries = {
             new Country("Marca del Alba",0,UnitKind.Archer,1), new Country("Valle de los Pinos",1,UnitKind.Archer,1),
             new Country("Escarpa de Poniente",2,UnitKind.Archer,1), new Country("Cuenca del Fresno",3,UnitKind.Archer,1),
@@ -71,28 +89,13 @@ namespace RiskAI
         };
         // Each authored pad is a deliberately clear, level site: away from ponds,
         // the river and cliff edges, with larger country groups where the land opens up.
-        static readonly Vector2[] ClassicPads = {
-            new(-38,-12),new(-47,12),new(-60,-8), new(-21,5),new(-23,30),new(-37,-47),
-            new(-60,-30),new(-54,-47), new(-2,24),new(8,3),new(1,-18),new(-24,-34),
-            new(28,30),new(43,9),new(65,15),new(15,45), new(38,-25),new(20,-39),new(57,-25),
-            new(-56,-65),new(-52,-83), new(-30,-66),new(-35,-83),new(-7,-47),
-            new(-5,-67),new(-1,-84),new(17,-65), new(37,-65),new(58,-58),
-            new(-47,57),new(-70,-78),new(-8,74),new(49,-82)
-        };
+        static readonly Vector2[] ClassicPads = System.Array.ConvertAll(ClassicCityCatalog,city=>city.Pad);
         static readonly Vector4[] ClassicIslands = { new(-47,53,12,12),new(-8,69,13,11) };
         static readonly Vector2[][] ClassicCliffs = {
             new[]{new Vector2(-58,3),new Vector2(-53,-4),new Vector2(-40,-6),new Vector2(-32,-3),new Vector2(-24,-7),new Vector2(-17,-1),new Vector2(-17,9),new Vector2(-10,14),new Vector2(-13,21),new Vector2(-18,24),new Vector2(-18,33),new Vector2(-29,34),new Vector2(-34,27),new Vector2(-45,26),new Vector2(-52,22),new Vector2(-59,16)},
             new[]{new Vector2(16,8),new Vector2(19,0),new Vector2(27,-4),new Vector2(35,-5),new Vector2(43,-1),new Vector2(45,6),new Vector2(56,8),new Vector2(59,15),new Vector2(54,19),new Vector2(56,30),new Vector2(46,36),new Vector2(34,36),new Vector2(30,40),new Vector2(23,34),new Vector2(18,26),new Vector2(21,18)}
         };
-        static City[] ClassicTowns;
-        static readonly Vector2[] ExpandedPads = {
-            new(-55,-59),new(-50,-27),new(-53,8),new(-44,44),new(-28,-59),new(-23,-22),new(-27,12),new(-19,43),
-            new(17,-58),new(22,-28),new(18,9),new(26,46),new(49,-57),new(44,-18),new(48,17),new(51,47),
-            new(-67,-82),new(-43,-83),new(-20,-86),new(-66,-44),new(-39,-45),new(-65,-10),new(-42,-5),new(-14,-5),
-            new(-64,24),new(-40,25),new(-12,22),new(-63,55),new(-31,58),new(-7,59),
-            new(42,-85),new(67,-75),new(35,-43),new(68,-40),new(32,-3),new(66,-4),new(31,28),new(65,31),new(18,63),
-            new(-54,94),new(-12,104),new(-60,-95),new(34,103),new(70,50)
-        };
+        static readonly Vector2[] ExpandedPads = System.Array.ConvertAll(ExpandedCityCatalog,city=>city.Pad);
         // Independent island settlements are kept on their original navigable land,
         // while mainland groups follow river banks, crossings, hills and coasts.
         static readonly Vector4[] ExpandedIslands = { new(-50,87,12,14),new(-12,96,18,16),new(30,94,11,13) };
@@ -127,7 +130,7 @@ namespace RiskAI
             }
             HalfWidth = 72 * Spacing; HalfDepth = (expanded ? 112 : 90) * Spacing;
             Pads = expanded ? ExpandedPads : ClassicPads; Islands = expanded ? ExpandedIslands : ClassicIslands; Cliffs = expanded ? ExpandedCliffs : ClassicCliffs;
-            TerrainHydrology.Configure(expanded); Towns = expanded ? BuildExpandedTowns() : BuildClassicTowns();
+            TerrainHydrology.Configure(expanded); Towns = System.Array.ConvertAll(expanded?ExpandedCityCatalog:ClassicCityCatalog,city=>city.Build());
             Countries = ApplySharedReinforcementFormula(expanded ? ExpandedCountries : ClassicCountries,Towns);
             UploadShaderGlobals();
         }
@@ -148,23 +151,21 @@ namespace RiskAI
             return result;
         }
 
-        static City[] BuildClassicTowns()
+        static AuthoredCity[] BuildClassicCatalog()
         {
-            if (ClassicTowns != null) return ClassicTowns;
-            ClassicTowns = new[] {
-                new City("dawn","Bastión del Alba",-38,-12,0,0,0,true),new City("pine","Pinar Alto",-47,12,0,0,0),new City("cordillera-norte","Cordillera del Alba",-60,-8,-1,0,0),
-                new City("mill","Molino Viejo",-21,5,-1,1,1),new City("meadow","Valdeluz",-23,30,-1,1,1),new City("encinar-centro","Encinar Central",-37,-47,-1,1,1),
-                new City("crest-west","Cresta de Poniente",-60,-30,-1,2,2),new City("dehesa-norte","Dehesa Norte",-54,-47,-1,2,2),
-                new City("gate","Puerta de Piedra",-2,24,-1,3,3),new City("ford","Valle del Fresno",8,3,-1,3,3),new City("stone","Piedra Vieja",1,-18,-1,3,3),new City("west","Marca del Sur",-24,-34,-1,3,3),
-                new City("ash","Torre del Roble",28,30,-1,4,4),new City("watch","Vigía del Este",43,9,-1,4,4),new City("senda-orient","Senda Oriental",65,15,-1,4,4),new City("torre-norte","Torre del Norte",15,45,-1,4,4),
-                new City("red","Fortaleza Carmesí",38,-25,1,5,5,true),new City("highland","Altos de Ceniza",20,-39,1,5,5),new City("guardia-oriental","Guardia Oriental",57,-25,-1,5,5),
-                new City("dehesa","Dehesa de Poniente",-56,-65,-1,6,6),new City("encina","Encinar Bajo",-52,-83,-1,6,6),
-                new City("secano","Campos del Secano",-30,-66,-1,7,7),new City("trigal","Trigal Dorado",-35,-83,-1,7,7),new City("azafran-norte","Azafrán del Norte",-7,-47,-1,7,7),
-                new City("azafran","Lomas de Azafrán",-5,-67,-1,8,8),new City("olivar","Olivar de la Marca",-1,-84,-1,8,8),new City("loma-sur","Loma del Sur",17,-65,-1,8,8),
-                new City("costa-sur","Costa del Sur",37,-65,-1,9,9),new City("vigia-sal","Vigía de la Sal",58,-58,-1,9,9),
-                new City("isla-bruma","Isla de la Bruma",-47,57,-1,10,10),new City("isla-roble","Dehesa de la Frontera",-70,-78,-1,6,6),new City("isla-viento","Isla del Viento",-8,74,-1,10,10),new City("isla-faro","Torre de la Sal",49,-82,-1,9,9)
+            return new[] {
+                new AuthoredCity("dawn","Bastión del Alba",-38,-12,0,0,0,true),new AuthoredCity("pine","Pinar Alto",-47,12,0,0,0),new AuthoredCity("cordillera-norte","Cordillera del Alba",-60,-8,-1,0,0),
+                new AuthoredCity("mill","Molino Viejo",-21,5,-1,1,1),new AuthoredCity("meadow","Valdeluz",-23,30,-1,1,1),new AuthoredCity("encinar-centro","Encinar Central",-37,-47,-1,1,1),
+                new AuthoredCity("crest-west","Cresta de Poniente",-60,-30,-1,2,2),new AuthoredCity("dehesa-norte","Dehesa Norte",-54,-47,-1,2,2),
+                new AuthoredCity("gate","Puerta de Piedra",-2,24,-1,3,3),new AuthoredCity("ford","Valle del Fresno",8,3,-1,3,3),new AuthoredCity("stone","Piedra Vieja",1,-18,-1,3,3),new AuthoredCity("west","Marca del Sur",-24,-34,-1,3,3),
+                new AuthoredCity("ash","Torre del Roble",28,30,-1,4,4),new AuthoredCity("watch","Vigía del Este",43,9,-1,4,4),new AuthoredCity("senda-orient","Senda Oriental",65,15,-1,4,4),new AuthoredCity("torre-norte","Torre del Norte",15,45,-1,4,4),
+                new AuthoredCity("red","Fortaleza Carmesí",38,-25,1,5,5,true),new AuthoredCity("highland","Altos de Ceniza",20,-39,1,5,5),new AuthoredCity("guardia-oriental","Guardia Oriental",57,-25,-1,5,5),
+                new AuthoredCity("dehesa","Dehesa de Poniente",-58,-62,-1,6,6),new AuthoredCity("encina","Encinar Bajo",-49,-81,-1,6,6),
+                new AuthoredCity("secano","Campos del Secano",-33,-63,-1,7,7),new AuthoredCity("trigal","Trigal Dorado",-32,-85,-1,7,7),new AuthoredCity("azafran-norte","Azafrán del Norte",-10,-48,-1,7,7),
+                new AuthoredCity("azafran","Lomas de Azafrán",-8,-69,-1,8,8),new AuthoredCity("olivar","Olivar de la Marca",1,-85,-1,8,8),new AuthoredCity("loma-sur","Loma del Sur",18,-62,-1,8,8),
+                new AuthoredCity("costa-sur","Costa del Sur",36,-70,-1,9,9),new AuthoredCity("vigia-sal","Vigía de la Sal",59,-56,-1,9,9),
+                new AuthoredCity("isla-bruma","Isla de la Bruma",-47,57,-1,10,10),new AuthoredCity("isla-roble","Dehesa de la Frontera",-69,-78,-1,6,6),new AuthoredCity("isla-viento","Isla del Viento",-8,74,-1,10,10),new AuthoredCity("isla-faro","Torre de la Sal",50,-83,-1,9,9)
             };
-            return ClassicTowns;
         }
         static void UploadShaderGlobals()
         {
@@ -176,20 +177,20 @@ namespace RiskAI
             Shader.SetGlobalVector("_RiskCoastParams0", IsExpanded ? new Vector4(70f, .13f, 3.5f, 2f) : new Vector4(40f, .26f, 4f, 3f));
             Shader.SetGlobalVector("_RiskCoastParams1", IsExpanded ? new Vector4(.08f, .16f, 0f, 0f) : new Vector4(.09f, .2f, 0f, 0f));
         }
-        static City[] BuildExpandedTowns()
+        static AuthoredCity[] BuildExpandedCatalog()
         {
             return new[] {
-                new City("west-01","Bastión Occidental",-55,-59,0,0,0,true),new City("west-05","Marca del Sur",-67,-82,-1,0,0),new City("west-06","Bosque Bajo",-43,-83,-1,0,0),new City("west-07","Paso de Poniente",-66,-44,-1,0,0),
-                new City("west-02","Pinar Occidental",-50,-27,0,1,1),new City("west-08","Loma del Roble",-39,-45,-1,1,1),new City("west-09","Marjal Occidental",-65,-10,-1,1,1),new City("west-10","Cresta del Bosque",-42,-5,-1,1,1),
-                new City("river-01","Puerta del Río",-28,-59,0,2,2),new City("river-05","Vega del Sur",-20,-86,-1,2,2),new City("river-02","Molino del Río",-23,-22,0,2,2),new City("river-06","Vado Bajo",-14,-5,-1,2,2),new City("river-03","Ribera del Río",-27,12,1,2,2),
-                new City("west-03","Linde Occidental",-53,8,1,3,3),new City("west-11","Peña del Mar",-64,24,-1,3,3),new City("west-04","Cresta Occidental",-44,44,1,3,3),new City("west-13","Puerto Alto",-63,55,-1,3,3),
-                new City("west-12","Colina del Vado",-40,25,-1,4,4),new City("west-14","Senda del Norte",-31,58,-1,4,4),
-                new City("river-04","Ribera Alta",-19,43,1,5,5),new City("river-07","Paso de los Sauces",-12,22,-1,5,5),new City("river-08","Estuario Verde",-7,59,-1,5,5),
-                new City("high-01","Bastión Central",17,-58,0,6,6),new City("high-05","Altos del Sur",42,-85,-1,6,6),new City("high-02","Loma Central",22,-28,0,6,6),new City("high-06","Cerro de Piedra",35,-43,-1,6,6),
-                new City("east-01","Puerta Oriental",49,-57,0,7,7),new City("east-05","Frontera del Sur",67,-75,-1,7,7),new City("east-02","Cantera Oriental",44,-18,0,7,7),new City("east-06","Paso de Levante",68,-40,-1,7,7),new City("high-07","Mirador del Río",32,-3,-1,7,7),new City("east-07","Fuerte del Este",66,-4,-1,7,7),
-                new City("high-03","Paso Central",18,9,1,8,8),new City("east-03","Vigía Oriental",48,17,1,8,8),new City("high-08","Atalaya del Llano",31,28,-1,8,8),new City("east-08","Costa de Levante",65,31,-1,8,8),new City("east-04","Cresta Oriental",51,47,1,8,8),
-                new City("high-04","Altos del Estuario",26,46,1,9,9),new City("high-09","Puerta del Estuario",18,63,-1,9,9),
-                new City("isle-01","Isla del Roble",-54,94,0,10,10),new City("isle-02","Isla del Viento",-12,104,0,10,10),new City("isle-03","Vega del Confín",-60,-95,1,0,0),new City("isle-04","Isla del Alba",34,103,1,10,10),new City("isle-05","Vigía de Levante",70,50,-1,8,8)
+                new AuthoredCity("west-01","Bastión Occidental",-55,-59,0,0,0,true),new AuthoredCity("west-05","Marca del Sur",-67,-82,-1,0,0),new AuthoredCity("west-06","Bosque Bajo",-43,-83,-1,0,0),new AuthoredCity("west-07","Paso de Poniente",-66,-44,-1,0,0),
+                new AuthoredCity("west-02","Pinar Occidental",-50,-27,0,1,1),new AuthoredCity("west-08","Loma del Roble",-39,-48,-1,1,1),new AuthoredCity("west-09","Marjal Occidental",-65,-10,-1,1,1),new AuthoredCity("west-10","Cresta del Bosque",-42,-5,-1,1,1),
+                new AuthoredCity("river-01","Puerta del Río",-28,-59,0,2,2),new AuthoredCity("river-05","Vega del Sur",-20,-86,-1,2,2),new AuthoredCity("river-02","Molino del Río",-23,-22,0,2,2),new AuthoredCity("river-06","Vado Bajo",-14,-5,-1,2,2),new AuthoredCity("river-03","Ribera del Río",-27,12,1,2,2),
+                new AuthoredCity("west-03","Linde Occidental",-53,8,1,3,3),new AuthoredCity("west-11","Peña del Mar",-64,24,-1,3,3),new AuthoredCity("west-04","Cresta Occidental",-44,44,1,3,3),new AuthoredCity("west-13","Puerto Alto",-63,55,-1,3,3),
+                new AuthoredCity("west-12","Colina del Vado",-40,25,-1,4,4),new AuthoredCity("west-14","Senda del Norte",-31,58,-1,4,4),
+                new AuthoredCity("river-04","Ribera Alta",-19,43,1,5,5),new AuthoredCity("river-07","Paso de los Sauces",-12,22,-1,5,5),new AuthoredCity("river-08","Estuario Verde",-7,59,-1,5,5),
+                new AuthoredCity("high-01","Bastión Central",17,-58,0,6,6),new AuthoredCity("high-05","Altos del Sur",42,-85,-1,6,6),new AuthoredCity("high-02","Loma Central",22,-28,0,6,6),new AuthoredCity("high-06","Cerro de Piedra",35,-43,-1,6,6),
+                new AuthoredCity("east-01","Puerta Oriental",49,-57,0,7,7),new AuthoredCity("east-05","Frontera del Sur",67,-75,-1,7,7),new AuthoredCity("east-02","Cantera Oriental",44,-18,0,7,7),new AuthoredCity("east-06","Paso de Levante",68,-40,-1,7,7),new AuthoredCity("high-07","Mirador del Río",32,-3,-1,7,7),new AuthoredCity("east-07","Fuerte del Este",66,-4,-1,7,7),
+                new AuthoredCity("high-03","Paso Central",18,9,1,8,8),new AuthoredCity("east-03","Vigía Oriental",48,17,1,8,8),new AuthoredCity("high-08","Atalaya del Llano",31,28,-1,8,8),new AuthoredCity("east-08","Costa de Levante",65,31,-1,8,8),new AuthoredCity("east-04","Cresta Oriental",51,47,1,8,8),
+                new AuthoredCity("high-04","Altos del Estuario",26,46,1,9,9),new AuthoredCity("high-09","Puerta del Estuario",18,63,-1,9,9),
+                new AuthoredCity("isle-01","Isla del Roble",-54,94,0,10,10),new AuthoredCity("isle-02","Isla del Viento",-12,104,0,10,10),new AuthoredCity("isle-03","Vega del Confín",-60,-95,1,0,0),new AuthoredCity("isle-04","Isla del Alba",34,103,1,10,10),new AuthoredCity("isle-05","Vigía de Levante",68,52,-1,8,8)
             };
         }
         public static float Coast(float x)
@@ -252,26 +253,52 @@ namespace RiskAI
         static float ExpandedHeight(float x, float z)
         {
             if (z > Coast(x)) { float d = float.NegativeInfinity; for (int i = 0; i < Islands.Length; i++) d = Mathf.Max(d, IslandDistance(x, z, i)); if (d < 0) return SeaFloor(x, z); return Mathf.Lerp(-.24f, 1.85f, Mathf.SmoothStep(0, 1, Mathf.Clamp01(d / 8))) + .16f * Mathf.Sin(x * .12f) * Mathf.Sin(z * .15f) * Mathf.SmoothStep(0, 1, Mathf.Clamp01(d / 5)); }
-            float nx = x / Spacing, nz = z / Spacing; var center = new Vector2(8, -85); float rolling = .8f + .5f * Mathf.Sin(nx * .12f + Mathf.Sin(nz * .085f)) + .35f * Mathf.Cos(nz * .17f - nx * .05f);
-            float mountain = 10.5f * Mathf.Pow(Mathf.Clamp01(1 - Vector2.Distance(new Vector2(nx, nz), center) / 18), 1.55f); float foothills = 1.4f * Mathf.Clamp01(1 - Vector2.Distance(new Vector2(nx, nz), center) / 31); float h = Mathf.Max(1.2f, rolling + foothills + mountain);
+            float nx = x / Spacing, nz = z / Spacing;var point=new Vector2(nx,nz);float rolling = .8f + .5f * Mathf.Sin(nx * .12f + Mathf.Sin(nz * .085f)) + .35f * Mathf.Cos(nz * .17f - nx * .05f);
+            float westPeak=9.2f*Mathf.Pow(Mathf.Clamp01(1-Vector2.Distance(point,new Vector2(-18,-87))/19),1.55f);
+            float eastPeak=9.2f*Mathf.Pow(Mathf.Clamp01(1-Vector2.Distance(point,new Vector2(18,-87))/19),1.55f);
+            float peaks=Mathf.Max(westPeak,eastPeak),foothills=1.35f*Mathf.Clamp01(1-Mathf.Min(Vector2.Distance(point,new Vector2(-18,-87)),Vector2.Distance(point,new Vector2(18,-87)))/32);
+            float westRidge=Ridge(point,new Vector2(-67,-74),new Vector2(-45,42),9,6.1f,31);
+            float eastRidge=Ridge(point,new Vector2(67,-74),new Vector2(45,42),9,6.1f,47);
+            float h = Mathf.Max(1.2f, rolling + Mathf.Max(peaks + foothills,Mathf.Max(westRidge,eastRidge)));
             for (int i = 0; i < Pads.Length; i++) { float distance = Vector2.Distance(new Vector2(nx, nz), Pads[i]); if (distance < 7.5f) h = Mathf.Lerp(h, 1.7f + .15f * Mathf.Sin(Pads[i].x), Mathf.SmoothStep(1, 0, Mathf.InverseLerp(1.8f, 7.5f, distance))); }
-            h=Mathf.Lerp(-.24f,h,Mathf.SmoothStep(0,1,Mathf.Clamp01((Coast(x)-z)/7)));
+            h=Mathf.Lerp(-.24f,h,Mathf.SmoothStep(0,1,Mathf.Clamp01((Coast(x)-z)/CoastBlendWidth(x))));
             return TerrainHydrology.Carve(x, z, h);
         }
         static float ClassicHeight(float x, float z)
         {
             float wx = x, wz = z; if (z > Coast(x)) { float d = Mathf.Max(IslandDistance(x, z, 0), IslandDistance(x, z, 1)); if (d < 0) return SeaFloor(x, z); return Mathf.Lerp(-.24f, 1.85f, Mathf.SmoothStep(0, 1, Mathf.Clamp01(d / 8))) + .22f * Mathf.Sin(x * .12f) * Mathf.Sin(z * .15f) * Mathf.SmoothStep(0, 1, Mathf.Clamp01(d / 5)); }
             x /= Spacing; z /= Spacing; float west = Terrace(x, z, 0, 3.8f), east = Terrace(x, z, 1, 6.2f); float rocky = Mathf.SmoothStep(0, 2.1f, Mathf.Clamp01((20 - Vector2.Distance(new Vector2(x, z), new Vector2(57, -40))) / 11));
-            float pond = Mathf.Min(Ellipse(x, z, -11, -30, 8, 5), Ellipse(x, z, 16, -4, 3, 2)); float depression = (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.72f, 1.15f, pond))) * .6f; float coastFade = Mathf.SmoothStep(0, 1, Mathf.Clamp01((Coast(wx) - wz) / 7)); float padFade = 1;
+            float pond = Mathf.Min(Ellipse(x, z, -11, -30, 8, 5), Ellipse(x, z, 16, -4, 3, 2)); float depression = (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.72f, 1.15f, pond))) * .6f; float coastFade = Mathf.SmoothStep(0, 1, Mathf.Clamp01((Coast(wx) - wz) / CoastBlendWidth(wx))); float padFade = 1;
             foreach (var pad in ClassicPads) padFade = Mathf.Min(padFade, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(5.2f, 11, Vector2.Distance(new Vector2(x, z), pad))));
             float rolling = (.9f + .63f * Mathf.Sin(x * .12f + Mathf.Sin(z * .085f)) + .5f * Mathf.Cos(z * .17f - x * .05f)) * (.55f + .45f * Mathf.PerlinNoise(x * .047f + 16, z * .047f + 4)); float mountain = 13.5f * Mathf.Pow(Mathf.Clamp01(1 - Vector2.Distance(new Vector2(x, z), new Vector2(55, 29)) / 16), 1.6f);
-            return TerrainHydrology.Carve(wx, wz, Mathf.Max(west, east, rocky) + rolling * padFade * coastFade + mountain - depression);
+            float south=Mathf.SmoothStep(0,1,Mathf.InverseLerp(-38,-78,z));
+            float dryHills=south*(.2f+1.05f*Mathf.PerlinNoise(x*.061f+73,z*.038f+29));
+            float washCenter=-18+7*Mathf.Sin(z*.055f),wash=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(3,13,Mathf.Abs(x-washCenter)));
+            return TerrainHydrology.Carve(wx, wz, Mathf.Max(west, east, rocky) + (rolling+dryHills-wash*south*.48f) * padFade * coastFade + mountain - depression);
         }
+        static float Ridge(Vector2 point,Vector2 start,Vector2 end,float width,float height,float seed)
+        {
+            var axis=end-start;float along=Mathf.Clamp01(Vector2.Dot(point-start,axis)/axis.sqrMagnitude);
+            float endFade=Mathf.SmoothStep(0,1,Mathf.InverseLerp(0,.12f,along))*Mathf.SmoothStep(0,1,Mathf.InverseLerp(1,.88f,along));
+            float distance=Vector2.Distance(point,start+axis*along),crest=Mathf.Pow(Mathf.Clamp01(1-distance/width),1.7f);
+            float fracture=.78f+.22f*Mathf.PerlinNoise(point.x*.11f+seed,point.y*.085f+seed*.37f);
+            return height*crest*endFade*fracture;
+        }
+        static float CoastExposure(float x)
+        {
+            float probe=6*Spacing,center=Coast(x),before=Coast(x-probe),after=Coast(x+probe);
+            float slope=Mathf.Abs(after-before)/(2*probe);
+            float headland=Mathf.Max(0,center-(before+after)*.5f)/(Spacing*.45f);
+            return Mathf.Clamp01(.12f+slope*.68f+headland*.5f);
+        }
+        static float CoastBlendWidth(float x) => Mathf.Lerp(10.5f,5.5f,CoastExposure(x));
         public static Vector3 Point(float x, float z) => new Vector3(x, Height(x, z), z);
         public static float SeaFloor(float x, float z)
         {
             float nearestIsland = float.MaxValue; for (int i = 0; i < Islands.Length; i++) nearestIsland = Mathf.Min(nearestIsland, -IslandDistance(x, z, i));
-            float shore = Mathf.Max(0, Mathf.Min(z - Coast(x), nearestIsland)); return TerrainHydrology.Carve(x, z, -.24f - Mathf.Min(24, .10f * shore * shore));
+            float shore = Mathf.Max(0, Mathf.Min(z - Coast(x), nearestIsland));
+            float falloff=Mathf.Lerp(.055f,.145f,CoastExposure(x));
+            return TerrainHydrology.Carve(x, z, -.24f - Mathf.Min(24, falloff * shore * shore));
         }
     }
 }

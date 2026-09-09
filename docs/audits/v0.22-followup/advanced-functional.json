@@ -1,0 +1,223 @@
+{
+  "runtimeSourceCommit": "61f386d27a22a5aed5dbe6a5ef98596e46003daf",
+  "cleanHardwareComparison": false,
+  "purpose": "Functional advanced-fixture check under external compilation",
+  "result": {
+    "phase": "measurement",
+    "valid": "True",
+    "winner": "-1",
+    "map": "Europe",
+    "seed": "160212",
+    "warmupRequestedSimSeconds": "900.0",
+    "warmupCompletedSimSeconds": "900.0",
+    "measurementRequestedRealSeconds": "90.0",
+    "simSecondsDelta": "90.00",
+    "fixtureRecruitsPerPlayer": "48",
+    "measurementElapsedRealSeconds": "90.00",
+    "navBudget": "500",
+    "applied": "1291",
+    "rejected": "0",
+    "queued": "0",
+    "unitsInitial": "942",
+    "unitsFinal": "454",
+    "probeMovesSubmitted": "213",
+    "probeDestinationsUnavailable": "21",
+    "movedUnits": "6/6",
+    "survivingMovables": "3",
+    "unmovedSurvivors": "0",
+    "unmovedIds": "none",
+    "holdRounds": "41",
+    "holdTimeouts": "0",
+    "maxDisplacement": "19.98",
+    "measureFrames": "8074",
+    "measureFrameAvgMs": "11.15",
+    "measureFrameMaxMs": "93.20",
+    "measureOver50ms": "33",
+    "measureOver100ms": "0",
+    "measureOver250ms": "0",
+    "measureFrameSampler": "unscaled_background",
+    "blue": "2010@135.7,-43.7:19.98;2011@153.6,-11.7:15.62;2012@174.8,-37.2:19.91;2013@116.5,-66.7:19.98;2014@170.2,-147.4:19.98;2015@194.6,-167.8:18.54",
+    "success": "True"
+  },
+  "fixture": [
+    {
+      "player": "0",
+      "ownedTowns": "18",
+      "rallyAttempts": "48",
+      "navPoints": "45",
+      "spawned": "45",
+      "mobileBefore": "13",
+      "mobileAfter": "58"
+    },
+    {
+      "player": "1",
+      "ownedTowns": "11",
+      "rallyAttempts": "48",
+      "navPoints": "39",
+      "spawned": "39",
+      "mobileBefore": "3",
+      "mobileAfter": "42"
+    },
+    {
+      "player": "2",
+      "ownedTowns": "7",
+      "rallyAttempts": "48",
+      "navPoints": "48",
+      "spawned": "48",
+      "mobileBefore": "6",
+      "mobileAfter": "54"
+    },
+    {
+      "player": "3",
+      "ownedTowns": "5",
+      "rallyAttempts": "48",
+      "navPoints": "28",
+      "spawned": "28",
+      "mobileBefore": "3",
+      "mobileAfter": "31"
+    },
+    {
+      "player": "4",
+      "ownedTowns": "7",
+      "rallyAttempts": "48",
+      "navPoints": "41",
+      "spawned": "41",
+      "mobileBefore": "6",
+      "mobileAfter": "47"
+    },
+    {
+      "player": "5",
+      "ownedTowns": "6",
+      "rallyAttempts": "48",
+      "navPoints": "40",
+      "spawned": "40",
+      "mobileBefore": "5",
+      "mobileAfter": "45"
+    },
+    {
+      "player": "6",
+      "ownedTowns": "6",
+      "rallyAttempts": "48",
+      "navPoints": "40",
+      "spawned": "40",
+      "mobileBefore": "1",
+      "mobileAfter": "41"
+    },
+    {
+      "player": "7",
+      "ownedTowns": "7",
+      "rallyAttempts": "48",
+      "navPoints": "41",
+      "spawned": "41",
+      "mobileBefore": "5",
+      "mobileAfter": "46"
+    },
+    {
+      "player": "8",
+      "ownedTowns": "12",
+      "rallyAttempts": "48",
+      "navPoints": "44",
+      "spawned": "44",
+      "mobileBefore": "9",
+      "mobileAfter": "53"
+    },
+    {
+      "player": "9",
+      "ownedTowns": "14",
+      "rallyAttempts": "48",
+      "navPoints": "39",
+      "spawned": "39",
+      "mobileBefore": "10",
+      "mobileAfter": "49"
+    },
+    {
+      "player": "10",
+      "ownedTowns": "21",
+      "rallyAttempts": "48",
+      "navPoints": "41",
+      "spawned": "41",
+      "mobileBefore": "23",
+      "mobileAfter": "64"
+    },
+    {
+      "player": "11",
+      "ownedTowns": "13",
+      "rallyAttempts": "48",
+      "navPoints": "48",
+      "spawned": "48",
+      "mobileBefore": "3",
+      "mobileAfter": "51"
+    },
+    {
+      "player": "12",
+      "ownedTowns": "11",
+      "rallyAttempts": "48",
+      "navPoints": "48",
+      "spawned": "48",
+      "mobileBefore": "4",
+      "mobileAfter": "52"
+    },
+    {
+      "player": "13",
+      "ownedTowns": "9",
+      "rallyAttempts": "48",
+      "navPoints": "48",
+      "spawned": "48",
+      "mobileBefore": "3",
+      "mobileAfter": "51"
+    },
+    {
+      "player": "14",
+      "ownedTowns": "17",
+      "rallyAttempts": "48",
+      "navPoints": "37",
+      "spawned": "37",
+      "mobileBefore": "10",
+      "mobileAfter": "47"
+    },
+    {
+      "player": "15",
+      "ownedTowns": "13",
+      "rallyAttempts": "48",
+      "navPoints": "41",
+      "spawned": "41",
+      "mobileBefore": "5",
+      "mobileAfter": "46"
+    },
+    {
+      "cohortSource": "recruits",
+      "tracked": "6",
+      "reason": "none"
+    }
+  ],
+  "latencySummary": {
+    "submitToApply": {
+      "observations": 447,
+      "averageMs": 15.424,
+      "maximumMs": 45.94
+    },
+    "applyToRoute": {
+      "observations": 195,
+      "averageMs": 56.383,
+      "maximumMs": 252.09
+    },
+    "submitToVelocity": {
+      "observations": 195,
+      "averageMs": 77.822,
+      "maximumMs": 257.68
+    },
+    "routeToVelocity": {
+      "observations": 195,
+      "averageMs": 7.999,
+      "maximumMs": 104.18
+    },
+    "backgroundFrames": {
+      "measureFrames": "8074",
+      "measureFrameAvgMs": "11.15",
+      "measureFrameMaxMs": "93.20",
+      "measureOver50ms": "33",
+      "measureOver100ms": "0",
+      "measureOver250ms": "0"
+    }
+  }
+}

@@ -6,20 +6,38 @@ namespace RiskAI.Tests
     public sealed class EconomyCountryTests
     {
         [Test]
-        public void FragmentedCountryPaysEachOwnedCityWithoutRequiringFullOwnership()
+        public void BreakdownMatchesActualRoundPaymentAndDropsLostCountries()
+        {
+            var economy=new Economy();
+            var lost=new TownState("complete",0,0,2);
+            economy.Towns.Add(lost);
+            economy.Towns.Add(new TownState("incomplete",0,0,3));
+            economy.Towns.Add(new TownState("enemy",1,0,3));
+            var countries=new System.Collections.Generic.Dictionary<int,int>();
+            int total=economy.IncomeBreakdown(0,countries,out int basic);
+            Assert.That(basic,Is.EqualTo(4));Assert.That(countries[2],Is.EqualTo(1));Assert.That(countries.ContainsKey(3),Is.False);
+            int before=economy.Gold[0];economy.Advance(60);
+            Assert.That(economy.Gold[0]-before,Is.EqualTo(total));
+            lost.Owner=1;
+            Assert.That(economy.IncomeBreakdown(0,countries,out basic),Is.EqualTo(4));
+            Assert.That(countries,Is.Empty,"Reusing a breakdown must remove a country that was lost.");
+        }
+
+        [Test]
+        public void FragmentedCountryPaysOnlyBasicIncomeUntilCompleted()
         {
             var economy = new Economy();
             var first = new TownState("a", 0, 0, 3);
             var second = new TownState("b", 1, 0, 3);
             economy.Towns.Add(first); economy.Towns.Add(second);
             Assert.That(economy.CountryOwner(3), Is.EqualTo(-1));
-            Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome + BattleRules.TownIncome));
+            Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome));
             second.Owner = 0;
             Assert.That(economy.CountryOwner(3), Is.EqualTo(0));
             Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome + BattleRules.TownIncome * 2));
             second.Owner = 1;
             Assert.That(economy.CountryOwner(3), Is.EqualTo(-1));
-            Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome + BattleRules.TownIncome));
+            Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome));
         }
 
         [Test]
@@ -30,7 +48,26 @@ namespace RiskAI.Tests
             economy.Towns.Add(new TownState("mixed-a", 0, 0, 4));
             economy.Towns.Add(new TownState("mixed-b", -1, 0, 4));
             Assert.That(economy.CountryOwner(4), Is.EqualTo(-1));
-            Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome + BattleRules.TownIncome * 2));
+            Assert.That(economy.Income(0), Is.EqualTo(BattleRules.BaseIncome));
+        }
+
+        [Test]
+        public void ThreeScatteredCitiesPayFourWhileACompleteThreeCityCountryPaysSeven()
+        {
+            var economy=new Economy();
+            for(int country=0;country<3;country++)
+            {
+                economy.Towns.Add(new TownState("owned-"+country,0,0,country));
+                economy.Towns.Add(new TownState("neutral-"+country,-1,0,country));
+            }
+            Assert.That(economy.Income(0),Is.EqualTo(4));
+            economy.Advance(60);
+            Assert.That(economy.Gold[0],Is.EqualTo(8));
+            economy.Towns.Clear();
+            for(int city=0;city<3;city++)economy.Towns.Add(new TownState("complete-"+city,0,0,0));
+            Assert.That(economy.Income(0),Is.EqualTo(7));
+            economy.Advance(60);
+            Assert.That(economy.Gold[0],Is.EqualTo(15));
         }
 
         [Test]

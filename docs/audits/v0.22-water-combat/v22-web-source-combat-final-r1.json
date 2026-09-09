@@ -1,0 +1,35 @@
+{
+  "url": "http://127.0.0.1:8081/?riskai-seed=19031&riskai-players=16&riskai-path-budget=500&riskai-map=europe&riskai-play=1&riskai-probe=1&riskai-probe-seconds=60&riskai-probe-recruits=6&riskai-probe-warmup=0",
+  "desktop_browser": true,
+  "physical_arm": false,
+  "viewport": [
+    1280,
+    800
+  ],
+  "device_scale_factor": 1,
+  "draws_suppressed": false,
+  "overview": false,
+  "path_budget": 500,
+  "sustained_navigation": false,
+  "minimap_hidden": false,
+  "browser": "152.0.4191.66",
+  "loader_seconds": 2.969,
+  "battle_ready_seconds": 10.668,
+  "canvas": {
+    "width": 1280,
+    "height": 800,
+    "cssWidth": 1280,
+    "cssHeight": 800,
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Laptop GPU (0x00002C59) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "heapBytes": 481165312
+  },
+  "probe_results": [
+    "RISKAI_PROBE_RESULT phase=measurement valid=True winner=-1 map=Europe seed=19031 warmupRequestedSimSeconds=0.0 warmupCompletedSimSeconds=0.0 measurementRequestedRealSeconds=60.0 simSecondsDelta=60.00 fixtureRecruitsPerPlayer=6 measurementElapsedRealSeconds=60.01 navBudget=500 applied=129 rejected=0 queued=0 unitsInitial=293 unitsFinal=328 probeMovesSubmitted=62 probeDestinationsUnavailable=5 movedUnits=6/6 survivingMovables=2 unmovedSurvivors=0 unmovedIds=none holdRounds=27 holdTimeouts=0 maxDisplacement=19.99 measureFrames=2518 measureFrameAvgMs=23.83 measureFrameMaxMs=43.00 measureOver50ms=0 measureOver100ms=0 measureOver250ms=0 measureFrameSampler=unscaled_background blue=425@3.8,-56.5:11.02;426@17.9,-116.6:11.02;427@92.2,-156.3:19.99;428@199.7,-285.6:11.14;429@102.4,-294.6:11.02;430@-115.2,-24.5:11.02 success=True\n"
+  ],
+  "success": true,
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
+  "seconds": 73.278
+}

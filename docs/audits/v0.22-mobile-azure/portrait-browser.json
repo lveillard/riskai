@@ -1,0 +1,29 @@
+{
+  "viewport": [
+    390,
+    844
+  ],
+  "dpr": 3.0,
+  "touchEmulated": true,
+  "physicalMobile": false,
+  "errors": [],
+  "captures": [
+    "menu",
+    "loading",
+    "building-production",
+    "army-actions",
+    "ranking",
+    "strategic",
+    "middle-orbit",
+    "three-finger-orbit",
+    "help"
+  ],
+  "canvas": {
+    "width": 780,
+    "height": 1688,
+    "cssWidth": 390,
+    "cssHeight": 844
+  },
+  "success": true,
+  "seconds": 41.53
+}

@@ -1,0 +1,37 @@
+[
+  {
+    "map": "classic",
+    "exitCode": 0,
+    "records": [
+      "RISKAI_PRESENTATION_IMAGE: town-idle",
+      "RISKAI_PRESENTATION_IMAGE: town-training",
+      "RISKAI_PRESENTATION_IMAGE: port-training",
+      "RISKAI_PRESENTATION_IMAGE: guard-idle",
+      "RISKAI_PRESENTATION_IMAGE: guard-selected",
+      "RISKAI_PRESENTATION_GUARD: garrison=True distance=0",
+      "RISKAI_PRESENTATION_SHORE: kind=green at=(-20.80, 0.38, -50.00) weights=(0.00, 0.16) allowed=False landing=(0.00, 0.00, 0.00) reason=S\u00f3lo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.",
+      "RISKAI_PRESENTATION_IMAGE: shore-green",
+      "RISKAI_PRESENTATION_SHORE: kind=rock at=(-8.80, -0.09, -34.00) weights=(0.00, 0.75) allowed=False landing=(0.00, 0.00, 0.00) reason=S\u00f3lo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.",
+      "RISKAI_PRESENTATION_IMAGE: shore-rock",
+      "RISKAI_PRESENTATION_SHORE: kind=sand at=(-84.80, 0.10, 38.00) weights=(1.00, 0.00) allowed=True landing=(-84.80, 0.21, 38.00) reason=",
+      "RISKAI_PRESENTATION_IMAGE: shore-sand",
+      "RISKAI_PRESENTATION_SHORE: kind=steep at=(-52.80, 1.10, 38.00) weights=(1.00, 0.00) allowed=True landing=(-53.40, 0.53, 38.70) reason=",
+      "RISKAI_PRESENTATION_IMAGE: shore-steep",
+      "RISKAI_PRESENTATION_OK: map=Classic sand=True rock=True green=True steep=True directory=C:\\Users\\lveil\\Desktop\\Projects\\riskai\\Captures\\v22-presentation-strategy-automation-r1\\classic"
+    ],
+    "images": [
+      "Captures\\v22-presentation-strategy-automation-r1\\classic\\guard-idle.png",
+      "Captures\\v22-presentation-strategy-automation-r1\\classic\\guard-selected.png",
+      "Captures\\v22-presentation-strategy-automation-r1\\classic\\port-training.png",
+      "Captures\\v22-presentation-strategy-automation-r1\\classic\\shore-green.png",
+      "Captures\\v22-presentation-strategy-automation-r1\\classic\\shore-rock.png",
+      "Captures\\v22-presentation-strategy-automation-r1\\classic\\shore-sand.png",
+      "Captures\\v22-presentation-strategy-automation-r1\\classic\\shore-steep.png",
+      "Captures\\v22-presentation-strategy-automation-r1\\classic\\town-idle.png",
+      "Captures\\v22-presentation-strategy-automation-r1\\classic\\town-training.png"
+    ],
+    "completed": true,
+    "syntheticRenderingFixture": true,
+    "physicalInputTest": false
+  }
+]

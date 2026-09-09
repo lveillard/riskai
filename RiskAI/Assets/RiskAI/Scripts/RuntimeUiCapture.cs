@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
 using RiskAI.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,7 +16,6 @@ namespace RiskAI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void EnableWhenRequested()
         {
-#if !UNITY_WEBGL
             var args=LaunchArguments.Get();
             for(int i=0;i<args.Length;i++)if(args[i]=="--riskai-restart-probe")return;
             for(int i=0;i<args.Length-1;i++) if(args[i]=="--riskai-ui-capture")
@@ -25,11 +25,15 @@ namespace RiskAI
                 host.AddComponent<RuntimeUiCapture>().directory=args[i+1];
                 break;
             }
-#endif
         }
 
         IEnumerator Start()
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            // Browser QA drives Review and captures the canvas through Playwright.
+            // This opt-in route shares the actual UI and production commands.
+            yield break;
+#else
             Application.runInBackground=true;
             Directory.CreateDirectory(directory);
             yield return Settle();
@@ -61,18 +65,13 @@ namespace RiskAI
             session.TogglePause();
             yield return Settle();
             yield return Capture("selection");
-            if(UiViewport.IsCompact)ActivateButton("HUD tab 2");
             yield return Settle();
             yield return Capture("production");
             if(UiViewport.IsCompact)
             {
                 ScrollToEnd("HUD context");yield return Settle();yield return Capture("production-more");
             }
-            if(UiViewport.IsCompact)ActivateButton("HUD tab 1");
-            else
-            {
-                foreach(var unit in session.Units)if(unit&&unit.Team==0){controller.SelectOnly(unit);controller.Focus(unit.transform.position);break;}
-            }
+            foreach(var unit in session.Units)if(unit&&unit.Team==0){controller.SelectOnly(unit);controller.Focus(unit.transform.position);break;}
             yield return Settle();
             yield return Capture("orders");
             controller.HelpVisible=true;
@@ -94,13 +93,79 @@ namespace RiskAI
                 commands.Execute(harbor.Owner,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Transport));
                 session.TogglePause();
                 controller.SelectHarbor(harbor);controller.Focus(harbor.Landing);
-                yield return Settle();if(UiViewport.IsCompact)ActivateButton("HUD tab 0");yield return Settle();
+                yield return Settle();
                 yield return Capture("port-queues");
                 break;
             }
             Debug.Log("RISKAI_UI_CAPTURE_OK: "+Screen.width+"x"+Screen.height+" directory="+directory);
             Application.Quit();
+#endif
         }
+
+        public void Review(string stage)
+        {
+            if(string.IsNullOrEmpty(directory)||!BattleSession.Current)return;
+            StartCoroutine(ReviewStage(stage));
+        }
+
+        IEnumerator ReviewStage(string stage)
+        {
+            var session=BattleSession.Current;var controller=FindFirstObjectByType<RtsController>();
+            var hud=FindFirstObjectByType<BattleHud>();
+            session.AiEnabled=false;controller.HelpVisible=false;
+            if(stage=="empty")controller.Clear();
+            else if(stage=="city"||stage=="queue")
+            {
+                var town=session.Towns.First(t=>t.State.Owner==0&&!t.IsPort);
+                controller.SelectTown(town);controller.Focus(town.transform.position);
+                if(stage=="queue")
+                {
+                    if(session.Paused)session.TogglePause();session.Economy.Grant(0,20);
+                    foreach(var kind in new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Guard})
+                        new PlayerBuildingCommands(session).Execute(0,PlayerBuildingIntent.Recruit(town.BuildingId,kind));
+                }
+            }
+            else if(stage=="harbor")
+            {
+                var harbor=session.Naval.Harbors.FirstOrDefault(h=>h.Owner==0);
+                if(!harbor){Debug.LogError("RISKAI_UI_REVIEW: no owned harbor in fixture seed");yield break;}
+                if(session.Paused)session.TogglePause();session.Economy.Grant(0,30);
+                var commands=new PlayerBuildingCommands(session);
+                commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Galley));
+                commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Transport));
+                controller.SelectHarbor(harbor);controller.Focus(harbor.IsImportedPort?harbor.LinkedTown.transform.position:harbor.Landing);
+            }
+            else if(stage=="income")hud.ShowIncome();
+            else if(stage=="ranking")hud.ShowPlayers();
+            else if(stage=="strategic"){controller.Clear();controller.CameraRig.FrameMap();}
+            else if(stage=="north"||stage=="south"||stage=="coast")
+            {
+                controller.Clear();
+                float zoom=MapLayout.IsImported?85:62;
+                for(int i=0;i<4;i++)controller.CameraRig.ZoomByRatio(controller.CameraRig.TargetZoom/zoom,UiViewport.WorldRect.center);
+                var min=MapLayout.PlayableMin;var max=MapLayout.PlayableMax;
+                var point=MapLayout.Point(Mathf.Lerp(min.x,max.x,.5f),Mathf.Lerp(min.y,max.y,stage=="north"?.76f:stage=="south"?.24f:.5f));
+                if(stage=="coast")
+                {
+                    var harbor=session.Naval.Harbors.FirstOrDefault();
+                    if(harbor)point=harbor.Berth;
+                }
+                controller.Focus(point);
+            }
+            if(!session.Paused)session.TogglePause();
+            yield return new WaitForSecondsRealtime(1.5f);
+            var elements=new System.Collections.Generic.List<ReviewElement>();
+            foreach(var document in FindObjectsByType<UIDocument>(FindObjectsSortMode.None))
+                foreach(var element in document.rootVisualElement.Query<VisualElement>().ToList())
+                    // Anonymous modal labels can exceed WebGL's console line limit.
+                    // Keep actionable controls and the named HUD bounds in the report.
+                    if((element is Button||element.name=="HUD footer"||element.name=="HUD header"||element.name=="HUD gold"||element.name=="HUD unit population")&&element.resolvedStyle.display!=DisplayStyle.None&&element.worldBound.width>0)
+                        elements.Add(new ReviewElement { name=element.name,text=(element as TextElement)?.text,rect=element.worldBound,visible=element.visible });
+            Debug.Log("RISKAI_UI_REVIEW "+JsonUtility.ToJson(new ReviewLayout { stage=stage,scale=UiViewport.Scale,world=UiViewport.WorldRect,elements=elements.ToArray() }));
+        }
+
+        [Serializable] sealed class ReviewLayout { public string stage;public float scale;public Rect world;public ReviewElement[] elements; }
+        [Serializable] sealed class ReviewElement { public string name,text;public Rect rect;public bool visible; }
 
         static IEnumerator Settle()
         {

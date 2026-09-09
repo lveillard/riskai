@@ -184,6 +184,7 @@ namespace RiskAI
                 case DirectPointerActionKind.AreaCancel: controller.CancelAreaSelection();break;
                 case DirectPointerActionKind.Context: controller.ContextAction(Vector(action.Position));break;
                 case DirectPointerActionKind.Pan: controller.CameraRig.Drag(Vector(action.Previous),Vector(action.Position));break;
+                case DirectPointerActionKind.Orbit: controller.CameraRig.Orbit(Vector(action.Position)-Vector(action.Previous));break;
                 case DirectPointerActionKind.Pinch: controller.CameraRig.ZoomByRatio(action.Scale,Vector(action.Position));break;
             }
         }

@@ -1,0 +1,50 @@
+{
+  "smoke-r3": {
+    "localRawLog": "Captures\\v22-sustained-fixture-smoke-r3.log",
+    "records": [
+      "RISKAI_SUSTAINED_SAMPLE elapsed=0.00 cohortAlive=900 moving=0 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=1.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=2.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=3.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=4.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=5.01 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=6.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=7.01 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=8.01 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=9.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=10.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=11.01 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=12.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=13.01 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=14.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=15.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=16.01 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=17.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=18.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=19.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=20.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=21.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=22.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=23.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=24.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=25.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=26.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=27.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=28.00 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_SUSTAINED_SAMPLE elapsed=29.01 cohortAlive=900 moving=900 pathPending=0 originalActorsUnchanged=True units=1112 timeScale=1.0",
+      "RISKAI_PROBE_RESULT phase=measurement scenario=sustained-navigation-v2 valid=True fixtureHash=F2CBE9FE navBudget=500 cohort=900 cohortMinAlive=900 movedUnits=900 movingMin=0 movingFrameAvg=867.26 pathPendingMax=900 pathPendingMaxAgeMs=100.00 realSeconds=30.00 simSecondsDelta=30.00 originalActorsUnchanged=True scheduleValid=True rounds=5 probeMovesSubmitted=4500 applied=9000 rejected=0 queued=0 measureFrames=3360 measureFrameAvgMs=8.93 measureFrameMaxMs=39.08 measureOver50ms=0 measureOver100ms=0 measureOver250ms=0 measureFrameSampler=unscaled_background success=True"
+    ]
+  },
+  "advanced-r1": {
+    "localRawLog": "Captures\\v22-sustained-fixture-advanced-r1.log",
+    "records": [
+      "RISKAI_PROBE_RESULT phase=fixture valid=false reason=no-player-zero-mobile-cohort map=Europe seed=160212 warmupCompletedSimSeconds=900.0 success=False"
+    ]
+  },
+  "advanced-r2": {
+    "localRawLog": "Captures\\v22-sustained-fixture-advanced-r2.log",
+    "records": [
+      "RISKAI_PROBE_RESULT phase=fixture valid=false reason=no-player-zero-mobile-cohort map=Europe seed=160212 warmupCompletedSimSeconds=900.2 success=False"
+    ]
+  }
+}

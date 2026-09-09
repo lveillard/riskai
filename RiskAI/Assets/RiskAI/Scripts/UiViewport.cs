@@ -22,7 +22,7 @@ namespace RiskAI
         public static bool IsPortrait => LogicalHeight>LogicalWidth;
         public static bool IsTouchLayout => PlatformPresentation.TouchCapable || IsCompact;
         public static Rect WorldRect => Calculate(new Vector2(Screen.width,Screen.height),SafeRect,Scale,
-            headerOverride>=0?headerOverride:48,footerOverride>=0?footerOverride:IsPortrait?260:IsCompact?232:208).World;
+            headerOverride>=0?headerOverride:IsPortrait?64:48,footerOverride>=0?footerOverride:IsPortrait?224:208).World;
         public static float TopPixels => Screen.height-WorldRect.yMax;
         public static float BottomPixels => WorldRect.yMin;
         public static bool ContainsWorld(Vector2 screen) => WorldRect.Contains(screen);

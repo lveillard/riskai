@@ -49,8 +49,9 @@ namespace RiskAI.Tests
             scene = SceneManager.CreateScene("16 players " + map);
             SceneManager.SetActiveScene(scene);
             new GameObject("16 players bootstrap").AddComponent<RiskBootstrap>();
-            yield return null;
             battle = BattleSession.Current;
+            battle.AiEnabled = false;
+            yield return null;
 
             Assert.That(battle.PlayerCount, Is.EqualTo(PlayerRules.MaxPlayers));
             Assert.That(battle.Commanders.Count, Is.EqualTo(15));
@@ -70,7 +71,8 @@ namespace RiskAI.Tests
             Assert.That(neutralPosts.All(town => town.Defender && town.Defender.Team == PlayerRules.NeutralTeam), Is.True);
             Assert.That(Enumerable.Range(0, PlayerRules.MaxPlayers).Select(VisualFactory.TeamColor).Distinct().Count(), Is.EqualTo(PlayerRules.MaxPlayers));
 
-            AdvanceTo(35f);
+            battle.AiEnabled = true;
+            AdvanceTo(5f);
             Assert.That(battle.RecruitmentPopulation(0), Is.Zero, "Only AI commanders may receive their opening order automatically.");
             for (int team = 1; team < PlayerRules.MaxPlayers; team++)
             {
@@ -84,7 +86,12 @@ namespace RiskAI.Tests
                 unit.TakeDamage(10000, PlayerRules.NeutralTeam);
             for (int team = 2; team < PlayerRules.MaxPlayers; team++)
                 Assert.That(battle.Units.Any(unit => unit && unit.IsAlive && unit.Team == team), Is.True, "Other opponents must still be present.");
+            int eliminationAnnouncements = 0;
+            battle.PlayerEliminated += team => { if (team == 1) eliminationAnnouncements++; };
             AdvanceTo(56f);
+            Assert.That(battle.IsPlayerEliminated(1), Is.True);
+            Assert.That(eliminationAnnouncements, Is.EqualTo(1));
+            Assert.That(battle.Spawn(1, UnitKind.Archer, battle.Towns[0].Rally), Is.Null);
             Assert.That(battle.Winner, Is.EqualTo(-1), "Eliminating one rival cannot end a 16-player match while fourteen rivals remain.");
 
             int heldCities = battle.VictoryTarget - 1;

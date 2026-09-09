@@ -1,0 +1,521 @@
+{
+  "distinctLatestCases": 93,
+  "allLatestPassed": true,
+  "runs": [
+    {
+      "name": "refinements-edit-r2",
+      "result": "Passed",
+      "passed": "30",
+      "failed": "0"
+    },
+    {
+      "name": "refinements-edit-r5",
+      "result": "Failed(Child)",
+      "passed": "18",
+      "failed": "1"
+    },
+    {
+      "name": "refinements-edit-r6",
+      "result": "Passed",
+      "passed": "4",
+      "failed": "0"
+    },
+    {
+      "name": "refinements-play-r1",
+      "result": "Passed",
+      "passed": "21",
+      "failed": "0"
+    },
+    {
+      "name": "refinements-play-r2",
+      "result": "Passed",
+      "passed": "19",
+      "failed": "0"
+    },
+    {
+      "name": "refinements-play-r3",
+      "result": "Passed",
+      "passed": "14",
+      "failed": "0"
+    },
+    {
+      "name": "refinements-edit-r7",
+      "result": "Passed",
+      "passed": "8",
+      "failed": "0"
+    },
+    {
+      "name": "refinements-play-r4",
+      "result": "Passed",
+      "passed": "14",
+      "failed": "0"
+    }
+  ],
+  "cases": [
+    {
+      "name": "RiskAI.Tests.AttackPresentationTests.SwordsmanContactPoseCoincidesWithItsDamageEvent",
+      "result": "Passed",
+      "source": "refinements-play-r1"
+    },
+    {
+      "name": "RiskAI.Tests.AttackPresentationTimingTests.EveryLandAttackSamplesItsContactPoseAtTheSimulationStrike",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.AttackPresentationTimingTests.ImportedClipsUseTheirMeasuredContactKeyframes",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.AttackPresentationTimingTests.SourceBackswingControlsRecoveryWithoutChangingCooldown",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.AuthoredLayoutTests.AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Classic,33,11)",
+      "result": "Passed",
+      "source": "refinements-edit-r6"
+    },
+    {
+      "name": "RiskAI.Tests.AuthoredLayoutTests.AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Riverlands,44,11)",
+      "result": "Passed",
+      "source": "refinements-edit-r6"
+    },
+    {
+      "name": "RiskAI.Tests.AuthoredLayoutTests.ClassicSouthernSettlementsDoNotRepeatMechanicalLatitudeRows",
+      "result": "Passed",
+      "source": "refinements-edit-r6"
+    },
+    {
+      "name": "RiskAI.Tests.AuthoredLayoutTests.RiverlandsHasTwinOuterCordillerasAndAuthoredCoastsHaveVariableShelves",
+      "result": "Passed",
+      "source": "refinements-edit-r6"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.AppendingFriendlyLandSelectionReplacesEnemyInspection",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.ArmyRosterShowsPortraitsAndLiveHealthAndSelectsOneUnit",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.DifferentArmiesWithTheSameLegacyHashRebuildTheRoster",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.EmptySelectionReleasesWorldAndCitySelectionClearsImmediately",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.GoldHeaderRefreshesAfterGrantWhilePausedBeforeNextSimulationTick",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.HelpSheetIsReplacedByActualVictoryResult",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.MixedRosterKeepsSoldiersAndShipsAndSelectsTheShip",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.OldRosterCardCannotSelectANewLifetimeOfTheSameView",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.OwnProductionFloatsWithoutSelectionAndNeverExposesEnemyQueues",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.ProductionFollowsSelectedBuildingOwnershipWithoutReselecting",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.ResourceButtonsOpenIncomeAndRankingAndExposeRecruitmentLimit",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleHudTests.SelectedArmyExposesSixDirectVectorActionsAndLiveResourceIcons",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.BattleIntegrationTests.CountryIncomeStopsWhenFragmentedAndReturnsAfterRecapture",
+      "result": "Passed",
+      "source": "refinements-play-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.BountyRetainsQuarterPointFractionsUntilWholeGold",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.BountyUsesPointValueIndependentlyOfPurchasePrice",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.BreakdownMatchesActualRoundPaymentAndDropsLostCountries",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.CountryQueriesReflectMutableOwnershipAndTopology",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.FragmentedCountryPaysOnlyBasicIncomeUntilCompleted",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.GrantAndRefundValidateTeamsAndAmounts",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.MixedAndLegacyTownsRemainDistinguishable",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.SourceCountryReinforcementUsesCeilingHalfCityCreditAndFivePointCap",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.SourceGoldCostsAndNavalProfilesAreNotScaledByPrototypeMultiplier",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.EconomyCountryTests.ThreeScatteredCitiesPayFourWhileACompleteThreeCityCountryPaysSeven",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.FrontEndTests.MapDefaultsFollowCapacityUntilPlayerCountIsAdjusted",
+      "result": "Passed",
+      "source": "refinements-play-r1"
+    },
+    {
+      "name": "RiskAI.Tests.FrontEndTests.ReservedHudBandsExcludeWorldInputAtRuntime",
+      "result": "Passed",
+      "source": "refinements-play-r1"
+    },
+    {
+      "name": "RiskAI.Tests.FrontEndTests.SetupScreenDoesNotCreateBattlefieldOrSimulation",
+      "result": "Passed",
+      "source": "refinements-play-r1"
+    },
+    {
+      "name": "RiskAI.Tests.HarborPresentationTests.HarborKeepsSmallClaimRingAndEntriesUseNavMesh",
+      "result": "Passed",
+      "source": "refinements-play-r2"
+    },
+    {
+      "name": "RiskAI.Tests.HarborPresentationTests.NavalQueueHasFiveSlotsRefundsOnCaptureAndDrivesOnePausableView",
+      "result": "Passed",
+      "source": "refinements-play-r2"
+    },
+    {
+      "name": "RiskAI.Tests.HarborPresentationTests.TrainingCuesUseAuthoredScaledEntrancesWithoutMovingSpawnEntries",
+      "result": "Passed",
+      "source": "refinements-play-r2"
+    },
+    {
+      "name": "RiskAI.Tests.HarborPresentationTests.TrainingSpillsWarmLightForEitherQueueAndResetsAcrossReuse",
+      "result": "Passed",
+      "source": "refinements-play-r2"
+    },
+    {
+      "name": "RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(False,False)",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(False,True)",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(True,False)",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(True,True)",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.ImportedCoastGeometryTests.HeightWaterLandAndInverseMatchRenderedTrianglesIncludingCrossedSourceCells",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.ImportedCoastGeometryTests.RoundingIsBoundedPreservesSourceArraysAndKeepsEveryTriangleOriented",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.ImportedCoastGeometryTests.SmallDryIslandSurvivesInsideSourceWaterWithoutChangingItsFlags",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.ImportedMapGameplayTests.ImportedMapsBootstrapSourcePostsAndKeepTheirSharedPortState",
+      "result": "Passed",
+      "source": "refinements-play-r2"
+    },
+    {
+      "name": "RiskAI.Tests.ImportedPortNavalIntegrationTests.EuropeLinkedPortRecruitsMarinesAndUsesDockedFrigateAsGuardian",
+      "result": "Passed",
+      "source": "refinements-play-r2"
+    },
+    {
+      "name": "RiskAI.Tests.LaunchArgumentsTests.BrowserDiagnosticsRequireAnExplicitFlagAndIgnoreUnrelatedQueryData",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.LaunchArgumentsTests.ExplicitProbeUsesTheSameOptionsAsDesktop",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.LaunchArgumentsTests.RestartProbeAndBoundedCyclesAreWhitelistedForBrowserDiagnostics",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerLifecycleTests.ResizeRefreshesImmediatelyAndHudDestructionReleasesBothTextures",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerLifecycleTests.SelectionChangesRefreshAtTenHertzWithoutReplacingTexture",
+      "result": "Passed",
+      "source": "refinements-play-r4"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerRasterTests.CameraOutlineClipsBothEndsInsideOffsetMinimap(False)",
+      "result": "Passed",
+      "source": "refinements-edit-r7"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerRasterTests.CameraOutlineClipsBothEndsInsideOffsetMinimap(True)",
+      "result": "Passed",
+      "source": "refinements-edit-r7"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerRasterTests.CameraOutlineRejectsParallelEdgesOutsideMinimap",
+      "result": "Passed",
+      "source": "refinements-edit-r7"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerRasterTests.ClippingCannotWrapMarkersAndClearReusesThePixelBuffer",
+      "result": "Passed",
+      "source": "refinements-edit-r7"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerRasterTests.FractionalUnitMarkersKeepEdgeCoverageAndTeamHue",
+      "result": "Passed",
+      "source": "refinements-edit-r7"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerRasterTests.HarborAndDefenderOutlinesKeepTheirHollowCentersAndOneLogicalPixelEdges",
+      "result": "Passed",
+      "source": "refinements-edit-r7"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerRasterTests.LaterMarkersCompositeOverEarlierMarkersAndSelectionRemainsWhite",
+      "result": "Passed",
+      "source": "refinements-edit-r7"
+    },
+    {
+      "name": "RiskAI.Tests.MinimapMarkerRasterTests.TopDownMapCoordinatesAreStoredInTextureBottomUpOrder",
+      "result": "Passed",
+      "source": "refinements-edit-r7"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.AiFleetPassKeepsAnExistingRouteInsteadOfRebuildingIt",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.AiSavesForAndBuysItsFirstGalleyThroughThePortQueue",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.GalleyAttackMoveResumesItsOriginalDestinationAfterCombat",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.GalleyAutoTargetsCoastalSoldierAtMainlandHarbor",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.GalleyDamageReactionKeepsAnExplicitAttackTarget",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.GalleyFiresAndTransportDestructionRemovesCargo",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.LastTransportAndCargoKeepPlayerAliveUntilSunk",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.NavalPurchasesCancelRefundAndCompleteExactlyOnce",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.RiverHasDownhillBedAndIslandsAreSeparateLandmasses",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.StalledActiveRouteBecomesEligibleForAiReissue",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.NavalGameplayTests.TransportActuallySailsAndDisembarkedTroopsCaptureIsland",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerPaletteTests.UsesWarcraftThreeExtendedPaletteInCanonicalPlayerOrder",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.IndividualAllocationGivesEveryOneOfSixteenPlayersACity",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(0,0)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(212,16)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(293,16)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(33,11)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(44,14)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(48,16)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(5,1)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.NeutralOwnershipMapsToDedicatedCombatTeam",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PlayerRulesTests.SixteenPlayerEconomyStartsAndPaysEveryAccount",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.PresentationIsolationTests.DestroyingProjectileViewsDoesNotCancelSimulationHit",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.RulesTests.IncomeIncludesCompleteCountriesAndStopsWithoutCities",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.RulesTests.IncomePaysAtRoundBoundaryAndHandlesLongFrames",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.RulesTests.InvalidTimeAndPurchasesCannotCreateGold",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.SimulationInfrastructureTests.SourceWeaponDeliveryControlsImpactInsteadOfDamageCategory",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    },
+    {
+      "name": "RiskAI.Tests.TerrainContinuityTests.AdjacentImportedChunksShareLightingNormalsAcrossACurvedSlope",
+      "result": "Passed",
+      "source": "refinements-edit-r5"
+    },
+    {
+      "name": "RiskAI.Tests.TerritoryMarkersTests.InternalPostsHideWhenAdjacentCitiesShareAnOwner",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(1.0f)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(2.0f)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(3.0f)",
+      "result": "Passed",
+      "source": "refinements-edit-r2"
+    },
+    {
+      "name": "RiskAI.Tests.TowerCombatTests.TowerLaunchesAfterItsSourceAttackPoint",
+      "result": "Passed",
+      "source": "refinements-play-r3"
+    }
+  ]
+}

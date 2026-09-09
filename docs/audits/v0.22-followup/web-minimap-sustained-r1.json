@@ -1,0 +1,35 @@
+{
+  "url": "http://127.0.0.1:8081/?riskai-seed=19031&riskai-players=16&riskai-path-budget=500&riskai-map=europe&riskai-play=1&riskai-probe=1&riskai-probe-seconds=90&riskai-probe-recruits=6&riskai-probe-warmup=0&riskai-probe-sustained=1",
+  "desktop_browser": true,
+  "physical_arm": false,
+  "viewport": [
+    1600,
+    900
+  ],
+  "device_scale_factor": 1,
+  "draws_suppressed": false,
+  "overview": false,
+  "path_budget": 500,
+  "sustained_navigation": true,
+  "minimap_hidden": false,
+  "browser": "152.0.4191.66",
+  "loader_seconds": 5.587,
+  "battle_ready_seconds": 15.65,
+  "canvas": {
+    "width": 1600,
+    "height": 900,
+    "cssWidth": 1600,
+    "cssHeight": 900,
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Laptop GPU (0x00002C59) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "heapBytes": 481165312
+  },
+  "probe_results": [
+    "RISKAI_PROBE_RESULT phase=measurement scenario=sustained-navigation-v2 valid=True fixtureHash=74F57FD4 navBudget=500 cohort=900 cohortMinAlive=900 movedUnits=900 movingMin=0 movingFrameAvg=829.88 pathPendingMax=900 pathPendingMaxAgeMs=600.00 realSeconds=90.05 simSecondsDelta=90.05 originalActorsUnchanged=True scheduleValid=True rounds=15 probeMovesSubmitted=13500 applied=27000 rejected=0 queued=0 measureFrames=1590 measureFrameAvgMs=56.63 measureFrameMaxMs=84.00 measureOver50ms=1427 measureOver100ms=0 measureOver250ms=0 measureFrameSampler=unscaled_background success=True\n"
+  ],
+  "success": true,
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
+  "seconds": 110.33
+}

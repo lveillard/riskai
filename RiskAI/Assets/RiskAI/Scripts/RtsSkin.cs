@@ -27,7 +27,7 @@ namespace RiskAI
             CommandLabel=new GUIStyle(Center){fontSize=10};
             VictoryTitle=new GUIStyle(Center){fontSize=34};
             for(int team=0;team<townLabels.Length;team++)
-                townLabels[team]=new GUIStyle(Center){fontSize=12,normal={textColor=Color.Lerp(VisualFactory.TeamColor(team),Color.white,.55f)}};
+                townLabels[team]=new GUIStyle(Center){fontSize=10,clipping=TextClipping.Clip,normal={textColor=Color.Lerp(VisualFactory.TeamColor(team),Color.white,.55f)}};
             Button=new GUIStyle(GUI.skin.button){fontSize=13,alignment=TextAnchor.MiddleLeft,padding=new RectOffset(9,6,4,4),border=new RectOffset(1,1,1,1)};
             Button.normal.background=card;Button.hover.background=hover;Button.active.background=pressed;
             Button.normal.textColor=Button.hover.textColor=Button.active.textColor=new Color(.95f,.94f,.83f);
@@ -50,6 +50,20 @@ namespace RiskAI
         }
         public static void Fill(Rect r,Color color)
         { Color old=GUI.color;GUI.color=color;GUI.DrawTexture(r,Texture2D.whiteTexture);GUI.color=old; }
+        public static bool ClipLine(Rect bounds,ref Vector2 a,ref Vector2 b)
+        {
+            var delta=b-a;float enter=0,leave=1;
+            if(!ClipInterval(a.x,delta.x,bounds.xMin,bounds.xMax,ref enter,ref leave)||
+               !ClipInterval(a.y,delta.y,bounds.yMin,bounds.yMax,ref enter,ref leave))return false;
+            b=a+delta*leave;a+=delta*enter;return true;
+        }
+        static bool ClipInterval(float origin,float delta,float min,float max,ref float enter,ref float leave)
+        {
+            if(Mathf.Abs(delta)<.000001f)return origin>=min&&origin<=max;
+            float first=(min-origin)/delta,last=(max-origin)/delta;
+            enter=Mathf.Max(enter,Mathf.Min(first,last));leave=Mathf.Min(leave,Mathf.Max(first,last));
+            return enter<=leave;
+        }
         public static void Frame(Rect r,Color? trim=null)
         {
             GUI.DrawTexture(r,stone,ScaleMode.StretchToFill);Color edge=trim??new Color(.51f,.42f,.25f);

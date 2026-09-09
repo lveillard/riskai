@@ -9,6 +9,8 @@ namespace RiskAI
         readonly BattleSession session;
         readonly int[] credits,cityCounts,alivePoints,sequence;
         float elapsed;
+        // Only the explicitly launched, isolated navigation benchmark sets this.
+        internal bool SuspendedForProbe { get; set; }
         public CountryRecruitment(BattleSession battle)
         {
             session=battle;int count=MapLayout.Countries.Length;
@@ -25,6 +27,7 @@ namespace RiskAI
         }
         public void CreditRound()
         {
+            if (SuspendedForProbe) return;
             CountAlive();
             for(int country=0;country<credits.Length;country++)
                 if(session.Economy.CountryOwner(country)>=0&&alivePoints[country]<cityCounts[country]*BattleRules.CountryReinforcementPointCapPerCity)
@@ -32,6 +35,7 @@ namespace RiskAI
         }
         public void Tick(float delta)
         {
+            if (SuspendedForProbe) return;
             elapsed+=delta;if(elapsed+.0001f<BattleRules.CountryReinforcementStepSeconds)return;elapsed-=BattleRules.CountryReinforcementStepSeconds;
             CountAlive();
             for(int country=0;country<credits.Length;country++)

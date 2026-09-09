@@ -1,0 +1,1278 @@
+{
+  "runtime": "9fb6beb9ea12c86a995a3788712500aff3dbc190",
+  "distinctCases": 77,
+  "latestResults": {
+    "RiskAI.Tests.ImportedCameraFramingTests.WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(Classic)": "Passed",
+    "RiskAI.Tests.ImportedCameraFramingTests.WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(Riverlands)": "Passed",
+    "RiskAI.Tests.ImportedCameraFramingTests.WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(Europe)": "Passed",
+    "RiskAI.Tests.ImportedCameraFramingTests.WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(NewWorld)": "Passed",
+    "RiskAI.Tests.ZoomResponseTests.ReversingZoomSettlesWithoutOvershootingTheNewTarget": "Passed",
+    "RiskAI.Tests.ZoomResponseTests.SameZoomRatioHasSameResponseAtTacticalAndMapHeights(0.65f)": "Passed",
+    "RiskAI.Tests.ZoomResponseTests.SameZoomRatioHasSameResponseAtTacticalAndMapHeights(1.5f)": "Passed",
+    "RiskAI.Tests.ZoomResponseTests.ZeroDurationAtRestCannotPoisonTheNextZoomFrame": "Passed",
+    "RiskAI.Tests.BattleHudTests.AppendingFriendlyLandSelectionReplacesEnemyInspection": "Passed",
+    "RiskAI.Tests.BattleHudTests.ArmyRosterShowsPortraitsAndLiveHealthAndSelectsOneUnit": "Passed",
+    "RiskAI.Tests.BattleHudTests.DifferentArmiesWithTheSameLegacyHashRebuildTheRoster": "Passed",
+    "RiskAI.Tests.BattleHudTests.GoldHeaderRefreshesAfterGrantWhilePausedBeforeNextSimulationTick": "Passed",
+    "RiskAI.Tests.BattleHudTests.HelpSheetIsReplacedByActualVictoryResult": "Passed",
+    "RiskAI.Tests.BattleHudTests.MixedRosterKeepsSoldiersAndShipsAndSelectsTheShip": "Passed",
+    "RiskAI.Tests.BattleHudTests.OldRosterCardCannotSelectANewLifetimeOfTheSameView": "Passed",
+    "RiskAI.Tests.BattleHudTests.ProductionFollowsSelectedBuildingOwnershipWithoutReselecting": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.ArmyDefeatsGuardsAndCapturesNeutralTown": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.AttackMoveResumesAfterKillingItsTarget": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.CameraZoomIsSmoothAndMiddleDragTracksGround": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.CountryIncomeLosesOnlyTheCapturedCityAndReturnsAfterRecapture": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.CountryReinforcementsCreditThenSpawnOnePerHalfSecondToTheTenPointCap": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.EnemyPickingAcceptsClicksOutsideTheNarrowCollider": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.FormationPlacesMeleeBeforeRanged": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.HighlandsRequireRampRoutesAndTownsStandOnLevelGround": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.MapHasAllTownsAndReachableRoutes": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.NormalizedWheelEventChangesVirtualZoomAndKeepsCursorAnchored": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.RecruitmentPaysOnceAndPauseStopsSimulation": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.RecruitmentPurchasesEveryProfileAtItsDeclaredCost": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.RecruitmentReservationsCombineTownHarborAndCountryCreditsAtTheLocalCap": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.ResetZoomThenFocusUsesTheNewZoomBounds": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.SettingRallyLeavesSettlementPositionUnchanged": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.StopEngagesWhileHoldAndMoveRespectTheirOrders": "Passed",
+    "RiskAI.Tests.BattleIntegrationTests.ZoomAndGroundPickingStayAnchoredOnHighGround": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.CancelMotionStopsZoomWhenFocusIsLostAndHelpIsOpen": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.CursorPolicyRequiresWindowsFocusGameplayAndAuthorization": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.DisablingStrategicViewRestoresCameraWithoutDisablingActors": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.EdgePolicyUsesEveryOuterEdgeAndNormalizesCorners": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.EscapeClosesHelpAndStopsPendingCameraMotion": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.FocusLossCancelsHeldCameraInput": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.FocusPointProjectsToPlayableAreaCenter": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.MiddleDragLeavingScreenCancelsWithoutReentryJump": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.StrategicZoomHasHysteresisAndOnlyChangesRendering": "Passed",
+    "RiskAI.Tests.CameraUsabilityTests.ZoomAtKeepsGroundAnchorUnderCursor": "Passed",
+    "RiskAI.Tests.FrontEndTests.ReservedHudBandsExcludeWorldInputAtRuntime": "Passed",
+    "RiskAI.Tests.FrontEndTests.SetupScreenDoesNotCreateBattlefieldOrSimulation": "Passed",
+    "RiskAI.Tests.MatchCountdownTests.CountdownBlocksSimulationAndOrdersThenStartsFromZero": "Passed",
+    "RiskAI.Tests.NavalEmbarkCaptureTests.BoardingReportsFailureWhenTheOrderedActorsCannotProgress": "Passed",
+    "RiskAI.Tests.NavalEmbarkCaptureTests.BoardingSurvivesDeselectionAndFocusLossButRespectsPause": "Passed",
+    "RiskAI.Tests.NavalEmbarkCaptureTests.FailedShipRouteDoesNotIssueTheSoldiersEmbarkOrder": "Passed",
+    "RiskAI.Tests.NavalEmbarkCaptureTests.GalleyReliefCanSailInsideSharedReliefRadiusBeforeGuardLeaves": "Passed",
+    "RiskAI.Tests.NavalEmbarkCaptureTests.LivingLandGuardianIsNotDisplacedByEnemyGalley": "Passed",
+    "RiskAI.Tests.NavalEmbarkCaptureTests.LivingNavalGuardianKeepsOwnerButMarksNearbyEnemyContested": "Passed",
+    "RiskAI.Tests.NavalEmbarkCaptureTests.NavalGuardNeedsReliefAndAnchorsAtTheWaterBerth": "Passed",
+    "RiskAI.Tests.NavalEmbarkCaptureTests.OccludedNavalGuardNeverPlansOrMovesOffItsBerth": "Passed",
+    "RiskAI.Tests.NavalEmbarkCaptureTests.TransportBoardsByRadiusAndFrigateHoldsAnUnguardedHarbor": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.AiFleetPassKeepsAnExistingRouteInsteadOfRebuildingIt": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.AiSavesForAndBuysItsFirstGalleyThroughThePortQueue": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.GalleyAttackMoveResumesItsOriginalDestinationAfterCombat": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.GalleyAutoTargetsCoastalSoldierAtMainlandHarbor": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.GalleyDamageReactionKeepsAnExplicitAttackTarget": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.GalleyFiresAndTransportDestructionRemovesCargo": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.NavalPurchasesCancelRefundAndCompleteExactlyOnce": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.RiverHasDownhillBedAndIslandsAreSeparateLandmasses": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.StalledActiveRouteBecomesEligibleForAiReissue": "Passed",
+    "RiskAI.Tests.NavalGameplayTests.TransportActuallySailsAndDisembarkedTroopsCaptureIsland": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.BattleCommandsValidateOwnershipFiniteValuesGarrisonsDeferredAndStaleIds": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.FollowStopsWhenItsEntityDiesAndDoesNotAttachToThePooledReplacement": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.MortarArtilleryLocksItsImpactPointAndUsesThreeSourceBands": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.MortarDoesNotAcquireBeyondItsSourceRadius": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.PauseFreezesSimulationWithoutChangingTimeScale": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.RiflemanAcquiresInsideItsSourceRadiusBeyondWeaponRange": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.RiflemanDoesNotAcquireBeyondItsSourceRadius": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.SoldierPoolReusesIdentityWithFreshStateAndRejectsOldProjectileTarget": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.SourceWeaponDeliveryControlsImpactInsteadOfDamageCategory": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.SpatialIndexReturnsBroadphaseSupersetAndExactPressure": "Passed",
+    "RiskAI.Tests.SimulationInfrastructureTests.WarshipSplashHonorsItsExplicitEnemyAndNeutralRelations": "Passed",
+    "RiskAI.Tests.StrategicCountryBorderTests.CountryBordersIgnoreCityOwnershipAndNeverOutlineWater": "Passed"
+  },
+  "testRuns": [
+    {
+      "result": "Passed",
+      "total": "8",
+      "passed": "8",
+      "failed": "0",
+      "name": "strategy-start-edit-r1"
+    },
+    {
+      "result": "Failed(Child)",
+      "total": "69",
+      "passed": "68",
+      "failed": "1",
+      "name": "strategy-start-play-r1"
+    },
+    {
+      "result": "Passed",
+      "total": "1",
+      "passed": "1",
+      "failed": "0",
+      "name": "strategy-border-r2"
+    },
+    {
+      "result": "Passed",
+      "total": "2",
+      "passed": "2",
+      "failed": "0",
+      "name": "strategy-border-r3"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/audits/v0.22-strategy-start/strategy-start-edit-r1.xml",
+      "sha256": "204944888d94c7de6f0945c07c483b9f32c86a430f446a19c0d2504f135f7fde",
+      "source": "ff33720"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/strategy-start-play-r1.xml",
+      "sha256": "2f139d32cb30d01e8330198c0c95af71373b1ffbe053d6b6e556a775dfc201cf",
+      "source": "ff33720"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/strategy-border-r2.xml",
+      "sha256": "092786769fd394b53eaac8e515448d3f760ad448f6d20ee3760ea7ed29366ede",
+      "source": "ff33720"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/strategy-border-r3.xml",
+      "sha256": "6dab54fff3d40f21d4ec6079e2b71ec1df56feb4b36ad7f1aa96eb6dfd1da75f",
+      "source": "7448c3a"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2.json",
+      "sha256": "708a8d1a516dcc78ea3e337356b983e81933c3bdcd2467a41e67e5ce18e30b37",
+      "source": "7448c3a"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2.log",
+      "sha256": "42bb398204bf9204a7039c3b335f86678f1d5520d5d212dbd8da0704cfcedf1f",
+      "source": "7448c3a"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2-countdown-early.webp",
+      "sha256": "66367f7505b1baa0e161f0ba866e29cddd453c40201b1a23db3df03a0033342d",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2-countdown-middle.webp",
+      "sha256": "10bbe6e05c363a0431af05284f75ad9e40f51c0243152c91ec62e29d7130bdbe",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2-countdown-late.webp",
+      "sha256": "5bd0eb110468e228b06fecce813e202666144449621440bcc3a0a806c9c5ebea",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2-playing.webp",
+      "sha256": "e947a49b397a80be76a8dd0d498a04a62075daceb9f0bce3ac2b9f2335efae13",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2-country-overview.webp",
+      "sha256": "2887abad0287a30126b32f7f5c6c38d32049fa00a8508fa341cddb16d506025e",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2-country-detail.webp",
+      "sha256": "dec86e77eb296fd9234a9ad882324f5bafa6f839fe711fd46c3d8d1360728e05",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2-zoom-step-3.webp",
+      "sha256": "fd4f4ff7c23d8f3bca5d81fc4eec7345c47f558480cb9ecaf83c194aa53f7b55",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-start-r2-zoom-step-4.webp",
+      "sha256": "dcd83cb1294f749d794d20a4a648e86eae33f4cfbe3e96f5aaa3940e029c4d8b",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2.json",
+      "sha256": "48a4cc90c56ccabf57ebfeeb89ffd51847a3a7bd6f8a1b0ae4229ac7fb68637c",
+      "source": "7448c3a"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2.log",
+      "sha256": "05c9febd786c6ea4d5bb58f968ceb347dbfde80ac206af7437cc80121932090a",
+      "source": "7448c3a"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2-countdown-early.webp",
+      "sha256": "0a156ea0a0f0a6720b64cd8e3f23419681e78253e64c09192ebd63d5445e3fae",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2-countdown-middle.webp",
+      "sha256": "7feb7d62ef392ab143c781a636c64b73bfcebc1e86e89b5a16cae7a4598137ea",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2-countdown-late.webp",
+      "sha256": "b515703b4c73fa7a34ccd5f441643c748476c3b49bcb3cde7fdad58d8a17d1a9",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2-playing.webp",
+      "sha256": "101e578358800587bf05237718e9e6344788e46794366cb9bb871a9251727971",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2-country-overview.webp",
+      "sha256": "3ad9e6c3727f09b32b9cca2a19daf07e920514b439c903f1d95fd754d151ada5",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2-country-detail.webp",
+      "sha256": "1b9505a86004b88aed48818422d12bf925a53009c2e06b3c626d2cf232440c3a",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2-zoom-step-3.webp",
+      "sha256": "042a22c573a3217114390d5b8916fff3082121eae577214689e599fb91d8120f",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/v22-web-strategy-portrait-r2-zoom-step-4.webp",
+      "sha256": "de9210d445e4fdc8d40b421fc8b4d76bcead4fdc2b345ea2c704e567186a278e",
+      "source": "7448c3a",
+      "desktopBrowser": true,
+      "physicalInput": false
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/windows-automation.json",
+      "sha256": "7c85ec0b3b4bd38c326a24e421c685b5dcdefd9a55a7e97e7739550ae269c277",
+      "source": "9fb6beb9ea12c86a995a3788712500aff3dbc190"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/final-web-probe.json",
+      "sha256": "52f87fa19f039e87b1f52109f947df89d92741900ddda5dd2f3bc1f74bf4d14c",
+      "source": "9fb6beb9ea12c86a995a3788712500aff3dbc190"
+    },
+    {
+      "path": "docs/audits/v0.22-strategy-start/final-web-probe.log",
+      "sha256": "7634b3451ef828b5fd98f8ff259b9a2f474e1115d756260a82b527dfe37adf9a",
+      "source": "9fb6beb9ea12c86a995a3788712500aff3dbc190"
+    },
+    {
+      "path": "data/derived/reforged-latest-inheritance.json",
+      "sha256": "f28fa6c2fcae91988ce46c2d6582360f51e65e1882aad686afdd16f0bb205dad",
+      "source": "Blizzard 2.0.4.23745; map 2.0.2.22796; effective balance selector pending"
+    }
+  ],
+  "builds": [
+    {
+      "target": "Windows",
+      "source": "9fb6beb9ea12c86a995a3788712500aff3dbc190",
+      "files": [
+        {
+          "path": "Builds/Windows-v0.22/Cinzel-OFL.txt",
+          "bytes": 4392,
+          "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb"
+        },
+        {
+          "path": "Builds/Windows-v0.22/D3D12/D3D12Core.dll",
+          "bytes": 4725304,
+          "sha256": "625bd40005b1c3708695d5256ecf230d278e6b8edba5a88af70f3d91324f3052"
+        },
+        {
+          "path": "Builds/Windows-v0.22/KayKit-LICENSE.txt",
+          "bytes": 891,
+          "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll",
+          "bytes": 7828912,
+          "sha256": "7ccc2fcff211b1be0f498bd537c6575e0a028bd6971cd1812d1884c9840d702d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/EmbedRuntime/MonoPosixHelper.dll",
+          "bytes": 611240,
+          "sha256": "4d882d75accec7054b72498afd7c627efca8824453253fa67e38dceaedaba5df"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/Browsers/Compat.browser",
+          "bytes": 1605,
+          "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/DefaultWsdlHelpGenerator.aspx",
+          "bytes": 60575,
+          "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/machine.config",
+          "bytes": 29066,
+          "sha256": "e91782a27fa39fc6c1d6ee8b08529f5d35052310d0006034b878eb04b8f2af30"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/settings.map",
+          "bytes": 2622,
+          "sha256": "49c6160f9d54af4270a3b4e997fc4a8301f79b9e2070118fa46ddbcbbc44f9a2"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/2.0/web.config",
+          "bytes": 11635,
+          "sha256": "cf2b54339e069b9e42f7d6795eecbf562c50c1011f4ca8f65f578fe52d97ff92"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/Browsers/Compat.browser",
+          "bytes": 1605,
+          "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/DefaultWsdlHelpGenerator.aspx",
+          "bytes": 60575,
+          "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/machine.config",
+          "bytes": 33598,
+          "sha256": "e60aec2c5115d65b3acb3c55ea21576dbd770f579166c017125571e46ae560ed"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/settings.map",
+          "bytes": 2622,
+          "sha256": "ce1db1ad8a9512073164e3eccdc193f7eda036e1a9733caec4635de21b2865c8"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.0/web.config",
+          "bytes": 18802,
+          "sha256": "e38bb8cc68fe5b4edecdfd288d094b9e8ced7629039b2a347682aba0d8bd7492"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/Browsers/Compat.browser",
+          "bytes": 1605,
+          "sha256": "8a1082057ac5681dcd4e9c227ed7fb8eb42ac1618963b5de3b65739dd77e2741"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/DefaultWsdlHelpGenerator.aspx",
+          "bytes": 60575,
+          "sha256": "751861040b69ea63a3827507b7c8da9c7f549dc181c1c8af4b7ca78cc97d710a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/machine.config",
+          "bytes": 34056,
+          "sha256": "ee950004b576fb28dc85f4b0435ed04bf96612de2e8b53be84d07afe85a0de6c"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/settings.map",
+          "bytes": 2622,
+          "sha256": "ce1db1ad8a9512073164e3eccdc193f7eda036e1a9733caec4635de21b2865c8"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/4.5/web.config",
+          "bytes": 18811,
+          "sha256": "c4cbddd4fd9347b58cc5a72b36dc4ba1ad2bb699e65869d05cd3fb9865f0d824"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/browscap.ini",
+          "bytes": 311984,
+          "sha256": "4ddd50f31fb968f30bedefc253a46dc3f2890192d05cdaa9e0a64a056eee807e"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/config",
+          "bytes": 3815,
+          "sha256": "5776169973a26a387b8b3e5c0f2301a7ab9a6dd7c7d3efa22a96abc47fbf8662"
+        },
+        {
+          "path": "Builds/Windows-v0.22/MonoBleedingEdge/etc/mono/mconfig/config.xml",
+          "bytes": 25817,
+          "sha256": "0c56e34c69124510fa8c19e7b4c2ca6c1c4ff460ae19f798dd0ca035809e396d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI — Dominios v0.22_BurstDebugInformation_DoNotShip/Data/Plugins/x86_64/lib_burst_generated.txt",
+          "bytes": 193489,
+          "sha256": "5ed09573d5536f1e98624dfadb6374a874ca6f6b1b26674610db8e44a7eaa150"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI.exe",
+          "bytes": 667136,
+          "sha256": "82efd5a8c297a5046f6bb72c240dab8972e64003851935eba0a46ad121ce0305"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/app.info",
+          "bytes": 32,
+          "sha256": "eec201eebeeedc7c533ac5a3bfc18358f6fdc5a3f964c54eb152b530dd1d0b0a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/boot.config",
+          "bytes": 156,
+          "sha256": "d29567be5919ac4da0d659a4730480a4f24345bb6c67e1fc1e5eed31ab668860"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/globalgamemanagers",
+          "bytes": 241140,
+          "sha256": "13d500fcf669dfc8dd1d40e705bd972f8c6518432cb2a1c0e4c64e1f4f591543"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/globalgamemanagers.assets",
+          "bytes": 1162296,
+          "sha256": "53776cdb3677d9f26d65ee5494a2a2fa00b2e121de7d4a5d5ac67189a9d00144"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/globalgamemanagers.assets.resS",
+          "bytes": 6174944,
+          "sha256": "26b24bbd0bdb7017ecbac3b829c0ed7c4848bc343af5702e96ebdb75a7258b04"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/level0",
+          "bytes": 1152,
+          "sha256": "2407dd05fe5ba35f0a090fd89fb7f548ff9bfcf6bc09fc23407e17beca1f585f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/level1",
+          "bytes": 1152,
+          "sha256": "c308be6fc22c3903e908dcd7efa263172b8f036e47699762baba2f76ef5eda78"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Microsoft.CodeAnalysis.CSharp.dll",
+          "bytes": 6098320,
+          "sha256": "e822156145e1add437b1d893c0315257c12e3d5b1b89d83494db6d88d37fe20a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Microsoft.CodeAnalysis.dll",
+          "bytes": 2903440,
+          "sha256": "159f595e313f8cc09bac14588e2466c312f512a4778d9fa2352fcccf2a53aa3d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Mono.Security.dll",
+          "bytes": 241152,
+          "sha256": "82df31404def10ffd69c09e3a8c454e76552f3a37675d1b7b8c743cfd3d1af6f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/mscorlib.dll",
+          "bytes": 4632064,
+          "sha256": "194417662b72e9fdc29df44aa07fb693a9cf2194d84e327231f3eeff1104ae0f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/netstandard.dll",
+          "bytes": 90112,
+          "sha256": "6ae62e082dc494a2433984177f60ca4db5fae69b1f360a8b33754172b310b8c5"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Newtonsoft.Json.dll",
+          "bytes": 691712,
+          "sha256": "a56146202232958f46bd6a28b5a7da166aea123ee0d646735a46e5c341dfbf1f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/RiskAI.Core.dll",
+          "bytes": 31744,
+          "sha256": "035bd73e886c60e1c3110c92121898a04314e76b48c47a5185ecb83ceecbc337"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/RiskAI.Runtime.dll",
+          "bytes": 489472,
+          "sha256": "7b64ce631517b0638226915c3c0569e2b3533860db68d2127c2cc84df0e6505f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Buffers.dll",
+          "bytes": 4608,
+          "sha256": "762f8fdbe975e05b76be5fe996c53ce7c75e4a2830f2f50b02a5948ef6ba0aeb"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Collections.Immutable.dll",
+          "bytes": 252680,
+          "sha256": "5b1b1c83ba3d135c2fdfe425842fbe9c7432878b7e468623acb554c69b4c130f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.ComponentModel.Composition.dll",
+          "bytes": 257024,
+          "sha256": "9373a420101d4c674b9f74bce93a45c58ddb3548c130d9b65ab87235d0a4ed30"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Configuration.dll",
+          "bytes": 124928,
+          "sha256": "d3acb14b8ebaf7482d2d3e26e8c04685299e2b471a513a30508bd0cab8336354"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Core.dll",
+          "bytes": 1113088,
+          "sha256": "ebf140bf5f8d49ccac20c14935625b0ae0a46c30aa4f90b2808f3b9678822470"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Data.DataSetExtensions.dll",
+          "bytes": 29696,
+          "sha256": "79a01061129709358567a9254684ba52ba66371e01e0354e7fa4852a9f62e59f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Data.dll",
+          "bytes": 2125312,
+          "sha256": "5d0807269bfcf112aa844951232ef105bbb642abb1e14c2e78dd70fb9245e98a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.dll",
+          "bytes": 2641920,
+          "sha256": "9e8a5190797e35428b1ae9bce6d47d39a1dbc3e974f14239e44678913dc6194a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Drawing.dll",
+          "bytes": 489984,
+          "sha256": "76dca8fbe098c285b03de79369f9f2aa141dec44de99ebcc0478c7e762024204"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.EnterpriseServices.dll",
+          "bytes": 44544,
+          "sha256": "d8a3d6c1929ec028793ff07df92781c03ebb38c63005d4c12c35e3116d04fcaf"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.IO.Compression.dll",
+          "bytes": 114688,
+          "sha256": "7370dc2d3a6f02dbda1a69ca596f2ae96fc464809b3bbca6071fc1fc1edfbb2d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.IO.Compression.FileSystem.dll",
+          "bytes": 18432,
+          "sha256": "40ef91246d44d6c4d8a1505e1210b0c54963a12938ba0458959bb064d62f36f4"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Memory.dll",
+          "bytes": 4608,
+          "sha256": "c4f030a2cba7da7cdcf493257c24560e203d355904aee490d645a935842f834a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Net.Http.dll",
+          "bytes": 122880,
+          "sha256": "c46d5b5dc68af8ce1b34e8ace4372b157e2e85ab63d6b5eea938ca71dc7fb064"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Numerics.dll",
+          "bytes": 119296,
+          "sha256": "74f6771aedd33262470e8e653fc0f4e04a659bcdadbeb44b2f8826fba7053f77"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Reflection.Metadata.dll",
+          "bytes": 487696,
+          "sha256": "55ef768ffa305de58e38e15420669258b16f420618eb1f702bddb30e5c797961"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Runtime.CompilerServices.Unsafe.dll",
+          "bytes": 22184,
+          "sha256": "bac58578ec05ecb8c234bf3402a0aa1491a5e437b03008b431e78d663ab52b78"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Runtime.dll",
+          "bytes": 12288,
+          "sha256": "e0a7334b7ba419aaab6bd3bb6992d693e689341a9178172c9bf99c2aa6a085bd"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Runtime.Serialization.dll",
+          "bytes": 934400,
+          "sha256": "2aa92fb930200ddb3c9c3ffaaff39bd6cdc6d689f19614f6c3b84a15060800f0"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Security.dll",
+          "bytes": 320000,
+          "sha256": "95a29120e164e5bdb7ff5dcb2cb4641e5ea0aca7c1ad0854b0e9b2b0ff5abe2d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.ServiceModel.Internals.dll",
+          "bytes": 215040,
+          "sha256": "6738a31088136d38a50354371feb83a4fd1558acca2a5f8b165c34a859e08c47"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Text.Encoding.CodePages.dll",
+          "bytes": 5120,
+          "sha256": "f58f99392c2dfc31d067e320ce7c009e276e6dd5ed7c615cc3895a0609931182"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Threading.Tasks.Extensions.dll",
+          "bytes": 5120,
+          "sha256": "96150abdca5df4446b376560e069d59b3550212deda8cbdd316272f6b834f597"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Transactions.dll",
+          "bytes": 35328,
+          "sha256": "cfac784408e3b7da6c6e94ec04c162c6d902372fab19353c02aeda3464ce185f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Xml.dll",
+          "bytes": 3160064,
+          "sha256": "f90799a0c38f3d45e390f9768ab467bf681a052e1b807f4c59fabef5f7edaffa"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/System.Xml.Linq.dll",
+          "bytes": 136704,
+          "sha256": "ed219710472b837fddf45cc73c912e04b4d6b8ca833ea074ec1f73bc00157b05"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.AI.Navigation.dll",
+          "bytes": 22528,
+          "sha256": "dd4527109fd853932e7496233e3d00e8e69f1135cd6f8ecf807220249b0e3788"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Burst.dll",
+          "bytes": 296960,
+          "sha256": "8cdc85671a965a4a6284169188a0f236590ae0eae59b7db098d1516ba0fc85a6"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Burst.Unsafe.dll",
+          "bytes": 5632,
+          "sha256": "9d9c1ff52411decbee5d9f0d1cd61ebeaa222077aa77a52101ea3debafae98e2"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Collections.dll",
+          "bytes": 432128,
+          "sha256": "005d0ec9881271b75813300edce726ad1b8e9341a1075760a8fc8e39d760a4e3"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Collections.LowLevel.ILSupport.dll",
+          "bytes": 5120,
+          "sha256": "ff50383f807f9692e4913b97e47d86fefcb8faa33d6d48cd3e3fd6fc7ffb448d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.InputSystem.dll",
+          "bytes": 1074176,
+          "sha256": "7c5db2f547398f86085a074f26dd9f7d089b920a700e55c9f64346a7490630c0"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.InputSystem.ForUI.dll",
+          "bytes": 15360,
+          "sha256": "dbb6ff9dccc1ab6ca1bee8855817cfe176da0fd4f9e6a9e5ace8a1c6b0e0ede9"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.InternalAPIEngineBridge.004.dll",
+          "bytes": 4096,
+          "sha256": "a7f68282b6fedb371db82c093c4fe91c3fdb35fb0c5e1547757154c31fa57ce7"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Mathematics.dll",
+          "bytes": 737280,
+          "sha256": "2aa2aae6a3dc60fc99ee7e6c4b9b349371933d9407d4971a3e844ebd08b290b4"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Pipeline.dll",
+          "bytes": 284672,
+          "sha256": "c885537d5928228938b191521fcbc864d6dcc2b123f6a9309cc8d9daa2f47d27"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.Pipeline.IlInterpreter.dll",
+          "bytes": 332800,
+          "sha256": "f45abf608343eeef78eecfeea0743c79e29c8c6c9b26e7e384061d3c5b6c02c3"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipeline.Universal.ShaderLibrary.dll",
+          "bytes": 7680,
+          "sha256": "8291572de1e7e79a5c7992def16288ce9d9ee8176da4c636c47cef553d153d10"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Core.Runtime.dll",
+          "bytes": 1131520,
+          "sha256": "fcedf10a4427c62a5d5f9fda85874e2fde377af90eb8a2f34eae99b97bfe5ff7"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Core.Runtime.Shared.dll",
+          "bytes": 4608,
+          "sha256": "a483e174d0089c146a45e465b69eeee7a835f15d525ec63eb7a3427056c39f9b"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Core.ShaderLibrary.dll",
+          "bytes": 3584,
+          "sha256": "24ab3cc009a7d077d7e1ab4b7ef9aecf90cbefd64a755bf4250bcefe1168e9e2"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.GPUDriven.Runtime.dll",
+          "bytes": 220160,
+          "sha256": "70a2f2211425ccf77a620538d7a744fff4142c326a48357f0930def29876768f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll",
+          "bytes": 3584,
+          "sha256": "a2f02ab3690be3c68175e01dff401055f18ab54010ff46ad39d3982a3d41d43e"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.2D.Runtime.dll",
+          "bytes": 216064,
+          "sha256": "ff3b6d7e47494ff8e2d2ba49b113240837631dc32a554e9cf198c5b63ab9dbe6"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Config.Runtime.dll",
+          "bytes": 4096,
+          "sha256": "91d31a3e073738d0911b104a633926c0a02eb6ff104aff0124f5c76947229fc3"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Runtime.dll",
+          "bytes": 698880,
+          "sha256": "3848d011fe963fdd1aae3af9b92be54f22ab0bea1cb179f3df7c7401c5b9c7fd"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.RenderPipelines.Universal.Shaders.dll",
+          "bytes": 3584,
+          "sha256": "08fb33e4549c96ae157d9c3c884d5359568ea2e3cb6b408fe6cb19b35f79664e"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.TextMeshPro.dll",
+          "bytes": 435712,
+          "sha256": "2fb9d91b5f936d5926cae37e0a0094a83f9f3feb51ad2bc1a7e4a95fafd0f5c0"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/Unity.UnifiedRayTracing.Runtime.dll",
+          "bytes": 88576,
+          "sha256": "c0dd4c67da4cb18691011b7bc123ebbad2c26592924ab9361206a1578964b9cd"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AccessibilityModule.dll",
+          "bytes": 51120,
+          "sha256": "c8249b9ca23640f7959c529d61f2eed1c86b715d364ed17e494cfaa324001e4a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AdaptivePerformanceModule.dll",
+          "bytes": 125352,
+          "sha256": "385cc1158fb02325535a6df613811204afeb7e3f240737a1fc2add0bd976b49e"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AIModule.dll",
+          "bytes": 77224,
+          "sha256": "71f41d664d48128f5135884413f21ea9fa86b6ce9a4f053b5081bf286d7ccb99"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AMDModule.dll",
+          "bytes": 21928,
+          "sha256": "aa68b148f2e74c334ae8bd38ddeaff055730aeada6f809697521ebd8920ce988"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AndroidJNIModule.dll",
+          "bytes": 121776,
+          "sha256": "8e008a125f9cd1417f84780eeb7de840e0f2c749ef92a9d87910637f9b5f9b58"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AnimationModule.dll",
+          "bytes": 225200,
+          "sha256": "e2952b9c0d9405a52f9b0e5cc72fcc14b63f23a20562e354c42ce2697c74836b"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ARModule.dll",
+          "bytes": 25520,
+          "sha256": "b36cde8f19c92faef74723bc362e69de210181323bd55f1c4acefe47f2cda4a4"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AssetBundleModule.dll",
+          "bytes": 41896,
+          "sha256": "8d542e27040bdd47d416a5d9d388059642a18da0dfbf18eb350e17597ca21bad"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.AudioModule.dll",
+          "bytes": 142760,
+          "sha256": "e340de4e194c183136a86f45fb17df334435775ed0680679b4c5d8370def04d9"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ClothModule.dll",
+          "bytes": 36272,
+          "sha256": "1b33dd16fe1022981108455221d5d608df9c42f9875a673c1edb39b0a232c3df"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ClusterInputModule.dll",
+          "bytes": 28080,
+          "sha256": "a7fba2eab6ee716d637ecb0f377cefb16979c7c1d26592d48eaa0665d3640fb0"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ClusterRendererModule.dll",
+          "bytes": 26536,
+          "sha256": "d9dbf5f9ab23959510d457a7a263dce628aa6f85490717e322bbed4dacd39c74"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ContentLoadModule.dll",
+          "bytes": 32680,
+          "sha256": "b7292cd077c601278bac76b65efe15df43efc52c13ed4913f8fd9dcaac908016"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.CoreModule.dll",
+          "bytes": 1985968,
+          "sha256": "6e113749845967506284bc65e85d28b527a4c4c99af73f0433af9b4ed5abfbc8"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.CrashReportingModule.dll",
+          "bytes": 26544,
+          "sha256": "8b3141bdc0c6bbef38dc74fa71021c9e54af76b2b1a37b63e49b39cfc9271bd6"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.DirectorModule.dll",
+          "bytes": 41896,
+          "sha256": "ad25a8f620e97ec1962a5cb2d5369485108673922b47b2cadf0b4239c94ce647"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.dll",
+          "bytes": 197544,
+          "sha256": "8f5656476f57134b88f230538fff8abb66eac6bf3ac087daa86d64d88d9d39eb"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.DSPGraphModule.dll",
+          "bytes": 31664,
+          "sha256": "688f7cbed6213df3bd5ce6a5c6dac92b0f3d0530841b88e82c69bce5a2c1827e"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.GameCenterModule.dll",
+          "bytes": 45992,
+          "sha256": "5bb7513b5b76e44f118323fdd27302df224db134bd9c6818f008a3dd6bf95534"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.GIModule.dll",
+          "bytes": 24488,
+          "sha256": "53d4bd69745ee83d5c4f0760f92b9efdb099489fdfc64528af9a1c95b0adfeb8"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.GraphicsStateCollectionSerializerModule.dll",
+          "bytes": 14256,
+          "sha256": "86ea17b6e8515403416ddfa2a08f4658b27d956cc28585f488a85d3e8939a358"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.GridModule.dll",
+          "bytes": 30632,
+          "sha256": "aac2d49a3b8f3d853cd318f0d67cbd8cffbe0f5f8f9ce288aaec85f25f46c5db"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.HierarchyCoreModule.dll",
+          "bytes": 109488,
+          "sha256": "bf800cc45f5c0354f9ad2ea22e0c1463bbfcc111c18247fea92c24baf4f45938"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.HierarchyModule.dll",
+          "bytes": 102312,
+          "sha256": "6a5d008a26eaed4289ffee5deaf6628cd708211674b9fbd2c243c465b022f748"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.HotReloadModule.dll",
+          "bytes": 24488,
+          "sha256": "a58a336e1f65a20fdaa79ef547388367540203ab07d9211d0f322f9fbb202c66"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.IdentifiersModule.dll",
+          "bytes": 16808,
+          "sha256": "9e32c80cb919fa932d33200fc1b840f028d9badd6bafdf540305ee51354d98d1"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ImageConversionModule.dll",
+          "bytes": 31152,
+          "sha256": "48deef77c0900f884d3a62530914188d6916519d415cd5196505a0dd2ba11b2d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.IMGUIModule.dll",
+          "bytes": 214448,
+          "sha256": "59079367d288ee1afc510ae174e6bd3373d44dffdcf39cd6a3d81f4ae72cc6a8"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.InputForUIModule.dll",
+          "bytes": 57768,
+          "sha256": "6b80e1f8e768de2769fe874111c1cb63ab21b8eb662fc0f208f9f45e7aa47625"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.InputLegacyModule.dll",
+          "bytes": 45488,
+          "sha256": "3fe0a3b1c2dcbf8430d053be5523c9db768601624069c593d981fe5d89262c41"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.InputModule.dll",
+          "bytes": 28584,
+          "sha256": "c7555f9e890b65d52806d11be2a18e79ad9e20dd3d9b7950c344b0e98269146b"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.InsightsModule.dll",
+          "bytes": 14256,
+          "sha256": "7823f02c0fd49945db4611a061f76f952f3bea5f1888e8a3ee32432a42564367"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.JSONSerializeModule.dll",
+          "bytes": 27056,
+          "sha256": "7d596dab3f41e563d3cadacff3f9259b662d764a1efcbfeae7ce680f7bb503bd"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.LocalizationModule.dll",
+          "bytes": 27056,
+          "sha256": "d37f7fc4d38c8ea2462194e69b4ea33f88be334a1e7ed222f200f2e707564bad"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.MarshallingModule.dll",
+          "bytes": 83888,
+          "sha256": "2424626f708e2abf2cc58f1fe5e5093805aace99cd4e9f90b52c84ddaec993b3"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.MultiplayerModule.dll",
+          "bytes": 17832,
+          "sha256": "b0e7ca214c64d51d2fd6703aebdad36b2426e6f090ef93038b3bcf08ac7ecd58"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.NVIDIAModule.dll",
+          "bytes": 40880,
+          "sha256": "9401ce6e59d01797ddffc4db283dbd7cc8ed5e9d9516cf536e0ad9a4650d3bed"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ParticleSystemModule.dll",
+          "bytes": 171944,
+          "sha256": "ca47a718f791e2104377e7cfe218210314a957dc1bcfb70102417adb73b4a430"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.PerformanceReportingModule.dll",
+          "bytes": 25008,
+          "sha256": "35e66ed8f5d0fbd8b25479ae75625b4a17cd41519dbf605970db154757c254e2"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.Physics2DModule.dll",
+          "bytes": 586664,
+          "sha256": "a13a44e7344ba20d6fcd5abde493d2a159dcd4010be1a016f6a0eb877f007766"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.PhysicsBackendPhysXModule.dll",
+          "bytes": 14256,
+          "sha256": "33ae23327a5d59ee0743ab0c5df0b0264ccf4f292d2f0807bc8cef40efb5a813"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.PhysicsModule.dll",
+          "bytes": 183720,
+          "sha256": "6112016fb7df440b4af9ff6d1e05cdb1d7f5dae652cf19e3cbdc6a2ca4699d0a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.PropertiesModule.dll",
+          "bytes": 134064,
+          "sha256": "8063760df50b181d9f9c90db6fad2a34c06ef5fb02f26467384b3aec5d14dc76"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.RenderAs2DModule.dll",
+          "bytes": 25520,
+          "sha256": "52c9a1536d88fedc62df201840d435a745c16b6448b86f6e22f91902e4d92c8b"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll",
+          "bytes": 24488,
+          "sha256": "f59d4c5e3c08db5f532117e76b16f5d5c4d5219ba584ee94312bb7d54c399311"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ScreenCaptureModule.dll",
+          "bytes": 26544,
+          "sha256": "f04cdf78234bf6387aabad5aacb327542f5a8bdcca533eff7401c6eee3206e36"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ShaderRuntimeModule.dll",
+          "bytes": 25512,
+          "sha256": "1396cb6600b39b593d0a58221c978d513dd289e1dff71a2eb2c6b2b60d1356e1"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.ShaderVariantAnalyticsModule.dll",
+          "bytes": 24488,
+          "sha256": "7a26b6fcc298b6d2251e551b7bc6fc4910cf029c9a0dc0c6cb412b722a7fcf5e"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SharedInternalsModule.dll",
+          "bytes": 38320,
+          "sha256": "8db34acfc413aeb640d9a618cc65964e3c6be6c2dbe3f5f9eb3fa3156fbf34f3"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SpriteMaskModule.dll",
+          "bytes": 28584,
+          "sha256": "c77d26f5ae1ee1cfd733d51fa9b3e44687f47ab49cb8a1e5f951fb326cfe498d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SpriteShapeModule.dll",
+          "bytes": 32688,
+          "sha256": "ad172378591dee76cc2d08d5a004a92ac4ce469fa1cc3a962854e29f04448cca"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.StreamingModule.dll",
+          "bytes": 26024,
+          "sha256": "56877ff28757655ffefa1daf4a4255b668616277c3c84df8f51f0daeecbf4b92"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SubstanceModule.dll",
+          "bytes": 29104,
+          "sha256": "aeddbe082d614d20f56d26a0cb415118c17e76763094cae3ed85567fd0f517ba"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.SubsystemsModule.dll",
+          "bytes": 41896,
+          "sha256": "1372e9608f65909baf934b33fb04a8eb55bb386ed9d88e56840fffe9bc7d8b19"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TerrainModule.dll",
+          "bytes": 134056,
+          "sha256": "407e8d6c30c7fefbcc7d888e0086f5ef8743531bfcbbc04bb11762b12558a759"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TerrainPhysicsModule.dll",
+          "bytes": 25520,
+          "sha256": "e8c19bd79f9d840b6ae34ad78adac43581c03dcb9cc375bfdbc682e8a349f4b2"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TextCoreFontEngineModule.dll",
+          "bytes": 81832,
+          "sha256": "1e9ec852583e53600d166d6688c62aa0e29d8ec26ceabfd9aab5319fd098203a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TextCoreTextEngineModule.dll",
+          "bytes": 334760,
+          "sha256": "4345d56bea3d26f7aba127754d95d6a1a9b754491ff5cd01d707e90219eede5b"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TextRenderingModule.dll",
+          "bytes": 39336,
+          "sha256": "41d9b82516a161f4e33b33ec54ccbf4ff520a546dfc0278d9d89342cf48e187f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TilemapModule.dll",
+          "bytes": 58800,
+          "sha256": "742b401342db4188a1d438cf42cff503d927f87182615e52d463ce13bb8d5aef"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.TLSModule.dll",
+          "bytes": 32176,
+          "sha256": "e824d1cf3bdf44ae67b05d795e3a64ca351b4e71f283e37ff55c8312f59692b7"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UI.dll",
+          "bytes": 260096,
+          "sha256": "5927e5ad33724b76625611d80822665bce209474e2bafe204ab3f1d12610707d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UIElementsModule.dll",
+          "bytes": 2452392,
+          "sha256": "f791cdee383a20ef998be28112bb4c0600528945289f9138ff4a6d5352946e16"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UIModule.dll",
+          "bytes": 50088,
+          "sha256": "8490946ba29a169115bf4d3e549d42a0a5e9b1c4fb49b28d0dea97b19c21af99"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UmbraModule.dll",
+          "bytes": 24496,
+          "sha256": "1fe54406a037f8f8bf0e4b648137b5d796e92716ee16d9120ded96b023e47f64"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityAnalyticsCommonModule.dll",
+          "bytes": 35752,
+          "sha256": "903a192bf5d0cb1b7c99826ccfd67401161949ecc0eb6c07ee350216526e53c3"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityAnalyticsModule.dll",
+          "bytes": 60848,
+          "sha256": "37c8de9c5b3b5014c491eb70db235bed73cb717c25d2c0a4438f3c9faddf009e"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityConnectModule.dll",
+          "bytes": 27560,
+          "sha256": "d795553835cb0a6bbd2d13ba36799323bfbfbdf6dbe3ed709f490b80d8e8af5a"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityConsentModule.dll",
+          "bytes": 16304,
+          "sha256": "8252eeef40749b9b8d1015569a3dd0148ee5b8c2445821781476165a82713af3"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityCurlModule.dll",
+          "bytes": 26032,
+          "sha256": "4119615947f88d586ca33cc9b217fe2f81ada01e49214d2b9b73b186cd233e41"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestAssetBundleModule.dll",
+          "bytes": 28592,
+          "sha256": "f1498767358fa09c93691d7907f67300ee3bee396413b978e948c83b1e2cf48c"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestAudioModule.dll",
+          "bytes": 28592,
+          "sha256": "fd8d815a45915f17ec9f63fda402769746ea28251a408a5f439c62f4a8af2729"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestModule.dll",
+          "bytes": 70064,
+          "sha256": "9d777e08bfe9b9c12ff69c5bba91a0ec67b6712c03aa62896eb892fa8fbb4009"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestTextureModule.dll",
+          "bytes": 27560,
+          "sha256": "c983a36f4ecf311a8ac2f067a943612bdfdb04dd1d4b0902fe23b8c22b800caa"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.UnityWebRequestWWWModule.dll",
+          "bytes": 36776,
+          "sha256": "71a0dfa0aecd73f7935d58f90b24ea56adc8c7866495ef3528e1a128f1f36a14"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VectorGraphicsModule.dll",
+          "bytes": 252840,
+          "sha256": "8d8aabf185a7238ac0e205c708305a9d1da2ba6160d497aaac70f439ee1671f6"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VehiclesModule.dll",
+          "bytes": 31656,
+          "sha256": "2946f811e0b6e3ee9748d39b916e78f418a70c4157177efa946b8aeca90ca86d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VFXModule.dll",
+          "bytes": 78248,
+          "sha256": "5c62f2e10b2559ae6333487dfb94c82c2e128a074f4777d9e69a74c8e522ae6e"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VideoModule.dll",
+          "bytes": 49072,
+          "sha256": "33e1f716564b7fc9169c7ad9b4b433b2e7ab3eaf760e83cc658c49bf216dbf51"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VirtualTexturingModule.dll",
+          "bytes": 42920,
+          "sha256": "8a0e54d097692eb82c8863b1d3f2319e1794e43f57b9e4d77a0ea728711173f8"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.VRModule.dll",
+          "bytes": 31664,
+          "sha256": "881678fd43267960701bffe14b698fc40fbab28247b675c2e18c5578dcd6c0d2"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.WindModule.dll",
+          "bytes": 26536,
+          "sha256": "3db21bbc42641b0dbfe8cc802045c623bb45ec725e84734114330ac59889c18f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Managed/UnityEngine.XRModule.dll",
+          "bytes": 88496,
+          "sha256": "b3f56678282a17a731c9328f1c32d1203f4388fba7188060d9f5cb9b44c198d7"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Plugins/x86_64/lib_burst_generated.dll",
+          "bytes": 446464,
+          "sha256": "5ed114d3f821394d958a921385f1414da3dd9cdf35967ec89bf087cb998b593d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Resources/unity default resources",
+          "bytes": 5883716,
+          "sha256": "32b58bdb9cf090212b46a8ca7436dcdae89e4ef43e9d55a835233c21d1347734"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/Resources/unity_builtin_extra",
+          "bytes": 397816,
+          "sha256": "03fb33a3885536096b224a3d90fd62b58a735526626cec97e17da416e4f789fe"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/resources.assets",
+          "bytes": 24664712,
+          "sha256": "fbaa35854b3cfd40845c0eb11b7a8a7c46e22cadaf1c6fe8872860aecd550737"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/resources.assets.resS",
+          "bytes": 70420816,
+          "sha256": "6b3ec910da3369fa347f1ddcbd4a3047b4f7aed465f7fec835e8fee10110ccaf"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/RuntimeInitializeOnLoads.json",
+          "bytes": 4891,
+          "sha256": "37e40f23ab96a9a58c58454f2041e5476407a60aa31816b5c6688b59fd6e8754"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/ScriptingAssemblies.json",
+          "bytes": 4352,
+          "sha256": "90fb6f762a9af3aca504708bcdfbacaddf824f5a855fb9397e11af521f5036f0"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/sharedassets0.assets",
+          "bytes": 7920,
+          "sha256": "0bb4785f1fef1256b3622057ba6595143d7fc1a10d5208c137b9e6221c62298d"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/sharedassets0.assets.resS",
+          "bytes": 524288,
+          "sha256": "393efe6399536384aa91bdfc4e64f244b4d3e1fbb6a4ff145c483ffee64ccb36"
+        },
+        {
+          "path": "Builds/Windows-v0.22/RiskAI_Data/sharedassets1.assets",
+          "bytes": 361,
+          "sha256": "6a5662507d053fe9362fedc65eda9fbb21138c2e12218b8ca9a01ff468df3865"
+        },
+        {
+          "path": "Builds/Windows-v0.22/THIRD_PARTY_NOTICES.md",
+          "bytes": 3396,
+          "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f"
+        },
+        {
+          "path": "Builds/Windows-v0.22/UnityCrashHandler64.exe",
+          "bytes": 1669544,
+          "sha256": "4e65cef1be7996ccecec341c11a2f1319c1349b30288bf01455a2494451ddb69"
+        },
+        {
+          "path": "Builds/Windows-v0.22/UnityPlayer.dll",
+          "bytes": 36730288,
+          "sha256": "6aaaa964ebb34fb3d72f14288729e64002e3b917062e313a3452f73a2a9c4cba"
+        }
+      ]
+    },
+    {
+      "target": "Web",
+      "source": "9fb6beb9ea12c86a995a3788712500aff3dbc190",
+      "files": [
+        {
+          "path": "Builds/Web-v0.22/Build/Web-v0.22.data.unityweb",
+          "bytes": 45189861,
+          "sha256": "cfd15823ec8cba3d78369afcc067287f7d2a30e3fc749d0c90bfd65705dbcd92"
+        },
+        {
+          "path": "Builds/Web-v0.22/Build/Web-v0.22.framework.js.unityweb",
+          "bytes": 88954,
+          "sha256": "4492db63d735d02a4cb7eb45c006f0e674426d13eb0610272d34670c050d1bba"
+        },
+        {
+          "path": "Builds/Web-v0.22/Build/Web-v0.22.loader.js",
+          "bytes": 47867,
+          "sha256": "e60779c9bc8164628beefea66e3cee6b93c33b96ace2897bfcfa2424dd851bd5"
+        },
+        {
+          "path": "Builds/Web-v0.22/Build/Web-v0.22.wasm.unityweb",
+          "bytes": 12140101,
+          "sha256": "9819a3c9ceb8782d3b4e51e8145a4748c820aa9d6a342302b4713a5e4219b63a"
+        },
+        {
+          "path": "Builds/Web-v0.22/Cinzel-OFL.txt",
+          "bytes": 4392,
+          "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb"
+        },
+        {
+          "path": "Builds/Web-v0.22/index.html",
+          "bytes": 4938,
+          "sha256": "f4e13c216ab5031e5944b0e2e95889190dd6aaa4d9e69d408a19c741c23e4ed0"
+        },
+        {
+          "path": "Builds/Web-v0.22/KayKit-LICENSE.txt",
+          "bytes": 891,
+          "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629"
+        },
+        {
+          "path": "Builds/Web-v0.22/riskai-pen.js",
+          "bytes": 11720,
+          "sha256": "de87827367c3455505446bcc5f60d8d4b5cc6fe61862a76d463748cea9244e60"
+        },
+        {
+          "path": "Builds/Web-v0.22/THIRD_PARTY_NOTICES.md",
+          "bytes": 3396,
+          "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "New roster deferred pending user preference after explanation.",
+    "No physical ARM or clean large-army performance claim.",
+    "Initial border GPU fixture failed to render; fixed pipeline request passed without shader changes.",
+    "First browser captures exposed world labels above countdown; fixed in 7448c3a and final browser captures supersede those.",
+    "Countdown screenshot filenames describe sampling windows, not the number guaranteed visible in that frame."
+  ]
+}

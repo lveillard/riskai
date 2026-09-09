@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 20:24:42Z" end-time="2026-09-08 20:24:42Z" duration="0.8656542">
+  <test-suite type="TestSuite" id="1283" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="224" result="Passed" start-time="2026-09-08 20:24:42Z" end-time="2026-09-08 20:24:42Z" duration="0.865654" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1277" name="RiskAI.PlayTests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.PlayTests.dll" runstate="Runnable" testcasecount="224" result="Passed" start-time="2026-09-08 20:24:42Z" end-time="2026-09-08 20:24:42Z" duration="0.843280" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="36656" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1278" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="224" result="Passed" start-time="2026-09-08 20:24:42Z" end-time="2026-09-08 20:24:42Z" duration="0.837104" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="SetUpFixture" id="1115" name="Tests" fullname="RiskAI.Tests.LegacyPlayModeSetUp" classname="RiskAI.Tests.LegacyPlayModeSetUp" runstate="Runnable" testcasecount="224" result="Passed" start-time="2026-09-08 20:24:42Z" end-time="2026-09-08 20:24:42Z" duration="0.830244" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1241" name="StrategicCountryBorderTests" fullname="RiskAI.Tests.StrategicCountryBorderTests" classname="RiskAI.Tests.StrategicCountryBorderTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 20:24:42Z" end-time="2026-09-08 20:24:42Z" duration="0.819155" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1242" name="CountryBordersIgnoreCityOwnershipAndNeverOutlineWater" fullname="RiskAI.Tests.StrategicCountryBorderTests.CountryBordersIgnoreCityOwnershipAndNeverOutlineWater" methodname="CountryBordersIgnoreCityOwnershipAndNeverOutlineWater" classname="RiskAI.Tests.StrategicCountryBorderTests" runstate="Runnable" seed="2019398602" result="Passed" start-time="2026-09-08 20:24:42Z" end-time="2026-09-08 20:24:42Z" duration="0.804056" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

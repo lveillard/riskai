@@ -29,6 +29,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _ColorLift: 0
     - _Recolor: 0
     - _Scale: 0.33
     m_Colors:

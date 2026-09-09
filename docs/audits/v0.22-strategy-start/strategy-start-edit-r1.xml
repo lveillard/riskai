@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:18Z" duration="0.9215693">
+  <test-suite type="TestSuite" id="1000" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="108" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:18Z" duration="0.921569" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1143" name="RiskAI.Tests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.Tests.dll" runstate="Runnable" testcasecount="108" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:18Z" duration="0.907664" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16564" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1144" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="108" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:18Z" duration="0.904816" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1145" name="Tests" fullname="RiskAI.Tests" runstate="Runnable" testcasecount="108" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:18Z" duration="0.898839" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1044" name="ImportedCameraFramingTests" fullname="RiskAI.Tests.ImportedCameraFramingTests" classname="RiskAI.Tests.ImportedCameraFramingTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.512642" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="ParameterizedMethod" id="1049" name="WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport" fullname="RiskAI.Tests.ImportedCameraFramingTests.WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport" classname="RiskAI.Tests.ImportedCameraFramingTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.504894" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1045" name="WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(Classic)" fullname="RiskAI.Tests.ImportedCameraFramingTests.WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(Classic)" methodname="WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport" classname="RiskAI.Tests.ImportedCameraFramingTests" runstate="Runnable" seed="569235612" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.058007" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1046" name="WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(Riverlands)" fullname="RiskAI.Tests.ImportedCameraFramingTests.WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(Riverlands)" methodname="WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport" classname="RiskAI.Tests.ImportedCameraFramingTests" runstate="Runnable" seed="1455892443" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.003884" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1047" name="WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(Europe)" fullname="RiskAI.Tests.ImportedCameraFramingTests.WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(Europe)" methodname="WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport" classname="RiskAI.Tests.ImportedCameraFramingTests" runstate="Runnable" seed="277285078" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.170938" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1048" name="WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(NewWorld)" fullname="RiskAI.Tests.ImportedCameraFramingTests.WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport(NewWorld)" methodname="WholeMapViewFitsEverySourceCornerInsideTheUsableHudViewport" classname="RiskAI.Tests.ImportedCameraFramingTests" runstate="Runnable" seed="1481637060" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.241500" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+          <test-suite type="TestFixture" id="1137" name="ZoomResponseTests" fullname="RiskAI.Tests.ZoomResponseTests" classname="RiskAI.Tests.ZoomResponseTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:18Z" duration="0.379015" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1142" name="ReversingZoomSettlesWithoutOvershootingTheNewTarget" fullname="RiskAI.Tests.ZoomResponseTests.ReversingZoomSettlesWithoutOvershootingTheNewTarget" methodname="ReversingZoomSettlesWithoutOvershootingTheNewTarget" classname="RiskAI.Tests.ZoomResponseTests" runstate="Runnable" seed="1643292714" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.001665" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1141" name="SameZoomRatioHasSameResponseAtTacticalAndMapHeights" fullname="RiskAI.Tests.ZoomResponseTests.SameZoomRatioHasSameResponseAtTacticalAndMapHeights" classname="RiskAI.Tests.ZoomResponseTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.001633" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1139" name="SameZoomRatioHasSameResponseAtTacticalAndMapHeights(0.65f)" fullname="RiskAI.Tests.ZoomResponseTests.SameZoomRatioHasSameResponseAtTacticalAndMapHeights(0.65f)" methodname="SameZoomRatioHasSameResponseAtTacticalAndMapHeights" classname="RiskAI.Tests.ZoomResponseTests" runstate="Runnable" seed="591396477" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.000510" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1140" name="SameZoomRatioHasSameResponseAtTacticalAndMapHeights(1.5f)" fullname="RiskAI.Tests.ZoomResponseTests.SameZoomRatioHasSameResponseAtTacticalAndMapHeights(1.5f)" methodname="SameZoomRatioHasSameResponseAtTacticalAndMapHeights" classname="RiskAI.Tests.ZoomResponseTests" runstate="Runnable" seed="1251008084" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.000278" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1138" name="ZeroDurationAtRestCannotPoisonTheNextZoomFrame" fullname="RiskAI.Tests.ZoomResponseTests.ZeroDurationAtRestCannotPoisonTheNextZoomFrame" methodname="ZeroDurationAtRestCannotPoisonTheNextZoomFrame" classname="RiskAI.Tests.ZoomResponseTests" runstate="Runnable" seed="414987720" result="Passed" start-time="2026-09-08 20:15:17Z" end-time="2026-09-08 20:15:17Z" duration="0.001312" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

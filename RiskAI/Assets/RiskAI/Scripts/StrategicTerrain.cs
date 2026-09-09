@@ -7,6 +7,7 @@ namespace RiskAI
         public static void Create(Transform root)
         {
             var resources=GeneratedResourceOwner.For(root);
+            ShoreAccess.BakeSurface(root);
             // Sub-metre sampling keeps the bevel and river banks continuous with the walkable surface.
             const int nx=360,nz=400;
             var vertices=new Vector3[(nx+1)*(nz+1)];var triangles=new List<int>(nx*nz*6);
@@ -47,9 +48,8 @@ namespace RiskAI
                 float east=Mathf.Abs(bx-(29+6*Mathf.Sin(bz*.12f)));
                 float south=Mathf.Abs(bz-(-27+5*Mathf.Sin(bx*.09f)));
                 bool island=pz>MapLayout.Coast(px);
-                bool southwest=!MapLayout.IsExpanded&&bx<4&&bz<-45;
                 if(island){float d=-1;for(int islandIndex=0;islandIndex<MapLayout.Islands.Length;islandIndex++)d=Mathf.Max(d,MapLayout.IslandDistance(px,pz,islandIndex));if(d<3)continue;}
-                bool edge=Mathf.Abs(bx)>mapX-5||bz<-mapZ+6||Mathf.Abs(pz-MapLayout.Coast(px))<5;
+                bool drySouth=!MapLayout.IsExpanded&&bz<-43;
                 bool ribbon=west<3.5f||east<3.1f||south<2.8f;
                 bool grove=Mathf.PerlinNoise(px*.046f+14,pz*.046f+8)>.64f;
                 // Broad warped noise creates recognisable woods, dry openings and scrub
@@ -58,14 +58,16 @@ namespace RiskAI
                 float warpX=Mathf.PerlinNoise(px*.012f+31,pz*.012f+7)*18-9;
                 float warpZ=Mathf.PerlinNoise(px*.012f-11,pz*.012f+43)*18-9;
                 float patch=Mathf.PerlinNoise((px+warpX)*.021f+4,(pz+warpZ)*.021f+19);
+                bool southEdge=bz<-mapZ+6&&(!drySouth||patch>.57f);
+                bool edge=Mathf.Abs(bx)>mapX-5||southEdge||Mathf.Abs(pz-MapLayout.Coast(px))<5;
                 float fringe=Mathf.PerlinNoise(px*.079f+71,pz*.079f+13);
                 bool woodland=patch>.68f&&fringe>.35f;
-                if(!(edge||ribbon||grove||woodland||island)||random.NextDouble()<(island?.38:woodland?.055:.16))continue;
+                if(!(edge||ribbon||grove||woodland||island)||random.NextDouble()<(island?.38:drySouth?.36:woodland?.055:.16))continue;
                 bool rampPass=MapLayout.IsExpanded ? TerrainHydrology.IsChannel(px,pz) : (Mathf.Abs(bx+32)<5.5f&&bz>-14&&bz<7)||(Mathf.Abs(bx-34)<5.5f&&bz>-16&&bz<8)
                     ||(Mathf.Abs(bz-12)<5&&bx>-21&&bx<6)||(Mathf.Abs(bz-13)<5&&bx>44);
                 if(!edge&&(Mathf.Abs(bz-2)<3.2f||Mathf.Abs(bz-22)<3||rampPass))continue;
                 if(Mathf.Abs(MapLayout.Height(px+1,pz)-point.y)>1||Mathf.Abs(MapLayout.Height(px,pz+1)-point.y)>1)continue;
-                float treeHeight=southwest?2.8f+(float)random.NextDouble()*1.55f:3.6f+(float)random.NextDouble()*2.1f;
+                float treeHeight=drySouth?2.7f+(float)random.NextDouble()*1.45f:3.6f+(float)random.NextDouble()*2.1f;
                 int treeSeed=seed++;
                 if(ObscuresBuilding(point,treeHeight,clearings))continue;
                 BiomeVegetation.Tree(trees.transform,point,treeHeight,treeSeed);
@@ -75,11 +77,12 @@ namespace RiskAI
             for(int i=0;i<58;i++)
             {
                 float x=(-70+(float)random.NextDouble()*140)*MapLayout.Spacing,z=MapLayout.Coast(x)-.5f-(float)random.NextDouble()*1.5f;
-                if(z>MapLayout.HalfDepth)continue;WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z)-.04f,z),.65f+(float)random.NextDouble()*1.2f,i);
+                if(z>MapLayout.HalfDepth||ShoreAccess.SurfaceWeights(x,z).y<.55f)continue;WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z)-.04f,z),.65f+(float)random.NextDouble()*1.2f,i);
             }
-            for(int i=0;i<55;i++)
+            if(MapLayout.IsExpanded)CreateExpandedCordilleraDetails(root,clearings);
+            else for(int i=0;i<55;i++)
             {
-                float mountainX=MapLayout.IsExpanded?8:57,mountainZ=MapLayout.IsExpanded?-85:-40;
+                float mountainX=57,mountainZ=-40;
                 float x=(mountainX-13+(float)random.NextDouble()*26)*MapLayout.Spacing,z=(mountainZ-13+(float)random.NextDouble()*26)*MapLayout.Spacing;
                 if(Vector2.Distance(new Vector2(x,z)/MapLayout.Spacing,new Vector2(mountainX,mountainZ))>17)continue;
                 WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z),z),.6f+(float)random.NextDouble()*1.6f,i+80);
@@ -105,6 +108,27 @@ namespace RiskAI
                 float x=(center.x+Mathf.Cos(a)*r)*MapLayout.Spacing,z=(center.y+Mathf.Sin(a)*r)*MapLayout.Spacing;
                 if(!MapLayout.IsLand(x,z)||NearClearing(x,z,clearings,3.3f))continue;
                 WorldArt.Rock(root.transform,new Vector3(x,MapLayout.Height(x,z)-.03f,z),.42f+(float)random.NextDouble()*.72f,seed++);
+            }
+            StaticBatchingUtility.Combine(root);
+        }
+        static void CreateExpandedCordilleraDetails(Transform parent,List<Vector4> clearings)
+        {
+            var root=new GameObject("Cordilleras gemelas de las riberas");root.transform.SetParent(parent,false);
+            var random=new System.Random(6821);int seed=440;
+            for(int side=-1;side<=1;side+=2)
+            {
+                var start=new Vector2(side*67,-74);var end=new Vector2(side*45,42);
+                var direction=(end-start).normalized;var normal=new Vector2(-direction.y,direction.x);
+                for(int i=0;i<42;i++)
+                {
+                    float along=(i+(float)random.NextDouble())/42f;
+                    var point=Vector2.Lerp(start,end,along)+normal*((float)random.NextDouble()*10-5);
+                    float x=point.x*MapLayout.Spacing,z=point.y*MapLayout.Spacing;
+                    if(!MapLayout.IsLand(x,z)||TerrainHydrology.DistanceToRiver(x,z)<7||NearClearing(x,z,clearings,4.5f))continue;
+                    float y=MapLayout.Height(x,z),slope=Mathf.Max(Mathf.Abs(MapLayout.Height(x+1,z)-MapLayout.Height(x-1,z)),Mathf.Abs(MapLayout.Height(x,z+1)-MapLayout.Height(x,z-1)));
+                    if(slope<.22f)continue;
+                    WorldArt.Rock(root.transform,new Vector3(x,y-.05f,z),.55f+(float)random.NextDouble()*1.45f,seed++);
+                }
             }
             StaticBatchingUtility.Combine(root);
         }

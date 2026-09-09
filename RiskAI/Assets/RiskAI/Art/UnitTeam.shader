@@ -95,7 +95,11 @@ Shader "RiskAI/UnitTeam"
                 half mask=1-smoothstep(_HueWidth*.25,_HueWidth,HueDistance(hsv.x,_SourceHue));
                 mask*=smoothstep(.16,.42,hsv.y);
                 mask=lerp(mask,1,_ForceTeam);
-                half3 recolored=HsvToRgb(half3(team.x,max(team.y,hsv.y*.8),hsv.z));
+                // Keep the canonical player colour as the albedo and use the source
+                // cloth only as shading. Reusing its HSV value made bright red and
+                // dark red converge on the same bright texture value.
+                half shade=lerp(.48,1.12,hsv.z);
+                half3 recolored=saturate(_TeamColor.rgb*shade);
                 recolored=lerp(recolored,hsv.z*half3(1.05,1.01,.84),_MedicUniform*(1-_ForceTeam)*(1-smoothstep(1.35,1.52,height)));
                 return lerp(source,recolored,mask);
             }

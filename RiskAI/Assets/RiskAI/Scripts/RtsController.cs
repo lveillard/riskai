@@ -177,7 +177,7 @@ namespace RiskAI
         CountryCamp PickCamp(Vector2 pointer)
         {
             CountryCamp best=null;float distance=StrategicMapView.Active?10*BattleHud.Scale:24;
-            foreach(var camp in session.Camps)if(camp){var p=cam.WorldToScreenPoint(camp.transform.position+Vector3.up*.7f);float d=Vector2.Distance(pointer,p);if(p.z>0&&d<distance){best=camp;distance=d;}}
+            foreach(var camp in session.Camps)if(camp){var p=cam.WorldToScreenPoint(StrategicMapView.Active?StrategicMapView.SurfaceAnchor(camp.SpawnPoint):camp.SpawnPoint+Vector3.up*.7f);float d=Vector2.Distance(pointer,p);if(p.z>0&&d<distance){best=camp;distance=d;}}
             return best;
         }
         public void SelectShip(Ship ship,bool append=false)
@@ -257,7 +257,7 @@ namespace RiskAI
         {
             string error=TryRecruitSelected(kind);
             if(error!=null)session.Message(error);
-            else session.Message(BattleRules.Name(kind)+" en la cola de reclutamiento.");
+            else session.Message(LastProductionResult.Feedback(BattleRules.Name(kind)));
         }
         public void BuildTower() { if(SelectedHarbor)Feedback(ExecuteBuilding(PlayerBuildingIntent.BuildTower(SelectedHarbor.BuildingId)));else if(SelectedTown)Feedback(ExecuteBuilding(PlayerBuildingIntent.BuildTower(SelectedTown.BuildingId)));else session.Message("Selecciona una ciudad o un puerto tuyo para reconstruir su torre."); }
         public void UpgradeTown() { if(SelectedTown)Feedback(SelectedTown.Upgrade());else session.Message("Selecciona una ciudad tuya para mejorarla."); }
@@ -300,7 +300,8 @@ namespace RiskAI
         public void BuyShip(ShipKind kind)
         {
             string error=TryBuySelected(kind);
-            if(error!=null&&session)session.Message(error);
+            if(!session)return;
+            session.Message(error??LastProductionResult.Feedback(Harbor.Profile(kind).Name));
         }
         public void BoardNearby()
         {
@@ -595,7 +596,7 @@ namespace RiskAI
             if(Hovered)
             {
                 hoverRing.transform.position=Hovered.transform.position;
-                hoverRing.transform.localScale=Vector3.one*(Hovered is DefenseTower?1.15f:Hovered is Ship ship?(ship.IsGarrison?.9f:1.6f):.47f);
+                hoverRing.transform.localScale=Vector3.one*(Hovered is DefenseTower?1.15f:Hovered is Ship?ShipAppearance.SelectionRadius:.47f);
                 hoverRing.startColor=hoverRing.endColor=Hovered.Team==0?new Color(.65f,1,.65f):new Color(1,.3f,.2f);
             }
             Vector3 pan=key==null?Vector3.zero:new Vector3((key.rightArrowKey.isPressed?1:0)-(key.leftArrowKey.isPressed?1:0),0,(key.upArrowKey.isPressed?1:0)-(key.downArrowKey.isPressed?1:0));
@@ -624,7 +625,11 @@ namespace RiskAI
                 }
                 else if(mouse.middleButton.isPressed || mouse.rightButton.isPressed && secondaryGesture.Dragging)
                 {
-                    if((point-previousMouse).sqrMagnitude>.001f)CameraRig.Drag(previousMouse,point);
+                    if((point-previousMouse).sqrMagnitude>.001f)
+                    {
+                        if(mouse.middleButton.isPressed)CameraRig.Orbit(point-previousMouse);
+                        else CameraRig.Drag(previousMouse,point);
+                    }
                     previousMouse=point;
                 }
                 else

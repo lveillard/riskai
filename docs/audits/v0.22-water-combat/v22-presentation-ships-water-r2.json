@@ -1,0 +1,18 @@
+[
+  {
+    "map": "europe",
+    "exitCode": 0,
+    "records": [
+      "RISKAI_PRESENTATION_IMAGE: ships-underway-0",
+      "RISKAI_PRESENTATION_IMAGE: ships-underway-1",
+      "RISKAI_PRESENTATION_OK: ships visible=True galleyMoved=18.01981 transportMoved=18.01981"
+    ],
+    "images": [
+      "Captures\\v22-presentation-ships-water-r2\\europe\\ships-underway-0.png",
+      "Captures\\v22-presentation-ships-water-r2\\europe\\ships-underway-1.png"
+    ],
+    "completed": true,
+    "syntheticRenderingFixture": true,
+    "physicalInputTest": false
+  }
+]

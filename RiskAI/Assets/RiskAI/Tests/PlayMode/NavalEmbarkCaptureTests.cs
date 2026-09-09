@@ -201,6 +201,42 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator OccludedNavalGuardNeverPlansOrMovesOffItsBerth()
+        {
+            var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
+            var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
+            var guard=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            port.SimTick(.1f);
+            Assert.That(guard.IsGarrison,Is.True);
+            Vector3 enemyPoint=port.Berth;
+            bool found=false;
+            for(int i=0;i<16;i++)
+            {
+                float angle=i*Mathf.PI/8;
+                var candidate=port.Berth+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*4f;
+                if(!SeaNavigation.HasClearance(candidate)||!SeaNavigation.ClearSegment(port.Berth,candidate))continue;
+                enemyPoint=candidate;found=true;break;
+            }
+            Assert.That(found,Is.True,"Fixture needs a nearby clear firing lane.");
+            var enemy=BattleTestScenario.Ship(naval,1,ShipKind.Galley,enemyPoint);
+            guard.Attack(enemy);
+            var blocker=new GameObject("Opaque firing lane blocker");
+            blocker.layer=MapLayout.TerrainLayer;
+            blocker.transform.position=(guard.AimPoint+enemy.AimPoint)*.5f;
+            blocker.AddComponent<BoxCollider>().size=Vector3.one*1.5f;
+            Physics.SyncTransforms();
+            long revision=guard.RouteRevision;
+            Vector3 berth=guard.transform.position;
+            for(int tick=0;tick<10;tick++)guard.SimTick(.1f);
+            Assert.That(guard.RouteRevision,Is.EqualTo(revision),"A blocked shot must not schedule autonomous pursuit for a guardian.");
+            Assert.That(guard.transform.position,Is.EqualTo(berth));
+            Object.Destroy(blocker);yield return null;
+            guard.SimTick(.1f);
+            Assert.That(guard.CurrentTarget,Is.SameAs(enemy));
+            Assert.That(guard.transform.position,Is.EqualTo(berth),"Turning and firing retain the naval anchor.");
+        }
+
+        [UnityTest]
         public IEnumerator NavalGuardNeedsReliefAndAnchorsAtTheWaterBerth()
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
@@ -221,7 +257,7 @@ namespace RiskAI.Tests
             selectedCenter/=unitRing.positionCount;
             Assert.That(Vector2.Distance(new Vector2(selectedCenter.x,selectedCenter.z),new Vector2(berthBefore.x,berthBefore.z)),Is.LessThan(.001f));
             Assert.That(port.NavalClaimRing.transform.position,Is.EqualTo(berthBefore),"Selecting a ship cannot move its harbor claim circle.");
-            Assert.That(unitRing.transform.lossyScale.x,Is.LessThan(.8f),"The selected guard ring must remain visually separate from the almost equal berth ring.");
+            Assert.That(unitRing.GetPosition(0).x * unitRing.transform.lossyScale.x,Is.GreaterThan(ClaimRules.CircleRadius + 2f),"The selected ship outline clears the hull and stays outside the berth claim circle.");
 
             var destination=naval.Harbors.First(h=>h!=port&&h.CanLaunch).Berth;
             guard.MoveTo(destination);

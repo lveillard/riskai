@@ -17,11 +17,20 @@ namespace RiskAI
         ProfilerRecorder mainThread;
         ProfilerRecorder renderThread;
         ProfilerRecorder gcAllocated;
+        ProfilerRecorder drawCalls;
+        ProfilerRecorder setPassCalls;
+        ProfilerRecorder batches;
+        ProfilerRecorder vertices;
         bool frameTimingsAvailable;
         int startedFrame;
         float startedRealtime;
         int gcGenerationAtStart;
         int hitchLogs;
+        bool measuring;
+        int measuredFrames;
+        double measuredFrameMilliseconds;
+        long mainThreadTotal,renderThreadTotal,gcAllocatedTotal,drawCallsTotal,setPassCallsTotal,batchesTotal,verticesTotal;
+        int mainThreadSamples,renderThreadSamples,gcAllocatedSamples,drawCallsSamples,setPassCallsSamples,batchesSamples,verticesSamples;
 
         void Awake()
         {
@@ -33,7 +42,34 @@ namespace RiskAI
             mainThread = StartRecorder(ProfilerCategory.Internal, "Main Thread");
             renderThread = StartRecorder(ProfilerCategory.Internal, "Render Thread");
             gcAllocated = StartRecorder(ProfilerCategory.Memory, "GC Allocated In Frame");
+            drawCalls = StartRecorder(ProfilerCategory.Render, "Draw Calls Count");
+            setPassCalls = StartRecorder(ProfilerCategory.Render, "SetPass Calls Count");
+            batches = StartRecorder(ProfilerCategory.Render, "Batches Count");
+            vertices = StartRecorder(ProfilerCategory.Render, "Vertices Count");
             frameTimingsAvailable = FrameTimingManager.IsFeatureEnabled();
+        }
+
+        public void BeginMeasurement()
+        {
+            measuring=true;measuredFrames=0;measuredFrameMilliseconds=0;
+            mainThreadTotal=renderThreadTotal=gcAllocatedTotal=drawCallsTotal=setPassCallsTotal=batchesTotal=verticesTotal=0;
+            mainThreadSamples=renderThreadSamples=gcAllocatedSamples=drawCallsSamples=setPassCallsSamples=batchesSamples=verticesSamples=0;
+        }
+
+        public void EndMeasurement()
+        {
+            if(!measuring)return;
+            measuring=false;
+            Debug.Log(
+                $"RISKAI_PLAYERLOOP_TRACE frames={measuredFrames} frameAvgMs={(measuredFrames>0?measuredFrameMilliseconds/measuredFrames:0):F2} " +
+                $"mainThreadRawAvg={Average(mainThreadTotal,mainThreadSamples)} mainThreadSamples={mainThreadSamples} " +
+                $"renderThreadRawAvg={Average(renderThreadTotal,renderThreadSamples)} renderThreadSamples={renderThreadSamples} " +
+                $"drawCallsAvg={Average(drawCallsTotal,drawCallsSamples)} drawCallsSamples={drawCallsSamples} " +
+                $"setPassCallsAvg={Average(setPassCallsTotal,setPassCallsSamples)} setPassCallsSamples={setPassCallsSamples} " +
+                $"batchesAvg={Average(batchesTotal,batchesSamples)} batchesSamples={batchesSamples} " +
+                $"verticesAvg={Average(verticesTotal,verticesSamples)} verticesSamples={verticesSamples} " +
+                $"gcAllocatedAvgB={Average(gcAllocatedTotal,gcAllocatedSamples)} gcAllocatedSamples={gcAllocatedSamples} " +
+                "rawThreadCountersRequirePlatformUnitVerification=true");
         }
 
         static ProfilerRecorder StartRecorder(ProfilerCategory category, string marker)
@@ -53,6 +89,18 @@ namespace RiskAI
         void Update()
         {
             if (frameTimingsAvailable) FrameTimingManager.CaptureFrameTimings();
+
+            if(measuring)
+            {
+                measuredFrames++;measuredFrameMilliseconds+=Time.unscaledDeltaTime*1000;
+                Accumulate(mainThread,ref mainThreadTotal,ref mainThreadSamples);
+                Accumulate(renderThread,ref renderThreadTotal,ref renderThreadSamples);
+                Accumulate(gcAllocated,ref gcAllocatedTotal,ref gcAllocatedSamples);
+                Accumulate(drawCalls,ref drawCallsTotal,ref drawCallsSamples);
+                Accumulate(setPassCalls,ref setPassCallsTotal,ref setPassCallsSamples);
+                Accumulate(batches,ref batchesTotal,ref batchesSamples);
+                Accumulate(vertices,ref verticesTotal,ref verticesSamples);
+            }
 
             float frameSeconds = Time.unscaledDeltaTime;
             if (frameSeconds <= HitchSeconds || hitchLogs >= MaxHitchLogs) return;
@@ -90,11 +138,23 @@ namespace RiskAI
             return recorder.Valid && recorder.Count > 0 ? recorder.LastValue : -1;
         }
 
+        static void Accumulate(ProfilerRecorder recorder,ref long total,ref int samples)
+        {
+            if(!recorder.Valid||recorder.Count<=0)return;
+            total+=recorder.LastValue;samples++;
+        }
+
+        static long Average(long total,int samples) => samples>0?total/samples:-1;
+
         void OnDestroy()
         {
             Dispose(ref mainThread);
             Dispose(ref renderThread);
             Dispose(ref gcAllocated);
+            Dispose(ref drawCalls);
+            Dispose(ref setPassCalls);
+            Dispose(ref batches);
+            Dispose(ref vertices);
         }
 
         static void Dispose(ref ProfilerRecorder recorder)

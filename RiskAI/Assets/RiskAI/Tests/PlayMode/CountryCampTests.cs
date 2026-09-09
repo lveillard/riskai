@@ -98,6 +98,29 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator NavigationProbeSuspensionPreventsBothCreditsAndSpawnsWithoutChangingNormalRecruitment()
+        {
+            var country=battle.Camps[0].Country;
+            foreach(var town in battle.Towns.Where(t=>t.State.Country==country))town.State.Owner=0;
+            var recruits=new CountryRecruitment(battle);
+            var suspension=typeof(CountryRecruitment).GetProperty("SuspendedForProbe",BindingFlags.Instance|BindingFlags.NonPublic);
+            Assert.That(suspension,Is.Not.Null);
+            Assert.That(suspension.GetValue(recruits),Is.False,"Ordinary games must keep source recruitment enabled.");
+            recruits.CreditRound();
+            int pending=recruits.Pending(country), count=battle.Units.Count;
+            Assert.That(pending,Is.GreaterThan(0));
+            suspension.SetValue(recruits,true);
+            recruits.CreditRound();recruits.Tick(.5f);
+            Assert.That(recruits.Pending(country),Is.EqualTo(pending));
+            Assert.That(battle.Units.Count,Is.EqualTo(count));
+            suspension.SetValue(recruits,false);
+            recruits.Tick(.5f);
+            Assert.That(recruits.Pending(country),Is.EqualTo(pending-1));
+            Assert.That(battle.Units.Count,Is.GreaterThan(count));
+            yield return null;
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {

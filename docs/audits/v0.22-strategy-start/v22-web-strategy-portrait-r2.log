@@ -1,0 +1,148 @@
+1.166 [error] Failed to load resource: the server responded with a status of 404 (File not found)
+2.155 [log] [UnityCache] 'http://127.0.0.1:8081/Build/Web-v0.22.data.unityweb' successfully downloaded and stored in the browser cache
+2.355 [log] [UnityMemory] Configuration Parameters - Can be set up in boot.config
+
+2.356 [log]     "memorysetup-allocator-temp-initial-block-size-main=262144"
+
+2.356 [log]     "memorysetup-allocator-temp-initial-block-size-worker=262144"
+
+2.356 [log]     "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+
+2.356 [log]     "memorysetup-temp-allocator-size-audio-worker=65536"
+
+2.356 [log]     "memorysetup-remapper-allocator-initial-capacity=32768"
+
+2.356 [log]     "memorysetup-temp-allocator-size-background-worker=32768"
+
+2.357 [log]     "memorysetup-bucket-allocator-granularity=16"
+
+2.357 [log]     "memorysetup-bucket-allocator-bucket-count=8"
+
+2.357 [log]     "memorysetup-bucket-allocator-block-size=4194304"
+
+2.357 [log]     "memorysetup-bucket-allocator-block-count=1"
+
+2.358 [log]     "memorysetup-main-allocator-block-size=16777216"
+
+2.358 [log]     "memorysetup-thread-allocator-block-size=16777216"
+
+2.358 [log]     "memorysetup-gfx-main-allocator-block-size=16777216"
+
+2.358 [log]     "memorysetup-gfx-thread-allocator-block-size=16777216"
+
+2.358 [log]     "memorysetup-cache-allocator-block-size=4194304"
+
+2.358 [log]     "memorysetup-typetree-allocator-block-size=2097152"
+
+2.358 [log]     "memorysetup-profiler-bucket-allocator-granularity=16"
+
+2.358 [log]     "memorysetup-profiler-bucket-allocator-bucket-count=8"
+
+2.359 [log]     "memorysetup-profiler-bucket-allocator-block-size=4194304"
+
+2.359 [log]     "memorysetup-profiler-bucket-allocator-block-count=1"
+
+2.359 [log]     "memorysetup-profiler-allocator-block-size=16777216"
+
+2.359 [log]     "memorysetup-profiler-editor-allocator-block-size=1048576"
+
+2.359 [log]     "memorysetup-temp-allocator-size-main=4194304"
+
+2.359 [log]     "memorysetup-job-temp-allocator-block-size=2097152"
+
+2.359 [log]     "memorysetup-job-temp-allocator-block-size-background=1048576"
+
+2.359 [log]     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+
+2.429 [log] Input System module state changed to: Initialized.
+
+2.430 [log] [Physics::Module] Initialized fallback backend.
+
+2.430 [log] [Physics::Module] Id: 0xdecafbad
+
+2.433 [log] Loading player data from data.unity3d
+
+2.442 [log] Initialize engine version: 6000.3.23f1 (09d2ecc7fb28)
+
+2.444 [log] Creating WebGL 2.0 context.
+2.469 [log] Renderer: WebKit WebGL
+
+2.470 [log] Vendor:   WebKit
+
+2.470 [log] Version:  OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium))
+
+2.471 [log] GLES:     3
+
+2.471 [log]  EXT_clip_control EXT_color_buffer_float EXT_color_buffer_half_float EXT_conservative_depth EXT_depth_clamp EXT_disjoint_timer_query_webgl2 EXT_float_blend EXT_polygon_offset_clamp EXT_render_snorm EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_texture_norm16 KHR_parallel_shader_compile NV_shader_noperspective_interpolation OES_draw_buffers_indexed OES_sample_variables OES_shader_multisample_interpolation OES_texture_float_linear OVR_multiview2 WEBGL_blend_func_extended WEBGL_clip_cull_distance WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode WEBGL_provoking_vertex WEBGL_stencil_texturing GL_EXT_clip_control GL_EXT_color_buffer_float GL_EXT_color_buffer_half_float GL_EXT_conservative_depth GL_EXT_depth_clamp GL_EXT_disjoint_timer_query_webgl2 GL_EXT_float_blend GL_EXT_polygon_offset_clamp GL_EXT_render_snorm GL_EXT_
+
+2.471 [log] texture_compression_bptc GL_EXT_texture_compression_rgtc GL_EXT_texture_filter_anisotropic GL_EXT_texture_mirror_clamp_to_edge GL_EXT_texture_norm16 GL_KHR_parallel_shader_compile GL_NV_shader_noperspective_interpolation GL_OES_draw_buffers_indexed GL_OES_sample_variables GL_OES_shader_multisample_interpolation GL_OES_texture_float_linear GL_OVR_multiview2 GL_WEBGL_blend_func_extended GL_WEBGL_clip_cull_distance GL_WEBGL_compressed_texture_s3tc GL_WEBGL_compressed_texture_s3tc_srgb GL_WEBGL_debug_renderer_info GL_WEBGL_debug_shaders GL_WEBGL_lose_context GL_WEBGL_multi_draw GL_WEBGL_polygon_mode GL_WEBGL_provoking_vertex GL_WEBGL_stencil_texturing
+
+2.473 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+2.473 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+2.473 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+2.473 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+2.474 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+2.474 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+2.479 [log] OPENGL LOG: Creating OpenGL ES 3.0 graphics device ; Context level  <OpenGL ES 3.0> ; Context handle 1
+
+2.578 [log] [Physics::Module] Selected backend.
+
+2.578 [log] [Physics::Module] Name: PhysX
+
+2.578 [log] [Physics::Module] Id: 0xf2b8ea05
+
+2.578 [log] [Physics::Module] SDK Version: 4.1.2
+
+2.578 [log] [Physics::Module] Integration Version: 1.0.0
+
+2.578 [log] [Physics::Module] Threading Mode: Single-Threaded
+
+2.656 [log] ERROR: Shader
+2.656 [log] Hidden/CoreSRP/CoreCopy shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+
+2.656 [log] ERROR: Shader
+2.656 [log] Hidden/Universal Render Pipeline/StencilDitherMaskSeed shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+
+2.664 [log] ERROR: Shader
+2.665 [log] Hidden/Universal/HDRDebugView shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+
+2.724 [log] Input System initialize...
+
+2.775 [log] UnloadTime: 0.900000 ms
+
+2.941 [warning] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.
+3.341 [warning] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.
+3.741 [warning] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.
+4.142 [warning] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.
+4.542 [warning] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.
+5.312 [warning] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.
+5.342 [warning] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.
+5.363 [log] UnloadTime: 2.900001 ms
+
+6.379 [log] RISKAI_STARTUP phase=terrain map=Europe phaseMs=1011.30 totalMs=1011.30 unityAllocatedB=139999304 unityReservedB=160119017 managedB=42557440
+
+6.866 [log] RISKAI_STARTUP phase=buildings map=Europe phaseMs=489.70 totalMs=1501.00 unityAllocatedB=167735348 unityReservedB=191266587 managedB=53157888
+
+11.149 [log] RISKAI_STARTUP phase=navigation map=Europe phaseMs=4283.10 totalMs=5784.10 unityAllocatedB=169744219 unityReservedB=193298334 managedB=53284864
+
+11.577 [log] RISKAI_STARTUP phase=roster_and_ports map=Europe phaseMs=428.10 totalMs=6212.20 unityAllocatedB=201056007 unityReservedB=228328404 managedB=57327616
+
+11.670 [log] RISKAI_STARTUP phase=ground_cover map=Europe phaseMs=93.10 totalMs=6305.30 unityAllocatedB=202517517 unityReservedB=229869486 managedB=60706816
+
+11.703 [log] RISKAI_STARTUP phase=canopy_index map=Europe phaseMs=32.80 totalMs=6338.10 unityAllocatedB=202517517 unityReservedB=229869486 managedB=65351680
+
+11.814 [log] RISKAI_STARTUP phase=territory_atlas map=Europe phaseMs=110.00 totalMs=6448.10 unityAllocatedB=202910513 unityReservedB=230283173 managedB=80887808
+
+11.829 [log] RISKAI_STARTUP phase=ready map=Europe phaseMs=15.50 totalMs=6463.60 unityAllocatedB=203051799 unityReservedB=230426416 managedB=81285120
+
+11.891 [log] RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+
+12.490 [log] Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+
+12.505 [warning] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.
+12.586 [log] Unloading 170 unused Assets to reduce memory usage. Loaded Objects now: 219407.
+
+12.586 [log] Total: 77.400000 ms (FindLiveObjects: 33.400000 ms CreateObjectMapping: 2.600000 ms MarkObjects: 40.700001 ms  DeleteObjects: 0.699999 ms)
+
+
+12.832 [log] Audio context resumed after 10.292 seconds.

@@ -1,0 +1,66 @@
+[
+  {
+    "map": "europe",
+    "exitCode": 0,
+    "records": [
+      "RISKAI_PRESENTATION_IMAGE: town-idle",
+      "RISKAI_PRESENTATION_IMAGE: town-training",
+      "RISKAI_PRESENTATION_IMAGE: port-training",
+      "RISKAI_PRESENTATION_IMAGE: guard-idle",
+      "RISKAI_PRESENTATION_IMAGE: guard-selected",
+      "RISKAI_PRESENTATION_GUARD: garrison=True distance=0",
+      "RISKAI_PRESENTATION_SHORE: kind=green at=(-66.88, 0.40, -308.32) weights=(0.00, 0.01) allowed=False landing=(0.00, 0.00, 0.00) reason=S\u00f3lo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.",
+      "RISKAI_PRESENTATION_IMAGE: shore-green",
+      "RISKAI_PRESENTATION_SHORE: kind=rock at=(221.12, 0.54, -308.32) weights=(0.00, 0.91) allowed=False landing=(0.00, 0.00, 0.00) reason=S\u00f3lo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.",
+      "RISKAI_PRESENTATION_IMAGE: shore-rock",
+      "RISKAI_PRESENTATION_SHORE: kind=sand at=(233.12, 0.61, -256.32) weights=(0.82, 0.17) allowed=True landing=(233.12, 0.73, -256.32) reason=",
+      "RISKAI_PRESENTATION_IMAGE: shore-sand",
+      "RISKAI_PRESENTATION_OK: map=Europe sand=True rock=True green=True steep=False directory=C:\\Users\\lveil\\Desktop\\Projects\\riskai\\Captures\\v22-presentation-coast-r1\\europe"
+    ],
+    "images": [
+      "Captures\\v22-presentation-coast-r1\\europe\\guard-idle.png",
+      "Captures\\v22-presentation-coast-r1\\europe\\guard-selected.png",
+      "Captures\\v22-presentation-coast-r1\\europe\\port-training.png",
+      "Captures\\v22-presentation-coast-r1\\europe\\shore-green.png",
+      "Captures\\v22-presentation-coast-r1\\europe\\shore-rock.png",
+      "Captures\\v22-presentation-coast-r1\\europe\\shore-sand.png",
+      "Captures\\v22-presentation-coast-r1\\europe\\town-idle.png",
+      "Captures\\v22-presentation-coast-r1\\europe\\town-training.png"
+    ],
+    "completed": true,
+    "syntheticRenderingFixture": true,
+    "physicalInputTest": false
+  },
+  {
+    "map": "newworld",
+    "exitCode": 0,
+    "records": [
+      "RISKAI_PRESENTATION_IMAGE: town-idle",
+      "RISKAI_PRESENTATION_IMAGE: town-training",
+      "RISKAI_PRESENTATION_IMAGE: port-training",
+      "RISKAI_PRESENTATION_IMAGE: guard-idle",
+      "RISKAI_PRESENTATION_IMAGE: guard-selected",
+      "RISKAI_PRESENTATION_GUARD: garrison=True distance=0",
+      "RISKAI_PRESENTATION_SHORE: kind=green at=(-457.28, 0.42, -308.32) weights=(0.00, 0.00) allowed=False landing=(0.00, 0.00, 0.00) reason=S\u00f3lo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.",
+      "RISKAI_PRESENTATION_IMAGE: shore-green",
+      "RISKAI_PRESENTATION_SHORE: kind=rock at=(-169.28, 0.67, -308.32) weights=(0.00, 0.99) allowed=False landing=(0.00, 0.00, 0.00) reason=S\u00f3lo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.",
+      "RISKAI_PRESENTATION_IMAGE: shore-rock",
+      "RISKAI_PRESENTATION_SHORE: kind=sand at=(214.72, 0.15, -292.32) weights=(0.84, 0.00) allowed=True landing=(214.69, 0.24, -292.56) reason=",
+      "RISKAI_PRESENTATION_IMAGE: shore-sand",
+      "RISKAI_PRESENTATION_OK: map=NewWorld sand=True rock=True green=True steep=False directory=C:\\Users\\lveil\\Desktop\\Projects\\riskai\\Captures\\v22-presentation-coast-r1\\newworld"
+    ],
+    "images": [
+      "Captures\\v22-presentation-coast-r1\\newworld\\guard-idle.png",
+      "Captures\\v22-presentation-coast-r1\\newworld\\guard-selected.png",
+      "Captures\\v22-presentation-coast-r1\\newworld\\port-training.png",
+      "Captures\\v22-presentation-coast-r1\\newworld\\shore-green.png",
+      "Captures\\v22-presentation-coast-r1\\newworld\\shore-rock.png",
+      "Captures\\v22-presentation-coast-r1\\newworld\\shore-sand.png",
+      "Captures\\v22-presentation-coast-r1\\newworld\\town-idle.png",
+      "Captures\\v22-presentation-coast-r1\\newworld\\town-training.png"
+    ],
+    "completed": true,
+    "syntheticRenderingFixture": true,
+    "physicalInputTest": false
+  }
+]

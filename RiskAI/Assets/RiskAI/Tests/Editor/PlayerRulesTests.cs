@@ -6,6 +6,18 @@ namespace RiskAI.Tests
 {
     public sealed class PlayerRulesTests
     {
+        [TestCase(33,11)]
+        [TestCase(44,14)]
+        [TestCase(48,16)]
+        [TestCase(212,16)]
+        [TestCase(293,16)]
+        [TestCase(5,1)]
+        [TestCase(0,0)]
+        public void MapCapacityReservesThreeCitiesPerPlayer(int cities,int expected)
+        {
+            Assert.That(PlayerRules.MaximumPlayersForCityCount(cities),Is.EqualTo(expected));
+        }
+
         [Test]
         public void SixteenPlayerEconomyStartsAndPaysEveryAccount()
         {

@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="51" result="Failed(Child)" total="51" passed="48" failed="3" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 22:07:48Z" end-time="2026-09-08 22:11:10Z" duration="202.2711756">
+  <test-suite type="TestSuite" id="1289" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="230" result="Failed" site="Child" start-time="2026-09-08 22:07:48Z" end-time="2026-09-08 22:11:10Z" duration="202.271176" total="51" passed="48" failed="3" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1283" name="RiskAI.PlayTests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.PlayTests.dll" runstate="Runnable" testcasecount="230" result="Failed" site="Child" start-time="2026-09-08 22:07:48Z" end-time="2026-09-08 22:11:10Z" duration="202.256637" total="51" passed="48" failed="3" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="38172" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1284" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="230" result="Failed" site="Child" start-time="2026-09-08 22:07:48Z" end-time="2026-09-08 22:11:10Z" duration="202.253156" total="51" passed="48" failed="3" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="SetUpFixture" id="1120" name="Tests" fullname="RiskAI.Tests.LegacyPlayModeSetUp" classname="RiskAI.Tests.LegacyPlayModeSetUp" runstate="Runnable" testcasecount="230" result="Failed" site="Child" start-time="2026-09-08 22:07:48Z" end-time="2026-09-08 22:11:10Z" duration="202.249782" total="51" passed="48" failed="3" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestFixture" id="1006" name="BattleHudTests" fullname="RiskAI.Tests.BattleHudTests" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-08 22:07:48Z" end-time="2026-09-08 22:08:23Z" duration="34.718447" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1014" name="AppendingFriendlyLandSelectionReplacesEnemyInspection" fullname="RiskAI.Tests.BattleHudTests.AppendingFriendlyLandSelectionReplacesEnemyInspection" methodname="AppendingFriendlyLandSelectionReplacesEnemyInspection" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" seed="1139852761" result="Passed" start-time="2026-09-08 22:07:48Z" end-time="2026-09-08 22:07:54Z" duration="5.939080" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2246.83 totalMs=2246.83 unityAllocatedB=282464643 unityReservedB=628981760 managedB=670294016
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=169.93 totalMs=2416.76 unityAllocatedB=291337887 unityReservedB=630030336 managedB=671645696
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=194.11 totalMs=2610.87 unityAllocatedB=292404072 unityReservedB=850231296 managedB=671764480
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=605.37 totalMs=3216.24 unityAllocatedB=315706025 unityReservedB=851279872 managedB=674795520
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=121.61 totalMs=3337.85 unityAllocatedB=317141509 unityReservedB=851279872 managedB=677531648
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=17.88 totalMs=3355.73 unityAllocatedB=317142781 unityReservedB=851279872 managedB=678514688
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=264.88 totalMs=3620.61 unityAllocatedB=321510717 unityReservedB=851279872 managedB=684187648
+RISKAI_STARTUP phase=ready map=Classic phaseMs=238.28 totalMs=3858.89 unityAllocatedB=369490313 unityReservedB=901611520 managedB=684920832
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1011" name="ArmyRosterShowsPortraitsAndLiveHealthAndSelectsOneUnit" fullname="RiskAI.Tests.BattleHudTests.ArmyRosterShowsPortraitsAndLiveHealthAndSelectsOneUnit" methodname="ArmyRosterShowsPortraitsAndLiveHealthAndSelectsOneUnit" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" seed="1762055791" result="Passed" start-time="2026-09-08 22:07:54Z" end-time="2026-09-08 22:07:57Z" duration="3.401639" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2012.75 totalMs=2012.75 unityAllocatedB=436984487 unityReservedB=970817536 managedB=645644288
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=155.01 totalMs=2167.76 unityAllocatedB=446204121 unityReservedB=970817536 managedB=645865472
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=147.95 totalMs=2315.71 unityAllocatedB=446442206 unityReservedB=1021149184 managedB=645890048
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=397.25 totalMs=2712.96 unityAllocatedB=457402707 unityReservedB=1021149184 managedB=647462912
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=116.72 totalMs=2829.68 unityAllocatedB=458285419 unityReservedB=1021149184 managedB=650149888
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=9.77 totalMs=2839.45 unityAllocatedB=458286691 unityReservedB=1021149184 managedB=650416128
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=243.76 totalMs=3083.22 unityAllocatedB=462691851 unityReservedB=1021149184 managedB=655466496
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.41 totalMs=3087.62 unityAllocatedB=462713751 unityReservedB=1021149184 managedB=655609856
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1015" name="DifferentArmiesWithTheSameLegacyHashRebuildTheRoster" fullname="RiskAI.Tests.BattleHudTests.DifferentArmiesWithTheSameLegacyHashRebuildTheRoster" methodname="DifferentArmiesWithTheSameLegacyHashRebuildTheRoster" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" seed="968453170" result="Passed" start-time="2026-09-08 22:07:57Z" end-time="2026-09-08 22:08:01Z" duration="3.571900" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2269.61 totalMs=2269.61 unityAllocatedB=463225223 unityReservedB=1021149184 managedB=681299968
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=147.93 totalMs=2417.54 unityAllocatedB=472446161 unityReservedB=1021149184 managedB=682078208
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=145.04 totalMs=2562.58 unityAllocatedB=472684222 unityReservedB=1052606464 managedB=682205184
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=405.96 totalMs=2968.54 unityAllocatedB=483615419 unityReservedB=1052606464 managedB=684158976
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=133.89 totalMs=3102.44 unityAllocatedB=484498123 unityReservedB=1052606464 managedB=686919680
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=14.45 totalMs=3116.89 unityAllocatedB=484499395 unityReservedB=1052606464 managedB=687263744
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=257.79 totalMs=3374.68 unityAllocatedB=488854387 unityReservedB=1052606464 managedB=692801536
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.23 totalMs=3377.91 unityAllocatedB=488876287 unityReservedB=1052606464 managedB=692985856
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1009" name="GoldHeaderRefreshesAfterGrantWhilePausedBeforeNextSimulationTick" fullname="RiskAI.Tests.BattleHudTests.GoldHeaderRefreshesAfterGrantWhilePausedBeforeNextSimulationTick" methodname="GoldHeaderRefreshesAfterGrantWhilePausedBeforeNextSimulationTick" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" seed="775322672" result="Passed" start-time="2026-09-08 22:08:01Z" end-time="2026-09-08 22:08:04Z" duration="3.761572" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2382.05 totalMs=2382.05 unityAllocatedB=464731367 unityReservedB=1088258048 managedB=638234624
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=150.20 totalMs=2532.26 unityAllocatedB=474052041 unityReservedB=1088258048 managedB=638242816
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=146.89 totalMs=2679.15 unityAllocatedB=474290134 unityReservedB=1100840960 managedB=638267392
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=431.65 totalMs=3110.80 unityAllocatedB=485246419 unityReservedB=1100840960 managedB=638500864
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=134.55 totalMs=3245.36 unityAllocatedB=486179363 unityReservedB=1100840960 managedB=641019904
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=10.59 totalMs=3255.95 unityAllocatedB=486180635 unityReservedB=1100840960 managedB=641286144
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=268.25 totalMs=3524.20 unityAllocatedB=490535603 unityReservedB=1100840960 managedB=646316032
+RISKAI_STARTUP phase=ready map=Classic phaseMs=5.05 totalMs=3529.25 unityAllocatedB=490572495 unityReservedB=1100840960 managedB=646483968
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1010" name="HelpSheetIsReplacedByActualVictoryResult" fullname="RiskAI.Tests.BattleHudTests.HelpSheetIsReplacedByActualVictoryResult" methodname="HelpSheetIsReplacedByActualVictoryResult" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" seed="878042895" result="Passed" start-time="2026-09-08 22:08:04Z" end-time="2026-09-08 22:08:08Z" duration="3.495079" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2158.02 totalMs=2158.02 unityAllocatedB=515608168 unityReservedB=1151172608 managedB=671916032
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=160.35 totalMs=2318.37 unityAllocatedB=524828866 unityReservedB=1151172608 managedB=672669696
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=113.94 totalMs=2432.32 unityAllocatedB=525066975 unityReservedB=1157464064 managedB=672788480
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=434.88 totalMs=2867.19 unityAllocatedB=536068004 unityReservedB=1157464064 managedB=674766848
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=129.22 totalMs=2996.41 unityAllocatedB=536950740 unityReservedB=1157464064 managedB=677531648
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.74 totalMs=3008.15 unityAllocatedB=536952012 unityReservedB=1157464064 managedB=677924864
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=268.82 totalMs=3276.97 unityAllocatedB=541306436 unityReservedB=1157464064 managedB=683466752
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.18 totalMs=3280.15 unityAllocatedB=541345232 unityReservedB=1157464064 managedB=683724800
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1012" name="MixedRosterKeepsSoldiersAndShipsAndSelectsTheShip" fullname="RiskAI.Tests.BattleHudTests.MixedRosterKeepsSoldiersAndShipsAndSelectsTheShip" methodname="MixedRosterKeepsSoldiersAndShipsAndSelectsTheShip" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" seed="1980046445" result="Passed" start-time="2026-09-08 22:08:08Z" end-time="2026-09-08 22:08:12Z" duration="3.689364" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2315.93 totalMs=2315.93 unityAllocatedB=517412330 unityReservedB=1140686848 managedB=711106560
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=168.08 totalMs=2484.01 unityAllocatedB=526632548 unityReservedB=1140686848 managedB=712151040
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=169.87 totalMs=2653.88 unityAllocatedB=526873753 unityReservedB=1148026880 managedB=712273920
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=439.03 totalMs=3092.91 unityAllocatedB=537856222 unityReservedB=1148026880 managedB=714878976
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=142.12 totalMs=3235.03 unityAllocatedB=538738950 unityReservedB=1148026880 managedB=717676544
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=16.03 totalMs=3251.06 unityAllocatedB=538740222 unityReservedB=1148026880 managedB=718737408
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=275.63 totalMs=3526.69 unityAllocatedB=543095190 unityReservedB=1148026880 managedB=724545536
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.21 totalMs=3529.90 unityAllocatedB=543133986 unityReservedB=1148026880 managedB=724844544
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1013" name="OldRosterCardCannotSelectANewLifetimeOfTheSameView" fullname="RiskAI.Tests.BattleHudTests.OldRosterCardCannotSelectANewLifetimeOfTheSameView" methodname="OldRosterCardCannotSelectANewLifetimeOfTheSameView" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" seed="1959623018" result="Passed" start-time="2026-09-08 22:08:12Z" end-time="2026-09-08 22:08:15Z" duration="3.697753" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2297.03 totalMs=2297.03 unityAllocatedB=543364407 unityReservedB=1181581312 managedB=661389312
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=195.05 totalMs=2492.08 unityAllocatedB=552585217 unityReservedB=1181581312 managedB=661614592
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=134.27 totalMs=2626.35 unityAllocatedB=552823302 unityReservedB=1198358528 managedB=661639168
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=460.10 totalMs=3086.45 unityAllocatedB=563790299 unityReservedB=1198358528 managedB=663146496
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=135.09 totalMs=3221.54 unityAllocatedB=564756003 unityReservedB=1198358528 managedB=665833472
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=15.58 totalMs=3237.12 unityAllocatedB=564757275 unityReservedB=1198358528 managedB=666112000
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=289.88 totalMs=3527.00 unityAllocatedB=569112259 unityReservedB=1198358528 managedB=671088640
+RISKAI_STARTUP phase=ready map=Classic phaseMs=5.26 totalMs=3532.25 unityAllocatedB=569132591 unityReservedB=1198358528 managedB=671285248
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1007" name="ProductionFollowsSelectedBuildingOwnershipWithoutReselecting" fullname="RiskAI.Tests.BattleHudTests.ProductionFollowsSelectedBuildingOwnershipWithoutReselecting" methodname="ProductionFollowsSelectedBuildingOwnershipWithoutReselecting" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" seed="1133070619" result="Passed" start-time="2026-09-08 22:08:15Z" end-time="2026-09-08 22:08:19Z" duration="3.577402" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2281.34 totalMs=2281.34 unityAllocatedB=569349744 unityReservedB=1215135744 managedB=696115200
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=159.09 totalMs=2440.43 unityAllocatedB=578570442 unityReservedB=1215135744 managedB=696872960
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=123.62 totalMs=2564.05 unityAllocatedB=578808551 unityReservedB=1215135744 managedB=696979456
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=435.74 totalMs=2999.79 unityAllocatedB=589758052 unityReservedB=1215135744 managedB=698937344
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=130.62 totalMs=3130.41 unityAllocatedB=590640796 unityReservedB=1215135744 managedB=701714432
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.24 totalMs=3141.64 unityAllocatedB=590642068 unityReservedB=1215135744 managedB=702066688
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=253.79 totalMs=3395.44 unityAllocatedB=594997052 unityReservedB=1215135744 managedB=707608576
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.53 totalMs=3398.97 unityAllocatedB=595018952 unityReservedB=1215135744 managedB=707862528
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1008" name="SelectedArmyExposesSixDirectVectorActionsAndLiveResourceIcons" fullname="RiskAI.Tests.BattleHudTests.SelectedArmyExposesSixDirectVectorActionsAndLiveResourceIcons" methodname="SelectedArmyExposesSixDirectVectorActionsAndLiveResourceIcons" classname="RiskAI.Tests.BattleHudTests" runstate="Runnable" seed="1656952056" result="Passed" start-time="2026-09-08 22:08:19Z" end-time="2026-09-08 22:08:22Z" duration="3.562072" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2193.49 totalMs=2193.49 unityAllocatedB=595478555 unityReservedB=1231912960 managedB=733683712
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=176.71 totalMs=2370.21 unityAllocatedB=604699869 unityReservedB=1231912960 managedB=734576640
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=146.12 totalMs=2516.32 unityAllocatedB=604937994 unityReservedB=1231912960 managedB=734699520
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=500.71 totalMs=3017.03 unityAllocatedB=616032631 unityReservedB=1231912960 managedB=643379200
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=130.25 totalMs=3147.28 unityAllocatedB=616915367 unityReservedB=1231912960 managedB=645468160
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=12.94 totalMs=3160.22 unityAllocatedB=616916639 unityReservedB=1231912960 managedB=645603328
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=253.79 totalMs=3414.01 unityAllocatedB=621271647 unityReservedB=1231912960 managedB=650084352
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.31 totalMs=3418.33 unityAllocatedB=621292291 unityReservedB=1231912960 managedB=650276864
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1041" name="CameraUsabilityTests" fullname="RiskAI.Tests.CameraUsabilityTests" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-09-08 22:08:23Z" end-time="2026-09-08 22:09:08Z" duration="45.743066" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1050" name="CancelMotionStopsZoomWhenFocusIsLostAndHelpIsOpen" fullname="RiskAI.Tests.CameraUsabilityTests.CancelMotionStopsZoomWhenFocusIsLostAndHelpIsOpen" methodname="CancelMotionStopsZoomWhenFocusIsLostAndHelpIsOpen" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="778213469" result="Passed" start-time="2026-09-08 22:08:23Z" end-time="2026-09-08 22:08:26Z" duration="3.599568" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2329.41 totalMs=2329.41 unityAllocatedB=621367508 unityReservedB=1265467392 managedB=672088064
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=158.81 totalMs=2488.22 unityAllocatedB=630048710 unityReservedB=1265467392 managedB=672550912
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=133.04 totalMs=2621.27 unityAllocatedB=630286851 unityReservedB=1265467392 managedB=672632832
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=368.42 totalMs=2989.68 unityAllocatedB=641778536 unityReservedB=1265467392 managedB=674414592
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=124.04 totalMs=3113.73 unityAllocatedB=642661296 unityReservedB=1265467392 managedB=677183488
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=10.64 totalMs=3124.37 unityAllocatedB=642662600 unityReservedB=1265467392 managedB=677564416
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=244.49 totalMs=3368.86 unityAllocatedB=647017616 unityReservedB=1265467392 managedB=683118592
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.73 totalMs=3372.60 unityAllocatedB=647039532 unityReservedB=1265467392 managedB=683397120
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1043" name="CursorPolicyRequiresWindowsFocusGameplayAndAuthorization" fullname="RiskAI.Tests.CameraUsabilityTests.CursorPolicyRequiresWindowsFocusGameplayAndAuthorization" methodname="CursorPolicyRequiresWindowsFocusGameplayAndAuthorization" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="109206025" result="Passed" start-time="2026-09-08 22:08:26Z" end-time="2026-09-08 22:08:30Z" duration="3.412753" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2232.60 totalMs=2232.60 unityAllocatedB=650074586 unityReservedB=1282244608 managedB=708820992
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=153.60 totalMs=2386.20 unityAllocatedB=657690092 unityReservedB=1282244608 managedB=709644288
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=134.68 totalMs=2520.88 unityAllocatedB=657928185 unityReservedB=1282244608 managedB=709771264
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=388.77 totalMs=2909.65 unityAllocatedB=668913734 unityReservedB=1282244608 managedB=711802880
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=133.70 totalMs=3043.35 unityAllocatedB=669796478 unityReservedB=1282244608 managedB=714600448
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=13.92 totalMs=3057.27 unityAllocatedB=669804054 unityReservedB=1282244608 managedB=715436032
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=258.55 totalMs=3315.82 unityAllocatedB=674159094 unityReservedB=1282244608 managedB=720998400
+RISKAI_STARTUP phase=ready map=Classic phaseMs=6.03 totalMs=3321.85 unityAllocatedB=674181010 unityReservedB=1282244608 managedB=721305600
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1048" name="DisablingStrategicViewRestoresCameraWithoutDisablingActors" fullname="RiskAI.Tests.CameraUsabilityTests.DisablingStrategicViewRestoresCameraWithoutDisablingActors" methodname="DisablingStrategicViewRestoresCameraWithoutDisablingActors" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="734410830" result="Passed" start-time="2026-09-08 22:08:30Z" end-time="2026-09-08 22:08:33Z" duration="3.908465" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2611.03 totalMs=2611.03 unityAllocatedB=718068790 unityReservedB=1349353472 managedB=656478208
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=198.76 totalMs=2809.79 unityAllocatedB=725684832 unityReservedB=1349353472 managedB=656490496
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=131.13 totalMs=2940.93 unityAllocatedB=725922965 unityReservedB=1366130688 managedB=656515072
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=429.94 totalMs=3370.87 unityAllocatedB=736907994 unityReservedB=1366130688 managedB=656719872
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=138.77 totalMs=3509.63 unityAllocatedB=737790722 unityReservedB=1366130688 managedB=658808832
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=12.66 totalMs=3522.29 unityAllocatedB=737792026 unityReservedB=1366130688 managedB=658960384
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=259.52 totalMs=3781.81 unityAllocatedB=742147026 unityReservedB=1366130688 managedB=663887872
+RISKAI_STARTUP phase=ready map=Classic phaseMs=5.13 totalMs=3786.93 unityAllocatedB=742168574 unityReservedB=1366130688 managedB=664080384
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1042" name="EdgePolicyUsesEveryOuterEdgeAndNormalizesCorners" fullname="RiskAI.Tests.CameraUsabilityTests.EdgePolicyUsesEveryOuterEdgeAndNormalizesCorners" methodname="EdgePolicyUsesEveryOuterEdgeAndNormalizesCorners" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="716870841" result="Passed" start-time="2026-09-08 22:08:33Z" end-time="2026-09-08 22:08:37Z" duration="3.451725" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2269.64 totalMs=2269.64 unityAllocatedB=701882234 unityReservedB=1349353472 managedB=688214016
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=138.16 totalMs=2407.79 unityAllocatedB=709498420 unityReservedB=1349353472 managedB=688996352
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=134.33 totalMs=2542.12 unityAllocatedB=709736553 unityReservedB=1353547776 managedB=689082368
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=413.76 totalMs=2955.89 unityAllocatedB=720672262 unityReservedB=1387102208 managedB=691073024
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=131.29 totalMs=3087.18 unityAllocatedB=721555038 unityReservedB=1387102208 managedB=693862400
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.05 totalMs=3098.23 unityAllocatedB=721556342 unityReservedB=1387102208 managedB=694300672
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=238.72 totalMs=3336.95 unityAllocatedB=725915566 unityReservedB=1387102208 managedB=699854848
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.02 totalMs=3339.97 unityAllocatedB=725937482 unityReservedB=1387102208 managedB=700149760
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1051" name="EscapeClosesHelpAndStopsPendingCameraMotion" fullname="RiskAI.Tests.CameraUsabilityTests.EscapeClosesHelpAndStopsPendingCameraMotion" methodname="EscapeClosesHelpAndStopsPendingCameraMotion" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="1610471412" result="Passed" start-time="2026-09-08 22:08:37Z" end-time="2026-09-08 22:08:40Z" duration="3.600790" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2363.42 totalMs=2363.42 unityAllocatedB=769854086 unityReservedB=1437433856 managedB=724963328
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=141.66 totalMs=2505.07 unityAllocatedB=777470824 unityReservedB=1437433856 managedB=725950464
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=133.14 totalMs=2638.22 unityAllocatedB=777709005 unityReservedB=1437433856 managedB=726069248
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=405.12 totalMs=3043.33 unityAllocatedB=788694586 unityReservedB=1438482432 managedB=728707072
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=131.79 totalMs=3175.12 unityAllocatedB=789676642 unityReservedB=1438482432 managedB=731504640
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=14.63 totalMs=3189.75 unityAllocatedB=789677946 unityReservedB=1438482432 managedB=732626944
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=249.39 totalMs=3439.15 unityAllocatedB=794043442 unityReservedB=1438482432 managedB=738500608
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.41 totalMs=3442.55 unityAllocatedB=794065358 unityReservedB=1438482432 managedB=738820096
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1052" name="FocusLossCancelsHeldCameraInput" fullname="RiskAI.Tests.CameraUsabilityTests.FocusLossCancelsHeldCameraInput" methodname="FocusLossCancelsHeldCameraInput" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="1613091679" result="Passed" start-time="2026-09-08 22:08:40Z" end-time="2026-09-08 22:08:44Z" duration="3.784047" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2270.23 totalMs=2270.23 unityAllocatedB=753725610 unityReservedB=1455259648 managedB=671969280
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=224.20 totalMs=2494.43 unityAllocatedB=761341580 unityReservedB=1455259648 managedB=671985664
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=161.61 totalMs=2656.05 unityAllocatedB=761579737 unityReservedB=1455259648 managedB=672010240
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=442.48 totalMs=3098.52 unityAllocatedB=772515918 unityReservedB=1438482432 managedB=672219136
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=152.21 totalMs=3250.74 unityAllocatedB=773398646 unityReservedB=1438482432 managedB=674635776
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=23.18 totalMs=3273.92 unityAllocatedB=773399950 unityReservedB=1438482432 managedB=674959360
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=343.96 totalMs=3617.88 unityAllocatedB=777805158 unityReservedB=1438482432 managedB=679886848
+RISKAI_STARTUP phase=ready map=Classic phaseMs=11.45 totalMs=3629.33 unityAllocatedB=777892562 unityReservedB=1438482432 managedB=680091648
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1047" name="FocusPointProjectsToPlayableAreaCenter" fullname="RiskAI.Tests.CameraUsabilityTests.FocusPointProjectsToPlayableAreaCenter" methodname="FocusPointProjectsToPlayableAreaCenter" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="1142669112" result="Passed" start-time="2026-09-08 22:08:44Z" end-time="2026-09-08 22:08:48Z" duration="4.150145" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2521.25 totalMs=2521.25 unityAllocatedB=779645246 unityReservedB=1455259648 managedB=704806912
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=155.04 totalMs=2676.29 unityAllocatedB=787261984 unityReservedB=1455259648 managedB=705593344
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=149.00 totalMs=2825.29 unityAllocatedB=787500125 unityReservedB=1455259648 managedB=705667072
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=427.68 totalMs=3252.97 unityAllocatedB=798436298 unityReservedB=1455259648 managedB=707645440
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=122.32 totalMs=3375.29 unityAllocatedB=799319042 unityReservedB=1455259648 managedB=710443008
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=15.33 totalMs=3390.61 unityAllocatedB=799320346 unityReservedB=1455259648 managedB=710832128
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=269.06 totalMs=3659.68 unityAllocatedB=803675346 unityReservedB=1455259648 managedB=716386304
+RISKAI_STARTUP phase=ready map=Classic phaseMs=5.76 totalMs=3665.44 unityAllocatedB=803697262 unityReservedB=1455259648 managedB=716673024
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1053" name="MiddleDragLeavingScreenCancelsWithoutReentryJump" fullname="RiskAI.Tests.CameraUsabilityTests.MiddleDragLeavingScreenCancelsWithoutReentryJump" methodname="MiddleDragLeavingScreenCancelsWithoutReentryJump" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="1338280001" result="Passed" start-time="2026-09-08 22:08:48Z" end-time="2026-09-08 22:08:52Z" duration="3.785796" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2367.97 totalMs=2367.97 unityAllocatedB=805494194 unityReservedB=1488814080 managedB=741564416
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=153.54 totalMs=2521.51 unityAllocatedB=813111524 unityReservedB=1488814080 managedB=742604800
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=132.23 totalMs=2653.75 unityAllocatedB=813349705 unityReservedB=1488814080 managedB=742723584
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=537.14 totalMs=3190.88 unityAllocatedB=824286446 unityReservedB=1488814080 managedB=745373696
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=152.56 totalMs=3343.44 unityAllocatedB=825219390 unityReservedB=1488814080 managedB=748167168
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=13.82 totalMs=3357.26 unityAllocatedB=825220694 unityReservedB=1488814080 managedB=749375488
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=289.16 totalMs=3646.43 unityAllocatedB=829575694 unityReservedB=1488814080 managedB=755253248
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.75 totalMs=3651.18 unityAllocatedB=829597610 unityReservedB=1488814080 managedB=755609600
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1045" name="OrbitKeepsFocusCentredClampsPitchAndResetRestoresRotation" fullname="RiskAI.Tests.CameraUsabilityTests.OrbitKeepsFocusCentredClampsPitchAndResetRestoresRotation" methodname="OrbitKeepsFocusCentredClampsPitchAndResetRestoresRotation" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="1744561520" result="Passed" start-time="2026-09-08 22:08:52Z" end-time="2026-09-08 22:08:56Z" duration="3.903271" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2510.76 totalMs=2510.76 unityAllocatedB=831371550 unityReservedB=1505591296 managedB=684388352
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=202.03 totalMs=2712.79 unityAllocatedB=838989264 unityReservedB=1505591296 managedB=684400640
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=149.32 totalMs=2862.10 unityAllocatedB=839227445 unityReservedB=1505591296 managedB=684425216
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=480.37 totalMs=3342.47 unityAllocatedB=850198258 unityReservedB=1505591296 managedB=685887488
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=137.02 totalMs=3479.50 unityAllocatedB=851080978 unityReservedB=1505591296 managedB=688574464
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=13.03 totalMs=3492.53 unityAllocatedB=851082282 unityReservedB=1505591296 managedB=688906240
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=275.38 totalMs=3767.90 unityAllocatedB=855437306 unityReservedB=1505591296 managedB=693805056
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.53 totalMs=3772.44 unityAllocatedB=855459174 unityReservedB=1505591296 managedB=694009856
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1046" name="StrategicSymbolUsesTerrainAnchorAcrossZoomAndRotation" fullname="RiskAI.Tests.CameraUsabilityTests.StrategicSymbolUsesTerrainAnchorAcrossZoomAndRotation" methodname="StrategicSymbolUsesTerrainAnchorAcrossZoomAndRotation" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="219982661" result="Passed" start-time="2026-09-08 22:08:56Z" end-time="2026-09-08 22:09:00Z" duration="3.729618" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2397.47 totalMs=2397.47 unityAllocatedB=857234450 unityReservedB=1522368512 managedB=718667776
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=162.59 totalMs=2560.06 unityAllocatedB=865122428 unityReservedB=1522368512 managedB=719458304
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=142.12 totalMs=2702.17 unityAllocatedB=865360585 unityReservedB=1543340032 managedB=719523840
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=458.57 totalMs=3160.74 unityAllocatedB=876347430 unityReservedB=1543340032 managedB=721502208
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=140.41 totalMs=3301.15 unityAllocatedB=877230190 unityReservedB=1543340032 managedB=724295680
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=22.05 totalMs=3323.20 unityAllocatedB=877231494 unityReservedB=1543340032 managedB=724680704
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=271.50 totalMs=3594.70 unityAllocatedB=881586510 unityReservedB=1543340032 managedB=730226688
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.99 totalMs=3599.69 unityAllocatedB=881608426 unityReservedB=1543340032 managedB=730521600
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1044" name="StrategicZoomHasHysteresisAndOnlyChangesRendering" fullname="RiskAI.Tests.CameraUsabilityTests.StrategicZoomHasHysteresisAndOnlyChangesRendering" methodname="StrategicZoomHasHysteresisAndOnlyChangesRendering" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="1730857991" result="Passed" start-time="2026-09-08 22:09:00Z" end-time="2026-09-08 22:09:04Z" duration="3.975618" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2485.78 totalMs=2485.78 unityAllocatedB=885597006 unityReservedB=1593671680 managedB=755376128
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=236.16 totalMs=2721.94 unityAllocatedB=893215528 unityReservedB=1593671680 managedB=756236288
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=183.07 totalMs=2905.00 unityAllocatedB=893453709 unityReservedB=1593671680 managedB=756355072
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=522.23 totalMs=3427.23 unityAllocatedB=904390658 unityReservedB=1593671680 managedB=758816768
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=138.92 totalMs=3566.15 unityAllocatedB=905323602 unityReservedB=1593671680 managedB=761610240
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=12.46 totalMs=3578.60 unityAllocatedB=905324906 unityReservedB=1593671680 managedB=762728448
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=266.60 totalMs=3845.20 unityAllocatedB=909679930 unityReservedB=1593671680 managedB=768602112
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.07 totalMs=3849.27 unityAllocatedB=909701846 unityReservedB=1593671680 managedB=768929792
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1049" name="ZoomAtKeepsGroundAnchorUnderCursor" fullname="RiskAI.Tests.CameraUsabilityTests.ZoomAtKeepsGroundAnchorUnderCursor" methodname="ZoomAtKeepsGroundAnchorUnderCursor" classname="RiskAI.Tests.CameraUsabilityTests" runstate="Runnable" seed="671237955" result="Passed" start-time="2026-09-08 22:09:04Z" end-time="2026-09-08 22:09:08Z" duration="4.430501" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2322.41 totalMs=2322.41 unityAllocatedB=909858250 unityReservedB=1610448896 managedB=695091200
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=149.97 totalMs=2472.38 unityAllocatedB=919081764 unityReservedB=1610448896 managedB=695308288
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=138.52 totalMs=2610.90 unityAllocatedB=919319881 unityReservedB=1610448896 managedB=695332864
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=452.08 totalMs=3062.98 unityAllocatedB=930258150 unityReservedB=1610448896 managedB=696848384
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=142.75 totalMs=3205.73 unityAllocatedB=931140878 unityReservedB=1610448896 managedB=699531264
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=20.81 totalMs=3226.54 unityAllocatedB=931142182 unityReservedB=1610448896 managedB=699867136
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=331.43 totalMs=3557.97 unityAllocatedB=935497214 unityReservedB=1610448896 managedB=704745472
+RISKAI_STARTUP phase=ready map=Classic phaseMs=5.23 totalMs=3563.20 unityAllocatedB=935519074 unityReservedB=1610448896 managedB=704970752
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1073" name="CommanderConnectivityTests" fullname="RiskAI.Tests.CommanderConnectivityTests" classname="RiskAI.Tests.CommanderConnectivityTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-08 22:09:08Z" end-time="2026-09-08 22:09:18Z" duration="9.519273" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1074" name="CountryPrioritySkipsIslandAndOnlyCommandsReachableOrigins" fullname="RiskAI.Tests.CommanderConnectivityTests.CountryPrioritySkipsIslandAndOnlyCommandsReachableOrigins" methodname="CountryPrioritySkipsIslandAndOnlyCommandsReachableOrigins" classname="RiskAI.Tests.CommanderConnectivityTests" runstate="Runnable" seed="1632760907" result="Passed" start-time="2026-09-08 22:09:08Z" end-time="2026-09-08 22:09:13Z" duration="4.406486" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2912.64 totalMs=2912.64 unityAllocatedB=937266637 unityReservedB=1627226112 managedB=730050560
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=158.28 totalMs=3070.92 unityAllocatedB=944344335 unityReservedB=1627226112 managedB=730845184
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=133.60 totalMs=3204.52 unityAllocatedB=944595004 unityReservedB=1627226112 managedB=730968064
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=509.96 totalMs=3714.49 unityAllocatedB=956123721 unityReservedB=1627226112 managedB=732995584
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=145.07 totalMs=3859.55 unityAllocatedB=957006457 unityReservedB=1627226112 managedB=735793152
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.15 totalMs=3870.71 unityAllocatedB=957007793 unityReservedB=1627226112 managedB=736202752
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=272.73 totalMs=4143.43 unityAllocatedB=961362849 unityReservedB=1627226112 managedB=741756928
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.11 totalMs=4147.55 unityAllocatedB=961384789 unityReservedB=1627226112 managedB=742043648
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1075" name="ReachabilityCursorSurvivesMobileRosterChurn" fullname="RiskAI.Tests.CommanderConnectivityTests.ReachabilityCursorSurvivesMobileRosterChurn" methodname="ReachabilityCursorSurvivesMobileRosterChurn" classname="RiskAI.Tests.CommanderConnectivityTests" runstate="Runnable" seed="1354672980" result="Passed" start-time="2026-09-08 22:09:13Z" end-time="2026-09-08 22:09:18Z" duration="5.106556" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=3030.90 totalMs=3030.90 unityAllocatedB=972396046 unityReservedB=1660780544 managedB=766947328
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=402.99 totalMs=3433.89 unityAllocatedB=980014184 unityReservedB=1660780544 managedB=768020480
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=152.95 totalMs=3586.84 unityAllocatedB=980252309 unityReservedB=1660780544 managedB=768139264
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=712.33 totalMs=4299.16 unityAllocatedB=991258954 unityReservedB=1660780544 managedB=770818048
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=194.91 totalMs=4494.07 unityAllocatedB=992191938 unityReservedB=1660780544 managedB=773615616
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.21 totalMs=4505.28 unityAllocatedB=992193274 unityReservedB=1660780544 managedB=774737920
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=293.94 totalMs=4799.22 unityAllocatedB=996548330 unityReservedB=1660780544 managedB=780554240
+RISKAI_STARTUP phase=ready map=Classic phaseMs=8.21 totalMs=4807.43 unityAllocatedB=996570270 unityReservedB=1660780544 managedB=780890112
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1076" name="CommanderDefenseTests" fullname="RiskAI.Tests.CommanderDefenseTests" classname="RiskAI.Tests.CommanderDefenseTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-08 22:09:18Z" end-time="2026-09-08 22:09:24Z" duration="6.373492" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-case id="1077" name="NearbyThreatDivertsMarchingUnitsOnceAndKeepsReserve" fullname="RiskAI.Tests.CommanderDefenseTests.NearbyThreatDivertsMarchingUnitsOnceAndKeepsReserve" methodname="NearbyThreatDivertsMarchingUnitsOnceAndKeepsReserve" classname="RiskAI.Tests.CommanderDefenseTests" runstate="Runnable" seed="1854103662" result="Failed" start-time="2026-09-08 22:09:18Z" end-time="2026-09-08 22:09:24Z" duration="6.366635" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  The same threat must not cause repeated defensive orders every decision tick.
+  Expected: 4
+  But was:  5
+]]></message>
+                <stack-trace><![CDATA[at RiskAI.Tests.CommanderDefenseTests+<NearbyThreatDivertsMarchingUnitsOnceAndKeepsReserve>d__4.MoveNext () [0x00367] in C:\Users\lveil\Desktop\Projects\riskai\RiskAI\Assets\RiskAI\Tests\PlayMode\CommanderDefenseTests.cs:73
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@bd7f943e9647\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=3671.09 totalMs=3671.09 unityAllocatedB=998293311 unityReservedB=1677557760 managedB=708747264
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=172.07 totalMs=3843.17 unityAllocatedB=1005370553 unityReservedB=1677557760 managedB=708964352
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=157.47 totalMs=4000.64 unityAllocatedB=1005608670 unityReservedB=1677557760 managedB=708988928
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=437.93 totalMs=4438.56 unityAllocatedB=1017088339 unityReservedB=1677557760 managedB=710483968
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=138.18 totalMs=4576.75 unityAllocatedB=1017971115 unityReservedB=1677557760 managedB=713170944
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=16.12 totalMs=4592.87 unityAllocatedB=1017972419 unityReservedB=1677557760 managedB=713453568
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=259.65 totalMs=4852.52 unityAllocatedB=1022327499 unityReservedB=1677557760 managedB=718303232
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.17 totalMs=4856.69 unityAllocatedB=1022347727 unityReservedB=1677557760 managedB=718508032
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1082" name="DirectPointerInputTests" fullname="RiskAI.Tests.DirectPointerInputTests" classname="RiskAI.Tests.DirectPointerInputTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-08 22:09:24Z" end-time="2026-09-08 22:09:46Z" duration="21.671554" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1087" name="BarrelPressCancelsPenMarqueeBeforeContext" fullname="RiskAI.Tests.DirectPointerInputTests.BarrelPressCancelsPenMarqueeBeforeContext" methodname="BarrelPressCancelsPenMarqueeBeforeContext" classname="RiskAI.Tests.DirectPointerInputTests" runstate="Runnable" seed="137040509" result="Passed" start-time="2026-09-08 22:09:24Z" end-time="2026-09-08 22:09:28Z" duration="3.781518" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2432.58 totalMs=2432.58 unityAllocatedB=1024146070 unityReservedB=1694334976 managedB=745627648
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=179.05 totalMs=2611.63 unityAllocatedB=1031223552 unityReservedB=1694334976 managedB=746418176
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=159.53 totalMs=2771.16 unityAllocatedB=1031461669 unityReservedB=1694334976 managedB=746528768
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=406.20 totalMs=3177.36 unityAllocatedB=1042991722 unityReservedB=1694334976 managedB=748560384
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=112.86 totalMs=3290.22 unityAllocatedB=1043874498 unityReservedB=1694334976 managedB=751353856
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=13.75 totalMs=3303.97 unityAllocatedB=1043875818 unityReservedB=1694334976 managedB=751767552
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=251.71 totalMs=3555.68 unityAllocatedB=1048230858 unityReservedB=1694334976 managedB=757317632
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.50 totalMs=3560.17 unityAllocatedB=1048252790 unityReservedB=1694334976 managedB=757628928
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1083" name="EnhancedTouchDragUsesSharedAreaSelectionPath" fullname="RiskAI.Tests.DirectPointerInputTests.EnhancedTouchDragUsesSharedAreaSelectionPath" methodname="EnhancedTouchDragUsesSharedAreaSelectionPath" classname="RiskAI.Tests.DirectPointerInputTests" runstate="Runnable" seed="2055840413" result="Passed" start-time="2026-09-08 22:09:28Z" end-time="2026-09-08 22:09:31Z" duration="3.417002" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2077.72 totalMs=2077.72 unityAllocatedB=1050220898 unityReservedB=1711112192 managedB=782778368
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=144.88 totalMs=2222.59 unityAllocatedB=1057838652 unityReservedB=1711112192 managedB=784097280
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=126.54 totalMs=2349.13 unityAllocatedB=1058076761 unityReservedB=1727889408 managedB=784224256
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=414.71 totalMs=2763.84 unityAllocatedB=1069015558 unityReservedB=1727889408 managedB=786845696
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=125.23 totalMs=2889.07 unityAllocatedB=1069898350 unityReservedB=1727889408 managedB=789655552
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.35 totalMs=2900.42 unityAllocatedB=1069899670 unityReservedB=1727889408 managedB=790769664
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=242.19 totalMs=3142.61 unityAllocatedB=1074254742 unityReservedB=1727889408 managedB=796598272
+RISKAI_STARTUP phase=ready map=Classic phaseMs=19.18 totalMs=3161.79 unityAllocatedB=1074326874 unityReservedB=1727889408 managedB=796958720
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1084" name="PausedTwoFingerTouchPansAndPinchesWithoutCommands" fullname="RiskAI.Tests.DirectPointerInputTests.PausedTwoFingerTouchPansAndPinchesWithoutCommands" methodname="PausedTwoFingerTouchPansAndPinchesWithoutCommands" classname="RiskAI.Tests.DirectPointerInputTests" runstate="Runnable" seed="322320125" result="Passed" start-time="2026-09-08 22:09:31Z" end-time="2026-09-08 22:09:35Z" duration="3.820130" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2557.63 totalMs=2557.63 unityAllocatedB=1100910826 unityReservedB=1778221056 managedB=724840448
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=160.86 totalMs=2718.50 unityAllocatedB=1108463700 unityReservedB=1778221056 managedB=725061632
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=142.20 totalMs=2860.70 unityAllocatedB=1108701841 unityReservedB=1778221056 managedB=725086208
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=383.72 totalMs=3244.42 unityAllocatedB=1119641054 unityReservedB=1778221056 managedB=726597632
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=116.70 totalMs=3361.12 unityAllocatedB=1120523822 unityReservedB=1778221056 managedB=729288704
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=15.79 totalMs=3376.91 unityAllocatedB=1120525142 unityReservedB=1778221056 managedB=729563136
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=272.98 totalMs=3649.89 unityAllocatedB=1124880182 unityReservedB=1778221056 managedB=734375936
+RISKAI_STARTUP phase=ready map=Classic phaseMs=5.28 totalMs=3655.17 unityAllocatedB=1124902058 unityReservedB=1778221056 managedB=734584832
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1086" name="PenTipDragUsesSharedAreaSelectionPath" fullname="RiskAI.Tests.DirectPointerInputTests.PenTipDragUsesSharedAreaSelectionPath" methodname="PenTipDragUsesSharedAreaSelectionPath" classname="RiskAI.Tests.DirectPointerInputTests" runstate="Runnable" seed="1432996330" result="Passed" start-time="2026-09-08 22:09:35Z" end-time="2026-09-08 22:09:39Z" duration="3.484274" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2262.90 totalMs=2262.90 unityAllocatedB=1126741752 unityReservedB=1794998272 managedB=759439360
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=150.31 totalMs=2413.21 unityAllocatedB=1134359058 unityReservedB=1794998272 managedB=760242176
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=143.40 totalMs=2556.61 unityAllocatedB=1134597239 unityReservedB=1794998272 managedB=760270848
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=430.05 totalMs=2986.66 unityAllocatedB=1145536220 unityReservedB=1794998272 managedB=762310656
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=131.45 totalMs=3118.11 unityAllocatedB=1146469148 unityReservedB=1794998272 managedB=765108224
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=10.15 totalMs=3128.26 unityAllocatedB=1146470468 unityReservedB=1794998272 managedB=765448192
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=242.33 totalMs=3370.60 unityAllocatedB=1150825508 unityReservedB=1794998272 managedB=770990080
+RISKAI_STARTUP phase=ready map=Classic phaseMs=5.19 totalMs=3375.78 unityAllocatedB=1150847440 unityReservedB=1794998272 managedB=771289088
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1085" name="ThreeFingerDragOrbitsAndFocusCancellationQuarantinesHeldTouches" fullname="RiskAI.Tests.DirectPointerInputTests.ThreeFingerDragOrbitsAndFocusCancellationQuarantinesHeldTouches" methodname="ThreeFingerDragOrbitsAndFocusCancellationQuarantinesHeldTouches" classname="RiskAI.Tests.DirectPointerInputTests" runstate="Runnable" seed="249811845" result="Passed" start-time="2026-09-08 22:09:39Z" end-time="2026-09-08 22:09:42Z" duration="3.733471" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2363.13 totalMs=2363.13 unityAllocatedB=1152650898 unityReservedB=1811775488 managedB=796262400
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=194.49 totalMs=2557.62 unityAllocatedB=1160269484 unityReservedB=1811775488 managedB=797134848
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=170.73 totalMs=2728.36 unityAllocatedB=1160507625 unityReservedB=1811775488 managedB=797253632
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=444.06 totalMs=3172.42 unityAllocatedB=1171645630 unityReservedB=1811775488 managedB=799449088
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=143.69 totalMs=3316.11 unityAllocatedB=1172528398 unityReservedB=1811775488 managedB=802238464
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=12.65 totalMs=3328.76 unityAllocatedB=1172529718 unityReservedB=1811775488 managedB=803258368
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=276.53 totalMs=3605.29 unityAllocatedB=1176884806 unityReservedB=1811775488 managedB=808923136
+RISKAI_STARTUP phase=ready map=Classic phaseMs=8.99 totalMs=3614.28 unityAllocatedB=1176906730 unityReservedB=1811775488 managedB=809259008
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1088" name="UiOriginTouchAndFocusCancelledTouchNeverResumeWorldGesture" fullname="RiskAI.Tests.DirectPointerInputTests.UiOriginTouchAndFocusCancelledTouchNeverResumeWorldGesture" methodname="UiOriginTouchAndFocusCancelledTouchNeverResumeWorldGesture" classname="RiskAI.Tests.DirectPointerInputTests" runstate="Runnable" seed="1389906901" result="Passed" start-time="2026-09-08 22:09:42Z" end-time="2026-09-08 22:09:46Z" duration="3.428053" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2249.15 totalMs=2249.15 unityAllocatedB=1178668110 unityReservedB=1862107136 managedB=727580672
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=136.11 totalMs=2385.27 unityAllocatedB=1186285712 unityReservedB=1862107136 managedB=727801856
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=146.58 totalMs=2531.84 unityAllocatedB=1186523829 unityReservedB=1862107136 managedB=727826432
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=403.00 totalMs=2934.84 unityAllocatedB=1197513570 unityReservedB=1862107136 managedB=729337856
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=122.84 totalMs=3057.68 unityAllocatedB=1198396330 unityReservedB=1862107136 managedB=732024832
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=9.87 totalMs=3067.56 unityAllocatedB=1198397650 unityReservedB=1862107136 managedB=732299264
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=241.55 totalMs=3309.11 unityAllocatedB=1202752690 unityReservedB=1862107136 managedB=737083392
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.06 totalMs=3312.17 unityAllocatedB=1202773510 unityReservedB=1862107136 managedB=737271808
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1091" name="FrontEndTests" fullname="RiskAI.Tests.FrontEndTests" classname="RiskAI.Tests.FrontEndTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 22:09:46Z" end-time="2026-09-08 22:09:46Z" duration="0.386835" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1093" name="MapDefaultsFollowCapacityUntilPlayerCountIsAdjusted" fullname="RiskAI.Tests.FrontEndTests.MapDefaultsFollowCapacityUntilPlayerCountIsAdjusted" methodname="MapDefaultsFollowCapacityUntilPlayerCountIsAdjusted" classname="RiskAI.Tests.FrontEndTests" runstate="Runnable" seed="691288128" result="Passed" start-time="2026-09-08 22:09:46Z" end-time="2026-09-08 22:09:46Z" duration="0.256506" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1094" name="ReservedHudBandsExcludeWorldInputAtRuntime" fullname="RiskAI.Tests.FrontEndTests.ReservedHudBandsExcludeWorldInputAtRuntime" methodname="ReservedHudBandsExcludeWorldInputAtRuntime" classname="RiskAI.Tests.FrontEndTests" runstate="Runnable" seed="764049019" result="Passed" start-time="2026-09-08 22:09:46Z" end-time="2026-09-08 22:09:46Z" duration="0.057598" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1092" name="SetupScreenDoesNotCreateBattlefieldOrSimulation" fullname="RiskAI.Tests.FrontEndTests.SetupScreenDoesNotCreateBattlefieldOrSimulation" methodname="SetupScreenDoesNotCreateBattlefieldOrSimulation" classname="RiskAI.Tests.FrontEndTests" runstate="Runnable" seed="738265898" result="Passed" start-time="2026-09-08 22:09:46Z" end-time="2026-09-08 22:09:46Z" duration="0.066857" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1126" name="MatchCountdownTests" fullname="RiskAI.Tests.MatchCountdownTests" classname="RiskAI.Tests.MatchCountdownTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 22:09:46Z" end-time="2026-09-08 22:09:47Z" duration="0.732474" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1127" name="CountdownBlocksSimulationAndOrdersThenStartsFromZero" fullname="RiskAI.Tests.MatchCountdownTests.CountdownBlocksSimulationAndOrdersThenStartsFromZero" methodname="CountdownBlocksSimulationAndOrdersThenStartsFromZero" classname="RiskAI.Tests.MatchCountdownTests" runstate="Runnable" seed="195481062" result="Passed" start-time="2026-09-08 22:09:46Z" end-time="2026-09-08 22:09:47Z" duration="0.716641" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_ORDER_REJECTED: id=123 kind=Move tick=0 reason=La partida está detenida.
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1135" name="MouseCameraInputTests" fullname="RiskAI.Tests.MouseCameraInputTests" classname="RiskAI.Tests.MouseCameraInputTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 22:09:47Z" end-time="2026-09-08 22:09:57Z" duration="9.879972" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1136" name="PausedRightDragPansAndMiddleDragOrbitsWithoutIssuingOrders" fullname="RiskAI.Tests.MouseCameraInputTests.PausedRightDragPansAndMiddleDragOrbitsWithoutIssuingOrders" methodname="PausedRightDragPansAndMiddleDragOrbitsWithoutIssuingOrders" classname="RiskAI.Tests.MouseCameraInputTests" runstate="Runnable" seed="440978635" result="Passed" start-time="2026-09-08 22:09:47Z" end-time="2026-09-08 22:09:50Z" duration="3.059707" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=1840.99 totalMs=1840.99 unityAllocatedB=1189563909 unityReservedB=1885220864 managedB=800657408
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=169.19 totalMs=2010.18 unityAllocatedB=1196641599 unityReservedB=1885220864 managedB=802078720
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=143.12 totalMs=2153.30 unityAllocatedB=1196879756 unityReservedB=1901998080 managedB=802209792
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=376.97 totalMs=2530.27 unityAllocatedB=1208359761 unityReservedB=1901998080 managedB=804888576
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=114.46 totalMs=2644.72 unityAllocatedB=1209292697 unityReservedB=1901998080 managedB=807702528
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=15.25 totalMs=2659.97 unityAllocatedB=1209294001 unityReservedB=1901998080 managedB=808185856
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=273.70 totalMs=2933.68 unityAllocatedB=1213615801 unityReservedB=1901998080 managedB=720019456
+RISKAI_STARTUP phase=ready map=Classic phaseMs=6.88 totalMs=2940.55 unityAllocatedB=1213636493 unityReservedB=1901998080 managedB=720187392
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1138" name="PauseTransitionCancelsHeldClickAndFreshDragStillWorksAfterResume" fullname="RiskAI.Tests.MouseCameraInputTests.PauseTransitionCancelsHeldClickAndFreshDragStillWorksAfterResume" methodname="PauseTransitionCancelsHeldClickAndFreshDragStillWorksAfterResume" classname="RiskAI.Tests.MouseCameraInputTests" runstate="Runnable" seed="626909879" result="Passed" start-time="2026-09-08 22:09:50Z" end-time="2026-09-08 22:09:53Z" duration="3.431945" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2164.76 totalMs=2164.76 unityAllocatedB=1215579975 unityReservedB=1918775296 managedB=740790272
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=179.50 totalMs=2344.25 unityAllocatedB=1223197833 unityReservedB=1918775296 managedB=741261312
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=131.94 totalMs=2476.20 unityAllocatedB=1223436038 unityReservedB=1918775296 managedB=741289984
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=425.62 totalMs=2901.81 unityAllocatedB=1234376683 unityReservedB=1918775296 managedB=742973440
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=115.81 totalMs=3017.62 unityAllocatedB=1235259419 unityReservedB=1918775296 managedB=745664512
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=13.03 totalMs=3030.65 unityAllocatedB=1235260723 unityReservedB=1918775296 managedB=745967616
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=235.15 totalMs=3265.81 unityAllocatedB=1239615763 unityReservedB=1918775296 managedB=751484928
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.57 totalMs=3269.38 unityAllocatedB=1239637687 unityReservedB=1918775296 managedB=751759360
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1137" name="WheelZoomUsesMouseCoordinatesWhileRunningAndPausedWithHoveringPen" fullname="RiskAI.Tests.MouseCameraInputTests.WheelZoomUsesMouseCoordinatesWhileRunningAndPausedWithHoveringPen" methodname="WheelZoomUsesMouseCoordinatesWhileRunningAndPausedWithHoveringPen" classname="RiskAI.Tests.MouseCameraInputTests" runstate="Runnable" seed="246135842" result="Passed" start-time="2026-09-08 22:09:53Z" end-time="2026-09-08 22:09:57Z" duration="3.372227" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2111.38 totalMs=2111.38 unityAllocatedB=1241307273 unityReservedB=1952329728 managedB=776957952
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=161.79 totalMs=2273.17 unityAllocatedB=1248925939 unityReservedB=1952329728 managedB=777756672
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=148.54 totalMs=2421.71 unityAllocatedB=1249164064 unityReservedB=1952329728 managedB=777789440
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=427.13 totalMs=2848.83 unityAllocatedB=1260154917 unityReservedB=1952329728 managedB=779796480
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=136.18 totalMs=2985.01 unityAllocatedB=1261037669 unityReservedB=1952329728 managedB=782594048
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=13.80 totalMs=2998.80 unityAllocatedB=1261038973 unityReservedB=1952329728 managedB=782987264
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=240.45 totalMs=3239.25 unityAllocatedB=1265394013 unityReservedB=1952329728 managedB=788529152
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.35 totalMs=3243.59 unityAllocatedB=1265415937 unityReservedB=1952329728 managedB=788844544
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1153" name="NavalExpeditionCommanderTests" fullname="RiskAI.Tests.NavalExpeditionCommanderTests" classname="RiskAI.Tests.NavalExpeditionCommanderTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-08 22:09:57Z" end-time="2026-09-08 22:10:00Z" duration="3.379406" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-case id="1154" name="AiBuysBoardsSailsUnloadsAndOrdersOneRealExpedition" fullname="RiskAI.Tests.NavalExpeditionCommanderTests.AiBuysBoardsSailsUnloadsAndOrdersOneRealExpedition" methodname="AiBuysBoardsSailsUnloadsAndOrdersOneRealExpedition" classname="RiskAI.Tests.NavalExpeditionCommanderTests" runstate="Runnable" seed="415987270" result="Failed" start-time="2026-09-08 22:09:57Z" end-time="2026-09-08 22:10:00Z" duration="3.372361" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  The fixture must enter paid transport training.
+  Expected: greater than 0
+  But was:  0
+]]></message>
+                <stack-trace><![CDATA[at RiskAI.Tests.NavalExpeditionCommanderTests+<AiBuysBoardsSailsUnloadsAndOrdersOneRealExpedition>d__9.MoveNext () [0x001db] in C:\Users\lveil\Desktop\Projects\riskai\RiskAI\Assets\RiskAI\Tests\PlayMode\NavalExpeditionCommanderTests.cs:51
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@bd7f943e9647\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2116.26 totalMs=2116.26 unityAllocatedB=1267217585 unityReservedB=1969106944 managedB=813957120
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=179.02 totalMs=2295.28 unityAllocatedB=1274295307 unityReservedB=1969106944 managedB=814985216
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=127.02 totalMs=2422.30 unityAllocatedB=1274533456 unityReservedB=1969106944 managedB=815104000
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=413.93 totalMs=2836.23 unityAllocatedB=1286015453 unityReservedB=1969106944 managedB=817819648
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=126.07 totalMs=2962.30 unityAllocatedB=1286898213 unityReservedB=1969106944 managedB=820633600
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=14.59 totalMs=2976.89 unityAllocatedB=1286899549 unityReservedB=1969106944 managedB=821710848
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=274.32 totalMs=3251.21 unityAllocatedB=1291209965 unityReservedB=1969106944 managedB=722919424
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.33 totalMs=3255.55 unityAllocatedB=1291230289 unityReservedB=1969106944 managedB=723066880
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1155" name="NavalGameplayTests" fullname="RiskAI.Tests.NavalGameplayTests" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" testcasecount="11" result="Failed" site="Child" start-time="2026-09-08 22:10:00Z" end-time="2026-09-08 22:10:45Z" duration="44.865286" total="11" passed="10" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-case id="1160" name="AiFleetPassKeepsAnExistingRouteInsteadOfRebuildingIt" fullname="RiskAI.Tests.NavalGameplayTests.AiFleetPassKeepsAnExistingRouteInsteadOfRebuildingIt" methodname="AiFleetPassKeepsAnExistingRouteInsteadOfRebuildingIt" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="1267788790" result="Passed" start-time="2026-09-08 22:10:00Z" end-time="2026-09-08 22:10:03Z" duration="3.130224" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=1998.39 totalMs=1998.39 unityAllocatedB=1293051126 unityReservedB=1985884160 managedB=743796736
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=150.31 totalMs=2148.70 unityAllocatedB=1300128936 unityReservedB=1985884160 managedB=744296448
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=118.19 totalMs=2266.90 unityAllocatedB=1300367053 unityReservedB=1985884160 managedB=744415232
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=367.88 totalMs=2634.77 unityAllocatedB=1311898898 unityReservedB=1985884160 managedB=746102784
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=113.90 totalMs=2748.68 unityAllocatedB=1312781586 unityReservedB=1985884160 managedB=748793856
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.84 totalMs=2760.52 unityAllocatedB=1312782890 unityReservedB=1985884160 managedB=749088768
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=234.33 totalMs=2994.85 unityAllocatedB=1317137930 unityReservedB=1985884160 managedB=754606080
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.48 totalMs=2999.33 unityAllocatedB=1317159838 unityReservedB=1985884160 managedB=754864128
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1159" name="AiSavesForAndBuysItsFirstGalleyThroughThePortQueue" fullname="RiskAI.Tests.NavalGameplayTests.AiSavesForAndBuysItsFirstGalleyThroughThePortQueue" methodname="AiSavesForAndBuysItsFirstGalleyThroughThePortQueue" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="210740596" result="Failed" start-time="2026-09-08 22:10:03Z" end-time="2026-09-08 22:10:07Z" duration="3.378936" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[  The naval grace period must still apply.
+  Expected: 0
+  But was:  1
+]]></message>
+                <stack-trace><![CDATA[at RiskAI.Tests.NavalGameplayTests+<AiSavesForAndBuysItsFirstGalleyThroughThePortQueue>d__8.MoveNext () [0x0009a] in C:\Users\lveil\Desktop\Projects\riskai\RiskAI\Assets\RiskAI\Tests\PlayMode\NavalGameplayTests.cs:95
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@bd7f943e9647\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2096.93 totalMs=2096.93 unityAllocatedB=1319112049 unityReservedB=2019438592 managedB=779644928
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=181.04 totalMs=2277.97 unityAllocatedB=1326730835 unityReservedB=2019438592 managedB=780464128
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=140.66 totalMs=2418.63 unityAllocatedB=1326968976 unityReservedB=2019438592 managedB=780582912
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=441.14 totalMs=2859.77 unityAllocatedB=1337909301 unityReservedB=2019438592 managedB=782864384
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=139.48 totalMs=2999.26 unityAllocatedB=1338842253 unityReservedB=2019438592 managedB=785678336
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=10.89 totalMs=3010.14 unityAllocatedB=1338843557 unityReservedB=2019438592 managedB=786026496
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=253.56 totalMs=3263.71 unityAllocatedB=1343198621 unityReservedB=2019438592 managedB=791711744
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.24 totalMs=3267.95 unityAllocatedB=1343220529 unityReservedB=2019438592 managedB=792051712
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1164" name="GalleyAttackMoveResumesItsOriginalDestinationAfterCombat" fullname="RiskAI.Tests.NavalGameplayTests.GalleyAttackMoveResumesItsOriginalDestinationAfterCombat" methodname="GalleyAttackMoveResumesItsOriginalDestinationAfterCombat" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="1162975119" result="Passed" start-time="2026-09-08 22:10:07Z" end-time="2026-09-08 22:10:10Z" duration="3.343217" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2121.42 totalMs=2121.42 unityAllocatedB=1345023175 unityReservedB=2036215808 managedB=818126848
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=157.58 totalMs=2279.00 unityAllocatedB=1352641705 unityReservedB=2036215808 managedB=819851264
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=149.93 totalMs=2428.93 unityAllocatedB=1352879854 unityReservedB=2036215808 managedB=819982336
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=381.07 totalMs=2810.00 unityAllocatedB=1364360699 unityReservedB=2036215808 managedB=823320576
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=118.24 totalMs=2928.24 unityAllocatedB=1365243451 unityReservedB=2036215808 managedB=826146816
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=12.79 totalMs=2941.02 unityAllocatedB=1365244755 unityReservedB=2036215808 managedB=827207680
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=268.70 totalMs=3209.72 unityAllocatedB=1369555155 unityReservedB=2036215808 managedB=727830528
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.01 totalMs=3213.74 unityAllocatedB=1369577023 unityReservedB=2036215808 managedB=727990272
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1163" name="GalleyAutoTargetsCoastalSoldierAtMainlandHarbor" fullname="RiskAI.Tests.NavalGameplayTests.GalleyAutoTargetsCoastalSoldierAtMainlandHarbor" methodname="GalleyAutoTargetsCoastalSoldierAtMainlandHarbor" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="585070805" result="Passed" start-time="2026-09-08 22:10:10Z" end-time="2026-09-08 22:10:15Z" duration="5.100238" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2123.08 totalMs=2123.08 unityAllocatedB=1371391541 unityReservedB=2052993024 managedB=748498944
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=143.37 totalMs=2266.45 unityAllocatedB=1379009807 unityReservedB=2052993024 managedB=748969984
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=128.40 totalMs=2394.85 unityAllocatedB=1379247900 unityReservedB=2069770240 managedB=748994560
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=392.27 totalMs=2787.13 unityAllocatedB=1390239769 unityReservedB=2069770240 managedB=750686208
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=137.18 totalMs=2924.30 unityAllocatedB=1391122505 unityReservedB=2069770240 managedB=753369088
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=14.74 totalMs=2939.04 unityAllocatedB=1391123809 unityReservedB=2069770240 managedB=753659904
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=251.72 totalMs=3190.76 unityAllocatedB=1395478849 unityReservedB=2069770240 managedB=759169024
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.30 totalMs=3195.06 unityAllocatedB=1395500757 unityReservedB=2069770240 managedB=759447552
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1165" name="GalleyDamageReactionKeepsAnExplicitAttackTarget" fullname="RiskAI.Tests.NavalGameplayTests.GalleyDamageReactionKeepsAnExplicitAttackTarget" methodname="GalleyDamageReactionKeepsAnExplicitAttackTarget" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="641884214" result="Passed" start-time="2026-09-08 22:10:15Z" end-time="2026-09-08 22:10:19Z" duration="3.361943" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2165.07 totalMs=2165.07 unityAllocatedB=1401604867 unityReservedB=2086547456 managedB=798826496
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=156.21 totalMs=2321.28 unityAllocatedB=1409222629 unityReservedB=2086547456 managedB=800460800
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=124.07 totalMs=2445.35 unityAllocatedB=1409460730 unityReservedB=2086547456 managedB=800497664
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=415.53 totalMs=2860.88 unityAllocatedB=1420402543 unityReservedB=2086547456 managedB=803495936
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=122.16 totalMs=2983.04 unityAllocatedB=1421285295 unityReservedB=2086547456 managedB=806309888
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.85 totalMs=2994.89 unityAllocatedB=1421286599 unityReservedB=2086547456 managedB=806768640
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=244.83 totalMs=3239.72 unityAllocatedB=1425691847 unityReservedB=2086547456 managedB=812736512
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.51 totalMs=3244.22 unityAllocatedB=1425713755 unityReservedB=2086547456 managedB=813105152
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1162" name="GalleyFiresAndTransportDestructionRemovesCargo" fullname="RiskAI.Tests.NavalGameplayTests.GalleyFiresAndTransportDestructionRemovesCargo" methodname="GalleyFiresAndTransportDestructionRemovesCargo" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="1633206615" result="Passed" start-time="2026-09-08 22:10:19Z" end-time="2026-09-08 22:10:24Z" duration="5.206878" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2229.20 totalMs=2229.20 unityAllocatedB=1427495977 unityReservedB=2136879104 managedB=737083392
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=222.23 totalMs=2451.42 unityAllocatedB=1435113555 unityReservedB=2136879104 managedB=737095680
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=144.01 totalMs=2595.43 unityAllocatedB=1435351728 unityReservedB=2136879104 managedB=737120256
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=547.54 totalMs=3142.96 unityAllocatedB=1446294413 unityReservedB=2136879104 managedB=737325056
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=226.91 totalMs=3369.87 unityAllocatedB=1447177181 unityReservedB=2136879104 managedB=739414016
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=17.28 totalMs=3387.15 unityAllocatedB=1447178485 unityReservedB=2136879104 managedB=739549184
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=337.43 totalMs=3724.58 unityAllocatedB=1451533550 unityReservedB=2136879104 managedB=744263680
+RISKAI_STARTUP phase=ready map=Classic phaseMs=5.18 totalMs=3729.76 unityAllocatedB=1451554722 unityReservedB=2136879104 managedB=744456192
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1156" name="LastTransportAndCargoKeepPlayerAliveUntilSunk" fullname="RiskAI.Tests.NavalGameplayTests.LastTransportAndCargoKeepPlayerAliveUntilSunk" methodname="LastTransportAndCargoKeepPlayerAliveUntilSunk" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="1784106409" result="Passed" start-time="2026-09-08 22:10:24Z" end-time="2026-09-08 22:10:27Z" duration="3.687803" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2497.01 totalMs=2497.01 unityAllocatedB=1453354032 unityReservedB=2153656320 managedB=770412544
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=149.14 totalMs=2646.15 unityAllocatedB=1460971754 unityReservedB=2153656320 managedB=771813376
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=154.99 totalMs=2801.14 unityAllocatedB=1461209927 unityReservedB=2153656320 managedB=771846144
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=398.32 totalMs=3199.45 unityAllocatedB=1472152332 unityReservedB=2153656320 managedB=774500352
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=125.20 totalMs=3324.66 unityAllocatedB=1473085292 unityReservedB=2153656320 managedB=777318400
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.34 totalMs=3336.00 unityAllocatedB=1473086596 unityReservedB=2153656320 managedB=777781248
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=227.40 totalMs=3563.40 unityAllocatedB=1477441637 unityReservedB=2153656320 managedB=783486976
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.13 totalMs=3567.53 unityAllocatedB=1477463545 unityReservedB=2153656320 managedB=783855616
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1158" name="NavalPurchasesCancelRefundAndCompleteExactlyOnce" fullname="RiskAI.Tests.NavalGameplayTests.NavalPurchasesCancelRefundAndCompleteExactlyOnce" methodname="NavalPurchasesCancelRefundAndCompleteExactlyOnce" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="999175999" result="Passed" start-time="2026-09-08 22:10:27Z" end-time="2026-09-08 22:10:32Z" duration="4.763107" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2232.56 totalMs=2232.56 unityAllocatedB=1479285946 unityReservedB=2170433536 managedB=810557440
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=199.06 totalMs=2431.61 unityAllocatedB=1486904380 unityReservedB=2170433536 managedB=812212224
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=147.31 totalMs=2578.92 unityAllocatedB=1487142529 unityReservedB=2170433536 managedB=812339200
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=511.31 totalMs=3090.23 unityAllocatedB=1498085222 unityReservedB=2170433536 managedB=815648768
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=157.40 totalMs=3247.63 unityAllocatedB=1498967974 unityReservedB=2170433536 managedB=818462720
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=16.77 totalMs=3264.40 unityAllocatedB=1498969278 unityReservedB=2170433536 managedB=819593216
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=296.46 totalMs=3560.86 unityAllocatedB=1503324319 unityReservedB=2170433536 managedB=825569280
+RISKAI_STARTUP phase=ready map=Classic phaseMs=6.75 totalMs=3567.60 unityAllocatedB=1503346227 unityReservedB=2170433536 managedB=826015744
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1166" name="RiverHasDownhillBedAndIslandsAreSeparateLandmasses" fullname="RiskAI.Tests.NavalGameplayTests.RiverHasDownhillBedAndIslandsAreSeparateLandmasses" methodname="RiverHasDownhillBedAndIslandsAreSeparateLandmasses" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="1718740922" result="Passed" start-time="2026-09-08 22:10:32Z" end-time="2026-09-08 22:10:36Z" duration="3.384274" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2232.25 totalMs=2232.25 unityAllocatedB=1505091000 unityReservedB=2203987968 managedB=757215232
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=156.82 totalMs=2389.07 unityAllocatedB=1512710050 unityReservedB=2203987968 managedB=757223424
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=134.35 totalMs=2523.43 unityAllocatedB=1512948143 unityReservedB=2220765184 managedB=757248000
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=370.27 totalMs=2893.69 unityAllocatedB=1523941556 unityReservedB=2220765184 managedB=757456896
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=108.76 totalMs=3002.46 unityAllocatedB=1528060644 unityReservedB=2220765184 managedB=759869440
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=13.40 totalMs=3015.86 unityAllocatedB=1528061948 unityReservedB=2220765184 managedB=760152064
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=230.26 totalMs=3246.12 unityAllocatedB=1532416989 unityReservedB=2220765184 managedB=764854272
+RISKAI_STARTUP phase=ready map=Classic phaseMs=4.41 totalMs=3250.53 unityAllocatedB=1532438849 unityReservedB=2220765184 managedB=765059072
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1161" name="StalledActiveRouteBecomesEligibleForAiReissue" fullname="RiskAI.Tests.NavalGameplayTests.StalledActiveRouteBecomesEligibleForAiReissue" methodname="StalledActiveRouteBecomesEligibleForAiReissue" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="579776876" result="Passed" start-time="2026-09-08 22:10:36Z" end-time="2026-09-08 22:10:39Z" duration="3.036139" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=1934.00 totalMs=1934.00 unityAllocatedB=1531036742 unityReservedB=2237542400 managedB=789876736
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=133.35 totalMs=2067.35 unityAllocatedB=1538656472 unityReservedB=2237542400 managedB=790642688
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=115.90 totalMs=2183.24 unityAllocatedB=1538894565 unityReservedB=2237542400 managedB=790667264
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=353.48 totalMs=2536.73 unityAllocatedB=1553048498 unityReservedB=2237542400 managedB=792678400
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=107.10 totalMs=2643.83 unityAllocatedB=1553981482 unityReservedB=2237542400 managedB=795475968
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=11.74 totalMs=2655.57 unityAllocatedB=1553982786 unityReservedB=2237542400 managedB=795820032
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=221.32 totalMs=2876.89 unityAllocatedB=1558337851 unityReservedB=2237542400 managedB=801357824
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.84 totalMs=2880.73 unityAllocatedB=1558359759 unityReservedB=2237542400 managedB=801710080
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+            <test-case id="1157" name="TransportActuallySailsAndDisembarkedTroopsCaptureIsland" fullname="RiskAI.Tests.NavalGameplayTests.TransportActuallySailsAndDisembarkedTroopsCaptureIsland" methodname="TransportActuallySailsAndDisembarkedTroopsCaptureIsland" classname="RiskAI.Tests.NavalGameplayTests" runstate="Runnable" seed="573037039" result="Passed" start-time="2026-09-08 22:10:39Z" end-time="2026-09-08 22:10:45Z" duration="6.460912" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Classic phaseMs=2267.85 totalMs=2267.85 unityAllocatedB=1556946716 unityReservedB=2254319616 managedB=826589184
+RISKAI_STARTUP phase=buildings map=Classic phaseMs=211.21 totalMs=2479.06 unityAllocatedB=1564565766 unityReservedB=2254319616 managedB=827510784
+RISKAI_STARTUP phase=navigation map=Classic phaseMs=154.77 totalMs=2633.83 unityAllocatedB=1564803867 unityReservedB=2254319616 managedB=827633664
+RISKAI_STARTUP phase=roster_and_ports map=Classic phaseMs=461.35 totalMs=3095.18 unityAllocatedB=1579025480 unityReservedB=2254319616 managedB=829906944
+RISKAI_STARTUP phase=ground_cover map=Classic phaseMs=132.25 totalMs=3227.43 unityAllocatedB=1579942256 unityReservedB=2254319616 managedB=832700416
+RISKAI_STARTUP phase=canopy_index map=Classic phaseMs=13.43 totalMs=3240.86 unityAllocatedB=1579943560 unityReservedB=2254319616 managedB=833720320
+RISKAI_STARTUP phase=territory_atlas map=Classic phaseMs=264.73 totalMs=3505.59 unityAllocatedB=1584298601 unityReservedB=2254319616 managedB=839376896
+RISKAI_STARTUP phase=ready map=Classic phaseMs=3.98 totalMs=3509.58 unityAllocatedB=1584320509 unityReservedB=2254319616 managedB=839761920
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1239" name="SixteenPlayerCombatTests" fullname="RiskAI.Tests.SixteenPlayerCombatTests" classname="RiskAI.Tests.SixteenPlayerCombatTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 22:10:45Z" end-time="2026-09-08 22:10:49Z" duration="3.862747" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1240" name="TeamFifteenCanCommandKillAndCapture" fullname="RiskAI.Tests.SixteenPlayerCombatTests.TeamFifteenCanCommandKillAndCapture" methodname="TeamFifteenCanCommandKillAndCapture" classname="RiskAI.Tests.SixteenPlayerCombatTests" runstate="Runnable" seed="976290033" result="Passed" start-time="2026-09-08 22:10:45Z" end-time="2026-09-08 22:10:49Z" duration="3.857949" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Europe phaseMs=1195.01 totalMs=1195.01 unityAllocatedB=1696497984 unityReservedB=2375954432 managedB=694722560
+RISKAI_STARTUP phase=buildings map=Europe phaseMs=769.87 totalMs=1964.88 unityAllocatedB=1756871670 unityReservedB=2397974528 managedB=697450496
+RISKAI_STARTUP phase=navigation map=Europe phaseMs=353.83 totalMs=2318.71 unityAllocatedB=1758205509 unityReservedB=2414751744 managedB=698384384
+RISKAI_STARTUP phase=roster_and_ports map=Europe phaseMs=825.53 totalMs=3144.24 unityAllocatedB=1806516242 unityReservedB=2451451904 managedB=700948480
+RISKAI_STARTUP phase=ground_cover map=Europe phaseMs=81.52 totalMs=3225.76 unityAllocatedB=1808490135 unityReservedB=2468229120 managedB=704249856
+RISKAI_STARTUP phase=canopy_index map=Europe phaseMs=45.72 totalMs=3271.48 unityAllocatedB=1808491455 unityReservedB=2468229120 managedB=707866624
+RISKAI_STARTUP phase=territory_atlas map=Europe phaseMs=190.25 totalMs=3461.73 unityAllocatedB=1813092130 unityReservedB=2468229120 managedB=723824640
+RISKAI_STARTUP phase=ready map=Europe phaseMs=21.15 totalMs=3482.87 unityAllocatedB=1813111862 unityReservedB=2468229120 managedB=724041728
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+]]></output>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1241" name="SixteenPlayersGameplayTests" fullname="RiskAI.Tests.SixteenPlayersGameplayTests" classname="RiskAI.Tests.SixteenPlayersGameplayTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 22:10:49Z" end-time="2026-09-08 22:11:10Z" duration="21.061057" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1242" name="EuropeAndNewWorldGiveEveryPlayerAnIndependentOpening" fullname="RiskAI.Tests.SixteenPlayersGameplayTests.EuropeAndNewWorldGiveEveryPlayerAnIndependentOpening" methodname="EuropeAndNewWorldGiveEveryPlayerAnIndependentOpening" classname="RiskAI.Tests.SixteenPlayersGameplayTests" runstate="Runnable" seed="794331904" result="Passed" start-time="2026-09-08 22:10:49Z" end-time="2026-09-08 22:11:10Z" duration="21.055849" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[RISKAI_STARTUP phase=terrain map=Europe phaseMs=1118.33 totalMs=1118.33 unityAllocatedB=1836450193 unityReservedB=2585669632 managedB=668553216
+RISKAI_STARTUP phase=buildings map=Europe phaseMs=818.67 totalMs=1937.00 unityAllocatedB=1888753773 unityReservedB=2585669632 managedB=670846976
+RISKAI_STARTUP phase=navigation map=Europe phaseMs=352.12 totalMs=2289.13 unityAllocatedB=1889799132 unityReservedB=2602446848 managedB=671666176
+RISKAI_STARTUP phase=roster_and_ports map=Europe phaseMs=1091.48 totalMs=3380.61 unityAllocatedB=1928689045 unityReservedB=2602446848 managedB=673648640
+RISKAI_STARTUP phase=ground_cover map=Europe phaseMs=126.11 totalMs=3506.72 unityAllocatedB=1930662994 unityReservedB=2602446848 managedB=676765696
+RISKAI_STARTUP phase=canopy_index map=Europe phaseMs=57.34 totalMs=3564.06 unityAllocatedB=1930664346 unityReservedB=2602446848 managedB=680243200
+RISKAI_STARTUP phase=territory_atlas map=Europe phaseMs=235.69 totalMs=3799.75 unityAllocatedB=1935265053 unityReservedB=2602446848 managedB=696193024
+RISKAI_STARTUP phase=ready map=Europe phaseMs=4.75 totalMs=3804.50 unityAllocatedB=1935285593 unityReservedB=2602446848 managedB=696487936
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+RISKAI_STARTUP phase=terrain map=NewWorld phaseMs=1813.02 totalMs=1813.02 unityAllocatedB=2050131271 unityReservedB=2770219008 managedB=765534208
+RISKAI_STARTUP phase=buildings map=NewWorld phaseMs=1088.88 totalMs=2901.90 unityAllocatedB=2123465240 unityReservedB=2780938240 managedB=678309888
+RISKAI_STARTUP phase=navigation map=NewWorld phaseMs=852.59 totalMs=3754.48 unityAllocatedB=2125509135 unityReservedB=2797715456 managedB=679579648
+RISKAI_STARTUP phase=roster_and_ports map=NewWorld phaseMs=1973.36 totalMs=5727.84 unityAllocatedB=2202427397 unityReservedB=2894188544 managedB=682864640
+RISKAI_STARTUP phase=ground_cover map=NewWorld phaseMs=165.33 totalMs=5893.17 unityAllocatedB=2204713802 unityReservedB=2895237120 managedB=685957120
+RISKAI_STARTUP phase=canopy_index map=NewWorld phaseMs=79.59 totalMs=5972.76 unityAllocatedB=2204715154 unityReservedB=2895237120 managedB=691027968
+RISKAI_STARTUP phase=territory_atlas map=NewWorld phaseMs=297.42 totalMs=6270.18 unityAllocatedB=2209573125 unityReservedB=2895237120 managedB=710328320
+RISKAI_STARTUP phase=ready map=NewWorld phaseMs=5.28 totalMs=6275.46 unityAllocatedB=2209593361 unityReservedB=2895237120 managedB=710979584
+RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -132,6 +132,9 @@ namespace RiskAI
         }
         internal bool IsInBerthCircle(Vector3 point)=>FlatDistance(point,Berth)<=ClaimRules.CircleRadius*ClaimRules.CircleRadius;
         public bool IsShipDocked(Ship ship)=>ship&&FlatDistance(ship.transform.position,Berth)<=BerthRadius*BerthRadius;
+        internal bool CanSnapToBerth(Ship ship) => ship && ship.IsAlive && ship.Kind==ShipKind.Galley &&
+            IsShipDocked(ship) && SeaNavigation.HasClearance(ship.transform.position) &&
+            SeaNavigation.HasClearance(Berth) && SeaNavigation.ClearSegment(ship.transform.position,Berth);
         public bool HasLivingDefender=>Defender&&Defender.IsAlive;
         public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Kind==ShipKind.Galley&&
             navalDefender.Team==Owner&&IsShipDocked(navalDefender)?navalDefender:null;
@@ -189,6 +192,9 @@ namespace RiskAI
                 if(alliesOnly&&ship.Team!=owner)continue;
                 float distance=FlatDistance(ship.transform.position,Berth);
                 float radius=alliesOnly?ClaimRules.ReliefRadius:ship.Team==owner?ClaimRules.ProtectionRadius:ClaimRules.TakeoverRadius;
+                // An explicit arrival may use the docking margin, but passive
+                // capture and the living guardian's relief radius stay unchanged.
+                if(!alliesOnly && ship.IsOrderedToHarbor(this) && CanSnapToBerth(ship))radius=Mathf.Max(radius,BerthRadius);
                 if(distance>radius*radius)continue;
                 if(ClaimRules.BetterCandidate(PlayerRules.ToCombatTeam(owner),ship.Team,distance,ship.EntityId,
                     best?best.Team:-1,bestDistance,best?best.EntityId:0))

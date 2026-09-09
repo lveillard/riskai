@@ -1,0 +1,172 @@
+{
+  "url": "https://riskai-demo.spaincentral.cloudapp.azure.com/",
+  "release": "/srv/riskai/releases/20260908T225132Z-413c435",
+  "previous": "/srv/riskai/releases/20260908T201807Z",
+  "filesVerified": 10,
+  "success": true,
+  "checks": [
+    {
+      "path": "release-20260908T225132Z-413c435/Build/Web-v0.22.data.unityweb",
+      "bytes": 45191201,
+      "sha256": "a686bffe795528989cf68ed209ac271850b9f19d63661d6ca4e8f5fca9f4b17a",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:38 GMT",
+        "content-type": "application/octet-stream",
+        "content-length": "45191201",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-2b19021\"",
+        "content-encoding": "gzip",
+        "cache-control": "public, max-age=3600",
+        "accept-ranges": "bytes"
+      }
+    },
+    {
+      "path": "release-20260908T225132Z-413c435/Build/Web-v0.22.framework.js.unityweb",
+      "bytes": 88950,
+      "sha256": "2f219d9c73d0a5bb8de7c3b06c86a10c8ec3669b34fcaaea8f3f1df21ad03bb6",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:43 GMT",
+        "content-type": "application/javascript",
+        "content-length": "88950",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-15b76\"",
+        "content-encoding": "gzip",
+        "cache-control": "public, max-age=3600",
+        "accept-ranges": "bytes"
+      }
+    },
+    {
+      "path": "release-20260908T225132Z-413c435/Build/Web-v0.22.loader.js",
+      "bytes": 47867,
+      "sha256": "aab4dfe3c84271c0d43268edb7e5a3f5c2749004b2b3b9c87f909cc9fc6a9ab9",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:44 GMT",
+        "content-type": "application/javascript",
+        "content-length": "47867",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-bafb\"",
+        "x-content-type-options": "nosniff",
+        "accept-ranges": "bytes"
+      }
+    },
+    {
+      "path": "release-20260908T225132Z-413c435/Build/Web-v0.22.wasm.unityweb",
+      "bytes": 12161882,
+      "sha256": "4d73291f12cf89b29f263c3d1f6af3ec61fa35ed85d03e188325a9c370eea227",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:44 GMT",
+        "content-type": "application/wasm",
+        "content-length": "12161882",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-b9935a\"",
+        "content-encoding": "gzip",
+        "cache-control": "public, max-age=3600",
+        "accept-ranges": "bytes"
+      }
+    },
+    {
+      "path": "release-20260908T225132Z-413c435/Cinzel-OFL.txt",
+      "bytes": 4392,
+      "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:47 GMT",
+        "content-type": "text/plain",
+        "content-length": "4392",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-1128\"",
+        "x-content-type-options": "nosniff",
+        "accept-ranges": "bytes"
+      }
+    },
+    {
+      "path": "release-20260908T225132Z-413c435/index.html",
+      "bytes": 4912,
+      "sha256": "6334c4b17241b26a8e7a595d48bd5bed6c27e73af313a3181a4b467e83177c22",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:47 GMT",
+        "content-type": "text/html",
+        "content-length": "4912",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-1330\"",
+        "x-content-type-options": "nosniff",
+        "accept-ranges": "bytes"
+      }
+    },
+    {
+      "path": "release-20260908T225132Z-413c435/KayKit-LICENSE.txt",
+      "bytes": 891,
+      "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:47 GMT",
+        "content-type": "text/plain",
+        "content-length": "891",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-37b\"",
+        "x-content-type-options": "nosniff",
+        "accept-ranges": "bytes"
+      }
+    },
+    {
+      "path": "release-20260908T225132Z-413c435/riskai-pen.js",
+      "bytes": 11720,
+      "sha256": "de87827367c3455505446bcc5f60d8d4b5cc6fe61862a76d463748cea9244e60",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:47 GMT",
+        "content-type": "application/javascript",
+        "content-length": "11720",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-2dc8\"",
+        "x-content-type-options": "nosniff",
+        "accept-ranges": "bytes"
+      }
+    },
+    {
+      "path": "release-20260908T225132Z-413c435/THIRD_PARTY_NOTICES.md",
+      "bytes": 3396,
+      "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:47 GMT",
+        "content-type": "application/octet-stream",
+        "content-length": "3396",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-d44\"",
+        "x-content-type-options": "nosniff",
+        "accept-ranges": "bytes"
+      }
+    },
+    {
+      "path": "index.html",
+      "bytes": 5110,
+      "sha256": "ae926b538901c65fdc05d01ad3f02fa1672657ef60c099eab11ec03022ce5729",
+      "headers": {
+        "server": "nginx",
+        "date": "Tue, 08 Sep 2026 22:52:48 GMT",
+        "content-type": "text/html",
+        "content-length": "5110",
+        "last-modified": "Tue, 08 Sep 2026 22:51:42 GMT",
+        "connection": "close",
+        "etag": "\"6aa0917e-13f6\"",
+        "cache-control": "no-cache",
+        "accept-ranges": "bytes"
+      }
+    }
+  ]
+}

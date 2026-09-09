@@ -28,7 +28,7 @@ namespace RiskAI.Tests
             BattleSession.PlayerCountForNewMatch = PlayerRules.MaxPlayers;
             BattleSession.LayoutForNewMatch = BattleSession.StartLayout.RandomCities;
             BattleSession.SeedForNewMatch = 16015;
-            BattleSession.MapForNewMatch = ScenarioMap.Classic;
+            BattleSession.MapForNewMatch = ScenarioMap.Europe;
             previous = SceneManager.GetActiveScene();
             scene = SceneManager.CreateScene("Sixteen player combat");
             SceneManager.SetActiveScene(scene);
@@ -45,7 +45,7 @@ namespace RiskAI.Tests
         public IEnumerator TeamFifteenCanCommandKillAndCapture()
         {
             Assert.That(battle.PlayerCount, Is.EqualTo(PlayerRules.MaxPlayers));
-            var home = battle.Towns.First(town => town.State.Owner == 15);
+            var home = battle.Towns.First(town => town.State.Owner == 15 && !town.IsPort);
             var neutral = battle.Towns.First(town => town.State.Owner == PlayerRules.NeutralOwner);
             var attacker = BattleTestScenario.Mobile(battle, 15, UnitKind.Footman, home.Rally);
             var victim = BattleTestScenario.Mobile(battle, 14, UnitKind.Footman, home.Rally + Vector3.right * 2);

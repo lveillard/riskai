@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Passed" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.1618327">
+  <test-suite type="TestSuite" id="1000" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="128" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.161833" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1168" name="RiskAI.Tests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.Tests.dll" runstate="Runnable" testcasecount="128" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.148752" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="69408" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1169" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="128" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.146386" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1170" name="Tests" fullname="RiskAI.Tests" runstate="Runnable" testcasecount="128" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.144939" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1005" name="AuthoredLayoutTests" fullname="RiskAI.Tests.AuthoredLayoutTests" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.139871" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="ParameterizedMethod" id="1008" name="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts" fullname="RiskAI.Tests.AuthoredLayoutTests.AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.117530" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1006" name="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Classic,33,11)" fullname="RiskAI.Tests.AuthoredLayoutTests.AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Classic,33,11)" methodname="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" seed="1930437185" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.056808" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Riverlands,44,11)" fullname="RiskAI.Tests.AuthoredLayoutTests.AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Riverlands,44,11)" methodname="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" seed="1137133833" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.050216" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1009" name="ClassicSouthernSettlementsDoNotRepeatMechanicalLatitudeRows" fullname="RiskAI.Tests.AuthoredLayoutTests.ClassicSouthernSettlementsDoNotRepeatMechanicalLatitudeRows" methodname="ClassicSouthernSettlementsDoNotRepeatMechanicalLatitudeRows" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" seed="526314296" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.003213" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1010" name="RiverlandsHasTwinOuterCordillerasAndAuthoredCoastsHaveVariableShelves" fullname="RiskAI.Tests.AuthoredLayoutTests.RiverlandsHasTwinOuterCordillerasAndAuthoredCoastsHaveVariableShelves" methodname="RiverlandsHasTwinOuterCordillerasAndAuthoredCoastsHaveVariableShelves" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" seed="183449256" result="Passed" start-time="2026-09-09 00:15:12Z" end-time="2026-09-09 00:15:12Z" duration="0.005991" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

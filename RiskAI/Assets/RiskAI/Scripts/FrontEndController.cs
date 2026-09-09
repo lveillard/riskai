@@ -17,6 +17,7 @@ namespace RiskAI
         BattleSession.StartLayout selectedLayout;
         BattleSession.AiDifficulty selectedDifficulty;
         int selectedPlayers;
+        bool playersAdjusted;
         string seedText;
         bool sourceMountains;
         bool loading;
@@ -31,7 +32,7 @@ namespace RiskAI
             selectedMap = BattleSession.MapForNewMatch;
             selectedLayout = BattleSession.LayoutForNewMatch;
             selectedDifficulty = BattleSession.DifficultyForNewMatch;
-            selectedPlayers = Mathf.Clamp(BattleSession.PlayerCountForNewMatch, 2, PlayerRules.MaxPlayers);
+            selectedPlayers = MapLayout.MaximumPlayersForScenario(selectedMap);
             seedText = BattleSession.SeedForNewMatch.ToString();
             sourceMountains = ImportedLandscapeAugment.Enabled;
         }
@@ -70,10 +71,17 @@ namespace RiskAI
             BattleSession.MapForNewMatch = selectedMap;
             BattleSession.LayoutForNewMatch = selectedLayout;
             BattleSession.DifficultyForNewMatch = selectedDifficulty;
-            BattleSession.PlayerCountForNewMatch = Mathf.Clamp(selectedPlayers, 2, PlayerRules.MaxPlayers);
+            selectedPlayers = Mathf.Clamp(selectedPlayers, 2, MapLayout.MaximumPlayersForScenario(selectedMap));
+            BattleSession.PlayerCountForNewMatch = selectedPlayers;
             BattleSession.SeedForNewMatch = seed;
             BattleSession.ModeForNewMatch = BattleSession.VictoryMode.Conquest;
             ImportedLandscapeAugment.Enabled = sourceMountains;
+            BattleSession.CountdownForNewMatch = true;
+            foreach(var argument in LaunchArguments.Get())
+                if(argument.StartsWith("--riskai-",StringComparison.OrdinalIgnoreCase) &&
+                    (argument.IndexOf("capture",StringComparison.OrdinalIgnoreCase)>=0 ||
+                     argument.IndexOf("probe",StringComparison.OrdinalIgnoreCase)>=0))
+                    BattleSession.CountdownForNewMatch=false;
             StartCoroutine(LoadBattlefield());
         }
 
@@ -119,12 +127,20 @@ namespace RiskAI
 
         void BuildLoading(VisualElement root)
         {
+            root.style.justifyContent = Justify.Center;
             var panel = RtsUiStyle.Panel("Loading panel");
-            if (UiViewport.IsCompact) panel.style.width = Length.Percent(100); else panel.style.width = 700;
-            panel.style.alignSelf = Align.Center; panel.style.marginTop = Length.Percent(30);
-            panel.Add(RtsUiStyle.Label("PREPARANDO LA CONQUISTA", null, 24));
-            panel.Add(RtsUiStyle.Label(MapLayout.ScenarioDetail(selectedMap) + " · " + selectedPlayers + " jugadores", null, 16));
-            panel.Add(RtsUiStyle.Label("Cargando terreno, ciudades y rutas…", null, 14));
+            panel.style.width = Length.Percent(100); panel.style.maxWidth = 700;
+            panel.style.minWidth = 0; panel.style.flexShrink = 1;
+            panel.style.alignSelf = Align.Center;
+            var title = RtsUiStyle.Label("PREPARANDO LA CONQUISTA", null, UiViewport.IsCompact ? 20 : 24);
+            var detail = RtsUiStyle.Label(MapLayout.ScenarioDetail(selectedMap) + " · " + selectedPlayers + " jugadores", null, UiViewport.IsCompact ? 14 : 16);
+            var status = RtsUiStyle.Label("Cargando terreno, ciudades y rutas…", null, 14);
+            foreach (var label in new[] { title, detail, status })
+            {
+                label.style.whiteSpace = WhiteSpace.Normal;
+                label.style.minWidth = 0; label.style.maxWidth = Length.Percent(100);
+                label.style.flexShrink = 1; panel.Add(label);
+            }
             root.Add(panel);
         }
 
@@ -187,9 +203,9 @@ namespace RiskAI
             root.Add(SectionTitle("Elige tu campo de batalla"));
             var grid = new VisualElement { name = "Scenario cards" };
             RtsUiStyle.Row(grid, true);grid.style.alignItems=Align.Stretch; grid.style.marginBottom = 16;
+            ScenarioCard(grid, ScenarioMap.Europe, "EUROPE", "Territorio importado a escala con puertos y fronteras reales.");
             ScenarioCard(grid, ScenarioMap.Classic, "LAS MARCAS", "Costa, mesetas y un sur seco para campañas rápidas.");
             ScenarioCard(grid, ScenarioMap.Riverlands, "CUATRO RIBERAS", "Río central, puente y un archipiélago al norte.");
-            ScenarioCard(grid, ScenarioMap.Europe, "EUROPE · REFORGED", "Territorio importado a escala con puertos y fronteras reales.");
             ScenarioCard(grid, ScenarioMap.NewWorld, "NEW WORLD · EUROPA Y AMÉRICA", "Europa y América para una conquista de gran escala.");
             root.Add(grid);
         }
@@ -197,7 +213,7 @@ namespace RiskAI
         void ScenarioCard(VisualElement parent, ScenarioMap map, string title, string description)
         {
             bool chosen = selectedMap == map;
-            var button = RtsUiStyle.Button("", () => { selectedMap = map; Rebuild(); }, "Map " + map);
+            var button = RtsUiStyle.Button("", () => SelectMap(map), "Map " + map);
             button.style.flexGrow = 1;
             if (UiViewport.IsCompact) { button.style.width = Length.Percent(100); button.style.marginRight = 0; }
             else { button.style.width=Length.Percent(47);button.style.minWidth=0; }
@@ -211,7 +227,7 @@ namespace RiskAI
             var seal=new RtsHeraldicSeal((int)map,accent);seal.style.width=UiViewport.IsCompact?54:50;seal.style.height=UiViewport.IsCompact?66:58;seal.style.marginRight=12;
             var words=new VisualElement();words.style.minWidth=0;words.style.flexShrink=1;
             var titleLabel = RtsUiStyle.Title(title, null, 15);
-            var detail = RtsUiStyle.Label(MapLayout.ScenarioDetail(map), null, 13); detail.style.color = RtsUiStyle.Bronze; detail.style.whiteSpace = WhiteSpace.Normal;
+            var detail = RtsUiStyle.Label(MapLayout.ScenarioDetail(map) + " · máx. " + MapLayout.MaximumPlayersForScenario(map) + " jugadores", null, 13); detail.style.color = RtsUiStyle.Bronze; detail.style.whiteSpace = WhiteSpace.Normal;
             var body = RtsUiStyle.Label(description, null, 12); body.style.color = RtsUiStyle.Muted; body.style.whiteSpace = WhiteSpace.Normal;
             words.Add(titleLabel);words.Add(detail);words.Add(body);
             if(chosen){var selected=RtsUiStyle.Label("ELEGIDO",null,10);selected.style.color=RtsUiStyle.Gold;selected.style.marginTop=5;words.Add(selected);}
@@ -226,12 +242,27 @@ namespace RiskAI
             root.Add(panel);
         }
 
+        void SelectMap(ScenarioMap map)
+        {
+            selectedMap = map;
+            int maximum = MapLayout.MaximumPlayersForScenario(map);
+            selectedPlayers = playersAdjusted ? Mathf.Clamp(selectedPlayers, 2, maximum) : maximum;
+            Rebuild();
+        }
+
+        void AdjustPlayers(int delta)
+        {
+            playersAdjusted = true;
+            selectedPlayers = Mathf.Clamp(selectedPlayers + delta, 2, MapLayout.MaximumPlayersForScenario(selectedMap));
+            Rebuild();
+        }
+
         void AddPlayers(VisualElement parent)
         {
-            var row = NewFieldRow(parent, "JUGADORES");
-            row.Add(RtsUiStyle.Button("−", () => { selectedPlayers = Mathf.Max(2, selectedPlayers - 1); Rebuild(); }));
+            var row = NewFieldRow(parent, "JUGADORES · MÁXIMO " + MapLayout.MaximumPlayersForScenario(selectedMap));
+            row.Add(RtsUiStyle.Button("−", () => AdjustPlayers(-1)));
             var count = RtsUiStyle.Label(selectedPlayers + " · tú y " + (selectedPlayers - 1) + " IA", null, 15); count.style.minWidth = 154; row.Add(count);
-            row.Add(RtsUiStyle.Button("+", () => { selectedPlayers = Mathf.Min(PlayerRules.MaxPlayers, selectedPlayers + 1); Rebuild(); }));
+            row.Add(RtsUiStyle.Button("+", () => AdjustPlayers(1)));
         }
 
         void AddSeed(VisualElement parent)
@@ -253,8 +284,8 @@ namespace RiskAI
         void AddDifficulty(VisualElement parent)
         {
             var row = NewFieldRow(parent, "DIFICULTAD DE IA");
-            Choice(row, "Relajada · ataque más tarde", selectedDifficulty == BattleSession.AiDifficulty.Relaxed, () => selectedDifficulty = BattleSession.AiDifficulty.Relaxed);
-            Choice(row, "Estándar · presión temprana", selectedDifficulty == BattleSession.AiDifficulty.Standard, () => selectedDifficulty = BattleSession.AiDifficulty.Standard);
+            Choice(row, "Relajada · tácticas sencillas", selectedDifficulty == BattleSession.AiDifficulty.Relaxed, () => selectedDifficulty = BattleSession.AiDifficulty.Relaxed);
+            Choice(row, "Estándar · mayor coordinación", selectedDifficulty == BattleSession.AiDifficulty.Standard, () => selectedDifficulty = BattleSession.AiDifficulty.Standard);
         }
 
         void AddMountains(VisualElement parent)

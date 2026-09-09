@@ -1,5 +1,40 @@
 # Fase 2 · tablet, móvil y navegador
 
+Seguimiento `9fb6beb`: zoom proporcional, modo estratégico desde 84, bordes
+de regiones de hoguera, moneda, cuenta atrás y tres correcciones de autonomía.
+77 casos Unity distintos aprobados; Windows/Web exportados, UI Web revisada
+en escritorio y vertical. El contraste de Reforged actual no resuelve aún el
+selector de capas del motor ni amplía el catálogo. No cierra rendimiento de
+grandes ejércitos ni ARM físico. [Validación](VALIDATION-v0.22-STRATEGY-START.md).
+
+Seguimiento `3b83279`: agua continua y más oscura, atraque explícito, producción
+según propietario y correcciones de combate contrastadas con WC3. Windows/Web
+exportados; 81 casos Unity distintos aprobados en esa revisión. No equivale a
+paridad completa con el motor original ni cierra el rendimiento pendiente.
+[Agua, combate y límites de la fuente](VALIDATION-v0.22-WATER-COMBAT.md).
+
+Avance v0.22: guardianes navales, luz de entrenamiento, playas compartidas y
+animación montada mejorados. El seguimiento `61f386d` completa el suavizado
+acotado de esquinas de costa de Europe/NewWorld: máximo 0,512 m, protección
+de ciudades y puertos, y geometría común para render, agua, colisión y consultas
+CPU, sin triángulos adicionales. Supera 10 casos EditMode y 10 PlayMode.
+
+`2a9192b` agrupa los marcadores del minimapa en una textura reutilizada y añade
+siete regresiones aprobadas. Windows/Web exportados y comprobados, incluida
+interfaz y vista vertical. Web sostiene 900 unidades durante 90 s, con 27.000
+órdenes y cero rechazos; la media observada baja de 85,92 a 56,63 ms/frame
+entre pasadas con carga externa variable. No es una comparación limpia ni
+resuelve la fluidez Web con esa carga. La ronda v0.22 reúne 52 casos Unity
+distintos aprobados y 12 Python.
+
+Las pasadas limpias con presupuestos 500 y 1000 mantienen 900 unidades durante
+90 s; la de 2000 debe repetirse por compilación Rust externa. La comparación
+completa, su confirmación en partida avanzada, el combate con carga sostenida
+y ARM físico siguen abiertos. La preparación avanzada ya completó 900 s
+simulados y 90 s medidos, también con carga externa. El presupuesto permanece
+en 500.
+[Evidencia inicial v0.22](VALIDATION-v0.22.md) · [Seguimiento](VALIDATION-v0.22-FOLLOWUP.md).
+
 Base cerrada: v0.18, commit cd3ff21. Objetivo activo desde el 7 de septiembre
 de 2026. Primera plataforma de referencia: Chrome en Android; un dispositivo
 concreto todavía no ha sido confirmado.
@@ -218,6 +253,6 @@ La distribución compacta conserva las pestañas y comparte los controles y
 las reglas con escritorio. Adaptar el espacio no implica eliminar la
 identidad visual ni reducir la información disponible en pantallas amplias.
 
-La versión actual se genera en Builds/Windows-v0.21 y Builds/Web-v0.21. Las builds anteriores
+La versión actual se genera en Builds/Windows-v0.22 y Builds/Web-v0.22. Las builds anteriores
 se conservan como referencia local. No se implementan servidor, multijugador, niebla ni héroes en esta
 fase.

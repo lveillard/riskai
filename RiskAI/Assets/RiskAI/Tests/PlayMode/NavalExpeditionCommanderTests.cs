@@ -28,7 +28,7 @@ namespace RiskAI.Tests
             previousTimeScale=Time.timeScale;Time.timeScale=10f;
             scene=SceneManager.CreateScene("Naval expedition commander");SceneManager.SetActiveScene(scene);
             new GameObject("Naval expedition commander bootstrap").AddComponent<RiskBootstrap>();
-            battle=BattleSession.Current;Object.FindFirstObjectByType<RtsController>().enabled=false;
+            battle=BattleSession.Current;battle.AiEnabled=false;Object.FindFirstObjectByType<RtsController>().enabled=false;
             yield return null;
         }
 
@@ -41,12 +41,12 @@ namespace RiskAI.Tests
             var troops=BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,Sample(home.Landing+Vector3.right*3f));
             var sourceGalley=BattleTestScenario.Ship(naval,1,ShipKind.Galley,home.Berth);
             Assert.That(sourceGalley,Is.Not.Null,"The occupied source berth is part of the transport integration fixture.");
-            // Advance only the clock through the naval grace; no rules tick means
-            // no income or recruitment is introduced into this economic fixture.
+            // Advance only the clock to the first naval decision; no rules tick
+            // means no income or recruitment enters this economic fixture.
             while(battle.BattleTime<battle.AiFirstNavalOffensiveTime+.1f)battle.Clock.Advance(.4f,false,_=>{});
             int cost=Harbor.Cost(ShipKind.Transport);battle.Economy.Gold[1]=cost;
             battle.AiEnabled=true;
-            // Reserve and queue before the land commander receives its first post-grace turn.
+            // Reserve and queue before the land commander receives its first turn.
             naval.ExpeditionFor(1).Tick(0);
             Assert.That(naval.PendingShips(1),Is.GreaterThan(0),"The fixture must enter paid transport training.");
             foreach(var unit in troops)Assert.That(naval.ExpeditionFor(1).Reserves(unit),Is.False,"Training must leave the land army available to defend; embark troops are chosen when the transport is ready.");

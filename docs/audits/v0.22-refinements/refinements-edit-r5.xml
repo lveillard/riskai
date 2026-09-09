@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="19" result="Failed(Child)" total="19" passed="18" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.2966858">
+  <test-suite type="TestSuite" id="1000" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="128" result="Failed" site="Child" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.296686" total="19" passed="18" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1168" name="RiskAI.Tests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.Tests.dll" runstate="Runnable" testcasecount="128" result="Failed" site="Child" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.284911" total="19" passed="18" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="24872" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1169" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="128" result="Failed" site="Child" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.283194" total="19" passed="18" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1170" name="Tests" fullname="RiskAI.Tests" runstate="Runnable" testcasecount="128" result="Failed" site="Child" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.281433" total="19" passed="18" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestFixture" id="1001" name="AttackPresentationTimingTests" fullname="RiskAI.Tests.AttackPresentationTimingTests" classname="RiskAI.Tests.AttackPresentationTimingTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.055029" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1002" name="EveryLandAttackSamplesItsContactPoseAtTheSimulationStrike" fullname="RiskAI.Tests.AttackPresentationTimingTests.EveryLandAttackSamplesItsContactPoseAtTheSimulationStrike" methodname="EveryLandAttackSamplesItsContactPoseAtTheSimulationStrike" classname="RiskAI.Tests.AttackPresentationTimingTests" runstate="Runnable" seed="1483960616" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.030381" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1004" name="ImportedClipsUseTheirMeasuredContactKeyframes" fullname="RiskAI.Tests.AttackPresentationTimingTests.ImportedClipsUseTheirMeasuredContactKeyframes" methodname="ImportedClipsUseTheirMeasuredContactKeyframes" classname="RiskAI.Tests.AttackPresentationTimingTests" runstate="Runnable" seed="289499692" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.001105" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1003" name="SourceBackswingControlsRecoveryWithoutChangingCooldown" fullname="RiskAI.Tests.AttackPresentationTimingTests.SourceBackswingControlsRecoveryWithoutChangingCooldown" methodname="SourceBackswingControlsRecoveryWithoutChangingCooldown" classname="RiskAI.Tests.AttackPresentationTimingTests" runstate="Runnable" seed="1622094645" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.000481" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1005" name="AuthoredLayoutTests" fullname="RiskAI.Tests.AuthoredLayoutTests" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" testcasecount="4" result="Failed" site="Child" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.056508" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="ParameterizedMethod" id="1008" name="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts" fullname="RiskAI.Tests.AuthoredLayoutTests.AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.045678" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1006" name="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Classic,33,11)" fullname="RiskAI.Tests.AuthoredLayoutTests.AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Classic,33,11)" methodname="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" seed="586490077" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.035602" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Riverlands,44,11)" fullname="RiskAI.Tests.AuthoredLayoutTests.AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts(Riverlands,44,11)" methodname="AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" seed="1407748896" result="Failed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.009024" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  isle-05 must retain a four-metre land approach.
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at RiskAI.Tests.AuthoredLayoutTests.AuthoredMapsMatchImportedDensityWhileKeepingSafeGeographicPosts (RiskAI.ScenarioMap map, System.Int32 cities, System.Int32 countries) [0x00277] in C:\Users\lveil\Desktop\Projects\riskai\RiskAI\Assets\RiskAI\Tests\Editor\AuthoredLayoutTests.cs:34
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-case id="1009" name="ClassicSouthernSettlementsDoNotRepeatMechanicalLatitudeRows" fullname="RiskAI.Tests.AuthoredLayoutTests.ClassicSouthernSettlementsDoNotRepeatMechanicalLatitudeRows" methodname="ClassicSouthernSettlementsDoNotRepeatMechanicalLatitudeRows" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" seed="68959609" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.002760" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1010" name="RiverlandsHasTwinOuterCordillerasAndAuthoredCoastsHaveVariableShelves" fullname="RiskAI.Tests.AuthoredLayoutTests.RiverlandsHasTwinOuterCordillerasAndAuthoredCoastsHaveVariableShelves" methodname="RiverlandsHasTwinOuterCordillerasAndAuthoredCoastsHaveVariableShelves" classname="RiskAI.Tests.AuthoredLayoutTests" runstate="Runnable" seed="1408686356" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.005515" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1058" name="ImportedCoastGeometryTests" fullname="RiskAI.Tests.ImportedCoastGeometryTests" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.089305" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="ParameterizedMethod" id="1065" name="CityAndPortBothProtectTheirModelAndClaimAnchors" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.008538" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1061" name="CityAndPortBothProtectTheirModelAndClaimAnchors(False,False)" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(False,False)" methodname="CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="239500480" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.005031" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1062" name="CityAndPortBothProtectTheirModelAndClaimAnchors(False,True)" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(False,True)" methodname="CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="1377960314" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.000370" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1063" name="CityAndPortBothProtectTheirModelAndClaimAnchors(True,False)" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(True,False)" methodname="CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="704139397" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.000530" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1064" name="CityAndPortBothProtectTheirModelAndClaimAnchors(True,True)" fullname="RiskAI.Tests.ImportedCoastGeometryTests.CityAndPortBothProtectTheirModelAndClaimAnchors(True,True)" methodname="CityAndPortBothProtectTheirModelAndClaimAnchors" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="2074650574" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.000185" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1060" name="HeightWaterLandAndInverseMatchRenderedTrianglesIncludingCrossedSourceCells" fullname="RiskAI.Tests.ImportedCoastGeometryTests.HeightWaterLandAndInverseMatchRenderedTrianglesIncludingCrossedSourceCells" methodname="HeightWaterLandAndInverseMatchRenderedTrianglesIncludingCrossedSourceCells" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="1807179683" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.063783" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1059" name="RoundingIsBoundedPreservesSourceArraysAndKeepsEveryTriangleOriented" fullname="RiskAI.Tests.ImportedCoastGeometryTests.RoundingIsBoundedPreservesSourceArraysAndKeepsEveryTriangleOriented" methodname="RoundingIsBoundedPreservesSourceArraysAndKeepsEveryTriangleOriented" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="621844195" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.010135" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1066" name="SmallDryIslandSurvivesInsideSourceWaterWithoutChangingItsFlags" fullname="RiskAI.Tests.ImportedCoastGeometryTests.SmallDryIslandSurvivesInsideSourceWaterWithoutChangingItsFlags" methodname="SmallDryIslandSurvivesInsideSourceWaterWithoutChangingItsFlags" classname="RiskAI.Tests.ImportedCoastGeometryTests" runstate="Runnable" seed="1977058444" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.001419" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1072" name="LaunchArgumentsTests" fullname="RiskAI.Tests.LaunchArgumentsTests" classname="RiskAI.Tests.LaunchArgumentsTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.009152" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1073" name="BrowserDiagnosticsRequireAnExplicitFlagAndIgnoreUnrelatedQueryData" fullname="RiskAI.Tests.LaunchArgumentsTests.BrowserDiagnosticsRequireAnExplicitFlagAndIgnoreUnrelatedQueryData" methodname="BrowserDiagnosticsRequireAnExplicitFlagAndIgnoreUnrelatedQueryData" classname="RiskAI.Tests.LaunchArgumentsTests" runstate="Runnable" seed="1293519849" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.005263" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1074" name="ExplicitProbeUsesTheSameOptionsAsDesktop" fullname="RiskAI.Tests.LaunchArgumentsTests.ExplicitProbeUsesTheSameOptionsAsDesktop" methodname="ExplicitProbeUsesTheSameOptionsAsDesktop" classname="RiskAI.Tests.LaunchArgumentsTests" runstate="Runnable" seed="925147471" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.000282" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1075" name="RestartProbeAndBoundedCyclesAreWhitelistedForBrowserDiagnostics" fullname="RiskAI.Tests.LaunchArgumentsTests.RestartProbeAndBoundedCyclesAreWhitelistedForBrowserDiagnostics" methodname="RestartProbeAndBoundedCyclesAreWhitelistedForBrowserDiagnostics" classname="RiskAI.Tests.LaunchArgumentsTests" runstate="Runnable" seed="992077435" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.000150" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1088" name="PlayerPaletteTests" fullname="RiskAI.Tests.PlayerPaletteTests" classname="RiskAI.Tests.PlayerPaletteTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.007498" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1089" name="UsesWarcraftThreeExtendedPaletteInCanonicalPlayerOrder" fullname="RiskAI.Tests.PlayerPaletteTests.UsesWarcraftThreeExtendedPaletteInCanonicalPlayerOrder" methodname="UsesWarcraftThreeExtendedPaletteInCanonicalPlayerOrder" classname="RiskAI.Tests.PlayerPaletteTests" runstate="Runnable" seed="1826689522" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.006055" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1146" name="TerrainContinuityTests" fullname="RiskAI.Tests.TerrainContinuityTests" classname="RiskAI.Tests.TerrainContinuityTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.043621" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1147" name="AdjacentImportedChunksShareLightingNormalsAcrossACurvedSlope" fullname="RiskAI.Tests.TerrainContinuityTests.AdjacentImportedChunksShareLightingNormalsAcrossACurvedSlope" methodname="AdjacentImportedChunksShareLightingNormalsAcrossACurvedSlope" classname="RiskAI.Tests.TerrainContinuityTests" runstate="Runnable" seed="2056721105" result="Passed" start-time="2026-09-09 00:13:27Z" end-time="2026-09-09 00:13:27Z" duration="0.042053" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

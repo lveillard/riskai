@@ -173,5 +173,21 @@ namespace RiskAI
             appliedCommands = appliedNow;
             rejectedCommands = rejectedNow;
         }
+
+        // Explicit probe boundaries keep setup work out of the measurement windows
+        // and retain the final partial window before a probe exits the player.
+        public void BeginProbeMeasurement()
+        {
+            session.Commands.ConsumeTelemetry();
+            session.World.ConsumeTelemetry();
+            SeaNavigation.ConsumeTelemetry();
+            ResetWindow(Time.unscaledTime);
+        }
+
+        public void EndProbeMeasurement()
+        {
+            Report(applicationFocused, session.Paused);
+            ResetWindow(Time.unscaledTime);
+        }
     }
 }

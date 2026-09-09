@@ -7,6 +7,14 @@ namespace RiskAI
     {
         public const float EdgeBandPixels=20f;
 
+        /// <summary>Equal zoom ratios settle at the same rate at every camera height.</summary>
+        public static float SmoothZoom(float current,float target,ref float logarithmicVelocity,float deltaTime)
+        {
+            if(deltaTime<=0)return current;
+            return Mathf.Exp(Mathf.SmoothDamp(Mathf.Log(Mathf.Max(.001f,current)),
+                Mathf.Log(Mathf.Max(.001f,target)),ref logarithmicVelocity,.10f,Mathf.Infinity,deltaTime));
+        }
+
         /// <summary>
         /// Returns a unit screen-edge direction. Screen Y is mapped to camera Z:
         /// bottom is -Z and top is +Z. Points outside the viewport do not pan.

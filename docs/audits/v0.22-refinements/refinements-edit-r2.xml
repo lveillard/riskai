@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="30" result="Passed" total="30" passed="30" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:44Z" duration="0.2001058">
+  <test-suite type="TestSuite" id="1000" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="124" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:44Z" duration="0.200106" total="30" passed="30" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1163" name="RiskAI.Tests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.Tests.dll" runstate="Runnable" testcasecount="124" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:44Z" duration="0.184218" total="30" passed="30" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="52628" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1164" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="124" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:44Z" duration="0.180426" total="30" passed="30" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1165" name="Tests" fullname="RiskAI.Tests" runstate="Runnable" testcasecount="124" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:44Z" duration="0.178379" total="30" passed="30" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="AttackPresentationTimingTests" fullname="RiskAI.Tests.AttackPresentationTimingTests" classname="RiskAI.Tests.AttackPresentationTimingTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:43Z" duration="0.072046" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1002" name="EveryLandAttackSamplesItsContactPoseAtTheSimulationStrike" fullname="RiskAI.Tests.AttackPresentationTimingTests.EveryLandAttackSamplesItsContactPoseAtTheSimulationStrike" methodname="EveryLandAttackSamplesItsContactPoseAtTheSimulationStrike" classname="RiskAI.Tests.AttackPresentationTimingTests" runstate="Runnable" seed="1377202726" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:43Z" duration="0.038659" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1003" name="SourceBackswingControlsRecoveryWithoutChangingCooldown" fullname="RiskAI.Tests.AttackPresentationTimingTests.SourceBackswingControlsRecoveryWithoutChangingCooldown" methodname="SourceBackswingControlsRecoveryWithoutChangingCooldown" classname="RiskAI.Tests.AttackPresentationTimingTests" runstate="Runnable" seed="3786488" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:43Z" duration="0.000879" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1038" name="EconomyCountryTests" fullname="RiskAI.Tests.EconomyCountryTests" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:44Z" duration="0.030273" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1046" name="BountyRetainsQuarterPointFractionsUntilWholeGold" fullname="RiskAI.Tests.EconomyCountryTests.BountyRetainsQuarterPointFractionsUntilWholeGold" methodname="BountyRetainsQuarterPointFractionsUntilWholeGold" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="1583919043" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:43Z" duration="0.004057" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1047" name="BountyUsesPointValueIndependentlyOfPurchasePrice" fullname="RiskAI.Tests.EconomyCountryTests.BountyUsesPointValueIndependentlyOfPurchasePrice" methodname="BountyUsesPointValueIndependentlyOfPurchasePrice" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="1402649681" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:43Z" duration="0.000698" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1039" name="BreakdownMatchesActualRoundPaymentAndDropsLostCountries" fullname="RiskAI.Tests.EconomyCountryTests.BreakdownMatchesActualRoundPaymentAndDropsLostCountries" methodname="BreakdownMatchesActualRoundPaymentAndDropsLostCountries" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="197950473" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:43Z" duration="0.007805" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1043" name="CountryQueriesReflectMutableOwnershipAndTopology" fullname="RiskAI.Tests.EconomyCountryTests.CountryQueriesReflectMutableOwnershipAndTopology" methodname="CountryQueriesReflectMutableOwnershipAndTopology" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="697469244" result="Passed" start-time="2026-09-08 23:39:43Z" end-time="2026-09-08 23:39:44Z" duration="0.002472" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1040" name="FragmentedCountryPaysOnlyBasicIncomeUntilCompleted" fullname="RiskAI.Tests.EconomyCountryTests.FragmentedCountryPaysOnlyBasicIncomeUntilCompleted" methodname="FragmentedCountryPaysOnlyBasicIncomeUntilCompleted" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="1898908841" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000841" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1045" name="GrantAndRefundValidateTeamsAndAmounts" fullname="RiskAI.Tests.EconomyCountryTests.GrantAndRefundValidateTeamsAndAmounts" methodname="GrantAndRefundValidateTeamsAndAmounts" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="2054570336" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.001496" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1041" name="MixedAndLegacyTownsRemainDistinguishable" fullname="RiskAI.Tests.EconomyCountryTests.MixedAndLegacyTownsRemainDistinguishable" methodname="MixedAndLegacyTownsRemainDistinguishable" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="1047020086" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000549" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1044" name="SourceCountryReinforcementUsesCeilingHalfCityCreditAndFivePointCap" fullname="RiskAI.Tests.EconomyCountryTests.SourceCountryReinforcementUsesCeilingHalfCityCreditAndFivePointCap" methodname="SourceCountryReinforcementUsesCeilingHalfCityCreditAndFivePointCap" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="694347566" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000483" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1048" name="SourceGoldCostsAndNavalProfilesAreNotScaledByPrototypeMultiplier" fullname="RiskAI.Tests.EconomyCountryTests.SourceGoldCostsAndNavalProfilesAreNotScaledByPrototypeMultiplier" methodname="SourceGoldCostsAndNavalProfilesAreNotScaledByPrototypeMultiplier" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="1479828669" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.003044" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1042" name="ThreeScatteredCitiesPayFourWhileACompleteThreeCityCountryPaysSeven" fullname="RiskAI.Tests.EconomyCountryTests.ThreeScatteredCitiesPayFourWhileACompleteThreeCityCountryPaysSeven" methodname="ThreeScatteredCitiesPayFourWhileACompleteThreeCityCountryPaysSeven" classname="RiskAI.Tests.EconomyCountryTests" runstate="Runnable" seed="1575944277" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.001508" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1085" name="PlayerPaletteTests" fullname="RiskAI.Tests.PlayerPaletteTests" classname="RiskAI.Tests.PlayerPaletteTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.009219" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1086" name="UsesWarcraftThreeExtendedPaletteInCanonicalPlayerOrder" fullname="RiskAI.Tests.PlayerPaletteTests.UsesWarcraftThreeExtendedPaletteInCanonicalPlayerOrder" methodname="UsesWarcraftThreeExtendedPaletteInCanonicalPlayerOrder" classname="RiskAI.Tests.PlayerPaletteTests" runstate="Runnable" seed="859483444" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.007861" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1087" name="PlayerRulesTests" fullname="RiskAI.Tests.PlayerRulesTests" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.023206" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1097" name="IndividualAllocationGivesEveryOneOfSixteenPlayersACity" fullname="RiskAI.Tests.PlayerRulesTests.IndividualAllocationGivesEveryOneOfSixteenPlayersACity" methodname="IndividualAllocationGivesEveryOneOfSixteenPlayersACity" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="1231777778" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.005157" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1095" name="MapCapacityReservesThreeCitiesPerPlayer" fullname="RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.007577" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1088" name="MapCapacityReservesThreeCitiesPerPlayer(33,11)" fullname="RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(33,11)" methodname="MapCapacityReservesThreeCitiesPerPlayer" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="535590811" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000806" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1089" name="MapCapacityReservesThreeCitiesPerPlayer(44,14)" fullname="RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(44,14)" methodname="MapCapacityReservesThreeCitiesPerPlayer" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="1732703361" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000255" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1090" name="MapCapacityReservesThreeCitiesPerPlayer(48,16)" fullname="RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(48,16)" methodname="MapCapacityReservesThreeCitiesPerPlayer" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="1596340866" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000141" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1091" name="MapCapacityReservesThreeCitiesPerPlayer(212,16)" fullname="RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(212,16)" methodname="MapCapacityReservesThreeCitiesPerPlayer" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="1617952357" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000120" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1092" name="MapCapacityReservesThreeCitiesPerPlayer(293,16)" fullname="RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(293,16)" methodname="MapCapacityReservesThreeCitiesPerPlayer" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="138928597" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000101" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1093" name="MapCapacityReservesThreeCitiesPerPlayer(5,1)" fullname="RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(5,1)" methodname="MapCapacityReservesThreeCitiesPerPlayer" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="1219666851" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000118" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1094" name="MapCapacityReservesThreeCitiesPerPlayer(0,0)" fullname="RiskAI.Tests.PlayerRulesTests.MapCapacityReservesThreeCitiesPerPlayer(0,0)" methodname="MapCapacityReservesThreeCitiesPerPlayer" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="374023518" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000227" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1098" name="NeutralOwnershipMapsToDedicatedCombatTeam" fullname="RiskAI.Tests.PlayerRulesTests.NeutralOwnershipMapsToDedicatedCombatTeam" methodname="NeutralOwnershipMapsToDedicatedCombatTeam" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="210380875" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000785" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1096" name="SixteenPlayerEconomyStartsAndPaysEveryAccount" fullname="RiskAI.Tests.PlayerRulesTests.SixteenPlayerEconomyStartsAndPaysEveryAccount" methodname="SixteenPlayerEconomyStartsAndPaysEveryAccount" classname="RiskAI.Tests.PlayerRulesTests" runstate="Runnable" seed="1848829448" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.004812" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1124" name="RulesTests" fullname="RiskAI.Tests.RulesTests" classname="RiskAI.Tests.RulesTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.004221" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1125" name="IncomeIncludesCompleteCountriesAndStopsWithoutCities" fullname="RiskAI.Tests.RulesTests.IncomeIncludesCompleteCountriesAndStopsWithoutCities" methodname="IncomeIncludesCompleteCountriesAndStopsWithoutCities" classname="RiskAI.Tests.RulesTests" runstate="Runnable" seed="1504058764" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000851" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1126" name="IncomePaysAtRoundBoundaryAndHandlesLongFrames" fullname="RiskAI.Tests.RulesTests.IncomePaysAtRoundBoundaryAndHandlesLongFrames" methodname="IncomePaysAtRoundBoundaryAndHandlesLongFrames" classname="RiskAI.Tests.RulesTests" runstate="Runnable" seed="229333566" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000583" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1127" name="InvalidTimeAndPurchasesCannotCreateGold" fullname="RiskAI.Tests.RulesTests.InvalidTimeAndPurchasesCannotCreateGold" methodname="InvalidTimeAndPurchasesCannotCreateGold" classname="RiskAI.Tests.RulesTests" runstate="Runnable" seed="1095559523" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000531" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1143" name="TerritoryMarkersTests" fullname="RiskAI.Tests.TerritoryMarkersTests" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.011032" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1148" name="InternalPostsHideWhenAdjacentCitiesShareAnOwner" fullname="RiskAI.Tests.TerritoryMarkersTests.InternalPostsHideWhenAdjacentCitiesShareAnOwner" methodname="InternalPostsHideWhenAdjacentCitiesShareAnOwner" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" seed="1731824735" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000438" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1147" name="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" fullname="RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.007903" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1144" name="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(1.0f)" fullname="RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(1.0f)" methodname="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" seed="1028392146" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.003682" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1145" name="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(2.0f)" fullname="RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(2.0f)" methodname="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" seed="1093400184" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000549" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1146" name="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(3.0f)" fullname="RiskAI.Tests.TerritoryMarkersTests.StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity(3.0f)" methodname="StrategicDiamondStaysOnItsProjectedGroundPointAtEveryDensity" classname="RiskAI.Tests.TerritoryMarkersTests" runstate="Runnable" seed="433789395" result="Passed" start-time="2026-09-08 23:39:44Z" end-time="2026-09-08 23:39:44Z" duration="0.000195" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

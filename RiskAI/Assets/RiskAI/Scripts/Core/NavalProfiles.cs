@@ -13,6 +13,8 @@ namespace RiskAI.Core
     public readonly struct ShipProfile
     {
         public readonly string Name;
+        public readonly string SourceRawId;
+        public readonly bool CanCapture;
         public readonly float Health;
         public readonly float Damage;
         public readonly float BaseDamage;
@@ -43,9 +45,11 @@ namespace RiskAI.Core
             int cost,
             float trainSeconds,
             int capacity,
-            int pointValue,int dice=0,int sides=0)
+            int pointValue,int dice=0,int sides=0,string sourceRawId=null,bool canCapture=false)
         {
             Name = name;
+            SourceRawId = sourceRawId;
+            CanCapture = canCapture;
             Health = health;
             BaseDamage=damage;Dice=dice;Sides=sides;Damage=damage+dice*(sides+1)*.5f;
             Range = range;
@@ -66,17 +70,19 @@ namespace RiskAI.Core
         // while its source-aligned profile is the documented h00W Warship B.
         public static readonly ShipProfile Galley = new ShipProfile(
             "Fragata", 400f, 30f, 20f, 1.5f, 6.8f, 6f,
-            AttackKind.Normal, 5, 4f, 0, 5,1,15);
+            // W3U h00W ubld@0x2024; circle entry excludes n007/n008 only.
+            AttackKind.Normal, 5, 1f, 0, 5,1,15,"h00W",true);
 
         public static ShipProfile Frigate => Galley;
 
         // n008 (old nzep) overrides HP300, speed340/50 and cost/point2.
-        // Its inherited nzep armor is 0 and it has no enabled weapon. Capacity,
-        // train time and the UI's Normal token remain local. The inspected Aloa
-        // tables do not encode cargo capacity; these are not source-stat claims.
+        // Its inherited nzep armor is 0 and it has no enabled weapon.
+        // n008 uabi@0x3588 attaches Sch3: W3A Car1@0x395 sets capacity 10.
+        // The UI's Normal attack token does not enable a weapon.
         public static readonly ShipProfile Transport = new ShipProfile(
             "Transporte", 300f, 0f, 0f, 0f, 6.8f, 0f,
-            AttackKind.Normal, 2, 6f, 6, 2);
+            // W3U n008 ubld@0x3402; JASS17438-17445 excludes n008 from entry.
+            AttackKind.Normal, 2, 1f, 10, 2,sourceRawId:"n008",canCapture:false);
 
         public static ShipProfile Profile(NavalUnitKind kind)
         {

@@ -19,9 +19,10 @@ namespace RiskAI
         float FocusSpeedCap => Mathf.Max(120,MapLayout.HalfDepth*1.25f);
         Camera cam;Vector3 focus,targetFocus,panVelocity,zoomAnchor,homePoint=new Vector3(-26,0,-17);Vector2 anchorScreen;
         float zoomVelocity;bool anchorZoom;
+        float yaw,pitch=55;
         public void Initialize(Camera camera)
         {
-            cam=camera;cam.orthographicSize=TargetZoom=InitialZoom;
+            cam=camera;yaw=0;pitch=55;cam.transform.rotation=DefaultRotation;cam.orthographicSize=TargetZoom=InitialZoom;
             focus=targetFocus=new Vector3(-26,0,-17);Apply();
         }
         public Vector3 Ground(Vector2 screen)
@@ -32,7 +33,7 @@ namespace RiskAI
         }
         public void Focus(Vector3 point) { targetFocus=Clamp(point,TargetZoom);anchorZoom=false; }
         public void SetHome(Vector3 point) { homePoint=point;focus=targetFocus=Clamp(point);Apply(); }
-        public void ResetView() { TargetZoom=InitialZoom;targetFocus=Clamp(homePoint,TargetZoom);anchorZoom=false; }
+        public void ResetView() { yaw=0;pitch=55;cam.transform.rotation=DefaultRotation;Apply();TargetZoom=InitialZoom;targetFocus=Clamp(homePoint,TargetZoom);anchorZoom=false; }
         public void FrameMap(){TargetZoom=MaximumZoom;targetFocus=MapLayout.PlayableCenter;anchorZoom=false;}
         public void Pan(Vector3 direction,float dt)
         {
@@ -44,6 +45,14 @@ namespace RiskAI
             Vector3 planar=right*direction.x+forward*direction.z;
             if(planar.sqrMagnitude>.001f)planar.Normalize();
             targetFocus=Clamp(targetFocus+planar*TargetZoom*.9f*PanSpeed*dt);anchorZoom=false;
+        }
+        public void Orbit(Vector2 delta)
+        {
+            if(!cam)return;
+            float degrees=180f/Mathf.Max(1,Mathf.Min(Screen.width,Screen.height));
+            yaw=Mathf.Repeat(yaw+delta.x*degrees,360);
+            pitch=Mathf.Clamp(pitch-delta.y*degrees,35,80);
+            CancelMotion();cam.transform.rotation=Quaternion.Euler(pitch,yaw,0);Apply();
         }
         public void Drag(Vector2 previous,Vector2 current)
         {
@@ -65,13 +74,13 @@ namespace RiskAI
         void LateUpdate()
         {
             if(!cam)return;float dt=Mathf.Min(Time.unscaledDeltaTime,.05f);
-            cam.orthographicSize=Mathf.SmoothDamp(cam.orthographicSize,TargetZoom,ref zoomVelocity,.10f,200,dt);
+            cam.orthographicSize=RtsCameraPolicy.SmoothZoom(cam.orthographicSize,TargetZoom,ref zoomVelocity,dt);
             focus=Vector3.SmoothDamp(focus,Clamp(targetFocus),ref panVelocity,.1f,FocusSpeedCap,dt);Apply();
             if(anchorZoom)
             {
                 // Keep the original surface point under the cursor, including on cliff edges.
                 Vector3 delta=zoomAnchor-AtHeight(anchorScreen,zoomAnchor.y);focus=Clamp(focus+delta);targetFocus=Clamp(targetFocus+delta);Apply();
-                if(Mathf.Abs(cam.orthographicSize-TargetZoom)<.01f)anchorZoom=false;
+                if(Mathf.Abs(Mathf.Log(cam.orthographicSize/TargetZoom))<.0001f)anchorZoom=false;
             }
         }
         Vector3 AtHeight(Vector2 screen,float height)

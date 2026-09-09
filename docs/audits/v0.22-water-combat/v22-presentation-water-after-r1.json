@@ -1,0 +1,34 @@
+[
+  {
+    "map": "europe",
+    "exitCode": 0,
+    "records": [
+      "RISKAI_PRESENTATION_IMAGE: town-idle",
+      "RISKAI_PRESENTATION_IMAGE: town-training",
+      "RISKAI_PRESENTATION_IMAGE: port-training",
+      "RISKAI_PRESENTATION_IMAGE: guard-idle",
+      "RISKAI_PRESENTATION_IMAGE: guard-selected",
+      "RISKAI_PRESENTATION_GUARD: garrison=True distance=0",
+      "RISKAI_PRESENTATION_SHORE: kind=green at=(-66.88, 0.40, -308.32) weights=(0.00, 0.01) allowed=False landing=(0.00, 0.00, 0.00) reason=S\u00f3lo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.",
+      "RISKAI_PRESENTATION_IMAGE: shore-green",
+      "RISKAI_PRESENTATION_SHORE: kind=rock at=(221.12, 0.54, -308.32) weights=(0.00, 0.91) allowed=False landing=(0.00, 0.00, 0.00) reason=S\u00f3lo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.",
+      "RISKAI_PRESENTATION_IMAGE: shore-rock",
+      "RISKAI_PRESENTATION_SHORE: kind=sand at=(233.12, 0.61, -256.32) weights=(0.82, 0.17) allowed=True landing=(233.12, 0.73, -256.32) reason=",
+      "RISKAI_PRESENTATION_IMAGE: shore-sand",
+      "RISKAI_PRESENTATION_OK: map=Europe sand=True rock=True green=True steep=False directory=C:\\Users\\lveil\\Desktop\\Projects\\riskai\\Captures\\v22-presentation-water-after-r1\\europe"
+    ],
+    "images": [
+      "Captures\\v22-presentation-water-after-r1\\europe\\guard-idle.png",
+      "Captures\\v22-presentation-water-after-r1\\europe\\guard-selected.png",
+      "Captures\\v22-presentation-water-after-r1\\europe\\port-training.png",
+      "Captures\\v22-presentation-water-after-r1\\europe\\shore-green.png",
+      "Captures\\v22-presentation-water-after-r1\\europe\\shore-rock.png",
+      "Captures\\v22-presentation-water-after-r1\\europe\\shore-sand.png",
+      "Captures\\v22-presentation-water-after-r1\\europe\\town-idle.png",
+      "Captures\\v22-presentation-water-after-r1\\europe\\town-training.png"
+    ],
+    "completed": true,
+    "syntheticRenderingFixture": true,
+    "physicalInputTest": false
+  }
+]

@@ -1,0 +1,157 @@
+[
+  {
+    "captureFolder": "v22-click-classic-tablet",
+    "map": "classic",
+    "viewport": [
+      1024,
+      768
+    ],
+    "dpr": 2.0,
+    "success": true,
+    "errors": [],
+    "captures": [
+      "menu",
+      "empty",
+      "city",
+      "queue",
+      "army-actions",
+      "harbor",
+      "gold-real-click",
+      "income",
+      "cities-real-click",
+      "ranking",
+      "strategic",
+      "north",
+      "south",
+      "coast"
+    ],
+    "clickComparisons": {
+      "gold-real-click": 0.018,
+      "cities-real-click": 0.023
+    }
+  },
+  {
+    "captureFolder": "v22-final-world-desktop",
+    "map": "world",
+    "viewport": [
+      1280,
+      800
+    ],
+    "dpr": 1.0,
+    "success": true,
+    "errors": [],
+    "captures": [
+      "menu",
+      "empty",
+      "city",
+      "queue",
+      "army-actions",
+      "harbor",
+      "gold-real-click",
+      "income",
+      "cities-real-click",
+      "ranking",
+      "strategic",
+      "north",
+      "south",
+      "coast"
+    ],
+    "clickComparisons": {
+      "gold-real-click": 0.055,
+      "cities-real-click": 0.066
+    }
+  },
+  {
+    "captureFolder": "v22-final-europe-phone",
+    "map": "europe",
+    "viewport": [
+      390,
+      844
+    ],
+    "dpr": 2.0,
+    "success": true,
+    "errors": [],
+    "captures": [
+      "menu",
+      "empty",
+      "city",
+      "queue",
+      "army-actions",
+      "harbor",
+      "gold-real-click",
+      "income",
+      "cities-real-click",
+      "ranking",
+      "strategic",
+      "north",
+      "south",
+      "coast"
+    ],
+    "clickComparisons": {
+      "gold-real-click": 0.013,
+      "cities-real-click": 0.025
+    }
+  },
+  {
+    "captureFolder": "v22-final-europe-landscape",
+    "map": "europe",
+    "viewport": [
+      844,
+      390
+    ],
+    "dpr": 2.0,
+    "success": true,
+    "errors": [],
+    "captures": [
+      "menu",
+      "empty",
+      "city",
+      "queue",
+      "army-actions",
+      "harbor",
+      "gold-real-click",
+      "income",
+      "cities-real-click",
+      "ranking",
+      "strategic",
+      "north",
+      "south",
+      "coast"
+    ],
+    "clickComparisons": {
+      "gold-real-click": 0.013,
+      "cities-real-click": 0.024
+    }
+  },
+  {
+    "captureFolder": "v22-click-riverlands-tablet",
+    "map": "riverlands",
+    "viewport": [
+      768,
+      1024
+    ],
+    "dpr": 2.0,
+    "success": true,
+    "errors": [],
+    "captures": [
+      "menu",
+      "empty",
+      "city",
+      "queue",
+      "army-actions",
+      "harbor",
+      "gold-real-click",
+      "income",
+      "cities-real-click",
+      "ranking",
+      "strategic",
+      "north",
+      "south",
+      "coast"
+    ],
+    "clickComparisons": {
+      "gold-real-click": 0.019,
+      "cities-real-click": 0.318
+    }
+  }
+]

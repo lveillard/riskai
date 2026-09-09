@@ -9,7 +9,7 @@ namespace RiskAI
     public sealed class Soldier : CombatTarget
     {
         enum OrderMode { Idle, Move, AttackMove, Attack, Hold, Patrol, Follow }
-        struct Order { public Vector3 Point; public OrderMode Mode; public Soldier Target; }
+        struct Order { public Vector3 Point; public OrderMode Mode; public int TargetId; }
         public UnitKind Kind { get; private set; }
         public int OriginCountry { get; set; } = -1;
         public override float MaxHealth => BattleRules.Health(Kind);
@@ -23,17 +23,39 @@ namespace RiskAI
         public bool IsIdle => !IsGarrison && isActiveAndEnabled && mode == OrderMode.Idle && !target && Agent && Agent.enabled && !Agent.hasPath;
         public NavMeshAgent Agent { get; private set; }
         public CombatTarget CurrentTarget => target;
+        // Presentation-only projection of the strike already scheduled by SimTick.
+        // It does not schedule, cancel, or resolve combat.
+        public float StrikeWindupProgress => strikeAt < 0 || !strikeTarget || !session ? -1 :
+            Mathf.Clamp01(1-(strikeAt-session.BattleTime)/Mathf.Max(.001f,BattleRules.AttackPoint(Kind)));
+        // Observational animation phase only; damage remains owned by SimTick.
+        public float AttackPresentationProgress
+        {
+            get
+            {
+                if (!session || attackPresentationStartedAt < 0) return -1;
+                if (attackPresentationContactTick == session.Clock.TickCount)
+                    return AttackPresentationTiming.ContactNormalizedTime(Kind);
+                float elapsed = session.BattleTime - attackPresentationStartedAt;
+                float duration = attackPresentationAttackPoint + attackPresentationRecovery;
+                if (elapsed < 0 || elapsed > duration) return -1;
+                return AttackPresentationTiming.NormalizedTime(elapsed,
+                    attackPresentationAttackPoint, attackPresentationRecovery,
+                    AttackPresentationTiming.ContactNormalizedTime(Kind));
+            }
+        }
         public bool IsHolding => !IsGarrison && isActiveAndEnabled && mode==OrderMode.Hold && !target && Agent && Agent.enabled;
         public string OrderLabel => IsGarrison ? "Guarnición · mantiene el edificio" : target ? "En combate" : mode == OrderMode.Move ? "Moviendo" : mode == OrderMode.AttackMove ? "Avanzando y atacando" : mode == OrderMode.Hold ? "Manteniendo posición" : mode == OrderMode.Patrol ? "Patrullando" : mode == OrderMode.Follow ? "Siguiendo" : "Preparado";
         public Transform LeftLeg, RightLeg, Weapon;
         internal BattleSession session;
         CombatTarget target, strikeTarget;
-        Soldier followTarget;
+        int followTargetId;
         LineRenderer ring;
         SoldierAnimator visualAnimator;
         OrderMode mode;
         Vector3 destination, anchor, pursuitOrigin, patrolOrigin, garrisonAnchor;
-        float nextSense, nextPath, nextAttack, strikeAt = -1, attackFlash, stalled;
+        float nextSense, nextPath, nextAttack, strikeAt = -1, stalled;
+        float attackPresentationStartedAt = -1, attackPresentationAttackPoint, attackPresentationRecovery;
+        long attackPresentationContactTick = -1;
         // These fields are observational only: direct player moves are timed from accepted command submit to first observed velocity.
         double humanMoveSubmittedAt = -1;
         double humanMovePausedSecondsAtSubmit;
@@ -55,8 +77,8 @@ namespace RiskAI
             session=battle; Team=team; Kind=kind; Health=MaxHealth; OriginCountry=-1;
             Garrison=null; simulationPaused=false; enabled=true;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
-            mode=OrderMode.Idle; target=strikeTarget=followTarget=null; orders.Clear();
-            nextPath=nextAttack=attackFlash=stalled=0; strikeAt=-1; wasFighting=false;
+            mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; orders.Clear();
+            nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
             humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
             bool first=!Agent;
             Agent=GetComponent<NavMeshAgent>(); Agent.enabled=true;
@@ -116,7 +138,7 @@ namespace RiskAI
         internal void ReleaseGarrison(CityClaimZone zone)
         {
             if(Garrison!=zone)return;
-            Garrison=null; orders.Clear(); CancelStrike(); target=followTarget=null; mode=OrderMode.Idle;
+            Garrison=null; orders.Clear(); CancelStrike(); target=null; followTargetId=0; mode=OrderMode.Idle;
             anchor=destination=transform.position; nextSense=0; wasFighting=false;
             if(!Agent || !Agent.enabled)return;
             Agent.updatePosition=true; Agent.updateRotation=true;
@@ -181,7 +203,7 @@ namespace RiskAI
         {
             ClearHumanMoveTelemetry(true);
             CancelStrike(); mode = order.Mode; destination = order.Point; patrolOrigin = anchor = transform.position;
-            target = null; followTarget = order.Target; stalled = 0; nextSense = 0; wasFighting = false;
+            target = null; followTargetId = order.TargetId; stalled = 0; nextSense = 0; wasFighting = false;
             ResumePath();
         }
         void ResumePath()
@@ -205,19 +227,19 @@ namespace RiskAI
         public void Attack(CombatTarget enemy)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !enemy || enemy.Team == Team || !Agent.enabled || !Agent.isOnNavMesh) return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false;
+            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); followTargetId=0; mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false;
         }
         public void Follow(Soldier ally)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !ally || ally == this || ally.Team != Team) return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); Apply(new Order { Mode = OrderMode.Follow, Target = ally });
+            orders.Clear(); ClearHumanMoveTelemetry(true); Apply(new Order { Mode = OrderMode.Follow, TargetId = ally.EntityId });
         }
         public void Stop() => Stand(OrderMode.Idle);
         public void HoldPosition() => Stand(OrderMode.Hold);
         void Stand(OrderMode orderMode)
         {
             if(IsGarrison)return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = followTarget = null; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false;
+            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false;
             if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); Agent.isStopped = false; }
         }
         void Complete(bool failed=false)
@@ -227,7 +249,15 @@ namespace RiskAI
             else Stop();
         }
         void SetTarget(CombatTarget enemy) { target = enemy; pursuitOrigin = transform.position; nextPath = 0; }
-        void CancelStrike() { strikeAt = -1; strikeTarget = null; attackFlash = 0; }
+        void CancelStrike()
+        {
+            if(strikeAt>=0)
+            {
+                attackPresentationStartedAt=-1;attackPresentationContactTick=-1;
+                if(visualAnimator)visualAnimator.CancelStrike();
+            }
+            strikeAt = -1; strikeTarget = null;
+        }
         bool Visible(CombatTarget enemy)
         {
             if (!enemy) return false;
@@ -242,14 +272,23 @@ namespace RiskAI
         {
             if (!target || !target.CanBeAttacked || target.Team == Team) return false;
             if (mode == OrderMode.Attack) return true;
-            float leash = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == PlayerRules.NeutralTeam ? 7 : 11;
+            float leash = AutonomousLeash();
             var origin = mode == OrderMode.Idle || mode == OrderMode.Hold ? anchor : pursuitOrigin;
-            return Vector3.Distance(target.transform.position, origin) <= leash;
+            // Acquisition and firing measure an attackable surface. The autonomous
+            // leash must use that same surface or a long ship can be in weapon range
+            // while its pivot silently cancels the pending strike.
+            return Vector3.Distance(target.ApproachPoint(origin), origin) <= leash;
+        }
+        float AutonomousLeash()
+        {
+            float existing = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == PlayerRules.NeutralTeam ? 7 : 11;
+            return Mathf.Max(existing, SourceWeapons.AcquisitionRange(Kind));
         }
         void Acquire()
         {
             if (mode == OrderMode.Move || mode == OrderMode.Follow || mode == OrderMode.Attack) return;
-            float radius = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 1 : mode == OrderMode.Hold ? BattleRules.Range(Kind) : Team == PlayerRules.NeutralTeam ? 5 : 7.5f;
+            float sourceRadius = SourceWeapons.AcquisitionRange(Kind);
+            float radius = sourceRadius > 0 ? sourceRadius : mode == OrderMode.Hold ? BattleRules.Range(Kind) : Team == PlayerRules.NeutralTeam ? 5 : 7.5f;
             CombatTarget best = null; float score = float.MaxValue;
             session.Spatial.Query(transform.position,radius+3,nearby);
             foreach (var enemy in nearby)
@@ -257,7 +296,7 @@ namespace RiskAI
                 if (!enemy || enemy.Team == Team || !enemy.CanBeAttacked) continue;
                 float distance = Vector3.Distance(transform.position, enemy.ApproachPoint(transform.position));
                 if (distance > radius || !Visible(enemy)) continue;
-                if ((mode == OrderMode.Idle || Team == PlayerRules.NeutralTeam) && Vector3.Distance(anchor, enemy.transform.position) > (BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == PlayerRules.NeutralTeam ? 7 : 11)) continue;
+                if ((mode == OrderMode.Idle || Team == PlayerRules.NeutralTeam) && Vector3.Distance(anchor, enemy.ApproachPoint(anchor)) > AutonomousLeash()) continue;
                 int pressure = session.Spatial.Pressure(Team, enemy);
                 float candidate = distance + (Kind == UnitKind.Footman ? pressure * .48f : pressure * .1f);
                 if (candidate < score || candidate == score && (!best || enemy.EntityId < best.EntityId)) { best = enemy; score = candidate; }
@@ -276,10 +315,12 @@ namespace RiskAI
             else pathPendingSince = -1;
             if (strikeAt >= 0 && session.BattleTime >= strikeAt)
             {
+                attackPresentationContactTick=session.Clock.TickCount;
+                if(visualAnimator)visualAnimator.SampleStrikeContact();
                 if (strikeTarget && strikeTarget.Health > 0 && Vector3.Distance(transform.position, strikeTarget.ApproachPoint(transform.position)) <= BattleRules.Range(Kind) + .55f && Vector3.Distance(transform.position,strikeTarget.ApproachPoint(transform.position))>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
                 {
                     float damage = session.RollDamage(BattleRules.Profile(Kind));
-                    if (BattleRules.Ranged(Kind)) session.Combat.FireProjectile(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, AttackType);
+                    if (BattleRules.Ranged(Kind)) session.Combat.FireWeapon(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, SourceWeapons.For(Kind, AttackType));
                     else strikeTarget.ReceiveAttack(damage, AttackType, Team, this);
                 }
                 strikeAt = -1; strikeTarget = null;
@@ -346,8 +387,13 @@ namespace RiskAI
             float stride = Agent.velocity.magnitude > .15f ? Mathf.Sin(session.BattleTime * 13 + EntityId) * 30 : 0;
             if (LeftLeg) LeftLeg.localRotation = Quaternion.Euler(stride, 0, 0);
             if (RightLeg) RightLeg.localRotation = Quaternion.Euler(-stride, 0, 0);
-            attackFlash = Mathf.MoveTowards(attackFlash, 0, Time.deltaTime);
-            if (Weapon) Weapon.localRotation = Quaternion.Euler(-15 - Mathf.Sin(attackFlash * Mathf.PI / .4f) * 95, 0, 0);
+            float presentation=AttackPresentationProgress;
+            if (Weapon)
+            {
+                float pose=AttackPresentationTiming.ContactPose(presentation,
+                    AttackPresentationTiming.ContactNormalizedTime(Kind));
+                Weapon.localRotation = Quaternion.Euler(-15-pose*95,0,0);
+            }
         }
         void Fight()
         {
@@ -372,8 +418,12 @@ namespace RiskAI
                 if (direction.sqrMagnitude > .001f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(direction), 650 * simDelta);
                 if (session.BattleTime >= nextAttack && strikeAt < 0)
                 {
-                    nextAttack = session.BattleTime + BattleRules.AttackInterval(Kind); strikeAt = session.BattleTime + BattleRules.AttackPoint(Kind);
-                    strikeTarget = target; attackFlash = .4f;
+                    var profile=BattleRules.Profile(Kind);
+                    nextAttack = session.BattleTime + profile.Cooldown; strikeAt = session.BattleTime + profile.AttackPoint;
+                    strikeTarget = target;
+                    attackPresentationStartedAt=session.BattleTime;
+                    attackPresentationAttackPoint=profile.AttackPoint;
+                    attackPresentationRecovery=AttackPresentationTiming.RecoverySeconds(profile.AttackPoint,profile.Backswing,profile.Cooldown);
                     if(visualAnimator)visualAnimator.Strike();
                 }
             }
@@ -414,7 +464,8 @@ namespace RiskAI
             Agent.isStopped = false;
             if (mode == OrderMode.Follow)
             {
-                if (!followTarget) { Complete(); return; }
+                var followTarget = session.FindTarget(followTargetId) as Soldier;
+                if (!followTarget || !followTarget.IsAlive || followTarget.Team != Team) { followTargetId = 0; Complete(); return; }
                 if (session.BattleTime >= nextPath) { nextPath = session.BattleTime + .2f; Agent.stoppingDistance = 2; RequestAutonomousPath(followTarget.transform.position); }
                 if (followTarget.CurrentTarget && Vector3.Distance(transform.position, followTarget.CurrentTarget.transform.position) < 9) SetTarget(followTarget.CurrentTarget);
                 return;

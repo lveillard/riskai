@@ -33,6 +33,63 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator RelaxedFirstRecruitLeavesPromptlyThenResumesNormalCadence()
+        {
+            yield return VerifyOpeningCadence(BattleSession.AiDifficulty.Relaxed);
+        }
+
+        [UnityTest]
+        public IEnumerator StandardFirstRecruitLeavesPromptlyThenResumesNormalCadence()
+        {
+            yield return VerifyOpeningCadence(BattleSession.AiDifficulty.Standard);
+        }
+
+        IEnumerator VerifyOpeningCadence(BattleSession.AiDifficulty difficulty)
+        {
+            typeof(BattleSession).GetProperty("Difficulty").SetValue(battle,difficulty);
+            var commander=new SkirmishCommander(battle,1);
+            var home=battle.Towns.First(town=>town.State.Owner==1&&!OnIsland(town.ClaimPoint));
+            var path=new NavMeshPath();
+            var target=battle.Towns.First(town=>town!=home&&!OnIsland(town.ClaimPoint)&&
+                Vector3.Distance(home.Rally,town.ClaimPoint)>20&&
+                NavMesh.CalculatePath(home.Rally,town.ClaimPoint,NavMesh.AllAreas,path)&&path.status==NavMeshPathStatus.PathComplete);
+            foreach(var town in battle.Towns)town.State.Owner=town==target?-1:1;
+            foreach(var unit in battle.Units)if(unit&&unit.Team!=1)unit.gameObject.SetActive(false);
+            battle.Economy.Gold[1]=0;
+            var guards=battle.Units.Where(unit=>unit&&unit.Team==1&&unit.IsGarrison).ToArray();
+            // A ready mobile recruit isolates dispatch timing from training and
+            // combat. Opening recruitment itself is covered by the 16-player test.
+            var recruit=BattleTestScenario.Mobile(battle,1,UnitKind.Archer,home.Rally);
+            battle.AiEnabled=true;
+            long before=battle.Commands.AppliedCount;
+            float started=battle.BattleTime;
+            while(battle.Commands.AppliedCount==before&&battle.BattleTime<started+3)
+                AdvanceCommander(commander);
+            Assert.That(battle.Commands.AppliedCount,Is.GreaterThan(before));
+            Assert.That(battle.BattleTime-started,Is.LessThan(3));
+            Assert.That(recruit.IsIdle,Is.False,"Both difficulties dispatch their first ready recruit promptly.");
+            Assert.That(guards.All(unit=>unit.IsGarrison),Is.True,"Opening orders cannot empty guarded posts.");
+
+            var secondWave=BattleTestScenario.MobileArmy(battle,1,UnitKind.Archer,3,home.Rally);
+            long afterOpening=battle.Commands.AppliedCount;
+            float nextDecision=(float)typeof(SkirmishCommander).GetField("nextDecision",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(commander);
+            while(battle.BattleTime+SimClock.StepSeconds<nextDecision)
+                AdvanceCommander(commander);
+            Assert.That(battle.Commands.AppliedCount,Is.EqualTo(afterOpening),"Fast offensive polling ends after the first dispatch.");
+            Assert.That(secondWave.All(unit=>unit.IsIdle),Is.True);
+            while(battle.Commands.AppliedCount==afterOpening&&battle.BattleTime<nextDecision+1)
+                AdvanceCommander(commander);
+            Assert.That(battle.Commands.AppliedCount,Is.GreaterThan(afterOpening),"Later waves use the regular difficulty cadence.");
+            battle.AiEnabled=false;
+            yield return null;
+        }
+
+        void AdvanceCommander(SkirmishCommander commander)
+        {
+            battle.Clock.Advance(SimClock.StepSeconds,false,delta=>{commander.Tick(delta);battle.Commands.Tick();});
+        }
+
+        [UnityTest]
         public IEnumerator CountryPrioritySkipsIslandAndOnlyCommandsReachableOrigins()
         {
             var home=battle.Towns.First(town=>town.State.Owner==1);

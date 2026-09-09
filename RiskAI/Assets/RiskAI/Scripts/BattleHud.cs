@@ -19,10 +19,14 @@ namespace RiskAI
         float nextCanopyCheck;
         long lastHudTick = -1;
         bool hudDirty = true;
+        readonly Queue<int> eliminationNotices = new Queue<int>();
+        int announcedPlayer = -1;
+        float announcementUntil;
         Vector2 MousePoint => new Vector2(controller.Pointer.x / Scale, (Screen.height - controller.Pointer.y) / Scale);
         public void Initialize(BattleSession battle, RtsController input, Camera camera)
         {
             session = battle; controller = input; cam = camera;
+            session.PlayerEliminated += OnPlayerEliminated;
             RefreshHudSnapshot();ConfigureViewport();InitializeRetainedUi();
         }
         void LateUpdate()
@@ -44,6 +48,7 @@ namespace RiskAI
             // frame just before pausing. Keep this O(1) invalidation independent of time.
             if (hudDirty || hud.Gold != session.Economy.Gold[0] || lastHudTick / 2 != session.Clock.TickCount / 2) RefreshHudSnapshot();
             RefreshRetainedUi();
+            RefreshWorldQueues();
         }
         void RefreshHudSnapshot()
         {
@@ -55,7 +60,9 @@ namespace RiskAI
         void MarkHudDirty() { hudDirty = true; }
         void OnDestroy()
         {
+            if (session) session.PlayerEliminated -= OnPlayerEliminated;
             if(minimapTexture)Destroy(minimapTexture);
+            DisposeMinimapMarkers();
             UiViewport.ResetHudHeights();
         }
         static void Text(Rect r, string text, GUIStyle style = null) => GUI.Label(r, text, style ?? RtsSkin.Text);
@@ -73,7 +80,9 @@ namespace RiskAI
         {
             // Retained UI owns every interactive panel. IMGUI remains only for world-space
             // presentation, the selection rectangle and the transitional minimap renderer.
-            DrawWorld();
+            // World labels are drawn by IMGUI after retained panels; keep them
+            // from covering the start countdown's title and number.
+            if(!session.IsStarting)DrawWorld();
             if (MinimapVisible)
             {
                 DrawMinimap(MinimapRect());
@@ -88,6 +97,26 @@ namespace RiskAI
                 var r = new Rect(UiViewport.SafeRect.xMin/Scale+16, bottom - 28 - i * 23, Mathf.Min(680,UiViewport.LogicalWidth-32), 22); RtsSkin.Fill(r, new Color(.035f, .04f, .03f, .83f));
                 Label(r.x + 7, r.y, r.width - 12, session.Messages[i], RtsSkin.Small);
             }
+            DrawEliminationNotice();
+        }
+        void OnPlayerEliminated(int player) => eliminationNotices.Enqueue(player);
+
+        void DrawEliminationNotice()
+        {
+            if (Time.unscaledTime >= announcementUntil)
+            {
+                announcedPlayer = eliminationNotices.Count > 0 ? eliminationNotices.Dequeue() : -1;
+                announcementUntil = Time.unscaledTime + (announcedPlayer >= 0 ? 5 : 0);
+            }
+            int player = announcedPlayer >= 0 ? announcedPlayer : session.IsPlayerEliminated(0) ? 0 : -1;
+            if (player < 0) return;
+            string message = player == 0 ? "DERROTA · Has sido eliminado. La partida continúa."
+                : VisualFactory.TeamName(player) + " ha sido eliminado.";
+            float noticeWidth = Mathf.Min(460, UiViewport.LogicalWidth - 24);
+            var rect = new Rect(UiViewport.SafeRect.center.x / Scale - noticeWidth * .5f, TopPixels / Scale + 12, noticeWidth, 54);
+            RtsSkin.Fill(rect, new Color(.035f, .04f, .03f, .95f));
+            RtsSkin.Fill(new Rect(rect.x, rect.y, 4, rect.height), VisualFactory.TeamColor(player));
+            Text(new Rect(rect.x + 12, rect.y + 7, rect.width - 24, rect.height - 14), message, RtsSkin.WrappedText);
         }
         void DrawWorld()
         {
@@ -99,21 +128,22 @@ namespace RiskAI
                 bool capturing=harbor.CaptureProgress>0&&harbor.CaptureProgress<1&&harbor.State.Capturing>=0;
                 if(controller.SelectedHarbor!=harbor&&!capturing&&!harbor.State.Contested&&!controller.ShowHealthBars)continue;
                 var hp=cam.WorldToScreenPoint(harbor.Landing+Vector3.up*4.8f)/Scale;float hy=height-hp.y;if(hp.z<=0||hy<TopPixels/Scale+20||hy>bottom-20)continue;
-                var hr=new Rect(hp.x-92,hy,184,24);RtsSkin.Fill(hr,new Color(.025f,.035f,.025f,.86f));Text(hr,harbor.DisplayName,RtsSkin.Center);
+                DrawBuildingName(new Vector2(hp.x,hy),harbor.DisplayName,harbor.Owner);
                 if(capturing)
                 {
                     RtsSkin.Bar(new Rect(hp.x-65,hy+27,130,7),harbor.CaptureProgress,VisualFactory.TeamColor(harbor.State.Capturing));
                 }
             }
-            Settlement hoveredTown = controller.OverHud(controller.Pointer)?null:RtsPicking.Town(session,cam,controller.Pointer);
+            // A touch's last position is not a persistent mouse hover. Once a
+            // building is selected, show that selection without a second stale label.
+            Settlement hoveredTown = HasSelection || PlatformPresentation.TouchCapable || controller.OverHud(controller.Pointer)?null:RtsPicking.Town(session,cam,controller.Pointer);
             foreach (var town in session.Towns)
             {
                 bool visible = town.Selected || hoveredTown == town || controller.ShowHealthBars;
                 Vector3 p = cam.WorldToScreenPoint(town.transform.position + Vector3.up * 4.8f) / Scale;
                 float y = height - p.y; if (p.z <= 0 || y < TopPixels/Scale+20 || y > bottom - 20) continue;
                 if (!visible) continue;
-                var r = new Rect(p.x - 88, y - 3, 176, 25); RtsSkin.Fill(r, new Color(.025f,.035f,.025f,.86f));
-                Text(r, town.DisplayName, RtsSkin.TownLabelFor(town.State.Owner));
+                DrawBuildingName(new Vector2(p.x,y),town.DisplayName,town.State.Owner);
                 // Succession is immediate; nearby enemies or a bound guard are not a progress bar.
                 if (town.State.Capture > 0 && town.State.Capture < 1 && town.State.Capturing >= 0)
                 {
@@ -138,28 +168,18 @@ namespace RiskAI
             RtsSkin.Frame(new Rect(r.x-3,r.y-3,r.width+6,r.height+6));
             if (!minimapTexture) { const int resolution=192; minimapTexture = new Texture2D(resolution,resolution,TextureFormat.RGBA32,false); for (int ix=0;ix<resolution;ix++) for(int iz=0;iz<resolution;iz++){float x=Mathf.Lerp(MapLayout.PlayableMin.x,MapLayout.PlayableMax.x,(ix+.5f)/resolution),z=Mathf.Lerp(MapLayout.PlayableMin.y,MapLayout.PlayableMax.y,(iz+.5f)/resolution);float h=MapLayout.Height(x,z); minimapTexture.SetPixel(ix,iz,MapLayout.IsLand(x,z)?Color.Lerp(new Color(.24f,.38f,.20f),new Color(.56f,.63f,.30f),Mathf.Clamp01(h/6.2f)):new Color(.10f,.25f,.34f));} minimapTexture.Apply(); minimapTexture.filterMode=FilterMode.Point; }
             GUI.DrawTexture(r,minimapTexture,ScaleMode.StretchToFill,false);
-            foreach(var town in session.Towns)
-            {
-                float marker=Mathf.Clamp(35f/Mathf.Sqrt(MapLayout.Towns.Length),2,8);
-                var p=MapPoint(town.transform.position,r);RtsSkin.Fill(new Rect(p.x-marker*.5f,p.y-marker*.5f,marker,marker),VisualFactory.TeamColor(town.State.Owner));
-                if(town.Defense.IsAlive)Outline(new Rect(p.x-marker*.5f-2,p.y-marker*.5f-2,marker+4,marker+4),new Color(.83f,.76f,.48f));
-            }
-            foreach(var unit in session.Units) {if(!unit||!unit.IsAlive)continue;var p=MapPoint(unit.transform.position,r);RtsSkin.Fill(new Rect(p.x-1,p.y-1,2.5f,2.5f),unit.Selected?Color.white:VisualFactory.TeamColor(unit.Team));}
-            if(NavalWorld.Current)
-            {
-                foreach(var harbor in NavalWorld.Current.Harbors){var p=MapPoint(harbor.Landing,r);Outline(new Rect(p.x-3,p.y-3,6,6),VisualFactory.TeamColor(harbor.Owner));}
-                foreach(var ship in NavalWorld.Current.Ships){if(!ship||!ship.IsAlive)continue;var p=MapPoint(ship.transform.position,r);RtsSkin.Fill(new Rect(p.x-2,p.y-2,4,4),ship.Selected?Color.white:VisualFactory.TeamColor(ship.Team));}
-            }
+            DrawMinimapMarkers(r);
             Vector2[] corners={new Vector2(0,BottomPixels),new Vector2(Screen.width,BottomPixels),new Vector2(Screen.width,Screen.height-TopPixels),new Vector2(0,Screen.height-TopPixels)};
-            GUI.BeginGroup(r);
             for(int c=0;c<4;c++)
             {
-                var a=MapPoint(controller.CameraRig.Ground(corners[c]),r)-r.position;
-                var b=MapPoint(controller.CameraRig.Ground(corners[(c+1)%4]),r)-r.position;
-                Matrix4x4 matrix=GUI.matrix;GUIUtility.RotateAroundPivot(Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg,a);
-                RtsSkin.Fill(new Rect(a.x,a.y,(b-a).magnitude,1),Color.white);GUI.matrix=matrix;
+                var a=MapPoint(controller.CameraRig.Ground(corners[c]),r);
+                var b=MapPoint(controller.CameraRig.Ground(corners[(c+1)%4]),r);
+                // Keep clipping and rotation in the HUD's absolute logical space.
+                // Rotating inside BeginGroup also moves its clip origin at high DPI.
+                if(!RtsSkin.ClipLine(new Rect(r.x+.5f,r.y+.5f,r.width-1,r.height-1),ref a,ref b))continue;
+                Matrix4x4 matrix=GUI.matrix;GUI.matrix=matrix*Matrix4x4.Translate(a)*Matrix4x4.Rotate(Quaternion.Euler(0,0,Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg))*Matrix4x4.Translate(-a);
+                RtsSkin.Fill(new Rect(a.x,a.y-.5f,(b-a).magnitude,1),Color.white);GUI.matrix=matrix;
             }
-            GUI.EndGroup();
         }
         static Vector2 MapPoint(Vector3 p,Rect r)=>new Vector2(r.x+(p.x-MapLayout.PlayableMin.x)/(MapLayout.PlayableMax.x-MapLayout.PlayableMin.x)*r.width,r.y+(MapLayout.PlayableMax.y-p.z)/(MapLayout.PlayableMax.y-MapLayout.PlayableMin.y)*r.height);
         static void Outline(Rect r,Color c) {RtsSkin.Fill(new Rect(r.x,r.y,r.width,1),c);RtsSkin.Fill(new Rect(r.x,r.yMax,r.width,1),c);RtsSkin.Fill(new Rect(r.x,r.y,1,r.height),c);RtsSkin.Fill(new Rect(r.xMax,r.y,1,r.height),c);}
@@ -176,6 +196,8 @@ namespace RiskAI
             public readonly int[] PlayerCities = new int[PlayerRules.MaxPlayers];
             public readonly int[] PlayerMobile = new int[PlayerRules.MaxPlayers];
             public readonly int[] PlayerGuards = new int[PlayerRules.MaxPlayers];
+            public readonly int[] PlayerUnits = new int[PlayerRules.MaxPlayers];
+            public int RecruitmentReservations;
             public int OwnedTowns;
             public int Round;
             public float RoundElapsed;
@@ -200,9 +222,13 @@ namespace RiskAI
                 System.Array.Clear(PlayerCities,0,PlayerCities.Length);
                 System.Array.Clear(PlayerMobile,0,PlayerMobile.Length);
                 System.Array.Clear(PlayerGuards,0,PlayerGuards.Length);
+                System.Array.Clear(PlayerUnits,0,PlayerUnits.Length);
+                RecruitmentReservations=battle.RecruitmentReservations(0);
                 foreach(var unit in battle.Units)
                     if(unit&&unit.IsAlive&&PlayerRules.IsPlayer(unit.Team))
-                    {if(unit.IsGarrison)PlayerGuards[unit.Team]++;else PlayerMobile[unit.Team]++;}
+                    {PlayerUnits[unit.Team]++;if(unit.IsGarrison)PlayerGuards[unit.Team]++;else PlayerMobile[unit.Team]++;}
+                if(battle.Naval)foreach(var ship in battle.Naval.Ships)
+                    if(ship&&ship.IsAlive&&PlayerRules.IsPlayer(ship.Team))PlayerUnits[ship.Team]++;
                 MobilePopulation0=PlayerMobile[0];MobilePopulation1=PlayerMobile[1];
                 GarrisonPopulation0=PlayerGuards[0];GarrisonPopulation1=PlayerGuards[1];
                 OwnedTowns = 0;

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.1088691">
+  <test-suite type="TestSuite" id="1000" name="RiskAI — Dominios v0.22" fullname="RiskAI — Dominios v0.22" runstate="Runnable" testcasecount="131" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.108869" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1172" name="RiskAI.Tests.dll" fullname="C:/Users/lveil/Desktop/Projects/riskai/RiskAI/Library/ScriptAssemblies/RiskAI.Tests.dll" runstate="Runnable" testcasecount="131" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.095728" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="47912" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1173" name="RiskAI" fullname="RiskAI" runstate="Runnable" testcasecount="131" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.092976" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1174" name="Tests" fullname="RiskAI.Tests" runstate="Runnable" testcasecount="131" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.089933" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1076" name="MinimapMarkerRasterTests" fullname="RiskAI.Tests.MinimapMarkerRasterTests" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.084088" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="ParameterizedMethod" id="1079" name="CameraOutlineClipsBothEndsInsideOffsetMinimap" fullname="RiskAI.Tests.MinimapMarkerRasterTests.CameraOutlineClipsBothEndsInsideOffsetMinimap" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.055325" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1077" name="CameraOutlineClipsBothEndsInsideOffsetMinimap(False)" fullname="RiskAI.Tests.MinimapMarkerRasterTests.CameraOutlineClipsBothEndsInsideOffsetMinimap(False)" methodname="CameraOutlineClipsBothEndsInsideOffsetMinimap" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" seed="1093218728" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.035212" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1078" name="CameraOutlineClipsBothEndsInsideOffsetMinimap(True)" fullname="RiskAI.Tests.MinimapMarkerRasterTests.CameraOutlineClipsBothEndsInsideOffsetMinimap(True)" methodname="CameraOutlineClipsBothEndsInsideOffsetMinimap" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" seed="1295015038" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.002220" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1080" name="CameraOutlineRejectsParallelEdgesOutsideMinimap" fullname="RiskAI.Tests.MinimapMarkerRasterTests.CameraOutlineRejectsParallelEdgesOutsideMinimap" methodname="CameraOutlineRejectsParallelEdgesOutsideMinimap" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" seed="738597232" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.000527" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1085" name="ClippingCannotWrapMarkersAndClearReusesThePixelBuffer" fullname="RiskAI.Tests.MinimapMarkerRasterTests.ClippingCannotWrapMarkersAndClearReusesThePixelBuffer" methodname="ClippingCannotWrapMarkersAndClearReusesThePixelBuffer" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" seed="1955240834" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.008915" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1082" name="FractionalUnitMarkersKeepEdgeCoverageAndTeamHue" fullname="RiskAI.Tests.MinimapMarkerRasterTests.FractionalUnitMarkersKeepEdgeCoverageAndTeamHue" methodname="FractionalUnitMarkersKeepEdgeCoverageAndTeamHue" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" seed="1907388005" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.000663" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1084" name="HarborAndDefenderOutlinesKeepTheirHollowCentersAndOneLogicalPixelEdges" fullname="RiskAI.Tests.MinimapMarkerRasterTests.HarborAndDefenderOutlinesKeepTheirHollowCentersAndOneLogicalPixelEdges" methodname="HarborAndDefenderOutlinesKeepTheirHollowCentersAndOneLogicalPixelEdges" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" seed="1679887706" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.000662" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1083" name="LaterMarkersCompositeOverEarlierMarkersAndSelectionRemainsWhite" fullname="RiskAI.Tests.MinimapMarkerRasterTests.LaterMarkersCompositeOverEarlierMarkersAndSelectionRemainsWhite" methodname="LaterMarkersCompositeOverEarlierMarkersAndSelectionRemainsWhite" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" seed="1035932543" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.000396" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1081" name="TopDownMapCoordinatesAreStoredInTextureBottomUpOrder" fullname="RiskAI.Tests.MinimapMarkerRasterTests.TopDownMapCoordinatesAreStoredInTextureBottomUpOrder" methodname="TopDownMapCoordinatesAreStoredInTextureBottomUpOrder" classname="RiskAI.Tests.MinimapMarkerRasterTests" runstate="Runnable" seed="677680648" result="Passed" start-time="2026-09-09 00:58:37Z" end-time="2026-09-09 00:58:37Z" duration="0.000366" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/lveil/AppData/LocalLow/RiskAI/RiskAI — Dominios v0_22\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,12 +1,22 @@
-# RiskAI · v0.21
+# RiskAI · v0.22
 
 Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP y arte propio/CC0. Abre **Play-RiskAI.cmd** para jugar la compilación local. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`.
 
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
-La v0.21 corrige cámara en pausa, rueda sobre paneles y selección rectangular de edificios propios. Unifica la propiedad y producción del puerto e incorpora expediciones de IA que compran un transporte, embarcan, cruzan y desembarcan. Conserva el HUD de madera y metal con pestañas compactas. Windows y Web están exportados y comprobados visualmente; 100 casos Unity cubren los cambios; los contadores nuevos separan ruta y comienzo del movimiento. La costa geométrica y el rendimiento en hardware ARM siguen pendientes: [Validación v0.21](docs/VALIDATION-v0.21.md) · [Fase 2](docs/PHASE2.md).
+La v0.22 distingue los círculos navales, mantiene al guardián anclado al disparar y hace visible la luz de entrenamiento en la puerta. Arena, roca y reglas de desembarco comparten el mismo campo. Europe y NewWorld también suavizan esquinas de costa hasta 0,512 m: terreno, agua, colisión y consultas de navegación usan la misma geometría, con ciudades y muelles protegidos. El caballero articula el trote y sincroniza la lanza con el golpe real.
 
-![v0.21: puerto, entrenamiento y colas](docs/images/v0.21-harbor.png)
+Windows y Web están exportados en `9fb6beb`. El mapa de colores entra algo más lejos, el zoom mantiene una respuesta proporcional y las regiones de una misma hoguera tienen borde propio. El HUD añade moneda y cuenta atrás de tres segundos. Seguir una unidad conserva su identidad; avanzar atacando por mar recupera su destino y recibir daño respeta el blanco explícito. Esta ronda aprobó 77 casos Unity distintos. [Mapa estratégico y arranque](docs/VALIDATION-v0.22-STRATEGY-START.md).
+
+El mar es algo más oscuro y su color ya no copia los escalones del fondo; los barcos completan el atraque de puertos vacíos y los edificios ajenos ocultan la producción. La revisión anterior de WC3 incorpora la matriz completa de daño, armas instantáneas/proyectiles/área, alcances de adquisición, entrenamiento fuente de un segundo y transporte de diez plazas. Se aprobaron 81 casos Unity distintos en aquella revisión. [Agua y combate: pruebas y límites](docs/VALIDATION-v0.22-WATER-COMBAT.md).
+
+Contrastadas las tablas actuales de Reforged 2.0.4.23745, incluidas sus tres variantes de balance. Hay campos invariantes verificados y otros pendientes de saber qué capa carga el motor. Las ocho unidades nuevas y las variantes Marine se presentan antes de ampliar el catálogo. [Herencia actual](docs/audits/REFORGED-LATEST-INHERITANCE.md) · [Unidades pendientes](docs/audits/SOURCE-ROSTER-NEXT.md).
+
+El catálogo original completo está auditado; faltan unidades, modos y datos heredados del parche exacto para una réplica computativa completa. El minimapa conserva la textura reutilizada de `2a9192b`; su prueba anterior completó 90 s con 900 unidades y 27.000 órdenes sin rechazos, con carga externa. Siguen pendientes las mediciones limpias de 2000/partida avanzada, mayor fluidez Web con 900 unidades y ARM físico; el presupuesto sigue en 500. [Validación inicial v0.22](docs/VALIDATION-v0.22.md) · [Seguimiento de rendimiento](docs/VALIDATION-v0.22-FOLLOWUP.md) · [Fase 2](docs/PHASE2.md).
+
+![v0.22: luz de entrenamiento](docs/audits/v0.22/classic-town-training.webp)
+
+[Animación del caballero: trote, pausa y ataque](docs/audits/v0.22/knight-animation.webp).
 
 ## Escenarios y reglas comunes
 
@@ -74,13 +84,13 @@ Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. La batalla está en `Ass
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
 .\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
-.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.21/RiskAI.exe
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.22/RiskAI.exe
 .\scripts\Unity.ps1 -Action BuildWeb   # Requiere Web Build Support del mismo editor
 ```
 
 Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map classic`, `riverlands`, `europe` o `newworld`.
 
-Tras exportar Web, `python scripts/serve_web.py` sirve la build v0.21 en
+Tras exportar Web, `python scripts/serve_web.py` sirve la build v0.22 en
 `http://127.0.0.1:8080`. Para probar desde una tablet en la misma red, usa
 `--bind 0.0.0.0` y la IP local del equipo. Las utilidades
 `check_web_player.py` y `check_web_ui.py` conservan resultados, consola y

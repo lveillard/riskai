@@ -1,0 +1,138 @@
+2.199 [error] Failed to load resource: the server responded with a status of 404 (File not found)
+2.823 [log] [UnityCache] 'http://127.0.0.1:8081/Build/Web-v0.22.data.unityweb' successfully downloaded and stored in the browser cache
+3.178 [log] [UnityMemory] Configuration Parameters - Can be set up in boot.config
+
+3.178 [log]     "memorysetup-allocator-temp-initial-block-size-main=262144"
+
+3.178 [log]     "memorysetup-allocator-temp-initial-block-size-worker=262144"
+
+3.178 [log]     "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+
+3.178 [log]     "memorysetup-temp-allocator-size-audio-worker=65536"
+
+3.179 [log]     "memorysetup-remapper-allocator-initial-capacity=32768"
+
+3.179 [log]     "memorysetup-temp-allocator-size-background-worker=32768"
+
+3.179 [log]     "memorysetup-bucket-allocator-granularity=16"
+
+3.179 [log]     "memorysetup-bucket-allocator-bucket-count=8"
+
+3.180 [log]     "memorysetup-bucket-allocator-block-size=4194304"
+
+3.180 [log]     "memorysetup-bucket-allocator-block-count=1"
+
+3.180 [log]     "memorysetup-main-allocator-block-size=16777216"
+
+3.180 [log]     "memorysetup-thread-allocator-block-size=16777216"
+
+3.180 [log]     "memorysetup-gfx-main-allocator-block-size=16777216"
+
+3.180 [log]     "memorysetup-gfx-thread-allocator-block-size=16777216"
+
+3.180 [log]     "memorysetup-cache-allocator-block-size=4194304"
+
+3.180 [log]     "memorysetup-typetree-allocator-block-size=2097152"
+
+3.180 [log]     "memorysetup-profiler-bucket-allocator-granularity=16"
+
+3.180 [log]     "memorysetup-profiler-bucket-allocator-bucket-count=8"
+
+3.180 [log]     "memorysetup-profiler-bucket-allocator-block-size=4194304"
+
+3.180 [log]     "memorysetup-profiler-bucket-allocator-block-count=1"
+
+3.180 [log]     "memorysetup-profiler-allocator-block-size=16777216"
+
+3.181 [log]     "memorysetup-profiler-editor-allocator-block-size=1048576"
+
+3.181 [log]     "memorysetup-temp-allocator-size-main=4194304"
+
+3.181 [log]     "memorysetup-job-temp-allocator-block-size=2097152"
+
+3.181 [log]     "memorysetup-job-temp-allocator-block-size-background=1048576"
+
+3.181 [log]     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+
+3.219 [log] Input System module state changed to: Initialized.
+
+3.220 [log] [Physics::Module] Initialized fallback backend.
+
+3.220 [log] [Physics::Module] Id: 0xdecafbad
+
+3.221 [log] Loading player data from data.unity3d
+
+3.226 [log] Initialize engine version: 6000.3.23f1 (09d2ecc7fb28)
+
+3.226 [log] Creating WebGL 2.0 context.
+3.247 [log] Renderer: WebKit WebGL
+
+3.247 [log] Vendor:   WebKit
+
+3.247 [log] Version:  OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium))
+
+3.248 [log] GLES:     3
+
+3.248 [log]  EXT_clip_control EXT_color_buffer_float EXT_color_buffer_half_float EXT_conservative_depth EXT_depth_clamp EXT_disjoint_timer_query_webgl2 EXT_float_blend EXT_polygon_offset_clamp EXT_render_snorm EXT_texture_compression_bptc EXT_texture_compression_rgtc EXT_texture_filter_anisotropic EXT_texture_mirror_clamp_to_edge EXT_texture_norm16 KHR_parallel_shader_compile NV_shader_noperspective_interpolation OES_draw_buffers_indexed OES_sample_variables OES_shader_multisample_interpolation OES_texture_float_linear OVR_multiview2 WEBGL_blend_func_extended WEBGL_clip_cull_distance WEBGL_compressed_texture_s3tc WEBGL_compressed_texture_s3tc_srgb WEBGL_debug_renderer_info WEBGL_debug_shaders WEBGL_lose_context WEBGL_multi_draw WEBGL_polygon_mode WEBGL_provoking_vertex WEBGL_stencil_texturing GL_EXT_clip_control GL_EXT_color_buffer_float GL_EXT_color_buffer_half_float GL_EXT_conservative_depth GL_EXT_depth_clamp GL_EXT_disjoint_timer_query_webgl2 GL_EXT_float_blend GL_EXT_polygon_offset_clamp GL_EXT_render_snorm GL_EXT_
+
+3.248 [log] texture_compression_bptc GL_EXT_texture_compression_rgtc GL_EXT_texture_filter_anisotropic GL_EXT_texture_mirror_clamp_to_edge GL_EXT_texture_norm16 GL_KHR_parallel_shader_compile GL_NV_shader_noperspective_interpolation GL_OES_draw_buffers_indexed GL_OES_sample_variables GL_OES_shader_multisample_interpolation GL_OES_texture_float_linear GL_OVR_multiview2 GL_WEBGL_blend_func_extended GL_WEBGL_clip_cull_distance GL_WEBGL_compressed_texture_s3tc GL_WEBGL_compressed_texture_s3tc_srgb GL_WEBGL_debug_renderer_info GL_WEBGL_debug_shaders GL_WEBGL_lose_context GL_WEBGL_multi_draw GL_WEBGL_polygon_mode GL_WEBGL_provoking_vertex GL_WEBGL_stencil_texturing
+
+3.250 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+3.250 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+3.250 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+3.251 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+3.251 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+3.251 [warning] WebGL: INVALID_ENUM: getInternalformatParameter: invalid internalformat
+3.257 [log] OPENGL LOG: Creating OpenGL ES 3.0 graphics device ; Context level  <OpenGL ES 3.0> ; Context handle 1
+
+3.311 [log] [Physics::Module] Selected backend.
+
+3.312 [log] [Physics::Module] Name: PhysX
+
+3.312 [log] [Physics::Module] Id: 0xf2b8ea05
+
+3.312 [log] [Physics::Module] SDK Version: 4.1.2
+
+3.312 [log] [Physics::Module] Integration Version: 1.0.0
+
+3.312 [log] [Physics::Module] Threading Mode: Single-Threaded
+
+3.368 [log] ERROR: Shader
+3.369 [log] Hidden/CoreSRP/CoreCopy shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+
+3.369 [log] ERROR: Shader
+3.369 [log] Hidden/Universal Render Pipeline/StencilDitherMaskSeed shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+
+3.375 [log] ERROR: Shader
+3.375 [log] Hidden/Universal/HDRDebugView shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+
+3.419 [log] Input System initialize...
+
+3.456 [log] UnloadTime: 0.500000 ms
+
+3.467 [log] Audio context resumed after 0.183 seconds.
+5.907 [log] UnloadTime: 1.600000 ms
+
+7.727 [log] RISKAI_STARTUP phase=terrain map=Europe phaseMs=1817.10 totalMs=1817.10 unityAllocatedB=139863075 unityReservedB=159982864 managedB=42549248
+
+8.076 [log] RISKAI_STARTUP phase=buildings map=Europe phaseMs=351.40 totalMs=2168.50 unityAllocatedB=167730191 unityReservedB=191261525 managedB=53141504
+
+11.317 [log] RISKAI_STARTUP phase=navigation map=Europe phaseMs=3240.70 totalMs=5409.20 unityAllocatedB=169739062 unityReservedB=193293272 managedB=53268480
+
+11.621 [log] RISKAI_STARTUP phase=roster_and_ports map=Europe phaseMs=303.90 totalMs=5713.10 unityAllocatedB=201050850 unityReservedB=228323342 managedB=57319424
+
+11.678 [log] RISKAI_STARTUP phase=ground_cover map=Europe phaseMs=57.10 totalMs=5770.20 unityAllocatedB=202512360 unityReservedB=229864424 managedB=60698624
+
+11.709 [log] RISKAI_STARTUP phase=canopy_index map=Europe phaseMs=31.10 totalMs=5801.30 unityAllocatedB=202512360 unityReservedB=229864424 managedB=65343488
+
+11.794 [log] RISKAI_STARTUP phase=territory_atlas map=Europe phaseMs=85.00 totalMs=5886.30 unityAllocatedB=202901293 unityReservedB=230274067 managedB=80867328
+
+11.806 [log] RISKAI_STARTUP phase=ready map=Europe phaseMs=11.80 totalMs=5898.10 unityAllocatedB=203014082 unityReservedB=230389934 managedB=81367040
+
+11.858 [log] RISKAI_NAV_BUDGET applied=500 requestedRange=100..2000
+
+12.427 [log] Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+
+12.516 [log] Unloading 170 unused Assets to reduce memory usage. Loaded Objects now: 219430.
+
+12.517 [log] Total: 65.800001 ms (FindLiveObjects: 29.100000 ms CreateObjectMapping: 2.600000 ms MarkObjects: 33.400000 ms  DeleteObjects: 0.700001 ms)

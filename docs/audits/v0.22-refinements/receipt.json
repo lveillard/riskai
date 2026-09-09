@@ -1,0 +1,151 @@
+{
+  "sourceRevision": "f69b7f0",
+  "activeRelease": "/srv/riskai/releases/20260909T012000Z-f69b7f0",
+  "previousRelease": "/srv/riskai/releases/20260908T225132Z-413c435",
+  "archiveSha256": "7464a1c5ca736e384ca4181d0b495e169f90ea975b61e203d3ba21a1ea4f9e03",
+  "filesVerifiedByPublicHttps": 10,
+  "latestDistinctUnityPassed": 93,
+  "physicalMobileTested": false,
+  "evidence": {
+    "azure-browser-probe.json": {
+      "bytes": 1866,
+      "sha256": "c0b797652bd780414a142dad1596471218edb74670b04290cd2f6f3292cd1a1a"
+    },
+    "browser-summary.json": {
+      "bytes": 2742,
+      "sha256": "892841da94c3d56ddc7ef22dc71f364749fd6912e6d98a5785f007298dc94632"
+    },
+    "builds.json": {
+      "bytes": 39761,
+      "sha256": "a8cf8dbc35bd761d235dec19d7c010baceb3fefcfc08f3310d6e814db22d25e0"
+    },
+    "public-verification.json": {
+      "bytes": 6111,
+      "sha256": "7594a59e41e866644100225a042f2a5b254810d609567e33186419fb1c242a91"
+    },
+    "refinements-edit-r2.xml": {
+      "bytes": 25487,
+      "sha256": "d111001cf7fce42312a86a5da440a2bbf10f307f2484e034bb5f5d87ed13dfea"
+    },
+    "refinements-edit-r5.xml": {
+      "bytes": 20457,
+      "sha256": "af72152d64a3437985420c1d45a026d94205b9afcfdae484db6ab73b643d9b01"
+    },
+    "refinements-edit-r6.xml": {
+      "bytes": 6071,
+      "sha256": "8f8a7137f4c2f776e740c18609bbbb1086d2da53a671a668a7e78b34878096fe"
+    },
+    "refinements-edit-r7.xml": {
+      "bytes": 8608,
+      "sha256": "f056686033cc0f4c45bd245e290b3579eeabb409040df2bc966347bc2cb07e6b"
+    },
+    "refinements-play-r1.xml": {
+      "bytes": 42659,
+      "sha256": "edddfa3b5b2d2102bab5e60ef1d928c37d8beb9b351d993aaeef951875bf1239"
+    },
+    "refinements-play-r2.xml": {
+      "bytes": 44286,
+      "sha256": "f088f5fe72e436dcac6a352631218c3813ed32ad76fcc18d8aa19e8834c334ed"
+    },
+    "refinements-play-r3.xml": {
+      "bytes": 31935,
+      "sha256": "edbf4487e816cfafa1ad0ce8cb39925abd62c4fe22820195b069e7ac0554b1c8"
+    },
+    "refinements-play-r4.xml": {
+      "bytes": 31235,
+      "sha256": "b39128abf70dfbce18b2c9517c3fd57839e81bf38f810fe22599d7bfad3e1830"
+    },
+    "test-summary.json": {
+      "bytes": 18026,
+      "sha256": "77ecf683bc8f5e2e1b31fef8d0f8649b8c5efe52a8c629e5da2bf85492df9efd"
+    },
+    "v22-click-classic-tablet.jpg": {
+      "bytes": 310552,
+      "sha256": "e9b33430f3e5af6266231a3568c81a5ff2604ff6c58a79f72d6c6f9ebf952417"
+    },
+    "v22-click-classic-tablet.json": {
+      "bytes": 36770,
+      "sha256": "e6c5efb8a69a2b859a6bf0d6a9daaf614d40a0bbc145a7fff7e4fd5e22be91cb"
+    },
+    "v22-click-riverlands-tablet.jpg": {
+      "bytes": 417113,
+      "sha256": "d8d03c13e3ae180899f6b9761420f1949bb2cff7ae5c20a7004205a2848162b2"
+    },
+    "v22-click-riverlands-tablet.json": {
+      "bytes": 36125,
+      "sha256": "5544110e0de31b6266554ada07ff0ae34576993d2573ba1c27a86a71faff85d2"
+    },
+    "v22-final-classic-tablet.jpg": {
+      "bytes": 318505,
+      "sha256": "bad105b7bea377383be4c81f66f77156cdb8a3d5d198cebc9a2667c5d80c760c"
+    },
+    "v22-final-classic-tablet.json": {
+      "bytes": 38247,
+      "sha256": "299a1fa45842a8154c5c71f7b6accdc71cbf743064708421e36e6564a4af6494"
+    },
+    "v22-final-europe-landscape.jpg": {
+      "bytes": 232592,
+      "sha256": "fb46b3c7c14638304398feafd86f049e8bc9c2201d349845f32f9197a4bfb165"
+    },
+    "v22-final-europe-landscape.json": {
+      "bytes": 36289,
+      "sha256": "188c39f6a4899630f9020f9d888c34a06fe57d2146cd542251b23e53a36ac5ca"
+    },
+    "v22-final-europe-phone.jpg": {
+      "bytes": 293553,
+      "sha256": "b5df12cff8ef17a4fb30da88ebfdeefc12870e8ce2c9dd562b49f01cb15afefb"
+    },
+    "v22-final-europe-phone.json": {
+      "bytes": 36120,
+      "sha256": "c44cd226896736a889b93d7442e6f1493df1ca7827210a2f8f028832bf539e84"
+    },
+    "v22-final-riverlands-tablet.jpg": {
+      "bytes": 429957,
+      "sha256": "dc72fc8c8860df968a2d71b78fd388168ab3dc0197cb4093c718c2eefa2fc88f"
+    },
+    "v22-final-riverlands-tablet.json": {
+      "bytes": 34495,
+      "sha256": "a9a0ceb47f7633c6406f2f8c91a83717e3e6aa1a5f58fe6ee0cc2341178abaf5"
+    },
+    "v22-final-world-desktop.jpg": {
+      "bytes": 283281,
+      "sha256": "c1613bab9bd7e253689ea4d59880c09d867365aad038e4dfe49464b81f34e678"
+    },
+    "v22-final-world-desktop.json": {
+      "bytes": 41704,
+      "sha256": "350be2bf659c7723277f259713122331e0d68a882cb2149ef83e63dda3e8697a"
+    },
+    "v22-refine-classic-tablet.jpg": {
+      "bytes": 310386,
+      "sha256": "314a9b58e2ffff9ae5e054fccc063011179d934e167057a9a10a25034f8bf8cd"
+    },
+    "v22-refine-classic-tablet.json": {
+      "bytes": 67525,
+      "sha256": "3e57e9702365eab23a4edd70be0d00598bbaee537b4bb01831bc6c17589be8b4"
+    },
+    "v22-refine-europe-landscape.jpg": {
+      "bytes": 232457,
+      "sha256": "5f46d1339173bb8fa3ef6195b4ee4017f40699e0c129878b9624cb2ee6fbbebd"
+    },
+    "v22-refine-europe-landscape.json": {
+      "bytes": 75426,
+      "sha256": "f248efbfe224868274576ae0d192da55012149a79bc4165267494bf0fa703dd2"
+    },
+    "v22-refine-europe-phone.jpg": {
+      "bytes": 295620,
+      "sha256": "b50ad466f905b1e121940012b69f487c2b023b24311919fd8b138aace6d38f2b"
+    },
+    "v22-refine-europe-phone.json": {
+      "bytes": 75224,
+      "sha256": "4762907ad0984460d15aad3486116a9d837509e2862a988029c9fb295eabbf89"
+    },
+    "v22-refine-riverlands-tablet.jpg": {
+      "bytes": 418346,
+      "sha256": "3344bdcbc4355542155865d90d6cce855bb7858db791c5fabd6aaef7a6c4832a"
+    },
+    "v22-refine-riverlands-tablet.json": {
+      "bytes": 69337,
+      "sha256": "2158040d4ffb10c75b97cdeba069e58ad2b959c275e87de8e6b29cf2023e497f"
+    }
+  }
+}

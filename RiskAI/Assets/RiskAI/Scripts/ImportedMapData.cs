@@ -35,6 +35,9 @@ namespace RiskAI
         public Country[] countries;
         public SourceTree[] sourceTrees;
         public string[] treeSpecies;
+        public ImportedCoastGeometry CoastGeometry { get; private set; }
+        public void PrepareCoastGeometry()=>CoastGeometry=new ImportedCoastGeometry(this);
+        public Vector2 TerrainVertex(int x,int z)=>CoastGeometry!=null?CoastGeometry.Vertex(x,z):new Vector2(originX+x*cellSize,originZ+z*cellSize);
         public float HalfWidth => (width - 1) * cellSize * .5f;
         public float HalfDepth => (height - 1) * cellSize * .5f;
         bool HasPlayableBounds => Finite(playableMinX) && Finite(playableMaxX) && Finite(playableMinZ) && Finite(playableMaxZ) && playableMinX < playableMaxX && playableMinZ < playableMaxZ;
@@ -47,12 +50,19 @@ namespace RiskAI
         [Serializable] sealed class CensusCity { public bool port; }
         [Serializable] sealed class Census { public CensusCity[] cities; public Country[] countries; }
         static readonly string[] censusDescriptions=new string[4];
+        static readonly Census[] censuses=new Census[4];
+        static Census ReadCensus(ScenarioMap scenario)
+        {
+            int index=(int)scenario;
+            return censuses[index] ?? (censuses[index]=JsonUtility.FromJson<Census>(LoadSource(scenario).text));
+        }
+        public static int ScenarioCityCount(ScenarioMap scenario) => ReadCensus(scenario).cities.Length;
         // Read only the source metadata once. Setup does not instantiate or sculpt terrain.
         public static string ScenarioDetail(ScenarioMap scenario)
         {
             int index=(int)scenario;
             if(censusDescriptions[index]!=null)return censusDescriptions[index];
-            var census=JsonUtility.FromJson<Census>(LoadSource(scenario).text);
+            var census=ReadCensus(scenario);
             int ports=0;foreach(var city in census.cities)if(city.port)ports++;
             return censusDescriptions[index]=census.cities.Length+" ciudades · "+census.countries.Length+" grupos · "+ports+" puertos";
         }
@@ -72,6 +82,7 @@ namespace RiskAI
             data.Validate();
             ImportedLandscapeAugment.Apply(data);
             data.PrepareBuildingPads();
+            data.PrepareCoastGeometry();
             return data;
         }
         static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
@@ -104,27 +115,42 @@ namespace RiskAI
         public bool IsLand(float x, float z)
         {
             if(!Contains(x,z))return false;
-            int ix=Mathf.Clamp(Mathf.FloorToInt((x-originX)/cellSize),0,width-2);
-            int iz=Mathf.Clamp(Mathf.FloorToInt((z-originZ)/cellSize),0,height-2);
-            int index=iz*width+ix;
+            ResolveCell(x,z,out int index,out float u,out float v);
             // W3E may disable water even below the encoded water elevation.
             if(landSamples[index]+landSamples[index+1]+landSamples[index+width]+landSamples[index+width+1]==4)return true;
-            return HeightAt(x,z)>=WaterAt(x,z)+.02f;
+            return SampleCell(heightSamples,index,u,v)>=SampleCell(waterSamples,index,u,v)+.02f;
         }
         // W3E's terrain index is the low nibble of the flags/texture byte.
         // The low byte of our packed sample holds variation, not texture ID.
         public static int GroundTileIndex(int packed) => (packed >> 16) & 15;
-        public int TileAt(float x, float z)
+        public Vector2 SourcePositionAt(float x,float z)
         {
-            int ix = Mathf.Clamp(Mathf.RoundToInt((x - originX) / cellSize), 0, width - 1);
-            int iz = Mathf.Clamp(Mathf.RoundToInt((z - originZ) / cellSize), 0, height - 1);
-            return tileSamples[iz * width + ix];
+            ResolveCell(x,z,out int index,out float u,out float v);
+            return new Vector2(originX+(index%width+u)*cellSize,originZ+(index/width+v)*cellSize);
         }
-        float Sample(float[] samples, float x, float z)
+        // Material policy stays anchored in canonical world coordinates.
+        public int TileAt(float x,float z)
         {
-            float fx = Mathf.Clamp((x - originX) / cellSize, 0, width - 1), fz = Mathf.Clamp((z - originZ) / cellSize, 0, height - 1);
-            int ix = Mathf.Min(Mathf.FloorToInt(fx), width - 2), iz = Mathf.Min(Mathf.FloorToInt(fz), height - 2), index = iz * width + ix;
-            float u = fx - ix, v = fz - iz;
+            int ix=Mathf.Clamp(Mathf.RoundToInt((x-originX)/cellSize),0,width-1);
+            int iz=Mathf.Clamp(Mathf.RoundToInt((z-originZ)/cellSize),0,height-1);
+            return tileSamples[iz*width+ix];
+        }
+        void ResolveCell(float x,float z,out int index,out float u,out float v)
+        {
+            float fx=Mathf.Clamp((x-originX)/cellSize,0,width-1),fz=Mathf.Clamp((z-originZ)/cellSize,0,height-1);
+            int ix=Mathf.Min(Mathf.FloorToInt(fx),width-2),iz=Mathf.Min(Mathf.FloorToInt(fz),height-2);
+            u=fx-ix;v=fz-iz;
+            if(CoastGeometry!=null&&CoastGeometry.Resolve(originX+fx*cellSize,originZ+fz*cellSize,ref ix,ref iz,out float mappedU,out float mappedV))
+            {u=mappedU;v=mappedV;}
+            index=iz*width+ix;
+        }
+        float Sample(float[] samples,float x,float z)
+        {
+            ResolveCell(x,z,out int index,out float u,out float v);
+            return SampleCell(samples,index,u,v);
+        }
+        float SampleCell(float[] samples,int index,float u,float v)
+        {
             float lowerLeft = samples[index], lowerRight = samples[index + 1];
             float upperLeft = samples[index + width], upperRight = samples[index + width + 1];
             // ImportedTerrain splits every source quad from upper-left to

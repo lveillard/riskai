@@ -32,21 +32,53 @@ def main():
                         help='Unity asynchronous NavMesh path budget for the controlled A/B probe.')
     parser.add_argument('--warmup', type=int, default=0)
     parser.add_argument('--probe', action='store_true')
+    parser.add_argument('--sustained', action='store_true', help='Use the shared controlled 900-unit navigation workload with --probe.')
+    parser.add_argument('--hide-minimap', action='store_true', help='Diagnostic only: compare the same workload using the normal minimap visibility toggle.')
     parser.add_argument('--restart', action='store_true')
     parser.add_argument('--headed', action='store_true')
     parser.add_argument('--suppress-draws', action='store_true',
                         help='Diagnostic only: skip WebGL draw calls, retaining the same simulation. Not a playable performance result.')
     parser.add_argument('--overview', action='store_true',
                         help='Measure the normal strategic overview using the existing FrameMap camera action.')
+    parser.add_argument('--browser-metrics', action='store_true',
+                        help='Record Chrome main-thread metrics over the probe window for CPU-versus-presentation diagnosis.')
+    parser.add_argument('--cpu-profile', action='store_true',
+                        help='Save and summarize a Chrome CPU profile over the probe window.')
+    parser.add_argument('--frame-trace', action='store_true',
+                        help="Enable the player's opt-in Unity hitch correlation markers for this probe.")
+    parser.add_argument('--no-unit-shadows', action='store_true',
+                        help='Diagnostic only: disable real-time shadow casting for soldiers and ships, retaining their painted ground shadows.')
+    parser.add_argument('--hide-unit-renderers', action='store_true',
+                        help='Diagnostic only: hide unit and ship model renderers, retaining their painted ground shadows and simulation.')
+    parser.add_argument('--disable-unit-animation', action='store_true',
+                        help='Diagnostic only: freeze legacy unit animation while keeping unit and ship renderers visible.')
+    parser.add_argument('--bake-unit-skins', action='store_true',
+                        help='Diagnostic only: replace frozen unit skins with static baked meshes while retaining materials and simulation.')
     args = parser.parse_args()
     if args.probe and args.restart:
         parser.error('Choose one measurement type per browser session.')
+    if args.sustained and (not args.probe or args.warmup or args.map != 'europe'):
+        parser.error('--sustained requires --probe --map europe and no warmup.')
+    if args.hide_minimap and not args.probe:
+        parser.error('--hide-minimap requires --probe.')
     if args.probe and args.seconds <= 30:
         parser.error('The shared runtime probe requires more than 30 simulation seconds; use --seconds 60 or longer.')
     if args.suppress_draws and not args.probe:
         parser.error('--suppress-draws is only meaningful with --probe.')
     if args.overview and not args.probe:
         parser.error('--overview requires --probe and its battlefield.')
+    if args.frame_trace and not args.probe:
+        parser.error('--frame-trace requires --probe.')
+    if args.no_unit_shadows and not args.probe:
+        parser.error('--no-unit-shadows requires --probe.')
+    if args.hide_unit_renderers and not args.probe:
+        parser.error('--hide-unit-renderers requires --probe.')
+    if args.disable_unit_animation and not args.probe:
+        parser.error('--disable-unit-animation requires --probe.')
+    if args.bake_unit_skins and not args.probe:
+        parser.error('--bake-unit-skins requires --probe.')
+    if sum((args.no_unit_shadows, args.hide_unit_renderers, args.disable_unit_animation, args.bake_unit_skins)) > 1:
+        parser.error('Choose one unit-presentation diagnostic per probe.')
     if not 100 <= args.path_budget <= 2000:
         parser.error('--path-budget must be between 100 and 2000.')
     args.output.mkdir(parents=True, exist_ok=True)
@@ -58,18 +90,41 @@ def main():
     if args.probe:
         query.update({'riskai-probe': 1, 'riskai-probe-seconds': args.seconds,
                       'riskai-probe-recruits': args.recruits, 'riskai-probe-warmup': args.warmup})
+    if args.sustained:
+        query['riskai-probe-sustained'] = 1
+    if args.frame_trace:
+        query['riskai-frame-trace'] = 1
+    if args.no_unit_shadows:
+        query['riskai-probe-no-unit-shadows'] = 1
+    if args.hide_unit_renderers:
+        query['riskai-probe-hide-unit-renderers'] = 1
+    if args.disable_unit_animation:
+        query['riskai-probe-disable-unit-animation'] = 1
+    if args.bake_unit_skins:
+        query['riskai-probe-bake-unit-skins'] = 1
     if args.restart:
         query.update({'riskai-restart-probe': 1, 'riskai-restart-cycles': 3})
     url = args.url.rstrip('/') + '/?' + urlencode(query)
     report = {'url': url, 'desktop_browser': True, 'physical_arm': False,
               'viewport': [args.width, args.height], 'device_scale_factor': args.dpr,
               'draws_suppressed': args.suppress_draws, 'overview': args.overview,
-              'path_budget': args.path_budget}
+              'path_budget': args.path_budget, 'sustained_navigation': args.sustained,
+              'minimap_hidden': args.hide_minimap, 'browser_metrics_requested': args.browser_metrics,
+              'cpu_profile_requested': args.cpu_profile, 'frame_trace': args.frame_trace,
+              'unit_shadows_disabled': args.no_unit_shadows, 'unit_renderers_hidden': args.hide_unit_renderers,
+              'unit_animation_disabled': args.disable_unit_animation, 'unit_skins_baked': args.bake_unit_skins}
     started = time.monotonic()
     with (args.output / 'console.log').open('w', encoding='utf-8') as log, sync_playwright() as p:
         browser = p.chromium.launch(channel='msedge', headless=not args.headed)
         report['browser'] = browser.version
         page = browser.new_page(viewport={'width': args.width, 'height': args.height}, device_scale_factor=args.dpr)
+        performance = None
+        performance_start = None
+        performance_started_at = None
+        if args.browser_metrics or args.cpu_profile:
+            performance = page.context.new_cdp_session(page)
+        if args.browser_metrics:
+            performance.send('Performance.enable')
         if args.suppress_draws:
             page.add_init_script('''
                 window.riskaiSuppressedDraws = 0;
@@ -123,6 +178,13 @@ def main():
                         raise TimeoutError('The battlefield never emitted RISKAI_STARTUP phase=ready.')
                     page.wait_for_timeout(500)
                 report['battle_ready_seconds'] = round(time.monotonic()-started, 3)
+                if not args.probe and not args.restart:
+                    # A synthetic browser pointer starts at (0,0), which triggers edge
+                    # panning while the unattended smoke capture waits for its frame.
+                    page.mouse.move(args.width * .5, args.height * .4)
+                    page.evaluate('window.riskaiInstance.SendMessage("RiskAI · Bootstrap", "FocusHome")')
+            if args.hide_minimap:
+                page.evaluate('window.riskaiInstance.SendMessage("RiskAI · Bootstrap", "ToggleMinimap")')
             if args.overview:
                 page.evaluate('window.riskaiInstance.SendMessage("RiskAI · Bootstrap", "FrameMap")')
             page.wait_for_timeout(2000)
@@ -135,6 +197,15 @@ def main():
                     heapBytes:window.riskaiInstance.Module.HEAPU8?.buffer.byteLength};
             }''')
             if args.probe or args.restart:
+                if performance:
+                    if args.browser_metrics:
+                        performance_start = {item['name']: item['value']
+                                             for item in performance.send('Performance.getMetrics')['metrics']}
+                    if args.cpu_profile:
+                        performance.send('Profiler.enable')
+                        performance.send('Profiler.setSamplingInterval', {'interval': 1000})
+                        performance.send('Profiler.start')
+                    performance_started_at = time.monotonic()
                 deadline = time.monotonic() + max(240, args.seconds * 3 + args.warmup + 120)
                 last_notice = 0
                 while not results:
@@ -146,6 +217,36 @@ def main():
                         last_notice = time.monotonic()
                 report['probe_results'] = results
                 print(results[-1], flush=True)
+                if performance and performance_start is not None:
+                    performance_end = {item['name']: item['value']
+                                       for item in performance.send('Performance.getMetrics')['metrics']}
+                    names = ('TaskDuration', 'ScriptDuration', 'TaskOtherDuration', 'ThreadTime',
+                             'ProcessTime', 'LayoutDuration', 'RecalcStyleDuration', 'V8CompileDuration',
+                             'JSHeapUsedSize', 'JSHeapTotalSize', 'Nodes', 'LayoutObjects')
+                    report['browser_metrics'] = {
+                        'wall_seconds': round(time.monotonic() - performance_started_at, 3),
+                        'delta': {name: performance_end[name] - performance_start[name]
+                                  for name in names if name in performance_start and name in performance_end}
+                    }
+                if performance and args.cpu_profile:
+                    profile = performance.send('Profiler.stop')['profile']
+                    (args.output / 'cpu-profile.json').write_text(json.dumps(profile), encoding='utf-8')
+                    nodes = {node['id']: node.get('callFrame', {}) for node in profile.get('nodes', [])}
+                    totals = {}
+                    samples = profile.get('samples', [])
+                    deltas = profile.get('timeDeltas', [])
+                    for index, node_id in enumerate(samples):
+                        frame = nodes.get(node_id, {})
+                        name = frame.get('functionName') or '(anonymous)'
+                        url = frame.get('url') or ''
+                        key = name + (' @ ' + url if url else '')
+                        totals[key] = totals.get(key, 0) + (deltas[index] if index < len(deltas) else 0)
+                    report['cpu_profile'] = {
+                        'samples': len(samples),
+                        'sampled_milliseconds': round(sum(deltas) / 1000, 3),
+                        'top': [{'frame': key, 'milliseconds': round(value / 1000, 3)}
+                                for key, value in sorted(totals.items(), key=lambda item: item[1], reverse=True)[:20]]
+                    }
             page.screenshot(path=str(args.output / 'final.png'))
             report['success'] = not errors and not any('success=false' in item.lower() for item in results)
         except Exception as error:

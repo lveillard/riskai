@@ -71,8 +71,8 @@ namespace RiskAI.Tests
             }
             var coastPoint=new Vector3(0,0,MapLayout.Coast(0)+4);
             Assert.That(NavMesh.SamplePosition(coastPoint,out _,.5f,NavMesh.AllAreas),Is.False,"The coast test point must remain off the walkable NavMesh.");
-            var blueHome=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital);var army=BattleTestScenario.MobileArmy(battle,0,UnitKind.Footman,8,blueHome.Rally).ToList();
-            var field=blueHome.transform.position+Vector3.back*10;BattleSession.GiveFormation(army,field,false,false);
+            var playerHome=battle.Towns.First(t=>t.State.Owner==0&&t.IsCapital);var army=BattleTestScenario.MobileArmy(battle,0,UnitKind.Footman,8,playerHome.Rally).ToList();
+            var field=playerHome.transform.position+Vector3.back*10;BattleSession.GiveFormation(army,field,false,false);
             yield return new WaitForSeconds(4);
             Assert.That(army.Count(u=>Vector3.Distance(u.transform.position,field)<6),Is.GreaterThanOrEqualTo(army.Count-1),"The explicit test formation must reach the destination; only one crowd-avoidance straggler is allowed.");
         }
@@ -293,7 +293,7 @@ namespace RiskAI.Tests
             recruits.CreditRound(); recruits.Tick(.5f);
             Assert.That(battle.Units.Count(u => u && u.IsAlive && u.Team == 0 && u.OriginCountry == country), Is.EqualTo(10));
         }
-        [UnityTest] public IEnumerator CountryIncomeLosesOnlyTheCapturedCityAndReturnsAfterRecapture()
+        [UnityTest] public IEnumerator CountryIncomeStopsWhenFragmentedAndReturnsAfterRecapture()
         {
             const int country = 0;
             var countryTowns = battle.Towns.Where(t => t.State.Country == country).ToArray();
@@ -303,7 +303,7 @@ namespace RiskAI.Tests
             int completeIncome = battle.Economy.Income(0);
             countryTowns[1].State.Owner = 1;
             Assert.That(battle.Economy.CountryOwner(country), Is.EqualTo(-1));
-            Assert.That(battle.Economy.Income(0), Is.EqualTo(completeIncome - BattleRules.TownIncome));
+            Assert.That(battle.Economy.Income(0), Is.EqualTo(completeIncome - countryTowns.Length * BattleRules.TownIncome));
             countryTowns[1].State.Owner = 0;
             Assert.That(battle.Economy.CountryOwner(country), Is.EqualTo(0));
             Assert.That(battle.Economy.Income(0), Is.EqualTo(completeIncome)); yield return null;

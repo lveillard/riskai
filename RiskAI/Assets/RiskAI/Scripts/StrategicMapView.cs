@@ -15,10 +15,11 @@ namespace RiskAI
         public int SurfaceCount { get; private set; }
         public TerritoryAtlas Atlas { get; private set; }
         public int SelectedCountry { get; private set; }=-1;
-        public float EnterZoom => 72;
+        public float EnterZoom => 120;
         Camera cam; int tacticalMask; Color tacticalBackground;
         Material strategic,inspection;GameObject inspectionRoot;
         float nextRefresh;
+        readonly Dictionary<Vector2, Vector3> surfaceAnchors = new Dictionary<Vector2, Vector3>();
         public void Initialize(BattleSession session,Camera camera,Transform terrain)
         {
             Current=this;cam=camera;tacticalMask=cam.cullingMask&~(1<<StrategicLayer);tacticalBackground=cam.backgroundColor;
@@ -35,6 +36,22 @@ namespace RiskAI
                 CopySurface(filter,inspectionRoot.transform,inspection,0);SurfaceCount++;
             }
             inspectionRoot.SetActive(false);
+        }
+        /// <summary>Use the rendered terrain, rather than a NavMesh height, for overview symbols and picking.</summary>
+        public static Vector3 SurfaceAnchor(Vector3 world)
+        {
+            // Terrain is fixed for a match. Reuse anchors for all zoom levels and
+            // camera angles instead of raycasting every city on every repaint.
+            var key = new Vector2(world.x, world.z);
+            if (Current && Current.surfaceAnchors.TryGetValue(key, out var cached)) return cached;
+            var origin=new Vector3(world.x,10000,world.z);
+            if(Physics.Raycast(origin,Vector3.down,out var hit,20000,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))
+            {
+                var anchor = hit.point+Vector3.up*.035f;
+                if (Current) Current.surfaceAnchors[key] = anchor;
+                return anchor;
+            }
+            return world;
         }
         Material MakeMaterial(bool overview)
         {
