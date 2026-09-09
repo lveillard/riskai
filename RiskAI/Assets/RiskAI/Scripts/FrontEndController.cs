@@ -230,7 +230,7 @@ namespace RiskAI
                 ApplyMapSelection(map);
                 StartBattle();
                 evt.StopImmediatePropagation();
-            });
+            },TrickleDown.TrickleDown);
             button.style.flexGrow = 1;
             if (UiViewport.IsCompact) { button.style.width = Length.Percent(100); button.style.marginRight = 0; }
             else { button.style.width=Length.Percent(47);button.style.minWidth=0; }
