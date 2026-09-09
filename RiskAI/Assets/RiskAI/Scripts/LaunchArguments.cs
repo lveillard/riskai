@@ -17,6 +17,13 @@ namespace RiskAI
             return cached=Environment.GetCommandLineArgs();
 #endif
         }
+        public static bool HasFlag(string flag)
+        {
+            if(string.IsNullOrEmpty(flag))return false;
+            foreach(var argument in Get())
+                if(string.Equals(argument,flag,StringComparison.OrdinalIgnoreCase))return true;
+            return false;
+        }
         public static string[] FromUrl(string url)
         {
             var args=new List<string>();
@@ -31,7 +38,7 @@ namespace RiskAI
                     case "riskai-map":case "riskai-seed":case "riskai-players":case "riskai-ui-capture":
                     case "riskai-probe-seconds":case "riskai-probe-warmup":case "riskai-probe-recruits":case "riskai-restart-cycles":case "riskai-path-budget":
                         args.Add("--"+key);args.Add(value);break;
-                    case "riskai-probe":case "riskai-probe-sustained":case "riskai-probe-warmup-commander":case "riskai-frame-trace":case "riskai-probe-no-unit-shadows":case "riskai-probe-hide-unit-renderers":case "riskai-probe-disable-unit-animation":case "riskai-probe-bake-unit-skins":case "riskai-restart-probe":case "riskai-play":
+                    case "riskai-probe":case "riskai-probe-sustained":case "riskai-probe-warmup-commander":case "riskai-frame-trace":case "riskai-probe-no-unit-shadows":case "riskai-probe-hide-unit-renderers":case "riskai-probe-disable-unit-animation":case "riskai-probe-bake-unit-skins":case "riskai-disable-unit-lod":case "riskai-restart-probe":case "riskai-play":
                         if(value=="1"||value=="true")args.Add("--"+key);break;
                 }
             }

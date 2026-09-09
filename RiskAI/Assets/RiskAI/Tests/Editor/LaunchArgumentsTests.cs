@@ -39,5 +39,10 @@ namespace RiskAI.Tests
             var args=LaunchArguments.FromUrl("https://localhost/?riskai-probe-bake-unit-skins=true&bake-unit-skins=true");
             CollectionAssert.AreEqual(new[]{"--riskai-probe-bake-unit-skins"},args);
         }
+        [Test] public void SharedUnitLodCanBeDisabledOnlyByItsExplicitDiagnosticFlag()
+        {
+            var args=LaunchArguments.FromUrl("https://localhost/?riskai-disable-unit-lod=true&disable-unit-lod=true");
+            CollectionAssert.AreEqual(new[]{"--riskai-disable-unit-lod"},args);
+        }
     }
 }

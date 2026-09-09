@@ -51,6 +51,7 @@ namespace RiskAI
         int followTargetId;
         LineRenderer ring;
         SoldierAnimator visualAnimator;
+        UnitPresentationLodView presentationLod;
         OrderMode mode;
         Vector3 destination, anchor, pursuitOrigin, patrolOrigin, garrisonAnchor;
         float nextSense, nextPath, nextAttack, strikeAt = -1, stalled;
@@ -98,6 +99,7 @@ namespace RiskAI
             {
                 var collider=gameObject.AddComponent<CapsuleCollider>();collider.radius=.4f;collider.height=1.5f;collider.center=Vector3.up*.7f;collider.isTrigger=true;
                 VisualFactory.Soldier(this);
+                presentationLod=gameObject.AddComponent<UnitPresentationLodView>();presentationLod.Initialize(kind,team);
                 if(kind==UnitKind.Medic)medic=gameObject.AddComponent<MedicSupport>();
                 visualAnimator=GetComponent<SoldierAnimator>();
                 ring=VisualFactory.Ring(transform,Mathf.Max(.43f,SourceGeometry.AgentRadius(kind)*1.15f),.045f,new Color(.5f,1f,.6f));
@@ -154,7 +156,7 @@ namespace RiskAI
             if(Agent.isOnNavMesh && (Agent.nextPosition-garrisonAnchor).sqrMagnitude>.000001f)Agent.Warp(garrisonAnchor);
         }
 
-        public void Select(bool value) { Selected = value; if (ring) ring.enabled = value; }
+        public void Select(bool value) { Selected = value; if (ring) ring.enabled = value; if(presentationLod)presentationLod.SetSelected(value); }
         public string LastMoveError { get; private set; }
         internal bool PathPendingForTelemetry => Agent && Agent.enabled && Agent.isOnNavMesh && Agent.pathPending;
         internal float PathPendingAgeForTelemetry => pathPendingSince >= 0 && session != null ? Mathf.Max(0, session.BattleTime-pathPendingSince) : 0;

@@ -306,9 +306,7 @@ namespace RiskAI
 
         static bool HasExactFlag(string flag)
         {
-            foreach (var argument in LaunchArguments.Get())
-                if (string.Equals(argument, flag, StringComparison.OrdinalIgnoreCase)) return true;
-            return false;
+            return LaunchArguments.HasFlag(flag);
         }
 
         static bool TryReadNonNegativeFloat(string flag, float fallback, out float value, out string error)
