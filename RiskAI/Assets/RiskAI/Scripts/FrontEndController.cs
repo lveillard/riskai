@@ -214,6 +214,15 @@ namespace RiskAI
         {
             bool chosen = selectedMap == map;
             var button = RtsUiStyle.Button("", () => SelectMap(map), "Map " + map);
+            button.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                // The event's click count is shared by mouse, pen and touch in UI Toolkit.
+                // Start on the second press so the selected setup values remain unchanged.
+                if (evt.button != 0 || evt.clickCount < 2 || loading) return;
+                ApplyMapSelection(map);
+                StartBattle();
+                evt.StopImmediatePropagation();
+            });
             button.style.flexGrow = 1;
             if (UiViewport.IsCompact) { button.style.width = Length.Percent(100); button.style.marginRight = 0; }
             else { button.style.width=Length.Percent(47);button.style.minWidth=0; }
@@ -244,10 +253,15 @@ namespace RiskAI
 
         void SelectMap(ScenarioMap map)
         {
+            ApplyMapSelection(map);
+            Rebuild();
+        }
+
+        void ApplyMapSelection(ScenarioMap map)
+        {
             selectedMap = map;
             int maximum = MapLayout.MaximumPlayersForScenario(map);
             selectedPlayers = playersAdjusted ? Mathf.Clamp(selectedPlayers, 2, maximum) : maximum;
-            Rebuild();
         }
 
         void AdjustPlayers(int delta)

@@ -51,7 +51,7 @@ namespace RiskAI
                 var camp=session.Camps[country];int index=sequence[country]++;
                 float angle=index*2.399963f,radius=.65f+Mathf.Sqrt(index%12)*.55f;
                 var spot=camp.SpawnPoint+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*radius;
-                var unit=session.Spawn(owner,MapLayout.Countries[country].Reinforcement,spot,country);
+                var unit=session.SpawnSeparated(owner,MapLayout.Countries[country].Reinforcement,spot,country);
                 if(unit)camp.ApplyRally(unit);
             }
         }

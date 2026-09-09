@@ -160,8 +160,8 @@ namespace RiskAI
                 float healthHeight=target is Soldier person?VisualMetrics.HeightFor(person.Kind)+.15f:4.8f;
                 var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * healthHeight) / Scale;
                 float y = height - p.y; if(p.z<=0||y<TopPixels/Scale+16||y>bottom-8)continue;
-                float size = target is DefenseTower || target is Ship ? 48 : 18;
-                RtsSkin.Bar(new Rect(p.x-size/2,y,size,target is Ship?6:5),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
+                float size = target is Ship ? 56 : 28;
+                RtsSkin.WorldHealthBar(new Rect(p.x-size/2,y,size,target is Ship?9:7),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
             }
         }
         void DrawMinimap(Rect r)

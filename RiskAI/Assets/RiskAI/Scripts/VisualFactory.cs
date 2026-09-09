@@ -252,6 +252,7 @@ namespace RiskAI
                 model.transform.localScale*=VisualMetrics.UnitScale;
                 ModelMetrics.MatchStandingHeight(model,soldier.Kind);
                 UnitTeamColor.Apply(model,soldier.Kind,soldier.Team);
+                if(soldier.Kind==UnitKind.MarinePrivate)MarinePrivateView.Apply(model,soldier.Team);
                 soldier.gameObject.AddComponent<SoldierAnimator>().Initialize(soldier,model);
                 Ring(root,Mathf.Max(.33f,SourceGeometry.AgentRadius(soldier.Kind)*1.1f),.022f,team);return;
             }
@@ -486,12 +487,12 @@ namespace RiskAI
             var rootRenderer=GetComponent<Renderer>();if(rootRenderer)rootRenderer.enabled=false;
             Color wood=new Color(.30f,.16f,.065f),metal=new Color(.72f,.76f,.79f),feather=new Color(.84f,.73f,.46f);
             piercingView=Group(transform,"Piercing projectile");
-            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",Vector3.zero,new Vector3(.065f,.065f,.72f),wood);
-            var tip=Part(piercingView,PrimitiveType.Capsule,"Bolt metal point",new Vector3(0,0,.43f),new Vector3(.10f,.18f,.10f),metal);tip.transform.localRotation=Quaternion.Euler(90,0,0);
-            var streak=Part(piercingView,PrimitiveType.Cube,"Bright bolt streak",new Vector3(0,0,-.06f),new Vector3(.075f,.075f,.72f),feather);
-            streak.sharedMaterial=VisualFactory.EmissiveMat(new Color(1f,.72f,.28f),.38f);
-            Part(piercingView,PrimitiveType.Cube,"Bolt fletching top",new Vector3(0,.07f,-.34f),new Vector3(.15f,.025f,.14f),feather);
-            Part(piercingView,PrimitiveType.Cube,"Bolt fletching side",new Vector3(.07f,0,-.34f),new Vector3(.025f,.15f,.14f),feather);
+            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",Vector3.zero,new Vector3(.09f,.09f,.92f),wood);
+            var tip=Part(piercingView,PrimitiveType.Capsule,"Bolt metal point",new Vector3(0,0,.54f),new Vector3(.13f,.21f,.13f),metal);tip.transform.localRotation=Quaternion.Euler(90,0,0);
+            var streak=Part(piercingView,PrimitiveType.Cube,"Bright bolt streak",new Vector3(0,0,-.08f),new Vector3(.11f,.11f,.94f),feather);
+            streak.sharedMaterial=VisualFactory.EmissiveMat(new Color(1f,.78f,.30f),.65f);
+            Part(piercingView,PrimitiveType.Cube,"Bolt fletching top",new Vector3(0,.09f,-.43f),new Vector3(.19f,.03f,.17f),feather);
+            Part(piercingView,PrimitiveType.Cube,"Bolt fletching side",new Vector3(.09f,0,-.43f),new Vector3(.03f,.19f,.17f),feather);
 
             magicView=Group(transform,"Magic projectile");
             Part(magicView,PrimitiveType.Sphere,"Arcane orb",Vector3.zero,Vector3.one*.22f,new Color(.42f,.55f,1f));
@@ -588,7 +589,11 @@ namespace RiskAI
                 {
                     VisualFactory.ConfigureProjectile(this, attack);
                 }
-                SetPosition(state.Progress);
+                Vector3 previous=transform.position;
+                transform.position=state.Position;
+                Vector3 direction=state.Position-previous;
+                if(direction.sqrMagnitude<.0001f)direction=state.To-state.Position;
+                if(direction.sqrMagnitude>.0001f)transform.rotation=Quaternion.LookRotation(direction);
                 return;
             }
 

@@ -35,6 +35,7 @@ namespace RiskAI
             session.Spatial.Rebuild(session.Targets, session.Units);
             AddPhase(ref telemetry.SpatialMilliseconds, ref telemetry.SpatialMaxMilliseconds, phaseStarted);
 
+            session.Combat.BeginSimulationTick();
             phaseStarted = Stopwatch.GetTimestamp();
             units.Clear(); units.AddRange(session.Units);
             for (int i = 0; i < units.Count; i++)

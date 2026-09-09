@@ -147,13 +147,19 @@ namespace RiskAI.Tests
 
             float targetBefore = target.Health, bystanderBefore = bystander.Health;
             int projectileCount = battle.Combat.ActiveProjectileCount;
-            var instant = SourceWeapons.For(UnitKind.Archer, AttackKind.Piercing);
-            int instantId = battle.Combat.FireWeapon(source.AimPoint, target.AimPoint, target, 20,
-                source.Team, source, instant);
-            Assert.That(instant.Delivery, Is.EqualTo(WeaponDelivery.Instant));
-            Assert.That(instantId, Is.Zero);
-            Assert.That(battle.Combat.ActiveProjectileCount, Is.EqualTo(projectileCount));
-            Assert.That(target.Health, Is.LessThan(targetBefore), "h00B instant delivery must resolve at release.");
+            var crossbow = SourceWeapons.For(UnitKind.Archer, AttackKind.Piercing);
+            battle.Combat.BeginSimulationTick();
+            int crossbowId = battle.Combat.FireWeapon(source.AimPoint, target.AimPoint, target, 20,
+                source.Team, source, crossbow);
+            Assert.That(crossbow.Delivery, Is.EqualTo(WeaponDelivery.Missile));
+            Assert.That(crossbow.ProjectileSpeed,Is.EqualTo(36));
+            Assert.That(crossbowId, Is.GreaterThan(0));
+            Assert.That(battle.Combat.ActiveProjectileCount, Is.EqualTo(projectileCount+1));
+            Assert.That(target.Health, Is.EqualTo(targetBefore), "Crossbow damage waits for visible contact.");
+            battle.Combat.Tick(.05f);
+            Assert.That(target.Health,Is.EqualTo(targetBefore),"A newly released bolt cannot consume the firing tick's movement budget.");
+            battle.Combat.Tick(.2f);
+            Assert.That(target.Health, Is.LessThan(targetBefore));
 
             targetBefore = target.Health;
             Vector3 from = target.AimPoint + Vector3.left * 44;

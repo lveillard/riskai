@@ -43,6 +43,9 @@ namespace RiskAI
         void ConfigureViewport()
         {
             UiViewport.SetHudHeights(RequestedHeaderHeight, RequestedFooterHeight);
+            // Keep one stable camera framing while the contextual footer opens and
+            // closes. Hiding it reveals more map below instead of moving the world.
+            UiViewport.SetCameraHudHeights(RequestedHeaderHeight,UiViewport.IsPortrait?210:188);
         }
 
         void InitializeRetainedUi()

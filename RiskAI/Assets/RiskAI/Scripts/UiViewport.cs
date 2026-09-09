@@ -13,7 +13,7 @@ namespace RiskAI
             public Layout(Rect safe, Rect world, float scale) { Safe=safe; World=world; Scale=scale; }
         }
 
-        static float headerOverride=-1,footerOverride=-1;
+        static float headerOverride=-1,footerOverride=-1,cameraHeaderOverride=-1,cameraFooterOverride=-1;
         public static float Scale => PlatformPresentation.PixelDensity;
         public static Rect SafeRect => PlatformPresentation.SafeArea;
         public static float LogicalWidth => SafeRect.width/Scale;
@@ -23,6 +23,8 @@ namespace RiskAI
         public static bool IsTouchLayout => PlatformPresentation.TouchCapable || IsCompact;
         public static Rect WorldRect => Calculate(new Vector2(Screen.width,Screen.height),SafeRect,Scale,
             headerOverride>=0?headerOverride:IsPortrait?64:48,footerOverride>=0?footerOverride:IsPortrait?224:208).World;
+        public static Rect CameraWorldRect => Calculate(new Vector2(Screen.width,Screen.height),SafeRect,Scale,
+            cameraHeaderOverride>=0?cameraHeaderOverride:IsPortrait?64:48,cameraFooterOverride>=0?cameraFooterOverride:IsPortrait?224:208).World;
         public static float TopPixels => Screen.height-WorldRect.yMax;
         public static float BottomPixels => WorldRect.yMin;
         public static bool ContainsWorld(Vector2 screen) => WorldRect.Contains(screen);
@@ -32,7 +34,12 @@ namespace RiskAI
             if(!float.IsNaN(headerLogical)&&!float.IsInfinity(headerLogical))headerOverride=Mathf.Max(0,headerLogical);
             if(!float.IsNaN(footerLogical)&&!float.IsInfinity(footerLogical))footerOverride=Mathf.Max(0,footerLogical);
         }
-        public static void ResetHudHeights() { headerOverride=footerOverride=-1; }
+        public static void SetCameraHudHeights(float headerLogical,float footerLogical)
+        {
+            if(!float.IsNaN(headerLogical)&&!float.IsInfinity(headerLogical))cameraHeaderOverride=Mathf.Max(0,headerLogical);
+            if(!float.IsNaN(footerLogical)&&!float.IsInfinity(footerLogical))cameraFooterOverride=Mathf.Max(0,footerLogical);
+        }
+        public static void ResetHudHeights() { headerOverride=footerOverride=cameraHeaderOverride=cameraFooterOverride=-1; }
 
         public static Layout Calculate(Vector2 screen,Rect safe,float scale,float header,float footer)
         {

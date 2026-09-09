@@ -95,7 +95,7 @@ namespace RiskAI.Tests
             Assert.That(Quaternion.Angle(camera.transform.rotation,RtsCameraRig.DefaultRotation),Is.GreaterThan(1));
             Assert.That(rig.FocusPoint,Is.EqualTo(focus));
             var projected=camera.WorldToScreenPoint(focus);
-            Assert.That(Vector2.Distance(projected,UiViewport.WorldRect.center),Is.LessThan(.1f));
+            Assert.That(Vector2.Distance(projected,UiViewport.CameraWorldRect.center),Is.LessThan(.1f));
             rig.Orbit(new Vector2(0,-100000));
             Assert.That(camera.transform.eulerAngles.x,Is.EqualTo(80).Within(.01));
             rig.ResetView();
@@ -126,7 +126,7 @@ namespace RiskAI.Tests
             rig.Focus(battle.Towns[1].transform.position);
             yield return new WaitForSecondsRealtime(.35f);
             var projected=Camera.main.WorldToScreenPoint(rig.FocusPoint);
-            float playableCenterY=(BattleHud.BottomPixels+Screen.height-BattleHud.TopPixels)*.5f;
+            float playableCenterY=UiViewport.CameraWorldRect.center.y;
             Assert.That(projected.x,Is.EqualTo(Screen.width*.5f).Within(2f));
             Assert.That(projected.y,Is.EqualTo(playableCenterY).Within(2f));
         }

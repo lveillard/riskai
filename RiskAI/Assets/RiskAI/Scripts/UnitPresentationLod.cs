@@ -120,6 +120,8 @@ namespace RiskAI
             float[] heights = { 0f, .18f, .68f, .96f, 1.18f };
             float[] radii = mounted
                 ? new[] { .30f, .50f, .46f, .27f, .10f }
+                : kind == UnitKind.MarinePrivate
+                    ? new[] { .25f, .40f, .42f, .34f, .20f }
                 : kind == UnitKind.Mortar
                     ? new[] { .34f, .52f, .48f, .25f, .12f }
                     : ranged

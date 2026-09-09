@@ -277,7 +277,7 @@ namespace RiskAI
                 if (session.RecruitmentPopulation(first.Team) < BattleRules.PopulationLimit)
                 {
                     Vector3 spawn = IsPort && Port ? Port.LandEntry : DefaultLandEntry;
-                    var unit = session.Spawn(first.Team, first.Kind, spawn);
+                    var unit = session.SpawnSeparated(first.Team, first.Kind, spawn);
                     if (unit) { queue.RemoveAt(0); unit.MoveTo(Rally, true, false); }
                     else { queue.RemoveAt(0); session.Economy.Refund(first.Team, BattleRules.Cost(first.Kind)); }
                 }

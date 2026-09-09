@@ -57,7 +57,8 @@ namespace RiskAI
             }
             attackClip=null;
             if(soldier.Agent.velocity.sqrMagnitude>.05f){if(anim["Running_A"])anim["Running_A"].speed=1.15f;Play("Running_A",.12f);}
-            else Play(soldier.CurrentTarget&&soldier.Kind==Core.UnitKind.Archer?"2H_Ranged_Aiming":"Idle",.15f);
+            else Play(soldier.CurrentTarget&&soldier.Kind==Core.UnitKind.Archer?"2H_Ranged_Aiming":
+                soldier.CurrentTarget&&soldier.Kind==Core.UnitKind.MarinePrivate?"1H_Ranged_Aiming":"Idle",.15f);
         }
     }
 }
