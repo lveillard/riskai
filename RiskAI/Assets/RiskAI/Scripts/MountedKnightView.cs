@@ -169,13 +169,8 @@ namespace RiskAI
             motionRig.localPosition=new Vector3(0,.008f+Mathf.Abs(bob)*.032f*gaitBlend,0);
             motionRig.localRotation=Quaternion.Euler(bob*2.3f*gaitBlend,0,Mathf.Sin(stridePhase)*1.15f*gaitBlend);
             tail.localRotation=Quaternion.Euler(-25f-bob*7f,0,Mathf.Sin(stridePhase*.5f)*8f*gaitBlend);
-            float windup=soldier.StrikeWindupProgress;
-            float thrust=0;
-            if(windup>=0)
-            {
-                thrust=Mathf.Lerp(-1,1,Mathf.SmoothStep(0,1,windup));
-            }
-            lanceThrust=Mathf.MoveTowards(lanceThrust,thrust,Time.deltaTime*(thrust>lanceThrust?12f:5f));
+            lanceThrust=AttackPresentationTiming.ContactPose(soldier.AttackPresentationProgress,
+                AttackPresentationTiming.ContactNormalizedTime(soldier.Kind));
             lance.localPosition=lanceRestPosition+Vector3.forward*(lanceThrust>.0f?lanceThrust*.52f:lanceThrust*.16f);
             lance.localRotation=Quaternion.Euler(-18f+lanceThrust*15f,0,0);
         }

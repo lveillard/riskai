@@ -5,12 +5,12 @@ namespace RiskAI.Tests
 {
     public sealed class RulesTests
     {
-        [Test] public void IncomeIncludesEachOwnedTownAndStopsWithoutCities()
+        [Test] public void IncomeIncludesCompleteCountriesAndStopsWithoutCities()
         {
             var economy=new Economy();economy.Towns.Add(new TownState("a",0,0,0));economy.Towns.Add(new TownState("b",-1,0,0));
-            Assert.That(economy.Income(0),Is.EqualTo(5));economy.Towns[1].Owner=0;
+            Assert.That(economy.Income(0),Is.EqualTo(4));economy.Towns[1].Owner=0;
             Assert.That(economy.Income(0),Is.EqualTo(6));economy.Towns[1].Owner=1;
-            Assert.That(economy.Income(0),Is.EqualTo(5));
+            Assert.That(economy.Income(0),Is.EqualTo(4));
             economy.Towns[0].Owner=-1; economy.Towns[1].Owner=-1;
             Assert.That(economy.Income(0),Is.Zero);
         }

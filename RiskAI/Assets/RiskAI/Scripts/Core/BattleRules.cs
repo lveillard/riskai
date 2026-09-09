@@ -128,20 +128,37 @@ namespace RiskAI.Core
             return CalculateIncome(team);
         }
 
-        int CalculateIncome(int team)
+        public int IncomeBreakdown(int team, IDictionary<int,int> countries, out int basicIncome)
         {
-            // Saran's default Conquest FFA pays every city a player owns. It
-            // does not gate city income on a completed country. The source adds
-            // BasicIncome only when the player owns at least one city.
+            countries.Clear();basicIncome=0;
+            if(team<0||team>=Gold.Length)return 0;
+            RebuildCountryOwners();
+            return CalculateIncome(team,countries,out basicIncome);
+        }
+
+        int CalculateIncome(int team) => CalculateIncome(team,null,out _);
+
+        int CalculateIncome(int team, IDictionary<int,int> countries, out int basicIncome)
+        {
+            // Conquest FFA Income Give iterates RegionOwnersGroup only for a
+            // completed country (war3map.j:18954,19249). BasicIncome still
+            // applies with any surviving city, including fragmented countries.
             int ownedCities = 0;
             int income = 0;
             foreach (var town in Towns)
                 if (town.Owner == team)
                 {
                     ownedCities++;
-                    income += BattleRules.TownIncome + (town.Level - 1) * BattleRules.UpgradeIncome;
+                    if (town.Country >= 0 && countryOwners.TryGetValue(town.Country, out var owner) && owner == team)
+                    {
+                        int amount=BattleRules.TownIncome+(town.Level-1)*BattleRules.UpgradeIncome;
+                        income+=amount;
+                        if(countries!=null)
+                        {countries.TryGetValue(town.Country,out int current);countries[town.Country]=current+amount;}
+                    }
                 }
-            return ownedCities > 0 ? income + BattleRules.BaseIncome : 0;
+            basicIncome=ownedCities>0?BattleRules.BaseIncome:0;
+            return income+basicIncome;
         }
 
         public bool Spend(int team, int amount)

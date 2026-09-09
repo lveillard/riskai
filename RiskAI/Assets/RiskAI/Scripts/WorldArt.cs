@@ -16,15 +16,15 @@ namespace RiskAI
             shadow.transform.localRotation=Quaternion.Euler(90,0,0);
             var renderer=shadow.GetComponent<Renderer>();renderer.sharedMaterial=mat;renderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
         }
-        public static Material Painted(int tile, Color? tint = null, float scale = .33f, bool recolor = false, bool natural = false)
+        public static Material Painted(int tile, Color? tint = null, float scale = .33f, bool recolor = false, bool natural = false, float colorLift = 0)
         {
-            Color color=tint??Color.white;string key=tile+"/"+color+"/"+scale+"/"+recolor+"/"+natural;
+            Color color=tint??Color.white;string key=tile+"/"+color+"/"+scale+"/"+recolor+"/"+natural+"/"+colorLift;
             if(materials.TryGetValue(key,out var found)&&found)return found;
             var template=Resources.Load<Material>("PaintedSurface");
             var mat=template?new Material(template):new Material(Shader.Find("RiskAI/PaintedSurface"));
             mat.SetTexture("_Atlas",Resources.Load<Texture2D>(natural?"Painted/StrategicAtlas":"Painted/ArchitectureAtlas"));
             mat.SetVector("_Tile",new Vector4(tile%2*.5f,tile<2?.5f:0,0,0));mat.SetColor("_Tint",color);
-            mat.SetFloat("_Scale",scale);mat.SetFloat("_Recolor",recolor?1:0);materials[key]=mat;return mat;
+            mat.SetFloat("_Scale",scale);mat.SetFloat("_Recolor",recolor?1:0);mat.SetFloat("_ColorLift",colorLift);materials[key]=mat;return mat;
         }
         static GameObject Block(Transform root,string name,Vector3 position,Vector3 size,int tile=0,Color? tint=null,bool solid=false)
         {
@@ -48,7 +48,9 @@ namespace RiskAI
             Beam(root,basePoint+v[3],basePoint+v[4],.2f);Beam(root,basePoint+v[4],basePoint+v[5],.2f);
             Beam(root,basePoint+v[1],basePoint+v[4],.2f);return go;
         }
-        public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamColor(team),.32f,true);
+        // Roof slopes spend much of the match outside direct light. Retaining some of the
+        // painted albedo keeps light blue and navy visibly separate without changing the palette.
+        public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamColor(team),.32f,true,colorLift:.38f);
         static Renderer Banner(Transform root,Vector3 position,int team,float width=.7f,float height=1.6f)
         {
             var go=new GameObject("Banner");go.transform.SetParent(root,false);go.transform.localPosition=position;

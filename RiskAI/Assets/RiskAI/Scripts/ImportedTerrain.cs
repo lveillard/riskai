@@ -22,19 +22,25 @@ namespace RiskAI
         }
         static void CreateChunk(Transform root,ImportedTerrainResources resources,ImportedMapData data,int sx,int sz,int nx,int nz,Material ground,Material water)
         {
-            var vertices=new Vector3[(nx+1)*(nz+1)];var colors=new Color[vertices.Length];
+            var vertices=new Vector3[(nx+1)*(nz+1)];var normals=new Vector3[vertices.Length];var colors=new Color[vertices.Length];
             // All three meshes share the bounded coastal vertex deformation;
             // ImportedMapData resolves these same triangles for CPU queries.
             var shoreBand=new Vector3[vertices.Length];
             var triangles=new List<int>(nx*nz*6);var walkable=new List<int>(nx*nz*6);
-            var seaVertices=new List<Vector3>();var seaColors=new List<Color>();var seaTriangles=new List<int>();
+            // Water uses one vertex per source grid point inside a chunk. Sharing the
+            // diagonal and cardinal edges keeps every interpolant identical across
+            // adjacent source tiles instead of submitting four private vertices each.
+            var seaVertices=new Vector3[vertices.Length];var seaColors=new Color[vertices.Length];var seaTriangles=new List<int>();
             for(int z=0;z<=nz;z++)for(int x=0;x<=nx;x++)
             {
                 int ix=sx+x,iz=sz+z,source=iz*data.width+ix,index=z*(nx+1)+x;
                 var point=data.TerrainVertex(ix,iz);float wx=point.x,wz=point.y;
                 vertices[index]=new Vector3(wx,data.heightSamples[source],wz);
+                normals[index]=TerrainNormal(data,ix,iz);
                 colors[index]=GroundTint(data.tileSamples[source],wx,wz);
                 colors[index].a=ImportedLandscapeAugment.Enabled?ImportedLandscapeAugment.RockSnowWeightAt(data,wx,wz):0;
+                seaVertices[index]=new Vector3(wx,data.waterSamples[source],wz);
+                seaColors[index]=new Color(1,1,1,Mathf.Clamp01((data.waterSamples[source]-data.heightSamples[source])/3f));
                 var coast=ShoreAccess.SurfaceWeights(wx,wz);
                 shoreBand[index]=new Vector3(ShoreAccess.ShoreBandWeight(wx,wz),coast.x,coast.y);
                 if(x==nx||z==nz)continue;
@@ -43,29 +49,26 @@ namespace RiskAI
                 var center=(point+data.TerrainVertex(ix+1,iz)+data.TerrainVertex(ix,iz+1)+data.TerrainVertex(ix+1,iz+1))*.25f;
                 if(data.IsLand(center.x,center.y))AddQuad(walkable,index,b,index+1,b+1);
                 if(data.landSamples[source]+data.landSamples[source+1]+data.landSamples[source+data.width]+data.landSamples[source+data.width+1]<4)
-                {
-                    int n=seaVertices.Count;
-                    for(int corner=0;corner<4;corner++)
-                    {
-                        int offset=(corner%2)*data.width+corner/2;
-                        int k=source+offset,cx=k%data.width,cz=k/data.width;
-                        var waterPoint=data.TerrainVertex(cx,cz);
-                        seaVertices.Add(new Vector3(waterPoint.x,data.waterSamples[k],waterPoint.y));
-                        seaColors.Add(new Color(1,1,1,Mathf.Clamp01((data.waterSamples[k]-data.heightSamples[k])/3f)));
-                    }
-                    AddQuad(seaTriangles,n,n+1,n+2,n+3);
-                }
+                    AddQuad(seaTriangles,index,b,index+1,b+1);
             }
-            var mesh=new Mesh{name="Imported land chunk"};mesh.vertices=vertices;mesh.colors=colors;mesh.SetUVs(1,shoreBand);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();resources.Meshes.Add(mesh);
+            var mesh=new Mesh{name="Imported land chunk",vertices=vertices,normals=normals,colors=colors};mesh.SetUVs(1,shoreBand);mesh.SetTriangles(triangles,0);mesh.RecalculateBounds();resources.Meshes.Add(mesh);
             var go=new GameObject("Terrain "+sx+","+sz);go.layer=MapLayout.TerrainLayer;go.transform.SetParent(root,false);
             go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=ground;
             if(walkable.Count>0){var collision=new Mesh{name="Imported navigation chunk"};collision.vertices=vertices;collision.SetTriangles(walkable,0);collision.RecalculateBounds();resources.Meshes.Add(collision);go.AddComponent<MeshCollider>().sharedMesh=collision;}
             if(seaTriangles.Count==0)return;
-            var sea=new Mesh{name="Imported water chunk"};sea.SetVertices(seaVertices);sea.SetColors(seaColors);sea.SetTriangles(seaTriangles,0);sea.RecalculateNormals();sea.RecalculateBounds();resources.Meshes.Add(sea);
+            var sea=new Mesh{name="Imported water chunk",vertices=seaVertices,colors=seaColors};sea.SetTriangles(seaTriangles,0);sea.RecalculateNormals();sea.RecalculateBounds();resources.Meshes.Add(sea);
             var surface=new GameObject("Water "+sx+","+sz);surface.transform.SetParent(root,false);surface.AddComponent<MeshFilter>().sharedMesh=sea;
             var renderer=surface.AddComponent<MeshRenderer>();renderer.sharedMaterial=water;renderer.shadowCastingMode=ShadowCastingMode.Off;
         }
         static void AddQuad(List<int> target,int a,int b,int c,int d){target.Add(a);target.Add(b);target.Add(c);target.Add(c);target.Add(b);target.Add(d);}
+        static Vector3 TerrainNormal(ImportedMapData data,int x,int z)
+        {
+            int left=Mathf.Max(0,x-1),right=Mathf.Min(data.width-1,x+1),back=Mathf.Max(0,z-1),forward=Mathf.Min(data.height-1,z+1);
+            var lp=data.TerrainVertex(left,z);var rp=data.TerrainVertex(right,z);var bp=data.TerrainVertex(x,back);var fp=data.TerrainVertex(x,forward);
+            var across=new Vector3(rp.x-lp.x,data.heightSamples[z*data.width+right]-data.heightSamples[z*data.width+left],rp.y-lp.y);
+            var along=new Vector3(fp.x-bp.x,data.heightSamples[forward*data.width+x]-data.heightSamples[back*data.width+x],fp.y-bp.y);
+            var normal=Vector3.Cross(along,across);return normal.sqrMagnitude>.000001f?normal.normalized:Vector3.up;
+        }
         static Color GroundTint(int tile,float x,float z)
         {
             Color tint=GroundColors[Mathf.Min(ImportedMapData.GroundTileIndex(tile),GroundColors.Length-1)];
@@ -130,8 +133,8 @@ namespace RiskAI
             {
                 if(!c.port)continue;
                 Vector3 city=new Vector3(c.x,.55f,c.z),claim=new Vector3(c.claimX,.55f,c.claimZ);
-                Platform(root,city,city+Vector3.forward*.01f,9,"Shipyard footing");
-                Platform(root,city,claim,4.5f,"Guard pier");
+                Platform(root,city,city+Vector3.forward*.01f,7.2f,"Shipyard quay");
+                Platform(root,city,claim,3.15f,"Guard pier");
                 Vector3 shore=default;float nearest=float.MaxValue;
                 for(float dz=-26;dz<=26;dz+=data.cellSize)for(float dx=-26;dx<=26;dx+=data.cellSize)
                 {
@@ -139,18 +142,13 @@ namespace RiskAI
                     float distance=dx*dx+dz*dz;
                     if(distance<nearest){nearest=distance;shore=MapLayout.Point(x,z)+Vector3.up*.08f;}
                 }
-                if(nearest<float.MaxValue)Platform(root,city,shore,3.4f,"Shore gangway");
+                if(nearest<float.MaxValue)Platform(root,city,shore,2.35f,"Shore gangway");
                 else Debug.LogError("RISKAI_PORT_SHORE_MISSING: "+c.id);
             }
         }
         static void Platform(Transform root,Vector3 from,Vector3 to,float width,string label)
         {
-            var middle=(from+to)*.5f;var direction=to-from;
-            var go=GameObject.CreatePrimitive(PrimitiveType.Cube);go.name=label;go.layer=MapLayout.TerrainLayer;go.transform.SetParent(root,false);
-            go.transform.position=middle-Vector3.up*.16f;
-            go.transform.rotation=direction.sqrMagnitude>.02f?Quaternion.LookRotation(direction):Quaternion.identity;
-            go.transform.localScale=new Vector3(width,.32f,Mathf.Max(width,(to-from).magnitude+2));
-            go.GetComponent<Renderer>().sharedMaterial=WorldArt.Painted(2,new Color(.92f,.83f,.69f),.8f);
+            NavalArt.CreatePierDeck(root,from,to,width,label,true,label!="Shore gangway",label=="Shipyard quay"?.04f:label=="Guard pier"?.02f:0);
         }
     }
     public sealed class ImportedTerrainResources:MonoBehaviour

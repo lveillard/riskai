@@ -115,8 +115,8 @@ namespace RiskAI.Tests
             var harborCue=harbor.GetComponentInChildren<BuildingTrainingView>(true);
             Assert.That(harborAnchor,Is.Not.Null);Assert.That(harborCue,Is.Not.Null);
             var harborLocal=harborArt.InverseTransformPoint(harborAnchor.Position);
-            Assert.That(harborLocal.x,Is.EqualTo(-3f).Within(.001f));
-            Assert.That(harborLocal.z,Is.EqualTo(-1.55f).Within(.001f));
+            Assert.That(harborLocal.x,Is.EqualTo(-2.15f).Within(.001f));
+            Assert.That(harborLocal.z,Is.EqualTo(-1.74f).Within(.001f));
             Assert.That(Vector3.Dot(harborAnchor.Outward,harborArt.TransformDirection(Vector3.back).normalized),Is.GreaterThan(.999f));
             Assert.That(Vector3.Distance(harborCue.transform.position,harborAnchor.Position),Is.LessThan(.001f));
             Assert.That(Vector3.Distance(harbor.LandEntry,harborAnchor.Position),Is.GreaterThan(2f),"The harbor cue must not move its land spawn entry.");

@@ -47,18 +47,20 @@ Shader "RiskAI/StrategicTerritory"
                 float relief=.80+.2*saturate(dot(normalize(i.normal),normalize(float3(-.4,1,.3))));
                 half3 color=lerp(half3(.22,.29,.25),owner,.68)*relief;
                 color=lerp(color,half3(1,.85,.45),selected*.38);
-                // The immutable group channel joins all cities sharing one camp,
-                // independently of the live ownership palette. Approximately one
-                // screen pixel on each side stays legible at strategic zoom.
-                float2 borderStep=max(_Regions_TexelSize.xy,fwidth(uv)*1.15);
-                float2 withinCell=frac(uv/_Regions_TexelSize.xy);
-                float2 feather=max(fwidth(uv)*1.8,float2(.000001,.000001));
-                float2 positive=1-smoothstep(0,feather,(1-withinCell)*_Regions_TexelSize.xy);
-                float2 negative=1-smoothstep(0,feather,withinCell*_Regions_TexelSize.xy);
-                float border=max(max(CountryEdge(uv+float2(borderStep.x,0),country)*positive.x,CountryEdge(uv-float2(borderStep.x,0),country)*negative.x),
-                                 max(CountryEdge(uv+float2(0,borderStep.y),country)*positive.y,CountryEdge(uv-float2(0,borderStep.y),country)*negative.y));
-                border*=step(.5,country);
-                color=lerp(color,half3(.075,.095,.09),border*.85);
+                // Sample by screen footprint instead of gating the atlas-cell edge.
+                // This produces a stable two-pixel country outline at every zoom and
+                // catches diagonal borders without outlining water or individual cities.
+                float2 pixel=max(_Regions_TexelSize.xy,fwidth(uv));
+                float2 coreStep=pixel*.9,outerStep=pixel*2.15;
+                float core=max(max(CountryEdge(uv+float2(coreStep.x,0),country),CountryEdge(uv-float2(coreStep.x,0),country)),
+                               max(CountryEdge(uv+float2(0,coreStep.y),country),CountryEdge(uv-float2(0,coreStep.y),country)));
+                core=max(core,max(CountryEdge(uv+coreStep,country),CountryEdge(uv-coreStep,country)));
+                core=max(core,max(CountryEdge(uv+float2(coreStep.x,-coreStep.y),country),CountryEdge(uv+float2(-coreStep.x,coreStep.y),country)));
+                float outer=max(max(CountryEdge(uv+float2(outerStep.x,0),country),CountryEdge(uv-float2(outerStep.x,0),country)),
+                                max(CountryEdge(uv+float2(0,outerStep.y),country),CountryEdge(uv-float2(0,outerStep.y),country)));
+                core*=step(.5,country);outer*=step(.5,country);
+                color=lerp(color,half3(.105,.125,.105),outer*.48);
+                color=lerp(color,selected>.5?half3(.34,.245,.075):half3(.035,.047,.043),core*.94);
                 return half4(color,1);
             }
             ENDHLSL

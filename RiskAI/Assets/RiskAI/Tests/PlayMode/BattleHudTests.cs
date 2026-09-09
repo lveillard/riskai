@@ -34,6 +34,59 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator EmptySelectionReleasesWorldAndCitySelectionClearsImmediately()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var cities=battle.Towns.Where(t=>t.State.Owner==0&&!t.IsPort).Take(2).ToArray();
+            controller.SelectTown(cities[0]);yield return null;yield return null;
+            Assert.That(cities[0].SelectionRing.enabled,Is.True);
+            controller.SelectTown(cities[1]);
+            Assert.That(cities[0].SelectionRing.enabled,Is.False,"Deselect presentation must not wait for Settlement.Update.");
+            Assert.That(cities[1].SelectionRing.enabled,Is.True);
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Q<VisualElement>("HUD footer"),Is.Not.Null);
+            controller.Clear();yield return null;yield return null;
+            Assert.That(root.Q<VisualElement>("HUD footer"),Is.Null);
+            Assert.That(UiViewport.WorldRect.yMin,Is.EqualTo(UiViewport.SafeRect.yMin));
+            Assert.That(RtsUiInput.BlocksWorld(new Vector2(UiViewport.WorldRect.center.x,UiViewport.WorldRect.yMin+20)),Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator ResourceButtonsOpenIncomeAndRankingAndExposeRecruitmentLimit()
+        {
+            yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Q<Label>("HUD unit population").text,Does.Contain("/"+BattleRules.PopulationLimit));
+            Assert.That(root.Q<Label>("HUD guard population"),Is.Null);
+            var gold=root.Q<Button>("HUD gold button");
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=gold;gold.SendEvent(evt);}
+            Assert.That(root.Query<Label>().ToList().Any(l=>l.text=="DESGLOSE DEL ORO"),Is.True);
+            var cities=root.Q<Button>("HUD cities button");
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=cities;cities.SendEvent(evt);}
+            Assert.That(root.Query<VisualElement>().ToList().Count(e=>e.name!=null&&e.name.StartsWith("HUD ranking row ")),Is.EqualTo(battle.PlayerCount));
+        }
+
+        [UnityTest]
+        public IEnumerator OwnProductionFloatsWithoutSelectionAndNeverExposesEnemyQueues()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var own=battle.Towns.First(t=>t.State.Owner==0&&!t.IsPort);
+            var enemy=battle.Towns.First(t=>t.State.Owner==1&&!t.IsPort);
+            Assert.That(own.Recruit(UnitKind.Archer,0),Is.Null);
+            Assert.That(enemy.Recruit(UnitKind.Archer,1),Is.Null);
+            battle.TogglePause();controller.Clear();controller.Focus(own.transform.position);
+            yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Q<VisualElement>("HUD footer"),Is.Null);
+            Assert.That(root.Q<VisualElement>("HUD building queue "+own.GetInstanceID()),Is.Not.Null);
+            Assert.That(root.Q<VisualElement>("HUD building queue "+enemy.GetInstanceID()),Is.Null);
+            // Capturing a paused building must remove its queue without waiting for
+            // the next economy or claim simulation tick to refund its orders.
+            own.State.Owner=1;yield return null;
+            Assert.That(root.Q<VisualElement>("HUD building queue "+own.GetInstanceID()),Is.Null);
+        }
+
+        [UnityTest]
         public IEnumerator ProductionFollowsSelectedBuildingOwnershipWithoutReselecting()
         {
             var controller=Object.FindFirstObjectByType<RtsController>();

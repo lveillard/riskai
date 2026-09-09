@@ -69,6 +69,13 @@ namespace RiskAI.Editor
             MountedKnightView.Create(mountedRoot.transform,0);
             RenderPortrait(mountedRoot,null,"MountedKnight");
             Object.DestroyImmediate(mountedRoot);
+            foreach(ShipKind kind in System.Enum.GetValues(typeof(ShipKind)))
+            {
+                var shipRoot=new GameObject(kind+" portrait");
+                NavalArt.CreateShipModel(shipRoot.transform,0,kind);
+                RenderPortrait(shipRoot,null,kind.ToString());
+                Object.DestroyImmediate(shipRoot);
+            }
             AssetDatabase.Refresh(); AssetDatabase.SaveAssets(); Debug.Log("RISKAI_ART_OK");
         }
         static void RenderPortrait(GameObject root, Animation animation, string name)
@@ -79,9 +86,10 @@ namespace RiskAI.Editor
             var cameraObject = new GameObject("Portrait camera");
             var camera = cameraObject.AddComponent<Camera>(); camera.cullingMask = 1 << 31;
             camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.075f,.085f,.09f);
-            camera.orthographic = true; camera.orthographicSize = name=="Mortar"?1.35f:name=="MountedKnight"?1.85f:1.4f;
-            Vector3 focus = root.transform.position + Vector3.up * (name=="Mortar"?1.15f:1.75f);
-            camera.transform.position = focus + new Vector3(2, 1, 5); camera.transform.LookAt(focus);
+            bool ship=name==ShipKind.Galley.ToString()||name==ShipKind.Transport.ToString();
+            camera.orthographic = true; camera.orthographicSize = ship?3.35f:name=="Mortar"?1.35f:name=="MountedKnight"?1.85f:1.4f;
+            Vector3 focus = root.transform.position + Vector3.up * (ship?2.15f:name=="Mortar"?1.15f:1.75f);
+            camera.transform.position = focus + (ship?new Vector3(4.8f,3.1f,6.8f):new Vector3(2,1,5)); camera.transform.LookAt(focus);
             var keyObject = new GameObject("Portrait light"); var key = keyObject.AddComponent<Light>();
             key.type = LightType.Directional; key.intensity = 1.8f; key.cullingMask = 1 << 31; key.transform.rotation = Quaternion.Euler(35, -30, 0);
             var output = new RenderTexture(192, 192, 24); camera.targetTexture = output;

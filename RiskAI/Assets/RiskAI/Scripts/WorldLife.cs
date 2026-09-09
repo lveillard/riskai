@@ -21,8 +21,16 @@ namespace RiskAI
                 AddBannerMotion(town.transform);
             }
             AddBirds(root,resources);
-            AddPondLife(root,resources,new Vector2(-11,-30),new Vector2(8,5),29);
-            AddPondLife(root,resources,new Vector2(16,-4),new Vector2(3,2),11);
+            if(MapLayout.IsExpanded)
+            {
+                AddPondLife(root,resources,new Vector2(-39,-38),new Vector2(9,5),31);
+                AddPondLife(root,resources,new Vector2(35,-32),new Vector2(6,4),23);
+            }
+            else
+            {
+                AddPondLife(root,resources,new Vector2(-11,-30),new Vector2(8,5),29);
+                AddPondLife(root,resources,new Vector2(16,-4),new Vector2(3,2),11);
+            }
             TerrainHydrology.Create(root);
         }
 
@@ -148,4 +156,3 @@ namespace RiskAI
         }
     }
 }
-

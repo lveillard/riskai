@@ -9,25 +9,23 @@ namespace RiskAI
         sealed class RankingRow
         {
             public VisualElement Root;
-            public Label Name,Cities,Mobile,Guards;
+            public Label Name,Cities,Units;
         }
 
-        static Label AddMetric(VisualElement parent,RtsHudGlyph glyph,string value,string tooltip)
+        static Label AddMetric(VisualElement parent,RtsHudGlyph glyph,string value,string tooltip, System.Action action=null, string name=null)
         {
-            var row=new VisualElement { tooltip=tooltip };RtsUiStyle.Row(row);
+            var row=action==null?new VisualElement():ResourceButton(action,name);row.tooltip=tooltip;RtsUiStyle.Row(row);
             row.style.flexGrow=1;row.style.minWidth=0;row.style.marginRight=5;
             var icon=new RtsHudIcon(glyph);icon.style.width=20;icon.style.height=20;
             row.Add(icon);
-            var label=RtsUiStyle.Label(value,null,12);label.style.marginLeft=3;label.style.minWidth=0;
+            var label=RtsUiStyle.Label(value,null,11);label.style.marginLeft=3;label.style.minWidth=0;label.pickingMode=PickingMode.Ignore;
             row.Add(label);parent.Add(row);return label;
         }
 
         void AddPopulationDisplay(VisualElement parent)
         {
-            populationLabel=AddMetric(parent,RtsHudGlyph.Sword,hud.MobilePopulation0.ToString(),"Tropas móviles");
-            populationLabel.name="HUD mobile population";
-            guardsLabel=AddMetric(parent,RtsHudGlyph.Shield,hud.GarrisonPopulation0.ToString(),"Guardias en ciudades");
-            guardsLabel.name="HUD guard population";
+            populationLabel=AddMetric(parent,RtsHudGlyph.Sword,PopulationText,"Unidades totales. Límite de reclutamiento: incluye encargos; los defensores y barcos no consumen plazas.",ShowPopulation,"HUD units button");
+            populationLabel.name="HUD unit population";
         }
 
         static Button ActionButton(string title,RtsHudGlyph glyph,System.Action action)
@@ -108,18 +106,7 @@ namespace RiskAI
             button.style.paddingLeft = button.style.paddingRight = 4;
             button.style.paddingTop = button.style.paddingBottom = 4;
             button.style.marginRight = button.style.marginBottom = 4;
-            if (soldier)
-            {
-                var portrait = new Image { image = CachedPortrait(PortraitResource(soldier.Kind)), scaleMode = ScaleMode.ScaleToFit, pickingMode = PickingMode.Ignore };
-                portrait.style.width = UiViewport.IsCompact?32:40; portrait.style.height = UiViewport.IsCompact?32:40;
-                button.Add(portrait);
-            }
-            else
-            {
-                var icon = new NavalQueueIcon { pickingMode = PickingMode.Ignore };
-                icon.SetKind(ship.Kind); icon.style.width = UiViewport.IsCompact?32:40; icon.style.height = UiViewport.IsCompact?32:40;
-                button.Add(icon);
-            }
+            button.Add(PortraitFrame(soldier?PortraitResource(soldier.Kind):ShipPortrait.Resource(ship.Kind),UiViewport.IsCompact?32:40));
             var track = new VisualElement { pickingMode = PickingMode.Ignore };
             track.style.width = Length.Percent(100);
             track.style.height = 5; track.style.flexShrink = 0;

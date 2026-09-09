@@ -123,14 +123,15 @@ namespace RiskAI
         {
             if (impactPool != null) impactPool.Forget(pulse);
         }
-        // Warcraft III patch 1.29 player palette; preserve the legacy blue/red swap.
+        // Warcraft III patch 1.29 player palette, in the engine's canonical player order.
+        // Reference: https://www.hiveworkshop.com/threads/warcraft-iii-color-tags-and-linebreaks.31386/
         static readonly Color[] PlayerColors = {
-            new Color32(0,66,255,255), new Color32(255,3,3,255), new Color32(28,230,185,255), new Color32(84,0,129,255),
+            new Color32(255,3,3,255), new Color32(0,66,255,255), new Color32(28,230,185,255), new Color32(84,0,129,255),
             new Color32(255,252,1,255), new Color32(254,138,14,255), new Color32(32,192,0,255), new Color32(229,91,176,255),
             new Color32(149,150,151,255), new Color32(126,191,241,255), new Color32(16,98,70,255), new Color32(78,42,4,255),
             new Color32(155,0,0,255), new Color32(0,0,195,255), new Color32(0,234,255,255), new Color32(190,0,254,255)
         };
-        static readonly string[] PlayerColorNames = {"Azul","Rojo","Turquesa","Violeta","Amarillo","Naranja","Verde","Rosa","Gris","Azul claro","Verde oscuro","Marrón","Granate","Azul marino","Cian","Magenta"};
+        static readonly string[] PlayerColorNames = {"Rojo","Azul","Turquesa","Violeta","Amarillo","Naranja","Verde","Rosa","Gris","Azul claro","Verde oscuro","Marrón","Granate","Azul marino","Cian","Magenta"};
         public static Color TeamColor(int team) => PlayerRules.IsPlayer(team)?PlayerColors[team]:Color.white;
         public static string TeamName(int team) => !PlayerRules.IsPlayer(team)?"Neutral":(team==0?"Tú":"IA "+team)+" · "+PlayerColorNames[team];
         public static Material Mat(Color color)

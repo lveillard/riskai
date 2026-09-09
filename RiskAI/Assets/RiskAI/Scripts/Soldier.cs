@@ -27,6 +27,22 @@ namespace RiskAI
         // It does not schedule, cancel, or resolve combat.
         public float StrikeWindupProgress => strikeAt < 0 || !strikeTarget || !session ? -1 :
             Mathf.Clamp01(1-(strikeAt-session.BattleTime)/Mathf.Max(.001f,BattleRules.AttackPoint(Kind)));
+        // Observational animation phase only; damage remains owned by SimTick.
+        public float AttackPresentationProgress
+        {
+            get
+            {
+                if (!session || attackPresentationStartedAt < 0) return -1;
+                if (attackPresentationContactTick == session.Clock.TickCount)
+                    return AttackPresentationTiming.ContactNormalizedTime(Kind);
+                float elapsed = session.BattleTime - attackPresentationStartedAt;
+                float duration = attackPresentationAttackPoint + attackPresentationRecovery;
+                if (elapsed < 0 || elapsed > duration) return -1;
+                return AttackPresentationTiming.NormalizedTime(elapsed,
+                    attackPresentationAttackPoint, attackPresentationRecovery,
+                    AttackPresentationTiming.ContactNormalizedTime(Kind));
+            }
+        }
         public bool IsHolding => !IsGarrison && isActiveAndEnabled && mode==OrderMode.Hold && !target && Agent && Agent.enabled;
         public string OrderLabel => IsGarrison ? "Guarnición · mantiene el edificio" : target ? "En combate" : mode == OrderMode.Move ? "Moviendo" : mode == OrderMode.AttackMove ? "Avanzando y atacando" : mode == OrderMode.Hold ? "Manteniendo posición" : mode == OrderMode.Patrol ? "Patrullando" : mode == OrderMode.Follow ? "Siguiendo" : "Preparado";
         public Transform LeftLeg, RightLeg, Weapon;
@@ -37,7 +53,9 @@ namespace RiskAI
         SoldierAnimator visualAnimator;
         OrderMode mode;
         Vector3 destination, anchor, pursuitOrigin, patrolOrigin, garrisonAnchor;
-        float nextSense, nextPath, nextAttack, strikeAt = -1, attackFlash, stalled;
+        float nextSense, nextPath, nextAttack, strikeAt = -1, stalled;
+        float attackPresentationStartedAt = -1, attackPresentationAttackPoint, attackPresentationRecovery;
+        long attackPresentationContactTick = -1;
         // These fields are observational only: direct player moves are timed from accepted command submit to first observed velocity.
         double humanMoveSubmittedAt = -1;
         double humanMovePausedSecondsAtSubmit;
@@ -60,7 +78,7 @@ namespace RiskAI
             Garrison=null; simulationPaused=false; enabled=true;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
             mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; orders.Clear();
-            nextPath=nextAttack=attackFlash=stalled=0; strikeAt=-1; wasFighting=false;
+            nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
             humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
             bool first=!Agent;
             Agent=GetComponent<NavMeshAgent>(); Agent.enabled=true;
@@ -231,7 +249,15 @@ namespace RiskAI
             else Stop();
         }
         void SetTarget(CombatTarget enemy) { target = enemy; pursuitOrigin = transform.position; nextPath = 0; }
-        void CancelStrike() { strikeAt = -1; strikeTarget = null; attackFlash = 0; }
+        void CancelStrike()
+        {
+            if(strikeAt>=0)
+            {
+                attackPresentationStartedAt=-1;attackPresentationContactTick=-1;
+                if(visualAnimator)visualAnimator.CancelStrike();
+            }
+            strikeAt = -1; strikeTarget = null;
+        }
         bool Visible(CombatTarget enemy)
         {
             if (!enemy) return false;
@@ -286,6 +312,8 @@ namespace RiskAI
             else pathPendingSince = -1;
             if (strikeAt >= 0 && session.BattleTime >= strikeAt)
             {
+                attackPresentationContactTick=session.Clock.TickCount;
+                if(visualAnimator)visualAnimator.SampleStrikeContact();
                 if (strikeTarget && strikeTarget.Health > 0 && Vector3.Distance(transform.position, strikeTarget.ApproachPoint(transform.position)) <= BattleRules.Range(Kind) + .55f && Vector3.Distance(transform.position,strikeTarget.ApproachPoint(transform.position))>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
                 {
                     float damage = session.RollDamage(BattleRules.Profile(Kind));
@@ -356,8 +384,13 @@ namespace RiskAI
             float stride = Agent.velocity.magnitude > .15f ? Mathf.Sin(session.BattleTime * 13 + EntityId) * 30 : 0;
             if (LeftLeg) LeftLeg.localRotation = Quaternion.Euler(stride, 0, 0);
             if (RightLeg) RightLeg.localRotation = Quaternion.Euler(-stride, 0, 0);
-            attackFlash = Mathf.MoveTowards(attackFlash, 0, Time.deltaTime);
-            if (Weapon) Weapon.localRotation = Quaternion.Euler(-15 - Mathf.Sin(attackFlash * Mathf.PI / .4f) * 95, 0, 0);
+            float presentation=AttackPresentationProgress;
+            if (Weapon)
+            {
+                float pose=AttackPresentationTiming.ContactPose(presentation,
+                    AttackPresentationTiming.ContactNormalizedTime(Kind));
+                Weapon.localRotation = Quaternion.Euler(-15-pose*95,0,0);
+            }
         }
         void Fight()
         {
@@ -382,8 +415,12 @@ namespace RiskAI
                 if (direction.sqrMagnitude > .001f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(direction), 650 * simDelta);
                 if (session.BattleTime >= nextAttack && strikeAt < 0)
                 {
-                    nextAttack = session.BattleTime + BattleRules.AttackInterval(Kind); strikeAt = session.BattleTime + BattleRules.AttackPoint(Kind);
-                    strikeTarget = target; attackFlash = .4f;
+                    var profile=BattleRules.Profile(Kind);
+                    nextAttack = session.BattleTime + profile.Cooldown; strikeAt = session.BattleTime + profile.AttackPoint;
+                    strikeTarget = target;
+                    attackPresentationStartedAt=session.BattleTime;
+                    attackPresentationAttackPoint=profile.AttackPoint;
+                    attackPresentationRecovery=AttackPresentationTiming.RecoverySeconds(profile.AttackPoint,profile.Backswing,profile.Cooldown);
                     if(visualAnimator)visualAnimator.Strike();
                 }
             }

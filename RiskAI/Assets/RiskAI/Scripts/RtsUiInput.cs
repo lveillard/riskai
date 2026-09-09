@@ -23,13 +23,29 @@ namespace RiskAI
         {
             if (!UiViewport.WorldRect.Contains(screen)) return true;
             for (int i = 0; i < blocks.Count; i++) if (blocks[i].Contains(screen)) return true;
-            return false;
+            return RtsUiRuntime.PicksUi(screen);
         }
     }
 
     /// <summary>Creates a runtime UIToolkit panel with the project's Input System event module.</summary>
     public sealed class RtsUiRuntime : MonoBehaviour
     {
+        static readonly List<RtsUiRuntime> activePanels=new List<RtsUiRuntime>();
+
+        internal static bool PicksUi(Vector2 screen)
+        {
+            // World-anchored controls must exclude world commands just like the
+            // header/footer. Use the panel's actual hit geometry and display state.
+            var topLeft=new Vector2(screen.x,Screen.height-screen.y);
+            foreach(var runtime in activePanels)
+            {
+                var panel=runtime.Root?.panel;
+                if(panel==null)continue;
+                var hit=panel.Pick(RuntimePanelUtils.ScreenToPanel(panel,topLeft));
+                if(hit!=null&&hit!=runtime.Root&&runtime.Root.Contains(hit))return true;
+            }
+            return false;
+        }
         PanelSettings panelSettings;
         EventSystem ownedEventSystem;
         VisualElement safeRoot;
@@ -64,6 +80,7 @@ namespace RiskAI
             var chrome=Resources.Load<StyleSheet>("UI/RiskAIChrome");
             if(chrome)Root.styleSheets.Add(chrome);
             Root.pickingMode = PickingMode.Ignore;
+            activePanels.Add(this);
             safeRoot = new VisualElement { name = panelName + " safe root", pickingMode = PickingMode.Ignore };
             safeRoot.style.position = Position.Absolute;
             Root.Add(safeRoot);
@@ -117,6 +134,7 @@ namespace RiskAI
 
         void OnDestroy()
         {
+            activePanels.Remove(this);
             tooltip?.Dispose();
             if (panelSettings) Destroy(panelSettings);
             if (ownedEventSystem) Destroy(ownedEventSystem.gameObject);

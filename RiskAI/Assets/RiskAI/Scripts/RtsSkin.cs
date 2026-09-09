@@ -27,7 +27,7 @@ namespace RiskAI
             CommandLabel=new GUIStyle(Center){fontSize=10};
             VictoryTitle=new GUIStyle(Center){fontSize=34};
             for(int team=0;team<townLabels.Length;team++)
-                townLabels[team]=new GUIStyle(Center){fontSize=12,normal={textColor=Color.Lerp(VisualFactory.TeamColor(team),Color.white,.55f)}};
+                townLabels[team]=new GUIStyle(Center){fontSize=10,clipping=TextClipping.Clip,normal={textColor=Color.Lerp(VisualFactory.TeamColor(team),Color.white,.55f)}};
             Button=new GUIStyle(GUI.skin.button){fontSize=13,alignment=TextAnchor.MiddleLeft,padding=new RectOffset(9,6,4,4),border=new RectOffset(1,1,1,1)};
             Button.normal.background=card;Button.hover.background=hover;Button.active.background=pressed;
             Button.normal.textColor=Button.hover.textColor=Button.active.textColor=new Color(.95f,.94f,.83f);

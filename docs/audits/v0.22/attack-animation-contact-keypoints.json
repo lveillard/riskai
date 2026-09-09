@@ -1,0 +1,58 @@
+{
+  "method": "Direct FBX evaluation with ufbx fcc5d6ba444cfd3eb80677dba5e37e493941abe5 at the embedded 30 fps take keyframes; no Unity process used.",
+  "coordinateNote": "The reported tip is the farthest rigid weapon-mesh vertex transformed to model world space. Positive Z is character forward in these source files.",
+  "limitation": "The FBX takes contain no explicit gameplay hit/release events. Contact keyframes are geometric measurements: blade crossing/forward extremum for melee, the aimed-pose-to-recoil boundary for ranged, and the forward extremum for spellcast.",
+  "sources": [
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Knight.fbx",
+      "sha256": "B25E35CC7EAAA3C7C103F10A4F41FDE1CBD81936FEDE9AA9AE4EFBD29D40BA1B"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/RogueHooded.fbx",
+      "sha256": "4A773F074695C6C089CC6F059EED85DA080928A4A4137AF4E38B177139D4CC27"
+    },
+    {
+      "path": "RiskAI/Assets/RiskAI/Art/KayKit/Mage.fbx",
+      "sha256": "93B401D56E2547316F8841A4AC0086011C64D79185C9CB7623567C2DBF125C7D"
+    }
+  ],
+  "contacts": [
+    {
+      "clip": "1H_Melee_Attack_Slice_Horizontal",
+      "model": "Knight",
+      "frames": 32,
+      "contactFrame": 8,
+      "normalizedTime": 0.25,
+      "evidence": "The sword crosses the forward arc and reaches tip Z 1.741751. At frame 7 Z is 1.145321; at frame 9 it has passed left and Z falls to 1.523494. At normalized 0.5 it is already held in follow-through at Z 0.356089."
+    },
+    {
+      "clip": "2H_Melee_Attack_Slice",
+      "model": "Knight/RoyalGuard shared animation take",
+      "frames": 33,
+      "contactFrame": 13,
+      "normalizedTime": 0.3939394,
+      "evidence": "The two-handed sword crosses center near X -0.232429 and reaches its maximum forward tip Z 2.295638."
+    },
+    {
+      "clip": "2H_Ranged_Shoot",
+      "model": "RogueHooded/Mage shared animation take",
+      "frames": 32,
+      "contactFrame": 8,
+      "normalizedTime": 0.25,
+      "evidence": "The crossbow reaches the aimed high pose at frame 8; backward Z recoil begins at frame 9."
+    },
+    {
+      "clip": "Spellcast_Shoot",
+      "model": "Mage",
+      "frames": 28,
+      "contactFrame": 9,
+      "normalizedTime": 0.3214286,
+      "evidence": "The staff reaches its forward release extremum, tip Z 1.860532, at frame 9 before recovery."
+    }
+  ],
+  "procedural": {
+    "normalizedTime": 0.5,
+    "appliesTo": ["Guard mounted lance", "Mortar hand cannon"],
+    "evidence": "These are code-authored contact curves rather than imported FBX takes."
+  }
+}

@@ -1,5 +1,7 @@
 # Reglas Risk Reforged v0.16
 
+> Corrección de auditoría (2026-09-09): la sección de ingresos omitía la condición de país completo del trigger llamador. Véase [auditoría v0.22](audits/ECONOMY-RULES-v0.22.md).
+
 ## Alcance y procedencia
 
 Esta auditoría usa datos numéricos de los mapas extraídos localmente. No copia ni distribuye arte, modelos, sonidos ni tablas de Blizzard.
@@ -32,11 +34,11 @@ Las correcciones están en `Core/ReforgedProfiles.cs`: cooldown y Light del ball
 Los defaults de ambos JASS contienen `ModesTurnTime=60`, `ModesFirstIncome=4`, `ModesBasicIncome=4`, `ModesIncomeMultiplier=1`, `ModesSpawnLimit=5`, `ModesBounty=4` y `ModesIncomeType=0`.
 
 - El primer ingreso es 4 de oro y se ejecuta en `Post_Start_Init`, antes del primer temporizador de 60 s.
-- Cada ronda siguiente, un jugador con una o más ciudades cobra `4 + ciudades propias`; una ciudad propia aporta 1 aunque su país esté fragmentado.
-- Con cero ciudades, el ingreso de ronda es 0. No existe un bono fijo por completar país en el modo por defecto.
+- Cada ronda siguiente, un jugador con una o más ciudades cobra `4 + ciudades en países completamente propios`; las ciudades de países fragmentados no aportan oro adicional.
+- Con cero ciudades, el ingreso de ronda es 0. No existe un bono fijo adicional por país: completarlo habilita el ingreso de sus ciudades.
 - La recompensa acumula el valor de puntos del muerto y paga cada cuarto de punto entero (`pointValue / 4`), conservando el resto fraccional.
 
-En Europa, esto se ve en `war3map.j` líneas 4484–4488 (primer ingreso), 5568–5587 (defaults), 19230–19296 (income) y 18689+ (bounty). New World conserva los defaults en 1669–1671 y el flujo de ingresos en 5656–5676. `Core/BattleRules.cs` y `Economy.CalculateIncome` reflejan esta regla; `CountryOwner` se conserva para la lógica de refuerzos, no para bloquear el oro de las ciudades.
+En Europa, esto se ve en `war3map.j` líneas 4484–4488 (primer ingreso), 5568–5587 (defaults), 19230–19296 (income) y 18689+ (bounty). New World conserva los defaults en 1669–1671 y el flujo de ingresos en 5656–5676. La implementación v0.16 omitió la condición externa `CountPlayersInForceBJ(RegionOwnersGroup)==1`. La corrección v0.22 usa la propiedad completa del país tanto para oro como para refuerzos.
 
 ## Refuerzos de país
 

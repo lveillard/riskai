@@ -1,10 +1,10 @@
 Shader "RiskAI/PaintedSurface"
 {
- Properties { _Atlas("Atlas",2D)="white"{} _Tint("Tint",Color)=(1,1,1,1) _Tile("Tile",Vector)=(0,.5,0,0) _Scale("World scale",Float)=.33 _Recolor("Recolor",Float)=0 }
+ Properties { _Atlas("Atlas",2D)="white"{} _Tint("Tint",Color)=(1,1,1,1) _Tile("Tile",Vector)=(0,.5,0,0) _Scale("World scale",Float)=.33 _Recolor("Recolor",Float)=0 _ColorLift("Color lift",Range(0,1))=0 }
  HLSLINCLUDE
  #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
  CBUFFER_START(UnityPerMaterial)
- float4 _Tint,_Tile; float _Scale,_Recolor;
+ float4 _Tint,_Tile; float _Scale,_Recolor,_ColorLift;
  CBUFFER_END
  ENDHLSL
  SubShader
@@ -33,7 +33,9 @@ Shader "RiskAI/PaintedSurface"
     c=lerp(c*_Tint.rgb,dot(c,half3(.2126,.7152,.0722))*_Tint.rgb*2.7,_Recolor);
     Light sun=GetMainLight(TransformWorldToShadowCoord(i.w),i.w,half4(1,1,1,1));
     float paintedShadow=lerp(.34,1,saturate(sun.shadowAttenuation));
+    half3 painted=c;
     c*=half3(.40,.45,.48)+sun.color*saturate(dot(n,sun.direction))*paintedShadow*.65;
+    c=lerp(c,painted,_ColorLift);
     return half4(MixFog(c,i.fog),1);
    }
    ENDHLSL

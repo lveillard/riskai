@@ -27,7 +27,7 @@ half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow
  float small=WaterNoise(p*3.2-drift*.6+_Time.y*.15);
  float3 normal=normalize(surfaceNormal+float3(a*.09+(small-.5)*.065,0,b*.075));
  float3 view=GetWorldSpaceNormalizeViewDir(world);
- Light sun=GetMainLight(TransformWorldToShadowCoord(world),world,half4(1,1,1,1));
+ Light sun=GetMainLight();
  float fresnel=pow(1-saturate(dot(normal,view)),4);
  // A continuous geographical tint also covers the far sea beyond the rendered bed.
  // Actual scene depth still controls transmission, contact foam and water/land intersections.
@@ -50,7 +50,9 @@ half4 RiskWater(float3 world,float4 screen,float3 surfaceNormal,float2 riverFlow
  c=lerp(c,c*half3(.80,1.10,1.13),smoothstep(.30,.82,swell)*.55);
  float rippleCrest=pow(saturate(a*.6+b*.4),12)*(.35+.65*WaterNoise(p*.39+17));
  c+=rippleCrest*half3(.017,.030,.035)*(1-fresnel*.5);
- c*=.82+.18*saturate(sun.shadowAttenuation);
+ // A continuous body tint for every sea/river. Shadow-cascade boundaries must
+ // not print broad straight bands across the water; sun direction lights ripples.
+ c*=.96;
  c+=sun.color*pow(saturate(dot(normal,normalize(view+sun.direction))),155)*.055*smoothstep(.3,.7,phaseA);
  float broken=WaterNoise(p*2.1+_Time.y*.17);
  float wave=.5+.5*sin(depth*13-_Time.y*1.8+WaterNoise(p*.8)*2.4);

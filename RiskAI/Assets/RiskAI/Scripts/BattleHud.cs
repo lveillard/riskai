@@ -48,6 +48,7 @@ namespace RiskAI
             // frame just before pausing. Keep this O(1) invalidation independent of time.
             if (hudDirty || hud.Gold != session.Economy.Gold[0] || lastHudTick / 2 != session.Clock.TickCount / 2) RefreshHudSnapshot();
             RefreshRetainedUi();
+            RefreshWorldQueues();
         }
         void RefreshHudSnapshot()
         {
@@ -127,21 +128,22 @@ namespace RiskAI
                 bool capturing=harbor.CaptureProgress>0&&harbor.CaptureProgress<1&&harbor.State.Capturing>=0;
                 if(controller.SelectedHarbor!=harbor&&!capturing&&!harbor.State.Contested&&!controller.ShowHealthBars)continue;
                 var hp=cam.WorldToScreenPoint(harbor.Landing+Vector3.up*4.8f)/Scale;float hy=height-hp.y;if(hp.z<=0||hy<TopPixels/Scale+20||hy>bottom-20)continue;
-                var hr=new Rect(hp.x-92,hy,184,24);RtsSkin.Fill(hr,new Color(.025f,.035f,.025f,.86f));Text(hr,harbor.DisplayName,RtsSkin.Center);
+                DrawBuildingName(new Vector2(hp.x,hy),harbor.DisplayName,harbor.Owner);
                 if(capturing)
                 {
                     RtsSkin.Bar(new Rect(hp.x-65,hy+27,130,7),harbor.CaptureProgress,VisualFactory.TeamColor(harbor.State.Capturing));
                 }
             }
-            Settlement hoveredTown = controller.OverHud(controller.Pointer)?null:RtsPicking.Town(session,cam,controller.Pointer);
+            // A touch's last position is not a persistent mouse hover. Once a
+            // building is selected, show that selection without a second stale label.
+            Settlement hoveredTown = HasSelection || PlatformPresentation.TouchCapable || controller.OverHud(controller.Pointer)?null:RtsPicking.Town(session,cam,controller.Pointer);
             foreach (var town in session.Towns)
             {
                 bool visible = town.Selected || hoveredTown == town || controller.ShowHealthBars;
                 Vector3 p = cam.WorldToScreenPoint(town.transform.position + Vector3.up * 4.8f) / Scale;
                 float y = height - p.y; if (p.z <= 0 || y < TopPixels/Scale+20 || y > bottom - 20) continue;
                 if (!visible) continue;
-                var r = new Rect(p.x - 88, y - 3, 176, 25); RtsSkin.Fill(r, new Color(.025f,.035f,.025f,.86f));
-                Text(r, town.DisplayName, RtsSkin.TownLabelFor(town.State.Owner));
+                DrawBuildingName(new Vector2(p.x,y),town.DisplayName,town.State.Owner);
                 // Succession is immediate; nearby enemies or a bound guard are not a progress bar.
                 if (town.State.Capture > 0 && town.State.Capture < 1 && town.State.Capturing >= 0)
                 {
@@ -173,7 +175,7 @@ namespace RiskAI
             {
                 var a=MapPoint(controller.CameraRig.Ground(corners[c]),r)-r.position;
                 var b=MapPoint(controller.CameraRig.Ground(corners[(c+1)%4]),r)-r.position;
-                Matrix4x4 matrix=GUI.matrix;GUIUtility.RotateAroundPivot(Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg,a);
+                Matrix4x4 matrix=GUI.matrix;GUI.matrix=matrix*Matrix4x4.Translate(a)*Matrix4x4.Rotate(Quaternion.Euler(0,0,Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg))*Matrix4x4.Translate(-a);
                 RtsSkin.Fill(new Rect(a.x,a.y,(b-a).magnitude,1),Color.white);GUI.matrix=matrix;
             }
             GUI.EndGroup();
@@ -193,6 +195,8 @@ namespace RiskAI
             public readonly int[] PlayerCities = new int[PlayerRules.MaxPlayers];
             public readonly int[] PlayerMobile = new int[PlayerRules.MaxPlayers];
             public readonly int[] PlayerGuards = new int[PlayerRules.MaxPlayers];
+            public readonly int[] PlayerUnits = new int[PlayerRules.MaxPlayers];
+            public int RecruitmentReservations;
             public int OwnedTowns;
             public int Round;
             public float RoundElapsed;
@@ -217,9 +221,13 @@ namespace RiskAI
                 System.Array.Clear(PlayerCities,0,PlayerCities.Length);
                 System.Array.Clear(PlayerMobile,0,PlayerMobile.Length);
                 System.Array.Clear(PlayerGuards,0,PlayerGuards.Length);
+                System.Array.Clear(PlayerUnits,0,PlayerUnits.Length);
+                RecruitmentReservations=battle.RecruitmentReservations(0);
                 foreach(var unit in battle.Units)
                     if(unit&&unit.IsAlive&&PlayerRules.IsPlayer(unit.Team))
-                    {if(unit.IsGarrison)PlayerGuards[unit.Team]++;else PlayerMobile[unit.Team]++;}
+                    {PlayerUnits[unit.Team]++;if(unit.IsGarrison)PlayerGuards[unit.Team]++;else PlayerMobile[unit.Team]++;}
+                if(battle.Naval)foreach(var ship in battle.Naval.Ships)
+                    if(ship&&ship.IsAlive&&PlayerRules.IsPlayer(ship.Team))PlayerUnits[ship.Team]++;
                 MobilePopulation0=PlayerMobile[0];MobilePopulation1=PlayerMobile[1];
                 GarrisonPopulation0=PlayerGuards[0];GarrisonPopulation1=PlayerGuards[1];
                 OwnedTowns = 0;

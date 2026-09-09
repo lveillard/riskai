@@ -17,7 +17,8 @@ count it preserves that choice, clamped when switching to a smaller map.
   instead of 260. Resource and ranking counters use city, sword and shield marks.
   Ranking rows carry player colors and an eliminated status.
 - Colors use Warcraft III's extended palette (patch 1.29), retaining the existing
-  blue human / red first rival assignment.
+  blue human / red first rival assignment in this recorded build. The following
+  refinement restores canonical red/blue order; this receipt describes 413c435.
 - Middle drag and three-contact drag rotate yaw and pitch. Right drag still pans.
   Pitch stays between 35 and 80 degrees; reset restores 55 degrees and zero yaw.
   Releasing part of a three-finger gesture cannot turn the remainder into orders.
