@@ -1,0 +1,1592 @@
+{
+  "map": "riverlands",
+  "viewport": [
+    768,
+    1024
+  ],
+  "dpr": 2.0,
+  "physicalMobile": false,
+  "errors": [],
+  "layouts": {
+    "empty": {
+      "stage": "empty",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 0",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 338.0,
+            "y": 436.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 1",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 384.0,
+            "y": 436.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "city": {
+      "stage": "city",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 420.0,
+        "width": 1536.0,
+        "height": 1476.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 233.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "4 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 37.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 240.5,
+            "y": 3.0,
+            "width": 227.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 473.0,
+            "y": 3.0,
+            "width": 283.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "4 unidades\n0/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 499.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD footer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 814.0,
+            "width": 768.0,
+            "height": 210.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Footman",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 849.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Archer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 849.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Guard",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 908.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Mage",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 908.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Mortar",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 967.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Medic",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 967.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "queue": {
+      "stage": "queue",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 420.0,
+        "width": 1536.0,
+        "height": 1476.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 236.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "17 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 41.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 243.5,
+            "y": 3.0,
+            "width": 226.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 474.5,
+            "y": 3.0,
+            "width": 281.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "4 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 500.5,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD footer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 814.0,
+            "width": 768.0,
+            "height": 210.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Footman",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 849.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Archer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 849.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Guard",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 908.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Mage",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 908.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Mortar",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 967.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Medic",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 967.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item land 0",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 315.0,
+            "y": 323.5,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item land 1",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 361.0,
+            "y": 323.5,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item land 2",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 407.0,
+            "y": 323.5,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "harbor": {
+      "stage": "harbor",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 420.0,
+        "width": 1536.0,
+        "height": 1476.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD footer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 814.0,
+            "width": 768.0,
+            "height": 210.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarinePrivate",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 849.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarineMajor",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 849.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarineGeneral",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 908.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Build ship Galley",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 964.5,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Build ship Transport",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 964.5,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 0",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 338.5,
+            "y": 323.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 1",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 384.5,
+            "y": 323.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "income": {
+      "stage": "income",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 420.0,
+        "width": 1536.0,
+        "height": 1476.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD footer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 814.0,
+            "width": 768.0,
+            "height": 210.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarinePrivate",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 849.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarineMajor",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 849.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarineGeneral",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 908.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Build ship Galley",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 964.5,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Build ship Transport",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 964.5,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "VOLVER",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 33.0,
+            "y": 943.0,
+            "width": 79.5,
+            "height": 44.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "CONTINUAR",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 124.5,
+            "y": 943.0,
+            "width": 109.5,
+            "height": 44.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "ranking": {
+      "stage": "ranking",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "VOLVER",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 33.0,
+            "y": 943.0,
+            "width": 79.5,
+            "height": 44.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "CONTINUAR",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 124.5,
+            "y": 943.0,
+            "width": 109.5,
+            "height": 44.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "strategic": {
+      "stage": "strategic",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "north": {
+      "stage": "north",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 0",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 560.0,
+            "y": 328.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 1",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 606.0,
+            "y": 328.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "south": {
+      "stage": "south",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "coast": {
+      "stage": "coast",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        }
+      ]
+    }
+  },
+  "captures": [
+    "menu",
+    "empty",
+    "city",
+    "queue",
+    "army-actions",
+    "harbor",
+    "gold-real-click",
+    "income",
+    "cities-real-click",
+    "ranking",
+    "strategic",
+    "north",
+    "south",
+    "coast"
+  ],
+  "clickComparisons": {
+    "gold-real-click": 0.019,
+    "cities-real-click": 0.318
+  },
+  "success": true,
+  "seconds": 63.85
+}

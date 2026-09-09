@@ -12,7 +12,7 @@ sys.path.insert(0,str(root/'.tools/web-python'))
 from playwright.sync_api import sync_playwright
 p=argparse.ArgumentParser();p.add_argument('output');p.add_argument('--width',type=int,default=390);p.add_argument('--height',type=int,default=844);p.add_argument('--dpr',type=float,default=2);p.add_argument('--url',default='http://127.0.0.1:8081');p.add_argument('--map',default='europe',choices=['classic','riverlands','europe','world']);a=p.parse_args()
 folder=root/'Captures'/a.output;folder.mkdir(exist_ok=False)
-report={'map':a.map,'viewport':[a.width,a.height],'dpr':a.dpr,'physicalMobile':False,'errors':[],'layouts':{},'captures':[]}
+report={'url':a.url,'map':a.map,'viewport':[a.width,a.height],'dpr':a.dpr,'physicalMobile':False,'errors':[],'layouts':{},'captures':[]}
 ready=[];start=time.monotonic()
 with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') as log:
     browser=pw.chromium.launch(channel='msedge',headless=True)
@@ -37,9 +37,10 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
         page.wait_for_timeout(150);shot(stage)
     def click_named(name,layout):
         e=next(e for e in report['layouts'][layout]['elements'] if e['name']==name)
-        r=e['rect'];page.mouse.click(r['x']+r['width']/2,r['y']+r['height']/2)
-        page.mouse.move(a.width/2,a.height/2)
+        r=e['rect'];page.mouse.click(r['x']+r['width']/2,r['y']+r['height']/2,delay=100)
+        # Give Unity input frames time to consume down/up before moving the pointer.
         page.wait_for_timeout(400)
+        page.mouse.move(a.width/2,a.height/2);page.wait_for_timeout(100)
     try:
         page.goto(a.url+'/?riskai-map='+a.map+'&riskai-seed=19031&riskai-players=16&riskai-ui-capture=review',wait_until='domcontentloaded')
         page.wait_for_function('window.riskaiInstance != null',timeout=180000);page.wait_for_timeout(6500);shot('menu')
@@ -58,6 +59,13 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
         click_named('HUD cities button','empty');shot('cities-real-click')
         review('ranking');review('strategic')
         for stage in ['north','south','coast']:review(stage)
+        from PIL import Image,ImageChops,ImageStat
+        report['clickComparisons']={}
+        for actual,expected in [('gold-real-click','income'),('cities-real-click','ranking')]:
+            difference=ImageChops.difference(Image.open(folder/(actual+'.png')).convert('RGB'),Image.open(folder/(expected+'.png')).convert('RGB'))
+            mean=sum(ImageStat.Stat(difference).mean)/3
+            report['clickComparisons'][actual]=round(mean,3)
+            assert mean<12,(actual,'Real click differs from expected modal',mean)
         # Explicit responsive checks against actual resolved UIToolkit layout.
         for stage in ['empty','city','queue','harbor']:
             layout=report['layouts'][stage]

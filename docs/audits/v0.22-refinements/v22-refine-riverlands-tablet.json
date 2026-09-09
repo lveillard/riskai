@@ -1,0 +1,3028 @@
+{
+  "map": "riverlands",
+  "viewport": [
+    768,
+    1024
+  ],
+  "dpr": 2.0,
+  "physicalMobile": false,
+  "errors": [],
+  "layouts": {
+    "empty": {
+      "stage": "empty",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 271.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 52 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 0",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 338.0,
+            "y": 436.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 1",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 384.0,
+            "y": 436.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "city": {
+      "stage": "city",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 420.0,
+        "width": 1536.0,
+        "height": 1476.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 233.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "4 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 37.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 240.5,
+            "y": 3.0,
+            "width": 227.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 266.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 473.0,
+            "y": 3.0,
+            "width": 283.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "4 unidades\n0/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 499.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 58 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD footer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 814.0,
+            "width": 768.0,
+            "height": 210.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD building identity",
+          "text": "Pinar Occidental · Tú · Rojo",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 19.0,
+            "y": 821.0,
+            "width": 712.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Footman",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 849.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Espadachín",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 853.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "1 oro · Q",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 880.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Archer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 849.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Ballestero",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 853.0,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "1 oro · W",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 880.5,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Guard",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 908.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Caballero",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 912.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "5 oro · D",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 939.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Mage",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 908.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mago",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 912.0,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4 oro · F",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 939.5,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Mortar",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 967.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mortero",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 971.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 oro · R",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 998.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Medic",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 967.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Sanador",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 971.0,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "2 oro · C",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 998.5,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        }
+      ]
+    },
+    "queue": {
+      "stage": "queue",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 420.0,
+        "width": 1536.0,
+        "height": 1476.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 236.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "17 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 41.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 243.5,
+            "y": 3.0,
+            "width": 226.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 269.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 474.5,
+            "y": 3.0,
+            "width": 281.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "4 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 500.5,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 58 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD footer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 814.0,
+            "width": 768.0,
+            "height": 210.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD building identity",
+          "text": "Pinar Occidental · Tú · Rojo",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 19.0,
+            "y": 821.0,
+            "width": 712.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Footman",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 849.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Espadachín",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 853.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "1 oro · Q",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 880.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Archer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 849.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Ballestero",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 853.0,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "1 oro · W",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 880.5,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Guard",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 908.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Caballero",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 912.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "5 oro · D",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 939.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Mage",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 908.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mago",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 912.0,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4 oro · F",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 939.5,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Mortar",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 967.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mortero",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 971.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 oro · R",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 998.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit Medic",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 967.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Sanador",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 971.0,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "2 oro · C",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 998.5,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item land 0",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 315.0,
+            "y": 323.5,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item land 1",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 361.0,
+            "y": 323.5,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item land 2",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 407.0,
+            "y": 323.5,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "harbor": {
+      "stage": "harbor",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 420.0,
+        "width": 1536.0,
+        "height": 1476.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 271.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 52 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD footer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 814.0,
+            "width": 768.0,
+            "height": 210.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD building identity",
+          "text": "Dársena del Roble · Tú · Rojo",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 19.0,
+            "y": 821.0,
+            "width": 712.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarinePrivate",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 849.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Marine Private",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 853.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "1 oro · V",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 880.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarineMajor",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 849.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Marine Major",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 853.0,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "5 oro · B",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 880.5,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarineGeneral",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 908.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Marine General",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 912.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "10 oro · C",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 939.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Build ship Galley",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 964.5,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Fragata",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 968.5,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "5 oro",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 996.0,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Build ship Transport",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 964.5,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Transporte",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 968.5,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "2 oro",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 996.0,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 0",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 338.5,
+            "y": 323.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 1",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 384.5,
+            "y": 323.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "income": {
+      "stage": "income",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 420.0,
+        "width": 1536.0,
+        "height": 1476.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 271.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 52 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD footer",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 814.0,
+            "width": 768.0,
+            "height": 210.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD building identity",
+          "text": "Dársena del Roble · Tú · Rojo",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 19.0,
+            "y": 821.0,
+            "width": 712.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarinePrivate",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 849.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Marine Private",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 853.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "1 oro · V",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 880.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarineMajor",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 849.0,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Marine Major",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 853.0,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "5 oro · B",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 880.5,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Recruit MarineGeneral",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 908.0,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Marine General",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 912.0,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "10 oro · C",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 939.5,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Build ship Galley",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 17.0,
+            "y": 964.5,
+            "width": 344.5,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Fragata",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 968.5,
+            "width": 282.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "5 oro",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 70.0,
+            "y": 996.0,
+            "width": 282.5,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "Build ship Transport",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 366.5,
+            "y": 964.5,
+            "width": 345.0,
+            "height": 54.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Transporte",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 968.5,
+            "width": 283.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "2 oro",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 419.5,
+            "y": 996.0,
+            "width": 283.0,
+            "height": 20.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "DESGLOSE DEL ORO",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 31.0,
+            "y": 33.0,
+            "width": 704.0,
+            "height": 27.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Disponible: 40 oro",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 31.0,
+            "y": 68.0,
+            "width": 704.0,
+            "height": 24.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Próxima ronda: +4 oro en 52 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 31.0,
+            "y": 100.0,
+            "width": 704.0,
+            "height": 24.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Ingreso básico: +4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 31.0,
+            "y": 132.0,
+            "width": 704.0,
+            "height": 24.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Cada ciudad de un país completo aporta oro. Las ciudades de países incompletos no añaden ingresos.",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 31.0,
+            "y": 164.0,
+            "width": 704.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Bosques de Poniente · 2/4 ciudades · +0",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 31.0,
+            "y": 200.0,
+            "width": 704.0,
+            "height": 23.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Llanuras de Levante · 1/6 ciudades · +0",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 31.0,
+            "y": 234.0,
+            "width": 704.0,
+            "height": 23.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Las bajas enemigas conceden aparte ¼ de su valor de recompensa; las fracciones se acumulan hasta completar una moneda. No forman parte del ingreso por ronda.",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 31.0,
+            "y": 268.0,
+            "width": 704.0,
+            "height": 42.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "VOLVER",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 33.0,
+            "y": 943.0,
+            "width": 79.5,
+            "height": 44.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "CONTINUAR",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 124.5,
+            "y": 943.0,
+            "width": 109.5,
+            "height": 44.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "ranking": {
+      "stage": "ranking",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 271.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 52 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "CLASIFICACIÓN · CIUDADES",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 31.0,
+            "y": 33.0,
+            "width": 688.0,
+            "height": 27.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "1. Tú · Rojo",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 75.0,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 109.0,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "7",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.5,
+            "y": 109.0,
+            "width": 9.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "2. IA 1 · Azul",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 155.5,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 189.5,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 189.5,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3. IA 2 · Turquesa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 236.0,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 270.0,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "5",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 270.0,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4. IA 3 · Violeta",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 316.5,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 350.5,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 350.5,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "5. IA 4 · Amarillo",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 397.0,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 431.0,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 431.0,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "6. IA 5 · Naranja",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 477.5,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 511.5,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 511.5,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "7. IA 6 · Verde",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 558.0,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 592.0,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 592.0,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "8. IA 7 · Rosa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 638.5,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 672.5,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 672.5,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "9. IA 8 · Gris",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 719.0,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 753.0,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 753.0,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "10. IA 9 · Azul claro",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 799.5,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 833.5,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 833.5,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "11. IA 10 · Verde oscuro",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 880.0,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 914.0,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 914.0,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "12. IA 11 · Marrón",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 960.5,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 994.5,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 994.5,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "13. IA 12 · Granate",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 1041.0,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 1075.0,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "5",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 1075.0,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "14. IA 13 · Azul marino",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 45.0,
+            "y": 1121.5,
+            "width": 666.0,
+            "height": 25.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 66.0,
+            "y": 1155.5,
+            "width": 10.0,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 402.0,
+            "y": 1155.5,
+            "width": 10.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "VOLVER",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 33.0,
+            "y": 943.0,
+            "width": 79.5,
+            "height": 44.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "CONTINUAR",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 124.5,
+            "y": 943.0,
+            "width": 109.5,
+            "height": 44.0
+          },
+          "visible": true
+        },
+        {
+          "name": "Runtime tooltip",
+          "text": "Unidades totales, incluidos defensores y barcos",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 400.0,
+            "y": 530.5,
+            "width": 291.5,
+            "height": 29.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "strategic": {
+      "stage": "strategic",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 271.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 52 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "north": {
+      "stage": "north",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 271.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 52 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 0",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 560.0,
+            "y": 328.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD queue item sea 1",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 606.0,
+            "y": 328.0,
+            "width": 44.0,
+            "height": 46.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "south": {
+      "stage": "south",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 271.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 52 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        }
+      ]
+    },
+    "coast": {
+      "stage": "coast",
+      "scale": 2.0,
+      "world": {
+        "serializedVersion": "2",
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1536.0,
+        "height": 1896.0
+      },
+      "elements": [
+        {
+          "name": "HUD header",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 768.0,
+            "height": 76.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 7.0,
+            "y": 3.0,
+            "width": 238.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD gold",
+          "text": "40 ORO\n+4",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 37.0,
+            "y": 3.0,
+            "width": 44.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD cities button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 245.5,
+            "y": 3.0,
+            "width": 224.5,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "3 / 44",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 271.5,
+            "y": 10.5,
+            "width": 34.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD units button",
+          "text": "",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 475.0,
+            "y": 3.0,
+            "width": 281.0,
+            "height": 34.0
+          },
+          "visible": true
+        },
+        {
+          "name": "HUD unit population",
+          "text": "7 unidades\n3/100 reclutadas",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 501.0,
+            "y": 7.0,
+            "width": 90.5,
+            "height": 28.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "RONDA 1 · 52 s",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 11.0,
+            "y": 44.5,
+            "width": 627.5,
+            "height": 21.5
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Mapa",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 642.5,
+            "y": 39.0,
+            "width": 55.0,
+            "height": 32.0
+          },
+          "visible": true
+        },
+        {
+          "name": "",
+          "text": "Menú",
+          "rect": {
+            "serializedVersion": "2",
+            "x": 701.5,
+            "y": 39.0,
+            "width": 55.5,
+            "height": 32.0
+          },
+          "visible": true
+        }
+      ]
+    }
+  },
+  "captures": [
+    "menu",
+    "empty",
+    "city",
+    "queue",
+    "army-actions",
+    "harbor",
+    "gold-real-click",
+    "income",
+    "cities-real-click",
+    "ranking",
+    "strategic",
+    "north",
+    "south",
+    "coast"
+  ],
+  "success": true,
+  "seconds": 77.32
+}
