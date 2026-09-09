@@ -69,6 +69,23 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest] public IEnumerator StrategicContextAndDesktopDoubleClickZoomIntoTheChosenArea()
+        {
+            var view=StrategicMapView.Current;var camera=Camera.main;
+            var rig=Object.FindFirstObjectByType<RtsCameraRig>();var controller=Object.FindFirstObjectByType<RtsController>();
+            var point=UiViewport.WorldRect.center;
+            camera.orthographicSize=view.EnterZoom+10;rig.CancelMotion();view.RefreshPresentation();
+            Assert.That(view.IsStrategic,Is.True);
+            controller.SendMessage("ContextAction",point);
+            Assert.That(rig.TargetZoom,Is.EqualTo(RtsCameraRig.DefaultZoom).Within(.01f),"Right click, double tap and two-finger tap share ContextAction.");
+
+            camera.orthographicSize=view.EnterZoom+10;rig.CancelMotion();view.RefreshPresentation();
+            var primary=typeof(RtsController).GetMethod("PrimaryTap",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
+            primary.Invoke(controller,new object[]{point,false,true});primary.Invoke(controller,new object[]{point,false,true});
+            Assert.That(rig.TargetZoom,Is.EqualTo(RtsCameraRig.DefaultZoom).Within(.01f),"Desktop double click must use the same strategic zoom action.");
+            yield return null;
+        }
+
         [UnityTest] public IEnumerator OrbitKeepsFocusCentredClampsPitchAndResetRestoresRotation()
         {
             var rig=Object.FindFirstObjectByType<RtsCameraRig>();var camera=Camera.main;

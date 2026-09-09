@@ -59,6 +59,8 @@ namespace RiskAI
         public RtsCameraRig CameraRig { get; private set; }
         bool pressedWorld;
         readonly PointerGesture secondaryGesture = new PointerGesture();
+        float lastStrategicTapTime=-10;
+        Vector2 lastStrategicTap;
         RtsInputRouter inputRouter;
         bool cursorCaptureRequested;
         bool gameplayFocus;

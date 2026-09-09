@@ -214,7 +214,7 @@ namespace RiskAI
 
         static Color TeamColor(int owner)
         {
-            return VisualFactory.TeamColor(owner);
+            return VisualFactory.TeamMaterialColor(owner);
         }
 
         /// <summary>Internal country borders vanish whenever both adjacent cities share an owner.</summary>

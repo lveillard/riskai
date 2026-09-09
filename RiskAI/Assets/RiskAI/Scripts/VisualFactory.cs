@@ -133,6 +133,10 @@ namespace RiskAI
         };
         static readonly string[] PlayerColorNames = {"Rojo","Azul","Turquesa","Violeta","Amarillo","Naranja","Verde","Rosa","Gris","Azul claro","Verde oscuro","Marrón","Granate","Azul marino","Cian","Magenta"};
         public static Color TeamColor(int team) => PlayerRules.IsPlayer(team)?PlayerColors[team]:Color.white;
+        // Shader constants are linear in this project. Converting the canonical WC3
+        // sRGB code prevents dark colours such as maroon from being gamma-lifted
+        // toward bright red on roofs, cloth and strategic proxies.
+        public static Color TeamMaterialColor(int team) => QualitySettings.activeColorSpace==ColorSpace.Linear?TeamColor(team).linear:TeamColor(team);
         public static string TeamName(int team) => !PlayerRules.IsPlayer(team)?"Neutral":(team==0?"Tú":"IA "+team)+" · "+PlayerColorNames[team];
         public static Material Mat(Color color)
         {
@@ -228,7 +232,7 @@ namespace RiskAI
         public static void Road(Transform root,Vector3 from,Vector3 to,float width) => WorldArt.Road(from,to,width);
         public static void Soldier(Soldier soldier)
         {
-            var root=soldier.transform; var team=TeamColor(soldier.Team);
+            var root=soldier.transform; var team=TeamMaterialColor(soldier.Team);
             WorldArt.GroundShadow(root,new Vector3(.07f,.045f,.1f),new Vector2(1.1f,.95f));
             if(soldier.Kind==UnitKind.Guard)
             {
@@ -334,6 +338,13 @@ namespace RiskAI
             if (!fxRoot || projectilePool == null) FxRoot();
             var view = projectilePool.Rent();
             if (view) view.Init(session, projectileId, from, to, duration, attack);
+        }
+
+        public static void InstantProjectileView(Vector3 from, Vector3 to, AttackKind attack)
+        {
+            if (!fxRoot || projectilePool == null) FxRoot();
+            var view = projectilePool.Rent();
+            if (view) view.InitVisual(from, to, attack);
         }
 
         sealed class ProjectilePool
@@ -475,10 +486,12 @@ namespace RiskAI
             var rootRenderer=GetComponent<Renderer>();if(rootRenderer)rootRenderer.enabled=false;
             Color wood=new Color(.30f,.16f,.065f),metal=new Color(.72f,.76f,.79f),feather=new Color(.84f,.73f,.46f);
             piercingView=Group(transform,"Piercing projectile");
-            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",Vector3.zero,new Vector3(.035f,.035f,.48f),wood);
-            var tip=Part(piercingView,PrimitiveType.Capsule,"Bolt metal point",new Vector3(0,0,.30f),new Vector3(.07f,.13f,.07f),metal);tip.transform.localRotation=Quaternion.Euler(90,0,0);
-            Part(piercingView,PrimitiveType.Cube,"Bolt fletching top",new Vector3(0,.045f,-.22f),new Vector3(.10f,.018f,.10f),feather);
-            Part(piercingView,PrimitiveType.Cube,"Bolt fletching side",new Vector3(.045f,0,-.22f),new Vector3(.018f,.10f,.10f),feather);
+            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",Vector3.zero,new Vector3(.065f,.065f,.72f),wood);
+            var tip=Part(piercingView,PrimitiveType.Capsule,"Bolt metal point",new Vector3(0,0,.43f),new Vector3(.10f,.18f,.10f),metal);tip.transform.localRotation=Quaternion.Euler(90,0,0);
+            var streak=Part(piercingView,PrimitiveType.Cube,"Bright bolt streak",new Vector3(0,0,-.06f),new Vector3(.075f,.075f,.72f),feather);
+            streak.sharedMaterial=VisualFactory.EmissiveMat(new Color(1f,.72f,.28f),.38f);
+            Part(piercingView,PrimitiveType.Cube,"Bolt fletching top",new Vector3(0,.07f,-.34f),new Vector3(.15f,.025f,.14f),feather);
+            Part(piercingView,PrimitiveType.Cube,"Bolt fletching side",new Vector3(.07f,0,-.34f),new Vector3(.025f,.15f,.14f),feather);
 
             magicView=Group(transform,"Magic projectile");
             Part(magicView,PrimitiveType.Sphere,"Arcane orb",Vector3.zero,Vector3.one*.22f,new Color(.42f,.55f,1f));
@@ -529,6 +542,11 @@ namespace RiskAI
             transform.position = from;
             var direction = to - from;
             if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);
+        }
+
+        internal void InitVisual(Vector3 a,Vector3 b,AttackKind kind)
+        {
+            Init(a,b,null,0,0,null,kind);
         }
 
         public void Init(Vector3 a,Vector3 b,CombatTarget victim,float hit,int attacker,CombatTarget shooter,bool arcane)
@@ -689,4 +707,3 @@ namespace RiskAI
         void OnDestroy() { VisualFactory.Forget(this); }
     }
 }
-

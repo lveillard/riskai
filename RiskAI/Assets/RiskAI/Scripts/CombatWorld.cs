@@ -56,6 +56,9 @@ namespace RiskAI
                 weapon.DamageType, target.transform.position.y - source.transform.position.y));
             if (!weapon.IsProjectile)
             {
+                if (PresentationEnabled && source is Soldier soldier &&
+                    (soldier.Kind == UnitKind.Archer || soldier.Kind == UnitKind.MarinePrivate))
+                    VisualFactory.InstantProjectileView(from, to, weapon.DamageType);
                 if (!miss && target && target.CanBeAttacked)
                     target.ReceiveAttack(damage, weapon.DamageType, team, source);
                 return 0;

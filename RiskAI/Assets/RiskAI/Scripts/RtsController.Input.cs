@@ -64,6 +64,13 @@ namespace RiskAI
         internal void PrimaryTap(Vector2 point, bool append, bool desktopDoubleSelect)
         {
             if (BlocksWorldInput(point)) return;
+            if(StrategicMapView.Active&&desktopDoubleSelect)
+            {
+                float threshold=24*UiViewport.Scale;
+                bool zoom=Time.unscaledTime-lastStrategicTapTime<=.32f&&(point-lastStrategicTap).sqrMagnitude<=threshold*threshold;
+                lastStrategicTapTime=Time.unscaledTime;lastStrategicTap=point;
+                if(zoom){FocusStrategicPoint(point);lastStrategicTapTime=-10;return;}
+            }
             var camp = PickCamp(point); var picked = RtsPicking.Target(session, cam, point); var unit = picked as Soldier; var ship = picked as Ship;
             var town = RtsPicking.Town(session, cam, point); var harbor = RtsPicking.Harbor(session, cam, point);
             bool tacticalActor = !StrategicMapView.Active && (unit || ship);
@@ -128,6 +135,7 @@ namespace RiskAI
         internal void ContextAction(Vector2 point)
         {
             if (BlocksWorldInput(point) || OrderCursor || session.Paused || session.Winner >= 0) { if (OrderCursor) CancelCursor(); return; }
+            if(StrategicMapView.Active){FocusStrategicPoint(point);return;}
             PurgeStaleSelection();
             var clickedEnemy = RtsPicking.Target(session, cam, point, -1); var enemy = AttackRecipient(clickedEnemy);
             var ally = RtsPicking.Target(session, cam, point, 1) as Soldier; var town = RtsPicking.Town(session, cam, point); var harbor = RtsPicking.Harbor(session, cam, point);
@@ -151,6 +159,11 @@ namespace RiskAI
             }
             else if (clickedEnemy is DefenseTower fort) OrderAt(fort.Town ? fort.Town.ClaimPoint : fort.Harbor.Landing, true);
             else OrderAt(harbor ? harbor.Landing : town ? town.ClaimPoint : Ground(point), harbor ? harbor.Owner != 0 : town && town.State.Owner != 0);
+        }
+
+        void FocusStrategicPoint(Vector2 point)
+        {
+            Clear();CameraRig.FocusAndZoom(Ground(point));
         }
     }
 }

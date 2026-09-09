@@ -50,13 +50,13 @@ namespace RiskAI
         }
         // Roof slopes spend much of the match outside direct light. Retaining some of the
         // painted albedo keeps light blue and navy visibly separate without changing the palette.
-        public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamColor(team),.32f,true,colorLift:.38f);
+        public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamMaterialColor(team),.32f,true,colorLift:.38f);
         static Renderer Banner(Transform root,Vector3 position,int team,float width=.7f,float height=1.6f)
         {
             var go=new GameObject("Banner");go.transform.SetParent(root,false);go.transform.localPosition=position;
             var mesh=new Mesh();mesh.vertices=new[]{new Vector3(-width/2,0,0),new Vector3(width/2,0,0),new Vector3(width/2,-height*.8f,0),new Vector3(0,-height,0),new Vector3(-width/2,-height*.8f,0)};
             mesh.triangles=new[]{0,2,1,0,4,2,4,3,2,1,2,0,2,4,0,2,3,4};mesh.normals=new[]{Vector3.back,Vector3.back,Vector3.back,Vector3.back,Vector3.back};
-            go.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamColor(team));
+            go.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamMaterialColor(team));
             VisualFactory.Shape(root,PrimitiveType.Cube,"Gold heraldry",position+new Vector3(0,-height*.4f,-.015f),new Vector3(width*.16f,height*.58f,.035f),new Color(1,.77f,.26f));
             return renderer;
         }

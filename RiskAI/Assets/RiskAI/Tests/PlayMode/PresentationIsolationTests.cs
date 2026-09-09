@@ -108,6 +108,25 @@ namespace RiskAI.Tests
             Assert.That(VisualFactory.ProjectilePoolCreatedCount,Is.EqualTo(created));
         }
 
+        [UnityTest]
+        public IEnumerator InstantCrossbowDamageStillCreatesAVisibleBolt()
+        {
+            var source=battle.Units.First(unit=>unit&&unit.Team==0&&unit.Kind==UnitKind.Archer);
+            var target=battle.Units.First(unit=>unit&&unit.Team==PlayerRules.NeutralTeam);
+            StopBackgroundCombat(source,target);source.enabled=false;target.enabled=false;
+            yield return new WaitForSecondsRealtime(.8f);
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.Zero);
+            float health=target.Health;
+            int projectile=battle.Combat.FireWeapon(source.AimPoint,target.AimPoint,target,12,source.Team,source,
+                SourceWeapons.For(UnitKind.Archer,AttackKind.Piercing));
+            Assert.That(projectile,Is.Zero,"The source crossbow remains computationally instant.");
+            Assert.That(target.Health,Is.LessThan(health),"Instant source damage resolves on the attack tick.");
+            Assert.That(battle.Combat.ActiveProjectileCount,Is.Zero);
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.EqualTo(1),"The instant hit still needs a readable presentation bolt.");
+            yield return new WaitForSecondsRealtime(.7f);
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.Zero);
+        }
+
         void StopBackgroundCombat(CombatTarget keepA, CombatTarget keepB)
         {
             foreach (var tower in battle.Towers.ToArray())

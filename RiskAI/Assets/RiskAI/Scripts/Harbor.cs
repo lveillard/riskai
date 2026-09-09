@@ -71,7 +71,7 @@ namespace RiskAI
             world=naval;BuildingId=buildingId;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;landRally=LandEntry;lastOwner=Owner;
             var entrance=NavalArt.CreateHarbor(this);
             trainingView=BuildingTrainingView.Create(transform,entrance);
-            claimZone=new CityClaimZone(Landing);claimZone.AttachHarbor(this);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));claimRing.transform.position=Landing;
+            claimZone=new CityClaimZone(Landing);claimZone.AttachHarbor(this);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,CityClaimZone.RingWidth,CityClaimZone.RingColor);claimRing.transform.position=Landing;
             var towerObject=new GameObject("Torre de "+name);towerObject.transform.SetParent(transform,false);
             Vector3 direction=Berth-Landing;direction.y=0;direction=direction.sqrMagnitude>.001f?direction.normalized:Vector3.forward;
             // Opposite the harbormaster's house, with a clear silhouette and landing corridor.
@@ -99,7 +99,7 @@ namespace RiskAI
         }
         void CreateNavalClaimRing()
         {
-            navalClaimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));
+            navalClaimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,CityClaimZone.RingWidth,CityClaimZone.RingColor);
             navalClaimRing.transform.position=Berth;navalClaimRing.enabled=false;
         }
         internal bool InitializeGarrison()
@@ -154,7 +154,7 @@ namespace RiskAI
             Selected=selected;
             if(selectionRing)selectionRing.enabled=selected;
             if(rallyRing)rallyRing.enabled=selected&&Owner==0;
-            if(claimRing)claimRing.widthMultiplier=selected ? .11f : .065f;
+            if(claimRing)claimRing.widthMultiplier=selected ? .11f : CityClaimZone.RingWidth;
         }
         public bool SetRally(Vector3 target)
         {
@@ -172,7 +172,7 @@ namespace RiskAI
                 navalClaimRing.enabled=navalGuard;
                 navalClaimRing.transform.position=Berth;
                 navalClaimRing.widthMultiplier=Selected ? .11f : .065f;
-                navalClaimRing.startColor=navalClaimRing.endColor=State.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,State.Capture*.65f);
+                navalClaimRing.startColor=navalClaimRing.endColor=CityClaimZone.VisibleRingColor(State.Contested);
             }
             if(sharesTown&&LinkedTown)LinkedTown.SetNavalClaimVisual(navalGuard);
         }
@@ -289,7 +289,7 @@ namespace RiskAI
             {
                 int owner=StepClaim(delta);
                 if(owner!=state.Owner){state.Owner=owner;Captured();}
-                claimRing.startColor=claimRing.endColor=state.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,state.Capture*.65f);
+                claimRing.startColor=claimRing.endColor=CityClaimZone.VisibleRingColor(state.Contested);
             }
             if(!sharesTown&&Defense&&Defense.UnderConstruction)
             {

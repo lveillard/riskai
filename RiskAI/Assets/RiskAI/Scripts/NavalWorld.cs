@@ -77,12 +77,11 @@ namespace RiskAI
         }
         void AddImportedHarbor(Settlement town)
         {
-            var outward=town.ClaimPoint-town.transform.position;outward.y=0;
-            if(outward.sqrMagnitude<.01f)outward=Vector3.forward;else outward.Normalize();
-            // Imported claim circles are authored at waterfront coordinates.  Their
-            // gameplay deck is walkable, so launch from beyond it instead of finding
-            // the nearest water directly under the defender.
-            var probe=town.ClaimPoint+outward*6f;
+            var outward=town.PortSeaward;
+            // The source city is the coastal anchor and the source claim may point
+            // inland or over water. Use the terrain-derived seaward direction so the
+            // berth and pier never cross the land route through a narrow port.
+            var probe=town.PortBuildingPoint+outward*3f;
             bool found=SeaNavigation.TryNearestOcean(probe,30f,out var berth);
             if(!found)berth=new Vector3(probe.x,-.24f,probe.z);
             var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;

@@ -88,8 +88,16 @@ namespace RiskAI.Tests
                             Assert.That(town.Defender, Is.Not.Null, town.State.Id + " has a source-circle defender.");
                             Assert.That(town.Defender.Kind, Is.EqualTo(UnitKind.Archer));
                             Assert.That(town.Defender.IsGarrison, Is.True);
-                            Assert.That(town.ClaimZone.Center.x, Is.EqualTo(city.claimX).Within(.001f));
-                            Assert.That(town.ClaimZone.Center.z, Is.EqualTo(city.claimZ).Within(.001f));
+                            if(town.IsPort)
+                            {
+                                var anchors=ImportedPortLayout.Resolve(town.transform.position,new Vector3(city.claimX,town.transform.position.y,city.claimZ));
+                                Assert.That(Vector3.Distance(town.ClaimZone.Center,anchors.Claim),Is.LessThan(.001f));
+                            }
+                            else
+                            {
+                                Assert.That(town.ClaimZone.Center.x, Is.EqualTo(city.claimX).Within(.001f));
+                                Assert.That(town.ClaimZone.Center.z, Is.EqualTo(city.claimZ).Within(.001f));
+                            }
                             Assert.That(FlatDistance(town.Defender.transform.position, town.ClaimPoint), Is.LessThanOrEqualTo(.2f),
                                 town.State.Id + " guard must remain centered on its claim circle.");
                             Assert.That(Mathf.Abs(town.Defender.transform.position.y - town.ClaimPoint.y), Is.LessThanOrEqualTo(.21f),

@@ -60,7 +60,7 @@ namespace RiskAI
             proxy.transform.localScale = ProxyScale(kind);
             proxy.AddComponent<MeshFilter>().sharedMesh = ProxyMesh(kind);
             proxyRenderer = proxy.AddComponent<MeshRenderer>();
-            proxyRenderer.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamColor(team));
+            proxyRenderer.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamMaterialColor(team));
             proxyRenderer.shadowCastingMode = ShadowCastingMode.Off;
             proxyRenderer.receiveShadows = false;
             proxyRenderer.enabled = false;

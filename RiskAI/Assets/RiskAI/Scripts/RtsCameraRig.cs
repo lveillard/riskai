@@ -32,6 +32,11 @@ namespace RiskAI
             new Plane(Vector3.up,Vector3.zero).Raycast(ray,out float distance);return ray.GetPoint(distance);
         }
         public void Focus(Vector3 point) { targetFocus=Clamp(point,TargetZoom);anchorZoom=false; }
+        public void FocusAndZoom(Vector3 point,float zoom=DefaultZoom)
+        {
+            TargetZoom=Mathf.Clamp(zoom,MinimumZoom,MaximumZoom);
+            targetFocus=Clamp(point,TargetZoom);anchorZoom=false;
+        }
         public void SetHome(Vector3 point) { homePoint=point;focus=targetFocus=Clamp(point);Apply(); }
         public void ResetView() { yaw=0;pitch=55;cam.transform.rotation=DefaultRotation;Apply();TargetZoom=InitialZoom;targetFocus=Clamp(homePoint,TargetZoom);anchorZoom=false; }
         public void FrameMap(){TargetZoom=MaximumZoom;targetFocus=MapLayout.PlayableCenter;anchorZoom=false;}
@@ -137,4 +142,3 @@ namespace RiskAI
         }
     }
 }
-
