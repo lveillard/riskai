@@ -144,11 +144,14 @@ namespace RiskAI.Tests
             Assert.That(data.CoastGeometry.MovedVertexCount,Is.GreaterThan(0),map+" must actually round coastal corners.");
             int landChecks=0,waterChecks=0,collisionChecks=0;
             Physics.SyncTransforms();
-            foreach(var filter in Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None))
+            var filters=Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None);
+            Assert.That(filters.Count(filter=>filter.sharedMesh&&filter.sharedMesh.name=="Imported water surface"),Is.EqualTo(1),
+                "Transparent imported water must be one continuous mesh so renderer sorting cannot expose chunk rectangles.");
+            foreach(var filter in filters)
             {
                 var mesh=filter.sharedMesh;
-                if(!mesh||(mesh.name!="Imported land chunk"&&mesh.name!="Imported water chunk"))continue;
-                bool water=mesh.name=="Imported water chunk";
+                if(!mesh||(mesh.name!="Imported land chunk"&&mesh.name!="Imported water surface"))continue;
+                bool water=mesh.name=="Imported water surface";
                 var vertices=mesh.vertices;var triangles=mesh.triangles;
                 if((water?waterChecks:landChecks)<32)
                     for(int t=0;t<triangles.Length;t+=3)

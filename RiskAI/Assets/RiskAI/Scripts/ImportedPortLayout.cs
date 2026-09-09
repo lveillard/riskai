@@ -12,7 +12,7 @@ namespace RiskAI
         public const float WalkwayWidth = 3.4f;
         public const float StableLandRadius = 1.35f;
 
-        public enum PierShape { Direct, Elbow, CliffRamp }
+        public enum PierShape { Direct, CliffRamp }
 
         public readonly struct Anchors
         {
@@ -37,9 +37,8 @@ namespace RiskAI
             // house and tower occupy opposite land shoulders beside that lane.
             Vector3 building=BestLandShoulder(shore,seaward,side,1);
             Vector3 tower=BestTowerShoulder(shore,seaward,side,sourceClaim);
-            float deviation=DistanceToSegment(sourceCity,shore,sourceClaim);
             float rise=Mathf.Abs(shore.y-sourceCity.y);
-            PierShape shape=rise>.75f?PierShape.CliffRamp:deviation>WalkwayWidth*.32f?PierShape.Elbow:PierShape.Direct;
+            PierShape shape=rise>.75f?PierShape.CliffRamp:PierShape.Direct;
             return new Anchors(sourceCity,sourceClaim,shore,building,tower,seaward,shape);
         }
 
@@ -75,7 +74,7 @@ namespace RiskAI
 
         static Vector3 BestLandShoulder(Vector3 shore,Vector3 seaward,Vector3 side,float sign)
         {
-            Vector3 seed=shore-seaward*2.1f+side*(3.1f*sign);
+            Vector3 seed=shore-seaward*.6f+side*(2.4f*sign);
             if(HasLandClearance(seed,1.2f))return MapLayout.Point(seed.x,seed.z);
             return NearestLand(seed,-seaward,true);
         }
@@ -111,11 +110,5 @@ namespace RiskAI
             return true;
         }
 
-        static float DistanceToSegment(Vector3 point,Vector3 a,Vector3 b)
-        {
-            Vector3 line=b-a;line.y=0;Vector3 relative=point-a;relative.y=0;
-            float t=line.sqrMagnitude<.001f?0:Mathf.Clamp01(Vector3.Dot(relative,line)/line.sqrMagnitude);
-            return (relative-line*t).magnitude;
-        }
     }
 }
