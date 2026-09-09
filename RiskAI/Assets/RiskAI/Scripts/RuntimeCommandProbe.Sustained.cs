@@ -4,6 +4,7 @@ using System.Globalization;
 using RiskAI.Core;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Rendering;
 
 namespace RiskAI
 {
@@ -95,6 +96,24 @@ namespace RiskAI
             {
                 Finish(false, $"phase=fixture valid=false reason=insufficient-separated-corridors cohort={cohort.Count} gridSpacing={SustainedGridSpacing} gridCandidates={candidates.Count} candidatesTested={candidatesTested}");
                 yield break;
+            }
+            if (HasExactFlag("--riskai-probe-no-unit-shadows"))
+            {
+                int changedRenderers = DisableUnitShadowCasters(session);
+                Debug.Log($"RISKAI_PROBE_PRESENTATION unitShadowCasters=false changedRenderers={changedRenderers} " +
+                    $"soldiers={session.Units.Count} ships={(session.Naval ? session.Naval.Ships.Count : 0)} groundShadows=retained");
+            }
+            if (HasExactFlag("--riskai-probe-hide-unit-renderers"))
+            {
+                int hiddenRenderers = DisableUnitModelRenderers(session);
+                Debug.Log($"RISKAI_PROBE_PRESENTATION unitModelRenderers=false changedRenderers={hiddenRenderers} " +
+                    $"soldiers={session.Units.Count} ships={(session.Naval ? session.Naval.Ships.Count : 0)} groundShadows=retained");
+            }
+            if (HasExactFlag("--riskai-probe-disable-unit-animation"))
+            {
+                var result = DisableUnitAnimation(session);
+                Debug.Log($"RISKAI_PROBE_PRESENTATION unitAnimation=false changedLegacyAnimations={result.LegacyAnimations} " +
+                    $"changedControllers={result.Controllers} soldiers={session.Units.Count} ships={(session.Naval ? session.Naval.Ships.Count : 0)} renderers=retained");
             }
             SubmitHolds(session, cohort);
             yield return new WaitForSecondsRealtime(StabilizeSeconds);
@@ -190,6 +209,86 @@ namespace RiskAI
 
         static float HorizontalDistanceSquared(Vector3 a, Vector3 b)
         { float x = a.x - b.x, z = a.z - b.z; return x * x + z * z; }
+
+        // The diagnostic leaves the painted ground-shadow quads in place and only
+        // removes real-time shadow-map casters belonging to units and ships. It runs
+        // after the fixed cohort exists and is intentionally confined to this opt-in
+        // probe process, so ordinary battles keep their normal presentation.
+        static int DisableUnitShadowCasters(BattleSession session)
+        {
+            int changed = 0;
+            foreach (var renderer in UnitRenderers(session))
+            {
+                if (renderer.shadowCastingMode == ShadowCastingMode.Off) continue;
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                changed++;
+            }
+            return changed;
+        }
+
+        static int DisableUnitModelRenderers(BattleSession session)
+        {
+            int changed = 0;
+            foreach (var renderer in UnitRenderers(session))
+            {
+                // Keep the deliberately cheap painted shadow and selection overlay so
+                // the probe removes model rendering, not presentation feedback.
+                if (renderer is LineRenderer || renderer.gameObject.name == "Soft ground shadow" || !renderer.enabled) continue;
+                renderer.enabled = false;
+                changed++;
+            }
+            return changed;
+        }
+
+        static IEnumerable<Renderer> UnitRenderers(BattleSession session)
+        {
+            foreach (var root in UnitRoots(session))
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(true)) yield return renderer;
+        }
+
+        struct AnimationDisableResult
+        {
+            public int LegacyAnimations;
+            public int Controllers;
+        }
+
+        // Freeze every unit in its current valid pose while keeping the model, material,
+        // transform and battle simulation live. SoldierAnimator and MountedKnightView
+        // are disabled too, otherwise their Update methods would restart or alter a pose.
+        static AnimationDisableResult DisableUnitAnimation(BattleSession session)
+        {
+            var result = new AnimationDisableResult();
+            foreach (var root in UnitRoots(session))
+            {
+                foreach (var animation in root.GetComponentsInChildren<Animation>(true))
+                {
+                    if (!animation.enabled) continue;
+                    animation.Sample();
+                    animation.enabled = false;
+                    result.LegacyAnimations++;
+                }
+                foreach (var animator in root.GetComponentsInChildren<SoldierAnimator>(true))
+                {
+                    if (!animator.enabled) continue;
+                    animator.enabled = false;
+                    result.Controllers++;
+                }
+                foreach (var knightView in root.GetComponentsInChildren<MountedKnightView>(true))
+                {
+                    if (!knightView.enabled) continue;
+                    knightView.enabled = false;
+                    result.Controllers++;
+                }
+            }
+            return result;
+        }
+
+        static IEnumerable<GameObject> UnitRoots(BattleSession session)
+        {
+            foreach (var soldier in session.Units) if (soldier) yield return soldier.gameObject;
+            if (!session.Naval) yield break;
+            foreach (var ship in session.Naval.Ships) if (ship) yield return ship.gameObject;
+        }
 
         static uint HashPoint(uint hash, Vector3 point)
         {

@@ -46,6 +46,12 @@ def main():
                         help='Save and summarize a Chrome CPU profile over the probe window.')
     parser.add_argument('--frame-trace', action='store_true',
                         help="Enable the player's opt-in Unity hitch correlation markers for this probe.")
+    parser.add_argument('--no-unit-shadows', action='store_true',
+                        help='Diagnostic only: disable real-time shadow casting for soldiers and ships, retaining their painted ground shadows.')
+    parser.add_argument('--hide-unit-renderers', action='store_true',
+                        help='Diagnostic only: hide unit and ship model renderers, retaining their painted ground shadows and simulation.')
+    parser.add_argument('--disable-unit-animation', action='store_true',
+                        help='Diagnostic only: freeze legacy unit animation while keeping unit and ship renderers visible.')
     args = parser.parse_args()
     if args.probe and args.restart:
         parser.error('Choose one measurement type per browser session.')
@@ -61,6 +67,14 @@ def main():
         parser.error('--overview requires --probe and its battlefield.')
     if args.frame_trace and not args.probe:
         parser.error('--frame-trace requires --probe.')
+    if args.no_unit_shadows and not args.probe:
+        parser.error('--no-unit-shadows requires --probe.')
+    if args.hide_unit_renderers and not args.probe:
+        parser.error('--hide-unit-renderers requires --probe.')
+    if args.disable_unit_animation and not args.probe:
+        parser.error('--disable-unit-animation requires --probe.')
+    if sum((args.no_unit_shadows, args.hide_unit_renderers, args.disable_unit_animation)) > 1:
+        parser.error('Choose one unit-presentation diagnostic per probe.')
     if not 100 <= args.path_budget <= 2000:
         parser.error('--path-budget must be between 100 and 2000.')
     args.output.mkdir(parents=True, exist_ok=True)
@@ -76,6 +90,12 @@ def main():
         query['riskai-probe-sustained'] = 1
     if args.frame_trace:
         query['riskai-frame-trace'] = 1
+    if args.no_unit_shadows:
+        query['riskai-probe-no-unit-shadows'] = 1
+    if args.hide_unit_renderers:
+        query['riskai-probe-hide-unit-renderers'] = 1
+    if args.disable_unit_animation:
+        query['riskai-probe-disable-unit-animation'] = 1
     if args.restart:
         query.update({'riskai-restart-probe': 1, 'riskai-restart-cycles': 3})
     url = args.url.rstrip('/') + '/?' + urlencode(query)
@@ -84,7 +104,9 @@ def main():
               'draws_suppressed': args.suppress_draws, 'overview': args.overview,
               'path_budget': args.path_budget, 'sustained_navigation': args.sustained,
               'minimap_hidden': args.hide_minimap, 'browser_metrics_requested': args.browser_metrics,
-              'cpu_profile_requested': args.cpu_profile, 'frame_trace': args.frame_trace}
+              'cpu_profile_requested': args.cpu_profile, 'frame_trace': args.frame_trace,
+              'unit_shadows_disabled': args.no_unit_shadows, 'unit_renderers_hidden': args.hide_unit_renderers,
+              'unit_animation_disabled': args.disable_unit_animation}
     started = time.monotonic()
     with (args.output / 'console.log').open('w', encoding='utf-8') as log, sync_playwright() as p:
         browser = p.chromium.launch(channel='msedge', headless=not args.headed)

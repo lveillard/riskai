@@ -19,5 +19,20 @@ namespace RiskAI.Tests
             var args=LaunchArguments.FromUrl("https://localhost/?riskai-restart-probe=true&riskai-restart-cycles=4&unrelated=discard");
             CollectionAssert.AreEqual(new[]{"--riskai-restart-probe","--riskai-restart-cycles","4"},args);
         }
+        [Test] public void UnitShadowDiagnosticIsOptInAndCannotBeEnabledByAnUnrelatedQuery()
+        {
+            var args=LaunchArguments.FromUrl("https://localhost/?riskai-probe-no-unit-shadows=1&no-unit-shadows=1");
+            CollectionAssert.AreEqual(new[]{"--riskai-probe-no-unit-shadows"},args);
+        }
+        [Test] public void UnitModelRendererDiagnosticIsOptInAndKeepsTheBrowserContractNarrow()
+        {
+            var args=LaunchArguments.FromUrl("https://localhost/?riskai-probe-hide-unit-renderers=true&hide-unit-renderers=true");
+            CollectionAssert.AreEqual(new[]{"--riskai-probe-hide-unit-renderers"},args);
+        }
+        [Test] public void UnitAnimationDiagnosticIsOptInAndKeepsTheBrowserContractNarrow()
+        {
+            var args=LaunchArguments.FromUrl("https://localhost/?riskai-probe-disable-unit-animation=1&disable-unit-animation=1");
+            CollectionAssert.AreEqual(new[]{"--riskai-probe-disable-unit-animation"},args);
+        }
     }
 }
