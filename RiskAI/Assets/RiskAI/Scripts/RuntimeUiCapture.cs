@@ -157,7 +157,9 @@ namespace RiskAI
             var elements=new System.Collections.Generic.List<ReviewElement>();
             foreach(var document in FindObjectsByType<UIDocument>(FindObjectsSortMode.None))
                 foreach(var element in document.rootVisualElement.Query<VisualElement>().ToList())
-                    if((element is Button||element is Label||element.name=="HUD footer"||element.name=="HUD header")&&element.resolvedStyle.display!=DisplayStyle.None&&element.worldBound.width>0)
+                    // Anonymous modal labels can exceed WebGL's console line limit.
+                    // Keep actionable controls and the named HUD bounds in the report.
+                    if((element is Button||element.name=="HUD footer"||element.name=="HUD header"||element.name=="HUD gold"||element.name=="HUD unit population")&&element.resolvedStyle.display!=DisplayStyle.None&&element.worldBound.width>0)
                         elements.Add(new ReviewElement { name=element.name,text=(element as TextElement)?.text,rect=element.worldBound,visible=element.visible });
             Debug.Log("RISKAI_UI_REVIEW "+JsonUtility.ToJson(new ReviewLayout { stage=stage,scale=UiViewport.Scale,world=UiViewport.WorldRect,elements=elements.ToArray() }));
         }

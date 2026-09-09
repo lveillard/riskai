@@ -38,6 +38,7 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
     def click_named(name,layout):
         e=next(e for e in report['layouts'][layout]['elements'] if e['name']==name)
         r=e['rect'];page.mouse.click(r['x']+r['width']/2,r['y']+r['height']/2)
+        page.mouse.move(a.width/2,a.height/2)
         page.wait_for_timeout(400)
     try:
         page.goto(a.url+'/?riskai-map='+a.map+'&riskai-seed=19031&riskai-players=16&riskai-ui-capture=review',wait_until='domcontentloaded')

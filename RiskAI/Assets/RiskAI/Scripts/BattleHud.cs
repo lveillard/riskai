@@ -170,15 +170,16 @@ namespace RiskAI
             GUI.DrawTexture(r,minimapTexture,ScaleMode.StretchToFill,false);
             DrawMinimapMarkers(r);
             Vector2[] corners={new Vector2(0,BottomPixels),new Vector2(Screen.width,BottomPixels),new Vector2(Screen.width,Screen.height-TopPixels),new Vector2(0,Screen.height-TopPixels)};
-            GUI.BeginGroup(r);
             for(int c=0;c<4;c++)
             {
-                var a=MapPoint(controller.CameraRig.Ground(corners[c]),r)-r.position;
-                var b=MapPoint(controller.CameraRig.Ground(corners[(c+1)%4]),r)-r.position;
+                var a=MapPoint(controller.CameraRig.Ground(corners[c]),r);
+                var b=MapPoint(controller.CameraRig.Ground(corners[(c+1)%4]),r);
+                // Keep clipping and rotation in the HUD's absolute logical space.
+                // Rotating inside BeginGroup also moves its clip origin at high DPI.
+                if(!RtsSkin.ClipLine(new Rect(r.x+.5f,r.y+.5f,r.width-1,r.height-1),ref a,ref b))continue;
                 Matrix4x4 matrix=GUI.matrix;GUI.matrix=matrix*Matrix4x4.Translate(a)*Matrix4x4.Rotate(Quaternion.Euler(0,0,Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg))*Matrix4x4.Translate(-a);
-                RtsSkin.Fill(new Rect(a.x,a.y,(b-a).magnitude,1),Color.white);GUI.matrix=matrix;
+                RtsSkin.Fill(new Rect(a.x,a.y-.5f,(b-a).magnitude,1),Color.white);GUI.matrix=matrix;
             }
-            GUI.EndGroup();
         }
         static Vector2 MapPoint(Vector3 p,Rect r)=>new Vector2(r.x+(p.x-MapLayout.PlayableMin.x)/(MapLayout.PlayableMax.x-MapLayout.PlayableMin.x)*r.width,r.y+(MapLayout.PlayableMax.y-p.z)/(MapLayout.PlayableMax.y-MapLayout.PlayableMin.y)*r.height);
         static void Outline(Rect r,Color c) {RtsSkin.Fill(new Rect(r.x,r.y,r.width,1),c);RtsSkin.Fill(new Rect(r.x,r.yMax,r.width,1),c);RtsSkin.Fill(new Rect(r.x,r.y,1,r.height),c);RtsSkin.Fill(new Rect(r.xMax,r.y,1,r.height),c);}

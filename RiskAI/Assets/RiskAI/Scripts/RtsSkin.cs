@@ -50,6 +50,20 @@ namespace RiskAI
         }
         public static void Fill(Rect r,Color color)
         { Color old=GUI.color;GUI.color=color;GUI.DrawTexture(r,Texture2D.whiteTexture);GUI.color=old; }
+        public static bool ClipLine(Rect bounds,ref Vector2 a,ref Vector2 b)
+        {
+            var delta=b-a;float enter=0,leave=1;
+            if(!ClipInterval(a.x,delta.x,bounds.xMin,bounds.xMax,ref enter,ref leave)||
+               !ClipInterval(a.y,delta.y,bounds.yMin,bounds.yMax,ref enter,ref leave))return false;
+            b=a+delta*leave;a+=delta*enter;return true;
+        }
+        static bool ClipInterval(float origin,float delta,float min,float max,ref float enter,ref float leave)
+        {
+            if(Mathf.Abs(delta)<.000001f)return origin>=min&&origin<=max;
+            float first=(min-origin)/delta,last=(max-origin)/delta;
+            enter=Mathf.Max(enter,Mathf.Min(first,last));leave=Mathf.Min(leave,Mathf.Max(first,last));
+            return enter<=leave;
+        }
         public static void Frame(Rect r,Color? trim=null)
         {
             GUI.DrawTexture(r,stone,ScaleMode.StretchToFill);Color edge=trim??new Color(.51f,.42f,.25f);

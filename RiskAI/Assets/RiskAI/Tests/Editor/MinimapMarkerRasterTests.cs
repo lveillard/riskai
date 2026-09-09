@@ -5,6 +5,24 @@ namespace RiskAI.Tests
 {
     public sealed class MinimapMarkerRasterTests
     {
+        [TestCase(false)]
+        [TestCase(true)]
+        public void CameraOutlineClipsBothEndsInsideOffsetMinimap(bool reverse)
+        {
+            var a=new Vector2(90,190);var b=new Vector2(180,280);
+            if(reverse)(a,b)=(b,a);
+            Assert.That(RtsSkin.ClipLine(new Rect(100,200,60,40),ref a,ref b),Is.True);
+            Assert.That(Vector2.Distance(a,reverse?new Vector2(140,240):new Vector2(100,200)),Is.LessThan(.001f));
+            Assert.That(Vector2.Distance(b,reverse?new Vector2(100,200):new Vector2(140,240)),Is.LessThan(.001f));
+        }
+
+        [Test]
+        public void CameraOutlineRejectsParallelEdgesOutsideMinimap()
+        {
+            var a=new Vector2(90,190);var b=new Vector2(180,190);
+            Assert.That(RtsSkin.ClipLine(new Rect(100,200,60,40),ref a,ref b),Is.False);
+        }
+
         static Color32 At(MinimapMarkerRaster raster, int x, int topY) => raster.Pixels[(raster.Height - 1 - topY) * raster.Width + x];
 
         [Test]

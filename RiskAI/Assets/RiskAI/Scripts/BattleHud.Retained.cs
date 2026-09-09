@@ -30,6 +30,7 @@ namespace RiskAI
         Button modalPauseButton;
         float lastDensity;
         bool wideFooter;
+        bool BuildingSelection => controller.SelectedTowns.Count+controller.SelectedHarbors.Count>0;
         bool HasSelection => controller && (controller.SelectedTown || controller.SelectedHarbor || controller.SelectedCamp || controller.InspectedTarget || controller.Selection.Count + controller.Fleet.Count > 0);
         bool FooterVisible => HasSelection || (showMinimap && retainedTab == 3);
         bool MinimapVisible => showMinimap && FooterVisible && (!UiViewport.IsPortrait || retainedTab == 3);
@@ -265,10 +266,11 @@ namespace RiskAI
 
         void BuildWideContext(VisualElement selection, VisualElement contextual)
         {
+            selection.style.width=Length.Percent(BuildingSelection?100:43);
+            contextual.style.display=BuildingSelection?DisplayStyle.None:DisplayStyle.Flex;
+            if(BuildingSelection){BuildContext(selection);return;}
             BuildSelectionWithPortrait(selection);
-            if (controller.SelectedTown || controller.SelectedHarbor || controller.SelectedTowns.Count + controller.SelectedHarbors.Count > 0)
-                BuildProduction(contextual);
-            else if (controller.SelectedCamp)
+            if (controller.SelectedCamp)
                 BuildCampOrders(contextual);
             else if(controller.Selection.Count+controller.Fleet.Count>0)
                 BuildOrders(contextual);
@@ -332,8 +334,7 @@ namespace RiskAI
         void BuildContext(VisualElement root)
         {
             // Commands and purchases are available immediately after selecting their owner.
-            bool building=controller.SelectedTowns.Count+controller.SelectedHarbors.Count>0;
-            if(building)
+            if(BuildingSelection)
             {
                 BuildSelection(root);
                 BuildProduction(root);
