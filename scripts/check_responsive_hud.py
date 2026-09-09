@@ -50,7 +50,7 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
             if time.monotonic()>deadline:raise TimeoutError('battle')
             page.wait_for_timeout(50)
         page.wait_for_timeout(3500)
-        for stage in ['empty','city','queue']:review(stage)
+        for stage in ['empty','camp','city','queue']:review(stage)
         send('TogglePause');page.wait_for_timeout(6500);send('SelectAll');send('FocusSelection');send('TogglePause');page.wait_for_timeout(1000);shot('army-actions')
         review('harbor')
         click_named('HUD gold button','harbor');shot('gold-real-click')
@@ -68,7 +68,7 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
             report['clickComparisons'][actual]=round(mean,3)
             assert mean<12,(actual,'Real click differs from expected modal',mean)
         # Explicit responsive checks against actual resolved UIToolkit layout.
-        for stage in ['empty','city','queue','harbor']:
+        for stage in ['empty','camp','city','queue','harbor']:
             layout=report['layouts'][stage]
             for e in layout['elements']:
                 if e['name'] in ['HUD gold button','HUD cities button','HUD units button']:

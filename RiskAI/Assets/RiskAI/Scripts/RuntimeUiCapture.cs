@@ -114,6 +114,12 @@ namespace RiskAI
             var hud=FindFirstObjectByType<BattleHud>();
             session.AiEnabled=false;controller.HelpVisible=false;
             if(stage=="empty")controller.Clear();
+            else if(stage=="camp")
+            {
+                var camp=session.Camps.FirstOrDefault();
+                if(!camp){Debug.LogError("RISKAI_UI_REVIEW: no country camp in fixture");yield break;}
+                controller.SelectCamp(camp);controller.Focus(camp.SpawnPoint);
+            }
             else if(stage=="city"||stage=="queue")
             {
                 var town=session.Towns.First(t=>t.State.Owner==0&&!t.IsPort);

@@ -103,6 +103,10 @@ namespace RiskAI.Tests
             var battle=BattleSession.Current; battle.AiEnabled=false;
             var controller=Object.FindFirstObjectByType<RtsController>(); if(controller)controller.enabled=false;
             yield return null;
+            var strategic=StrategicMapView.Current;Assert.That(strategic.SurfaceCount,Is.GreaterThan(0),map+" inspection needs terrain surfaces.");
+            controller.SelectCamp(battle.Camps[0]);
+            Assert.That(strategic.TacticalInspectionVisible,Is.True,map+" camp selection must reveal its tactical territory.");
+            controller.Clear();Assert.That(strategic.TacticalInspectionVisible,Is.False);
             AssertCoastalMeshesMatchCpu(map);
             var naval=NavalWorld.Current;
             var port=naval.Harbors.FirstOrDefault(h=>h.IsImportedPort&&h.CanLaunch);

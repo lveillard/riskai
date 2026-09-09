@@ -52,6 +52,17 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator ClassicCampShowsAndClearsItsTacticalTerritory()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            controller.SelectCamp(battle.Camps[0]);yield return null;
+            Assert.That(StrategicMapView.Current.SelectedCountry,Is.EqualTo(battle.Camps[0].Country));
+            Assert.That(StrategicMapView.Current.TacticalInspectionVisible,Is.True);
+            controller.Clear();yield return null;
+            Assert.That(StrategicMapView.Current.TacticalInspectionVisible,Is.False);
+        }
+
+        [UnityTest]
         public IEnumerator ResourceButtonsOpenIncomeAndRankingAndExposeRecruitmentLimit()
         {
             yield return null;
