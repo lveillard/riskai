@@ -274,7 +274,10 @@ namespace RiskAI
             if (mode == OrderMode.Attack) return true;
             float leash = AutonomousLeash();
             var origin = mode == OrderMode.Idle || mode == OrderMode.Hold ? anchor : pursuitOrigin;
-            return Vector3.Distance(target.transform.position, origin) <= leash;
+            // Acquisition and firing measure an attackable surface. The autonomous
+            // leash must use that same surface or a long ship can be in weapon range
+            // while its pivot silently cancels the pending strike.
+            return Vector3.Distance(target.ApproachPoint(origin), origin) <= leash;
         }
         float AutonomousLeash()
         {
@@ -293,7 +296,7 @@ namespace RiskAI
                 if (!enemy || enemy.Team == Team || !enemy.CanBeAttacked) continue;
                 float distance = Vector3.Distance(transform.position, enemy.ApproachPoint(transform.position));
                 if (distance > radius || !Visible(enemy)) continue;
-                if ((mode == OrderMode.Idle || Team == PlayerRules.NeutralTeam) && Vector3.Distance(anchor, enemy.transform.position) > AutonomousLeash()) continue;
+                if ((mode == OrderMode.Idle || Team == PlayerRules.NeutralTeam) && Vector3.Distance(anchor, enemy.ApproachPoint(anchor)) > AutonomousLeash()) continue;
                 int pressure = session.Spatial.Pressure(Team, enemy);
                 float candidate = distance + (Kind == UnitKind.Footman ? pressure * .48f : pressure * .1f);
                 if (candidate < score || candidate == score && (!best || enemy.EntityId < best.EntityId)) { best = enemy; score = candidate; }

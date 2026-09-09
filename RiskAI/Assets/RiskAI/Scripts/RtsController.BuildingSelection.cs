@@ -5,6 +5,32 @@ using UnityEngine;
 
 namespace RiskAI
 {
+    public readonly struct ProductionBatchPreview
+    {
+        public readonly int CandidateCount, PlannedCount, PlannedCost;
+        public bool IsGrouped => CandidateCount > 1;
+        public bool CanPurchase => PlannedCount > 0;
+        public int UnfundedCount => CandidateCount - PlannedCount;
+        public ProductionBatchPreview(int candidates,int planned,int cost)
+        { CandidateCount=candidates;PlannedCount=planned;PlannedCost=cost; }
+    }
+
+    public readonly struct ProductionBatchResult
+    {
+        public readonly int RequestedCount, AcceptedCount, SpentGold;
+        public readonly string FirstFailure;
+        public int RejectedCount => RequestedCount-AcceptedCount;
+        public string Error => AcceptedCount>0?null:FirstFailure;
+        public ProductionBatchResult(int requested,int accepted,int spent,string failure)
+        { RequestedCount=requested;AcceptedCount=accepted;SpentGold=spent;FirstFailure=failure; }
+        public string Feedback(string product)
+        {
+            if(AcceptedCount<=0)return FirstFailure;
+            string text="×"+AcceptedCount+" "+product+" encargados · "+SpentGold+" oro";
+            return RejectedCount>0?text+" · "+RejectedCount+" sin encargo":text;
+        }
+    }
+
     public sealed partial class RtsController
     {
         const float NearbyBuildingSelectionRadius = 90f;
@@ -185,45 +211,75 @@ namespace RiskAI
         bool IsDoubleBuildingClick(Component building) => building && lastBuildingClick == building && Time.unscaledTime - lastBuildingClickTime < DoubleBuildingClickSeconds;
         void RememberBuildingClick(Component building) { lastBuildingClick = building; lastBuildingClickTime = Time.unscaledTime; }
 
+        public ProductionBatchResult LastProductionResult { get; private set; }
+
+        public ProductionBatchPreview PreviewRecruitSelected(UnitKind kind)
+        {
+            int cost=BattleRules.Cost(kind);
+            return ProductionCatalog.AllowsHarborUnit(kind)
+                ? PreviewSelectedBuildings(OwnSelectedHarbors(),cost)
+                : PreviewSelectedBuildings(OwnSelectedTowns(),cost);
+        }
+
+        public ProductionBatchPreview PreviewShipPurchase(ShipKind kind) =>
+            PreviewSelectedBuildings(OwnSelectedHarbors(),Harbor.Cost(kind));
+
+        IEnumerable<Settlement> OwnSelectedTowns() => selectedTowns.Where(t=>t&&t.State.Owner==0);
+        IEnumerable<Harbor> OwnSelectedHarbors() => selectedHarbors.Where(h=>h&&h.Owner==0);
+
+        ProductionBatchPreview PreviewSelectedBuildings<T>(IEnumerable<T> buildings,int unitCost) where T : class
+        {
+            int candidates=buildings.Count();
+            int gold=session&&unitCost>0?Mathf.Max(0,session.Economy.Gold[0]):0;
+            int planned=unitCost>0?Mathf.Min(candidates,gold/unitCost):candidates;
+            return new ProductionBatchPreview(candidates,planned,planned*unitCost);
+        }
+
         /// <summary>Queues one land unit at every selected, allied compatible building, shortest queues first.</summary>
         public string TryRecruitSelected(UnitKind kind)
         {
             if (ProductionCatalog.AllowsHarborUnit(kind))
             {
-                return QueueAtSelectedBuildings(
-                    selectedHarbors.Where(h => h && h.Owner == 0), h => h.LandQueueCount, StableHarborIndex,
+                LastProductionResult=QueueAtSelectedBuildings(
+                    OwnSelectedHarbors(), h => h.LandQueueCount, StableHarborIndex,
                     h => ExecuteBuilding(PlayerBuildingIntent.Recruit(h.BuildingId,kind)),
-                    "Selecciona un puerto de tu bando para reclutar Marines.");
+                    BattleRules.Cost(kind),"Selecciona un puerto de tu bando para reclutar Marines.");
+                return LastProductionResult.Error;
             }
-            return QueueAtSelectedBuildings(
-                selectedTowns.Where(t => t && t.State.Owner == 0), t => t.QueueCount, t => t.State.Id,
+            LastProductionResult=QueueAtSelectedBuildings(
+                OwnSelectedTowns(), t => t.QueueCount, t => t.State.Id,
                 t => ExecuteBuilding(PlayerBuildingIntent.Recruit(t.BuildingId,kind)),
-                "Selecciona una ciudad de tu bando para reclutar.");
+                BattleRules.Cost(kind),"Selecciona una ciudad de tu bando para reclutar.");
+            return LastProductionResult.Error;
         }
 
         /// <summary>Queues one ship at every selected allied harbor, shortest naval queues first.</summary>
         public string TryBuySelected(ShipKind kind)
         {
-            return QueueAtSelectedBuildings(
-                selectedHarbors.Where(h => h && h.Owner == 0), h => h.QueueCount, StableHarborIndex,
+            LastProductionResult=QueueAtSelectedBuildings(
+                OwnSelectedHarbors(), h => h.QueueCount, StableHarborIndex,
                 h => ExecuteBuilding(PlayerBuildingIntent.BuyShip(h.BuildingId,(NavalUnitKind)kind)),
-                "Selecciona un puerto de tu bando para comprar barcos.");
+                Harbor.Cost(kind),"Selecciona un puerto de tu bando para comprar barcos.");
+            return LastProductionResult.Error;
         }
 
         // A grouped purchase is best-effort: a full or unavailable queue must not
         // prevent other selected compatible buildings from receiving one order.
-        string QueueAtSelectedBuildings<T,TOrder>(IEnumerable<T> buildings, System.Func<T,int> queueLength,
-            System.Func<T,TOrder> stableOrder, System.Func<T,string> enqueue, string emptyMessage) where T : class
+        ProductionBatchResult QueueAtSelectedBuildings<T,TOrder>(IEnumerable<T> buildings, System.Func<T,int> queueLength,
+            System.Func<T,TOrder> stableOrder, System.Func<T,string> enqueue, int unitCost,string emptyMessage) where T : class
         {
             string firstError = null;
-            int queued = 0;
+            int queued = 0,requested=0;
+            int goldBefore=session?session.Economy.Gold[0]:0;
             foreach (var building in buildings.OrderBy(queueLength).ThenBy(stableOrder))
             {
+                requested++;
                 string error = enqueue(building);
                 if (error == null) { queued++; continue; }
                 if (firstError == null) firstError = error;
             }
-            return queued > 0 ? null : firstError ?? emptyMessage;
+            int spent=session?Mathf.Max(0,goldBefore-session.Economy.Gold[0]):queued*unitCost;
+            return new ProductionBatchResult(requested,queued,spent,firstError??emptyMessage);
         }
 
         // NavalWorld builds this list in source order; the index gives deterministic ties without treating a display name as identity.

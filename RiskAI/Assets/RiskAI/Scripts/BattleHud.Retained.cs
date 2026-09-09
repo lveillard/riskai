@@ -102,12 +102,13 @@ namespace RiskAI
             unchecked
             {
                 int key = retainedTab;
+                key = key * 23 + session.Economy.Gold[0];
                 key = key * 29 + (controller.InspectedTarget ? controller.InspectedTarget.EntityId : 0);
                 key = key * 41 + (controller.SelectedTown ? controller.SelectedTown.GetInstanceID() * 17 + controller.SelectedTown.State.Owner : 0);
                 key = key * 43 + (controller.SelectedHarbor ? controller.SelectedHarbor.GetInstanceID() * 17 + controller.SelectedHarbor.Owner : 0);
                 key = key * 47 + (controller.SelectedCamp ? controller.SelectedCamp.GetInstanceID() : 0);
-                for (int i = 0; i < controller.SelectedTowns.Count; i++) key = key * 53 + controller.SelectedTowns[i].GetInstanceID() * 17 + controller.SelectedTowns[i].State.Owner;
-                for (int i = 0; i < controller.SelectedHarbors.Count; i++) key = key * 59 + controller.SelectedHarbors[i].GetInstanceID() * 17 + controller.SelectedHarbors[i].Owner;
+                for (int i = 0; i < controller.SelectedTowns.Count; i++) key = key * 53 + controller.SelectedTowns[i].GetInstanceID() * 17 + controller.SelectedTowns[i].State.Owner + controller.SelectedTowns[i].QueueCount * 97 + controller.SelectedTowns[i].State.Level * 101;
+                for (int i = 0; i < controller.SelectedHarbors.Count; i++) key = key * 59 + controller.SelectedHarbors[i].GetInstanceID() * 17 + controller.SelectedHarbors[i].Owner + controller.SelectedHarbors[i].QueueCount * 103 + controller.SelectedHarbors[i].LandQueueCount * 107;
                 return key;
             }
         }
@@ -437,7 +438,7 @@ namespace RiskAI
             foreach(var town in controller.SelectedTowns) if(town && town.State.Owner==0) { ownTown=true; break; }
             foreach(var harbor in controller.SelectedHarbors) if(harbor && harbor.Owner==0) { ownHarbor=true; break; }
             if (controller.SelectedTowns.Count + controller.SelectedHarbors.Count > 1)
-                root.tooltip = "Cada compra se añade una vez a la cola compatible más corta.";
+                AddInfo(root,"Cada compra encarga una unidad por edificio compatible. La cantidad y el oro muestran el máximo disponible ahora; las colas no disponibles se omiten.");
             if (ownTown)
             {
 
@@ -469,8 +470,12 @@ namespace RiskAI
             root.Add(grid);
         }
 
-        Button RecruitButton(UnitKind kind) => PurchaseButton("Recruit "+kind,PortraitResource(kind),
-            BattleRules.Name(kind),BattleRules.Cost(kind)+" oro · "+BattleRules.Hotkey(kind),()=>controller.Recruit(kind));
+        Button RecruitButton(UnitKind kind)
+        {
+            var preview=controller.PreviewRecruitSelected(kind);
+            return PurchaseButton("Recruit "+kind,PortraitResource(kind),PurchaseTitle(BattleRules.Name(kind),preview),
+                PurchaseCost(preview,BattleRules.Cost(kind),BattleRules.Hotkey(kind)),()=>controller.Recruit(kind),preview.CanPurchase);
+        }
 
         static Button GridButton(string text, System.Action action)
         {
@@ -480,8 +485,24 @@ namespace RiskAI
             return button;
         }
 
-        static Button ShipButton(ShipKind kind, System.Action action) => PurchaseButton("Build ship "+kind,
-            ShipPortrait.Resource(kind),Harbor.Profile(kind).Name,Harbor.Profile(kind).Cost+" oro",action);
+        Button ShipButton(ShipKind kind,System.Action action)
+        {
+            var preview=controller.PreviewShipPurchase(kind);
+            return PurchaseButton("Build ship "+kind,ShipPortrait.Resource(kind),PurchaseTitle(Harbor.Profile(kind).Name,preview),
+                PurchaseCost(preview,Harbor.Profile(kind).Cost,null),action,preview.CanPurchase);
+        }
+
+        static string PurchaseTitle(string product,ProductionBatchPreview preview) =>
+            preview.IsGrouped?product+" ×"+preview.CandidateCount:product;
+
+        static string PurchaseCost(ProductionBatchPreview preview,int unitCost,string hotkey)
+        {
+            string cost=preview.IsGrouped
+                ? (preview.PlannedCount==preview.CandidateCount?preview.PlannedCost+" oro":"Hasta ×"+preview.PlannedCount+" · "+preview.PlannedCost+" oro")
+                : unitCost+" oro";
+            if(preview.UnfundedCount>0)cost+=" · falta oro";
+            return string.IsNullOrEmpty(hotkey)?cost:cost+" · "+hotkey;
+        }
 
         static readonly Dictionary<string, Texture2D> portraitCache = new Dictionary<string, Texture2D>();
         static Texture2D CachedPortrait(string resource)

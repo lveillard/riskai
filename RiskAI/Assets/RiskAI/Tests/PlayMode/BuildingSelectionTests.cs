@@ -175,6 +175,50 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator GroupRecruitReportsTheExactAcceptedCountAndGoldWhenFundsRunOut()
+        {
+            var towns=battle.Towns.Where(t=>!t.IsPort).Take(3).ToArray();
+            Assert.That(towns.Length,Is.EqualTo(3));
+            foreach(var town in towns)town.State.Owner=0;
+            battle.Economy.Gold[0]=2;
+            controller.SelectBuildings(towns,null);
+
+            var preview=controller.PreviewRecruitSelected(UnitKind.Footman);
+            Assert.That(preview.CandidateCount,Is.EqualTo(3));
+            Assert.That(preview.PlannedCount,Is.EqualTo(2));
+            Assert.That(preview.PlannedCost,Is.EqualTo(2));
+            Assert.That(preview.UnfundedCount,Is.EqualTo(1));
+            Assert.That(controller.TryRecruitSelected(UnitKind.Footman),Is.Null,"A partial grouped order is still useful when two buildings can accept it.");
+            Assert.That(controller.LastProductionResult.AcceptedCount,Is.EqualTo(2));
+            Assert.That(controller.LastProductionResult.RejectedCount,Is.EqualTo(1));
+            Assert.That(controller.LastProductionResult.SpentGold,Is.EqualTo(2));
+            Assert.That(battle.Economy.Gold[0],Is.Zero);
+            Assert.That(towns.Sum(town=>town.QueueCount),Is.EqualTo(2),"Only accepted orders consume gold or queue slots.");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator GroupRecruitSkipsAFullQueueAndDoesNotChargeForIt()
+        {
+            var towns=battle.Towns.Where(t=>!t.IsPort).Take(3).ToArray();
+            Assert.That(towns.Length,Is.EqualTo(3));
+            foreach(var town in towns)town.State.Owner=0;
+            battle.Economy.Gold[0]=8;
+            for(int i=0;i<5;i++)Assert.That(towns[0].Recruit(UnitKind.Footman),Is.Null);
+            battle.Economy.Gold[0]=3;
+            controller.SelectBuildings(towns,null);
+
+            Assert.That(controller.TryRecruitSelected(UnitKind.Footman),Is.Null);
+            Assert.That(controller.LastProductionResult.AcceptedCount,Is.EqualTo(2));
+            Assert.That(controller.LastProductionResult.RejectedCount,Is.EqualTo(1));
+            Assert.That(controller.LastProductionResult.SpentGold,Is.EqualTo(2));
+            Assert.That(battle.Economy.Gold[0],Is.EqualTo(1));
+            Assert.That(towns[0].QueueCount,Is.EqualTo(5));
+            Assert.That(towns[1].QueueCount+towns[2].QueueCount,Is.EqualTo(2));
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator GroupShipPurchaseQueuesOneShipAtEverySelectedOwnHarbor()
         {
             var harbors=NavalWorld.Current.Harbors.Where(h=>h&&h.CanLaunch).Take(2).ToArray();

@@ -5,6 +5,7 @@ using System.Reflection;
 using NUnit.Framework;
 using RiskAI.Core;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 namespace RiskAI.Tests
@@ -178,6 +179,31 @@ namespace RiskAI.Tests
    while(transport.Health>=before&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(transport.Health,Is.LessThan(before),"The archer should damage the transport without leaving hold position.");
    Assert.That(Vector3.Distance(archer.transform.position,anchor),Is.LessThan(.05f));
+  }
+  [UnityTest] public IEnumerator HoldingMortarKeepsHullRangeTargetBeyondShipPivotLeash()
+  {
+   var port=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
+   foreach(var tower in battle.Towers.ToArray())if(tower)tower.gameObject.SetActive(false);
+   foreach(var ship in naval.Ships.ToArray())if(ship)ship.gameObject.SetActive(false);
+   foreach(var unit in battle.Units.ToArray())if(unit)unit.gameObject.SetActive(false);
+   var inland=port.Landing-port.Berth;inland.y=0;Assert.That(inland.sqrMagnitude,Is.GreaterThan(.01f));inland.Normalize();
+   var desired=port.Berth+inland*20.5f;
+   Assert.That(NavMesh.SamplePosition(desired,out var mortarSpot,6,NavMesh.AllAreas),Is.True,"The mainland harbor needs an inland firing point for the long-range hull regression.");
+   var mortar=BattleTestScenario.Mobile(battle,0,UnitKind.Mortar,mortarSpot.position);
+   var galley=BattleTestScenario.Ship(naval,1,ShipKind.Galley,port.Berth);
+   galley.transform.position=mortar.transform.position-inland*20.5f;
+   galley.transform.rotation=Quaternion.LookRotation(inland);
+   float leash=SourceWeapons.AcquisitionRange(UnitKind.Mortar);
+   Assert.That(Vector3.Distance(mortar.transform.position,galley.transform.position),Is.EqualTo(20.5f).Within(.05f),"The fixture must keep the ship pivot inside spatial-query reach but outside the autonomous leash.");
+   Assert.That(Vector3.Distance(mortar.transform.position,galley.ApproachPoint(mortar.transform.position)),Is.LessThanOrEqualTo(BattleRules.Range(UnitKind.Mortar)),"The oriented hull remains within weapon range.");
+   mortar.HoldPosition();battle.Spatial.Rebuild(battle.Targets,battle.Units);var anchor=mortar.transform.position;float before=galley.Health;
+   float deadline=Time.realtimeSinceStartup+3;
+   while(mortar.CurrentTarget!=galley&&Time.realtimeSinceStartup<deadline)yield return null;
+   Assert.That(mortar.CurrentTarget,Is.SameAs(galley),"Hold must retain a ship whose hull is in leash range.");
+   deadline=Time.realtimeSinceStartup+3;
+   while(galley.Health>=before&&Time.realtimeSinceStartup<deadline)yield return null;
+   Assert.That(galley.Health,Is.LessThan(before),"The scheduled artillery strike must not be cancelled by the ship pivot.");
+   Assert.That(Vector3.Distance(mortar.transform.position,anchor),Is.LessThan(.05f));
   }
   [UnityTest] public IEnumerator GalleyAttackMoveResumesItsOriginalDestinationAfterCombat()
   {

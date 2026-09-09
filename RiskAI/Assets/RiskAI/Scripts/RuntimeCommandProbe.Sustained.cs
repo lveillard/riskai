@@ -107,6 +107,7 @@ namespace RiskAI
                 }
             var diagnostics = FindFirstObjectByType<RuntimeDiagnostics>();
             if (diagnostics) diagnostics.BeginProbeMeasurement();
+            var frameTrace=FindFirstObjectByType<RuntimeFrameProbe>();if(frameTrace)frameTrace.BeginMeasurement();
             float started = Time.realtimeSinceStartup, simStarted = session.BattleTime;
             long appliedStart = session.Commands.AppliedCount, rejectedStart = session.Commands.RejectedCount;
             int round = -1, issuedRound = -1, submitted = 0, minAlive = cohort.Count;
@@ -172,6 +173,7 @@ namespace RiskAI
                 yield return null;
             }
             if (diagnostics) diagnostics.EndProbeMeasurement();
+            if(frameTrace)frameTrace.EndMeasurement();
             int moved = 0;
             foreach (var unit in cohort) if (unit.MaxDisplacement >= MovedDistance) moved++;
             float realSeconds = Time.realtimeSinceStartup - started;

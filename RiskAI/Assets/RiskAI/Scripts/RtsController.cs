@@ -257,7 +257,7 @@ namespace RiskAI
         {
             string error=TryRecruitSelected(kind);
             if(error!=null)session.Message(error);
-            else session.Message(BattleRules.Name(kind)+" en la cola de reclutamiento.");
+            else session.Message(LastProductionResult.Feedback(BattleRules.Name(kind)));
         }
         public void BuildTower() { if(SelectedHarbor)Feedback(ExecuteBuilding(PlayerBuildingIntent.BuildTower(SelectedHarbor.BuildingId)));else if(SelectedTown)Feedback(ExecuteBuilding(PlayerBuildingIntent.BuildTower(SelectedTown.BuildingId)));else session.Message("Selecciona una ciudad o un puerto tuyo para reconstruir su torre."); }
         public void UpgradeTown() { if(SelectedTown)Feedback(SelectedTown.Upgrade());else session.Message("Selecciona una ciudad tuya para mejorarla."); }
@@ -300,7 +300,8 @@ namespace RiskAI
         public void BuyShip(ShipKind kind)
         {
             string error=TryBuySelected(kind);
-            if(error!=null&&session)session.Message(error);
+            if(!session)return;
+            session.Message(error??LastProductionResult.Feedback(Harbor.Profile(kind).Name));
         }
         public void BoardNearby()
         {

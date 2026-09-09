@@ -86,9 +86,10 @@ namespace RiskAI
             frame.Add(portrait);return frame;
         }
 
-        static Button PurchaseButton(string name,string resource,string title,string cost,System.Action action)
+        static Button PurchaseButton(string name,string resource,string title,string cost,System.Action action,bool enabled=true)
         {
             var button=RtsUiStyle.Button("",action,name);
+            button.SetEnabled(enabled);
             button.AddToClassList("riskai-purchase-card");button.tooltip=title+" · "+cost;
             bool landscape=UiViewport.IsCompact&&!UiViewport.IsPortrait;
             button.style.width=Length.Percent(UiViewport.IsPortrait?48:31);

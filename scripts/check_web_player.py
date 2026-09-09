@@ -44,6 +44,8 @@ def main():
                         help='Record Chrome main-thread metrics over the probe window for CPU-versus-presentation diagnosis.')
     parser.add_argument('--cpu-profile', action='store_true',
                         help='Save and summarize a Chrome CPU profile over the probe window.')
+    parser.add_argument('--frame-trace', action='store_true',
+                        help="Enable the player's opt-in Unity hitch correlation markers for this probe.")
     args = parser.parse_args()
     if args.probe and args.restart:
         parser.error('Choose one measurement type per browser session.')
@@ -57,6 +59,8 @@ def main():
         parser.error('--suppress-draws is only meaningful with --probe.')
     if args.overview and not args.probe:
         parser.error('--overview requires --probe and its battlefield.')
+    if args.frame_trace and not args.probe:
+        parser.error('--frame-trace requires --probe.')
     if not 100 <= args.path_budget <= 2000:
         parser.error('--path-budget must be between 100 and 2000.')
     args.output.mkdir(parents=True, exist_ok=True)
@@ -70,6 +74,8 @@ def main():
                       'riskai-probe-recruits': args.recruits, 'riskai-probe-warmup': args.warmup})
     if args.sustained:
         query['riskai-probe-sustained'] = 1
+    if args.frame_trace:
+        query['riskai-frame-trace'] = 1
     if args.restart:
         query.update({'riskai-restart-probe': 1, 'riskai-restart-cycles': 3})
     url = args.url.rstrip('/') + '/?' + urlencode(query)
@@ -78,7 +84,7 @@ def main():
               'draws_suppressed': args.suppress_draws, 'overview': args.overview,
               'path_budget': args.path_budget, 'sustained_navigation': args.sustained,
               'minimap_hidden': args.hide_minimap, 'browser_metrics_requested': args.browser_metrics,
-              'cpu_profile_requested': args.cpu_profile}
+              'cpu_profile_requested': args.cpu_profile, 'frame_trace': args.frame_trace}
     started = time.monotonic()
     with (args.output / 'console.log').open('w', encoding='utf-8') as log, sync_playwright() as p:
         browser = p.chromium.launch(channel='msedge', headless=not args.headed)
