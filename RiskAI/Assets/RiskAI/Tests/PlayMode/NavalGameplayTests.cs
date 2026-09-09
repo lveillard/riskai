@@ -158,6 +158,27 @@ namespace RiskAI.Tests
    yield return new WaitForSecondsRealtime(1.6f);
    Assert.That(coastal.Health,Is.LessThan(before),"The galley should resolve a projectile against its coastal target.");
   }
+  [UnityTest] public IEnumerator HoldingArcherAutoTargetsAndDamagesTransportAtMainlandBerth()
+  {
+   var port=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
+   foreach(var tower in battle.Towers.ToArray())if(tower)tower.gameObject.SetActive(false);
+   foreach(var ship in naval.Ships.ToArray())if(ship)ship.gameObject.SetActive(false);
+   foreach(var unit in battle.Units.ToArray())if(unit)unit.gameObject.SetActive(false);
+   var archer=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,port.Landing);
+   var transport=BattleTestScenario.Ship(naval,1,ShipKind.Transport,port.Berth);
+   archer.HoldPosition();var anchor=archer.transform.position;float before=transport.Health;
+   Assert.That(Vector3.Distance(archer.transform.position,transport.transform.position),Is.GreaterThan(BattleRules.Range(UnitKind.Archer)),
+    "The berth fixture must reproduce the old center-to-center range failure.");
+   Assert.That(Vector3.Distance(archer.transform.position,transport.ApproachPoint(archer.transform.position)),Is.LessThanOrEqualTo(BattleRules.Range(UnitKind.Archer)),
+    "The oriented hull surface should be in range from the port landing.");
+   float deadline=Time.realtimeSinceStartup+2.5f;
+   while(archer.CurrentTarget!=transport&&Time.realtimeSinceStartup<deadline)yield return null;
+   Assert.That(archer.CurrentTarget,Is.SameAs(transport),"A holding coastal archer should acquire the enemy transport.");
+   deadline=Time.realtimeSinceStartup+2.5f;
+   while(transport.Health>=before&&Time.realtimeSinceStartup<deadline)yield return null;
+   Assert.That(transport.Health,Is.LessThan(before),"The archer should damage the transport without leaving hold position.");
+   Assert.That(Vector3.Distance(archer.transform.position,anchor),Is.LessThan(.05f));
+  }
   [UnityTest] public IEnumerator GalleyAttackMoveResumesItsOriginalDestinationAfterCombat()
   {
    var home=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);

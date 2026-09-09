@@ -185,40 +185,45 @@ namespace RiskAI
         bool IsDoubleBuildingClick(Component building) => building && lastBuildingClick == building && Time.unscaledTime - lastBuildingClickTime < DoubleBuildingClickSeconds;
         void RememberBuildingClick(Component building) { lastBuildingClick = building; lastBuildingClickTime = Time.unscaledTime; }
 
-        /// <summary>Queues exactly one land unit at the selected, allied compatible building with the shortest queue.</summary>
+        /// <summary>Queues one land unit at every selected, allied compatible building, shortest queues first.</summary>
         public string TryRecruitSelected(UnitKind kind)
         {
-            string firstError = null;
             if (ProductionCatalog.AllowsHarborUnit(kind))
             {
-                foreach (var harbor in selectedHarbors.Where(h => h && h.Owner == 0).OrderBy(h => h.LandQueueCount).ThenBy(StableHarborIndex))
-                {
-                    string error = ExecuteBuilding(PlayerBuildingIntent.Recruit(harbor.BuildingId,kind));
-                    if (error == null) return null;
-                    if (firstError == null) firstError = error;
-                }
-                return firstError ?? "Selecciona un puerto de tu bando para reclutar Marines.";
+                return QueueAtSelectedBuildings(
+                    selectedHarbors.Where(h => h && h.Owner == 0), h => h.LandQueueCount, StableHarborIndex,
+                    h => ExecuteBuilding(PlayerBuildingIntent.Recruit(h.BuildingId,kind)),
+                    "Selecciona un puerto de tu bando para reclutar Marines.");
             }
-            foreach (var town in selectedTowns.Where(t => t && t.State.Owner == 0).OrderBy(t => t.QueueCount).ThenBy(t => t.State.Id, System.StringComparer.Ordinal))
-            {
-                string error = ExecuteBuilding(PlayerBuildingIntent.Recruit(town.BuildingId,kind));
-                if (error == null) return null;
-                if (firstError == null) firstError = error;
-            }
-            return firstError ?? "Selecciona una ciudad de tu bando para reclutar.";
+            return QueueAtSelectedBuildings(
+                selectedTowns.Where(t => t && t.State.Owner == 0), t => t.QueueCount, t => t.State.Id,
+                t => ExecuteBuilding(PlayerBuildingIntent.Recruit(t.BuildingId,kind)),
+                "Selecciona una ciudad de tu bando para reclutar.");
         }
 
-        /// <summary>Queues exactly one ship at the selected allied harbor with the shortest naval queue.</summary>
+        /// <summary>Queues one ship at every selected allied harbor, shortest naval queues first.</summary>
         public string TryBuySelected(ShipKind kind)
         {
+            return QueueAtSelectedBuildings(
+                selectedHarbors.Where(h => h && h.Owner == 0), h => h.QueueCount, StableHarborIndex,
+                h => ExecuteBuilding(PlayerBuildingIntent.BuyShip(h.BuildingId,(NavalUnitKind)kind)),
+                "Selecciona un puerto de tu bando para comprar barcos.");
+        }
+
+        // A grouped purchase is best-effort: a full or unavailable queue must not
+        // prevent other selected compatible buildings from receiving one order.
+        string QueueAtSelectedBuildings<T,TOrder>(IEnumerable<T> buildings, System.Func<T,int> queueLength,
+            System.Func<T,TOrder> stableOrder, System.Func<T,string> enqueue, string emptyMessage) where T : class
+        {
             string firstError = null;
-            foreach (var harbor in selectedHarbors.Where(h => h && h.Owner == 0).OrderBy(h => h.QueueCount).ThenBy(StableHarborIndex))
+            int queued = 0;
+            foreach (var building in buildings.OrderBy(queueLength).ThenBy(stableOrder))
             {
-                string error = ExecuteBuilding(PlayerBuildingIntent.BuyShip(harbor.BuildingId,(NavalUnitKind)kind));
-                if (error == null) return null;
+                string error = enqueue(building);
+                if (error == null) { queued++; continue; }
                 if (firstError == null) firstError = error;
             }
-            return firstError ?? "Selecciona un puerto de tu bando para comprar barcos.";
+            return queued > 0 ? null : firstError ?? emptyMessage;
         }
 
         // NavalWorld builds this list in source order; the index gives deterministic ties without treating a display name as identity.

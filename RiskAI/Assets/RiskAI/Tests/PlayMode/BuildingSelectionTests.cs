@@ -157,18 +157,38 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator GroupRecruitQueuesOneUnitAtTheShortestOwnTownQueue()
+        public IEnumerator GroupRecruitQueuesOneUnitAtEverySelectedOwnTown()
         {
             var towns=battle.Towns.Where(t=>!t.IsPort).Take(2).ToArray();
             Assert.That(towns.Length,Is.EqualTo(2));
             foreach(var town in towns)town.State.Owner=0;
-            battle.Economy.Gold[0]=BattleRules.Cost(UnitKind.Footman)*3;
-            Assert.That(towns[0].Recruit(UnitKind.Footman),Is.Null,"The first town establishes the longer queue.");
+            battle.Economy.Gold[0]=BattleRules.Cost(UnitKind.Footman)*4;
             controller.SelectBuildings(towns,null);
 
             Assert.That(controller.TryRecruitSelected(UnitKind.Footman),Is.Null);
             Assert.That(towns[0].QueueCount,Is.EqualTo(1));
-            Assert.That(towns[1].QueueCount,Is.EqualTo(1),"One click picks the selected allied town with the shorter queue; it does not enqueue at every town.");
+            Assert.That(towns[1].QueueCount,Is.EqualTo(1),"One group purchase must enqueue once at each selected compatible town.");
+            Assert.That(controller.TryRecruitSelected(UnitKind.Footman),Is.Null);
+            Assert.That(towns[0].QueueCount,Is.EqualTo(2));
+            Assert.That(towns[1].QueueCount,Is.EqualTo(2),"Repeated group purchases retain a balanced 2/2 split.");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator GroupShipPurchaseQueuesOneShipAtEverySelectedOwnHarbor()
+        {
+            var harbors=NavalWorld.Current.Harbors.Where(h=>h&&h.CanLaunch).Take(2).ToArray();
+            Assert.That(harbors.Length,Is.EqualTo(2));
+            foreach(var harbor in harbors)harbor.State.Owner=0;
+            battle.Economy.Gold[0]=Harbor.Cost(ShipKind.Galley)*4;
+            controller.SelectBuildings(null,harbors);
+
+            Assert.That(controller.TryBuySelected(ShipKind.Galley),Is.Null);
+            Assert.That(harbors[0].QueueCount,Is.EqualTo(1));
+            Assert.That(harbors[1].QueueCount,Is.EqualTo(1));
+            Assert.That(controller.TryBuySelected(ShipKind.Galley),Is.Null);
+            Assert.That(harbors[0].QueueCount,Is.EqualTo(2));
+            Assert.That(harbors[1].QueueCount,Is.EqualTo(2),"Repeated group ship purchases retain a balanced 2/2 split.");
             yield return null;
         }
 

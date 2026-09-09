@@ -87,7 +87,13 @@ namespace RiskAI
             if(!found)berth=new Vector3(probe.x,-.24f,probe.z);
             var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;
             var harbor=go.AddComponent<Harbor>();
-            harbor.InitializeImported(this,new BuildingId(BuildingKind.Harbor,"imported/"+town.State.Id),town,berth,found?null:"El puerto no tiene una salida marítima segura.");Harbors.Add(harbor);AddEmbarkZone(harbor);
+            harbor.InitializeImported(this,new BuildingId(BuildingKind.Harbor,"imported/"+town.State.Id),town,berth,found?null:"El puerto no tiene una salida marítima segura.");
+            // The imported map supplies a city-to-claim quay, while the safe naval
+            // berth may be farther offshore. Join both anchors with the same deck
+            // primitive used by authored harbors so the usable berth stays visible.
+            NavalArt.CreatePierDeck(harbor.transform,town.ClaimPoint+Vector3.up*.15f,berth+Vector3.up*.15f,
+                3.15f,"Harbor berth pier",false,true,.03f);
+            Harbors.Add(harbor);AddEmbarkZone(harbor);
         }
         void AddHarbor(BuildingId buildingId,string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
         {

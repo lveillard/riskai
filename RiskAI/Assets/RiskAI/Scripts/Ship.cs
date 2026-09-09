@@ -70,11 +70,20 @@ namespace RiskAI
         float AttackDamage=>Profile.Damage;
         float AttackRange=>Profile.Range;
         float AttackInterval=>Profile.Cooldown;
+        BoxCollider targetVolume;
+
+        public override Vector3 ApproachPoint(Vector3 from)
+        {
+            // Range and firing-position probes should stop at the oriented hull,
+            // not at the vessel pivot in water. NavalArt owns the target volume.
+            return targetVolume ? targetVolume.ClosestPoint(from) : transform.position;
+        }
 
         internal void Initialize(NavalWorld naval,int team,ShipKind kind)
         {
             world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
             NavalArt.CreateShip(this);
+            targetVolume=GetComponent<BoxCollider>();
         }
         public void Select(bool value){Selected=value;}
         public void MoveTo(Vector3 point,bool attackMove=false)

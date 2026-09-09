@@ -80,7 +80,7 @@ namespace RiskAI.Tests
         public void MortarUsesSiegeProfileAndCanRecruitWithoutUpgrade()
         {
             Assert.That(BattleRules.Cost(UnitKind.Mortar),Is.EqualTo(3));
-            Assert.That(BattleRules.TrainTime(UnitKind.Mortar),Is.EqualTo(6f));
+            Assert.That(BattleRules.TrainTime(UnitKind.Mortar),Is.EqualTo(1f));
             Assert.That(BattleRules.Health(UnitKind.Mortar),Is.EqualTo(350f));
             Assert.That(BattleRules.Speed(UnitKind.Mortar),Is.EqualTo(4.6f));
             Assert.That(BattleRules.Damage(UnitKind.Mortar),Is.EqualTo(25f));

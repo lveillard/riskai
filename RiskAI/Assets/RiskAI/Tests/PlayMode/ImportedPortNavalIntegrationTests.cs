@@ -28,6 +28,8 @@ namespace RiskAI.Tests
                 var home=battle.Towns.First(town=>town.IsPort&&town.State.Owner==0);var homePort=home.Port;
                 Assert.That(home.GetComponentsInChildren<Transform>().Count(t=>t.name=="Common harbor building"),Is.EqualTo(1),"Imported ports use the same harbor catalog as authored ports, without a duplicate town hall.");
                 Assert.That(home.GetComponentsInChildren<Transform>().Any(t=>t.name=="Masonry hall"),Is.False);
+                Assert.That(homePort.GetComponentsInChildren<Transform>().Count(t=>t.name=="Harbor berth pier"),Is.EqualTo(1),
+                    "Every imported claim quay must remain visibly connected to its runtime-derived safe berth.");
                 battle.Economy.Gold[0]=BattleRules.Cost(UnitKind.MarinePrivate);
                 Assert.That(homePort.RecruitLand(UnitKind.MarinePrivate,0),Is.Null);
                 Assert.That(home.QueueCount,Is.EqualTo(1));
