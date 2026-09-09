@@ -25,6 +25,8 @@ namespace RiskAI
         RtsUiRuntime ui;
         VisualElement content;
         bool lastCompact;
+        ScenarioMap lastPressedMap;
+        double lastScenarioPressAt=double.NegativeInfinity;
 
         void Awake()
         {
@@ -216,9 +218,15 @@ namespace RiskAI
             var button = RtsUiStyle.Button("", () => SelectMap(map), "Map " + map);
             button.RegisterCallback<PointerDownEvent>(evt =>
             {
-                // The event's click count is shared by mouse, pen and touch in UI Toolkit.
-                // Start on the second press so the selected setup values remain unchanged.
-                if (evt.button != 0 || evt.clickCount < 2 || loading) return;
+                // WebGL does not report a reliable clickCount for emulated touch.
+                // Keep the gesture at controller level so rebuilding the selected
+                // card after the first press cannot lose the second one.
+                if(evt.button!=0||loading)return;
+                double now=Time.unscaledTimeAsDouble;
+                bool repeated=lastPressedMap==map&&now-lastScenarioPressAt<=.55;
+                lastPressedMap=map;lastScenarioPressAt=now;
+                if(!repeated)return;
+                lastScenarioPressAt=double.NegativeInfinity;
                 ApplyMapSelection(map);
                 StartBattle();
                 evt.StopImmediatePropagation();

@@ -114,6 +114,10 @@ namespace RiskAI.Tests
             Assert.That(transport.CargoCount,Is.Zero);
 
             Assert.That(FindBeachShore(out var beach,out var beachWater),Is.True,map+" must retain a safe visible sandy landing.");
+            Vector3 seaward=beachWater-beach;seaward.y=0;seaward.Normalize();
+            Assert.That(ShoreAccess.TryLanding(beach+seaward*1.5f,out var tolerantBeach,out _),Is.True,
+                map+" a click on the painted waterline must resolve back onto its visible beach.");
+            Assert.That(Vector3.Distance(new Vector3(tolerantBeach.x,0,tolerantBeach.z),new Vector3(beach.x,0,beach.z)),Is.LessThanOrEqualTo(3.1f));
             var beachTransport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,beachWater);
             var beachSoldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,beach);
             Assert.That(beachTransport.TryEmbark(beachSoldier),Is.True,"Visible safe beach must accept real boarding.");

@@ -112,6 +112,7 @@ namespace RiskAI
                 key = key * 47 + (controller.SelectedCamp ? controller.SelectedCamp.GetInstanceID() : 0);
                 for (int i = 0; i < controller.SelectedTowns.Count; i++) key = key * 53 + controller.SelectedTowns[i].GetInstanceID() * 17 + controller.SelectedTowns[i].State.Owner + controller.SelectedTowns[i].QueueCount * 97 + controller.SelectedTowns[i].State.Level * 101;
                 for (int i = 0; i < controller.SelectedHarbors.Count; i++) key = key * 59 + controller.SelectedHarbors[i].GetInstanceID() * 17 + controller.SelectedHarbors[i].Owner + controller.SelectedHarbors[i].QueueCount * 103 + controller.SelectedHarbors[i].LandQueueCount * 107;
+                for(int i=0;i<controller.Fleet.Count;i++)if(controller.Fleet[i])key=key*61+controller.Fleet[i].EntityId*17+controller.Fleet[i].CargoCount;
                 return key;
             }
         }
@@ -390,6 +391,7 @@ namespace RiskAI
                 int count = controller.Selection.Count + controller.Fleet.Count;
                 AddTitle(root, count == 1 ? controller.Fleet[0].DisplayName : count + " UNIDADES SELECCIONADAS");
                 BuildSelectionRoster(root);
+                foreach(var ship in controller.Fleet)if(ship&&ship.Kind==ShipKind.Transport&&ship.CargoCount>0)BuildCargoRoster(root,ship);
                 return;
             }
             if (controller.InspectedTarget is Soldier inspected)

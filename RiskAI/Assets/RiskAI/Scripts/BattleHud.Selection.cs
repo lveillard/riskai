@@ -125,5 +125,25 @@ namespace RiskAI
             };
             liveContext.Add(refresh); refresh();
         }
+
+        void BuildCargoRoster(VisualElement root,Ship transport)
+        {
+            var label=RtsUiStyle.Label("A BORDO · "+transport.CargoCount+" / "+transport.CargoCapacity+" · pulsa para desembarcar",null,11);
+            label.style.color=RtsUiStyle.Bronze;label.style.whiteSpace=WhiteSpace.Normal;root.Add(label);
+            var cargo=new VisualElement { name="HUD transport cargo" };cargo.style.flexDirection=FlexDirection.Row;cargo.style.flexWrap=Wrap.Wrap;
+            foreach(var passenger in transport.Cargo)
+            {
+                var soldier=passenger;
+                if(!soldier)continue;
+                var button=RtsUiStyle.Button("",()=>controller.UnloadCargo(transport,soldier),"Unload cargo "+soldier.EntityId);
+                button.tooltip=BattleRules.Name(soldier.Kind)+" · desembarcar esta unidad";
+                button.style.width=button.style.minWidth=UiViewport.IsCompact?44:52;
+                button.style.height=button.style.minHeight=UiViewport.IsCompact?48:56;
+                button.style.paddingLeft=button.style.paddingRight=4;button.style.paddingTop=button.style.paddingBottom=4;
+                button.style.marginRight=button.style.marginBottom=4;
+                button.Add(PortraitFrame(PortraitResource(soldier.Kind),UiViewport.IsCompact?32:40));cargo.Add(button);
+            }
+            root.Add(cargo);
+        }
     }
 }

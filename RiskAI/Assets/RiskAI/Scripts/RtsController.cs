@@ -334,6 +334,12 @@ namespace RiskAI
                 if(ship.LastActionError!=null)session.Message(ship.LastActionError);
             }
         }
+        public void UnloadCargo(Ship transport,Soldier soldier)
+        {
+            if(session.Paused||session.Winner>=0||!IsSelectableShip(transport))return;
+            if(transport.UnloadOneNearby(soldier))session.Message(BattleRules.Name(soldier.Kind)+" ha desembarcado.");
+            else Feedback(transport.LastActionError);
+        }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
         public void FocusHome()
         {
@@ -360,12 +366,17 @@ namespace RiskAI
                 BattleSession.GiveFormation(mobile,point,attack,Shift,PatrolCursor);
                 issued=true;
             }
-            if(issued)ShowOrder(point,attack);
+            bool fleetIssued=false;
             if(Fleet.Count>0)
             {
-                foreach(var ship in Fleet)if(IsSelectableShip(ship)){ship.MoveTo(point,attack);Feedback(ship.LastActionError);}
-                issued=true;
+                foreach(var ship in Fleet)if(IsSelectableShip(ship))
+                {
+                    ship.MoveTo(point,attack);Feedback(ship.LastActionError);
+                    if(ship.LastActionError==null)fleetIssued=true;
+                }
+                issued|=fleetIssued;
             }
+            if(issued)ShowOrder(point,attack);
             if(!issued&&Selection.Count>0&&!attemptedGuardOrder)session.Message("No hay tropas disponibles para esa orden.");
             if(!issued&&SelectedCamp)
             {

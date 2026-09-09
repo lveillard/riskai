@@ -83,11 +83,32 @@ namespace RiskAI
         // pier: its platform may stand over W3E water, so IsLand alone is wrong.
         public static bool TryLanding(Vector3 requested,out Vector3 landing,out string error)
         {
+            return TryNearestLanding(requested,3f,out landing,out error);
+        }
+
+        public static bool TryNearestLanding(Vector3 requested,float searchRadius,out Vector3 landing,out string error)
+        {
+            if(TryLandingCandidate(requested,out landing,out error))return true;
+            string exactError=error;
+            searchRadius=Mathf.Clamp(searchRadius,0,Ship.LoadRadius);
+            const int directions=24;
+            for(float radius=.5f;radius<=searchRadius+.001f;radius+=.5f)
+                for(int i=0;i<directions;i++)
+                {
+                    float angle=i*Mathf.PI*2/directions;
+                    var candidate=requested+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*radius;
+                    if(TryLandingCandidate(candidate,out landing,out _))return true;
+                }
+            landing=default;error=exactError??"Elige una playa de arena o un muelle transitable.";return false;
+        }
+
+        static bool TryLandingCandidate(Vector3 requested,out Vector3 landing,out string error)
+        {
             landing=default;error=null;
-            if(!NavMesh.SamplePosition(requested,out var hit,1.25f,NavMesh.AllAreas))
+            if(!NavMesh.SamplePosition(requested,out var hit,.9f,NavMesh.AllAreas))
             {error="Elige una playa de arena o un muelle transitable.";return false;}
             if(IsDock(hit.position)){landing=hit.position;return true;}
-            if(!MapLayout.IsLand(requested.x,requested.z)||!MapLayout.IsLand(hit.position.x,hit.position.z)||
+            if(!MapLayout.IsLand(hit.position.x,hit.position.z)||
                 !IsSandySurface(hit.position.x,hit.position.z))
             {error="Sólo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.";return false;}
             if(!Gentle(hit.position))
@@ -142,14 +163,18 @@ namespace RiskAI
         }
         static bool Gentle(Vector3 point)
         {
-            const float probe=.8f;
+            const float probe=.8f;int landNeighbors=0;
             for(int i=0;i<4;i++)
             {
                 var offset=i==0?Vector3.right*probe:i==1?Vector3.left*probe:i==2?Vector3.forward*probe:Vector3.back*probe;
-                if(!NavMesh.SamplePosition(point+offset,out var neighbor,1.25f,NavMesh.AllAreas)||
-                    !MapLayout.IsLand(neighbor.position.x,neighbor.position.z)||Mathf.Abs(neighbor.position.y-point.y)>.7f)return false;
+                if(!NavMesh.SamplePosition(point+offset,out var neighbor,.9f,NavMesh.AllAreas)||
+                    !MapLayout.IsLand(neighbor.position.x,neighbor.position.z))continue;
+                landNeighbors++;
+                if(Mathf.Abs(neighbor.position.y-point.y)>.7f)return false;
             }
-            return true;
+            // A real coast necessarily has a missing seaward neighbour. Requiring
+            // all four made broad, visibly sandy beaches fail their own rule.
+            return landNeighbors>=2;
         }
     }
 }

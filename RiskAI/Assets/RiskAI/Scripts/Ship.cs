@@ -29,6 +29,7 @@ namespace RiskAI
         public bool IsGarrison=>harborGuard;
         public IReadOnlyList<Soldier> Cargo=>cargo;
         public int CargoCount=>cargo.Count;
+        public int CargoCapacity=>Capacity;
         public CombatTarget CurrentTarget=>target;
         public ShipProfile Profile=>NavalProfiles.Profile((NavalUnitKind)Kind);
         public string DisplayName=>Profile.Name;
@@ -90,10 +91,14 @@ namespace RiskAI
         {
             LastActionError=null;
             if(harborGuard&&harborGuard.IsInBerthCircle(point)){MaintainHarborGuard();return;}
-            if(!IsAlive||!SeaNavigation.TryBuildPath(transform.position,point,out var next)){LastActionError="No hay una ruta marítima hasta ese destino.";return;}
-            if(!TryLeaveHarborGuard(point))return;
+            if(!IsAlive)return;
+            Vector3 destination=point;
+            if(!SeaNavigation.HasClearance(destination)&&!SeaNavigation.TryNearestOcean(point,LoadRadius,out destination))
+            {LastActionError="Elige mar o tierra cercana a la costa.";return;}
+            if(!SeaNavigation.TryBuildPath(transform.position,destination,out var next)){LastActionError="No hay una ruta marítima hasta ese destino.";return;}
+            if(!TryLeaveHarborGuard(destination))return;
             orderedHarbor=null;
-            route.Clear();route.AddRange(next);routeIndex=0;routeGoal=point;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=point;pendingShoreUnload=false;
+            route.Clear();route.AddRange(next);routeIndex=0;routeGoal=destination;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=destination;pendingShoreUnload=false;
         }
         public void SailToHarbor(Harbor harbor)
         {
@@ -165,15 +170,11 @@ namespace RiskAI
             if(world.Session.Paused||world.Session.Winner>=0)return false;
             if(!IsAlive||Kind!=ShipKind.Transport){LastActionError="Selecciona un transporte.";return false;}
             if(!TryFindDisembarkPoint(shore,out shore,out var error)){LastActionError=error;return false;}
-            bool unloaded=false;
+            bool unloaded=false;int slot=0;
             foreach(var soldier in cargo.ToArray())
             {
                 if(!soldier){cargo.Remove(soldier);continue;}
-                var spread=shore+new Vector3((cargo.IndexOf(soldier)%3-1)*.7f,0,cargo.IndexOf(soldier)/3*.7f);
-                if(!NavMesh.SamplePosition(spread,out var hit,5,NavMesh.AllAreas)||!ShoreAccess.IsWalkableLanding(hit.position))continue;
-                soldier.transform.SetParent(null,true);soldier.transform.position=hit.position;soldier.transform.rotation=Quaternion.identity;soldier.gameObject.SetActive(true);
-                if(soldier.Agent){soldier.Agent.enabled=true;soldier.Agent.Warp(hit.position);soldier.Stop();}
-                cargo.Remove(soldier);unloaded=true;
+                if(TryUnloadSoldier(soldier,shore,slot++))unloaded=true;
             }
             if(!unloaded&&cargo.Count>0)LastActionError="No hay sitio transitable para desembarcar en esa playa.";
             return unloaded;
@@ -181,8 +182,39 @@ namespace RiskAI
         public bool TryFindDisembarkPoint(Vector3 requested,out Vector3 landing,out string error)
         {
             landing=default;error=null;
-            if(DistanceXZ(transform.position,requested)>LoadRadius){error="Acerca el transporte a una playa marcada.";return false;}
-            return TryValidateShore(requested,out landing,out error);
+            if(!TryValidateShore(requested,out landing,out error))return false;
+            if(DistanceXZ(transform.position,landing)>LoadRadius){error="Acerca el transporte a una playa marcada.";landing=default;return false;}
+            return true;
+        }
+        public bool UnloadOneNearby(Soldier soldier)
+        {
+            LastActionError=null;
+            if(world.Session.Paused||world.Session.Winner>=0)return false;
+            if(!IsAlive||Kind!=ShipKind.Transport||!soldier||!cargo.Contains(soldier))
+            {LastActionError="Esa unidad ya no está dentro del transporte.";return false;}
+            if(!ShoreAccess.TryNearestLanding(transform.position,LoadRadius,out var landing,out var error))
+            {LastActionError=error;return false;}
+            if(DistanceXZ(transform.position,landing)>LoadRadius)
+            {LastActionError="Acerca el transporte a una playa marcada.";return false;}
+            bool unloaded=TryUnloadSoldier(soldier,landing,0);
+            if(!unloaded)LastActionError="No hay sitio transitable para desembarcar en esa playa.";
+            return unloaded;
+        }
+        bool TryUnloadSoldier(Soldier soldier,Vector3 landing,int slot)
+        {
+            float spacing=VisualMetrics.SpawnRadiusFor(soldier.Kind)*2+.14f;
+            for(int attempt=0;attempt<24;attempt++)
+            {
+                int index=slot+attempt;
+                float radius=index==0?0:spacing*(.75f+Mathf.Sqrt(index)*.55f);
+                float angle=index*2.399963f;
+                var spread=landing+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*radius;
+                if(!NavMesh.SamplePosition(spread,out var hit,.9f,NavMesh.AllAreas)||!ShoreAccess.IsWalkableLanding(hit.position))continue;
+                soldier.transform.SetParent(null,true);soldier.transform.position=hit.position;soldier.transform.rotation=Quaternion.identity;soldier.gameObject.SetActive(true);
+                if(soldier.Agent){soldier.Agent.enabled=true;soldier.Agent.Warp(hit.position);soldier.Stop();}
+                cargo.Remove(soldier);return true;
+            }
+            return false;
         }
         static bool TryValidateShore(Vector3 requested,out Vector3 landing,out string error)
             => ShoreAccess.TryLanding(requested,out landing,out error);

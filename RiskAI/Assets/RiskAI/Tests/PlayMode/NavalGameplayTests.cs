@@ -142,6 +142,23 @@ namespace RiskAI.Tests
    yield return new WaitForSeconds(1.3f);Assert.That(transport.Health,Is.LessThan(health),"A galley must fire a projectile which resolves damage.");
    transport.TakeDamage(10000,1,enemy);yield return null;Assert.That(battle.Population(0),Is.EqualTo(before-1));Assert.That(battle.Units.Contains(soldier),Is.False);Assert.That(naval.Ships.Contains(transport),Is.False);
   }
+  [UnityTest] public IEnumerator FleetLandClickProjectsToNearbySeaAndShowsTheSharedOrderMarker()
+  {
+   var port=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
+   var ship=BattleTestScenario.Ship(naval,0,ShipKind.Transport,port.Berth);
+   Vector3 inland=port.Landing-port.Berth;inland.y=0;inland.Normalize();
+   Vector3 requested=port.Landing+inland*1.5f;
+   Assert.That(NavMesh.SamplePosition(requested,out var land,2,NavMesh.AllAreas),Is.True);
+   Assert.That(MapLayout.IsLand(land.position.x,land.position.z),Is.True,"The fixture must click land beside navigable sea.");
+   var controller=Object.FindFirstObjectByType<RtsController>();controller.SelectShip(ship);
+   long revision=ship.RouteRevision;controller.OrderAt(land.position);
+   Assert.That(ship.LastActionError,Is.Null);
+   Assert.That(ship.RouteRevision,Is.GreaterThan(revision),"A coastal land click must become a valid sea route.");
+   const BindingFlags hidden=BindingFlags.Instance|BindingFlags.NonPublic;
+   var marker=(LineRenderer)typeof(RtsController).GetField("orderMarker",hidden).GetValue(controller);
+   Assert.That(marker,Is.Not.Null);Assert.That(marker.enabled,Is.True,"Ships use the same move confirmation as soldiers.");
+   yield return null;
+  }
   [UnityTest] public IEnumerator GalleyAutoTargetsCoastalSoldierAtMainlandHarbor()
   {
    var port=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);

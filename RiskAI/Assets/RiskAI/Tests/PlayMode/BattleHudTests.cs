@@ -143,6 +143,26 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator SelectedTransportShowsCargoPortraitsAndOneClickUnloadsOne()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var port=battle.Naval.Harbors.First(item=>item.Owner==0);
+            var transport=BattleTestScenario.Ship(battle.Naval,0,ShipKind.Transport,port.Berth);
+            var first=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.Landing);
+            var second=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,port.Landing);
+            Assert.That(transport.TryEmbark(first),Is.True);Assert.That(transport.TryEmbark(second),Is.True);
+            controller.SelectShip(transport);yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Q<VisualElement>("HUD transport cargo"),Is.Not.Null);
+            var unload=root.Q<Button>("Unload cargo "+first.EntityId);Assert.That(unload,Is.Not.Null);
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=unload;unload.SendEvent(evt);}
+            yield return null;
+            Assert.That(transport.CargoCount,Is.EqualTo(1));
+            Assert.That(first.gameObject.activeInHierarchy,Is.True);
+            Assert.That(second.gameObject.activeInHierarchy,Is.False);
+        }
+
+        [UnityTest]
         public IEnumerator GoldHeaderRefreshesAfterGrantWhilePausedBeforeNextSimulationTick()
         {
             var document=hud.GetComponent<UIDocument>();Assert.That(document,Is.Not.Null);
