@@ -40,6 +40,10 @@ def main():
                         help='Diagnostic only: skip WebGL draw calls, retaining the same simulation. Not a playable performance result.')
     parser.add_argument('--overview', action='store_true',
                         help='Measure the normal strategic overview using the existing FrameMap camera action.')
+    parser.add_argument('--browser-metrics', action='store_true',
+                        help='Record Chrome main-thread metrics over the probe window for CPU-versus-presentation diagnosis.')
+    parser.add_argument('--cpu-profile', action='store_true',
+                        help='Save and summarize a Chrome CPU profile over the probe window.')
     args = parser.parse_args()
     if args.probe and args.restart:
         parser.error('Choose one measurement type per browser session.')
@@ -73,12 +77,20 @@ def main():
               'viewport': [args.width, args.height], 'device_scale_factor': args.dpr,
               'draws_suppressed': args.suppress_draws, 'overview': args.overview,
               'path_budget': args.path_budget, 'sustained_navigation': args.sustained,
-              'minimap_hidden': args.hide_minimap}
+              'minimap_hidden': args.hide_minimap, 'browser_metrics_requested': args.browser_metrics,
+              'cpu_profile_requested': args.cpu_profile}
     started = time.monotonic()
     with (args.output / 'console.log').open('w', encoding='utf-8') as log, sync_playwright() as p:
         browser = p.chromium.launch(channel='msedge', headless=not args.headed)
         report['browser'] = browser.version
         page = browser.new_page(viewport={'width': args.width, 'height': args.height}, device_scale_factor=args.dpr)
+        performance = None
+        performance_start = None
+        performance_started_at = None
+        if args.browser_metrics or args.cpu_profile:
+            performance = page.context.new_cdp_session(page)
+        if args.browser_metrics:
+            performance.send('Performance.enable')
         if args.suppress_draws:
             page.add_init_script('''
                 window.riskaiSuppressedDraws = 0;
@@ -151,6 +163,15 @@ def main():
                     heapBytes:window.riskaiInstance.Module.HEAPU8?.buffer.byteLength};
             }''')
             if args.probe or args.restart:
+                if performance:
+                    if args.browser_metrics:
+                        performance_start = {item['name']: item['value']
+                                             for item in performance.send('Performance.getMetrics')['metrics']}
+                    if args.cpu_profile:
+                        performance.send('Profiler.enable')
+                        performance.send('Profiler.setSamplingInterval', {'interval': 1000})
+                        performance.send('Profiler.start')
+                    performance_started_at = time.monotonic()
                 deadline = time.monotonic() + max(240, args.seconds * 3 + args.warmup + 120)
                 last_notice = 0
                 while not results:
@@ -162,6 +183,36 @@ def main():
                         last_notice = time.monotonic()
                 report['probe_results'] = results
                 print(results[-1], flush=True)
+                if performance and performance_start is not None:
+                    performance_end = {item['name']: item['value']
+                                       for item in performance.send('Performance.getMetrics')['metrics']}
+                    names = ('TaskDuration', 'ScriptDuration', 'TaskOtherDuration', 'ThreadTime',
+                             'ProcessTime', 'LayoutDuration', 'RecalcStyleDuration', 'V8CompileDuration',
+                             'JSHeapUsedSize', 'JSHeapTotalSize', 'Nodes', 'LayoutObjects')
+                    report['browser_metrics'] = {
+                        'wall_seconds': round(time.monotonic() - performance_started_at, 3),
+                        'delta': {name: performance_end[name] - performance_start[name]
+                                  for name in names if name in performance_start and name in performance_end}
+                    }
+                if performance and args.cpu_profile:
+                    profile = performance.send('Profiler.stop')['profile']
+                    (args.output / 'cpu-profile.json').write_text(json.dumps(profile), encoding='utf-8')
+                    nodes = {node['id']: node.get('callFrame', {}) for node in profile.get('nodes', [])}
+                    totals = {}
+                    samples = profile.get('samples', [])
+                    deltas = profile.get('timeDeltas', [])
+                    for index, node_id in enumerate(samples):
+                        frame = nodes.get(node_id, {})
+                        name = frame.get('functionName') or '(anonymous)'
+                        url = frame.get('url') or ''
+                        key = name + (' @ ' + url if url else '')
+                        totals[key] = totals.get(key, 0) + (deltas[index] if index < len(deltas) else 0)
+                    report['cpu_profile'] = {
+                        'samples': len(samples),
+                        'sampled_milliseconds': round(sum(deltas) / 1000, 3),
+                        'top': [{'frame': key, 'milliseconds': round(value / 1000, 3)}
+                                for key, value in sorted(totals.items(), key=lambda item: item[1], reverse=True)[:20]]
+                    }
             page.screenshot(path=str(args.output / 'final.png'))
             report['success'] = not errors and not any('success=false' in item.lower() for item in results)
         except Exception as error:
