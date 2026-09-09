@@ -88,23 +88,23 @@ namespace RiskAI.Tests
                             Assert.That(town.Defender, Is.Not.Null, town.State.Id + " has a source-circle defender.");
                             Assert.That(town.Defender.Kind, Is.EqualTo(UnitKind.Archer));
                             Assert.That(town.Defender.IsGarrison, Is.True);
-                            if(town.IsPort)
-                            {
-                                var anchors=ImportedPortLayout.Resolve(town.transform.position,new Vector3(city.claimX,town.transform.position.y,city.claimZ));
-                                Assert.That(Vector3.Distance(town.ClaimZone.Center,anchors.Claim),Is.LessThan(.001f));
-                            }
-                            else
-                            {
-                                Assert.That(town.ClaimZone.Center.x, Is.EqualTo(city.claimX).Within(.001f));
-                                Assert.That(town.ClaimZone.Center.z, Is.EqualTo(city.claimZ).Within(.001f));
-                            }
+                            Assert.That(town.ClaimZone.Center.x, Is.EqualTo(city.claimX).Within(.001f));
+                            Assert.That(town.ClaimZone.Center.z, Is.EqualTo(city.claimZ).Within(.001f));
                             Assert.That(FlatDistance(town.Defender.transform.position, town.ClaimPoint), Is.LessThanOrEqualTo(.2f),
                                 town.State.Id + " guard must remain centered on its claim circle.");
                             Assert.That(Mathf.Abs(town.Defender.transform.position.y - town.ClaimPoint.y), Is.LessThanOrEqualTo(.21f),
                                 town.State.Id + " guard NavMesh height must stay close to its source claim point.");
                             Assert.That(NavMesh.SamplePosition(town.ClaimPoint, out var navHit, .9f, NavMesh.AllAreas), Is.True, town.State.Id);
                             Assert.That(Mathf.Abs(navHit.position.y - town.ClaimPoint.y), Is.LessThanOrEqualTo(.21f), town.State.Id);
-                            if (!town.IsPort)
+                            if(town.IsPort)
+                            {
+                                Assert.That(NavMesh.SamplePosition(town.PortLandEntry,out var landHit,1.2f,NavMesh.AllAreas),Is.True,town.State.Id+" land entry");
+                                var path=new NavMeshPath();
+                                Assert.That(NavMesh.CalculatePath(landHit.position,navHit.position,NavMesh.AllAreas,path),Is.True,town.State.Id+" route");
+                                Assert.That(path.status,Is.EqualTo(NavMeshPathStatus.PathComplete),town.State.Id+" route must join land and source B00R");
+                                Assert.That(Vector3.Distance(town.Port.Berth,town.ClaimPoint),Is.LessThanOrEqualTo(ClaimRules.TakeoverRadius),town.State.Id+" shared naval circle");
+                            }
+                            else
                             {
                                 Assert.That(town.transform.position.x, Is.EqualTo(city.x).Within(.001f));
                                 Assert.That(town.transform.position.z, Is.EqualTo(city.z).Within(.001f));

@@ -39,6 +39,7 @@ namespace RiskAI
         {
             get
             {
+                if(sharesTown&&LinkedTown)return LinkedTown.PortLandEntry;
                 var landward=Landing-Berth;landward.y=0;
                 if(landward.sqrMagnitude<.01f)landward=Vector3.back;
                 else landward.Normalize();
@@ -100,7 +101,7 @@ namespace RiskAI
         void CreateNavalClaimRing()
         {
             navalClaimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,CityClaimZone.RingWidth,CityClaimZone.RingColor);
-            navalClaimRing.transform.position=Berth;navalClaimRing.enabled=false;
+            navalClaimRing.transform.position=Landing;navalClaimRing.enabled=false;
         }
         internal bool InitializeGarrison()
         {
@@ -170,7 +171,7 @@ namespace RiskAI
             if(navalClaimRing)
             {
                 navalClaimRing.enabled=navalGuard;
-                navalClaimRing.transform.position=Berth;
+                navalClaimRing.transform.position=Landing;
                 navalClaimRing.widthMultiplier=Selected ? .11f : .065f;
                 navalClaimRing.startColor=navalClaimRing.endColor=CityClaimZone.VisibleRingColor(State.Contested);
             }
@@ -188,7 +189,7 @@ namespace RiskAI
             foreach(var ship in world.Ships)
             {
                 if(!ship||ship==excluded||!ship.IsAlive||ship.Kind!=ShipKind.Galley||
-                    ship.Garrison&&ship.Garrison!=this)continue;
+                    !ship.Profile.CanCapture||ship.Garrison&&ship.Garrison!=this)continue;
                 if(alliesOnly&&ship.Team!=owner)continue;
                 float distance=FlatDistance(ship.transform.position,Berth);
                 float radius=alliesOnly?ClaimRules.ReliefRadius:ship.Team==owner?ClaimRules.ProtectionRadius:ClaimRules.TakeoverRadius;

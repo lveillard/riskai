@@ -154,6 +154,17 @@ namespace RiskAI
             return new HarborVisual(root,entrance,roof,flag);
         }
 
+        public static HarborVisual CreateHarborBuildingCentered(Transform parent,int owner,Vector3 houseCenter,Vector3 waterward,bool solid)
+        {
+            waterward.y=0;if(waterward.sqrMagnitude<.01f)waterward=Vector3.forward;else waterward.Normalize();
+            Quaternion rotation=Quaternion.LookRotation(waterward);
+            // The shared model leaves its central pier lane open by keeping the
+            // house at local (-2.15, 0, -.3). Translate that root so the actual
+            // house footprint, rather than its pivot, is centered on firm land.
+            Vector3 root=houseCenter-rotation*new Vector3(-2.15f,0,-.3f);
+            return CreateHarborBuilding(parent,owner,root,waterward,solid);
+        }
+
         public static BuildingEntranceAnchor CreateHarbor(Harbor harbor)
         {
             var root=new GameObject("Harbor architecture").transform;root.SetParent(harbor.transform,false);root.position=harbor.Landing;

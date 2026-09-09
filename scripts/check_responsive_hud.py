@@ -58,6 +58,7 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
         send('Review','RiskAI responsive UI capture','empty');page.wait_for_timeout(1800)
         click_named('HUD cities button','empty');shot('cities-real-click')
         review('ranking');review('strategic')
+        if a.map=='europe':review('denmark')
         for stage in ['north','south','coast']:review(stage)
         from PIL import Image,ImageChops,ImageStat
         report['clickComparisons']={}

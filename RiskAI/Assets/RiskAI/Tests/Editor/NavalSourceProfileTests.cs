@@ -32,7 +32,7 @@ namespace RiskAI.Tests
         }
 
         // Explicit W3U values, not inherited Warcraft defaults.
-        [TestCase(NavalUnitKind.Galley, "h00W", true, 400f, 5, 5)]
+        [TestCase(NavalUnitKind.Galley, "h00W", false, 400f, 5, 5)]
         [TestCase(NavalUnitKind.Transport, "n008", false, 300f, 2, 2)]
         public void PublicKindsResolveToTheirSourceIdentityAndExplicitEconomy(
             NavalUnitKind kind, string rawId, bool canCapture, float health, int gold, int points)

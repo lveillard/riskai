@@ -155,7 +155,7 @@ namespace RiskAI
         {
             return new[] {
                 new AuthoredCity("dawn","Bastión del Alba",-38,-12,0,0,0,true),new AuthoredCity("pine","Pinar Alto",-47,12,0,0,0),new AuthoredCity("cordillera-norte","Cordillera del Alba",-60,-8,-1,0,0),
-                new AuthoredCity("mill","Molino Viejo",-21,5,-1,1,1),new AuthoredCity("meadow","Valdeluz",-23,30,-1,1,1),new AuthoredCity("encinar-centro","Encinar Central",-37,-47,-1,1,1),
+                new AuthoredCity("mill","Molino Viejo",-21,5,-1,1,1),new AuthoredCity("meadow","Valdeluz",-23,30,-1,1,1),new AuthoredCity("encinar-centro","Encinar Central",-37,-47,-1,2,2),
                 new AuthoredCity("crest-west","Cresta de Poniente",-60,-30,-1,2,2),new AuthoredCity("dehesa-norte","Dehesa Norte",-54,-47,-1,2,2),
                 new AuthoredCity("gate","Puerta de Piedra",-2,24,-1,3,3),new AuthoredCity("ford","Valle del Fresno",8,3,-1,3,3),new AuthoredCity("stone","Piedra Vieja",1,-18,-1,3,3),new AuthoredCity("west","Marca del Sur",-24,-34,-1,3,3),
                 new AuthoredCity("ash","Torre del Roble",28,30,-1,4,4),new AuthoredCity("watch","Vigía del Este",43,9,-1,4,4),new AuthoredCity("senda-orient","Senda Oriental",65,15,-1,4,4),new AuthoredCity("torre-norte","Torre del Norte",15,45,-1,4,4),
@@ -183,7 +183,7 @@ namespace RiskAI
                 new AuthoredCity("west-01","Bastión Occidental",-55,-59,0,0,0,true),new AuthoredCity("west-05","Marca del Sur",-67,-82,-1,0,0),new AuthoredCity("west-06","Bosque Bajo",-43,-83,-1,0,0),new AuthoredCity("west-07","Paso de Poniente",-66,-44,-1,0,0),
                 new AuthoredCity("west-02","Pinar Occidental",-50,-27,0,1,1),new AuthoredCity("west-08","Loma del Roble",-39,-48,-1,1,1),new AuthoredCity("west-09","Marjal Occidental",-65,-10,-1,1,1),new AuthoredCity("west-10","Cresta del Bosque",-42,-5,-1,1,1),
                 new AuthoredCity("river-01","Puerta del Río",-28,-59,0,2,2),new AuthoredCity("river-05","Vega del Sur",-20,-86,-1,2,2),new AuthoredCity("river-02","Molino del Río",-23,-22,0,2,2),new AuthoredCity("river-06","Vado Bajo",-14,-5,-1,2,2),new AuthoredCity("river-03","Ribera del Río",-27,12,1,2,2),
-                new AuthoredCity("west-03","Linde Occidental",-53,8,1,3,3),new AuthoredCity("west-11","Peña del Mar",-64,24,-1,3,3),new AuthoredCity("west-04","Cresta Occidental",-44,44,1,3,3),new AuthoredCity("west-13","Puerto Alto",-63,55,-1,3,3),
+                new AuthoredCity("west-03","Linde Occidental",-53,8,1,3,3),new AuthoredCity("west-11","Peña del Mar",-64,24,-1,3,3),new AuthoredCity("west-04","Cresta Occidental",-44,44,1,4,4),new AuthoredCity("west-13","Puerto Alto",-63,55,-1,3,3),
                 new AuthoredCity("west-12","Colina del Vado",-40,25,-1,4,4),new AuthoredCity("west-14","Senda del Norte",-31,58,-1,4,4),
                 new AuthoredCity("river-04","Ribera Alta",-19,43,1,5,5),new AuthoredCity("river-07","Paso de los Sauces",-12,22,-1,5,5),new AuthoredCity("river-08","Estuario Verde",-7,59,-1,5,5),
                 new AuthoredCity("high-01","Bastión Central",17,-58,0,6,6),new AuthoredCity("high-05","Altos del Sur",42,-85,-1,6,6),new AuthoredCity("high-02","Loma Central",22,-28,0,6,6),new AuthoredCity("high-06","Cerro de Piedra",35,-43,-1,6,6),

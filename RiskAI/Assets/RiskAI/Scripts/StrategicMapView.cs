@@ -71,12 +71,13 @@ namespace RiskAI
         public void SelectCountry(int country)
         {
             SelectedCountry=country;inspection.SetFloat("_SelectedCountry",country>=0?country+1:-1);strategic.SetFloat("_SelectedCountry",country>=0?country+1:-1);
-            inspectionRoot.SetActive(country>=0);
+            inspectionRoot.SetActive(country>=0&&IsStrategic);
         }
         public void SetStrategic(bool enabled)
         {
             if(IsStrategic==enabled)return;
             IsStrategic=enabled;cam.cullingMask=enabled?1<<StrategicLayer:tacticalMask;
+            if(inspectionRoot)inspectionRoot.SetActive(enabled&&SelectedCountry>=0);
             cam.backgroundColor=enabled?new Color(.055f,.15f,.20f):tacticalBackground;
         }
         void LateUpdate() => RefreshPresentation();

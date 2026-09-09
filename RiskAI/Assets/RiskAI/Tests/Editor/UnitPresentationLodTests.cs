@@ -9,12 +9,12 @@ namespace RiskAI.Tests
         [Test]
         public void ZoomPolicyUsesDifferentCompactThresholdsAndHysteresis()
         {
-            Assert.That(UnitPresentationLodPolicy.UseProxy(39, true, false), Is.False);
-            Assert.That(UnitPresentationLodPolicy.UseProxy(40, true, false), Is.True);
-            Assert.That(UnitPresentationLodPolicy.UseProxy(38, true, true), Is.True);
-            Assert.That(UnitPresentationLodPolicy.UseProxy(35, true, true), Is.False);
-            Assert.That(UnitPresentationLodPolicy.UseProxy(51, false, false), Is.False);
-            Assert.That(UnitPresentationLodPolicy.UseProxy(52, false, false), Is.True);
+            Assert.That(UnitPresentationLodPolicy.UseProxy(87, true, false), Is.False);
+            Assert.That(UnitPresentationLodPolicy.UseProxy(88, true, false), Is.True);
+            Assert.That(UnitPresentationLodPolicy.UseProxy(82, true, true), Is.True);
+            Assert.That(UnitPresentationLodPolicy.UseProxy(78, true, true), Is.False);
+            Assert.That(UnitPresentationLodPolicy.UseProxy(95, false, false), Is.False);
+            Assert.That(UnitPresentationLodPolicy.UseProxy(96, false, false), Is.True);
         }
 
         [Test]

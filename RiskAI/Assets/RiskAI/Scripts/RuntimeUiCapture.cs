@@ -135,6 +135,12 @@ namespace RiskAI
                 commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Transport));
                 controller.SelectHarbor(harbor);controller.Focus(harbor.IsImportedPort?harbor.LinkedTown.transform.position:harbor.Landing);
             }
+            else if(stage=="denmark")
+            {
+                var town=session.Towns.FirstOrDefault(t=>t.State.Id=="europe-121");
+                if(!town){Debug.LogError("RISKAI_UI_REVIEW: Denmark source port is unavailable");yield break;}
+                controller.SelectTown(town);controller.CameraRig.FocusAndZoom(town.ClaimPoint,22f);
+            }
             else if(stage=="income")hud.ShowIncome();
             else if(stage=="ranking")hud.ShowPlayers();
             else if(stage=="strategic"){controller.Clear();controller.CameraRig.FrameMap();}

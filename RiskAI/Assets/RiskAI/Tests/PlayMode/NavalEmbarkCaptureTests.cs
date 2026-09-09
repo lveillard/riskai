@@ -26,7 +26,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator TransportBoardsByRadiusAndFrigateHoldsAnUnguardedHarbor()
+        public IEnumerator TransportBoardsByRadiusAndFrigateCannotTakeAnUnguardedHarbor()
         {
             var home = naval.Harbors.First(harbor => harbor.Owner == 0);
             var transport = BattleTestScenario.Ship(naval, 0, ShipKind.Transport, home.Berth);
@@ -56,12 +56,9 @@ namespace RiskAI.Tests
             if(guard)guard.TakeDamage(guard.MaxHealth+1,guard.Team==0?1:0);
             var frigate = BattleTestScenario.Ship(naval, 0, ShipKind.Galley, target.Berth);
             target.SimTick(.1f);
-            Assert.That(target.Owner, Is.EqualTo(0));
-            target.SimTick(.1f); target.SimTick(.1f);
-            Assert.That(target.Owner, Is.EqualTo(0), "The same docked frigate holds its captured harbor across ticks.");
-            frigate.transform.position += Vector3.forward * (Harbor.BerthRadius + 2);
-            target.SimTick(.1f);
-            Assert.That(target.Owner, Is.EqualTo(-1), "An undefended harbor becomes neutral after its naval defender leaves.");
+            Assert.That(target.Owner, Is.EqualTo(-1), "An undefended harbor becomes neutral instead of being captured by a warship.");
+            Assert.That(target.NavalDefender,Is.Null);
+            Assert.That(frigate.IsGarrison,Is.False);
             yield return null;
         }
 
@@ -91,22 +88,23 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator LivingNavalGuardianKeepsOwnerButMarksNearbyEnemyContested()
+        public IEnumerator DockedWarshipCannotBlockALandedEnemyCapture()
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
             var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
             var guard=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
             port.SimTick(.1f);
-            Assert.That(port.NavalDefender,Is.SameAs(guard));
+            Assert.That(port.NavalDefender,Is.Null);
+            Assert.That(port.Owner,Is.EqualTo(PlayerRules.NeutralOwner));
 
             var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,port.ClaimZone.Center);
             port.SimTick(.1f);
 
             Assert.That(enemy.IsAlive,Is.True);
-            Assert.That(port.ClaimZone.Contested,Is.True,"An enemy inside the harbor capture area must remain visible as pressure behind a living naval guardian.");
-            Assert.That(port.Owner,Is.EqualTo(0));
-            Assert.That(port.NavalDefender,Is.SameAs(guard));
-            Assert.That(guard.IsGarrison,Is.True);
+            Assert.That(port.Owner,Is.EqualTo(1));
+            Assert.That(port.Defender,Is.SameAs(enemy));
+            Assert.That(port.NavalDefender,Is.Null);
+            Assert.That(guard.IsGarrison,Is.False);
             yield return null;
         }
 
@@ -161,129 +159,42 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator GalleyReliefCanSailInsideSharedReliefRadiusBeforeGuardLeaves()
+        public IEnumerator MultipleWarshipsAtABerthNeverBecomeReliefGuards()
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
             var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
-            var incumbent=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            var first=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            var second=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth+Vector3.right);
             port.SimTick(.1f);
-            Assert.That(port.NavalDefender,Is.SameAs(incumbent),"The incumbent must be a live naval guardian.");
-
-            Vector3 reliefStart=default;
-            bool foundApproach=false;
-            var directions=new[]{Vector3.forward,Vector3.right,Vector3.back,Vector3.left,
-                (Vector3.forward+Vector3.right).normalized,(Vector3.back+Vector3.right).normalized,
-                (Vector3.back+Vector3.left).normalized,(Vector3.forward+Vector3.left).normalized};
-            for(float distance=6f;distance<=12f&&!foundApproach;distance+=2f)for(int i=0;i<directions.Length&&!foundApproach;i++)
-            {
-                if(!SeaNavigation.TryNearestOcean(port.Berth+directions[i]*distance,2f,out var candidate))continue;
-                if(Vector2.Distance(new Vector2(candidate.x,candidate.z),new Vector2(port.Berth.x,port.Berth.z))<5f)continue;
-                if(!SeaNavigation.TryBuildPath(candidate,port.Berth,out _))continue;
-                if(!SeaNavigation.TryBuildPath(port.Berth,candidate,out _))continue;
-                reliefStart=candidate;foundApproach=true;
-            }
-            Assert.That(foundApproach,Is.True,"The fixture requires clear ocean at least 5 m from the guarded berth.");
-            var relief=BattleTestScenario.Ship(naval,0,ShipKind.Galley,reliefStart);
-            Assert.That(Vector2.Distance(new Vector2(relief.transform.position.x,relief.transform.position.z),new Vector2(port.Berth.x,port.Berth.z)),Is.GreaterThanOrEqualTo(5f));
-
-            relief.MoveTo(port.Berth);
-            Assert.That(relief.LastActionError,Is.Null,"The relief begins with a normal ship route, not a berth warp.");
-            float deadline=Time.realtimeSinceStartup+5f;
-            while(Vector2.Distance(new Vector2(relief.transform.position.x,relief.transform.position.z),new Vector2(port.Berth.x,port.Berth.z))>ClaimRules.ReliefRadius&&Time.realtimeSinceStartup<deadline)
-                yield return null;
-            Assert.That(Vector2.Distance(new Vector2(relief.transform.position.x,relief.transform.position.z),new Vector2(port.Berth.x,port.Berth.z)),Is.LessThanOrEqualTo(ClaimRules.ReliefRadius),"Ship advance and separation must allow a real relief vessel into the shared 2 m radius.");
-
-            incumbent.MoveTo(reliefStart);
-            Assert.That(incumbent.LastActionError,Is.Null,"A routed allied galley inside the relief radius releases the incumbent.");
-            Assert.That(port.NavalDefender,Is.SameAs(relief));
-            Assert.That(incumbent.IsGarrison,Is.False);
-            Assert.That(relief.IsGarrison,Is.True);
-        }
-
-        [UnityTest]
-        public IEnumerator OccludedNavalGuardNeverPlansOrMovesOffItsBerth()
-        {
-            var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
-            var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
-            var guard=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
-            port.SimTick(.1f);
-            Assert.That(guard.IsGarrison,Is.True);
-            Vector3 enemyPoint=port.Berth;
-            bool found=false;
-            for(int i=0;i<16;i++)
-            {
-                float angle=i*Mathf.PI/8;
-                var candidate=port.Berth+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*4f;
-                if(!SeaNavigation.HasClearance(candidate)||!SeaNavigation.ClearSegment(port.Berth,candidate))continue;
-                enemyPoint=candidate;found=true;break;
-            }
-            Assert.That(found,Is.True,"Fixture needs a nearby clear firing lane.");
-            var enemy=BattleTestScenario.Ship(naval,1,ShipKind.Galley,enemyPoint);
-            guard.Attack(enemy);
-            var blocker=new GameObject("Opaque firing lane blocker");
-            blocker.layer=MapLayout.TerrainLayer;
-            blocker.transform.position=(guard.AimPoint+enemy.AimPoint)*.5f;
-            blocker.AddComponent<BoxCollider>().size=Vector3.one*1.5f;
-            Physics.SyncTransforms();
-            long revision=guard.RouteRevision;
-            Vector3 berth=guard.transform.position;
-            for(int tick=0;tick<10;tick++)guard.SimTick(.1f);
-            Assert.That(guard.RouteRevision,Is.EqualTo(revision),"A blocked shot must not schedule autonomous pursuit for a guardian.");
-            Assert.That(guard.transform.position,Is.EqualTo(berth));
-            Object.Destroy(blocker);yield return null;
-            guard.SimTick(.1f);
-            Assert.That(guard.CurrentTarget,Is.SameAs(enemy));
-            Assert.That(guard.transform.position,Is.EqualTo(berth),"Turning and firing retain the naval anchor.");
-        }
-
-        [UnityTest]
-        public IEnumerator NavalGuardNeedsReliefAndAnchorsAtTheWaterBerth()
-        {
-            var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
-            var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
-            var guard=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
-            port.SimTick(.1f);
-            Assert.That(port.NavalDefender,Is.SameAs(guard));
-            Assert.That(Vector3.Distance(guard.transform.position,port.Berth),Is.LessThan(.001f),"A naval defender uses the water berth, never the land claim center.");
+            Assert.That(port.Owner,Is.EqualTo(PlayerRules.NeutralOwner));
+            Assert.That(port.NavalDefender,Is.Null);
+            Assert.That(first.IsGarrison||second.IsGarrison,Is.False);
             yield return null;
-            Assert.That(port.NavalClaimRing,Is.Not.Null);
-            Assert.That(port.NavalClaimRing.enabled,Is.True);
-            Assert.That(Vector3.Distance(port.NavalClaimRing.transform.position,port.Berth),Is.LessThan(.001f),"The visible naval claim circle must share the berth anchor.");
-            var berthBefore=port.NavalClaimRing.transform.position;
-            guard.Select(true);yield return null;
-            var unitRing=guard.GetComponentInChildren<LineRenderer>();
-            Vector3 selectedCenter=Vector3.zero;
-            for(int i=0;i<unitRing.positionCount;i++)selectedCenter+=unitRing.transform.TransformPoint(unitRing.GetPosition(i));
-            selectedCenter/=unitRing.positionCount;
-            Assert.That(Vector2.Distance(new Vector2(selectedCenter.x,selectedCenter.z),new Vector2(berthBefore.x,berthBefore.z)),Is.LessThan(.001f));
-            Assert.That(port.NavalClaimRing.transform.position,Is.EqualTo(berthBefore),"Selecting a ship cannot move its harbor claim circle.");
-            Assert.That(unitRing.GetPosition(0).x * unitRing.transform.lossyScale.x,Is.GreaterThan(ClaimRules.CircleRadius + 2f),"The selected ship outline clears the hull and stays outside the berth claim circle.");
+        }
 
+        [UnityTest]
+        public IEnumerator WarshipAtBerthRemainsAControllableCombatUnit()
+        {
+            var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
+            var ship=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            port.SimTick(.1f);
+            Assert.That(ship.IsGarrison,Is.False);
             var destination=naval.Harbors.First(h=>h!=port&&h.CanLaunch).Berth;
-            guard.MoveTo(destination);
-            Assert.That(guard.LastActionError,Is.Not.Null);
-            Assert.That(port.NavalDefender,Is.SameAs(guard),"A lone guard ship cannot abandon its harbor.");
-
-            var shipRelief=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
-            guard.MoveTo(destination);
-            Assert.That(guard.LastActionError,Is.Null);
-            Assert.That(port.NavalDefender,Is.SameAs(shipRelief));
-            Assert.That(port.Owner,Is.EqualTo(0),"A same-team berth relief preserves port ownership.");
-
-            // The previous guard has a valid move order but is still at the berth
-            // in the submission frame. Let it leave before testing a land relief;
-            // land/sea candidates intentionally share distance and stable-ID ties.
-            float departDeadline=Time.realtimeSinceStartup+4;
-            while(Vector2.Distance(new Vector2(guard.transform.position.x,guard.transform.position.z),
-                new Vector2(port.Berth.x,port.Berth.z))<=ClaimRules.ReliefRadius&&Time.realtimeSinceStartup<departDeadline)yield return null;
-            Assert.That(Vector2.Distance(new Vector2(guard.transform.position.x,guard.transform.position.z),
-                new Vector2(port.Berth.x,port.Berth.z)),Is.GreaterThan(ClaimRules.ReliefRadius));
-            var landRelief=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.ClaimZone.Center);
-            shipRelief.MoveTo(destination);
-            Assert.That(port.Defender,Is.SameAs(landRelief),"An available land relief can replace the naval guard through the shared slot.");
+            ship.MoveTo(destination);
+            Assert.That(ship.LastActionError,Is.Null);
             Assert.That(port.NavalDefender,Is.Null);
             yield return null;
-            Assert.That(port.NavalClaimRing.enabled,Is.False,"The water circle hides as soon as land defense resumes.");
+        }
+
+        [UnityTest]
+        public IEnumerator PortKeepsOneLandCircleWhenAWarshipIsSelected()
+        {
+            var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
+            var ship=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            ship.Select(true);yield return null;
+            Assert.That(port.NavalDefender,Is.Null);
+            Assert.That(port.NavalClaimRing.enabled,Is.False);
+            Assert.That(Vector3.Distance(port.ClaimZone.Center,port.Landing),Is.LessThan(.001f));
         }
 
         [UnityTest]

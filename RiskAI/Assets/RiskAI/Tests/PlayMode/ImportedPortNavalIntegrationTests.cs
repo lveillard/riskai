@@ -11,7 +11,7 @@ namespace RiskAI.Tests
     public sealed class ImportedPortNavalIntegrationTests
     {
         [UnityTest]
-        public IEnumerator EuropeLinkedPortRecruitsMarinesAndUsesDockedFrigateAsGuardian()
+        public IEnumerator EuropeLinkedPortRecruitsMarinesAndRequiresLandedTroopsForConquest()
         {
             var previousMap=BattleSession.MapForNewMatch;var previousLayout=BattleSession.LayoutForNewMatch;
             var previousPlayers=BattleSession.PlayerCountForNewMatch;var previousSeed=BattleSession.SeedForNewMatch;
@@ -28,8 +28,10 @@ namespace RiskAI.Tests
                 var home=battle.Towns.First(town=>town.IsPort&&town.State.Owner==0);var homePort=home.Port;
                 Assert.That(home.GetComponentsInChildren<Transform>().Count(t=>t.name=="Common harbor building"),Is.EqualTo(1),"Imported ports use the same harbor catalog as authored ports, without a duplicate town hall.");
                 Assert.That(home.GetComponentsInChildren<Transform>().Any(t=>t.name=="Masonry hall"),Is.False);
-                Assert.That(homePort.GetComponentsInChildren<Transform>().Count(t=>t.name=="Harbor berth pier"),Is.EqualTo(1),
-                    "Every imported claim quay must remain visibly connected to its runtime-derived safe berth.");
+                Assert.That(homePort.GetComponentsInChildren<Transform>().Any(t=>t.name=="Harbor berth pier"),Is.False,
+                    "An imported port uses the source Circle of Power instead of drawing a second offshore pier.");
+                Assert.That(Vector3.Distance(homePort.Berth,home.ClaimPoint),Is.LessThanOrEqualTo(ClaimRules.TakeoverRadius),
+                    "The hull-safe berth must remain inside the shared source-circle capture radius.");
                 battle.Economy.Gold[0]=BattleRules.Cost(UnitKind.MarinePrivate);
                 Assert.That(homePort.RecruitLand(UnitKind.MarinePrivate,0),Is.Null);
                 Assert.That(home.QueueCount,Is.EqualTo(1));
@@ -41,13 +43,12 @@ namespace RiskAI.Tests
                 Assert.That(target.Defender.IsAlive,Is.False,"The dead source guard remains referenced until claim resolution.");
                 var frigate=BattleTestScenario.Ship(battle.Naval,0,ShipKind.Galley,target.Port.Berth);
                 target.SimTick(.1f);
-                Assert.That(target.State.Owner,Is.EqualTo(0));
-                Assert.That(target.Defense.Guardian,Is.SameAs(frigate));
-                target.SimTick(.1f);target.SimTick(.1f);
-                Assert.That(target.State.Owner,Is.EqualTo(0),"The docked guardian holds the linked town over later ticks.");
-                frigate.transform.position+=Vector3.forward*(Harbor.BerthRadius+2);
+                Assert.That(target.State.Owner,Is.EqualTo(PlayerRules.NeutralOwner),"A warship cannot conquer the land capture circle.");
+                Assert.That(target.Defense.Guardian,Is.Null);
+                var marine=BattleTestScenario.Mobile(battle,0,UnitKind.MarinePrivate,target.ClaimPoint);
                 target.SimTick(.1f);
-                Assert.That(target.State.Owner,Is.EqualTo(PlayerRules.NeutralOwner));
+                Assert.That(target.State.Owner,Is.EqualTo(0),"Conquest requires a landed soldier on the platform.");
+                Assert.That(target.Defense.Guardian,Is.SameAs(marine));
             }
             finally
             {

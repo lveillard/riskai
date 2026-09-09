@@ -22,6 +22,7 @@ namespace RiskAI
         public Vector3 ClaimPoint { get; private set; }
         public Vector3 PortBuildingPoint { get; private set; }
         public Vector3 PortSeaward { get; private set; }
+        public Vector3 PortLandEntry { get; private set; }
         // Town architecture faces south; this is beyond its entrance steps and
         // outside the solid hall, independent of the owning team.
         public Vector3 DefaultLandEntry => transform.position + Vector3.back * 4f;
@@ -66,18 +67,20 @@ namespace RiskAI
             Rally = DefaultLandEntry;
             Vector3 claimProbe = transform.position + new Vector3(0, 0, -4.2f);
             ClaimPoint = sourceClaim ?? MapLayout.Point(claimProbe.x, claimProbe.z);
-            PortBuildingPoint=transform.position;PortSeaward=Vector3.forward;
+            PortBuildingPoint=transform.position;PortSeaward=Vector3.forward;PortLandEntry=DefaultLandEntry;
             if(IsPort&&MapLayout.IsImported)
             {
                 var anchors=ImportedPortLayout.Resolve(transform.position,ClaimPoint);
-                ClaimPoint=anchors.Claim;PortBuildingPoint=anchors.Building;PortSeaward=anchors.Seaward;
+                // ClaimPoint stays at the exact source B00R coordinate. Only the
+                // presentation and land access adapt to the coastline.
+                PortBuildingPoint=anchors.Building;PortLandEntry=anchors.Shore;PortSeaward=anchors.Seaward;
             }
             ClaimZone = new CityClaimZone(ClaimPoint);
             session.Towns.Add(this); session.Economy.Towns.Add(State);
             BuildingEntranceAnchor entrance;
             if(IsPort)
             {
-                var visual=NavalArt.CreateHarborBuilding(transform,owner,PortBuildingPoint,PortSeaward,true);
+                var visual=NavalArt.CreateHarborBuildingCentered(transform,owner,PortBuildingPoint,PortSeaward,true);
                 flag=visual.Flag;entrance=visual.Entrance;
             }
             else
@@ -91,6 +94,7 @@ namespace RiskAI
             towerObject.transform.SetParent(transform, false);
             towerObject.transform.localPosition = new Vector3(transform.position.x < 0 ? 3.8f : -3.8f, 0, 0);
             if(sourceClaim.HasValue) towerObject.transform.position=ImportedTowerPoint();
+            if(IsPort&&MapLayout.IsImported)towerObject.transform.rotation=Quaternion.LookRotation(PortSeaward);
             Defense = towerObject.AddComponent<DefenseTower>(); Defense.Initialize(session, this, true);
             SelectionRing=BuildingSelection.CreateRing(this);
             var rallyObject = new GameObject("Punto de reunión"); rallyObject.transform.SetParent(transform, false);
@@ -101,7 +105,7 @@ namespace RiskAI
 
         Vector3 ImportedTowerPoint()
         {
-            if(IsPort)return ImportedPortLayout.TowerPoint(transform.position,ClaimPoint,PortSeaward);
+            if(IsPort)return ImportedPortLayout.Resolve(transform.position,ClaimPoint).Tower;
             Vector3 away=transform.position-ClaimPoint;away.y=0;away.Normalize();
             Vector3 fallback=transform.position+away*3.8f;
             // Rotate our added tower, keeping both source city and circle XY intact.

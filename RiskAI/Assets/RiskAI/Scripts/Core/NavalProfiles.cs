@@ -70,8 +70,9 @@ namespace RiskAI.Core
         // while its source-aligned profile is the documented h00W Warship B.
         public static readonly ShipProfile Galley = new ShipProfile(
             "Fragata", 400f, 30f, 20f, 1.5f, 6.8f, 6f,
-            // W3U h00W ubld@0x2024; circle entry excludes n007/n008 only.
-            AttackKind.Normal, 5, 1f, 0, 5,1,15,"h00W",true);
+            // Naval combat remains source-aligned. RiskAI requires landed troops
+            // for conquest, so warships no longer occupy a city guard slot.
+            AttackKind.Normal, 5, 1f, 0, 5,1,15,"h00W",false);
 
         public static ShipProfile Frigate => Galley;
 

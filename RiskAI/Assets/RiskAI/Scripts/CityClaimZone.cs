@@ -121,7 +121,7 @@ namespace RiskAI
         }
         internal void SetNavalDefender(Ship ship,Harbor harbor)
         {
-            if(ship&&(!ship.IsAlive||ship.Kind!=ShipKind.Galley||ship.Garrison&&ship.Garrison!=harbor))return;
+            if(ship&&(!ship.IsAlive||!ship.Profile.CanCapture||ship.Garrison&&ship.Garrison!=harbor))return;
             var previousShip=NavalDefender;
             if(previousShip==ship)return;
             // Land and sea are movement adapters for one logical garrison slot.

@@ -43,6 +43,7 @@ namespace RiskAI
                     AttackPresentationTiming.ContactNormalizedTime(Kind));
             }
         }
+        public long LastAttackContactTick => attackPresentationContactTick;
         public bool IsHolding => !IsGarrison && isActiveAndEnabled && mode==OrderMode.Hold && !target && Agent && Agent.enabled;
         public string OrderLabel => IsGarrison ? "Guarnición · mantiene el edificio" : target ? "En combate" : mode == OrderMode.Move ? "Moviendo" : mode == OrderMode.AttackMove ? "Avanzando y atacando" : mode == OrderMode.Hold ? "Manteniendo posición" : mode == OrderMode.Patrol ? "Patrullando" : mode == OrderMode.Follow ? "Siguiendo" : "Preparado";
         public Transform LeftLeg, RightLeg, Weapon;
@@ -315,7 +316,11 @@ namespace RiskAI
                 if (pathPendingSince < 0) pathPendingSince = session.BattleTime;
             }
             else pathPendingSince = -1;
-            if (strikeAt >= 0 && session.BattleTime >= strikeAt)
+            // Warcraft's Ahea heal is an autocast order. A medic can resume combat
+            // afterwards, but cannot resolve a heal and an attack in the same tick.
+            bool healed=medic&&medic.SimTick(delta);
+            if(healed){CancelStrike();nextAttack=Mathf.Max(nextAttack,session.BattleTime+MedicSupport.CastInterval);}
+            if (!healed && strikeAt >= 0 && session.BattleTime >= strikeAt)
             {
                 attackPresentationContactTick=session.Clock.TickCount;
                 if(visualAnimator)visualAnimator.SampleStrikeContact();
@@ -338,7 +343,7 @@ namespace RiskAI
                 }
             }
             if (!target && session.BattleTime >= nextSense) { nextSense = session.BattleTime + .2f; Acquire(); }
-            if (target) Fight(); else Travel();
+            if (target) { if(!healed)Fight(); } else Travel();
             wasFighting = target != null;
             if(IsGarrison)Agent.isStopped=true;
             if (humanMoveSubmittedAt >= 0)
@@ -369,7 +374,6 @@ namespace RiskAI
                     ClearHumanMoveTelemetry(false);
                 }
             }
-            if(medic)medic.SimTick(delta);
         }
         void UpdateTerrainSpeed()
         {

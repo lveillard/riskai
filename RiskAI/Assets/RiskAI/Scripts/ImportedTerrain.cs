@@ -133,22 +133,22 @@ namespace RiskAI
             {
                 if(!c.port)continue;
                 Vector3 city=new Vector3(c.x,.55f,c.z),claim=new Vector3(c.claimX,.55f,c.claimZ);
-                Platform(root,city,city+Vector3.forward*.01f,7.2f,"Shipyard quay");
-                Platform(root,city,claim,3.15f,"Guard pier");
-                Vector3 shore=default;float nearest=float.MaxValue;
-                for(float dz=-26;dz<=26;dz+=data.cellSize)for(float dx=-26;dx<=26;dx+=data.cellSize)
+                var layout=ImportedPortLayout.Resolve(city,claim);
+                string label=layout.Shape==ImportedPortLayout.PierShape.CliffRamp?"Cliff harbor ramp":"Harbor causeway";
+                // Direct posts need one clean quay. Elbow posts retain the exact
+                // h00O coordinate as their bend, matching the source placement.
+                if(layout.Shape==ImportedPortLayout.PierShape.Direct)
+                    Platform(root,layout.Shore,layout.Claim,ImportedPortLayout.WalkwayWidth,label);
+                else
                 {
-                    float x=c.x+dx,z=c.z+dz;if(!data.IsLand(x,z))continue;
-                    float distance=dx*dx+dz*dz;
-                    if(distance<nearest){nearest=distance;shore=MapLayout.Point(x,z)+Vector3.up*.08f;}
+                    Platform(root,layout.Shore,layout.City,ImportedPortLayout.WalkwayWidth,label);
+                    Platform(root,layout.City,layout.Claim,ImportedPortLayout.WalkwayWidth,"Circle platform");
                 }
-                if(nearest<float.MaxValue)Platform(root,city,shore,2.35f,"Shore gangway");
-                else Debug.LogError("RISKAI_PORT_SHORE_MISSING: "+c.id);
             }
         }
         static void Platform(Transform root,Vector3 from,Vector3 to,float width,string label)
         {
-            NavalArt.CreatePierDeck(root,from,to,width,label,true,label!="Shore gangway",label=="Shipyard quay"?.04f:label=="Guard pier"?.02f:0);
+            NavalArt.CreatePierDeck(root,from,to,width,label,true,true,label=="Circle platform"?.02f:0);
         }
     }
     public sealed class ImportedTerrainResources:MonoBehaviour

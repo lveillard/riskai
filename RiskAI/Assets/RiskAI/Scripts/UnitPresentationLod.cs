@@ -8,10 +8,10 @@ namespace RiskAI
     /// <summary>Zoom thresholds for the shared strategic unit proxy.</summary>
     public static class UnitPresentationLodPolicy
     {
-        public const float DesktopEnterZoom = 52f;
-        public const float DesktopExitZoom = 45f;
-        public const float CompactEnterZoom = 40f;
-        public const float CompactExitZoom = 35f;
+        public const float DesktopEnterZoom = 96f;
+        public const float DesktopExitZoom = 86f;
+        public const float CompactEnterZoom = 88f;
+        public const float CompactExitZoom = 78f;
 
         public static bool UseProxy(float zoom, bool compact, bool currentlyUsingProxy)
         {

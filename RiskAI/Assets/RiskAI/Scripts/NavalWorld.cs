@@ -78,20 +78,15 @@ namespace RiskAI
         void AddImportedHarbor(Settlement town)
         {
             var outward=town.PortSeaward;
-            // The source city is the coastal anchor and the source claim may point
-            // inland or over water. Use the terrain-derived seaward direction so the
-            // berth and pier never cross the land route through a narrow port.
-            var probe=town.PortBuildingPoint+outward*3f;
-            bool found=SeaNavigation.TryNearestOcean(probe,30f,out var berth);
+            // Warcraft's B00R post is amphibious. Keep that exact circle and find
+            // a hull-safe point inside its capture radius instead of inventing a
+            // second offshore objective.
+            var probe=town.ClaimPoint+outward*.5f;
+            bool found=SeaNavigation.TryNearestOcean(probe,ClaimRules.TakeoverRadius-.5f,out var berth);
             if(!found)berth=new Vector3(probe.x,-.24f,probe.z);
             var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;
             var harbor=go.AddComponent<Harbor>();
             harbor.InitializeImported(this,new BuildingId(BuildingKind.Harbor,"imported/"+town.State.Id),town,berth,found?null:"El puerto no tiene una salida marítima segura.");
-            // The imported map supplies a city-to-claim quay, while the safe naval
-            // berth may be farther offshore. Join both anchors with the same deck
-            // primitive used by authored harbors so the usable berth stays visible.
-            NavalArt.CreatePierDeck(harbor.transform,town.ClaimPoint+Vector3.up*.15f,berth+Vector3.up*.15f,
-                3.15f,"Harbor berth pier",false,true,.03f);
             Harbors.Add(harbor);AddEmbarkZone(harbor);
         }
         void AddHarbor(BuildingId buildingId,string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
