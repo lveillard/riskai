@@ -15,37 +15,38 @@ namespace RiskAI
 
             var identity=new GameObject("Marine private identity").transform;
             identity.SetParent(model.transform,false);
-            Color skin=new Color(.78f,.54f,.34f),leather=new Color(.20f,.105f,.045f),metal=new Color(.48f,.52f,.53f);
-            Color cloth=VisualFactory.TeamMaterialColor(team),linen=new Color(.82f,.76f,.60f);
+            Color skin=new Color(.78f,.54f,.34f),leather=new Color(.16f,.075f,.035f),metal=new Color(.48f,.52f,.53f);
+            Color cloth=VisualFactory.TeamMaterialColor(team),linen=new Color(.86f,.82f,.68f),navy=new Color(.075f,.12f,.17f);
 
             Transform head=Find(model.transform,"head")??identity;
-            var face=VisualFactory.Shape(head,PrimitiveType.Sphere,"Pirate face",Vector3.zero,new Vector3(.56f,.62f,.54f),skin);
+            var face=VisualFactory.Shape(head,PrimitiveType.Sphere,"Sailor face",new Vector3(0,-.03f,.015f),new Vector3(.46f,.54f,.45f),skin);
             face.transform.localRotation=Quaternion.identity;
-            var brim=VisualFactory.Shape(head,PrimitiveType.Cylinder,"Low pirate hat brim",new Vector3(0,.30f,0),new Vector3(.82f,.045f,.68f),leather);
-            brim.transform.localRotation=Quaternion.identity;
-            var crown=VisualFactory.Shape(head,PrimitiveType.Cylinder,"Low pirate hat crown",new Vector3(0,.43f,0),new Vector3(.50f,.14f,.44f),leather);
+            // A compact three-corner hat reads as a sailor at game distance without
+            // the oversized round head and decorative clutter of the first pass.
+            var crown=VisualFactory.Shape(head,PrimitiveType.Cylinder,"Tricorn crown",new Vector3(0,.31f,0),new Vector3(.46f,.15f,.42f),navy);
             crown.transform.localRotation=Quaternion.identity;
-            VisualFactory.Shape(head,PrimitiveType.Cube,"Pirate hat team band",new Vector3(0,.32f,.25f),new Vector3(.58f,.075f,.035f),cloth);
-            var feather=VisualFactory.Shape(head,PrimitiveType.Capsule,"Pirate hat feather",new Vector3(.37f,.65f,-.02f),new Vector3(.075f,.30f,.045f),linen);
-            feather.transform.localRotation=Quaternion.Euler(0,0,-24);
-            var patch=VisualFactory.Shape(head,PrimitiveType.Sphere,"Pirate eye patch",new Vector3(.17f,.035f,.285f),new Vector3(.15f,.105f,.035f),new Color(.025f,.02f,.015f));
-            patch.transform.localRotation=Quaternion.identity;
-            var strap=VisualFactory.Shape(head,PrimitiveType.Cube,"Pirate eye patch strap",new Vector3(0,.10f,.272f),new Vector3(.48f,.025f,.018f),new Color(.025f,.02f,.015f));
-            strap.transform.localRotation=Quaternion.Euler(0,0,10);
-            VisualFactory.Shape(head,PrimitiveType.Cube,"Pirate neck scarf",new Vector3(0,-.29f,.08f),new Vector3(.47f,.10f,.22f),linen);
+            for(int side=-1;side<=1;side+=2)
+            {
+                var brim=VisualFactory.Shape(head,PrimitiveType.Cube,"Tricorn raised brim",new Vector3(side*.23f,.32f,.01f),new Vector3(.36f,.055f,.62f),navy);
+                brim.transform.localRotation=Quaternion.Euler(0,side*18,side*25);
+            }
+            var front=VisualFactory.Shape(head,PrimitiveType.Cube,"Tricorn front brim",new Vector3(0,.33f,.22f),new Vector3(.62f,.055f,.30f),navy);
+            front.transform.localRotation=Quaternion.Euler(-18,0,0);
+            VisualFactory.Shape(head,PrimitiveType.Cube,"Tricorn team cockade",new Vector3(.18f,.38f,.34f),new Vector3(.15f,.15f,.035f),cloth);
+            VisualFactory.Shape(head,PrimitiveType.Cube,"Sailor neck cloth",new Vector3(0,-.29f,.08f),new Vector3(.40f,.09f,.20f),linen);
 
             Transform hand=Find(model.transform,"handslot.r")??identity;
             Transform source=Find(model.transform,"1H_Crossbow");
             var pistol=new GameObject("Short flintlock pistol").transform;pistol.SetParent(hand,false);
             if(source){pistol.localPosition=source.localPosition;pistol.localRotation=source.localRotation;}
             else pistol.localPosition=new Vector3(.1f,-.01f,0);
-            var barrel=VisualFactory.Shape(pistol,PrimitiveType.Cylinder,"Pistol barrel",new Vector3(0,0,.31f),new Vector3(.11f,.34f,.11f),metal);
+            var barrel=VisualFactory.Shape(pistol,PrimitiveType.Cylinder,"Pistol barrel",new Vector3(0,0,.27f),new Vector3(.085f,.30f,.085f),metal);
             barrel.transform.localRotation=Quaternion.Euler(90,0,0);
-            var muzzle=VisualFactory.Shape(pistol,PrimitiveType.Cylinder,"Pistol muzzle",new Vector3(0,0,.64f),new Vector3(.15f,.08f,.15f),metal);
+            var muzzle=VisualFactory.Shape(pistol,PrimitiveType.Cylinder,"Pistol muzzle",new Vector3(0,0,.56f),new Vector3(.12f,.065f,.12f),metal);
             muzzle.transform.localRotation=Quaternion.Euler(90,0,0);
-            var stock=VisualFactory.Shape(pistol,PrimitiveType.Cube,"Pistol stock",new Vector3(0,-.10f,.02f),new Vector3(.16f,.28f,.22f),leather);
+            var stock=VisualFactory.Shape(pistol,PrimitiveType.Cube,"Pistol stock",new Vector3(0,-.09f,.01f),new Vector3(.14f,.25f,.19f),leather);
             stock.transform.localRotation=Quaternion.Euler(-18,0,0);
-            VisualFactory.Shape(pistol,PrimitiveType.Cube,"Pistol brass lock",new Vector3(.10f,.02f,.13f),new Vector3(.035f,.14f,.18f),new Color(.67f,.45f,.16f));
+            VisualFactory.Shape(pistol,PrimitiveType.Cube,"Pistol brass lock",new Vector3(.08f,.01f,.12f),new Vector3(.028f,.11f,.15f),new Color(.67f,.45f,.16f));
         }
 
         static Transform Find(Transform root,string name)

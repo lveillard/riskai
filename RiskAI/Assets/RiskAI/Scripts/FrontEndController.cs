@@ -156,8 +156,10 @@ namespace RiskAI
             if(!UiViewport.IsCompact){var seal=new RtsHeraldicSeal(2,RtsUiStyle.Gold);seal.style.width=62;seal.style.height=62;seal.style.marginRight=18;titleRow.Add(seal);}
             var title = RtsUiStyle.Title("DOMINIOS", null, UiViewport.IsCompact ? 24 : 34);
             title.style.flexGrow = 1; titleRow.Add(title);
+            var language=RtsUiStyle.Button(GameText.SwitchLabel,()=>{GameText.Toggle();Rebuild();},"Switch language");
+            language.style.minWidth=48;language.style.marginBottom=0;titleRow.Add(language);
             var version = RtsUiStyle.Label("v"+Application.version+" · CONQUISTA", null, UiViewport.IsCompact ? 11 : 13); version.style.marginLeft = 8; titleRow.Add(version); header.Add(titleRow);
-            var description = RtsUiStyle.Label("RISKAI  ·  Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.", null, 14); description.style.whiteSpace = WhiteSpace.Normal;description.style.color=RtsUiStyle.Muted; header.Add(description);
+            var description = RtsUiStyle.Label("Conquista territorial en tiempo real.", null, 14); description.style.whiteSpace = WhiteSpace.Normal;description.style.color=RtsUiStyle.Muted; header.Add(description);
             root.Add(header);
 
             var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "Front end scroll" };
@@ -314,7 +316,7 @@ namespace RiskAI
         {
             bool imported = selectedMap == ScenarioMap.Europe || selectedMap == ScenarioMap.NewWorld;
             var row = NewFieldRow(parent, "RELIEVE IMPORTADO");
-            var toggle = new Toggle("Añadir cordilleras suaves a Europe y New World") { value = sourceMountains, name = "Source mountains" };
+            var toggle = new Toggle(GameText.Localize("Añadir cordilleras suaves a Europe y New World")) { value = sourceMountains, name = "Source mountains" };
             toggle.SetEnabled(imported); toggle.style.minHeight = 44;
             toggle.style.flexShrink=1;toggle.style.whiteSpace=WhiteSpace.Normal;toggle.style.maxWidth=Length.Percent(100);
             toggle.RegisterValueChangedCallback(change => sourceMountains = change.newValue); row.Add(toggle);

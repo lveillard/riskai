@@ -65,7 +65,7 @@ namespace RiskAI
             DisposeMinimapMarkers();
             UiViewport.ResetHudHeights();
         }
-        static void Text(Rect r, string text, GUIStyle style = null) => GUI.Label(r, text, style ?? RtsSkin.Text);
+        static void Text(Rect r, string text, GUIStyle style = null) => GUI.Label(r, GameText.Localize(text), style ?? RtsSkin.Text);
         static void Label(float x, float y, float w, string text, GUIStyle style = null) => Text(new Rect(x, y, w, 26), text, style);
         void OnGUI()
         {
@@ -82,7 +82,7 @@ namespace RiskAI
             // presentation, the selection rectangle and the transitional minimap renderer.
             // World labels are drawn by IMGUI after retained panels; keep them
             // from covering the start countdown's title and number.
-            if(!session.IsStarting)DrawWorld();
+            if(!session.IsStarting&&!session.Paused)DrawWorld();
             if (MinimapVisible)
             {
                 DrawMinimap(MinimapRect());

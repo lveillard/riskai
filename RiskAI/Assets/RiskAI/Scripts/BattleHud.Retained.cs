@@ -11,7 +11,7 @@ namespace RiskAI
         RtsUiRuntime retainedUi;
         VisualElement retainedRoot, header, footer, context, wideContext, modal;
         Label goldLabel, citiesLabel, populationLabel, roundLabel;
-        VisualElement startCountdown;
+        VisualElement startCountdown, pauseNotice;
         Label startCountdownNumber;
         Button pauseButton;
         int retainedTab;
@@ -81,12 +81,13 @@ namespace RiskAI
 
         void UpdateRetainedLabels()
         {
-            if (goldLabel != null) goldLabel.text = GoldText;
-            if (citiesLabel != null) citiesLabel.text = CitiesText;
-            if (populationLabel != null) populationLabel.text = PopulationText;
-            if (roundLabel != null) roundLabel.text = "RONDA " + hud.Round + " · " + Mathf.CeilToInt(BattleRules.RoundSeconds - hud.RoundElapsed) + " s";
-            if (pauseButton != null) { pauseButton.text = session.Paused ? "Continuar" : "Pausa";pauseButton.SetEnabled(!session.IsStarting); }
-            if (modalPauseButton != null) { modalPauseButton.text = session.Paused ? "CONTINUAR" : "PAUSA";modalPauseButton.SetEnabled(!session.IsStarting); }
+            if (goldLabel != null) goldLabel.text = GameText.Localize(GoldText);
+            if (citiesLabel != null) citiesLabel.text = GameText.Localize(CitiesText);
+            if (populationLabel != null) populationLabel.text = GameText.Localize(PopulationText);
+            if (roundLabel != null) roundLabel.text = GameText.Localize("RONDA " + hud.Round + " · " + Mathf.CeilToInt(BattleRules.RoundSeconds - hud.RoundElapsed) + " s");
+            if (pauseButton != null) { pauseButton.text = GameText.Localize(session.Paused ? "Continuar" : "Pausa");pauseButton.SetEnabled(!session.IsStarting); }
+            if (modalPauseButton != null) { modalPauseButton.text = GameText.Localize(session.Paused ? "CONTINUAR" : "PAUSA");modalPauseButton.SetEnabled(!session.IsStarting); }
+            if(pauseNotice!=null)pauseNotice.style.display=session.Paused&&!session.IsStarting&&session.Winner<0&&!controller.HelpVisible&&!controller.ScoreboardVisible?DisplayStyle.Flex:DisplayStyle.None;
             for(int i=0;i<liveContext.Count;i++)liveContext[i]();
             UpdateRankingLabels();
         }
@@ -125,7 +126,7 @@ namespace RiskAI
             {
                 int player=order[rank];var row=rankingRows[rank];
                 bool eliminated=session.IsPlayerEliminated(player);
-                row.Name.text=(rank+1)+". "+VisualFactory.TeamName(player)+(eliminated?" · ELIMINADO":"");
+                row.Name.text=GameText.Localize((rank+1)+". "+VisualFactory.TeamName(player)+(eliminated?" · ELIMINADO":""));
                 row.Root.style.borderLeftColor=VisualFactory.TeamColor(player);
                 row.Root.style.opacity=eliminated?.55f:1;
                 row.Cities.text=hud.PlayerCities[player].ToString();
@@ -149,7 +150,19 @@ namespace RiskAI
             if (MinimapVisible) BuildMinimapHitOverlay(retainedRoot);
             if (lastModalKind!=0) BuildModal(retainedRoot);
             BuildStartCountdown(retainedRoot);
+            BuildPauseNotice(retainedRoot);
             retainedUi.SetContent(retainedRoot);
+        }
+
+        void BuildPauseNotice(VisualElement root)
+        {
+            pauseNotice=RtsUiStyle.Panel("HUD paused notice");pauseNotice.pickingMode=PickingMode.Ignore;
+            pauseNotice.style.position=Position.Absolute;pauseNotice.style.left=Length.Percent(50);pauseNotice.style.top=Length.Percent(34);
+            pauseNotice.style.width=UiViewport.IsCompact?210:280;pauseNotice.style.marginLeft=UiViewport.IsCompact?-105:-140;
+            pauseNotice.style.alignItems=Align.Center;pauseNotice.style.paddingTop=16;pauseNotice.style.paddingBottom=16;
+            var title=RtsUiStyle.Title("PAUSADO","Paused title",UiViewport.IsCompact?28:36);title.pickingMode=PickingMode.Ignore;pauseNotice.Add(title);
+            root.Add(pauseNotice);
+            pauseNotice.style.display=session.Paused&&!session.IsStarting&&session.Winner<0&&!controller.HelpVisible&&!controller.ScoreboardVisible?DisplayStyle.Flex:DisplayStyle.None;
         }
 
         void BuildStartCountdown(VisualElement root)
@@ -353,7 +366,7 @@ namespace RiskAI
         {
             if (controller.SelectedCamp)
             {
-                var camp = controller.SelectedCamp; AddTitle(root, camp.DisplayName.ToUpperInvariant());
+                var camp = controller.SelectedCamp; AddTitle(root, GameText.Localize(camp.DisplayName).ToUpperInvariant());
                 LiveInfo(root, () => camp.HasRally ? "Salida fijada. Clic derecho cambia el punto de reunión." : "Los refuerzos esperan en la hoguera hasta fijar una salida.");
                 var clearRally = RtsUiStyle.Button("BORRAR SALIDA", controller.ClearCampRally);
                 root.Add(clearRally);
@@ -364,7 +377,7 @@ namespace RiskAI
                     if (town)
                     {
                         var button = RtsUiStyle.Button("", () => { controller.SelectTown(town); controller.Focus(town.transform.position); });
-                        System.Action refreshTown = () => button.text = town ? town.DisplayName + " · " + VisualFactory.TeamName(town.State.Owner) : "Ciudad retirada";
+                        System.Action refreshTown = () => button.text = GameText.Localize(town ? town.DisplayName + " · " + VisualFactory.TeamName(town.State.Owner) : "Ciudad retirada");
                         root.Add(button); liveContext.Add(refreshTown); refreshTown();
                     }
                 return;
@@ -534,6 +547,7 @@ namespace RiskAI
             sticky.style.flexShrink=0;
             modalPauseButton=RtsUiStyle.Button(session.Paused ? "CONTINUAR" : "PAUSA", () => { session.TogglePause(); UpdateRetainedLabels(); });
             sticky.Add(modalPauseButton);
+            sticky.Add(RtsUiStyle.Button(GameText.SwitchLabel,()=>{GameText.Toggle();BuildRetainedUi(false);},"Switch language"));
             panel.Add(sticky);
             root.Add(modal); modal.Add(panel);
         }
@@ -610,7 +624,7 @@ namespace RiskAI
         void LiveInfo(VisualElement root,System.Func<string> value)
         {
             var label=RtsUiStyle.Label(value(),null,13);label.style.color=RtsUiStyle.Muted;label.style.whiteSpace=WhiteSpace.Normal;label.style.marginBottom=4;
-            root.Add(label);liveContext.Add(()=>label.text=value());
+            root.Add(label);liveContext.Add(()=>label.text=GameText.Localize(value()));
         }
         static string SoldierStats(Soldier unit)
         {

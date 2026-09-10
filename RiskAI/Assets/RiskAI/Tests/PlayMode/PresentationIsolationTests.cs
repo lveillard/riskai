@@ -138,6 +138,7 @@ namespace RiskAI.Tests
             var parts=marine.GetComponentsInChildren<Transform>(true);
             Assert.That(parts.Any(part=>part.name=="Marine private identity"),Is.True);
             Assert.That(parts.Any(part=>part.name=="Short flintlock pistol"&&part.gameObject.activeInHierarchy),Is.True);
+            Assert.That(parts.Any(part=>part.name=="Tricorn crown"&&part.gameObject.activeInHierarchy),Is.True);
             Assert.That(parts.Any(part=>part.name=="Rogue_Head_Hooded"&&part.gameObject.activeInHierarchy),Is.False);
             Assert.That(parts.Any(part=>part.name=="2H_Crossbow"&&part.gameObject.activeInHierarchy),Is.False);
             yield return null;

@@ -23,7 +23,7 @@ namespace RiskAI
 
         void AddGoldDisplay(VisualElement parent)
         {
-            var row=ResourceButton(ShowIncome,"HUD gold button");row.tooltip="Desglose del oro y del próximo ingreso";
+            var row=ResourceButton(ShowIncome,"HUD gold button");row.tooltip=GameText.Localize("Desglose del oro y del próximo ingreso");
             RtsUiStyle.Row(row);row.Add(new RtsGoldIcon());
             goldLabel=HeaderLabel(GoldText);goldLabel.name="HUD gold";goldLabel.style.color=RtsUiStyle.Gold;
             goldLabel.pickingMode=PickingMode.Ignore;row.Add(goldLabel);parent.Add(row);
@@ -31,7 +31,7 @@ namespace RiskAI
 
         void AddCitiesDisplay(VisualElement parent)
         {
-            citiesLabel=AddMetric(parent,RtsHudGlyph.City,CitiesText,"Ciudades controladas / total · abrir clasificación",ShowPlayers,"HUD cities button");
+            citiesLabel=AddMetric(parent,RtsHudGlyph.City,CitiesText,GameText.Localize("Ciudades controladas / total · abrir clasificación"),ShowPlayers,"HUD cities button");
         }
 
         public void ShowIncome() { controller.CancelCursor();menuTab=3;controller.HelpVisible=true;BuildRetainedUi(false); }
@@ -56,7 +56,7 @@ namespace RiskAI
                 {
                     var state=hud.Countries[country];
                     breakdown.TryGetValue(country,out int amount);
-                    label.text=MapLayout.Countries[country].Name+" · "+state.Owned+"/"+state.CityCount+" ciudades · +"+amount;
+                    label.text=GameText.Localize(MapLayout.Countries[country].Name+" · "+state.Owned+"/"+state.CityCount+" ciudades · +"+amount);
                     label.style.display=state.Owned>0?DisplayStyle.Flex:DisplayStyle.None;
                     label.style.color=amount>0?RtsUiStyle.Gold:RtsUiStyle.Muted;
                 }
@@ -90,7 +90,7 @@ namespace RiskAI
         {
             var button=RtsUiStyle.Button("",action,name);
             button.SetEnabled(enabled);
-            button.AddToClassList("riskai-purchase-card");button.tooltip=title+" · "+cost;
+            button.AddToClassList("riskai-purchase-card");button.tooltip=GameText.Localize(title+" · "+cost);
             bool landscape=UiViewport.IsCompact&&!UiViewport.IsPortrait;
             button.style.width=Length.Percent(UiViewport.IsPortrait?48:31);
             button.style.minWidth=0;button.style.height=button.style.minHeight=button.style.maxHeight=UiViewport.IsPortrait?54:landscape?50:60;
@@ -117,7 +117,7 @@ namespace RiskAI
             var label=RtsUiStyle.Label(value(),"HUD building identity",UiViewport.IsCompact?11:14);
             label.style.color=RtsUiStyle.Gold;label.style.marginTop=0;label.style.marginBottom=4;
             label.style.whiteSpace=WhiteSpace.NoWrap;label.style.overflow=Overflow.Hidden;label.style.textOverflow=TextOverflow.Ellipsis;
-            root.Add(label);liveContext.Add(()=>label.text=value());
+            root.Add(label);liveContext.Add(()=>label.text=GameText.Localize(value()));
         }
     }
 }

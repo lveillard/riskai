@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,6 +13,7 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator SetupScreenDoesNotCreateBattlefieldOrSimulation()
         {
+            GameText.Set(GameLanguage.English);
             var previous=SceneManager.GetActiveScene();var scene=SceneManager.CreateScene("Frontend isolation");
             SceneManager.SetActiveScene(scene);
             var menu=new GameObject("Standalone match setup").AddComponent<FrontEndController>();
@@ -23,6 +25,12 @@ namespace RiskAI.Tests
             Assert.That(runtime.Root,Is.Not.Null);
             Assert.That(runtime.Theme,Is.Not.Null,"The retained UI must use the portable project theme.");
             Assert.That(runtime.Root.Q("Front end content"),Is.Not.Null);
+            Assert.That(runtime.Root.Query<Label>().ToList().Any(label=>label.text=="DOMINIONS"),Is.True);
+            var language=runtime.Root.Q<Button>("Switch language");Assert.That(language.text,Is.EqualTo("ES"));
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=language;language.SendEvent(evt);}
+            yield return null;
+            Assert.That(runtime.Root.Query<Label>().ToList().Any(label=>label.text=="DOMINIOS"),Is.True);
+            GameText.Set(GameLanguage.English);
             foreach(var root in scene.GetRootGameObjects())
             {
                 Assert.That(root.GetComponentInChildren<BattleSession>(),Is.Null);
