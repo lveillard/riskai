@@ -116,6 +116,9 @@ namespace RiskAI.Tests
             Assert.That(StrategicMapView.Current, Is.Not.Null);
             Assert.That(StrategicMapView.Current.SelectedCountry, Is.EqualTo(selected.Country),
                 "Camp selection now drives the strategic territory inspection surface.");
+            Assert.That(StrategicMapView.Current.IsStrategic,Is.False);
+            Assert.That(StrategicMapView.Current.TacticalInspectionVisible,Is.True,
+                "A selected camp must show its territory without requiring strategic zoom.");
             foreach (var town in battle.Towns.Where(t => t.State.Country == 0)) town.State.Owner = 0;
             battle.Reinforcements.CreditRound();
             Assert.That(battle.Reinforcements.Pending(0), Is.EqualTo(MapLayout.Countries[0].PerTurn));
@@ -130,6 +133,7 @@ namespace RiskAI.Tests
             Assert.That(battle.Units.Count(u => u && u.OriginCountry == 0), Is.EqualTo(MapLayout.Countries[0].PerTurn));
             controller.Clear();
             Assert.That(StrategicMapView.Current.SelectedCountry, Is.EqualTo(-1));
+            Assert.That(StrategicMapView.Current.TacticalInspectionVisible,Is.False);
             yield return null;
         }
 

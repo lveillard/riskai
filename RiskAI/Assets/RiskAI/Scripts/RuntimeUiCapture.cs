@@ -114,6 +114,12 @@ namespace RiskAI
             var hud=FindFirstObjectByType<BattleHud>();
             session.AiEnabled=false;controller.HelpVisible=false;
             if(stage=="empty")controller.Clear();
+            else if(stage=="camp")
+            {
+                var camp=session.Camps.FirstOrDefault();
+                if(!camp){Debug.LogError("RISKAI_UI_REVIEW: no country camp in fixture");yield break;}
+                controller.SelectCamp(camp);controller.Focus(camp.SpawnPoint);
+            }
             else if(stage=="city"||stage=="queue")
             {
                 var town=session.Towns.First(t=>t.State.Owner==0&&!t.IsPort);
@@ -134,6 +140,12 @@ namespace RiskAI
                 commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Galley));
                 commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Transport));
                 controller.SelectHarbor(harbor);controller.Focus(harbor.IsImportedPort?harbor.LinkedTown.transform.position:harbor.Landing);
+            }
+            else if(stage=="denmark")
+            {
+                var town=session.Towns.FirstOrDefault(t=>t.State.Id=="europe-121");
+                if(!town){Debug.LogError("RISKAI_UI_REVIEW: Denmark source port is unavailable");yield break;}
+                controller.SelectTown(town);controller.CameraRig.FocusAndZoom(town.ClaimPoint,22f);
             }
             else if(stage=="income")hud.ShowIncome();
             else if(stage=="ranking")hud.ShowPlayers();

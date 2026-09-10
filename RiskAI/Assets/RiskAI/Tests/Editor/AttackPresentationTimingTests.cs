@@ -46,6 +46,9 @@ namespace RiskAI.Tests
             Assert.That(AttackPresentationTiming.Clip(UnitKind.Footman),Is.EqualTo("1H_Melee_Attack_Slice_Horizontal"));
             Assert.That(AttackPresentationTiming.ContactNormalizedTime(UnitKind.Footman),Is.EqualTo(8f/32f));
             Assert.That(AttackPresentationTiming.ContactNormalizedTime(UnitKind.Archer),Is.EqualTo(8f/32f));
+            Assert.That(AttackPresentationTiming.Clip(UnitKind.MarinePrivate),Is.EqualTo("1H_Ranged_Shoot"));
+            Assert.That(BattleRules.Model(UnitKind.MarinePrivate),Is.EqualTo("MarinePrivate"));
+            Assert.That(BattleRules.Model(UnitKind.MarinePrivate),Is.Not.EqualTo(BattleRules.Model(UnitKind.Archer)));
             Assert.That(AttackPresentationTiming.ContactNormalizedTime(UnitKind.Mage),Is.EqualTo(9f/28f));
             Assert.That(AttackPresentationTiming.ContactNormalizedTime(UnitKind.MarineMajor),Is.EqualTo(13f/33f));
             Assert.That(AttackPresentationTiming.Clip(UnitKind.Mortar),Is.Null);

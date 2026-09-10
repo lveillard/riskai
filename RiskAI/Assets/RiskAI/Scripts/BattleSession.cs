@@ -253,6 +253,36 @@ namespace RiskAI
             return soldier;
         }
 
+        public Soldier SpawnSeparated(int team, UnitKind kind, Vector3 position, int originCountry = -1)
+        {
+            if (IsPlayerEliminated(team)) return null;
+            float radius=VisualMetrics.SpawnRadiusFor(kind),step=radius*2+.16f;
+            Vector3 fallback=position;float fallbackClearance=float.NegativeInfinity;
+            // Test the requested point, then deterministic concentric rings. This
+            // runs only when an actor is created, never in the simulation hot path.
+            for(int attempt=0;attempt<49;attempt++)
+            {
+                Vector3 probe=position;
+                if(attempt>0)
+                {
+                    int index=attempt-1,ring=index/12+1;
+                    float angle=(index%12)*Mathf.PI/6+(Units.Count%12)*2.399963f;
+                    probe+=new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*step*ring;
+                }
+                if(!NavMesh.SamplePosition(probe,out var hit,.7f,NavMesh.AllAreas))continue;
+                Vector3 candidate=hit.position;float clearance=float.MaxValue;
+                for(int i=0;i<Units.Count;i++)
+                {
+                    var other=Units[i];if(!other||!other.IsAlive)continue;
+                    Vector3 delta=other.transform.position-candidate;delta.y=0;
+                    clearance=Mathf.Min(clearance,delta.magnitude-radius-VisualMetrics.SpawnRadiusFor(other.Kind));
+                }
+                if(clearance>=.12f)return Spawn(team,kind,candidate,originCountry);
+                if(clearance>fallbackClearance){fallbackClearance=clearance;fallback=candidate;}
+            }
+            return Spawn(team,kind,fallback,originCountry);
+        }
+
         void CountryReinforcements() => Reinforcements.CreditRound();
 
         public static void GiveFormation(IReadOnlyList<Soldier> units, Vector3 point, bool attackMove, bool queue, bool patrol=false)

@@ -33,7 +33,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator FourMapsShareOneHarborGuardianAcrossLandAndSea()
+        public IEnumerator FourMapsRequireALandGuardianAtEveryHarbor()
         {
             foreach (var map in new[] { ScenarioMap.Classic, ScenarioMap.Riverlands, ScenarioMap.Europe, ScenarioMap.NewWorld })
                 yield return RunMap(map);
@@ -67,34 +67,28 @@ namespace RiskAI.Tests
             DisableOtherSoldiers(battle);
             var frigate = BattleTestScenario.Ship(naval, 0, ShipKind.Galley, port.Berth);
             TickPort(battle, port);
-            Assert.That(port.Owner, Is.EqualTo(0));
-            Assert.That(port.ClaimZone.Guardian, Is.SameAs(frigate));
-            Assert.That(port.Defense.Guardian, Is.SameAs(frigate));
+            Assert.That(port.Owner, Is.EqualTo(PlayerRules.NeutralOwner));
+            Assert.That(port.ClaimZone.Guardian, Is.Null);
+            Assert.That(frigate.IsGarrison,Is.False);
+
+            var enemyFootman = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, port.Landing);
+            TickPort(battle,port);
+            Assert.That(port.Owner,Is.EqualTo(1));
+            Assert.That(port.ClaimZone.Guardian,Is.SameAs(enemyFootman));
+
+            enemyFootman.TakeDamage(enemyFootman.MaxHealth+1,0);
+            var alliedFootman=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.Landing);
+            TickPort(battle, port);
+            Assert.That(port.Owner,Is.EqualTo(0));
+            Assert.That(port.ClaimZone.Guardian,Is.SameAs(alliedFootman));
 
             var commands = new PlayerBuildingCommands(battle);
             battle.Economy.Gold[0] = Harbor.Cost(ShipKind.Galley);
             Assert.That(commands.Execute(0, PlayerBuildingIntent.BuyShip(port.BuildingId, NavalUnitKind.Galley)), Is.Null,
-                "The captured harbor must remain usable through the player command boundary.");
+                "A harbor captured by landed troops remains usable through the player command boundary.");
             Assert.That(port.QueueCount, Is.EqualTo(1));
 
-            var enemyFootman = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, port.Landing);
-            TickPort(battle,port);
-            Assert.That(port.Owner,Is.EqualTo(0),"A living naval guardian cannot be replaced by nearby enemy land troops.");
-            Assert.That(port.ClaimZone.Guardian,Is.SameAs(frigate));
-            Assert.That(enemyFootman.IsGarrison,Is.False);
-            var alliedShip=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth+Vector3.right*.2f);
-            frigate.TakeDamage(frigate.MaxHealth + 1, 1);
-            TickPort(battle, port);
-            Assert.That(port.Owner,Is.EqualTo(0),"Allied relief has priority across land and sea, even over a closer enemy.");
-            Assert.That(port.ClaimZone.Guardian,Is.SameAs(alliedShip));
-            alliedShip.TakeDamage(alliedShip.MaxHealth+1,1);
-            TickPort(battle,port);
-            Assert.That(port.Owner, Is.EqualTo(1));
-            Assert.That(port.ClaimZone.Guardian, Is.SameAs(enemyFootman));
-            Assert.That(port.Defense.Guardian, Is.SameAs(enemyFootman));
-            Assert.That(port.Defender, Is.SameAs(enemyFootman));
-
-            enemyFootman.TakeDamage(enemyFootman.MaxHealth + 1, 0);
+            alliedFootman.TakeDamage(alliedFootman.MaxHealth + 1, 1);
             TickPort(battle, port);
             Assert.That(port.Owner, Is.EqualTo(PlayerRules.NeutralOwner));
             Assert.That(port.ClaimZone.Guardian, Is.Null);

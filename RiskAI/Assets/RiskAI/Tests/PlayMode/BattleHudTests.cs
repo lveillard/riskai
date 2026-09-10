@@ -27,6 +27,7 @@ namespace RiskAI.Tests
             previousMode=BattleSession.ModeForNewMatch;previousPlayers=BattleSession.PlayerCountForNewMatch;previousSeed=BattleSession.SeedForNewMatch;previousTimeScale=Time.timeScale;
             BattleSession.MapForNewMatch=ScenarioMap.Classic;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.Fixed;BattleSession.ModeForNewMatch=BattleSession.VictoryMode.Conquest;
             BattleSession.PlayerCountForNewMatch=2;BattleSession.SeedForNewMatch=19031;
+            GameText.Set(GameLanguage.English);
             scene=SceneManager.CreateScene("Battle HUD gold refresh");SceneManager.SetActiveScene(scene);
             new GameObject("Battle HUD bootstrap").AddComponent<RiskBootstrap>();battle=BattleSession.Current;battle.AiEnabled=false;
             Object.FindFirstObjectByType<RtsController>().enabled=false;hud=Object.FindFirstObjectByType<BattleHud>();
@@ -52,6 +53,17 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator ClassicCampShowsAndClearsItsTacticalTerritory()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            controller.SelectCamp(battle.Camps[0]);yield return null;
+            Assert.That(StrategicMapView.Current.SelectedCountry,Is.EqualTo(battle.Camps[0].Country));
+            Assert.That(StrategicMapView.Current.TacticalInspectionVisible,Is.True);
+            controller.Clear();yield return null;
+            Assert.That(StrategicMapView.Current.TacticalInspectionVisible,Is.False);
+        }
+
+        [UnityTest]
         public IEnumerator ResourceButtonsOpenIncomeAndRankingAndExposeRecruitmentLimit()
         {
             yield return null;
@@ -60,7 +72,7 @@ namespace RiskAI.Tests
             Assert.That(root.Q<Label>("HUD guard population"),Is.Null);
             var gold=root.Q<Button>("HUD gold button");
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=gold;gold.SendEvent(evt);}
-            Assert.That(root.Query<Label>().ToList().Any(l=>l.text=="DESGLOSE DEL ORO"),Is.True);
+            Assert.That(root.Query<Label>().ToList().Any(l=>l.text=="GOLD BREAKDOWN"),Is.True);
             var cities=root.Q<Button>("HUD cities button");
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=cities;cities.SendEvent(evt);}
             Assert.That(root.Query<VisualElement>().ToList().Count(e=>e.name!=null&&e.name.StartsWith("HUD ranking row ")),Is.EqualTo(battle.PlayerCount));
@@ -136,10 +148,30 @@ namespace RiskAI.Tests
                 Assert.That(button.worldBound.y,Is.EqualTo(buttons[0].worldBound.y).Within(1),"All six commands must stay on one row.");
                 Assert.That(button.worldBound.xMax,Is.LessThanOrEqualTo(actions.worldBound.xMax+1),"The final command must remain inside the action panel.");
             }
-            var move=root.Q<Button>("HUD action Mover");Assert.That(move.tooltip,Is.EqualTo("Mover"));
+            var move=root.Q<Button>("HUD action Mover");Assert.That(move.tooltip,Is.EqualTo("Move"));
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=move;move.SendEvent(evt);}
             Assert.That(controller.MoveCursor,Is.True,"The direct icon must call the existing move action.");
             Assert.That(root.Q<Image>("HUD unit portrait"),Is.Not.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator SelectedTransportShowsCargoPortraitsAndOneClickUnloadsOne()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var port=battle.Naval.Harbors.First(item=>item.Owner==0);
+            var transport=BattleTestScenario.Ship(battle.Naval,0,ShipKind.Transport,port.Berth);
+            var first=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.Landing);
+            var second=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,port.Landing);
+            Assert.That(transport.TryEmbark(first),Is.True);Assert.That(transport.TryEmbark(second),Is.True);
+            controller.SelectShip(transport);yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Q<VisualElement>("HUD transport cargo"),Is.Not.Null);
+            var unload=root.Q<Button>("Unload cargo "+first.EntityId);Assert.That(unload,Is.Not.Null);
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=unload;unload.SendEvent(evt);}
+            yield return null;
+            Assert.That(transport.CargoCount,Is.EqualTo(1));
+            Assert.That(first.gameObject.activeInHierarchy,Is.True);
+            Assert.That(second.gameObject.activeInHierarchy,Is.False);
         }
 
         [UnityTest]
@@ -155,7 +187,7 @@ namespace RiskAI.Tests
             yield return null;
 
             Assert.That(battle.Clock.TickCount,Is.EqualTo(tickBefore),"The assertion must cover a model change before any next simulation tick.");
-            Assert.That(gold.text,Does.StartWith(granted+" ORO"),"The retained header must read economy gold even while its simulation snapshot is paused.");
+            Assert.That(gold.text,Does.StartWith(granted+" GOLD"),"The retained header must read economy gold even while its simulation snapshot is paused.");
         }
 
         [UnityTest]
@@ -177,8 +209,21 @@ namespace RiskAI.Tests
 
             yield return null;
             var labels=hud.GetComponent<UIDocument>().rootVisualElement.Query<Label>().ToList();
-            Assert.That(labels.Any(label=>label.text=="VICTORIA"),Is.True,
+            Assert.That(labels.Any(label=>label.text=="VICTORY"),Is.True,
                 "A modal already open as help must rebuild as the result sheet when the normal victory rule fires.");
+        }
+
+        [UnityTest]
+        public IEnumerator ManualPauseShowsCentralLocalizedNotice()
+        {
+            Assert.That(battle.IsStarting,Is.False);
+            if(!battle.Paused)battle.TogglePause();
+            yield return new WaitForSecondsRealtime(.12f);
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            var title=root.Q<Label>("Paused title");
+            Assert.That(title,Is.Not.Null);
+            Assert.That(title.text,Is.EqualTo("PAUSED"));
+            Assert.That(root.Q<VisualElement>("HUD paused notice").resolvedStyle.display,Is.EqualTo(DisplayStyle.Flex));
         }
 
         [UnityTest]
@@ -305,7 +350,7 @@ namespace RiskAI.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            Time.timeScale=previousTimeScale;UiViewport.ResetHudHeights();BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
+            Time.timeScale=previousTimeScale;UiViewport.ResetHudHeights();GameText.Set(GameLanguage.English);BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
             BattleSession.ModeForNewMatch=previousMode;BattleSession.PlayerCountForNewMatch=previousPlayers;BattleSession.SeedForNewMatch=previousSeed;
             SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);
         }

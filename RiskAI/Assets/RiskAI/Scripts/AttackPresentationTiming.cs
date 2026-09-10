@@ -21,6 +21,7 @@ namespace RiskAI
                 case UnitKind.Mortar: return null;
                 case UnitKind.MarineMajor:
                 case UnitKind.MarineGeneral: return "2H_Melee_Attack_Slice";
+                case UnitKind.MarinePrivate:return "1H_Ranged_Shoot";
                 default: return "2H_Ranged_Shoot";
             }
         }

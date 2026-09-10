@@ -108,6 +108,42 @@ namespace RiskAI.Tests
             Assert.That(VisualFactory.ProjectilePoolCreatedCount,Is.EqualTo(created));
         }
 
+        [UnityTest]
+        public IEnumerator CrossbowBoltDealsDamageOnlyWhenItsVisibleFlightArrives()
+        {
+            var source=battle.Units.First(unit=>unit&&unit.Team==0&&unit.Kind==UnitKind.Archer);
+            var target=battle.Units.First(unit=>unit&&unit.Team==PlayerRules.NeutralTeam);
+            StopBackgroundCombat(source,target);source.enabled=false;target.enabled=false;
+            yield return new WaitForSecondsRealtime(.8f);
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.Zero);
+            float health=target.Health;
+            Vector3 launch=target.AimPoint+Vector3.left*8;
+            int projectile=battle.Combat.FireWeapon(launch,target.AimPoint,target,12,source.Team,source,
+                SourceWeapons.For(UnitKind.Archer,AttackKind.Piercing));
+            Assert.That(projectile,Is.GreaterThan(0));
+            Assert.That(target.Health,Is.EqualTo(health),"The bolt cannot deal damage before contact.");
+            Assert.That(battle.Combat.ActiveProjectileCount,Is.EqualTo(1));
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.EqualTo(1),"The simulated bolt needs a readable presentation view.");
+            yield return new WaitForSecondsRealtime(.7f);
+            Assert.That(target.Health,Is.LessThan(health),"Damage resolves when the bolt reaches its target.");
+            Assert.That(battle.Combat.ActiveProjectileCount,Is.Zero);
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.Zero);
+        }
+
+        [UnityTest]
+        public IEnumerator MarinePrivateHasItsOwnPiratePistolPresentation()
+        {
+            var marine=battle.Spawn(0,UnitKind.MarinePrivate,battle.Towns.First(t=>t.State.Owner==0).Rally);
+            Assert.That(marine,Is.Not.Null);
+            var parts=marine.GetComponentsInChildren<Transform>(true);
+            Assert.That(parts.Any(part=>part.name=="Marine private identity"),Is.True);
+            Assert.That(parts.Any(part=>part.name=="Short flintlock pistol"&&part.gameObject.activeInHierarchy),Is.True);
+            Assert.That(parts.Any(part=>part.name=="Tricorn crown"&&part.gameObject.activeInHierarchy),Is.True);
+            Assert.That(parts.Any(part=>part.name=="Rogue_Head_Hooded"&&part.gameObject.activeInHierarchy),Is.False);
+            Assert.That(parts.Any(part=>part.name=="2H_Crossbow"&&part.gameObject.activeInHierarchy),Is.False);
+            yield return null;
+        }
+
         void StopBackgroundCombat(CombatTarget keepA, CombatTarget keepB)
         {
             foreach (var tower in battle.Towers.ToArray())

@@ -39,6 +39,7 @@ namespace RiskAI
         {
             get
             {
+                if(sharesTown&&LinkedTown)return LinkedTown.PortLandEntry;
                 var landward=Landing-Berth;landward.y=0;
                 if(landward.sqrMagnitude<.01f)landward=Vector3.back;
                 else landward.Normalize();
@@ -71,7 +72,7 @@ namespace RiskAI
             world=naval;BuildingId=buildingId;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;landRally=LandEntry;lastOwner=Owner;
             var entrance=NavalArt.CreateHarbor(this);
             trainingView=BuildingTrainingView.Create(transform,entrance);
-            claimZone=new CityClaimZone(Landing);claimZone.AttachHarbor(this);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));claimRing.transform.position=Landing;
+            claimZone=new CityClaimZone(Landing);claimZone.AttachHarbor(this);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,CityClaimZone.RingWidth,CityClaimZone.RingColor);claimRing.transform.position=Landing;
             var towerObject=new GameObject("Torre de "+name);towerObject.transform.SetParent(transform,false);
             Vector3 direction=Berth-Landing;direction.y=0;direction=direction.sqrMagnitude>.001f?direction.normalized:Vector3.forward;
             // Opposite the harbormaster's house, with a clear silhouette and landing corridor.
@@ -99,8 +100,8 @@ namespace RiskAI
         }
         void CreateNavalClaimRing()
         {
-            navalClaimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));
-            navalClaimRing.transform.position=Berth;navalClaimRing.enabled=false;
+            navalClaimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,CityClaimZone.RingWidth,CityClaimZone.RingColor);
+            navalClaimRing.transform.position=Landing;navalClaimRing.enabled=false;
         }
         internal bool InitializeGarrison()
         {
@@ -132,11 +133,11 @@ namespace RiskAI
         }
         internal bool IsInBerthCircle(Vector3 point)=>FlatDistance(point,Berth)<=ClaimRules.CircleRadius*ClaimRules.CircleRadius;
         public bool IsShipDocked(Ship ship)=>ship&&FlatDistance(ship.transform.position,Berth)<=BerthRadius*BerthRadius;
-        internal bool CanSnapToBerth(Ship ship) => ship && ship.IsAlive && ship.Kind==ShipKind.Galley &&
+        internal bool CanSnapToBerth(Ship ship) => ship && ship.IsAlive && ship.Profile.CanCapture &&
             IsShipDocked(ship) && SeaNavigation.HasClearance(ship.transform.position) &&
             SeaNavigation.HasClearance(Berth) && SeaNavigation.ClearSegment(ship.transform.position,Berth);
         public bool HasLivingDefender=>Defender&&Defender.IsAlive;
-        public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Kind==ShipKind.Galley&&
+        public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Profile.CanCapture&&
             navalDefender.Team==Owner&&IsShipDocked(navalDefender)?navalDefender:null;
         public bool HasNavalDefender=>NavalDefender;
         public LineRenderer NavalClaimRing=>navalClaimRing;
@@ -154,7 +155,7 @@ namespace RiskAI
             Selected=selected;
             if(selectionRing)selectionRing.enabled=selected;
             if(rallyRing)rallyRing.enabled=selected&&Owner==0;
-            if(claimRing)claimRing.widthMultiplier=selected ? .11f : .065f;
+            if(claimRing)claimRing.widthMultiplier=selected ? .11f : CityClaimZone.RingWidth;
         }
         public bool SetRally(Vector3 target)
         {
@@ -170,9 +171,9 @@ namespace RiskAI
             if(navalClaimRing)
             {
                 navalClaimRing.enabled=navalGuard;
-                navalClaimRing.transform.position=Berth;
+                navalClaimRing.transform.position=Landing;
                 navalClaimRing.widthMultiplier=Selected ? .11f : .065f;
-                navalClaimRing.startColor=navalClaimRing.endColor=State.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,State.Capture*.65f);
+                navalClaimRing.startColor=navalClaimRing.endColor=CityClaimZone.VisibleRingColor(State.Contested);
             }
             if(sharesTown&&LinkedTown)LinkedTown.SetNavalClaimVisual(navalGuard);
         }
@@ -187,8 +188,7 @@ namespace RiskAI
             Ship best=null;float bestDistance=float.MaxValue;
             foreach(var ship in world.Ships)
             {
-                if(!ship||ship==excluded||!ship.IsAlive||ship.Kind!=ShipKind.Galley||
-                    ship.Garrison&&ship.Garrison!=this)continue;
+                if(!ship||ship==excluded||!ship.IsAlive||!ship.Profile.CanCapture||ship.Garrison&&ship.Garrison!=this)continue;
                 if(alliesOnly&&ship.Team!=owner)continue;
                 float distance=FlatDistance(ship.transform.position,Berth);
                 float radius=alliesOnly?ClaimRules.ReliefRadius:ship.Team==owner?ClaimRules.ProtectionRadius:ClaimRules.TakeoverRadius;
@@ -289,7 +289,7 @@ namespace RiskAI
             {
                 int owner=StepClaim(delta);
                 if(owner!=state.Owner){state.Owner=owner;Captured();}
-                claimRing.startColor=claimRing.endColor=state.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,state.Capture*.65f);
+                claimRing.startColor=claimRing.endColor=CityClaimZone.VisibleRingColor(state.Contested);
             }
             if(!sharesTown&&Defense&&Defense.UnderConstruction)
             {

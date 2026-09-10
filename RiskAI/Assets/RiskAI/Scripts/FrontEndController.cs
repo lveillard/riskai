@@ -25,6 +25,8 @@ namespace RiskAI
         RtsUiRuntime ui;
         VisualElement content;
         bool lastCompact;
+        ScenarioMap lastPressedMap;
+        double lastScenarioPressAt=double.NegativeInfinity;
 
         void Awake()
         {
@@ -154,8 +156,10 @@ namespace RiskAI
             if(!UiViewport.IsCompact){var seal=new RtsHeraldicSeal(2,RtsUiStyle.Gold);seal.style.width=62;seal.style.height=62;seal.style.marginRight=18;titleRow.Add(seal);}
             var title = RtsUiStyle.Title("DOMINIOS", null, UiViewport.IsCompact ? 24 : 34);
             title.style.flexGrow = 1; titleRow.Add(title);
+            var language=RtsUiStyle.Button(GameText.SwitchLabel,()=>{GameText.Toggle();Rebuild();},"Switch language");
+            language.style.minWidth=48;language.style.marginBottom=0;titleRow.Add(language);
             var version = RtsUiStyle.Label("v"+Application.version+" · CONQUISTA", null, UiViewport.IsCompact ? 11 : 13); version.style.marginLeft = 8; titleRow.Add(version); header.Add(titleRow);
-            var description = RtsUiStyle.Label("RISKAI  ·  Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.", null, 14); description.style.whiteSpace = WhiteSpace.Normal;description.style.color=RtsUiStyle.Muted; header.Add(description);
+            var description = RtsUiStyle.Label("Conquista territorial en tiempo real.", null, 14); description.style.whiteSpace = WhiteSpace.Normal;description.style.color=RtsUiStyle.Muted; header.Add(description);
             root.Add(header);
 
             var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "Front end scroll" };
@@ -214,6 +218,21 @@ namespace RiskAI
         {
             bool chosen = selectedMap == map;
             var button = RtsUiStyle.Button("", () => SelectMap(map), "Map " + map);
+            button.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                // WebGL does not report a reliable clickCount for emulated touch.
+                // Keep the gesture at controller level so rebuilding the selected
+                // card after the first press cannot lose the second one.
+                if(evt.button!=0||loading)return;
+                double now=Time.unscaledTimeAsDouble;
+                bool repeated=lastPressedMap==map&&now-lastScenarioPressAt<=.55;
+                lastPressedMap=map;lastScenarioPressAt=now;
+                if(!repeated)return;
+                lastScenarioPressAt=double.NegativeInfinity;
+                ApplyMapSelection(map);
+                StartBattle();
+                evt.StopImmediatePropagation();
+            },TrickleDown.TrickleDown);
             button.style.flexGrow = 1;
             if (UiViewport.IsCompact) { button.style.width = Length.Percent(100); button.style.marginRight = 0; }
             else { button.style.width=Length.Percent(47);button.style.minWidth=0; }
@@ -244,10 +263,15 @@ namespace RiskAI
 
         void SelectMap(ScenarioMap map)
         {
+            ApplyMapSelection(map);
+            Rebuild();
+        }
+
+        void ApplyMapSelection(ScenarioMap map)
+        {
             selectedMap = map;
             int maximum = MapLayout.MaximumPlayersForScenario(map);
             selectedPlayers = playersAdjusted ? Mathf.Clamp(selectedPlayers, 2, maximum) : maximum;
-            Rebuild();
         }
 
         void AdjustPlayers(int delta)
@@ -292,7 +316,7 @@ namespace RiskAI
         {
             bool imported = selectedMap == ScenarioMap.Europe || selectedMap == ScenarioMap.NewWorld;
             var row = NewFieldRow(parent, "RELIEVE IMPORTADO");
-            var toggle = new Toggle("Añadir cordilleras suaves a Europe y New World") { value = sourceMountains, name = "Source mountains" };
+            var toggle = new Toggle(GameText.Localize("Añadir cordilleras suaves a Europe y New World")) { value = sourceMountains, name = "Source mountains" };
             toggle.SetEnabled(imported); toggle.style.minHeight = 44;
             toggle.style.flexShrink=1;toggle.style.whiteSpace=WhiteSpace.Normal;toggle.style.maxWidth=Length.Percent(100);
             toggle.RegisterValueChangedCallback(change => sourceMountains = change.newValue); row.Add(toggle);

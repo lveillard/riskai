@@ -85,7 +85,7 @@ namespace RiskAI
         void RefreshVisuals()
         {
             upper.SetActive(IsAlive); scaffolding.SetActive(UnderConstruction);
-            banner.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamColor(Team));
+            banner.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamMaterialColor(Team));
             foreach(var roof in upper.GetComponentsInChildren<Renderer>())if(roof.name=="Faction roof")roof.sharedMaterial=WorldArt.RoofMaterial(Team);
         }
 

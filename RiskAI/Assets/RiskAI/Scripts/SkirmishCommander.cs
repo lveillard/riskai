@@ -39,7 +39,8 @@ namespace RiskAI
         readonly List<Soldier> reachable = new List<Soldier>(12);
         readonly List<Soldier> candidateReachable = new List<Soldier>(12);
         readonly List<OffensiveCandidate> offensiveCandidates = new List<OffensiveCandidate>(64);
-        readonly HashSet<int> ownedCountries = new HashSet<int>();
+        readonly Dictionary<int,int> countryTotals = new Dictionary<int,int>();
+        readonly Dictionary<int,int> countryOwned = new Dictionary<int,int>();
         readonly NavMeshPath offensivePath = new NavMeshPath();
         readonly float decisionPhase;
         float nextDecision;
@@ -231,7 +232,8 @@ namespace RiskAI
         struct OffensiveCandidate
         {
             public Settlement Town;
-            public bool JoinsCountry;
+            public int CountryTier;
+            public int RemainingCities;
             public float Distance;
             public int Order;
         }
@@ -310,11 +312,14 @@ namespace RiskAI
             center/=available.Count;
 
             bool neutralsRemain=false;
-            ownedCountries.Clear();
+            countryTotals.Clear();countryOwned.Clear();
             foreach(var town in session.Towns)
             {
                 if(town.State.Owner<0)neutralsRemain=true;
-                if(town.State.Owner==team && town.State.Country>=0)ownedCountries.Add(town.State.Country);
+                int country=town.State.Country;
+                if(country<0)continue;
+                countryTotals[country]=countryTotals.TryGetValue(country,out int total)?total+1:1;
+                if(town.State.Owner==team)countryOwned[country]=countryOwned.TryGetValue(country,out int owned)?owned+1:1;
             }
 
             offensiveCandidates.Clear();
@@ -322,9 +327,11 @@ namespace RiskAI
             foreach(var town in session.Towns)
             {
                 if(town.State.Owner==team || (session.BattleTime<=100 && town.State.Owner>=0 && neutralsRemain)){order++;continue;}
-                bool joinsCountry=town.State.Country>=0&&ownedCountries.Contains(town.State.Country);
+                int total=town.State.Country>=0&&countryTotals.TryGetValue(town.State.Country,out int foundTotal)?foundTotal:0;
+                int owned=town.State.Country>=0&&countryOwned.TryGetValue(town.State.Country,out int foundOwned)?foundOwned:0;
+                int remaining=Mathf.Max(0,total-owned);
                 float distance=Vector3.SqrMagnitude(town.transform.position-center);
-                offensiveCandidates.Add(new OffensiveCandidate { Town=town, JoinsCountry=joinsCountry, Distance=distance, Order=order });
+                offensiveCandidates.Add(new OffensiveCandidate { Town=town, CountryTier=CountryCompletionTier(total,owned), RemainingCities=remaining, Distance=distance, Order=order });
                 order++;
             }
             // This is the previous country-first, nearest-city policy expressed as
@@ -367,8 +374,15 @@ namespace RiskAI
 
         static int CompareOffensiveCandidates(OffensiveCandidate a,OffensiveCandidate b)
         {
-            if(a.JoinsCountry!=b.JoinsCountry)return a.JoinsCountry?-1:1;
+            int tier=a.CountryTier.CompareTo(b.CountryTier);if(tier!=0)return tier;
+            if(a.CountryTier<2){int remaining=a.RemainingCities.CompareTo(b.RemainingCities);if(remaining!=0)return remaining;}
             int distance=a.Distance.CompareTo(b.Distance);return distance!=0?distance:a.Order.CompareTo(b.Order);
+        }
+
+        public static int CountryCompletionTier(int total,int owned)
+        {
+            if(total<=0||owned<=0)return 2;
+            return total-owned<=1?0:1;
         }
 
         bool CanReachOffensiveTarget(Soldier unit,Vector3 point)

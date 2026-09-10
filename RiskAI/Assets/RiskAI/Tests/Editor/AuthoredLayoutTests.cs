@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using RiskAI.Core;
@@ -90,6 +91,41 @@ namespace RiskAI.Tests
             Assert.That(west,Is.GreaterThan(4));
             Assert.That(east,Is.GreaterThan(4));
             Assert.That(Mathf.Abs(west-east),Is.LessThan(3.2f),"Mirrored ridge relief should preserve comparable outer routes.");
+        }
+
+        [TestCase(ScenarioMap.Classic)]
+        [TestCase(ScenarioMap.Riverlands)]
+        public void EveryAuthoredCountryProducesOneContiguousVoronoiRegion(ScenarioMap map)
+        {
+            MapLayout.Configure(map);
+            const int width=145,height=225;
+            var labels=new int[width,height];
+            for(int x=0;x<width;x++)for(int z=0;z<height;z++)
+            {
+                float wx=Mathf.Lerp(-MapLayout.HalfWidth,MapLayout.HalfWidth,x/(float)(width-1));
+                float wz=Mathf.Lerp(-MapLayout.HalfDepth,MapLayout.HalfDepth,z/(float)(height-1));
+                labels[x,z]=TerritoryMarkers.CountryAt(new Vector3(wx,0,wz));
+            }
+            for(int country=0;country<MapLayout.Countries.Length;country++)
+            {
+                var seen=new bool[width,height];int components=0;
+                for(int x=0;x<width;x++)for(int z=0;z<height;z++)
+                {
+                    if(seen[x,z]||labels[x,z]!=country)continue;
+                    components++;var queue=new Queue<Vector2Int>();queue.Enqueue(new Vector2Int(x,z));seen[x,z]=true;
+                    while(queue.Count>0)
+                    {
+                        var point=queue.Dequeue();
+                        foreach(var step in new[]{Vector2Int.left,Vector2Int.right,Vector2Int.up,Vector2Int.down})
+                        {
+                            var next=point+step;
+                            if(next.x<0||next.x>=width||next.y<0||next.y>=height||seen[next.x,next.y]||labels[next.x,next.y]!=country)continue;
+                            seen[next.x,next.y]=true;queue.Enqueue(next);
+                        }
+                    }
+                }
+                Assert.That(components,Is.EqualTo(1),MapLayout.Countries[country].Name+" must render as one contiguous region.");
+            }
         }
 
         static float SampleLandArea()

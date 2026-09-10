@@ -25,8 +25,8 @@ namespace RiskAI.Tests
                     data.heightSamples[index]=2+Mathf.Sin((x-31)*.6f)+z*.2f;
                 }
                 var create=typeof(ImportedTerrain).GetMethod("CreateChunk",BindingFlags.Static|BindingFlags.NonPublic);
-                create.Invoke(null,new object[]{root.transform,resources,data,0,0,32,3,null,null});
-                create.Invoke(null,new object[]{root.transform,resources,data,32,0,32,3,null,null});
+                create.Invoke(null,new object[]{root.transform,resources,data,0,0,32,3,null});
+                create.Invoke(null,new object[]{root.transform,resources,data,32,0,32,3,null});
                 var left=root.transform.Find("Terrain 0,0").GetComponent<MeshFilter>().sharedMesh;
                 var right=root.transform.Find("Terrain 32,0").GetComponent<MeshFilter>().sharedMesh;
                 for(int z=0;z<height;z++)

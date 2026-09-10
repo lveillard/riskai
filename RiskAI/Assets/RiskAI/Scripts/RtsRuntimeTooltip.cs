@@ -286,7 +286,7 @@ namespace RiskAI
                 CancelNativePress();
             }
             label.style.maxWidth=Mathf.Max(1,Mathf.Min(MaximumWidth,root.worldBound.width-Edge*2));
-            label.text = pendingText;
+            label.text = GameText.Localize(pendingText);
             label.BringToFront();
             label.style.display = DisplayStyle.Flex;
             Place();

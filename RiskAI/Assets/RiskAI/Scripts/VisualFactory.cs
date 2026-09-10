@@ -133,6 +133,10 @@ namespace RiskAI
         };
         static readonly string[] PlayerColorNames = {"Rojo","Azul","Turquesa","Violeta","Amarillo","Naranja","Verde","Rosa","Gris","Azul claro","Verde oscuro","Marrón","Granate","Azul marino","Cian","Magenta"};
         public static Color TeamColor(int team) => PlayerRules.IsPlayer(team)?PlayerColors[team]:Color.white;
+        // Shader constants are linear in this project. Converting the canonical WC3
+        // sRGB code prevents dark colours such as maroon from being gamma-lifted
+        // toward bright red on roofs, cloth and strategic proxies.
+        public static Color TeamMaterialColor(int team) => QualitySettings.activeColorSpace==ColorSpace.Linear?TeamColor(team).linear:TeamColor(team);
         public static string TeamName(int team) => !PlayerRules.IsPlayer(team)?"Neutral":(team==0?"Tú":"IA "+team)+" · "+PlayerColorNames[team];
         public static Material Mat(Color color)
         {
@@ -228,7 +232,7 @@ namespace RiskAI
         public static void Road(Transform root,Vector3 from,Vector3 to,float width) => WorldArt.Road(from,to,width);
         public static void Soldier(Soldier soldier)
         {
-            var root=soldier.transform; var team=TeamColor(soldier.Team);
+            var root=soldier.transform; var team=TeamMaterialColor(soldier.Team);
             WorldArt.GroundShadow(root,new Vector3(.07f,.045f,.1f),new Vector2(1.1f,.95f));
             if(soldier.Kind==UnitKind.Guard)
             {
@@ -248,6 +252,7 @@ namespace RiskAI
                 model.transform.localScale*=VisualMetrics.UnitScale;
                 ModelMetrics.MatchStandingHeight(model,soldier.Kind);
                 UnitTeamColor.Apply(model,soldier.Kind,soldier.Team);
+                if(soldier.Kind==UnitKind.MarinePrivate)MarinePrivateView.Apply(model,soldier.Team);
                 soldier.gameObject.AddComponent<SoldierAnimator>().Initialize(soldier,model);
                 Ring(root,Mathf.Max(.33f,SourceGeometry.AgentRadius(soldier.Kind)*1.1f),.022f,team);return;
             }
@@ -282,27 +287,23 @@ namespace RiskAI
         public static void MortarModel(Transform root,Color team) => MortarModel(root,team,null);
         public static void MortarModel(Transform root,Color team,Soldier soldier)
         {
-            // A human gunner reads at unit scale; the short, flared hand-cannon is not a carriage.
-            Color brass=new Color(.57f,.38f,.14f), steel=new Color(.34f,.37f,.38f), leather=new Color(.20f,.115f,.055f), skin=new Color(.80f,.57f,.36f);
-            Shape(root,PrimitiveType.Capsule,"Mortar gunner coat",new Vector3(0,1.13f,0),new Vector3(.68f,.48f,.43f),team*.82f);
-            Shape(root,PrimitiveType.Cube,"Mortar gunner team cloth",new Vector3(0,1.14f,.25f),new Vector3(.48f,.60f,.055f),team);
-            Shape(root,PrimitiveType.Sphere,"Mortar gunner head",new Vector3(0,1.78f,.035f),new Vector3(.43f,.46f,.42f),skin);
-            Shape(root,PrimitiveType.Cylinder,"Mortar gunner helmet",new Vector3(0,2.00f,.01f),new Vector3(.47f,.18f,.47f),steel);
+            // Restore the compact wheeled mortar silhouette used by the original prototype.
+            // It still participates in the shared strategic LOD like every other unit.
+            Color metal=new Color(.52f,.56f,.61f),wood=new Color(.32f,.19f,.09f);
+            Shape(root,PrimitiveType.Cube,"Oak carriage",new Vector3(0,.42f,0),new Vector3(.86f,.24f,.94f),wood);
+            Shape(root,PrimitiveType.Cube,"Faction panel",new Vector3(0,.56f,-.28f),new Vector3(.78f,.16f,.16f),team);
             for(int side=-1;side<=1;side+=2)
             {
-                var leg=new GameObject("Mortar leg pivot");leg.transform.SetParent(root,false);leg.transform.localPosition=new Vector3(side*.18f,.78f,-.03f);
-                Shape(leg.transform,PrimitiveType.Capsule,"Mortar gunner boot",new Vector3(0,-.34f,.03f),new Vector3(.25f,.37f,.28f),leather);
-                if(soldier){if(side<0)soldier.LeftLeg=leg.transform;else soldier.RightLeg=leg.transform;}
-                Shape(root,PrimitiveType.Capsule,"Mortar gunner arm",new Vector3(side*.36f,1.28f,.18f),new Vector3(.19f,.32f,.21f),team*.76f);
+                var wheel=Shape(root,PrimitiveType.Cylinder,"Iron bound wheel",new Vector3(side*.52f,.34f,0),new Vector3(.64f,.09f,.64f),wood);
+                wheel.transform.localRotation=Quaternion.Euler(0,0,90);
+                var hub=Shape(root,PrimitiveType.Cylinder,"Iron wheel hub",new Vector3(side*.63f,.34f,0),new Vector3(.18f,.025f,.18f),metal);
+                hub.transform.localRotation=Quaternion.Euler(0,0,90);
             }
-            var cannon=new GameObject("Hand cannon pivot");cannon.transform.SetParent(root,false);cannon.transform.localPosition=new Vector3(.18f,1.34f,.26f);cannon.transform.localRotation=Quaternion.Euler(76,0,0);
-            Shape(cannon.transform,PrimitiveType.Cylinder,"Bronze hand cannon",new Vector3(0,.28f,0),new Vector3(.19f,.38f,.19f),brass);
-            Shape(cannon.transform,PrimitiveType.Cylinder,"Flared hand cannon muzzle",new Vector3(0,.62f,0),new Vector3(.29f,.16f,.29f),brass);
-            Shape(cannon.transform,PrimitiveType.Cylinder,"Hand cannon bore",new Vector3(0,.705f,0),new Vector3(.20f,.008f,.20f),new Color(.018f,.015f,.01f));
-            Shape(cannon.transform,PrimitiveType.Cube,"Hand cannon stock",new Vector3(0,-.13f,0),new Vector3(.13f,.31f,.13f),leather);
-            Shape(root,PrimitiveType.Sphere,"Gunner forward hand",new Vector3(.25f,1.42f,.26f),new Vector3(.18f,.16f,.18f),skin);
-            Shape(root,PrimitiveType.Sphere,"Gunner rear hand",new Vector3(.09f,1.27f,.18f),new Vector3(.18f,.16f,.18f),skin);
-            if(soldier)soldier.Weapon=cannon.transform;
+            var pivot=new GameObject("Mortar barrel");pivot.transform.SetParent(root,false);pivot.transform.localPosition=new Vector3(0,.54f,.03f);pivot.transform.localRotation=Quaternion.Euler(43,0,0);
+            Shape(pivot.transform,PrimitiveType.Cylinder,"Cast iron tube",new Vector3(0,.35f,0),new Vector3(.36f,.43f,.36f),metal);
+            Shape(pivot.transform,PrimitiveType.Cylinder,"Brass muzzle rim",new Vector3(0,.75f,0),new Vector3(.44f,.065f,.44f),new Color(.57f,.43f,.21f));
+            Shape(pivot.transform,PrimitiveType.Cylinder,"Bore",new Vector3(0,.818f,0),new Vector3(.31f,.003f,.31f),new Color(.025f,.026f,.023f));
+            if(soldier)soldier.Weapon=pivot.transform;
         }
         public static void Arrow(Vector3 from, Vector3 to, CombatTarget target=null, float damage=0, int team=0, CombatTarget source=null, AttackKind attack=AttackKind.Piercing)
         {
@@ -334,6 +335,13 @@ namespace RiskAI
             if (!fxRoot || projectilePool == null) FxRoot();
             var view = projectilePool.Rent();
             if (view) view.Init(session, projectileId, from, to, duration, attack);
+        }
+
+        public static void InstantProjectileView(Vector3 from, Vector3 to, AttackKind attack)
+        {
+            if (!fxRoot || projectilePool == null) FxRoot();
+            var view = projectilePool.Rent();
+            if (view) view.InitVisual(from, to, attack);
         }
 
         sealed class ProjectilePool
@@ -475,10 +483,12 @@ namespace RiskAI
             var rootRenderer=GetComponent<Renderer>();if(rootRenderer)rootRenderer.enabled=false;
             Color wood=new Color(.30f,.16f,.065f),metal=new Color(.72f,.76f,.79f),feather=new Color(.84f,.73f,.46f);
             piercingView=Group(transform,"Piercing projectile");
-            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",Vector3.zero,new Vector3(.035f,.035f,.48f),wood);
-            var tip=Part(piercingView,PrimitiveType.Capsule,"Bolt metal point",new Vector3(0,0,.30f),new Vector3(.07f,.13f,.07f),metal);tip.transform.localRotation=Quaternion.Euler(90,0,0);
-            Part(piercingView,PrimitiveType.Cube,"Bolt fletching top",new Vector3(0,.045f,-.22f),new Vector3(.10f,.018f,.10f),feather);
-            Part(piercingView,PrimitiveType.Cube,"Bolt fletching side",new Vector3(.045f,0,-.22f),new Vector3(.018f,.10f,.10f),feather);
+            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",Vector3.zero,new Vector3(.09f,.09f,.92f),wood);
+            var tip=Part(piercingView,PrimitiveType.Capsule,"Bolt metal point",new Vector3(0,0,.54f),new Vector3(.13f,.21f,.13f),metal);tip.transform.localRotation=Quaternion.Euler(90,0,0);
+            var streak=Part(piercingView,PrimitiveType.Cube,"Bright bolt streak",new Vector3(0,0,-.08f),new Vector3(.11f,.11f,.94f),feather);
+            streak.sharedMaterial=VisualFactory.EmissiveMat(new Color(1f,.78f,.30f),.65f);
+            Part(piercingView,PrimitiveType.Cube,"Bolt fletching top",new Vector3(0,.09f,-.43f),new Vector3(.19f,.03f,.17f),feather);
+            Part(piercingView,PrimitiveType.Cube,"Bolt fletching side",new Vector3(.09f,0,-.43f),new Vector3(.03f,.19f,.17f),feather);
 
             magicView=Group(transform,"Magic projectile");
             Part(magicView,PrimitiveType.Sphere,"Arcane orb",Vector3.zero,Vector3.one*.22f,new Color(.42f,.55f,1f));
@@ -531,6 +541,11 @@ namespace RiskAI
             if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);
         }
 
+        internal void InitVisual(Vector3 a,Vector3 b,AttackKind kind)
+        {
+            Init(a,b,null,0,0,null,kind);
+        }
+
         public void Init(Vector3 a,Vector3 b,CombatTarget victim,float hit,int attacker,CombatTarget shooter,bool arcane)
         { Init(a,b,victim,hit,attacker,shooter,arcane?AttackKind.Magic:AttackKind.Piercing); }
         public void Init(Vector3 a,Vector3 b,CombatTarget victim,float hit,int attacker,CombatTarget shooter,AttackKind kind)
@@ -570,7 +585,11 @@ namespace RiskAI
                 {
                     VisualFactory.ConfigureProjectile(this, attack);
                 }
-                SetPosition(state.Progress);
+                Vector3 previous=transform.position;
+                transform.position=state.Position;
+                Vector3 direction=state.Position-previous;
+                if(direction.sqrMagnitude<.0001f)direction=state.To-state.Position;
+                if(direction.sqrMagnitude>.0001f)transform.rotation=Quaternion.LookRotation(direction);
                 return;
             }
 
@@ -689,4 +708,3 @@ namespace RiskAI
         void OnDestroy() { VisualFactory.Forget(this); }
     }
 }
-

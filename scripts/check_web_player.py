@@ -54,6 +54,8 @@ def main():
                         help='Diagnostic only: freeze legacy unit animation while keeping unit and ship renderers visible.')
     parser.add_argument('--bake-unit-skins', action='store_true',
                         help='Diagnostic only: replace frozen unit skins with static baked meshes while retaining materials and simulation.')
+    parser.add_argument('--disable-unit-lod', action='store_true',
+                        help='Diagnostic control: retain detailed unit models at strategic zoom.')
     args = parser.parse_args()
     if args.probe and args.restart:
         parser.error('Choose one measurement type per browser session.')
@@ -77,6 +79,8 @@ def main():
         parser.error('--disable-unit-animation requires --probe.')
     if args.bake_unit_skins and not args.probe:
         parser.error('--bake-unit-skins requires --probe.')
+    if args.disable_unit_lod and not args.probe:
+        parser.error('--disable-unit-lod requires --probe.')
     if sum((args.no_unit_shadows, args.hide_unit_renderers, args.disable_unit_animation, args.bake_unit_skins)) > 1:
         parser.error('Choose one unit-presentation diagnostic per probe.')
     if not 100 <= args.path_budget <= 2000:
@@ -102,6 +106,8 @@ def main():
         query['riskai-probe-disable-unit-animation'] = 1
     if args.bake_unit_skins:
         query['riskai-probe-bake-unit-skins'] = 1
+    if args.disable_unit_lod:
+        query['riskai-disable-unit-lod'] = 1
     if args.restart:
         query.update({'riskai-restart-probe': 1, 'riskai-restart-cycles': 3})
     url = args.url.rstrip('/') + '/?' + urlencode(query)
@@ -112,7 +118,8 @@ def main():
               'minimap_hidden': args.hide_minimap, 'browser_metrics_requested': args.browser_metrics,
               'cpu_profile_requested': args.cpu_profile, 'frame_trace': args.frame_trace,
               'unit_shadows_disabled': args.no_unit_shadows, 'unit_renderers_hidden': args.hide_unit_renderers,
-              'unit_animation_disabled': args.disable_unit_animation, 'unit_skins_baked': args.bake_unit_skins}
+              'unit_animation_disabled': args.disable_unit_animation, 'unit_skins_baked': args.bake_unit_skins,
+              'unit_lod_disabled': args.disable_unit_lod}
     started = time.monotonic()
     with (args.output / 'console.log').open('w', encoding='utf-8') as log, sync_playwright() as p:
         browser = p.chromium.launch(channel='msedge', headless=not args.headed)

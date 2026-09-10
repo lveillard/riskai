@@ -35,12 +35,20 @@ namespace RiskAI.Tests
                 renderer.sharedMaterial=source;
                 UnitTeamColor.Apply(root,RiskAI.Core.UnitKind.Archer,12);
                 var canonical=VisualFactory.TeamColor(12);
-                Assert.That(renderer.sharedMaterial.GetColor("_TeamColor"),Is.EqualTo(canonical));
-                Assert.That(WorldArt.RoofMaterial(12).GetColor("_Tint"),Is.EqualTo(canonical));
+                var surface=VisualFactory.TeamMaterialColor(12);
+                Assert.That(Vector4.Distance(renderer.sharedMaterial.GetColor("_TeamColor"),surface),Is.LessThan(.00001f));
+                Assert.That(Vector4.Distance(WorldArt.RoofMaterial(12).GetColor("_Tint"),surface),Is.LessThan(.00001f));
                 Assert.That(canonical.maxColorComponent,Is.LessThan(VisualFactory.TeamColor(0).maxColorComponent-.3f),
                     "WC3 red and maroon must retain their visible brightness gap on every faction surface.");
             }
             finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void ClaimCirclesStayWhiteIndependentlyOfPlayerColour()
+        {
+            Assert.That(CityClaimZone.VisibleRingColor(false),Is.EqualTo(Color.white));
+            Assert.That(CityClaimZone.VisibleRingColor(true),Is.EqualTo(CityClaimZone.ContestedRingColor));
         }
     }
 }

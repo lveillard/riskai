@@ -28,12 +28,13 @@ namespace RiskAI.Tests
             SceneManager.SetActiveScene(scene);
             new GameObject("AI pacing bootstrap").AddComponent<RiskBootstrap>();
             battle = BattleSession.Current;
+            battle.AiEnabled = false;
             Object.FindFirstObjectByType<RtsController>().enabled = false;
             yield return null;
         }
 
         [UnityTest]
-        public IEnumerator RelaxedDelaysRecruitmentAndKeepsTheOneArcherPerPostStart()
+        public IEnumerator RelaxedStartsRecruitingImmediatelyAndKeepsOneArcherPerPost()
         {
             battle.AiEnabled = true;
             int startingGold = battle.Economy.Gold[1];
@@ -59,14 +60,13 @@ namespace RiskAI.Tests
 
             Time.timeScale = 10;
             yield return ReachBattleTime(29);
-            Assert.That(battle.Economy.Gold[1], Is.EqualTo(startingGold));
-            Assert.That(battle.Towns.All(t => t.QueueCount == 0), Is.True);
-            Assert.That(battle.Units.Where(u => u && u.Team == 1 && u.IsAlive).All(u => !u.CurrentTarget && (!u.Agent || !u.Agent.hasPath)), Is.True);
+            Assert.That(battle.Economy.Gold[1], Is.LessThan(startingGold),"Even relaxed AI starts acting instead of waiting through an empty opening.");
+            Assert.That(battle.Towns.Any(t => t.QueueCount > 0)||battle.Units.Count(u=>u&&u.Team==1&&!u.IsGarrison)>0,Is.True);
             Assert.That(garrisonPositions.All(item => item.Unit && Vector3.Distance(item.Unit.transform.position, item.Position) < .05f), Is.True);
         }
 
         [UnityTest]
-        public IEnumerator RelaxedFirstTickQueuesAtMostOneTown()
+        public IEnumerator RelaxedOpeningSpendsOneUnitPerDecision()
         {
             battle.AiEnabled = true;
             Time.timeScale = 10;
@@ -75,9 +75,10 @@ namespace RiskAI.Tests
             yield return ReachBattleTime(30.2f); // Just after the first 30-second AI tick.
             int queued = battle.Towns.Sum(t => t.QueueCount);
             int trained = battle.Population(1) - startingPopulation;
-            Assert.That(startingGold - battle.Economy.Gold[1], Is.EqualTo(1));
-            Assert.That(queued + trained, Is.EqualTo(1));
-            Assert.That(battle.Towns.Count(t => t.QueueCount > 0), Is.LessThanOrEqualTo(1));
+            int purchases=startingGold-battle.Economy.Gold[1];
+            Assert.That(purchases,Is.InRange(2,3));
+            Assert.That(queued + trained, Is.LessThanOrEqualTo(purchases),"A recruit may already have died after the immediate opening attack.");
+            Assert.That(battle.Towns.Count(t => t.QueueCount > 0), Is.LessThanOrEqualTo(purchases));
         }
 
         [UnityTest]

@@ -20,6 +20,9 @@ namespace RiskAI
         public CityClaimZone ClaimZone { get; private set; }
         public Soldier Defender => ClaimZone != null ? ClaimZone.Defender : null;
         public Vector3 ClaimPoint { get; private set; }
+        public Vector3 PortBuildingPoint { get; private set; }
+        public Vector3 PortSeaward { get; private set; }
+        public Vector3 PortLandEntry { get; private set; }
         // Town architecture faces south; this is beyond its entrance steps and
         // outside the solid hall, independent of the owning team.
         public Vector3 DefaultLandEntry => transform.position + Vector3.back * 4f;
@@ -37,7 +40,7 @@ namespace RiskAI
                 selected=value;
                 if(SelectionRing)SelectionRing.enabled=value;
                 if(rallyRing)rallyRing.enabled=value&&State!=null&&State.Owner==0;
-                if(Ring)Ring.widthMultiplier=value?.10f:.065f;
+                if(Ring)Ring.widthMultiplier=value?.10f:CityClaimZone.RingWidth;
             }
         }
         public bool Building => project != BuildingProject.None;
@@ -64,12 +67,20 @@ namespace RiskAI
             Rally = DefaultLandEntry;
             Vector3 claimProbe = transform.position + new Vector3(0, 0, -4.2f);
             ClaimPoint = sourceClaim ?? MapLayout.Point(claimProbe.x, claimProbe.z);
+            PortBuildingPoint=transform.position;PortSeaward=Vector3.forward;PortLandEntry=DefaultLandEntry;
+            if(IsPort&&MapLayout.IsImported)
+            {
+                var anchors=ImportedPortLayout.Resolve(transform.position,ClaimPoint);
+                // ClaimPoint stays at the exact source B00R coordinate. Only the
+                // presentation and land access adapt to the coastline.
+                PortBuildingPoint=anchors.Building;PortLandEntry=anchors.Shore;PortSeaward=anchors.Seaward;
+            }
             ClaimZone = new CityClaimZone(ClaimPoint);
             session.Towns.Add(this); session.Economy.Towns.Add(State);
             BuildingEntranceAnchor entrance;
             if(IsPort)
             {
-                var visual=NavalArt.CreateHarborBuilding(transform,owner,transform.position,ClaimPoint-transform.position,true);
+                var visual=NavalArt.CreateHarborBuildingCentered(transform,owner,PortBuildingPoint,PortSeaward,true);
                 flag=visual.Flag;entrance=visual.Entrance;
             }
             else
@@ -77,12 +88,13 @@ namespace RiskAI
                 flag = VisualFactory.Town(transform, owner, capital && !MapLayout.IsImported);
                 entrance=BuildingEntranceAnchor.Find(transform);
             }
-            Ring = VisualFactory.Ring(transform, CityClaimZone.DefaultHalfExtent, .055f, new Color(.5f,1,.55f));
+            Ring = VisualFactory.Ring(transform, CityClaimZone.DefaultHalfExtent, CityClaimZone.RingWidth, CityClaimZone.RingColor);
             Ring.transform.position = ClaimPoint; Ring.enabled=false;
             var towerObject = new GameObject("Torre de " + displayName);
             towerObject.transform.SetParent(transform, false);
             towerObject.transform.localPosition = new Vector3(transform.position.x < 0 ? 3.8f : -3.8f, 0, 0);
             if(sourceClaim.HasValue) towerObject.transform.position=ImportedTowerPoint();
+            if(IsPort&&MapLayout.IsImported)towerObject.transform.rotation=Quaternion.LookRotation(PortSeaward);
             Defense = towerObject.AddComponent<DefenseTower>(); Defense.Initialize(session, this, true);
             SelectionRing=BuildingSelection.CreateRing(this);
             var rallyObject = new GameObject("Punto de reunión"); rallyObject.transform.SetParent(transform, false);
@@ -93,6 +105,7 @@ namespace RiskAI
 
         Vector3 ImportedTowerPoint()
         {
+            if(IsPort)return ImportedPortLayout.Resolve(transform.position,ClaimPoint).Tower;
             Vector3 away=transform.position-ClaimPoint;away.y=0;away.Normalize();
             Vector3 fallback=transform.position+away*3.8f;
             // Rotate our added tower, keeping both source city and circle XY intact.
@@ -221,7 +234,7 @@ namespace RiskAI
                 session.Economy.Refund(projectOwner, project == BuildingProject.Tower ? BattleRules.TowerCost : BattleRules.UpgradeCost);
                 project = BuildingProject.None; Defense.CancelBuild();
             }
-            flag.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamColor(State.Owner)); Defense.ChangeOwner();
+            flag.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamMaterialColor(State.Owner)); Defense.ChangeOwner();
             foreach(var roof in GetComponentsInChildren<Renderer>())if(roof.name=="Faction roof"&&!roof.GetComponentInParent<DefenseTower>())roof.sharedMaterial=WorldArt.RoofMaterial(State.Owner);
             session.Message((State.Owner < 0 ? "Queda neutral " : State.Owner == 0 ? "Has conquistado " : VisualFactory.TeamName(State.Owner) + " ha conquistado ") + DisplayName);
             if (State.Owner >= 0 && State.Country >= 0 && session.Economy.CountryOwner(State.Country) == State.Owner)
@@ -232,8 +245,8 @@ namespace RiskAI
             SelectionRing.enabled=Selected;
             rallyRing.enabled = Selected && State.Owner == 0;
             Ring.enabled = !navalClaimVisual;
-            Ring.startColor = Ring.endColor = State.Contested ? new Color(1,.7f,.15f) : Color.Lerp(VisualFactory.TeamColor(State.Owner),Color.white,State.Capture*.65f);
-            Ring.widthMultiplier = Selected ? .10f : .065f;
+            Ring.startColor = Ring.endColor = CityClaimZone.VisibleRingColor(State.Contested);
+            Ring.widthMultiplier = Selected ? .10f : CityClaimZone.RingWidth;
         }
         public void SimTick(float delta)
         {
@@ -264,7 +277,7 @@ namespace RiskAI
                 if (session.RecruitmentPopulation(first.Team) < BattleRules.PopulationLimit)
                 {
                     Vector3 spawn = IsPort && Port ? Port.LandEntry : DefaultLandEntry;
-                    var unit = session.Spawn(first.Team, first.Kind, spawn);
+                    var unit = session.SpawnSeparated(first.Team, first.Kind, spawn);
                     if (unit) { queue.RemoveAt(0); unit.MoveTo(Rally, true, false); }
                     else { queue.RemoveAt(0); session.Economy.Refund(first.Team, BattleRules.Cost(first.Kind)); }
                 }

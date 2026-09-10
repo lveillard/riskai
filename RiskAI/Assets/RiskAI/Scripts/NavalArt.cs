@@ -63,7 +63,7 @@ namespace RiskAI
             }
             var mesh=resources.Track(new Mesh{name="Wind filled team sail"});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();
             var go=new GameObject("Team sail");go.transform.SetParent(root,false);go.AddComponent<MeshFilter>().sharedMesh=mesh;
-            var cloth=resources.Track(new Material(VisualFactory.Mat(Color.Lerp(VisualFactory.TeamColor(team),Color.white,war?.08f:.35f))));cloth.SetFloat("_Cull",0);go.AddComponent<MeshRenderer>().sharedMaterial=cloth;
+            var cloth=resources.Track(new Material(VisualFactory.Mat(Color.Lerp(VisualFactory.TeamMaterialColor(team),Color.white,war?.08f:.35f))));cloth.SetFloat("_Cull",0);go.AddComponent<MeshRenderer>().sharedMaterial=cloth;
             for(int side=-1;side<=1;side+=2)Beam(root,new(side*1.08f,1.55f,-.15f),new(side*1.36f,4.3f,-.15f),.045f,new Color(1.9f,1.6f,1));
             // Ivory standard reads at the strategic zoom without covering the team-coloured cloth.
             Block(root,"Sail heraldry",new(0,2.9f,.405f),new(.2f,1.15f,.025f),0,new Color(1.6f,1.5f,1.15f));
@@ -76,7 +76,7 @@ namespace RiskAI
         }
         public static void CreatePierDeck(Transform parent,Vector3 from,Vector3 to,float width,string label,bool walkable,bool trim=true,float surfaceLift=0)
         {
-            var direction=to-from;float length=Mathf.Max(width,direction.magnitude+2);
+            var direction=to-from;float length=Mathf.Max(width,direction.magnitude+.5f);
             var rotation=direction.sqrMagnitude>.02f?Quaternion.LookRotation(direction):Quaternion.identity;
             var go=new GameObject(label);go.transform.SetParent(parent,false);go.transform.SetPositionAndRotation((from+to)*.5f,rotation);
             go.layer=MapLayout.TerrainLayer;
@@ -150,8 +150,19 @@ namespace RiskAI
             var barrel=VisualFactory.Shape(root,PrimitiveType.Cylinder,"Dockside barrel",new(2.05f,.43f,.9f),new(.48f,.62f,.48f),Color.white);barrel.GetComponent<Renderer>().sharedMaterial=WorldArt.Painted(2,new Color(.75f,.48f,.24f),.45f);
             Beam(root,new(houseX+1.65f,0,houseZ+.3f),new(houseX+1.65f,4.25f,houseZ+.3f),.12f);
             var flag=Block(root,"Harbor standard",new(houseX+2.22f,3.63f,houseZ+.3f),new(1.08f,.82f,.07f),0).GetComponent<Renderer>();
-            flag.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamColor(owner));
+            flag.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamMaterialColor(owner));
             return new HarborVisual(root,entrance,roof,flag);
+        }
+
+        public static HarborVisual CreateHarborBuildingCentered(Transform parent,int owner,Vector3 houseCenter,Vector3 waterward,bool solid)
+        {
+            waterward.y=0;if(waterward.sqrMagnitude<.01f)waterward=Vector3.forward;else waterward.Normalize();
+            Quaternion rotation=Quaternion.LookRotation(waterward);
+            // The shared model leaves its central pier lane open by keeping the
+            // house at local (-2.15, 0, -.3). Translate that root so the actual
+            // house footprint, rather than its pivot, is centered on firm land.
+            Vector3 root=houseCenter-rotation*new Vector3(-2.15f,0,-.3f);
+            return CreateHarborBuilding(parent,owner,root,waterward,solid);
         }
 
         public static BuildingEntranceAnchor CreateHarbor(Harbor harbor)
@@ -176,6 +187,6 @@ namespace RiskAI
     public sealed class HarborAppearance:MonoBehaviour
     {
         Harbor harbor;Renderer roof,flag;int owner=-9;public void Initialize(Harbor h,Renderer r,Renderer f){harbor=h;roof=r;flag=f;Refresh();}
-        void Update(){if(owner!=harbor.Owner)Refresh();}void Refresh(){owner=harbor.Owner;roof.sharedMaterial=WorldArt.RoofMaterial(owner);flag.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamColor(owner));}
+        void Update(){if(owner!=harbor.Owner)Refresh();}void Refresh(){owner=harbor.Owner;roof.sharedMaterial=WorldArt.RoofMaterial(owner);flag.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamMaterialColor(owner));}
     }
 }

@@ -77,22 +77,16 @@ namespace RiskAI
         }
         void AddImportedHarbor(Settlement town)
         {
-            var outward=town.ClaimPoint-town.transform.position;outward.y=0;
-            if(outward.sqrMagnitude<.01f)outward=Vector3.forward;else outward.Normalize();
-            // Imported claim circles are authored at waterfront coordinates.  Their
-            // gameplay deck is walkable, so launch from beyond it instead of finding
-            // the nearest water directly under the defender.
-            var probe=town.ClaimPoint+outward*6f;
-            bool found=SeaNavigation.TryNearestOcean(probe,30f,out var berth);
+            var outward=town.PortSeaward;
+            // Warcraft's B00R post is amphibious. Keep that exact circle and find
+            // a hull-safe point inside its capture radius instead of inventing a
+            // second offshore objective.
+            var probe=town.ClaimPoint+outward*.5f;
+            bool found=SeaNavigation.TryNearestOcean(probe,ClaimRules.TakeoverRadius-.5f,out var berth);
             if(!found)berth=new Vector3(probe.x,-.24f,probe.z);
             var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;
             var harbor=go.AddComponent<Harbor>();
             harbor.InitializeImported(this,new BuildingId(BuildingKind.Harbor,"imported/"+town.State.Id),town,berth,found?null:"El puerto no tiene una salida marítima segura.");
-            // The imported map supplies a city-to-claim quay, while the safe naval
-            // berth may be farther offshore. Join both anchors with the same deck
-            // primitive used by authored harbors so the usable berth stays visible.
-            NavalArt.CreatePierDeck(harbor.transform,town.ClaimPoint+Vector3.up*.15f,berth+Vector3.up*.15f,
-                3.15f,"Harbor berth pier",false,true,.03f);
             Harbors.Add(harbor);AddEmbarkZone(harbor);
         }
         void AddHarbor(BuildingId buildingId,string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
@@ -137,7 +131,7 @@ namespace RiskAI
         public bool TryOrderEmbarkAt(Ship ship,Soldier soldier,Harbor harbor,out string error)
         {
             error=null;
-            if(!ship||!ship.IsAlive||ship.Kind!=ShipKind.Transport){error="Selecciona un transporte.";return false;}
+            if(!ship||!ship.IsAlive||!ship.Profile.CanTransport){error="Selecciona un transporte.";return false;}
             if(!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=ship.Team){error="Selecciona una tropa móvil aliada.";return false;}
             if(!harbor||harbor.Owner!=ship.Team||!harbor.TryTransportLanding(out var landing,out var berth))
             {error="El puerto no tiene una playa o pasarela al alcance del transporte.";return false;}
@@ -150,7 +144,7 @@ namespace RiskAI
         public bool TryPlanEmbark(Ship ship,IReadOnlyList<Soldier> soldiers,out Vector3 landing,out Vector3 berth,out string error)
         {
             landing=default;berth=default;error=null;
-            if(!ship||!ship.IsAlive||ship.Kind!=ShipKind.Transport){error="Selecciona un transporte.";return false;}
+            if(!ship||!ship.IsAlive||!ship.Profile.CanTransport){error="Selecciona un transporte.";return false;}
             if(soldiers==null||soldiers.Count==0){error="Selecciona soldados para embarcar.";return false;}
             Harbor best=null;float score=float.MaxValue;
             foreach(var harbor in Harbors)
@@ -170,7 +164,7 @@ namespace RiskAI
         }
         public string OrderDisembark(Ship ship,Harbor harbor)
         {
-            if(!ship||ship.Kind!=ShipKind.Transport)return "Selecciona un transporte.";
+            if(!ship||!ship.Profile.CanTransport)return "Selecciona un transporte.";
             if(!harbor)return "Elige una playa o muelle de desembarco marcado.";
             ship.SailToHarbor(harbor);
             return string.IsNullOrEmpty(ship.LastActionError)?"El transporte navega al desembarco marcado.":ship.LastActionError;
@@ -239,7 +233,7 @@ namespace RiskAI
             if(fleet<2&&Session.Economy.Gold[team]>=Harbor.Cost(ShipKind.Galley))
                 foreach(var harbor in Harbors)
                     if(harbor.Owner==team&&harbor.QueueCount==0&&buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Galley))==null)break;
-            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Galley&&!ship.IsGarrison&&!ship.CurrentTarget)
+            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Profile.CanAttack&&!ship.IsGarrison&&!ship.CurrentTarget)
             {
                 Harbor target=null;float distance=float.MaxValue;
                 foreach(var harbor in Harbors)

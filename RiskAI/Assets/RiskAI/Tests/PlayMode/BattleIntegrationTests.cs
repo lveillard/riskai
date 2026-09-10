@@ -271,6 +271,20 @@ namespace RiskAI.Tests
             Assert.That(rallyObject.position,Is.EqualTo(hit.position));
             yield return null;
         }
+        [UnityTest] public IEnumerator FreshRecruitsUseStableVisualFootprintsInsteadOfStacking()
+        {
+            var center=battle.Towns.First(t=>t.State.Owner==0).Rally;
+            var kinds=new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Guard,UnitKind.Medic};
+            var recruits=kinds.Select(kind=>battle.SpawnSeparated(0,kind,center)).ToArray();
+            Assert.That(recruits,Has.All.Not.Null);
+            for(int i=0;i<recruits.Length;i++)for(int j=i+1;j<recruits.Length;j++)
+            {
+                Vector3 delta=recruits[i].transform.position-recruits[j].transform.position;delta.y=0;
+                float required=VisualMetrics.SpawnRadiusFor(recruits[i].Kind)+VisualMetrics.SpawnRadiusFor(recruits[j].Kind)+.1f;
+                Assert.That(delta.magnitude,Is.GreaterThanOrEqualTo(required),$"{recruits[i].Kind} and {recruits[j].Kind} spawned overlapped.");
+            }
+            yield return null;
+        }
         [UnityTest] public IEnumerator CountryReinforcementsCreditThenSpawnOnePerHalfSecondToTheTenPointCap()
         {
             var recruits=new CountryRecruitment(battle); // Isolate the 500 ms timer from setup frames.

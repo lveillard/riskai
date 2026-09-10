@@ -152,9 +152,13 @@ namespace RiskAI.Core
         {
             switch (kind)
             {
-                // The source weapon type is instant for h00B and both deployed marine-private IDs.
+                // h00B inherits the Rifleman's instant weapon, but the runtime actor is
+                // presented as a crossbowman. Use its authored ua1z=1800 as a real bolt
+                // speed (1800 / 50 = 36) so damage coincides with visible contact.
                 case UnitKind.Archer:
-                    return new WeaponProfile(damageType, WeaponDelivery.Instant, sourceRawId: "h00B");
+                    return new WeaponProfile(damageType, WeaponDelivery.Missile, 36, WeaponTargeting.Target,
+                        sourceRawId: "h00B-crossbow-adaptation");
+                // The firearm identity keeps the source Rifleman/Marine instant delivery.
                 case UnitKind.MarinePrivate:
                     return new WeaponProfile(damageType, WeaponDelivery.Instant, sourceRawId: "h012/h00R");
                 // h00E speed 1100 uses the project's established native-distance / 50 scale.

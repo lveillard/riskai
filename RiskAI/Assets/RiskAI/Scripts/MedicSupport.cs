@@ -8,13 +8,15 @@ namespace RiskAI
     /// </summary>
     public sealed class MedicSupport : MonoBehaviour
     {
-        public const float HealRadius = 8f;
+        // Ahea: 250 native range, 25 points and a one-second cooldown.
+        public const float HealRadius = 5f;
         public const float MaxVerticalDelta = 3f;
-        public const float HealAmount = 15f;
+        public const float HealAmount = 25f;
         public const float CastInterval = 1f;
 
         public int CastCount { get; private set; }
         public float TotalHealing { get; private set; }
+        public long LastCastTick { get; private set; } = -1;
 
         Soldier self;
         BattleSession session;
@@ -27,25 +29,27 @@ namespace RiskAI
             self = owner;
             session = battle;
             nextCastTime = session.BattleTime + CastInterval;
-            CastCount=0;TotalHealing=0;
+            CastCount=0;TotalHealing=0;LastCastTick=-1;
         }
 
-        public void SimTick(float delta)
+        public bool SimTick(float delta)
         {
             if (!self || self.Kind != Core.UnitKind.Medic || !self.IsAlive || !self.isActiveAndEnabled ||
                 !session || session.Paused || session.Winner >= 0 || session.BattleTime < nextCastTime)
-                return;
+                return false;
 
             nextCastTime = session.BattleTime + CastInterval;
             var target = FindMostInjuredAlly();
-            if (!target) return;
+            if (!target) return false;
 
             float healed = target.Heal(HealAmount);
-            if (healed <= 0) return;
+            if (healed <= 0) return false;
 
             CastCount++;
             TotalHealing += healed;
+            LastCastTick=session.Clock.TickCount;
             VisualFactory.Impact(target.AimPoint, new Color(.72f, .96f, .36f), .25f);
+            return true;
         }
 
         Soldier FindMostInjuredAlly()

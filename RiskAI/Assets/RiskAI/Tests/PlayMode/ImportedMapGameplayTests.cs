@@ -96,7 +96,15 @@ namespace RiskAI.Tests
                                 town.State.Id + " guard NavMesh height must stay close to its source claim point.");
                             Assert.That(NavMesh.SamplePosition(town.ClaimPoint, out var navHit, .9f, NavMesh.AllAreas), Is.True, town.State.Id);
                             Assert.That(Mathf.Abs(navHit.position.y - town.ClaimPoint.y), Is.LessThanOrEqualTo(.21f), town.State.Id);
-                            if (!town.IsPort)
+                            if(town.IsPort)
+                            {
+                                Assert.That(NavMesh.SamplePosition(town.PortLandEntry,out var landHit,1.2f,NavMesh.AllAreas),Is.True,town.State.Id+" land entry");
+                                var path=new NavMeshPath();
+                                Assert.That(NavMesh.CalculatePath(landHit.position,navHit.position,NavMesh.AllAreas,path),Is.True,town.State.Id+" route");
+                                Assert.That(path.status,Is.EqualTo(NavMeshPathStatus.PathComplete),town.State.Id+" route must join land and source B00R");
+                                Assert.That(Vector3.Distance(town.Port.Berth,town.ClaimPoint),Is.LessThanOrEqualTo(ClaimRules.TakeoverRadius),town.State.Id+" shared naval circle");
+                            }
+                            else
                             {
                                 Assert.That(town.transform.position.x, Is.EqualTo(city.x).Within(.001f));
                                 Assert.That(town.transform.position.z, Is.EqualTo(city.z).Within(.001f));

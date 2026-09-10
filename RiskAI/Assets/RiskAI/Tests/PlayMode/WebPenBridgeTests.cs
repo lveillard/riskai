@@ -135,6 +135,7 @@ namespace RiskAI.Tests
             yield return null;
             controller.HelpVisible=false;controller.ArmAttack();controller.SendMessage("Update");
             Assert.That(controller.AttackCursor,Is.True,"An old held barrel must not generate ContextAction on resuming input.");
+            yield return null; // Let the retained modal detach before testing a world press.
             SetState(.5f,.5f,0,0,0,0);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
             SetState(.5f,.5f,2,0,0,0);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
             Assert.That(controller.AttackCursor,Is.False,"A fresh barrel press still invokes the shared context path and cancels the armed cursor.");

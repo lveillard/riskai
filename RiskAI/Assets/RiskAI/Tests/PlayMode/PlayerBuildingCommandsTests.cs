@@ -62,17 +62,14 @@ namespace RiskAI.Tests
             battle.TogglePause();
             yield return null;
             var root=Object.FindFirstObjectByType<BattleHud>().GetComponent<UIDocument>().rootVisualElement;
-            if(UiViewport.IsCompact){Activate(root.Q<Button>("HUD tab 2"));yield return null;}
             Assert.That(root.Q<Button>("Recruit Footman"),Is.Null,"A port's legacy SelectedTown alias must not display regular-city production.");
             foreach(var kind in ProductionCatalog.HarborUnits)Assert.That(root.Q<Button>("Recruit "+kind),Is.Not.Null);
             Assert.That(root.Q<Button>("Build ship Galley"),Is.Not.Null);
             Assert.That(root.Q<Button>("Build ship Transport"),Is.Not.Null);
-            if(UiViewport.IsCompact){Activate(root.Q<Button>("HUD tab 0"));yield return null;}
-            Assert.That(root.Query<Label>().ToList().Any(label=>label.text!=null&&label.text.Contains("tierra 1 / 5")&&label.text.Contains("barcos 1 / 5")),Is.True,
-                "Selecting the house or tower must expose the same port land/naval queues.");
+            Assert.That(root.Q<VisualElement>("HUD building queue "+port.GetInstanceID()),Is.Not.Null,
+                "The selected imported port must expose its shared land/naval queue above the building.");
             var city=battle.Towns.First(item=>!item.IsPort);city.State.Owner=0;
             controller.SelectTown(city,true);yield return null;
-            if(UiViewport.IsCompact){Activate(root.Q<Button>("HUD tab 2"));yield return null;}
             Assert.That(root.Q<Button>("Recruit Footman"),Is.Not.Null,"A mixed selection still exposes regular production for its real city.");
             Assert.That(root.Q<Button>("Recruit MarinePrivate"),Is.Not.Null);
         }

@@ -65,7 +65,7 @@ namespace RiskAI
             DisposeMinimapMarkers();
             UiViewport.ResetHudHeights();
         }
-        static void Text(Rect r, string text, GUIStyle style = null) => GUI.Label(r, text, style ?? RtsSkin.Text);
+        static void Text(Rect r, string text, GUIStyle style = null) => GUI.Label(r, GameText.Localize(text), style ?? RtsSkin.Text);
         static void Label(float x, float y, float w, string text, GUIStyle style = null) => Text(new Rect(x, y, w, 26), text, style);
         void OnGUI()
         {
@@ -82,7 +82,7 @@ namespace RiskAI
             // presentation, the selection rectangle and the transitional minimap renderer.
             // World labels are drawn by IMGUI after retained panels; keep them
             // from covering the start countdown's title and number.
-            if(!session.IsStarting)DrawWorld();
+            if(!session.IsStarting&&!session.Paused)DrawWorld();
             if (MinimapVisible)
             {
                 DrawMinimap(MinimapRect());
@@ -155,12 +155,13 @@ namespace RiskAI
             {
                 if (target is DefenseTower) continue; // Permanent buildings have no destructible health bar.
                 bool selected = target is Soldier soldier && soldier.Selected || target is Ship ship && ship.Selected;
-                if (!target.IsAlive || !target.isActiveAndEnabled || (!controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth && !canopyOccludedUnits.Contains(target.EntityId))) continue;
+                bool persistentShipHealth=target is Ship;
+                if (!target.IsAlive || !target.isActiveAndEnabled || (!persistentShipHealth && !controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth && !canopyOccludedUnits.Contains(target.EntityId))) continue;
                 float healthHeight=target is Soldier person?VisualMetrics.HeightFor(person.Kind)+.15f:4.8f;
                 var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * healthHeight) / Scale;
                 float y = height - p.y; if(p.z<=0||y<TopPixels/Scale+16||y>bottom-8)continue;
-                float size = target is DefenseTower || target is Ship ? 44 : 18;
-                RtsSkin.Bar(new Rect(p.x-size/2,y,size,5),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
+                float size = target is Ship ? 56 : 28;
+                RtsSkin.WorldHealthBar(new Rect(p.x-size/2,y,size,target is Ship?9:7),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
             }
         }
         void DrawMinimap(Rect r)
@@ -273,4 +274,3 @@ namespace RiskAI
         }
     }
 }
-

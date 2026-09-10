@@ -28,5 +28,19 @@ namespace RiskAI.Tests
             Assert.That(layout.Safe,Is.EqualTo(new Rect(0,0,100,100)));
             Assert.That(layout.World.height,Is.EqualTo(38).Within(.001));
         }
+        [Test] public void CameraFramingKeepsItsExpandedFooterAnchorWhenFooterCloses()
+        {
+            try
+            {
+                UiViewport.SetCameraHudHeights(48,188);
+                UiViewport.SetHudHeights(48,188);
+                Rect anchored=UiViewport.CameraWorldRect,open=UiViewport.WorldRect;
+                UiViewport.SetHudHeights(48,0);
+                Assert.That(UiViewport.CameraWorldRect,Is.EqualTo(anchored));
+                Assert.That(UiViewport.WorldRect.yMin,Is.LessThan(open.yMin));
+                Assert.That(UiViewport.WorldRect.yMax,Is.EqualTo(open.yMax));
+            }
+            finally { UiViewport.ResetHudHeights(); }
+        }
     }
 }

@@ -42,11 +42,6 @@ Shader "RiskAI/StrategicTerritory"
                 clip(cell.a-.5);
                 float country=round(cell.b*255),id=round(cell.r*255)+round(cell.g*255)*256;
                 float selected=1-step(.5,abs(country-_SelectedCountry));
-                if(_Overview<.5){clip(selected-.5);return half4(1,.79,.28,.21);}
-                half3 owner=SAMPLE_TEXTURE2D(_Palette,sampler_Palette,float2((id+.5)/_PaletteWidth,.5)).rgb;
-                float relief=.80+.2*saturate(dot(normalize(i.normal),normalize(float3(-.4,1,.3))));
-                half3 color=lerp(half3(.22,.29,.25),owner,.68)*relief;
-                color=lerp(color,half3(1,.85,.45),selected*.38);
                 // Sample by screen footprint instead of gating the atlas-cell edge.
                 // This produces a stable two-pixel country outline at every zoom and
                 // catches diagonal borders without outlining water or individual cities.
@@ -59,6 +54,16 @@ Shader "RiskAI/StrategicTerritory"
                 float outer=max(max(CountryEdge(uv+float2(outerStep.x,0),country),CountryEdge(uv-float2(outerStep.x,0),country)),
                                 max(CountryEdge(uv+float2(0,outerStep.y),country),CountryEdge(uv-float2(0,outerStep.y),country)));
                 core*=step(.5,country);outer*=step(.5,country);
+                if(_Overview<.5)
+                {
+                    clip(selected-.5);
+                    float border=saturate(core+outer*.72);
+                    return half4(lerp(half3(1,.79,.28),half3(1,.97,.79),border),lerp(.16,.88,border));
+                }
+                half3 owner=SAMPLE_TEXTURE2D(_Palette,sampler_Palette,float2((id+.5)/_PaletteWidth,.5)).rgb;
+                float relief=.80+.2*saturate(dot(normalize(i.normal),normalize(float3(-.4,1,.3))));
+                half3 color=lerp(half3(.22,.29,.25),owner,.68)*relief;
+                color=lerp(color,half3(1,.85,.45),selected*.38);
                 color=lerp(color,half3(.105,.125,.105),outer*.48);
                 color=lerp(color,selected>.5?half3(.34,.245,.075):half3(.035,.047,.043),core*.94);
                 return half4(color,1);

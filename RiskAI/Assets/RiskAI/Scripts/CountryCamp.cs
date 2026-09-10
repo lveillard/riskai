@@ -62,7 +62,7 @@ namespace RiskAI
         {
             if(!session||lastRefresh==session.Clock.TickCount/20)return;
             lastRefresh=session.Clock.TickCount/20;
-            banner.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamColor(session.Economy.CountryOwner(Country)));
+            banner.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamMaterialColor(session.Economy.CountryOwner(Country)));
         }
         void RefreshRallyView()
         {
