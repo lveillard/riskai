@@ -104,7 +104,7 @@ namespace RiskAI
         {
             LastActionError=null;
             if(!harbor){LastActionError="Elige un puerto de desembarco.";return;}
-            if(Kind==ShipKind.Transport)
+            if(Profile.CanTransport)
             {
                 if(!harbor.TryTransportLanding(out var landing,out _))
                 {LastActionError="El puerto no tiene una playa o pasarela al alcance del transporte.";return;}
@@ -125,7 +125,7 @@ namespace RiskAI
         }
         public void Attack(CombatTarget enemy)
         {
-            if(!IsAlive||Kind!=ShipKind.Galley||!enemy||enemy.Team==Team||!enemy.CanBeAttacked)return;
+            if(!IsAlive||!Profile.CanAttack||!enemy||enemy.Team==Team||!enemy.CanBeAttacked)return;
             var next=new List<Vector3>();
             float distance=DistanceXZ(transform.position,enemy.transform.position);
             if(distance>AttackRange)
@@ -141,7 +141,7 @@ namespace RiskAI
         public string SailToShore(Vector3 shore)
         {
             LastActionError=null;
-            if(!IsAlive||Kind!=ShipKind.Transport)return LastActionError="Selecciona un transporte.";
+            if(!IsAlive||!Profile.CanTransport)return LastActionError="Selecciona un transporte.";
             if(!TryValidateShore(shore,out var landing,out var error))return LastActionError=error;
             if(!SeaNavigation.TryNearestOcean(landing,ShoreBerthSearchRadius,out var berth)||!SeaNavigation.TryBuildPath(transform.position,berth,out var path))return LastActionError="No hay una ruta marítima segura hasta esa playa.";
             if(!TryLeaveHarborGuard(berth))return LastActionError;
@@ -153,7 +153,7 @@ namespace RiskAI
         {
             LastActionError=null;
             if(world.Session.Paused||world.Session.Winner>=0){LastActionError="No se puede embarcar con la partida detenida.";return false;}
-            if(!IsAlive||Kind!=ShipKind.Transport||cargo.Count>=Capacity||!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=Team||cargo.Contains(soldier)){LastActionError="El transporte no puede embarcar a ese soldado.";return false;}
+            if(!IsAlive||!Profile.CanTransport||cargo.Count>=Capacity||!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=Team||cargo.Contains(soldier)){LastActionError="El transporte no puede embarcar a ese soldado.";return false;}
             if(DistanceXZ(transform.position,soldier.transform.position)>LoadRadius){LastActionError="Acerca el transporte a menos de 10 m del soldado.";return false;}
             if(!ShoreAccess.TryLanding(soldier.transform.position,out _,out var shoreError)){LastActionError=shoreError;return false;}
             soldier.Stop();soldier.Select(false);if(soldier.Agent)soldier.Agent.enabled=false;
@@ -168,7 +168,7 @@ namespace RiskAI
         {
             LastActionError=null;
             if(world.Session.Paused||world.Session.Winner>=0)return false;
-            if(!IsAlive||Kind!=ShipKind.Transport){LastActionError="Selecciona un transporte.";return false;}
+            if(!IsAlive||!Profile.CanTransport){LastActionError="Selecciona un transporte.";return false;}
             if(!TryFindDisembarkPoint(shore,out shore,out var error)){LastActionError=error;return false;}
             bool unloaded=false;int slot=0;
             foreach(var soldier in cargo.ToArray())
@@ -190,7 +190,7 @@ namespace RiskAI
         {
             LastActionError=null;
             if(world.Session.Paused||world.Session.Winner>=0)return false;
-            if(!IsAlive||Kind!=ShipKind.Transport||!soldier||!cargo.Contains(soldier))
+            if(!IsAlive||!Profile.CanTransport||!soldier||!cargo.Contains(soldier))
             {LastActionError="Esa unidad ya no está dentro del transporte.";return false;}
             if(!ShoreAccess.TryNearestLanding(transform.position,LoadRadius,out var landing,out var error))
             {LastActionError=error;return false;}
@@ -236,7 +236,7 @@ namespace RiskAI
             // A garrison can fire and turn in place, but autonomous targeting may
             // not move it off the same fixed anchor used by the capture circle.
             if(IsGarrison&&target&&DistanceXZ(transform.position,target.transform.position)>AttackRange)target=null;
-            if(!target&&Kind==ShipKind.Galley&&world.Session.BattleTime>=nextSense&&(attackMoveOrder||routeIndex>=route.Count)){nextSense=world.Session.BattleTime+.2f;target=FindNearbyEnemy();}
+            if(!target&&Profile.CanAttack&&world.Session.BattleTime>=nextSense&&(attackMoveOrder||routeIndex>=route.Count)){nextSense=world.Session.BattleTime+.2f;target=FindNearbyEnemy();}
             if(target&&DistanceXZ(transform.position,target.transform.position)<=AttackRange&&Visible(target))
             {
                 Face(target.transform.position);
@@ -308,7 +308,7 @@ namespace RiskAI
         void ClearRoute(){route.Clear();routeIndex=0;hasRouteGoal=false;}
         internal void BindHarborGuard(Harbor harbor)
         {
-            if(!harbor||Kind!=ShipKind.Galley)return;
+            if(!harbor||!Profile.CanCapture)return;
             harborGuard=harbor;orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
             MaintainHarborGuard();
         }
@@ -341,7 +341,7 @@ namespace RiskAI
         public override void TakeDamage(float damage,int attacker,CombatTarget source=null)
         {
             if(!IsAlive||damage<=0||float.IsNaN(damage)||float.IsInfinity(damage)||attacker==Team)return;
-            if(Kind==ShipKind.Galley&&source&&source.IsAlive&&!target&&(attackMoveOrder||routeIndex>=route.Count)){target=source;nextTargetPath=0;}
+            if(Profile.CanAttack&&source&&source.IsAlive&&!target&&(attackMoveOrder||routeIndex>=route.Count)){target=source;nextTargetPath=0;}
             Health=Mathf.Max(0,Health-damage);if(IsAlive)return;
             foreach(var soldier in cargo.ToArray())if(soldier)soldier.DestroyEmbarked(attacker);
             cargo.Clear();route.Clear();routeIndex=0;hasRouteGoal=false;hasAttackMoveGoal=false;target=null;orderedHarbor=null;ReleaseHarborGuard(harborGuard);

@@ -133,11 +133,11 @@ namespace RiskAI
         }
         internal bool IsInBerthCircle(Vector3 point)=>FlatDistance(point,Berth)<=ClaimRules.CircleRadius*ClaimRules.CircleRadius;
         public bool IsShipDocked(Ship ship)=>ship&&FlatDistance(ship.transform.position,Berth)<=BerthRadius*BerthRadius;
-        internal bool CanSnapToBerth(Ship ship) => ship && ship.IsAlive && ship.Kind==ShipKind.Galley &&
+        internal bool CanSnapToBerth(Ship ship) => ship && ship.IsAlive && ship.Profile.CanCapture &&
             IsShipDocked(ship) && SeaNavigation.HasClearance(ship.transform.position) &&
             SeaNavigation.HasClearance(Berth) && SeaNavigation.ClearSegment(ship.transform.position,Berth);
         public bool HasLivingDefender=>Defender&&Defender.IsAlive;
-        public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Kind==ShipKind.Galley&&
+        public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Profile.CanCapture&&
             navalDefender.Team==Owner&&IsShipDocked(navalDefender)?navalDefender:null;
         public bool HasNavalDefender=>NavalDefender;
         public LineRenderer NavalClaimRing=>navalClaimRing;
@@ -188,8 +188,7 @@ namespace RiskAI
             Ship best=null;float bestDistance=float.MaxValue;
             foreach(var ship in world.Ships)
             {
-                if(!ship||ship==excluded||!ship.IsAlive||ship.Kind!=ShipKind.Galley||
-                    !ship.Profile.CanCapture||ship.Garrison&&ship.Garrison!=this)continue;
+                if(!ship||ship==excluded||!ship.IsAlive||!ship.Profile.CanCapture||ship.Garrison&&ship.Garrison!=this)continue;
                 if(alliesOnly&&ship.Team!=owner)continue;
                 float distance=FlatDistance(ship.transform.position,Berth);
                 float radius=alliesOnly?ClaimRules.ReliefRadius:ship.Team==owner?ClaimRules.ProtectionRadius:ClaimRules.TakeoverRadius;

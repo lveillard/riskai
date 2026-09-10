@@ -28,7 +28,10 @@ namespace RiskAI
             if(sourceDirection.sqrMagnitude<.01f)sourceDirection=Vector3.forward;
             else sourceDirection.Normalize();
 
-            Vector3 shore=NearestLand(sourceCity,-sourceDirection,true);
+            // Start at the amphibious source circle and walk landward. Starting
+            // at the city produced a city-to-circle causeway even when the real
+            // coast was already beside the circle.
+            Vector3 shore=NearestLand(sourceClaim,-sourceDirection,false);
             Vector3 seaward=sourceCity-shore;seaward.y=0;
             if(seaward.sqrMagnitude<.01f)seaward=sourceDirection;else seaward.Normalize();
             Vector3 side=new Vector3(-seaward.z,0,seaward.x);
@@ -36,7 +39,7 @@ namespace RiskAI
             // Keep the central shore-to-circle lane clear. The reusable harbor
             // house and tower occupy opposite land shoulders beside that lane.
             Vector3 building=BestLandShoulder(shore,seaward,side,1);
-            Vector3 tower=BestTowerShoulder(shore,seaward,side,sourceClaim);
+            Vector3 tower=BestTowerShoulder(shore,seaward,side,sourceClaim,building);
             float rise=Mathf.Abs(shore.y-sourceCity.y);
             PierShape shape=rise>.75f?PierShape.CliffRamp:PierShape.Direct;
             return new Anchors(sourceCity,sourceClaim,shore,building,tower,seaward,shape);
@@ -79,7 +82,7 @@ namespace RiskAI
             return NearestLand(seed,-seaward,true);
         }
 
-        static Vector3 BestTowerShoulder(Vector3 shore,Vector3 seaward,Vector3 side,Vector3 ownClaim)
+        static Vector3 BestTowerShoulder(Vector3 shore,Vector3 seaward,Vector3 side,Vector3 ownClaim,Vector3 building)
         {
             Vector3 seed=shore-seaward*1.7f-side*3.4f;
             Vector3 best=seed;float bestScore=float.MaxValue;
@@ -89,7 +92,8 @@ namespace RiskAI
             {
                 float angle=i*Mathf.PI/24f;
                 Vector3 candidate=seed+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*radius;
-                if(!HasLandClearance(candidate,.8f)||!ClearOfForeignClaims(candidate,ownClaim,clearance))continue;
+                if(!HasLandClearance(candidate,.8f)||!ClearOfForeignClaims(candidate,ownClaim,clearance)||
+                    Vector3.SqrMagnitude(candidate-building)<9f)continue;
                 float score=radius+Mathf.Max(0,Vector3.Dot(candidate-shore,seaward))*.5f;
                 if(score>=bestScore)continue;
                 best=MapLayout.Point(candidate.x,candidate.z);bestScore=score;

@@ -66,7 +66,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator ExplicitDockingNeverLetsWarshipsCaptureInClassicAndEurope()
+        public IEnumerator ExplicitDockingSnapsOnlyOnClaimAndPersistsFromFarAwayInClassicAndEurope()
         {
             foreach (var map in new[] { ScenarioMap.Classic, ScenarioMap.Europe })
             {
@@ -80,9 +80,9 @@ namespace RiskAI.Tests
                 Assert.That(ship.LastActionError, Is.Null);
                 Assert.That(Vector3.Distance(ship.transform.position, near), Is.LessThan(.001f), "Submitting must not move a candidate before shared ranking.");
                 Tick(port);
-                Assert.That(port.ClaimZone.Guardian, Is.Null);
-                Assert.That(port.Owner, Is.EqualTo(PlayerRules.NeutralOwner));
-                Assert.That(ship.IsGarrison,Is.False,"A warship cannot occupy a land capture slot.");
+                Assert.That(port.ClaimZone.Guardian, Is.SameAs(ship));
+                Assert.That(port.Owner, Is.EqualTo(0));
+                Assert.That(Vector3.Distance(ship.transform.position, port.Berth), Is.LessThan(.001f));
 
                 ship.TakeDamage(ship.MaxHealth + 1, 1);
                 port.State.Owner = PlayerRules.NeutralOwner;
@@ -92,20 +92,22 @@ namespace RiskAI.Tests
                 Assert.That(arriving.LastActionError, Is.Null);
                 Tick(port);
                 Assert.That(arriving.IsGarrison, Is.False, "A distant order cannot teleport directly to the port.");
-                for (int tick = 0; tick < 120; tick++)
+                float beforeClaim = 0;
+                for (int tick = 0; tick < 120 && !arriving.IsGarrison; tick++)
                 {
                     arriving.SimTick(.1f);
+                    beforeClaim = Vector2.Distance(new Vector2(arriving.transform.position.x, arriving.transform.position.z), new Vector2(port.Berth.x, port.Berth.z));
                     Tick(port);
                 }
-                Assert.That(arriving.IsGarrison, Is.False);
-                Assert.That(port.ClaimZone.Guardian,Is.Null);
-                Assert.That(port.Owner,Is.EqualTo(PlayerRules.NeutralOwner));
+                Assert.That(arriving.IsGarrison, Is.True);
+                Assert.That(beforeClaim, Is.GreaterThan(ClaimRules.TakeoverRadius), "The pending order must survive navigation and use the docking margin.");
+                Assert.That(beforeClaim, Is.LessThanOrEqualTo(Harbor.BerthRadius));
                 SceneManager.SetActiveScene(previousScene); yield return SceneManager.UnloadSceneAsync(scene); scene = default;
             }
         }
 
         [UnityTest]
-        public IEnumerator StopMoveAndDeathLeaveLandCaptureSlotEmpty()
+        public IEnumerator StopNewMoveAndDeathCancelPendingDockingAndAlliedSuccessorStillWins()
         {
             yield return Build(ScenarioMap.Classic);
             var port = EmptyPort(); var near = Approach(port, 6.75f);
@@ -121,10 +123,10 @@ namespace RiskAI.Tests
             var allyPoint = Vector3.Lerp(port.Berth, near, 3f / 6.75f);
             var ally = BattleTestScenario.Ship(naval, 1, ShipKind.Galley, allyPoint);
             Tick(port);
-            Assert.That(port.ClaimZone.Guardian, Is.Null);
+            Assert.That(port.ClaimZone.Guardian, Is.SameAs(ally));
             Assert.That(Vector3.Distance(ship.transform.position, near), Is.LessThan(.001f), "Losing candidates must never snap.");
             ship.SailToHarbor(port); Tick(port);
-            Assert.That(port.ClaimZone.Guardian, Is.Null);
+            Assert.That(port.ClaimZone.Guardian, Is.SameAs(ally), "The living naval defender keeps priority over an explicit order.");
             ally.TakeDamage(ally.MaxHealth + 1, 0); port.State.Owner = PlayerRules.NeutralOwner;
             ship.SailToHarbor(port); ship.TakeDamage(ship.MaxHealth + 1, 1); Tick(port);
             Assert.That(port.ClaimZone.Guardian, Is.Null);

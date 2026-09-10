@@ -32,32 +32,30 @@ namespace RiskAI.Core
         // is selected.
         public const int UpgradeIncome = 0;
         public const float ConstructionSeconds = 7;
-        public const float TowerHealth = 550;
-        public const float TowerRange = 8.5f;
+        public static float TowerHealth => UnitCatalog.Tower.Health;
+        public static float TowerRange => UnitCatalog.Tower.Range;
         // Every represented source unit explicitly overrides ubld=1 in W3U.
         // Footman and Mage remain prototype identities with local queue timings.
-        static readonly float[] Training = { 3f, 1f, 1f, 6f, 1f, 1f, 1f, 1f, 1f };
-        static readonly string[] Names = { "Espadach\u00edn", "Ballestero", "Caballero", "Mago", "Mortero", "Sanador", "Marine Private", "Marine Major", "Marine General" }, Roles = { "Primera l\u00ednea", "Ataque a distancia", "Caballer\u00eda pesada", "Da\u00f1o de \u00e1rea", "\u00c1rea a larga distancia", "Sana aliados \u00b7 25 vida", "Pistolero de puerto", "Caballer\u00eda de puerto", "Caballer\u00eda veterana de puerto" }, Keys = { "Q", "W", "D", "F", "R", "C", "V", "B", "C" }, Models = { "Knight", "RogueHooded", "RoyalGuard", "Mage", "Mortar", "Medic", "MarinePrivate", "RoyalGuard", "RoyalGuard" };
-        public static UnitProfile Profile(UnitKind kind)=>ReforgedProfiles.Units[(int)kind];
+        public static UnitProfile Profile(UnitKind kind)=>UnitCatalog.Definition(kind).Profile;
         public static int Cost(UnitKind kind) => Profile(kind).Cost;
         public static int PointValue(UnitKind kind) => Profile(kind).PointValue;
-        public static float TrainTime(UnitKind kind) => Training[(int)kind];
+        public static float TrainTime(UnitKind kind) => UnitCatalog.Definition(kind).TrainSeconds;
         public static float Health(UnitKind kind) => Profile(kind).Health;
         public static float Damage(UnitKind kind) => Profile(kind).AverageDamage;
         public static string DamageRange(UnitKind kind) => Profile(kind).MinimumDamage+"–"+Profile(kind).MaximumDamage;
         public static float Range(UnitKind kind) => Profile(kind).Range;
-        public static float MinimumRange(UnitKind kind)=>kind==UnitKind.Mortar?5:0;
+        public static float MinimumRange(UnitKind kind)=>UnitCatalog.Definition(kind).MinimumRange;
         public static float AttackInterval(UnitKind kind) => Profile(kind).Cooldown;
         public static float AttackPoint(UnitKind kind) => Profile(kind).AttackPoint;
         public static float Speed(UnitKind kind) => Profile(kind).Speed;
-        public static bool Ranged(UnitKind kind) => kind != UnitKind.Footman && kind != UnitKind.Guard && kind != UnitKind.MarineMajor && kind != UnitKind.MarineGeneral;
+        public static bool Ranged(UnitKind kind) => UnitCatalog.Definition(kind).Ranged;
         // The extracted map does not define this prototype's upgrade unlocks;
         // every source-aligned unit remains available at level I.
-        public static int RequiredLevel(UnitKind kind) => 1;
-        public static string Name(UnitKind kind) => Names[(int)kind];
-        public static string Role(UnitKind kind) => Roles[(int)kind];
-        public static string Hotkey(UnitKind kind) => Keys[(int)kind];
-        public static string Model(UnitKind kind) => Models[(int)kind];
+        public static int RequiredLevel(UnitKind kind) => Profile(kind).Level;
+        public static string Name(UnitKind kind) => UnitCatalog.Definition(kind).Name;
+        public static string Role(UnitKind kind) => UnitCatalog.Definition(kind).Role;
+        public static string Hotkey(UnitKind kind) => UnitCatalog.Definition(kind).Hotkey;
+        public static string Model(UnitKind kind) => UnitCatalog.Definition(kind).Model;
     }
 
     [Serializable]

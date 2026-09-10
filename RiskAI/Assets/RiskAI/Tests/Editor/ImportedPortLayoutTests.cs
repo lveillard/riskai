@@ -13,6 +13,7 @@ namespace RiskAI.Tests
             try
             {
                 MapLayout.Configure(scenario);
+                float longestPier=0;string longestPort=null;
                 foreach(var city in MapLayout.Towns)
                 {
                     if(!city.IsPort)continue;
@@ -23,7 +24,10 @@ namespace RiskAI.Tests
                     Assert.That(MapLayout.IsLand(anchors.Building.x,anchors.Building.z),Is.True,city.Id+" building");
                     Assert.That(MapLayout.IsLand(anchors.Tower.x,anchors.Tower.z),Is.True,city.Id+" tower");
                     Assert.That(Vector3.Distance(anchors.Building,anchors.Tower),Is.GreaterThan(2f),city.Id+" shoulders");
+                    float pier=Vector3.Distance(anchors.Shore,anchors.Claim);
+                    if(pier>longestPier){longestPier=pier;longestPort=city.Id;}
                 }
+                Assert.That(longestPier,Is.LessThanOrEqualTo(14.1f),scenario+" longest pier: "+longestPort);
             }
             finally { MapLayout.Configure(previous); }
         }

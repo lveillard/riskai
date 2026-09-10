@@ -11,7 +11,7 @@ namespace RiskAI.Tests
     public sealed class ImportedPortNavalIntegrationTests
     {
         [UnityTest]
-        public IEnumerator EuropeLinkedPortRecruitsMarinesAndRequiresLandedTroopsForConquest()
+        public IEnumerator EuropeLinkedPortRecruitsMarinesAndUsesCatalogCaptureCapabilities()
         {
             var previousMap=BattleSession.MapForNewMatch;var previousLayout=BattleSession.LayoutForNewMatch;
             var previousPlayers=BattleSession.PlayerCountForNewMatch;var previousSeed=BattleSession.SeedForNewMatch;
@@ -43,11 +43,16 @@ namespace RiskAI.Tests
                 Assert.That(target.Defender.IsAlive,Is.False,"The dead source guard remains referenced until claim resolution.");
                 var frigate=BattleTestScenario.Ship(battle.Naval,0,ShipKind.Galley,target.Port.Berth);
                 target.SimTick(.1f);
-                Assert.That(target.State.Owner,Is.EqualTo(PlayerRules.NeutralOwner),"A warship cannot conquer the land capture circle.");
-                Assert.That(target.Defense.Guardian,Is.Null);
+                Assert.That(target.State.Owner,Is.EqualTo(0),"A capture-capable warship occupies an empty amphibious port.");
+                Assert.That(target.Port.ClaimZone.NavalDefender,Is.SameAs(frigate));
+                frigate.TakeDamage(frigate.MaxHealth+1,1);target.State.Owner=PlayerRules.NeutralOwner;target.SimTick(.1f);
+                var transport=BattleTestScenario.Ship(battle.Naval,0,ShipKind.Transport,target.Port.Berth);
+                target.SimTick(.1f);
+                Assert.That(target.State.Owner,Is.EqualTo(PlayerRules.NeutralOwner),"Transport capability never implies capture capability.");
+                Assert.That(target.Port.ClaimZone.Guardian,Is.Null);
                 var marine=BattleTestScenario.Mobile(battle,0,UnitKind.MarinePrivate,target.ClaimPoint);
                 target.SimTick(.1f);
-                Assert.That(target.State.Owner,Is.EqualTo(0),"Conquest requires a landed soldier on the platform.");
+                Assert.That(target.State.Owner,Is.EqualTo(0),"A landed soldier remains a valid capture path.");
                 Assert.That(target.Defense.Guardian,Is.SameAs(marine));
             }
             finally

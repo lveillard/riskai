@@ -118,7 +118,7 @@ namespace RiskAI
             if (UnloadCursor)
             {
                 var shore = Ground(point);
-                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Kind == ShipKind.Transport) Feedback(ship.SailToShore(shore));
+                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Profile.CanTransport) Feedback(ship.SailToShore(shore));
                 ShowOrder(shore, false); CancelCursor(); pressedWorld = false; return;
             }
             var victim = AttackCursor ? AttackRecipient(RtsPicking.Target(session, cam, point, -1)) : null;
@@ -146,10 +146,10 @@ namespace RiskAI
             {
                 CancelBoardingForSelection();
                 foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Attack, targetId: enemy.EntityId));
-                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Kind == ShipKind.Galley) ship.Attack(enemy);
+                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Profile.CanAttack) ship.Attack(enemy);
                 ShowOrder(enemy.transform.position, true);
             }
-            else if (ownShip && ownShip.Kind == ShipKind.Transport && Selection.Count > 0) BeginBoarding(ownShip);
+            else if (ownShip && ownShip.Profile.CanTransport && Selection.Count > 0) BeginBoarding(ownShip);
             else if (harbor && Fleet.Count > 0) MoveFleetToHarbor(harbor);
             else if (ally && !IsSelected(ally) && Selection.Count > 0)
             {

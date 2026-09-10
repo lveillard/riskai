@@ -131,7 +131,7 @@ namespace RiskAI
         public bool TryOrderEmbarkAt(Ship ship,Soldier soldier,Harbor harbor,out string error)
         {
             error=null;
-            if(!ship||!ship.IsAlive||ship.Kind!=ShipKind.Transport){error="Selecciona un transporte.";return false;}
+            if(!ship||!ship.IsAlive||!ship.Profile.CanTransport){error="Selecciona un transporte.";return false;}
             if(!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=ship.Team){error="Selecciona una tropa móvil aliada.";return false;}
             if(!harbor||harbor.Owner!=ship.Team||!harbor.TryTransportLanding(out var landing,out var berth))
             {error="El puerto no tiene una playa o pasarela al alcance del transporte.";return false;}
@@ -144,7 +144,7 @@ namespace RiskAI
         public bool TryPlanEmbark(Ship ship,IReadOnlyList<Soldier> soldiers,out Vector3 landing,out Vector3 berth,out string error)
         {
             landing=default;berth=default;error=null;
-            if(!ship||!ship.IsAlive||ship.Kind!=ShipKind.Transport){error="Selecciona un transporte.";return false;}
+            if(!ship||!ship.IsAlive||!ship.Profile.CanTransport){error="Selecciona un transporte.";return false;}
             if(soldiers==null||soldiers.Count==0){error="Selecciona soldados para embarcar.";return false;}
             Harbor best=null;float score=float.MaxValue;
             foreach(var harbor in Harbors)
@@ -164,7 +164,7 @@ namespace RiskAI
         }
         public string OrderDisembark(Ship ship,Harbor harbor)
         {
-            if(!ship||ship.Kind!=ShipKind.Transport)return "Selecciona un transporte.";
+            if(!ship||!ship.Profile.CanTransport)return "Selecciona un transporte.";
             if(!harbor)return "Elige una playa o muelle de desembarco marcado.";
             ship.SailToHarbor(harbor);
             return string.IsNullOrEmpty(ship.LastActionError)?"El transporte navega al desembarco marcado.":ship.LastActionError;
@@ -233,7 +233,7 @@ namespace RiskAI
             if(fleet<2&&Session.Economy.Gold[team]>=Harbor.Cost(ShipKind.Galley))
                 foreach(var harbor in Harbors)
                     if(harbor.Owner==team&&harbor.QueueCount==0&&buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Galley))==null)break;
-            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Galley&&!ship.IsGarrison&&!ship.CurrentTarget)
+            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Profile.CanAttack&&!ship.IsGarrison&&!ship.CurrentTarget)
             {
                 Harbor target=null;float distance=float.MaxValue;
                 foreach(var harbor in Harbors)

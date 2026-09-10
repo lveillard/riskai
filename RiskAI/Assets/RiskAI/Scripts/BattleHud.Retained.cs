@@ -404,7 +404,7 @@ namespace RiskAI
                 int count = controller.Selection.Count + controller.Fleet.Count;
                 AddTitle(root, count == 1 ? controller.Fleet[0].DisplayName : count + " UNIDADES SELECCIONADAS");
                 BuildSelectionRoster(root);
-                foreach(var ship in controller.Fleet)if(ship&&ship.Kind==ShipKind.Transport&&ship.CargoCount>0)BuildCargoRoster(root,ship);
+                foreach(var ship in controller.Fleet)if(ship&&ship.Profile.CanTransport&&ship.CargoCount>0)BuildCargoRoster(root,ship);
                 return;
             }
             if (controller.InspectedTarget is Soldier inspected)

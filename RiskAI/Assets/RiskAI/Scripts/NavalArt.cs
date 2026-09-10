@@ -76,7 +76,7 @@ namespace RiskAI
         }
         public static void CreatePierDeck(Transform parent,Vector3 from,Vector3 to,float width,string label,bool walkable,bool trim=true,float surfaceLift=0)
         {
-            var direction=to-from;float length=Mathf.Max(width,direction.magnitude+2);
+            var direction=to-from;float length=Mathf.Max(width,direction.magnitude+.5f);
             var rotation=direction.sqrMagnitude>.02f?Quaternion.LookRotation(direction):Quaternion.identity;
             var go=new GameObject(label);go.transform.SetParent(parent,false);go.transform.SetPositionAndRotation((from+to)*.5f,rotation);
             go.layer=MapLayout.TerrainLayer;
