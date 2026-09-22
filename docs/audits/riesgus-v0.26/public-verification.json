@@ -1,0 +1,96 @@
+{
+  "url": "https://riesgus.com",
+  "files": [
+    {
+      "path": "release-20260922T015400Z-riesgus-v026/Build/Web-v0.26.data.unityweb",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "application/octet-stream",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "5708132083833b564d4b9f540d810b0eabae11308bf99cf48bf6b7630bcdd8ea",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T015400Z-riesgus-v026/Build/Web-v0.26.framework.js.unityweb",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "a2303a8caae26b2df947dd6d715012f081a1df13e4fcf185116bbc3cfd9e37f0",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T015400Z-riesgus-v026/Build/Web-v0.26.loader.js",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "fa0fce2a2568234df481e864ddc1b0811dfb7cb9160845a8449e2b2c078d00c4",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T015400Z-riesgus-v026/Build/Web-v0.26.wasm.unityweb",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "application/wasm",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "a209cc1a66e11ad6b2200635e92406d10c33468e5af703ed12530efa8e1fbbfc",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T015400Z-riesgus-v026/Cinzel-OFL.txt",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/plain",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T015400Z-riesgus-v026/index.html",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/html",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "3a43753620ea4d65c3c5abf9a13a36e7138260ef4dbad80246331cc133d1d4da",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T015400Z-riesgus-v026/KayKit-LICENSE.txt",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/plain",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T015400Z-riesgus-v026/riskai-pen.js",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "de87827367c3455505446bcc5f60d8d4b5cc6fe61862a76d463748cea9244e60",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T015400Z-riesgus-v026/THIRD_PARTY_NOTICES.md",
+      "status": 200,
+      "encoding": null,
+      "contentType": "application/octet-stream",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f",
+      "matches": true
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/html",
+      "cacheControl": "no-store, max-age=0",
+      "sha256": "a9fd40be3abea4d2a2c085e040a1b5bad1a4aee442daf73b237f59f0e81c2308",
+      "matches": true
+    }
+  ],
+  "success": true
+}

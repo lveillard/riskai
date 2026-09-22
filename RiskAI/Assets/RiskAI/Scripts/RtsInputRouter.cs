@@ -129,8 +129,9 @@ namespace RiskAI
             if(barrelDown&&!barrelHeld)
             {
                 barrelHeld=true;Cancel();penBlocked=tipDown;SuppressSyntheticMouse();
-                // A held button first observed after pause/focus loss is not a new command.
-                if(pen.firstBarrelButton.wasPressedThisFrame&&!controller.BlocksWorldInput(position))controller.ContextAction(position);
+                // barrelHeld is the edge detector. A press first observed over a
+                // modal is retained until release; the next press is therefore fresh.
+                if(!controller.BlocksWorldInput(position))controller.ContextAction(position);
                 return;
             }
             if(barrelHeld)

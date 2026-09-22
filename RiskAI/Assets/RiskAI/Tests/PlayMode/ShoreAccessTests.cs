@@ -103,6 +103,10 @@ namespace RiskAI.Tests
             var battle=BattleSession.Current; battle.AiEnabled=false;
             var controller=Object.FindFirstObjectByType<RtsController>(); if(controller)controller.enabled=false;
             yield return null;
+            var strategic=StrategicMapView.Current;Assert.That(strategic.SurfaceCount,Is.GreaterThan(0),map+" inspection needs terrain surfaces.");
+            controller.SelectCamp(battle.Camps[0]);
+            Assert.That(strategic.TacticalInspectionVisible,Is.True,map+" camp selection must reveal its tactical territory.");
+            controller.Clear();Assert.That(strategic.TacticalInspectionVisible,Is.False);
             AssertCoastalMeshesMatchCpu(map);
             var naval=NavalWorld.Current;
             var port=naval.Harbors.FirstOrDefault(h=>h.IsImportedPort&&h.CanLaunch);
@@ -114,6 +118,10 @@ namespace RiskAI.Tests
             Assert.That(transport.CargoCount,Is.Zero);
 
             Assert.That(FindBeachShore(out var beach,out var beachWater),Is.True,map+" must retain a safe visible sandy landing.");
+            Vector3 seaward=beachWater-beach;seaward.y=0;seaward.Normalize();
+            Assert.That(ShoreAccess.TryLanding(beach+seaward*1.5f,out var tolerantBeach,out _),Is.True,
+                map+" a click on the painted waterline must resolve back onto its visible beach.");
+            Assert.That(Vector3.Distance(new Vector3(tolerantBeach.x,0,tolerantBeach.z),new Vector3(beach.x,0,beach.z)),Is.LessThanOrEqualTo(3.1f));
             var beachTransport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,beachWater);
             var beachSoldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,beach);
             Assert.That(beachTransport.TryEmbark(beachSoldier),Is.True,"Visible safe beach must accept real boarding.");
@@ -144,11 +152,14 @@ namespace RiskAI.Tests
             Assert.That(data.CoastGeometry.MovedVertexCount,Is.GreaterThan(0),map+" must actually round coastal corners.");
             int landChecks=0,waterChecks=0,collisionChecks=0;
             Physics.SyncTransforms();
-            foreach(var filter in Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None))
+            var filters=Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None);
+            Assert.That(filters.Count(filter=>filter.sharedMesh&&filter.sharedMesh.name=="Imported water surface"),Is.EqualTo(1),
+                "Transparent imported water must be one continuous mesh so renderer sorting cannot expose chunk rectangles.");
+            foreach(var filter in filters)
             {
                 var mesh=filter.sharedMesh;
-                if(!mesh||(mesh.name!="Imported land chunk"&&mesh.name!="Imported water chunk"))continue;
-                bool water=mesh.name=="Imported water chunk";
+                if(!mesh||(mesh.name!="Imported land chunk"&&mesh.name!="Imported water surface"))continue;
+                bool water=mesh.name=="Imported water surface";
                 var vertices=mesh.vertices;var triangles=mesh.triangles;
                 if((water?waterChecks:landChecks)<32)
                     for(int t=0;t<triangles.Length;t+=3)

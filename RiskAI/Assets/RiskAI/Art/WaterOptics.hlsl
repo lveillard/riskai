@@ -5,13 +5,21 @@ float RiskImportedOpticalDepth(float coastalWeight,float swell)
 {
  return .4+lerp(10.0,1.3,saturate(coastalWeight))*(.9+swell*.2);
 }
+half3 RiskWaterBodyColor(half3 bottom,float depth,float opticalDepth,float coastalWeight)
+{
+ half3 tint=lerp(half3(.025,.13,.285),half3(.018,.072,.28),1-exp(-opticalDepth*.24));
+ // Open sea retains the seam-proof historical contract. Source-authored shared
+ // shallows may reveal their continuous submerged bed, then close before the
+ // first deep-water band so coarse terrain tiles cannot print through offshore.
+ float openSeaTransmission=exp(-depth*4.8)*(1-smoothstep(.10,.45,depth));
+ float shallowBase=lerp(.80,.60,smoothstep(.20,.80,depth));
+ float sharedTransmission=shallowBase*(1-smoothstep(.75,1.45,depth));
+ float transmission=lerp(openSeaTransmission,max(openSeaTransmission,sharedTransmission),saturate(coastalWeight));
+ return lerp(tint,bottom,transmission);
+}
 half3 RiskWaterBodyColor(half3 bottom,float depth,float opticalDepth)
 {
- half3 tint=lerp(half3(.021,.207,.198),half3(.0106,.0642,.1672),1-exp(-opticalDepth*.24));
- // Only the contact shallows transmit the opaque terrain. Beyond 45 cm,
- // differences between source bed tiles or chunk lighting cannot print seams.
- float transmission=exp(-depth*4.8)*(1-smoothstep(.10,.45,depth));
- return lerp(tint,bottom,transmission);
+ return RiskWaterBodyColor(bottom,depth,opticalDepth,0);
 }
 half RiskWaterContactOpacity(float depth) { return smoothstep(0,.18,depth); }
 #endif

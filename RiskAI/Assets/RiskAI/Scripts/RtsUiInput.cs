@@ -169,13 +169,13 @@ namespace RiskAI
 
         public static Label Label(string text, string name = null, int size = 14)
         {
-            var label = new Label(text) { name = name };
+            var label = new Label(GameText.Localize(text)) { name = name };
             label.style.color = Text; label.style.fontSize = size; label.style.unityTextAlign = TextAnchor.MiddleLeft;
             return label;
         }
         public static Button Button(string text, System.Action action, string name = null)
         {
-            var button = new RtsOrnamentButton(action) { text = text, name = name };
+            var button = new RtsOrnamentButton(action) { text = GameText.Localize(text), name = name };
             button.style.minHeight = 44; button.style.paddingLeft = 12; button.style.paddingRight = 12;
             button.style.marginRight = 8; button.style.marginBottom = 8;
             button.style.backgroundColor = Card; button.style.borderTopColor = Bronze; button.style.borderBottomColor = Bronze;

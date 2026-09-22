@@ -38,7 +38,7 @@ Shader "RiskAI/ImportedGround"
     color=lerp(color,snowRock,snow*.45);
     // Source water flags seed a continuous bank band through the waterline.
     // The shared field changes materials, never land, water or navigation.
-    float3 coast=RiskCoastSurface(i.w.xz);
+    float4 coast=RiskCoastSurfaceData(i.w.xz);
     half shore=saturate(coast.b);
     half sand=RiskSandBlend(coast.r);
     // Keep beach identity in the shared field. Grain and broken stone alter
@@ -65,6 +65,13 @@ Shader "RiskAI/ImportedGround"
     half meadow=NaturalNoise(warped*.18+patch*3);
     color*=lerp(half3(.84,.92,.80),half3(1.10,1.07,.96),patch);
     color*=.90+meadow*.17;
+    // Reuse the finely grained rock atlas for the submerged bed. A high-contrast
+    // value-noise threshold looks like a square mosaic, not small wet stones.
+    // No extra texture fetch: this is the same filtered rock sample as the bank.
+    half3 wetPebbles=lerp(rock,rockLuma.xxx,.82)*half3(.72,.78,.80);
+    wetPebbles*=.92+pebbles*.10;
+    half3 wetBed=lerp(wetPebbles,beachSand*.58,sand*.20);
+    color=lerp(color,wetBed,smoothstep(.035,.18,coast.a*_RiskCoastDepthRange));
     Light sun=GetMainLight(TransformWorldToShadowCoord(i.w),i.w,half4(1,1,1,1));
     color*=half3(.36,.41,.43)+sun.color*saturate(dot(n,sun.direction))*lerp(.24,1,sun.shadowAttenuation)*.78;
     return half4(MixFog(color,i.fog),1);

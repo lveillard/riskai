@@ -77,6 +77,54 @@ namespace RiskAI.Tests
                 "The rendered clip must be sampled at the pose belonging to the simulation strike.");
         }
 
+        [UnityTest]
+        public IEnumerator CulledSwordsmanRestoresTheCurrentContactPoseOnReentry()
+        {
+            foreach(var tower in battle.Towers)if(tower)tower.enabled=false;
+            foreach(var unit in battle.Units.ToArray())if(unit)unit.gameObject.SetActive(false);
+            Vector3 origin=battle.Towns[0].Rally;
+            Assert.That(NavMesh.SamplePosition(origin,out var attackerPoint,1,NavMesh.AllAreas),Is.True);
+            Assert.That(NavMesh.SamplePosition(attackerPoint.position+Vector3.right*.75f,out var targetPoint,.5f,NavMesh.AllAreas),Is.True);
+            var attacker=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,attackerPoint.position);
+            var target=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,targetPoint.position);
+            Assert.That(attacker.Agent.Warp(attackerPoint.position),Is.True);
+            Assert.That(target.Agent.Warp(targetPoint.position),Is.True);
+            target.enabled=false;target.Agent.enabled=false;
+            var view=attacker.GetComponent<UnitPresentationLodView>();
+            var controller=attacker.GetComponent<SoldierAnimator>();
+            var animation=attacker.GetComponentInChildren<Animation>();
+            float healthBefore=target.Health;attacker.Attack(target);
+            float deadline=Time.realtimeSinceStartup+2;
+            while(attacker.AttackPresentationProgress<0&&Time.realtimeSinceStartup<deadline)yield return null;
+            view.SetInCameraView(false);
+            view.enabled=false; // Keep the manager from reclassifying this focused unit during the synthetic offscreen interval.
+            Assert.That(controller.enabled,Is.False);
+            while(target.Health==healthBefore&&Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.That(target.Health,Is.LessThan(healthBefore));
+
+            view.SetSelected(true);
+            view.enabled=true;
+            Assert.That(controller.enabled,Is.True);
+            var state=animation["1H_Melee_Attack_Slice_Horizontal"];
+            Assert.That(state.normalizedTime,Is.EqualTo(attacker.AttackPresentationProgress).Within(.001f),
+                "Re-entry samples the simulation-owned attack phase immediately.");
+            Assert.That(state.normalizedTime,Is.EqualTo(AttackPresentationTiming.ContactNormalizedTime(UnitKind.Footman)).Within(.001f));
+        }
+
+        [UnityTest]
+        public IEnumerator PooledReactivationStartsPresentationVisibleUntilTheNextCameraRefresh()
+        {
+            var root=new GameObject("Pooled presentation unit");
+            var controller=root.AddComponent<SoldierAnimator>();
+            var view=root.AddComponent<UnitPresentationLodView>();view.Initialize(UnitKind.Footman,0);view.SetSelected(true);
+            view.SetInCameraView(false);Assert.That(controller.enabled,Is.False);
+            root.SetActive(false);yield return null;
+            root.SetActive(true);
+            Assert.That(view.ControllersActive,Is.True);
+            Assert.That(controller.enabled,Is.True);
+            Object.Destroy(root);yield return null;
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {

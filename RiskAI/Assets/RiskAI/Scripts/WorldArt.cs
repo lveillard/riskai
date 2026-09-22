@@ -40,7 +40,7 @@ namespace RiskAI
         {
             float x=width/2,z=length/2;
             var v=new[]{new Vector3(-x,0,-z),new Vector3(0,rise,-z),new Vector3(x,0,-z),new Vector3(-x,0,z),new Vector3(0,rise,z),new Vector3(x,0,z)};
-            var mesh=new Mesh();mesh.vertices=new[]{v[0],v[3],v[4],v[1], v[1],v[4],v[5],v[2], v[0],v[1],v[2], v[5],v[4],v[3]};
+            var mesh=GeneratedResourceOwner.For(root).Track(new Mesh());mesh.vertices=new[]{v[0],v[3],v[4],v[1], v[1],v[4],v[5],v[2], v[0],v[1],v[2], v[5],v[4],v[3]};
             mesh.triangles=new[]{0,1,2,0,2,3,4,5,6,4,6,7,8,9,10,11,12,13};mesh.RecalculateNormals();mesh.RecalculateBounds();
             var go=new GameObject("Faction roof");go.transform.SetParent(root,false);go.transform.localPosition=basePoint;
             go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=RoofMaterial(team);
@@ -50,17 +50,25 @@ namespace RiskAI
         }
         // Roof slopes spend much of the match outside direct light. Retaining some of the
         // painted albedo keeps light blue and navy visibly separate without changing the palette.
-        public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamColor(team),.32f,true,colorLift:.38f);
+        public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamMaterialColor(team),.32f,true,colorLift:.38f);
         static Renderer Banner(Transform root,Vector3 position,int team,float width=.7f,float height=1.6f)
         {
             var go=new GameObject("Banner");go.transform.SetParent(root,false);go.transform.localPosition=position;
-            var mesh=new Mesh();mesh.vertices=new[]{new Vector3(-width/2,0,0),new Vector3(width/2,0,0),new Vector3(width/2,-height*.8f,0),new Vector3(0,-height,0),new Vector3(-width/2,-height*.8f,0)};
+            var mesh=GeneratedResourceOwner.For(root).Track(new Mesh());mesh.vertices=new[]{new Vector3(-width/2,0,0),new Vector3(width/2,0,0),new Vector3(width/2,-height*.8f,0),new Vector3(0,-height,0),new Vector3(-width/2,-height*.8f,0)};
             mesh.triangles=new[]{0,2,1,0,4,2,4,3,2,1,2,0,2,4,0,2,3,4};mesh.normals=new[]{Vector3.back,Vector3.back,Vector3.back,Vector3.back,Vector3.back};
-            go.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamColor(team));
+            go.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamMaterialColor(team));
             VisualFactory.Shape(root,PrimitiveType.Cube,"Gold heraldry",position+new Vector3(0,-height*.4f,-.015f),new Vector3(width*.16f,height*.58f,.035f),new Color(1,.77f,.26f));
             return renderer;
         }
-        public static Renderer Town(Transform root,int team,bool capital)
+        public static Renderer Town(Transform root,int team,bool capital) =>
+            Town(root,team,capital,BuildingVariant.DetachedTown);
+        public static Renderer Town(Transform root,int team,bool capital,BuildingVariant variant)
+        {
+            if(variant==BuildingVariant.DetachedTown)return DetachedTown(root,team,capital);
+            if(variant==BuildingVariant.IntegratedTown)return IntegratedTown(root,team,capital);
+            throw new System.ArgumentException("A town requires a town building variant.",nameof(variant));
+        }
+        static Renderer DetachedTown(Transform root,int team,bool capital)
         {
             var model=new GameObject(root.name+" · architecture");model.transform.SetParent(root,false);
             model.transform.localScale=Vector3.one*VisualMetrics.TownScale;root=model.transform;
@@ -108,9 +116,50 @@ namespace RiskAI
                     for(int slat=0;slat<5;slat++)Block(sail.transform,"Windmill slat",new Vector3(.2f,.85f+slat*.24f,0),new Vector3(.65f,.14f,.08f),2,new Color(1.6f,1.55f,1.35f));
                 }
             }
-            return Banner(root,new Vector3(-1.08f,3.28f,-1.78f),team,.66f,1.22f);
+            var banner=Banner(root,new Vector3(-1.08f,3.28f,-1.78f),team,.66f,1.22f);
+            StaticArchitectureBatching.Combine(root,banner);
+            return banner;
         }
-        public static void Tower(Transform root,int team,out GameObject upper,out GameObject scaffold,out Renderer banner)
+        static Renderer IntegratedTown(Transform root,int team,bool capital)
+        {
+            var model=new GameObject(root.name+" · integrated architecture");model.transform.SetParent(root,false);
+            model.transform.localScale=Vector3.one*VisualMetrics.TownScale;root=model.transform;
+            GroundShadow(root,new Vector3(0,.035f,.15f),new Vector2(8.2f,7.4f));
+            Block(root,"Integrated stone footing",new Vector3(0,.16f,0),new Vector3(4.5f,.32f,4.05f));
+            Block(root,"Integrated civic hall",new Vector3(0,1.32f,.15f),new Vector3(3.85f,2.35f,3.45f),0,new Color(1.1f,1.06f,.94f),true);
+            Block(root,"Integrated upper storey",new Vector3(0,2.55f,.15f),new Vector3(3.6f,.55f,3.2f),0,new Color(1.18f,1.07f,.82f));
+            Roof(root,new Vector3(0,2.82f,.15f),4.4f,3.95f,capital?1.45f:1.18f,team);
+            for(int side=-1;side<=1;side+=2)
+            {
+                Block(root,"Integrated corner pier",new Vector3(side*1.72f,1.05f,-1.3f),new Vector3(.36f,2.1f,.58f));
+                Beam(root,new Vector3(side*1.7f,.35f,-1.59f),new Vector3(side*1.7f,2.68f,-1.59f),.16f);
+                VisualFactory.Shape(root,PrimitiveType.Cube,"Integrated warm window",new Vector3(side*.98f,1.72f,-1.61f),new Vector3(.45f,.64f,.05f),new Color(.96f,.64f,.19f));
+            }
+            Block(root,"Integrated gate surround",new Vector3(0,1.0f,-1.7f),new Vector3(1.35f,1.95f,.3f));
+            Block(root,"Integrated oak gate",new Vector3(0,.9f,-1.88f),new Vector3(.94f,1.62f,.1f),2);
+            BuildingEntranceAnchor.Create(root,"Integrated town entrance anchor",new Vector3(0,0,-1.88f),Vector3.back);
+            for(int i=0;i<2;i++)Block(root,"Integrated entrance stair",new Vector3(0,.08f+i*.07f,-2.18f+i*.16f),new Vector3(1.5f,.16f+i*.12f,.72f-i*.14f));
+            if(capital)
+            {
+                Block(root,"Integrated council lantern",new Vector3(-1.15f,3.58f,.5f),new Vector3(.72f,1.45f,.7f));
+                Roof(root,new Vector3(-1.15f,4.3f,.5f),1.2f,1.15f,.7f,team);
+            }
+            var banner=Banner(root,new Vector3(1.18f,3.12f,-1.66f),team,.64f,1.16f);
+            StaticArchitectureBatching.Combine(root,banner);
+            return banner;
+        }
+        public static void Tower(Transform root,int team,out GameObject upper,out GameObject scaffold,out Renderer banner) =>
+            Tower(root,team,BuildingVariant.DetachedTown,out upper,out scaffold,out banner);
+        public static void Tower(Transform root,int team,BuildingVariant variant,out GameObject upper,out GameObject scaffold,out Renderer banner)
+        {
+            if(BuildingVariants.IsIntegrated(variant))IntegratedTower(root,team,out upper,out scaffold,out banner);
+            else DetachedTower(root,team,out upper,out scaffold,out banner);
+            // Scaffolding is activated independently while a tower is rebuilt.
+            // Batch only the stable upper architecture and leave its mutable
+            // faction roof/banner as ordinary renderers.
+            StaticArchitectureBatching.Combine(upper.transform,banner);
+        }
+        static void DetachedTower(Transform root,int team,out GameObject upper,out GameObject scaffold,out Renderer banner)
         {
             var model=new GameObject("Tower architecture");model.transform.SetParent(root,false);
             model.transform.localScale=Vector3.one*VisualMetrics.TowerScale;root=model.transform;
@@ -139,6 +188,48 @@ namespace RiskAI
             banner=Banner(upper.transform,new Vector3(0,3.2f,-1.15f),team,.85f,1.5f);
             scaffold=new GameObject("Scaffolding");scaffold.transform.SetParent(root,false);
             for(int s=-1;s<=1;s+=2){Beam(scaffold.transform,new Vector3(s*1.3f,0,-1.3f),new Vector3(s*1.3f,4,-1.3f));Block(scaffold.transform,"Scaffold",new Vector3(0,s==1?2.8f:1.2f,-1.3f),new Vector3(3,.16f,.6f),2);}
+        }
+        static void IntegratedTower(Transform root,int team,out GameObject upper,out GameObject scaffold,out Renderer banner)
+        {
+            var model=new GameObject("Integrated tower architecture");model.transform.SetParent(root,false);
+            model.transform.localScale=Vector3.one*VisualMetrics.TowerScale;root=model.transform;
+            upper=new GameObject("Integrated watchtower");upper.transform.SetParent(root,false);
+            // Raise the silhouette without stretching the parapets/roof or moving
+            // the floor and the independent gameplay aim/launch anchors.
+            float lift=VisualMetrics.IntegratedTowerVisualLift/VisualMetrics.TowerScale;
+            var shaft=Block(upper.transform,"Integrated stone turret",new Vector3(0,2.29f+lift*.5f,0),new Vector3(2.35f,4.58f+lift,2.35f));
+            shaft.GetComponent<Renderer>().sharedMaterial=Painted(0);
+            Block(upper.transform,"Integrated gallery",new Vector3(0,4.58f+lift,0),new Vector3(3.15f,.34f,3.15f));
+            var parapetMesh=IntegratedParapetMesh(root,shaft.GetComponent<MeshFilter>().sharedMesh);
+            var parapetMaterial=Painted(0);
+            for(int side=0;side<4;side++)
+            {
+                float angle=side*90;var direction=Quaternion.Euler(0,angle,0)*Vector3.forward;
+                var parapet=new GameObject("Integrated battlement parapet");parapet.transform.SetParent(upper.transform,false);
+                parapet.transform.localPosition=direction*1.34f+Vector3.up*(4.82f+lift);parapet.transform.localRotation=Quaternion.Euler(0,angle,0);
+                parapet.AddComponent<MeshFilter>().sharedMesh=parapetMesh;parapet.AddComponent<MeshRenderer>().sharedMaterial=parapetMaterial;
+            }
+            var roof=VisualFactory.Cone(upper.transform,"Faction roof",new Vector3(0,5.18f+lift,0),1.2f,1.15f,Color.white,4,45);
+            roof.GetComponent<Renderer>().sharedMaterial=RoofMaterial(team);
+            Beam(upper.transform,new Vector3(0,5.75f+lift,0),new Vector3(0,6.45f+lift,0),.1f);
+            banner=Banner(upper.transform,new Vector3(0,4.55f+lift,-1.48f),team,.72f,1.18f);
+            scaffold=new GameObject("Integrated scaffolding");scaffold.transform.SetParent(root,false);
+            for(int side=-1;side<=1;side+=2)
+            {
+                Beam(scaffold.transform,new Vector3(side*1.05f,1.7f,-1.05f),new Vector3(side*1.05f,5+lift,-1.05f),.15f);
+                Block(scaffold.transform,"Integrated scaffold",new Vector3(0,side>0?4.35f+lift:2.45f,-1.05f),new Vector3(2.35f,.14f,.5f),2);
+            }
+        }
+        static Mesh IntegratedParapetMesh(Transform owner,Mesh cube)
+        {
+            var pieces=new[]
+            {
+                new CombineInstance{mesh=cube,transform=Matrix4x4.TRS(Vector3.zero,Quaternion.identity,new Vector3(2.65f,.28f,.3f))},
+                new CombineInstance{mesh=cube,transform=Matrix4x4.TRS(new Vector3(-1.03f,.32f,0),Quaternion.identity,new Vector3(.5f,.65f,.38f))},
+                new CombineInstance{mesh=cube,transform=Matrix4x4.TRS(new Vector3(1.03f,.32f,0),Quaternion.identity,new Vector3(.5f,.65f,.38f))}
+            };
+            var mesh=GeneratedResourceOwner.For(owner).Track(new Mesh{name="Integrated stone battlement parapet"});
+            mesh.CombineMeshes(pieces,true,true,false);mesh.RecalculateBounds();return mesh;
         }
         public static void ResetRoads() {roadCount=0;Shader.SetGlobalInt("_RiskRoadCount",0);}
         public static void Road(Vector3 a,Vector3 b,float width)

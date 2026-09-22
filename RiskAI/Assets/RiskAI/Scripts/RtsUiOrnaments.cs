@@ -187,6 +187,27 @@ namespace RiskAI
         }
     }
 
+    /// <summary>A quiet campaign-screen divider that keeps the menu distinct from framed battle chrome.</summary>
+    public sealed class RtsCampaignDivider : VisualElement
+    {
+        public RtsCampaignDivider()
+        {
+            name="Campaign divider";pickingMode=PickingMode.Ignore;
+            style.height=12;style.marginTop=5;style.flexShrink=0;
+            generateVisualContent+=Paint;
+        }
+
+        void Paint(MeshGenerationContext context)
+        {
+            var r=contentRect;if(r.width<24)return;
+            var p=context.painter2D;float y=r.height*.5f;
+            var edge=new Color(RtsUiStyle.Bronze.r,RtsUiStyle.Bronze.g,RtsUiStyle.Bronze.b,.42f);
+            RtsOrnamentDrawing.Line(p,new Vector2(0,y),new Vector2(r.width*.46f,y),edge,1);
+            RtsOrnamentDrawing.Line(p,new Vector2(r.width*.54f,y),new Vector2(r.width,y),edge,1);
+            RtsOrnamentDrawing.Diamond(p,new Vector2(r.width*.5f,y),4,RtsUiStyle.Gold);
+        }
+    }
+
     static class RtsOrnamentDrawing
     {
         public static void Box(Painter2D p,float x,float y,float w,float h,Color color)

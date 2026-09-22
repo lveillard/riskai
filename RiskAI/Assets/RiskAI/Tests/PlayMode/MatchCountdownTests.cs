@@ -9,6 +9,34 @@ namespace RiskAI.Tests
 {
     public sealed class MatchCountdownTests
     {
+        [UnityTest] public IEnumerator ReturningToTheAppPreservesTheUnreadBriefing()
+        {
+            var previous=SceneManager.GetActiveScene();var scene=SceneManager.CreateScene("Countdown resume");
+            SceneManager.SetActiveScene(scene);
+            var battle=new GameObject("Countdown session").AddComponent<BattleSession>();battle.AiEnabled=false;
+            try
+            {
+                battle.BeginStartCountdown();
+                Assert.That(battle.StartCountdownRemaining,Is.EqualTo(5));
+                foreach(string callback in new[]{"OnApplicationFocus","OnApplicationPause"})
+                {
+                    battle.BeginStartCountdown(.25f);
+                    battle.enabled=false; // Unity stops player updates in the background.
+                    yield return new WaitForSecondsRealtime(.35f);
+                    battle.SendMessage(callback,callback=="OnApplicationFocus");
+                    battle.enabled=true;
+                    yield return null;
+                    Assert.That(battle.IsStarting,Is.True,callback+" must discard the suspended time.");
+                    Assert.That(battle.Clock.TickCount,Is.Zero);
+                    Assert.That(battle.Commands.Submit(new UnitCommand(0,123,UnitCommandKind.Move)),Is.False);
+                }
+                yield return new WaitForSecondsRealtime(.35f);
+                Assert.That(battle.IsStarting,Is.False);
+            }
+            finally { SceneManager.SetActiveScene(previous); }
+            yield return SceneManager.UnloadSceneAsync(scene);
+        }
+
         [UnityTest] public IEnumerator CountdownBlocksSimulationAndOrdersThenStartsFromZero()
         {
             var previous=SceneManager.GetActiveScene();var scene=SceneManager.CreateScene("Match countdown");

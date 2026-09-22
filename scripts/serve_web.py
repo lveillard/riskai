@@ -31,7 +31,7 @@ class UnityHandler(http.server.SimpleHTTPRequestHandler):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--directory', type=Path, default=Path(__file__).resolve().parents[1] / 'Builds' / 'Web-v0.22')
+    parser.add_argument('--directory', type=Path, default=Path(__file__).resolve().parents[1] / 'Builds' / 'Web-v0.29.1')
     parser.add_argument('--bind', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8080)
     args = parser.parse_args()
@@ -40,7 +40,7 @@ def main():
         parser.error(f'No Web build found at {directory}. Run scripts/Unity.ps1 -Action BuildWeb first.')
     handler = functools.partial(UnityHandler, directory=str(directory))
     with http.server.ThreadingHTTPServer((args.bind, args.port), handler) as server:
-        print(f'RiskAI: http://{args.bind}:{args.port}', flush=True)
+        print(f'Riesgus: http://{args.bind}:{args.port}', flush=True)
         server.serve_forever()
 
 

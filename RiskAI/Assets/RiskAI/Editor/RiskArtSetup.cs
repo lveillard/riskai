@@ -23,7 +23,7 @@ namespace RiskAI.Editor
                     var cart=new GameObject("Mortar portrait model");VisualFactory.MortarModel(cart.transform,VisualFactory.TeamColor(0));
                     RenderPortrait(cart,null,name);Object.DestroyImmediate(cart);continue;
                 }
-                string model = kind == UnitKind.Guard ? "Knight" : kind==UnitKind.Medic?"Mage":name;
+                string model = kind == UnitKind.Guard ? "Knight" : kind==UnitKind.Medic?"Mage":kind==UnitKind.MarinePrivate?"RogueHooded":name;
                 string path = Folder + model + ".fbx";
                 var importer = (ModelImporter)AssetImporter.GetAtPath(path);
                 if(!importer)throw new System.InvalidOperationException("Missing own unit art importer: "+path);
@@ -60,8 +60,12 @@ namespace RiskAI.Editor
                         item.gameObject.SetActive(visible);
                     }
                 }
+                if(kind==UnitKind.MarinePrivate)
+                    foreach(var part in visual.GetComponentsInChildren<Transform>(true))
+                        if(part.name=="Rogue_Cape"||part.name=="Rogue_Head_Hooded")part.gameObject.SetActive(false);
                 var prefab = PrefabUtility.SaveAsPrefabAsset(root, "Assets/RiskAI/Resources/Units/" + name + ".prefab");
                 UnitTeamColor.Apply(root,kind,0);
+                if(kind==UnitKind.MarinePrivate)MarinePrivateView.Apply(visual,0);
                 RenderPortrait(root, animation, name);
                 Object.DestroyImmediate(root);
             }

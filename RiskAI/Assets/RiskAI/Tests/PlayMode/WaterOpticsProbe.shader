@@ -16,7 +16,7 @@ Shader "Hidden/RiskAI/Tests/WaterOpticsProbe"
    half4 Frag():SV_Target
    {
     float opticalDepth=RiskImportedOpticalDepth(_Optics.y,_Optics.z);
-    return half4(RiskWaterBodyColor(_Bottom.rgb,_Optics.x,opticalDepth),RiskWaterContactOpacity(_Optics.x));
+    return half4(RiskWaterBodyColor(_Bottom.rgb,_Optics.x,opticalDepth,_Optics.y),RiskWaterContactOpacity(_Optics.x));
    }
    ENDHLSL
   }

@@ -52,7 +52,7 @@ namespace RiskAI
             {
                 var city=MapLayout.Towns[i];int owner=owners[i];bool capital=owner>=0 && capitals[owner]==i;
                 var go=new GameObject(city.Name);go.transform.SetParent(terrain.transform);go.transform.position=city.Position;
-                go.AddComponent<Settlement>().Initialize(session,city.Id,city.Name,owner,city.Region,capital,city.Country,MapLayout.IsImported?city.ClaimPoint:(Vector3?)null,city.IsPort);
+                go.AddComponent<Settlement>().Initialize(session,city.Id,city.Name,owner,city.Region,capital,city.Country,MapLayout.IsImported?city.ClaimPoint:(Vector3?)null,city.IsPort,city.Variant);
             }
             WorldArt.Cities(session.Towns);
             if(!MapLayout.IsImported)TerrainHydrology.CreateCrossings(terrain.transform);

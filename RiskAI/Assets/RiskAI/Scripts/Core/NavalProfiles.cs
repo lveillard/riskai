@@ -32,6 +32,8 @@ namespace RiskAI.Core
         public readonly int PointValue;
         public readonly float TrainSeconds;
         public readonly int Capacity;
+        public bool CanAttack=>Damage>0&&Range>0;
+        public bool CanTransport=>Capacity>0;
 
         public ShipProfile(
             string name,
@@ -68,10 +70,7 @@ namespace RiskAI.Core
     {
         // The prototype keeps the Galley identity for public compatibility,
         // while its source-aligned profile is the documented h00W Warship B.
-        public static readonly ShipProfile Galley = new ShipProfile(
-            "Fragata", 400f, 30f, 20f, 1.5f, 6.8f, 6f,
-            // W3U h00W ubld@0x2024; circle entry excludes n007/n008 only.
-            AttackKind.Normal, 5, 1f, 0, 5,1,15,"h00W",true);
+        public static ShipProfile Galley=>UnitCatalog.Profile(NavalUnitKind.Galley);
 
         public static ShipProfile Frigate => Galley;
 
@@ -79,19 +78,11 @@ namespace RiskAI.Core
         // Its inherited nzep armor is 0 and it has no enabled weapon.
         // n008 uabi@0x3588 attaches Sch3: W3A Car1@0x395 sets capacity 10.
         // The UI's Normal attack token does not enable a weapon.
-        public static readonly ShipProfile Transport = new ShipProfile(
-            "Transporte", 300f, 0f, 0f, 0f, 6.8f, 0f,
-            // W3U n008 ubld@0x3402; JASS17438-17445 excludes n008 from entry.
-            AttackKind.Normal, 2, 1f, 10, 2,sourceRawId:"n008",canCapture:false);
+        public static ShipProfile Transport=>UnitCatalog.Profile(NavalUnitKind.Transport);
 
         public static ShipProfile Profile(NavalUnitKind kind)
         {
-            switch (kind)
-            {
-                case NavalUnitKind.Galley: return Galley;
-                case NavalUnitKind.Transport: return Transport;
-                default: throw new ArgumentOutOfRangeException(nameof(kind));
-            }
+            return UnitCatalog.Profile(kind);
         }
     }
 }

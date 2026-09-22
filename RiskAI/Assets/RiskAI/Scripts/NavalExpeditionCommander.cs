@@ -382,7 +382,7 @@ namespace RiskAI
         {
             foreach(var ship in world.Ships)
             {
-                if(!ship||!ship.IsAlive||ship.Team!=team||ship.Kind!=ShipKind.Transport||ship.CargoCount==0)continue;
+                if(!ship||!ship.IsAlive||ship.Team!=team||!ship.Profile.CanTransport||ship.CargoCount==0)continue;
                 transport=ship;
                 returnHarbor=NearestRecoveryHarbor(ship.transform.position);
                 if(!returnHarbor){retryAt=session.BattleTime+RetrySeconds;return true;}
@@ -409,7 +409,7 @@ namespace RiskAI
         bool HasEligibleEmptyTransport()
         {
             foreach(var ship in world.Ships)
-                if(ship&&ship.IsAlive&&ship.Team==team&&ship.Kind==ShipKind.Transport&&!ship.IsGarrison&&ship.CargoCount==0)return true;
+                if(ship&&ship.IsAlive&&ship.Team==team&&ship.Profile.CanTransport&&!ship.IsGarrison&&ship.CargoCount==0)return true;
             return false;
         }
         Ship FindCompatibleTransport(Vector3 berth)
@@ -417,7 +417,7 @@ namespace RiskAI
             Ship best=null;float distance=float.MaxValue;
             foreach(var ship in world.Ships)
             {
-                if(!ship||!ship.IsAlive||ship.Team!=team||ship.Kind!=ShipKind.Transport||ship.IsGarrison||ship.CargoCount!=0||!SeaNavigation.AreConnected(ship.transform.position,berth))continue;
+                if(!ship||!ship.IsAlive||ship.Team!=team||!ship.Profile.CanTransport||ship.IsGarrison||ship.CargoCount!=0||!SeaNavigation.AreConnected(ship.transform.position,berth))continue;
                 float next=DistanceXZ(ship.transform.position,berth);
                 if(next<distance){distance=next;best=ship;}
             }

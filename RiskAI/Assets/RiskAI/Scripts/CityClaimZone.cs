@@ -9,6 +9,11 @@ namespace RiskAI
     {
         public const float DefaultHalfExtent = ClaimRules.CircleRadius;
         public const float VerticalExtent = 1.25f;
+        public const float AnchorSearchRadius = .9f;
+        public const float RingWidth = .07f;
+        public static readonly Color RingColor = Color.white;
+        public static readonly Color ContestedRingColor = new Color(1f,.68f,.12f);
+        public static Color VisibleRingColor(bool contested) => contested ? ContestedRingColor : RingColor;
         readonly List<CombatTarget> nearby = new List<CombatTarget>(32);
         public Vector3 Center { get; }
         // This is deliberately resolved once.  Every replacement defender must use
@@ -34,7 +39,7 @@ namespace RiskAI
                 anchor = garrisonAnchor;
                 return true;
             }
-            if (!NavMesh.SamplePosition(Center, out var hit, .9f, NavMesh.AllAreas))
+            if (!NavMesh.SamplePosition(Center, out var hit, AnchorSearchRadius, NavMesh.AllAreas))
             {
                 anchor = default;
                 return false;
@@ -117,7 +122,7 @@ namespace RiskAI
         }
         internal void SetNavalDefender(Ship ship,Harbor harbor)
         {
-            if(ship&&(!ship.IsAlive||ship.Kind!=ShipKind.Galley||ship.Garrison&&ship.Garrison!=harbor))return;
+            if(ship&&(!ship.IsAlive||!ship.Profile.CanCapture||ship.Garrison&&ship.Garrison!=harbor))return;
             var previousShip=NavalDefender;
             if(previousShip==ship)return;
             // Land and sea are movement adapters for one logical garrison slot.

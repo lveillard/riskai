@@ -46,7 +46,7 @@ namespace RiskAI.Tests
 
             var roof=town.GetComponentsInChildren<MeshRenderer>()
                 .First(renderer=>renderer.name=="Faction roof"&&!renderer.GetComponentInParent<DefenseTower>());
-            var house=town.GetComponentsInChildren<MeshRenderer>().First(renderer=>renderer.name=="Masonry hall");
+            var house=town.GetComponentsInChildren<MeshRenderer>().First(renderer=>renderer.name=="Integrated civic hall");
             var tower=town.GetComponentsInChildren<MeshRenderer>()
                 .First(renderer=>renderer.GetComponentInParent<DefenseTower>()==town.Defense);
             foreach(var renderer in new[]{roof,house,tower})
@@ -92,12 +92,13 @@ namespace RiskAI.Tests
             Assert.That(nearbyPorts.Length,Is.EqualTo(2));
             foreach(var harbor in NavalWorld.Current.Harbors)harbor.State.Owner=1;
             port.State.Owner=0;nearbyPorts[0].State.Owner=1;nearbyPorts[1].State.Owner=-1;
-            var focus=(port.transform.position+port.LinkedTown.transform.position)*.5f;
             var cameraObject=new GameObject("Imported port box camera");var boxCamera=cameraObject.AddComponent<Camera>();
-            boxCamera.transform.position=focus+new Vector3(0,52,-72);boxCamera.transform.LookAt(focus+Vector3.up*2);boxCamera.fieldOfView=58;boxCamera.nearClipPlane=.1f;boxCamera.farClipPlane=1000;
+            boxCamera.fieldOfView=58;boxCamera.nearClipPlane=.1f;boxCamera.farClipPlane=1000;
             controller.Initialize(battle,boxCamera);
-            var ownershipPoints=nearbyPorts.Select(h=>ScreenPoint(boxCamera,BuildingSelection.Bounds(h).center))
-                .Append(ScreenPoint(boxCamera,BuildingSelection.Bounds(port).center)).ToArray();
+            var ownershipBounds=nearbyPorts.Select(BuildingSelection.Bounds)
+                .Append(BuildingSelection.Bounds(port)).ToArray();
+            Frame(boxCamera,ownershipBounds);
+            var ownershipPoints=ownershipBounds.Select(bounds=>ScreenPoint(boxCamera,bounds.center)).ToArray();
             var ownershipRect=Rect.MinMaxRect(ownershipPoints.Min(point=>point.x)-5,ownershipPoints.Min(point=>point.y)-5,
                 ownershipPoints.Max(point=>point.x)+5,ownershipPoints.Max(point=>point.y)+5);
             BoxSelect(ownershipRect);
@@ -105,8 +106,10 @@ namespace RiskAI.Tests
             BoxSelect(new Rect(0,0,1,1),true);
             Assert.That(controller.SelectedHarbors,Is.EqualTo(new[]{port}),"Shift-selecting empty terrain must preserve the existing selection.");
             controller.Clear();
-            var house=ScreenPoint(boxCamera,BuildingSelection.Bounds(port.LinkedTown).center);
-            var berth=ScreenPoint(boxCamera,BuildingSelection.Bounds(port).center);
+            var houseBounds=BuildingSelection.Bounds(port.LinkedTown);var berthBounds=BuildingSelection.Bounds(port);
+            Frame(boxCamera,houseBounds,berthBounds);
+            var house=ScreenPoint(boxCamera,houseBounds.center);
+            var berth=ScreenPoint(boxCamera,berthBounds.center);
             Assert.That(Vector2.Distance(house,berth),Is.GreaterThan(10),"The fixture needs distinct city-house and berth footprints.");
 
             var houseRect=RectAt(house);Assert.That(houseRect.Contains(berth),Is.False);
@@ -148,6 +151,17 @@ namespace RiskAI.Tests
         {
             var screen=camera.WorldToScreenPoint(point);Assert.That(screen.z,Is.GreaterThan(0));
             return new Vector2(screen.x,Screen.height-screen.y);
+        }
+        static void Frame(Camera camera,params Bounds[] targets)
+        {
+            Assert.That(targets,Is.Not.Empty);
+            var combined=targets[0];for(int i=1;i<targets.Length;i++)combined.Encapsulate(targets[i]);
+            float verticalHalf=camera.fieldOfView*.5f*Mathf.Deg2Rad;
+            float horizontalHalf=Mathf.Atan(Mathf.Tan(verticalHalf)*Mathf.Max(.1f,camera.aspect));
+            float distance=Mathf.Max(8,combined.extents.magnitude/Mathf.Sin(Mathf.Min(verticalHalf,horizontalHalf))*1.15f);
+            var fromTarget=new Vector3(0,.585f,-.811f).normalized;
+            camera.transform.position=combined.center+fromTarget*distance;
+            camera.transform.LookAt(combined.center);
         }
         static Rect RectAt(Vector2 point)=>new Rect(point.x-3,point.y-3,6,6);
         void BoxSelect(Rect rect,bool append=false)

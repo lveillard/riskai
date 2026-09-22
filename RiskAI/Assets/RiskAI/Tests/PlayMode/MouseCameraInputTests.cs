@@ -101,9 +101,23 @@ namespace RiskAI.Tests
                     before=controller.CameraRig.TargetZoom;
                     Pump(Vector2.zero,scroll:1);
                     Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(before),"Scrolling the HUD cannot zoom the battlefield.");
+                    Pump(UiViewport.WorldRect.center);
+                    Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(before),"A discarded HUD wheel must not jump after the pointer returns to the map.");
                 }
             }
             finally { InputSystem.RemoveDevice(pen); }
+            yield return null;
+        }
+
+        [UnityTest] public IEnumerator FractionalWheelBurstHasTheSameUnitsAsOneNotchAndReversesCleanly()
+        {
+            var point=UiViewport.WorldRect.center;
+            controller.CameraRig.ResetView();
+            float initial=controller.CameraRig.TargetZoom;
+            for(int eventIndex=0;eventIndex<10;eventIndex++)Pump(point,scroll:.1f);
+            Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(initial*RtsCameraPolicy.WheelZoomMultiplier(1)).Within(.001f));
+            for(int eventIndex=0;eventIndex<10;eventIndex++)Pump(point,scroll:-.1f);
+            Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(initial).Within(.001f));
             yield return null;
         }
 

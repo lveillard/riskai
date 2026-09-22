@@ -97,5 +97,12 @@ namespace RiskAI
         }
         public static void Bar(Rect r,float amount,Color color)
         { Fill(r,new Color(.025f,.03f,.025f));Fill(new Rect(r.x+1,r.y+1,(r.width-2)*Mathf.Clamp01(amount),r.height-2),color); }
+        public static void WorldHealthBar(Rect r,float amount,Color color)
+        {
+            Fill(r,new Color(.94f,.96f,.92f,.96f));
+            var track=new Rect(r.x+1,r.y+1,Mathf.Max(0,r.width-2),Mathf.Max(0,r.height-2));
+            Fill(track,new Color(.018f,.022f,.018f,.96f));
+            Fill(new Rect(track.x,track.y,track.width*Mathf.Clamp01(amount),track.height),color);
+        }
     }
 }

@@ -59,6 +59,8 @@ namespace RiskAI
         public RtsCameraRig CameraRig { get; private set; }
         bool pressedWorld;
         readonly PointerGesture secondaryGesture = new PointerGesture();
+        float lastStrategicTapTime=-10;
+        Vector2 lastStrategicTap;
         RtsInputRouter inputRouter;
         bool cursorCaptureRequested;
         bool gameplayFocus;
@@ -238,7 +240,7 @@ namespace RiskAI
         static bool IsSelectableShip(Ship ship) => ship&&ship.Team==0&&ship.IsAlive&&ship.isActiveAndEnabled;
         Ship SelectedTransport
         {
-            get { foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Kind==ShipKind.Transport)return ship;return null; }
+            get { foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Profile.CanTransport)return ship;return null; }
         }
         void CancelPendingBoarding()
         {
@@ -323,14 +325,20 @@ namespace RiskAI
             Harbor harbor=null;float distance=12*12;
             foreach(var candidate in naval.Harbors)if(candidate)
             {float next=FlatDistance(candidate.Berth,anchor.transform.position);if(next<distance){distance=next;harbor=candidate;}}
-            if(!Fleet.Any(s=>IsSelectableShip(s)&&s.Kind==ShipKind.Transport&&s.CargoCount>0)){session.Message("Selecciona un transporte con tropas a bordo.");return;}
+            if(!Fleet.Any(s=>IsSelectableShip(s)&&s.Profile.CanTransport&&s.CargoCount>0)){session.Message("Selecciona un transporte con tropas a bordo.");return;}
             CancelBoardingForSelection();
             if(!harbor){CancelCursor();UnloadCursor=true;session.Message("Desembarco: haz clic en una playa transitable. El transporte navegará hasta ella.");return;}
-            foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Kind==ShipKind.Transport)
+            foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Profile.CanTransport)
             {
                 ship.SailToHarbor(harbor);
                 if(ship.LastActionError!=null)session.Message(ship.LastActionError);
             }
+        }
+        public void UnloadCargo(Ship transport,Soldier soldier)
+        {
+            if(session.Paused||session.Winner>=0||!IsSelectableShip(transport))return;
+            if(transport.UnloadOneNearby(soldier))session.Message(BattleRules.Name(soldier.Kind)+" ha desembarcado.");
+            else Feedback(transport.LastActionError);
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
         public void FocusHome()
@@ -358,12 +366,17 @@ namespace RiskAI
                 BattleSession.GiveFormation(mobile,point,attack,Shift,PatrolCursor);
                 issued=true;
             }
-            if(issued)ShowOrder(point,attack);
+            bool fleetIssued=false;
             if(Fleet.Count>0)
             {
-                foreach(var ship in Fleet)if(IsSelectableShip(ship)){ship.MoveTo(point,attack);Feedback(ship.LastActionError);}
-                issued=true;
+                foreach(var ship in Fleet)if(IsSelectableShip(ship))
+                {
+                    ship.MoveTo(point,attack);Feedback(ship.LastActionError);
+                    if(ship.LastActionError==null)fleetIssued=true;
+                }
+                issued|=fleetIssued;
             }
+            if(issued)ShowOrder(point,attack);
             if(!issued&&Selection.Count>0&&!attemptedGuardOrder)session.Message("No hay tropas disponibles para esa orden.");
             if(!issued&&SelectedCamp)
             {
@@ -409,7 +422,7 @@ namespace RiskAI
         void BeginBoarding(Ship transport) => BeginBoarding(transport,Selection);
         void BeginBoarding(Ship transport,IReadOnlyList<Soldier> candidates)
         {
-            if(!transport||transport.Team!=0||transport.Kind!=ShipKind.Transport||candidates.Count==0)return;
+            if(!transport||transport.Team!=0||!transport.Profile.CanTransport||candidates.Count==0)return;
             var naval=NavalWorld.Current;if(!naval)return;
             var available=candidates.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison).Take(Mathf.Min(Ship.LoadOrderLimit,transport.Profile.Capacity-transport.CargoCount)).ToList();
             if(available.Count==0){session.Message("Transporte lleno o sólo defensores retenidos seleccionados.");return;}
@@ -491,6 +504,10 @@ namespace RiskAI
         static bool InsideScreen(Vector2 point) => point.x>=0&&point.x<=Screen.width&&point.y>=0&&point.y<=Screen.height;
         void Update()
         {
+            // Consume the browser bridge before every focus/modal/HUD early return.
+            // A menu scroll or stale pre-load touchpad burst must never zoom later.
+            var mouse=Mouse.current;
+            float wheelSteps=PlatformPresentation.ConsumeWheelSteps(mouse==null?0:mouse.scroll.ReadValue().y);
             if(session&&!session.Paused&&session.Winner<0)ProcessPendingBoarding();
             AnimateOrderMarker();
             // Ownership is released before any focus/modal early return: a dead
@@ -504,7 +521,7 @@ namespace RiskAI
             }
             SyncPauseInput();
             ApplyCursorCapture();
-            var mouse=Mouse.current;var key=Keyboard.current;
+            var key=Keyboard.current;
             if(key!=null)
             {
             if(key.f1Key.wasPressedThisFrame)HelpVisible=!HelpVisible;
@@ -640,7 +657,7 @@ namespace RiskAI
             if(!CameraDragging)
             {
                 if(pan.sqrMagnitude>.001f)CameraRig.Pan(pan,Time.unscaledDeltaTime*panMultiplier);
-                if(!mouse.middleButton.isPressed&&insideScreen&&!OverHud(point))CameraRig.ZoomAt(mouse.scroll.ReadValue().y,point);
+                if(!mouse.middleButton.isPressed&&insideScreen&&!OverHud(point))CameraRig.ZoomAt(wheelSteps,point);
                 previousMouse=point;
             }
             if(mouse.leftButton.wasPressedThisFrame&&!OverHud(point))

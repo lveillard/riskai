@@ -97,6 +97,51 @@ namespace RiskAI.Tests
             Assert.That(views.Any(view=>view.transform.Find("Piercing projectile").gameObject.activeSelf),Is.True);
             Assert.That(views.Any(view=>view.transform.Find("Magic projectile").gameObject.activeSelf),Is.True);
             Assert.That(views.Any(view=>view.transform.Find("Siege projectile").gameObject.activeSelf),Is.True);
+            var piercing=views.Select(view=>view.transform.Find("Piercing projectile")).First(group=>group.gameObject.activeSelf);
+            var piercingParts=piercing.GetComponentsInChildren<MeshRenderer>();
+            CollectionAssert.AreEquivalent(new[]{"Bolt shaft","Bolt metal point","Bolt fletching top","Bolt fletching side"},
+                piercingParts.Select(renderer=>renderer.name));
+            Assert.That(piercing.Find("Bright bolt streak"),Is.Null);
+            Assert.That(piercingParts.All(renderer=>renderer.shadowCastingMode==UnityEngine.Rendering.ShadowCastingMode.Off&&!renderer.receiveShadows),Is.True);
+            foreach(var renderer in piercingParts)foreach(var material in renderer.sharedMaterials)
+            {
+                Assert.That(material.IsKeywordEnabled("_EMISSION"),Is.False,renderer.name+" must use an ordinary physical material.");
+                if(material.HasProperty("_EmissionColor"))
+                {
+                    var emission=material.GetColor("_EmissionColor");
+                    Assert.That(Mathf.Max(emission.r,Mathf.Max(emission.g,emission.b)),Is.LessThan(.001f));
+                }
+            }
+            var filters=piercing.GetComponentsInChildren<MeshFilter>();
+            Assert.That(filters.Sum(filter=>filter.sharedMesh.vertexCount),Is.LessThanOrEqualTo(96),"A pooled bolt must not contain capsule-grade geometry.");
+            var tipFilter=filters.Single(filter=>filter.name=="Bolt metal point");
+            Assert.That(Mathf.Max(tipFilter.sharedMesh.bounds.size.x,tipFilter.sharedMesh.bounds.size.z),Is.LessThanOrEqualTo(.111f),
+                "The metal point must read as a needle, not an arrow icon.");
+            var fletching=filters.Where(filter=>filter.name.StartsWith("Bolt fletching")).ToArray();
+            Assert.That(fletching.Length,Is.EqualTo(2));Assert.That(fletching[0].sharedMesh,Is.SameAs(fletching[1].sharedMesh));
+            Assert.That(fletching[0].sharedMesh.vertexCount,Is.EqualTo(8));Assert.That(fletching[0].sharedMesh.triangles.Length,Is.EqualTo(12));
+            bool found=false;var localBounds=default(Bounds);
+            foreach(var filter in filters)foreach(var vertex in filter.sharedMesh.vertices)
+            {
+                var local=piercing.InverseTransformPoint(filter.transform.TransformPoint(vertex));
+                if(!found){localBounds=new Bounds(local,Vector3.zero);found=true;}else localBounds.Encapsulate(local);
+            }
+            Assert.That(found,Is.True);Assert.That(localBounds.size.z,Is.InRange(.70f,.95f));
+            Assert.That(localBounds.size.x,Is.LessThan(.15f));Assert.That(localBounds.size.y,Is.LessThan(.15f));
+            foreach(var filter in fletching)
+            {
+                var finBounds=default(Bounds);bool hasVertex=false;
+                foreach(var vertex in filter.sharedMesh.vertices)
+                {
+                    var local=piercing.InverseTransformPoint(filter.transform.TransformPoint(vertex));
+                    if(!hasVertex){finBounds=new Bounds(local,Vector3.zero);hasVertex=true;}else finBounds.Encapsulate(local);
+                }
+                // Transforming world-space vertices back to this moving local
+                // frame can leave a tiny rounding residue on the shaft axis.
+                const float axisTolerance=.0001f;
+                Assert.That(finBounds.min.x,Is.LessThanOrEqualTo(axisTolerance));Assert.That(finBounds.max.x,Is.GreaterThanOrEqualTo(-axisTolerance));
+                Assert.That(finBounds.min.y,Is.LessThanOrEqualTo(axisTolerance));Assert.That(finBounds.max.y,Is.GreaterThanOrEqualTo(-axisTolerance));
+            }
             int created=VisualFactory.ProjectilePoolCreatedCount;
             Assert.That(created,Is.GreaterThanOrEqualTo(3));
 
@@ -106,6 +151,42 @@ namespace RiskAI.Tests
             battle.Combat.FireProjectile(from,to,null,0,0,null,AttackKind.Siege);
             yield return null;
             Assert.That(VisualFactory.ProjectilePoolCreatedCount,Is.EqualTo(created));
+        }
+
+        [UnityTest]
+        public IEnumerator CrossbowBoltDealsDamageOnlyWhenItsVisibleFlightArrives()
+        {
+            var source=battle.Units.First(unit=>unit&&unit.Team==0&&unit.Kind==UnitKind.Archer);
+            var target=battle.Units.First(unit=>unit&&unit.Team==PlayerRules.NeutralTeam);
+            StopBackgroundCombat(source,target);source.enabled=false;target.enabled=false;
+            yield return new WaitForSecondsRealtime(.8f);
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.Zero);
+            float health=target.Health;
+            Vector3 launch=target.AimPoint+Vector3.left*8;
+            int projectile=battle.Combat.FireWeapon(launch,target.AimPoint,target,12,source.Team,source,
+                SourceWeapons.For(UnitKind.Archer,AttackKind.Piercing));
+            Assert.That(projectile,Is.GreaterThan(0));
+            Assert.That(target.Health,Is.EqualTo(health),"The bolt cannot deal damage before contact.");
+            Assert.That(battle.Combat.ActiveProjectileCount,Is.EqualTo(1));
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.EqualTo(1),"The simulated bolt needs a readable presentation view.");
+            yield return new WaitForSecondsRealtime(.7f);
+            Assert.That(target.Health,Is.LessThan(health),"Damage resolves when the bolt reaches its target.");
+            Assert.That(battle.Combat.ActiveProjectileCount,Is.Zero);
+            Assert.That(VisualFactory.ActiveProjectileViewCount,Is.Zero);
+        }
+
+        [UnityTest]
+        public IEnumerator MarinePrivateHasItsOwnPiratePistolPresentation()
+        {
+            var marine=battle.Spawn(0,UnitKind.MarinePrivate,battle.Towns.First(t=>t.State.Owner==0).Rally);
+            Assert.That(marine,Is.Not.Null);
+            var parts=marine.GetComponentsInChildren<Transform>(true);
+            Assert.That(parts.Any(part=>part.name=="Marine private identity"),Is.True);
+            Assert.That(parts.Any(part=>part.name=="Short flintlock pistol"&&part.gameObject.activeInHierarchy),Is.True);
+            Assert.That(parts.Any(part=>part.name=="Tricorn crown"&&part.gameObject.activeInHierarchy),Is.True);
+            Assert.That(parts.Any(part=>part.name=="Rogue_Head_Hooded"&&part.gameObject.activeInHierarchy),Is.False);
+            Assert.That(parts.Any(part=>part.name=="2H_Crossbow"&&part.gameObject.activeInHierarchy),Is.False);
+            yield return null;
         }
 
         void StopBackgroundCombat(CombatTarget keepA, CombatTarget keepB)

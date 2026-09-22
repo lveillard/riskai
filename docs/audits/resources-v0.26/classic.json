@@ -1,0 +1,186 @@
+{
+  "scenario": "classic",
+  "viewport": [
+    1600,
+    900
+  ],
+  "dpr": 1,
+  "physicalMobile": false,
+  "errors": [],
+  "gpuScope": "whole machine",
+  "frameScope": "browser requestAnimationFrame cadence",
+  "url": "https://riesgus.com/?riskai-seed=19031&riskai-map=classic&riskai-play=1&riskai-players=16",
+  "browser": "153.0.4234.48",
+  "loaderSeconds": 4.475,
+  "battleReadySeconds": 11.837,
+  "privateMemoryBefore": [
+    {
+      "Id": 2904,
+      "PrivateMemorySize64": 8146944,
+      "WorkingSet64": 17195008
+    },
+    {
+      "Id": 4380,
+      "PrivateMemorySize64": 603222016,
+      "WorkingSet64": 626520064
+    },
+    {
+      "Id": 20428,
+      "PrivateMemorySize64": 9064448,
+      "WorkingSet64": 23142400
+    },
+    {
+      "Id": 22156,
+      "PrivateMemorySize64": 8531968,
+      "WorkingSet64": 19251200
+    },
+    {
+      "Id": 24504,
+      "PrivateMemorySize64": 17645568,
+      "WorkingSet64": 32993280
+    },
+    {
+      "Id": 28304,
+      "PrivateMemorySize64": 443297792,
+      "WorkingSet64": 216698880
+    },
+    {
+      "Id": 30188,
+      "PrivateMemorySize64": 123715584,
+      "WorkingSet64": 232329216
+    },
+    {
+      "Id": 32032,
+      "PrivateMemorySize64": 14446592,
+      "WorkingSet64": 42819584
+    },
+    {
+      "Id": 35756,
+      "PrivateMemorySize64": 59330560,
+      "WorkingSet64": 58658816
+    },
+    {
+      "Id": 39344,
+      "PrivateMemorySize64": 8192000,
+      "WorkingSet64": 17776640
+    }
+  ],
+  "gpuBefore": "NVIDIA GeForce RTX 5080 Laptop GPU, 1153, 16303, 12",
+  "measurementSeconds": 30.01,
+  "frames": {
+    "count": 1801,
+    "meanMs": 16.667,
+    "p95Ms": 16.8,
+    "p99Ms": 16.8,
+    "maxMs": 16.9,
+    "over50ms": 0,
+    "cadenceHz": 60.0
+  },
+  "processCpu": [
+    {
+      "type": "browser",
+      "id": 30188,
+      "cpuTime": 5.335728,
+      "cpuSeconds": 0.291,
+      "corePercent": 1.0
+    },
+    {
+      "type": "renderer",
+      "id": 24504,
+      "cpuTime": 0.21551,
+      "cpuSeconds": 0.0,
+      "corePercent": 0.0
+    },
+    {
+      "type": "renderer",
+      "id": 4380,
+      "cpuTime": 44.422683,
+      "cpuSeconds": 26.127,
+      "corePercent": 87.1
+    },
+    {
+      "type": "GPU",
+      "id": 28304,
+      "cpuTime": 21.257083,
+      "cpuSeconds": 13.415,
+      "corePercent": 44.7
+    },
+    {
+      "type": "network.mojom.NetworkService",
+      "id": 32032,
+      "cpuTime": 2.203058,
+      "cpuSeconds": 0.018,
+      "corePercent": 0.1
+    },
+    {
+      "type": "storage.mojom.StorageService",
+      "id": 22156,
+      "cpuTime": 0.137179,
+      "cpuSeconds": 0.0,
+      "corePercent": 0.0
+    },
+    {
+      "type": "audio.mojom.AudioService",
+      "id": 20428,
+      "cpuTime": 0.295119,
+      "cpuSeconds": 0.085,
+      "corePercent": 0.3
+    },
+    {
+      "type": "video_capture.mojom.VideoCaptureService",
+      "id": 35756,
+      "cpuTime": 1.059131,
+      "cpuSeconds": 0.003,
+      "corePercent": 0.0
+    }
+  ],
+  "browserMainThreadBusyPercent": 79.6,
+  "jsHeapUsedBytes": 14517324,
+  "wasmHeapBytes": 278396928,
+  "privateMemoryAfter": [
+    {
+      "Id": 4380,
+      "PrivateMemorySize64": 610013184,
+      "WorkingSet64": 623579136
+    },
+    {
+      "Id": 20428,
+      "PrivateMemorySize64": 8953856,
+      "WorkingSet64": 23224320
+    },
+    {
+      "Id": 22156,
+      "PrivateMemorySize64": 8499200,
+      "WorkingSet64": 19234816
+    },
+    {
+      "Id": 24504,
+      "PrivateMemorySize64": 17612800,
+      "WorkingSet64": 32976896
+    },
+    {
+      "Id": 28304,
+      "PrivateMemorySize64": 426557440,
+      "WorkingSet64": 194863104
+    },
+    {
+      "Id": 30188,
+      "PrivateMemorySize64": 123482112,
+      "WorkingSet64": 232194048
+    },
+    {
+      "Id": 32032,
+      "PrivateMemorySize64": 14405632,
+      "WorkingSet64": 42999808
+    },
+    {
+      "Id": 35756,
+      "PrivateMemorySize64": 59269120,
+      "WorkingSet64": 58626048
+    }
+  ],
+  "gpuAfter": "NVIDIA GeForce RTX 5080 Laptop GPU, 1154, 16303, 15",
+  "webglRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Laptop GPU (0x00002C59) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "success": true,
+  "totalSeconds": 52.713
+}

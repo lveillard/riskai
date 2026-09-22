@@ -25,6 +25,8 @@ namespace RiskAI
         RtsUiRuntime ui;
         VisualElement content;
         bool lastCompact;
+        ScenarioMap lastPressedMap;
+        double lastScenarioPressAt=double.NegativeInfinity;
 
         void Awake()
         {
@@ -117,10 +119,10 @@ namespace RiskAI
             lastCompact = UiViewport.IsCompact;
             content = new VisualElement { name = "Front end content" };
             content.style.flexGrow = 1; content.style.backgroundColor = RtsUiStyle.Slate;
-            content.style.paddingLeft = UiViewport.IsCompact ? 14 : 28;
-            content.style.paddingRight = UiViewport.IsCompact ? 14 : 28;
-            content.style.paddingTop = UiViewport.IsCompact ? 12 : 24;
-            content.style.paddingBottom = UiViewport.IsCompact ? 12 : 24;
+            content.style.paddingLeft = UiViewport.IsCompact ? 12 : 32;
+            content.style.paddingRight = UiViewport.IsCompact ? 12 : 32;
+            content.style.paddingTop = UiViewport.IsCompact ? 10 : 26;
+            content.style.paddingBottom = UiViewport.IsCompact ? 10 : 26;
             if (loading) BuildLoading(content); else BuildSetup(content);
             ui.SetContent(content);
         }
@@ -146,17 +148,36 @@ namespace RiskAI
 
         void BuildSetup(VisualElement root)
         {
-            var header = RtsUiStyle.Panel("Front end header");
+            // The setup screen is a campaign briefing, not another in-match HUD.
+            // Its open banner and centered table deliberately contrast with the
+            // compact framed strips used once the battle starts.
+            var shell = new VisualElement { name = "Campaign setup" };
+            shell.style.width = Length.Percent(100); shell.style.maxWidth = 1360;
+            shell.style.alignSelf = Align.Center; shell.style.flexGrow = 1;
+            shell.style.minHeight = 0;
+            var header = new VisualElement { name = "Front end header" };
             header.style.flexDirection = FlexDirection.Column;
             header.style.flexShrink = 0;
-            header.style.marginBottom = 12;
+            header.style.paddingLeft = UiViewport.IsCompact ? 4 : 8;
+            header.style.paddingRight = UiViewport.IsCompact ? 4 : 8;
+            header.style.paddingTop = UiViewport.IsCompact ? 4 : 8;
+            header.style.paddingBottom = UiViewport.IsCompact ? 10 : 14;
+            header.style.marginBottom = UiViewport.IsCompact ? 8 : 14;
+            header.style.borderBottomWidth = 2; header.style.borderBottomColor = RtsUiStyle.Bronze;
+            var eyebrow = RtsUiStyle.Label("SALA DE GUERRA · CONFIGURA TU CAMPAÑA", "Campaign setup eyebrow", UiViewport.IsCompact ? 10 : 12);
+            eyebrow.style.color = RtsUiStyle.Bronze; eyebrow.style.letterSpacing = 1.2f; header.Add(eyebrow);
             var titleRow = new VisualElement(); RtsUiStyle.Row(titleRow);
-            if(!UiViewport.IsCompact){var seal=new RtsHeraldicSeal(2,RtsUiStyle.Gold);seal.style.width=62;seal.style.height=62;seal.style.marginRight=18;titleRow.Add(seal);}
-            var title = RtsUiStyle.Title("DOMINIOS", null, UiViewport.IsCompact ? 24 : 34);
+            if(!UiViewport.IsCompact){var seal=new RtsHeraldicSeal(2,RtsUiStyle.Gold);seal.style.width=70;seal.style.height=76;seal.style.marginRight=18;titleRow.Add(seal);}
+            var title = RtsUiStyle.Title("RIESGUS", "Riesgus title", UiViewport.IsCompact ? 28 : 42);
             title.style.flexGrow = 1; titleRow.Add(title);
-            var version = RtsUiStyle.Label("v"+Application.version+" · CONQUISTA", null, UiViewport.IsCompact ? 11 : 13); version.style.marginLeft = 8; titleRow.Add(version); header.Add(titleRow);
-            var description = RtsUiStyle.Label("RISKAI  ·  Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.", null, 14); description.style.whiteSpace = WhiteSpace.Normal;description.style.color=RtsUiStyle.Muted; header.Add(description);
-            root.Add(header);
+            var language=RtsUiStyle.Button(GameText.SwitchLabel,()=>{GameText.Toggle();Rebuild();},"Switch language");
+            language.style.width=language.style.minWidth=UiViewport.MinimumTouchTarget;language.style.marginBottom=0;titleRow.Add(language);
+            if(!UiViewport.IsCompact){var version = RtsUiStyle.Label("v"+Application.version+" · CONQUISTA", null, 12); version.style.marginLeft = 8; titleRow.Add(version);}
+            header.Add(titleRow);
+            var description = RtsUiStyle.Label("RIESGUS · Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.", null, UiViewport.IsCompact ? 13 : 15);
+            description.style.whiteSpace = WhiteSpace.Normal;description.style.color=RtsUiStyle.Muted; header.Add(description);
+            header.Add(new RtsCampaignDivider());
+            shell.Add(header);
 
             var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "Front end scroll" };
             RtsUiStyle.ConfigureScroll(scroll);
@@ -180,22 +201,22 @@ namespace RiskAI
             }
             BuildScenarioSection(scenarios);BuildConfigurationSection(configuration);
             body.Add(scenarios);body.Add(configuration);scroll.Add(body);
-            root.Add(scroll);
+            shell.Add(scroll);
 
             var footer = RtsUiStyle.Panel("Front end footer");
             footer.style.flexDirection = UiViewport.IsCompact ? FlexDirection.Column : FlexDirection.Row;
             footer.style.flexShrink = 0;
             footer.style.marginTop = 12;
-            var rules = RtsUiStyle.Label("4 de oro y un defensor por puesto. Conquista el 60 % de las ciudades.", null, 13);
+            var rules = RtsUiStyle.Label("+4 oro base por ronda si conservas una ciudad · País completo: +1 por ciudad y refuerzos · Conquista el 60 %.", null, 13);
             rules.style.flexGrow = 1; rules.style.whiteSpace = WhiteSpace.Normal; footer.Add(rules);
             if (!string.IsNullOrEmpty(validation))
             {
                 var error = RtsUiStyle.Label(validation, null, 13); error.style.color = new Color(1f, .48f, .36f); footer.Add(error);
             }
             var start = RtsUiStyle.Button("COMENZAR LA CONQUISTA", StartBattle, "Start battle");
-            start.style.backgroundColor=new Color(.31f,.23f,.105f);start.style.color=RtsUiStyle.Gold;start.style.minHeight=50;
+            start.style.backgroundColor=new Color(.35f,.245f,.09f);start.style.color=RtsUiStyle.Gold;start.style.minHeight=56;
             if (UiViewport.IsCompact) { start.style.width = Length.Percent(100); start.style.marginRight = 0; start.style.marginBottom = 0; } else start.style.minWidth = 250;
-            footer.Add(start); root.Add(footer);
+            footer.Add(start); shell.Add(footer); root.Add(shell);
         }
 
         void BuildScenarioSection(VisualElement root)
@@ -214,6 +235,21 @@ namespace RiskAI
         {
             bool chosen = selectedMap == map;
             var button = RtsUiStyle.Button("", () => SelectMap(map), "Map " + map);
+            button.RegisterCallback<PointerDownEvent>(evt =>
+            {
+                // WebGL does not report a reliable clickCount for emulated touch.
+                // Keep the gesture at controller level so rebuilding the selected
+                // card after the first press cannot lose the second one.
+                if(evt.button!=0||loading)return;
+                double now=Time.unscaledTimeAsDouble;
+                bool repeated=lastPressedMap==map&&now-lastScenarioPressAt<=.55;
+                lastPressedMap=map;lastScenarioPressAt=now;
+                if(!repeated)return;
+                lastScenarioPressAt=double.NegativeInfinity;
+                ApplyMapSelection(map);
+                StartBattle();
+                evt.StopImmediatePropagation();
+            },TrickleDown.TrickleDown);
             button.style.flexGrow = 1;
             if (UiViewport.IsCompact) { button.style.width = Length.Percent(100); button.style.marginRight = 0; }
             else { button.style.width=Length.Percent(47);button.style.minWidth=0; }
@@ -244,10 +280,15 @@ namespace RiskAI
 
         void SelectMap(ScenarioMap map)
         {
+            ApplyMapSelection(map);
+            Rebuild();
+        }
+
+        void ApplyMapSelection(ScenarioMap map)
+        {
             selectedMap = map;
             int maximum = MapLayout.MaximumPlayersForScenario(map);
             selectedPlayers = playersAdjusted ? Mathf.Clamp(selectedPlayers, 2, maximum) : maximum;
-            Rebuild();
         }
 
         void AdjustPlayers(int delta)
@@ -292,7 +333,7 @@ namespace RiskAI
         {
             bool imported = selectedMap == ScenarioMap.Europe || selectedMap == ScenarioMap.NewWorld;
             var row = NewFieldRow(parent, "RELIEVE IMPORTADO");
-            var toggle = new Toggle("Añadir cordilleras suaves a Europe y New World") { value = sourceMountains, name = "Source mountains" };
+            var toggle = new Toggle(GameText.Localize("Añadir cordilleras suaves a Europe y New World")) { value = sourceMountains, name = "Source mountains" };
             toggle.SetEnabled(imported); toggle.style.minHeight = 44;
             toggle.style.flexShrink=1;toggle.style.whiteSpace=WhiteSpace.Normal;toggle.style.maxWidth=Length.Percent(100);
             toggle.RegisterValueChangedCallback(change => sourceMountains = change.newValue); row.Add(toggle);

@@ -10,7 +10,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'.tools/web-python'))
 from playwright.sync_api import sync_playwright
-p=argparse.ArgumentParser();p.add_argument('output');p.add_argument('--width',type=int,default=390);p.add_argument('--height',type=int,default=844);p.add_argument('--dpr',type=float,default=2);p.add_argument('--url',default='http://127.0.0.1:8081');p.add_argument('--map',default='europe',choices=['classic','riverlands','europe','world']);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('output');p.add_argument('--width',type=int,default=390);p.add_argument('--height',type=int,default=844);p.add_argument('--dpr',type=float,default=2);p.add_argument('--url',default='http://127.0.0.1:8081');p.add_argument('--map',default='europe',choices=['classic','riverlands','europe','world']);p.add_argument('--posts',nargs='*',default=[],help='Additional closeups by stable source city ID');p.add_argument('--disable-architecture-batching',action='store_true');p.add_argument('--disable-unit-presentation-culling',action='store_true');p.add_argument('--manual-architecture-batching',action='store_true');a=p.parse_args()
 folder=root/'Captures'/a.output;folder.mkdir(exist_ok=False)
 report={'url':a.url,'map':a.map,'viewport':[a.width,a.height],'dpr':a.dpr,'physicalMobile':False,'errors':[],'layouts':{},'captures':[]}
 ready=[];start=time.monotonic()
@@ -27,14 +27,19 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
     def send(method,host='RiskAI · Bootstrap',arg=None):
         page.evaluate('([h,m,a])=>a===null?window.riskaiInstance.SendMessage(h,m):window.riskaiInstance.SendMessage(h,m,a)',[host,method,arg])
     def shot(name):
-        page.screenshot(path=str(folder/(name+'.png')));report['captures'].append(name)
+        page.screenshot(path=str(folder/(name.replace(':','-')+'.png')));report['captures'].append(name)
     def review(stage):
         send('Review','RiskAI responsive UI capture',stage)
         deadline=time.monotonic()+20
         while stage not in report['layouts']:
             if time.monotonic()>deadline:raise TimeoutError(stage)
             page.wait_for_timeout(50)
-        page.wait_for_timeout(150);shot(stage)
+        page.wait_for_timeout(150)
+        # Source-art closeups must not be covered by the central pause plaque.
+        # Review disables AI; briefly advancing this opt-in fixture is harmless.
+        if stage.startswith('post:'):
+            send('TogglePause');page.wait_for_timeout(150);shot(stage);send('TogglePause')
+        else:shot(stage)
     def click_named(name,layout):
         e=next(e for e in report['layouts'][layout]['elements'] if e['name']==name)
         r=e['rect'];page.mouse.click(r['x']+r['width']/2,r['y']+r['height']/2,delay=100)
@@ -42,7 +47,8 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
         page.wait_for_timeout(400)
         page.mouse.move(a.width/2,a.height/2);page.wait_for_timeout(100)
     try:
-        page.goto(a.url+'/?riskai-map='+a.map+'&riskai-seed=19031&riskai-players=16&riskai-ui-capture=review',wait_until='domcontentloaded')
+        controls=('&riskai-disable-architecture-batching=1' if a.disable_architecture_batching else '')+('&riskai-disable-unit-presentation-culling=1' if a.disable_unit_presentation_culling else '')+('&riskai-manual-architecture-batching=1' if a.manual_architecture_batching else '')
+        page.goto(a.url+'/?riskai-map='+a.map+'&riskai-seed=19031&riskai-players=16&riskai-ui-capture=review'+controls,wait_until='domcontentloaded')
         page.wait_for_function('window.riskaiInstance != null',timeout=180000);page.wait_for_timeout(6500);shot('menu')
         send('StartBattle','RiskAI · Front End')
         deadline=time.monotonic()+120
@@ -50,7 +56,7 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
             if time.monotonic()>deadline:raise TimeoutError('battle')
             page.wait_for_timeout(50)
         page.wait_for_timeout(3500)
-        for stage in ['empty','city','queue']:review(stage)
+        for stage in ['empty','camp','city','queue']:review(stage)
         send('TogglePause');page.wait_for_timeout(6500);send('SelectAll');send('FocusSelection');send('TogglePause');page.wait_for_timeout(1000);shot('army-actions')
         review('harbor')
         click_named('HUD gold button','harbor');shot('gold-real-click')
@@ -58,6 +64,8 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
         send('Review','RiskAI responsive UI capture','empty');page.wait_for_timeout(1800)
         click_named('HUD cities button','empty');shot('cities-real-click')
         review('ranking');review('strategic')
+        if a.map=='europe':review('denmark')
+        for post in a.posts:review('post:'+post)
         for stage in ['north','south','coast']:review(stage)
         from PIL import Image,ImageChops,ImageStat
         report['clickComparisons']={}
@@ -67,7 +75,7 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
             report['clickComparisons'][actual]=round(mean,3)
             assert mean<12,(actual,'Real click differs from expected modal',mean)
         # Explicit responsive checks against actual resolved UIToolkit layout.
-        for stage in ['empty','city','queue','harbor']:
+        for stage in ['empty','camp','city','queue','harbor']:
             layout=report['layouts'][stage]
             for e in layout['elements']:
                 if e['name'] in ['HUD gold button','HUD cities button','HUD units button']:

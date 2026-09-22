@@ -11,8 +11,10 @@ namespace RiskAI
         RtsUiRuntime retainedUi;
         VisualElement retainedRoot, header, footer, context, wideContext, modal;
         Label goldLabel, citiesLabel, populationLabel, roundLabel;
-        VisualElement startCountdown;
+        VisualElement startCountdown, pauseNotice;
         Label startCountdownNumber;
+        VisualElement startCountdownProgress;
+        readonly Label[] startCountdownMilestones = new Label[3];
         Button pauseButton;
         int retainedTab;
         bool showMinimap = true;
@@ -35,14 +37,17 @@ namespace RiskAI
         bool FooterVisible => HasSelection || (showMinimap && retainedTab == 3);
         bool MinimapVisible => showMinimap && FooterVisible && (!UiViewport.IsPortrait || retainedTab == 3);
 
-        float RequestedHeaderHeight => !UiViewport.IsCompact ? 48 : UiViewport.IsPortrait ? 76 : 44;
-        float RequestedFooterHeight => FooterVisible ? UiViewport.IsPortrait ? 210 : 188 : 0;
+        float RequestedHeaderHeight => !UiViewport.IsCompact ? 48 : UiViewport.IsPortrait ? 94 : 50;
+        float RequestedFooterHeight => FooterVisible ? UiViewport.IsPortrait ? 210 : UiViewport.IsCompact ? 164 : 188 : 0;
         float HeaderHeight => Mathf.Max(0, (UiViewport.SafeRect.yMax - UiViewport.WorldRect.yMax) / UiViewport.Scale);
         float FooterHeight => Mathf.Max(0, (UiViewport.BottomPixels - UiViewport.SafeRect.yMin) / UiViewport.Scale);
 
         void ConfigureViewport()
         {
             UiViewport.SetHudHeights(RequestedHeaderHeight, RequestedFooterHeight);
+            // Keep one stable camera framing while the contextual footer opens and
+            // closes. Hiding it reveals more map below instead of moving the world.
+            UiViewport.SetCameraHudHeights(RequestedHeaderHeight,UiViewport.IsPortrait?210:188);
         }
 
         void InitializeRetainedUi()
@@ -78,12 +83,13 @@ namespace RiskAI
 
         void UpdateRetainedLabels()
         {
-            if (goldLabel != null) goldLabel.text = GoldText;
-            if (citiesLabel != null) citiesLabel.text = CitiesText;
-            if (populationLabel != null) populationLabel.text = PopulationText;
-            if (roundLabel != null) roundLabel.text = "RONDA " + hud.Round + " · " + Mathf.CeilToInt(BattleRules.RoundSeconds - hud.RoundElapsed) + " s";
-            if (pauseButton != null) { pauseButton.text = session.Paused ? "Continuar" : "Pausa";pauseButton.SetEnabled(!session.IsStarting); }
-            if (modalPauseButton != null) { modalPauseButton.text = session.Paused ? "CONTINUAR" : "PAUSA";modalPauseButton.SetEnabled(!session.IsStarting); }
+            if (goldLabel != null) goldLabel.text = GameText.Localize(GoldText);
+            if (citiesLabel != null) citiesLabel.text = GameText.Localize(CitiesText);
+            if (populationLabel != null) populationLabel.text = GameText.Localize(PopulationText);
+            if (roundLabel != null) roundLabel.text = GameText.Localize("RONDA " + hud.Round + " · " + Mathf.CeilToInt(BattleRules.RoundSeconds - hud.RoundElapsed) + " s");
+            if (pauseButton != null) { pauseButton.text = GameText.Localize(session.Paused ? "Continuar" : "Pausa");pauseButton.SetEnabled(!session.IsStarting); }
+            if (modalPauseButton != null) { modalPauseButton.text = GameText.Localize(session.Paused ? "CONTINUAR" : "PAUSA");modalPauseButton.SetEnabled(!session.IsStarting); }
+            if(pauseNotice!=null)pauseNotice.style.display=session.Paused&&!session.IsStarting&&session.Winner<0&&!controller.HelpVisible&&!controller.ScoreboardVisible?DisplayStyle.Flex:DisplayStyle.None;
             for(int i=0;i<liveContext.Count;i++)liveContext[i]();
             UpdateRankingLabels();
         }
@@ -109,6 +115,7 @@ namespace RiskAI
                 key = key * 47 + (controller.SelectedCamp ? controller.SelectedCamp.GetInstanceID() : 0);
                 for (int i = 0; i < controller.SelectedTowns.Count; i++) key = key * 53 + controller.SelectedTowns[i].GetInstanceID() * 17 + controller.SelectedTowns[i].State.Owner + controller.SelectedTowns[i].QueueCount * 97 + controller.SelectedTowns[i].State.Level * 101;
                 for (int i = 0; i < controller.SelectedHarbors.Count; i++) key = key * 59 + controller.SelectedHarbors[i].GetInstanceID() * 17 + controller.SelectedHarbors[i].Owner + controller.SelectedHarbors[i].QueueCount * 103 + controller.SelectedHarbors[i].LandQueueCount * 107;
+                for(int i=0;i<controller.Fleet.Count;i++)if(controller.Fleet[i])key=key*61+controller.Fleet[i].EntityId*17+controller.Fleet[i].CargoCount;
                 return key;
             }
         }
@@ -121,7 +128,7 @@ namespace RiskAI
             {
                 int player=order[rank];var row=rankingRows[rank];
                 bool eliminated=session.IsPlayerEliminated(player);
-                row.Name.text=(rank+1)+". "+VisualFactory.TeamName(player)+(eliminated?" · ELIMINADO":"");
+                row.Name.text=GameText.Localize((rank+1)+". "+VisualFactory.TeamName(player)+(eliminated?" · ELIMINADO":""));
                 row.Root.style.borderLeftColor=VisualFactory.TeamColor(player);
                 row.Root.style.opacity=eliminated?.55f:1;
                 row.Cities.text=hud.PlayerCities[player].ToString();
@@ -145,26 +152,71 @@ namespace RiskAI
             if (MinimapVisible) BuildMinimapHitOverlay(retainedRoot);
             if (lastModalKind!=0) BuildModal(retainedRoot);
             BuildStartCountdown(retainedRoot);
+            BuildPauseNotice(retainedRoot);
             retainedUi.SetContent(retainedRoot);
+        }
+
+        void BuildPauseNotice(VisualElement root)
+        {
+            pauseNotice=RtsUiStyle.Panel("HUD paused notice");pauseNotice.pickingMode=PickingMode.Ignore;
+            pauseNotice.style.position=Position.Absolute;pauseNotice.style.left=Length.Percent(50);pauseNotice.style.top=Length.Percent(34);
+            pauseNotice.style.width=UiViewport.IsCompact?210:280;pauseNotice.style.marginLeft=UiViewport.IsCompact?-105:-140;
+            pauseNotice.style.alignItems=Align.Center;pauseNotice.style.paddingTop=16;pauseNotice.style.paddingBottom=16;
+            var title=RtsUiStyle.Title("PAUSADO","Paused title",UiViewport.IsCompact?28:36);title.pickingMode=PickingMode.Ignore;pauseNotice.Add(title);
+            root.Add(pauseNotice);
+            pauseNotice.style.display=session.Paused&&!session.IsStarting&&session.Winner<0&&!controller.HelpVisible&&!controller.ScoreboardVisible?DisplayStyle.Flex:DisplayStyle.None;
         }
 
         void BuildStartCountdown(VisualElement root)
         {
             startCountdown=RtsUiStyle.Panel("Match start countdown");startCountdown.pickingMode=PickingMode.Ignore;
             startCountdown.style.position=Position.Absolute;startCountdown.style.left=Length.Percent(50);
-            startCountdown.style.top=Length.Percent(34);startCountdown.style.width=236;startCountdown.style.marginLeft=-118;
-            startCountdown.style.alignItems=Align.Center;startCountdown.style.paddingTop=14;startCountdown.style.paddingBottom=14;
-            var title=RtsUiStyle.Label("LA CONQUISTA EMPIEZA EN",null,12);title.pickingMode=PickingMode.Ignore;
-            startCountdown.Add(title);
-            startCountdownNumber=RtsUiStyle.Title("3","Countdown number",48);startCountdownNumber.pickingMode=PickingMode.Ignore;
-            startCountdown.Add(startCountdownNumber);root.Add(startCountdown);RefreshStartCountdown();
+            startCountdown.style.top=Length.Percent(UiViewport.IsPortrait?23:27);
+            float countdownWidth=Mathf.Min(UiViewport.IsPortrait?360:540,UiViewport.LogicalWidth-24);
+            startCountdown.style.width=countdownWidth;startCountdown.style.marginLeft=-countdownWidth*.5f;
+            startCountdown.style.paddingLeft=UiViewport.IsCompact?16:22;startCountdown.style.paddingRight=UiViewport.IsCompact?16:22;
+            startCountdown.style.paddingTop=14;startCountdown.style.paddingBottom=16;
+
+            var heading=new VisualElement();RtsUiStyle.Row(heading);heading.pickingMode=PickingMode.Ignore;
+            var title=RtsUiStyle.Title("RIESGUS · DESPLIEGUE",null,UiViewport.IsCompact?15:18);title.pickingMode=PickingMode.Ignore;title.style.flexGrow=1;
+            heading.Add(title);
+            startCountdownNumber=RtsUiStyle.Title("5","Countdown number",UiViewport.IsCompact?38:44);startCountdownNumber.pickingMode=PickingMode.Ignore;
+            heading.Add(startCountdownNumber);startCountdown.Add(heading);
+
+            var progressTrack=new VisualElement { name="Countdown progress",pickingMode=PickingMode.Ignore };
+            progressTrack.style.height=4;progressTrack.style.marginTop=4;progressTrack.style.marginBottom=10;progressTrack.style.backgroundColor=RtsUiStyle.Slate;
+            startCountdownProgress=new VisualElement { name="Countdown progress fill",pickingMode=PickingMode.Ignore };
+            startCountdownProgress.style.height=4;startCountdownProgress.style.backgroundColor=RtsUiStyle.Gold;progressTrack.Add(startCountdownProgress);startCountdown.Add(progressTrack);
+
+            var milestones=new VisualElement { name="Countdown milestones",pickingMode=PickingMode.Ignore };
+            string[] names={
+                "1 · Selecciona una ciudad. Crea unidades e invade.",
+                "2 · La guarnición no sale sin un relevo aliado.",
+                "3 · Completa países para obtener oro y refuerzos."
+            };
+            for(int i=0;i<startCountdownMilestones.Length;i++)
+            {
+                var label=RtsUiStyle.Label(names[i],"Countdown milestone "+(i+1),UiViewport.IsCompact?13:14);label.pickingMode=PickingMode.Ignore;
+                label.style.whiteSpace=WhiteSpace.Normal;label.style.marginBottom=i<2?5:0;
+                startCountdownMilestones[i]=label;milestones.Add(label);
+            }
+            startCountdown.Add(milestones);root.Add(startCountdown);RefreshStartCountdown();
         }
 
         void RefreshStartCountdown()
         {
             if(startCountdown==null)return;
             startCountdown.style.display=session.IsStarting?DisplayStyle.Flex:DisplayStyle.None;
-            if(session.IsStarting)startCountdownNumber.text=Mathf.CeilToInt(session.StartCountdownRemaining).ToString();
+            if(!session.IsStarting)return;
+            float remaining=session.StartCountdownRemaining;
+            startCountdownNumber.text=Mathf.CeilToInt(remaining).ToString();
+            startCountdownProgress.style.width=Length.Percent(Mathf.Clamp01((5f-remaining)/5f)*100);
+            int stage=remaining>3f?0:remaining>1f?1:2;
+            for(int i=0;i<startCountdownMilestones.Length;i++)
+            {
+                startCountdownMilestones[i].style.color=i==stage?RtsUiStyle.Gold:RtsUiStyle.Muted;
+                startCountdownMilestones[i].style.opacity=i==stage?1:.82f;
+            }
         }
 
         void BuildHeader(VisualElement root)
@@ -179,7 +231,7 @@ namespace RiskAI
         void BuildWideHeader()
         {
             RtsUiStyle.Row(header);
-            var title = RtsUiStyle.Title("DOMINIOS", null, 17); header.Add(title);
+            var title = RtsUiStyle.Title("RIESGUS", null, 17); header.Add(title);
             AddGoldDisplay(header);
             AddCitiesDisplay(header);
             AddPopulationDisplay(header);
@@ -192,7 +244,7 @@ namespace RiskAI
 
         void BuildCompactHeader()
         {
-            var top = new VisualElement { name="HUD resource row" }; RtsUiStyle.Row(top);top.style.height=UiViewport.IsPortrait?36:38;top.style.flexShrink=0;
+            var top = new VisualElement { name="HUD resource row" }; RtsUiStyle.Row(top);top.style.height=UiViewport.MinimumTouchTarget;top.style.flexShrink=0;
             AddGoldDisplay(top);
             AddCitiesDisplay(top);
             AddPopulationDisplay(top);
@@ -205,7 +257,7 @@ namespace RiskAI
             header.Add(top);
             if (UiViewport.IsPortrait)
             {
-                var lower = new VisualElement { name="HUD navigation row" }; RtsUiStyle.Row(lower);lower.style.height=34;lower.style.flexShrink=0;
+                var lower = new VisualElement { name="HUD navigation row" }; RtsUiStyle.Row(lower);lower.style.height=UiViewport.MinimumTouchTarget;lower.style.flexShrink=0;
                 roundLabel = HeaderLabel("RONDA " + hud.Round); roundLabel.style.flexGrow = 1; lower.Add(roundLabel);
                 lower.Add(HeaderButton("Mapa", ToggleMinimap));
                 lower.Add(HeaderButton("Menú", OpenMenu));
@@ -215,14 +267,15 @@ namespace RiskAI
 
         Label HeaderLabel(string text)
         {
-            var label = RtsUiStyle.Label(text, null, 11); label.style.marginLeft = 4; label.style.marginRight = 4; label.style.marginTop=0;label.style.marginBottom=0;return label;
+            var label = RtsUiStyle.Label(text, null, UiViewport.IsTouchLayout?12:11); label.style.marginLeft = 4; label.style.marginRight = 4; label.style.marginTop=0;label.style.marginBottom=0;return label;
         }
         string CitiesText => hud.OwnedTowns + " / " + MapLayout.Towns.Length;
 
         static Button HeaderButton(string text, System.Action action)
         {
             var button = RtsUiStyle.Button(text, action);
-            button.style.height=button.style.minHeight=UiViewport.IsPortrait?32:36;
+            float height=UiViewport.IsTouchLayout?UiViewport.MinimumTouchTarget:36;
+            button.style.height=button.style.minHeight=height;
             button.style.paddingTop=2;button.style.paddingBottom=2;button.style.marginBottom=0;button.style.marginTop=0;button.style.marginLeft=0;button.style.marginRight=4;
             button.style.fontSize=11;button.style.flexShrink=0;
             return button;
@@ -349,7 +402,7 @@ namespace RiskAI
         {
             if (controller.SelectedCamp)
             {
-                var camp = controller.SelectedCamp; AddTitle(root, camp.DisplayName.ToUpperInvariant());
+                var camp = controller.SelectedCamp; AddTitle(root, GameText.Localize(camp.DisplayName).ToUpperInvariant());
                 LiveInfo(root, () => camp.HasRally ? "Salida fijada. Clic derecho cambia el punto de reunión." : "Los refuerzos esperan en la hoguera hasta fijar una salida.");
                 var clearRally = RtsUiStyle.Button("BORRAR SALIDA", controller.ClearCampRally);
                 root.Add(clearRally);
@@ -360,7 +413,7 @@ namespace RiskAI
                     if (town)
                     {
                         var button = RtsUiStyle.Button("", () => { controller.SelectTown(town); controller.Focus(town.transform.position); });
-                        System.Action refreshTown = () => button.text = town ? town.DisplayName + " · " + VisualFactory.TeamName(town.State.Owner) : "Ciudad retirada";
+                        System.Action refreshTown = () => button.text = GameText.Localize(town ? town.DisplayName + " · " + VisualFactory.TeamName(town.State.Owner) : "Ciudad retirada");
                         root.Add(button); liveContext.Add(refreshTown); refreshTown();
                     }
                 return;
@@ -387,6 +440,7 @@ namespace RiskAI
                 int count = controller.Selection.Count + controller.Fleet.Count;
                 AddTitle(root, count == 1 ? controller.Fleet[0].DisplayName : count + " UNIDADES SELECCIONADAS");
                 BuildSelectionRoster(root);
+                foreach(var ship in controller.Fleet)if(ship&&ship.Profile.CanTransport&&ship.CargoCount>0)BuildCargoRoster(root,ship);
                 return;
             }
             if (controller.InspectedTarget is Soldier inspected)
@@ -529,13 +583,14 @@ namespace RiskAI
             sticky.style.flexShrink=0;
             modalPauseButton=RtsUiStyle.Button(session.Paused ? "CONTINUAR" : "PAUSA", () => { session.TogglePause(); UpdateRetainedLabels(); });
             sticky.Add(modalPauseButton);
+            sticky.Add(RtsUiStyle.Button(GameText.SwitchLabel,()=>{GameText.Toggle();BuildRetainedUi(false);},"Switch language"));
             panel.Add(sticky);
             root.Add(modal); modal.Add(panel);
         }
 
         void BuildHelp(VisualElement panel)
         {
-            AddTitle(panel, "DOMINIOS · " + MapLayout.MapName);
+            AddTitle(panel, "RIESGUS · " + MapLayout.MapName);
             var tabs = new VisualElement(); RtsUiStyle.Row(tabs, true);
             tabs.Add(RtsUiStyle.Button("Partida", () => { menuTab = 0; BuildRetainedUi(false); }));
             tabs.Add(RtsUiStyle.Button("Controles", () => { menuTab = 1; BuildRetainedUi(false); }));
@@ -605,7 +660,7 @@ namespace RiskAI
         void LiveInfo(VisualElement root,System.Func<string> value)
         {
             var label=RtsUiStyle.Label(value(),null,13);label.style.color=RtsUiStyle.Muted;label.style.whiteSpace=WhiteSpace.Normal;label.style.marginBottom=4;
-            root.Add(label);liveContext.Add(()=>label.text=value());
+            root.Add(label);liveContext.Add(()=>label.text=GameText.Localize(value()));
         }
         static string SoldierStats(Soldier unit)
         {

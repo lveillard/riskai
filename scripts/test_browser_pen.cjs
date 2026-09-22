@@ -221,4 +221,74 @@ function rows(bridge) {
   assert.strictEqual(bridge.readSample(), null);
 })();
 
-console.log("browser pen bridge tests: 12 passed");
+(function wheelPreservesRawModesAndUnityPropagation() {
+  let time = 10;
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element, { now: () => time });
+  const pixels = element.dispatch("wheel", { deltaY: -12.5, deltaMode: 0 });
+  element.dispatch("wheel", { deltaY: -100, deltaMode: 0 });
+  element.dispatch("wheel", { deltaY: 3, deltaMode: 1 });
+  element.dispatch("wheel", { deltaY: -1, deltaMode: 2 });
+  assert(pixels.defaultPrevented, "browser page zoom/scroll is prevented");
+  assert(!pixels.stopped, "wheel propagation remains available to Unity UI Toolkit");
+  assert.deepStrictEqual(bridge.readSample(), [-12.5, -100, 3, -1]);
+  assert.strictEqual(bridge.readSample(), null, "each frame consumes the sample exactly once");
+  bridge.dispose();
+})();
+
+(function wheelPixelHeuristicIsSmoothAndPreservesNotches() {
+  function steps(delta) {
+    const [fine, coarse] = RiskAIPen.splitWheelPixelDelta(delta);
+    return fine / 400 + coarse / 100;
+  }
+  assert.strictEqual(steps(100), 1);
+  assert.strictEqual(steps(120), 1.2);
+  assert.strictEqual(steps(20), .05, "fine pixel input has one quarter of the old response");
+  assert(Math.abs(steps(40.01) - steps(39.99)) < .001,
+    "crossing the fine transition cannot introduce a zoom jump");
+  assert(Math.abs(steps(80.01) - steps(79.99)) < .001,
+    "crossing the wheel transition cannot introduce a zoom jump");
+})();
+
+(function wheelBurstAccumulatesDistanceNotEventCountAndKeepsReversal() {
+  let time = 0;
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element, { now: () => time });
+  for (let index = 0; index < 40; index++) {
+    time += 1;
+    element.dispatch("wheel", { deltaY: -.5, deltaMode: 0 });
+  }
+  assert.deepStrictEqual(bridge.readSample(), [-20, 0, 0, 0]);
+  element.dispatch("wheel", { deltaY: 7, deltaMode: 0 });
+  element.dispatch("wheel", { deltaY: -3, deltaMode: 0 });
+  assert.deepStrictEqual(bridge.readSample(), [4, 0, 0, 0], "same-frame reversal is a signed net delta");
+  bridge.dispose();
+})();
+
+(function wheelLifecycleAndTtlDiscardStaleInput() {
+  let time = 0;
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element, { now: () => time, maximumAgeMilliseconds: 100 });
+  element.dispatch("wheel", { deltaY: 10, deltaMode: 0 });
+  element.dispatch("pointerleave");
+  assert.strictEqual(bridge.readSample(), null, "pointer leave discards a pending canvas wheel");
+  element.dispatch("wheel", { deltaY: 10, deltaMode: 0 });
+  element.ownerDocument.defaultView.dispatch("blur");
+  assert.strictEqual(bridge.readSample(), null, "blur discards a pending wheel");
+  element.dispatch("wheel", { deltaY: 10, deltaMode: 0 });
+  element.ownerDocument.visibilityState = "hidden";
+  element.ownerDocument.dispatch("visibilitychange");
+  assert.strictEqual(bridge.readSample(), null, "hidden documents discard a pending wheel");
+  element.ownerDocument.visibilityState = "visible";
+  element.dispatch("wheel", { deltaY: 10, deltaMode: 0 });
+  time = 101;
+  assert.strictEqual(bridge.readSample(), null, "a scene-load-length delay expires stale wheel input");
+  bridge.dispose();
+})();
+
+(function wheelDisposeRemovesListeners() {
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element);
+  bridge.dispose();
+  const event = element.dispatch("wheel", { deltaY: 100, deltaMode: 0 });
+  assert(!event.defaultPrevented && !event.stopped);
+  assert.strictEqual(bridge.readSample(), null);
+})();
+
+console.log("browser pen/wheel bridge tests: 17 passed");

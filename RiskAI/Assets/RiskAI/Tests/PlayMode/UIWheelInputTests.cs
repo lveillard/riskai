@@ -88,6 +88,8 @@ namespace RiskAI.Tests
             Assert.That(controller.CameraRig.TargetZoom, Is.EqualTo(zoom), "HUD wheel input must not zoom the tactical map.");
 
             controller.HelpVisible = false;
+            yield return null;
+            Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(zoom),"Closing a wheel-scrolled modal cannot replay stale zoom over the map.");
             controller.SelectBuildings(BattleSession.Current.Towns.Where(t => t.State.Owner == 0), NavalWorld.Current.Harbors.Where(h => h.Owner == 0));
             yield return null; yield return null;
             var hudScroll = document.rootVisualElement.Q<ScrollView>("HUD selection column") ?? document.rootVisualElement.Q<ScrollView>("HUD context");

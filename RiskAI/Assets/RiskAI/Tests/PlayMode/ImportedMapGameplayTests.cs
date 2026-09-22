@@ -81,27 +81,84 @@ namespace RiskAI.Tests
                         Assert.That(battle.Naval.Ships, Is.Empty);
                         Assert.That(battle.Towns.Select(town => town.Defender).Distinct().Count(), Is.EqualTo(test.Cities));
 
+                        LogNavigationDiagnostics(test.Map,battle.Towns);
+
                         var anchored = new Dictionary<Settlement, Soldier>(test.Cities);
+                        var anchoredPositions = new Dictionary<Settlement, Vector3>(test.Cities);
                         foreach (var town in battle.Towns)
                         {
                             var city = sourceById[town.State.Id];
+                            var expectedVariant=town.IsPort?BuildingVariant.IntegratedHarbor:BuildingVariant.IntegratedTown;
+                            Assert.That(town.VisualVariant,Is.EqualTo(expectedVariant),town.State.Id+" explicit building variant");
+                            Assert.That(town.Defense.VisualVariant,Is.EqualTo(expectedVariant),town.State.Id+" tower variant");
+                            Assert.That(FlatDistance(town.Defense.transform.position,town.transform.position),Is.LessThan(.001f),town.State.Id+" integrated tower center");
+                            Assert.That(FlatDistance(town.Defense.AimPoint,town.transform.position),Is.LessThan(.001f),town.State.Id+" tower aim center");
+                            Assert.That(FlatDistance(town.Defense.AttackOrigin,town.transform.position),Is.LessThan(.001f),town.State.Id+" tower launch center");
+                            Assert.That(town.Defense.AimPoint.y-town.Defense.transform.position.y,Is.EqualTo(VisualMetrics.IntegratedTowerGalleryHeight).Within(.001f),town.State.Id+" tower aim height");
+                            Assert.That(town.Defense.AttackOrigin.y-town.Defense.transform.position.y,Is.EqualTo(VisualMetrics.IntegratedTowerAttackHeight).Within(.001f),town.State.Id+" tower launch height");
+                            var turret=town.Defense.GetComponentsInChildren<Renderer>().Single(renderer=>renderer.name=="Integrated stone turret");
+                            Assert.That(turret.bounds.min.y,Is.EqualTo(town.transform.position.y).Within(.01f),town.State.Id+" tower base must reach the building floor");
+                            Assert.That(turret.bounds.size.x,Is.GreaterThanOrEqualTo(2.35f*VisualMetrics.TowerScale-.01f),town.State.Id+" embedded keep width");
+                            var parapets=town.Defense.GetComponentsInChildren<MeshFilter>().Where(item=>item.name=="Integrated battlement parapet").ToArray();
+                            Assert.That(parapets.Length,Is.EqualTo(4),town.State.Id+" four crenellated parapets");
+                            Assert.That(parapets.Select(item=>item.sharedMesh).Distinct().Count(),Is.EqualTo(1),town.State.Id+" parapets share one scene-owned mesh");
+                            Assert.That(parapets[0].sharedMesh.vertexCount,Is.EqualTo(72),town.State.Id+" bounded three-piece parapet mesh");
+                            var gallery=town.Defense.GetComponentsInChildren<Renderer>().Single(renderer=>renderer.name=="Integrated gallery");
+                            Assert.That(gallery.bounds.center.y-town.Defense.transform.position.y,
+                                Is.EqualTo(VisualMetrics.IntegratedTowerGalleryHeight+.45f).Within(.01f),town.State.Id+" visual gallery raised independently of combat anchors");
+                            Assert.That(gallery.bounds.size.x,Is.GreaterThanOrEqualTo(3.15f*VisualMetrics.TowerScale-.01f),town.State.Id+" visible watch platform");
+                            foreach(var parapet in parapets)
+                            {
+                                var bounds=parapet.GetComponent<Renderer>().bounds;
+                                Assert.That(bounds.min.x,Is.GreaterThanOrEqualTo(gallery.bounds.min.x-.02f),town.State.Id+" parapet inside gallery west edge");
+                                Assert.That(bounds.max.x,Is.LessThanOrEqualTo(gallery.bounds.max.x+.02f),town.State.Id+" parapet inside gallery east edge");
+                                Assert.That(bounds.min.z,Is.GreaterThanOrEqualTo(gallery.bounds.min.z-.02f),town.State.Id+" parapet inside gallery south edge");
+                                Assert.That(bounds.max.z,Is.LessThanOrEqualTo(gallery.bounds.max.z+.02f),town.State.Id+" parapet inside gallery north edge");
+                            }
+                            Assert.That(town.Defense.GetComponentsInChildren<Renderer>().Count(renderer=>renderer.enabled),Is.LessThanOrEqualTo(10),town.State.Id+" bounded integrated tower renderer budget");
+                            float towerTop=town.Defense.GetComponentsInChildren<Renderer>().Max(renderer=>renderer.bounds.max.y)-town.Defense.transform.position.y;
+                            Assert.That(towerTop,Is.InRange(VisualMetrics.TowerHeight+.33f,VisualMetrics.TowerHeight+.47f),town.State.Id+" integrated silhouette is modestly taller without extra geometry");
+                            Assert.That(town.Defense.GetComponentsInChildren<NavMeshObstacle>(),Is.Empty,town.State.Id+" integrated tower cannot carve the shared surface");
+                            Assert.That(town.Defense.GetComponentsInChildren<Collider>().Any(collider=>collider.enabled&&!collider.isTrigger),Is.False,town.State.Id+" integrated tower cannot add a solid footprint");
+                            Assert.That(town.GetComponentsInChildren<Collider>().Count(collider=>collider.enabled&&!collider.isTrigger),
+                                Is.EqualTo(1),town.State.Id+" integrated art owns exactly one compact building collider");
                             Assert.That(town.Defender, Is.Not.Null, town.State.Id + " has a source-circle defender.");
                             Assert.That(town.Defender.Kind, Is.EqualTo(UnitKind.Archer));
                             Assert.That(town.Defender.IsGarrison, Is.True);
+                            Assert.That(FlatDistance(town.Defender.transform.position,town.transform.position),Is.GreaterThan(3f),town.State.Id+" guard stays outside the building body");
                             Assert.That(town.ClaimZone.Center.x, Is.EqualTo(city.claimX).Within(.001f));
                             Assert.That(town.ClaimZone.Center.z, Is.EqualTo(city.claimZ).Within(.001f));
-                            Assert.That(FlatDistance(town.Defender.transform.position, town.ClaimPoint), Is.LessThanOrEqualTo(.2f),
-                                town.State.Id + " guard must remain centered on its claim circle.");
-                            Assert.That(Mathf.Abs(town.Defender.transform.position.y - town.ClaimPoint.y), Is.LessThanOrEqualTo(.21f),
-                                town.State.Id + " guard NavMesh height must stay close to its source claim point.");
-                            Assert.That(NavMesh.SamplePosition(town.ClaimPoint, out var navHit, .9f, NavMesh.AllAreas), Is.True, town.State.Id);
-                            Assert.That(Mathf.Abs(navHit.position.y - town.ClaimPoint.y), Is.LessThanOrEqualTo(.21f), town.State.Id);
-                            if (!town.IsPort)
+                            Assert.That(Vector3.Distance(town.Defender.transform.position, town.ClaimPoint), Is.LessThanOrEqualTo(CityClaimZone.AnchorSearchRadius+.001f),
+                                town.State.Id + " guard must use the nearest valid floor inside its source circle.");
+                            Vector3 guardPosition=town.Defender.transform.position;
+                            Assert.That(Mathf.Abs(guardPosition.y-MapLayout.Height(guardPosition.x,guardPosition.z)), Is.LessThanOrEqualTo(.21f),
+                                town.State.Id + " guard must stand on the actual source floor at its valid anchor.");
+                            Assert.That(NavMesh.SamplePosition(town.ClaimPoint, out var navHit, CityClaimZone.AnchorSearchRadius, NavMesh.AllAreas), Is.True, town.State.Id);
+                            Assert.That(Vector3.Distance(town.Defender.transform.position,navHit.position),Is.LessThanOrEqualTo(.02f),
+                                town.State.Id+" guard must use the cached NavMesh anchor, not an arbitrary offset.");
+                            Assert.That(Mathf.Abs(navHit.position.y-MapLayout.Height(navHit.position.x,navHit.position.z)), Is.LessThanOrEqualTo(.21f), town.State.Id);
+                            if(town.IsPort)
                             {
+                                Assert.That(town.PortBuildingPoint.x,Is.EqualTo(city.x).Within(.001f));
+                                Assert.That(town.PortBuildingPoint.z,Is.EqualTo(city.z).Within(.001f));
+                                Assert.That(town.GetComponentsInChildren<Transform>().Count(item=>item.name=="Integrated harbor building"),Is.EqualTo(1));
+                                Assert.That(town.GetComponentsInChildren<Transform>().Count(item=>item.name=="Integrated tower plinth"),Is.EqualTo(1),town.State.Id+" embedded harbor tower base");
+                                Assert.That(town.GetComponentsInChildren<Transform>().Count(item=>item.name=="Integrated tower tie"),Is.EqualTo(2),town.State.Id+" embedded harbor tower ties");
+                                Assert.That(town.GetComponentsInChildren<Transform>().Any(item=>item.name=="Harbor pier"||item.name=="Harbor berth pier"),Is.False);
+                                Assert.That(NavMesh.SamplePosition(town.PortLandEntry,out var landHit,1.2f,NavMesh.AllAreas),Is.True,town.State.Id+" land entry");
+                                var path=new NavMeshPath();
+                                Assert.That(NavMesh.CalculatePath(landHit.position,navHit.position,NavMesh.AllAreas,path),Is.True,town.State.Id+" route");
+                                Assert.That(path.status,Is.EqualTo(NavMeshPathStatus.PathComplete),town.State.Id+" route must join land and source B00R");
+                                Assert.That(Vector3.Distance(town.Port.Berth,town.ClaimPoint),Is.LessThanOrEqualTo(ClaimRules.TakeoverRadius),town.State.Id+" shared naval circle");
+                            }
+                            else
+                            {
+                                Assert.That(town.GetComponentsInChildren<Transform>().Count(item=>item.name.EndsWith(" · integrated architecture")),Is.EqualTo(1));
                                 Assert.That(town.transform.position.x, Is.EqualTo(city.x).Within(.001f));
                                 Assert.That(town.transform.position.z, Is.EqualTo(city.z).Within(.001f));
                             }
                             anchored.Add(town, town.Defender);
+                            anchoredPositions.Add(town,town.Defender.transform.position);
                         }
 
                         var portTowns = battle.Towns.Where(town => town.IsPort).ToArray();
@@ -113,12 +170,21 @@ namespace RiskAI.Tests
                             Assert.That(port, Is.Not.Null, town.State.Id + " must expose its imported harbor adapter.");
                             Assert.That(port.IsImportedPort, Is.True);
                             Assert.That(port.LinkedTown, Is.SameAs(town));
+                            Assert.That(port.VisualVariant,Is.EqualTo(BuildingVariant.IntegratedHarbor));
                             Assert.That(port.State, Is.SameAs(town.State));
                             Assert.That(port.Defense, Is.SameAs(town.Defense));
                             Assert.That(port.ClaimZone, Is.SameAs(town.ClaimZone));
                             Assert.That(port.Defender, Is.SameAs(town.Defender));
                             Assert.That(port.CanLaunch, Is.True, town.State.Id + " has a usable naval berth.");
+                            Assert.That(source.IsSharedSurface(town.ClaimPoint.x,town.ClaimPoint.z),Is.True,
+                                town.State.Id+" claim must remain authored for ground and naval capture.");
+                            Assert.That(HasOpenWaterApproach(port.Berth,town.PortSeaward,10f),Is.True,
+                                town.State.Id+" berth must route to clear navigable water 10 metres away.");
                         }
+
+                        var deepWater=DeepWaterCenter(source);
+                        Assert.That(NavMesh.SamplePosition(deepWater,out _,.1f,NavMesh.AllAreas),Is.False,
+                            test.Map+" deep source water must not receive walkable NavMesh.");
 
                         // Guards do not consume the imported map's 100-mobile-unit budget.
                         Assert.That(battle.Population(0), Is.GreaterThan(BattleRules.PopulationLimit),
@@ -142,8 +208,8 @@ namespace RiskAI.Tests
                         yield return new WaitForSecondsRealtime(3f);
                         Assert.That(anchored.All(pair => pair.Key.Defender == pair.Value && pair.Value && pair.Value.IsGarrison), Is.True,
                             "Source guards must retain identity and garrison binding over simulation frames.");
-                        Assert.That(anchored.All(pair => FlatDistance(pair.Value.transform.position, pair.Key.ClaimPoint) <= .2f), Is.True,
-                            "Bound source guards must stay centered after simulation advances.");
+                        Assert.That(anchored.All(pair => Vector3.Distance(pair.Value.transform.position, anchoredPositions[pair.Key]) <= .02f), Is.True,
+                            "Bound source guards must not drift from their initial valid anchor after simulation advances.");
                         float minimumGuardHealth = anchored.Min(pair => pair.Value.Health);
                         int totalTowerShots = battle.Towers.Sum(tower => tower ? tower.ShotsFired : 0);
                         Debug.Log($"RISKAI_IMPORTED_MAP_AFTER_3S: {test.Map} minGuardHealth={minimumGuardHealth:F2} towerShots={totalTowerShots}");
@@ -199,6 +265,66 @@ namespace RiskAI.Tests
                     if (towerTown != guardTown)
                         minimum = Mathf.Min(minimum, FlatDistance(towerTown.Defense.transform.position, guardTown.Defender.transform.position));
             return minimum;
+        }
+
+        static Vector3 DeepWaterCenter(ImportedMapData data)
+        {
+            for(int z=1;z<data.pathingHeight-1;z++)for(int x=1;x<data.pathingWidth-1;x++)
+            {
+                bool clear=true;
+                for(int dz=-1;dz<=1&&clear;dz++)for(int dx=-1;dx<=1;dx++)
+                {
+                    Vector2 neighbor=data.PathingCellCenter(x+dx,z+dz);
+                    if(data.IsWalkable(neighbor.x,neighbor.y)||!data.IsShipNavigable(neighbor.x,neighbor.y))
+                    {clear=false;break;}
+                }
+                if(!clear)continue;
+                Vector2 center=data.PathingCellCenter(x,z);
+                return new Vector3(center.x,data.WalkHeightAt(center.x,center.y),center.y);
+            }
+            Assert.Fail("Imported source has no interior deep-water WPM cell.");
+            return default;
+        }
+
+        static bool HasOpenWaterApproach(Vector3 berth,Vector3 preferredDirection,float distance)
+        {
+            float baseAngle=Mathf.Atan2(preferredDirection.z,preferredDirection.x);
+            for(int i=0;i<16;i++)
+            {
+                float angle=baseAngle+i*Mathf.PI/8f;
+                var target=berth+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*distance;
+                if(!SeaNavigation.HasClearance(target)||!SeaNavigation.TryBuildPath(berth,target,out var route))continue;
+                Vector3 previous=berth;bool valid=true;
+                foreach(var waypoint in route)
+                {
+                    if(!SeaNavigation.ClearSegment(previous,waypoint)){valid=false;break;}
+                    previous=waypoint;
+                }
+                if(valid&&FlatDistance(previous,target)<.01f)return true;
+            }
+            return false;
+        }
+
+        static void LogNavigationDiagnostics(ScenarioMap scenario,IEnumerable<Settlement> towns)
+        {
+            var guardOffsets=new List<string>();var missingClaims=new List<string>();var disconnectedPorts=new List<string>();
+            foreach(var town in towns)
+            {
+                float offset=town.Defender?FlatDistance(town.Defender.transform.position,town.ClaimPoint):float.PositiveInfinity;
+                if(offset>.2f)guardOffsets.Add(town.State.Id+":"+offset.ToString("F3"));
+                bool hasClaim=NavMesh.SamplePosition(town.ClaimPoint,out var claimHit,.9f,NavMesh.AllAreas);
+                if(!hasClaim){missingClaims.Add(town.State.Id);continue;}
+                if(!town.IsPort)continue;
+                if(!NavMesh.SamplePosition(town.PortLandEntry,out var landHit,1.2f,NavMesh.AllAreas))
+                {disconnectedPorts.Add(town.State.Id+":no-land-entry");continue;}
+                var path=new NavMeshPath();
+                if(!NavMesh.CalculatePath(landHit.position,claimHit.position,NavMesh.AllAreas,path)||path.status!=NavMeshPathStatus.PathComplete)
+                    disconnectedPorts.Add(town.State.Id+":"+path.status);
+            }
+            Debug.Log("RISKAI_IMPORTED_NAV_DIAGNOSTIC: "+scenario+
+                " guardOffsets="+guardOffsets.Count+" ["+string.Join(",",guardOffsets)+"]"+
+                " missingClaims="+missingClaims.Count+" ["+string.Join(",",missingClaims)+"]"+
+                " disconnectedPorts="+disconnectedPorts.Count+" ["+string.Join(",",disconnectedPorts)+"]");
         }
     }
 }

@@ -41,6 +41,11 @@ namespace RiskAI.Tests
             Assert.That(battle.Units.Count, Is.EqualTo(MapLayout.Towns.Length + NavalWorld.Current.Harbors.Count));
             Assert.That(battle.Towns.All(town => town.Defender && town.Defender.Kind == UnitKind.Archer && town.Defender.IsGarrison), Is.True);
             Assert.That(NavalWorld.Current.Harbors.All(harbor => harbor.Defender && harbor.Defender.Kind == UnitKind.Archer && harbor.Defender.IsGarrison), Is.True);
+            Assert.That(battle.Towns.All(town=>town.VisualVariant==BuildingVariant.DetachedTown&&town.Defense.VisualVariant==BuildingVariant.DetachedTown),Is.True,"Custom maps retain detached town architecture.");
+            Assert.That(battle.Towns.All(town=>new Vector2(town.Defense.transform.position.x-town.transform.position.x,town.Defense.transform.position.z-town.transform.position.z).magnitude>3.5f),Is.True);
+            Assert.That(NavalWorld.Current.Harbors.All(harbor=>harbor.VisualVariant==BuildingVariant.PierHarbor&&harbor.Defense.VisualVariant==BuildingVariant.PierHarbor),Is.True,"Custom ports retain the authored pier family.");
+            Assert.That(NavalWorld.Current.Harbors.All(harbor=>harbor.GetComponentsInChildren<Transform>().Any(item=>item.name=="Harbor pier")),Is.True);
+            Assert.That(NavalWorld.Current.Harbors.All(harbor=>harbor.Defense.GetComponent<NavMeshObstacle>()!=null),Is.True,"Only legacy detached harbor towers retain their established carving obstacle.");
             Assert.That(battle.Units.All(unit => unit.IsGarrison), Is.True);
             Assert.That(NavalWorld.Current.Ships, Is.Empty);
             Assert.That(MapLayout.HalfDepth, Is.EqualTo(112 * MapLayout.Spacing).Within(.001f));
@@ -116,6 +121,9 @@ namespace RiskAI.Tests
             Assert.That(StrategicMapView.Current, Is.Not.Null);
             Assert.That(StrategicMapView.Current.SelectedCountry, Is.EqualTo(selected.Country),
                 "Camp selection now drives the strategic territory inspection surface.");
+            Assert.That(StrategicMapView.Current.IsStrategic,Is.False);
+            Assert.That(StrategicMapView.Current.TacticalInspectionVisible,Is.True,
+                "A selected camp must show its territory without requiring strategic zoom.");
             foreach (var town in battle.Towns.Where(t => t.State.Country == 0)) town.State.Owner = 0;
             battle.Reinforcements.CreditRound();
             Assert.That(battle.Reinforcements.Pending(0), Is.EqualTo(MapLayout.Countries[0].PerTurn));
@@ -130,6 +138,7 @@ namespace RiskAI.Tests
             Assert.That(battle.Units.Count(u => u && u.OriginCountry == 0), Is.EqualTo(MapLayout.Countries[0].PerTurn));
             controller.Clear();
             Assert.That(StrategicMapView.Current.SelectedCountry, Is.EqualTo(-1));
+            Assert.That(StrategicMapView.Current.TacticalInspectionVisible,Is.False);
             yield return null;
         }
 

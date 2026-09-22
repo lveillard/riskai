@@ -32,6 +32,11 @@ namespace RiskAI
             new Plane(Vector3.up,Vector3.zero).Raycast(ray,out float distance);return ray.GetPoint(distance);
         }
         public void Focus(Vector3 point) { targetFocus=Clamp(point,TargetZoom);anchorZoom=false; }
+        public void FocusAndZoom(Vector3 point,float zoom=DefaultZoom)
+        {
+            TargetZoom=Mathf.Clamp(zoom,MinimumZoom,MaximumZoom);
+            targetFocus=Clamp(point,TargetZoom);anchorZoom=false;
+        }
         public void SetHome(Vector3 point) { homePoint=point;focus=targetFocus=Clamp(point);Apply(); }
         public void ResetView() { yaw=0;pitch=55;cam.transform.rotation=DefaultRotation;Apply();TargetZoom=InitialZoom;targetFocus=Clamp(homePoint,TargetZoom);anchorZoom=false; }
         public void FrameMap(){TargetZoom=MaximumZoom;targetFocus=MapLayout.PlayableCenter;anchorZoom=false;}
@@ -63,12 +68,12 @@ namespace RiskAI
         {
             if(Mathf.Abs(wheelSteps)<.001f)return;
             zoomAnchor=Ground(screen);anchorScreen=screen;anchorZoom=true;
-            TargetZoom=Mathf.Clamp(TargetZoom*Mathf.Exp(-Mathf.Clamp(wheelSteps,-4,4)*.24f),MinimumZoom,MaximumZoom);
+            TargetZoom=Mathf.Clamp(TargetZoom*RtsCameraPolicy.WheelZoomMultiplier(wheelSteps),MinimumZoom,MaximumZoom);
         }
         public void ZoomByRatio(float ratio,Vector2 screen)
         {
             if(float.IsNaN(ratio)||float.IsInfinity(ratio)||ratio<=0)return;
-            ZoomAt(Mathf.Log(ratio)/.24f,screen);
+            ZoomAt(Mathf.Log(ratio)/RtsCameraPolicy.WheelZoomExponent,screen);
         }
         public void CancelMotion() { targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;zoomVelocity=0;if(cam)TargetZoom=cam.orthographicSize; }
         void LateUpdate()
@@ -103,7 +108,7 @@ namespace RiskAI
             // Apply still centres the raw HUD gap; equal padding at both sides keeps
             // that centre while leaving a visible buffer for borders and terrain skirts.
             float width=Mathf.Max(1,Screen.width),height=Mathf.Max(1,Screen.height);
-            Rect viewport=UiViewport.WorldRect;
+            Rect viewport=UiViewport.CameraWorldRect;
             float horizontalPadding=Mathf.Min(MapFramePaddingPixels*UiViewport.Scale,viewport.width*.1f);
             float verticalPadding=Mathf.Min(MapFramePaddingPixels*UiViewport.Scale,viewport.height*.1f);
             float left=-1+2*(viewport.xMin+horizontalPadding)/width,right=-1+2*(viewport.xMax-horizontalPadding)/width;
@@ -130,11 +135,10 @@ namespace RiskAI
 
         void Apply()
         {
-            Vector2 center=UiViewport.WorldRect.center;
+            Vector2 center=UiViewport.CameraWorldRect.center;
             float vertical=cam.orthographicSize*(2*center.y/Mathf.Max(1,Screen.height)-1);
             float horizontal=cam.orthographicSize*cam.aspect*(2*center.x/Mathf.Max(1,Screen.width)-1);
             cam.transform.position=focus-cam.transform.forward*(cam.orthographicSize/Mathf.Tan(cam.fieldOfView*.5f*Mathf.Deg2Rad))-cam.transform.up*vertical-cam.transform.right*horizontal;
         }
     }
 }
-

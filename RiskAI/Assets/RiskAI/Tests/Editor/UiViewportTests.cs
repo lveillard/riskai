@@ -5,6 +5,9 @@ namespace RiskAI.Tests
 {
     public class UiViewportTests
     {
+        [Test] public void TouchTargetContractIsAtLeastFortyFourLogicalPixels() =>
+            Assert.That(UiViewport.MinimumTouchTarget,Is.GreaterThanOrEqualTo(44));
+
         [TestCase(360,800,1)]
         [TestCase(800,360,1)]
         [TestCase(1536,2048,2)]
@@ -27,6 +30,20 @@ namespace RiskAI.Tests
             var layout=UiViewport.Calculate(new Vector2(100,100),Rect.zero,1,500,500);
             Assert.That(layout.Safe,Is.EqualTo(new Rect(0,0,100,100)));
             Assert.That(layout.World.height,Is.EqualTo(38).Within(.001));
+        }
+        [Test] public void CameraFramingKeepsItsExpandedFooterAnchorWhenFooterCloses()
+        {
+            try
+            {
+                UiViewport.SetCameraHudHeights(48,188);
+                UiViewport.SetHudHeights(48,188);
+                Rect anchored=UiViewport.CameraWorldRect,open=UiViewport.WorldRect;
+                UiViewport.SetHudHeights(48,0);
+                Assert.That(UiViewport.CameraWorldRect,Is.EqualTo(anchored));
+                Assert.That(UiViewport.WorldRect.yMin,Is.LessThan(open.yMin));
+                Assert.That(UiViewport.WorldRect.yMax,Is.EqualTo(open.yMax));
+            }
+            finally { UiViewport.ResetHudHeights(); }
         }
     }
 }

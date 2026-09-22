@@ -1,0 +1,96 @@
+{
+  "url": "https://riesgus.com",
+  "files": [
+    {
+      "path": "release-20260922T121400Z-zoom-v0261/Build/Web-v0.26.1.data.unityweb",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "application/octet-stream",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "2e6473a2e2ccede55dc8c22a7db23eada1d74c485ea331d7a2371b6811d30d71",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T121400Z-zoom-v0261/Build/Web-v0.26.1.framework.js.unityweb",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "e5a4a2e8895c1149b1a1a2b751ca9bc4e13887ae8d8f00dff3b25f0703c82338",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T121400Z-zoom-v0261/Build/Web-v0.26.1.loader.js",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "def265bd83040dfd18adb0f1ad0ca29598e08f33c5facd1dbb26452ba3808ef6",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T121400Z-zoom-v0261/Build/Web-v0.26.1.wasm.unityweb",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "application/wasm",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "c11d4ef3af38e9d092e282ce601ce3e77822ababadfbe27b0b42379831f8e5fa",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T121400Z-zoom-v0261/Cinzel-OFL.txt",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/plain",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "a59a6ae705d1b6aac3f660d135230b1837dd19f804953efbe0cc751dc1ea31cb",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T121400Z-zoom-v0261/index.html",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/html",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "e9bc0b44bec0642b5324d19e3561c988a5ce979118f68df97b25f280fbdfc2b5",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T121400Z-zoom-v0261/KayKit-LICENSE.txt",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/plain",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "ae322141814056dda0deea7540d74c41d87aee1da319977cd1bd84ee5a923629",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T121400Z-zoom-v0261/riskai-pen.js",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/javascript; charset=utf-8",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "a54de07ec35ab8431dd59ac00a485e5d3a93ac2c25c291256e1c52820e8711ae",
+      "matches": true
+    },
+    {
+      "path": "release-20260922T121400Z-zoom-v0261/THIRD_PARTY_NOTICES.md",
+      "status": 200,
+      "encoding": null,
+      "contentType": "application/octet-stream",
+      "cacheControl": "public, max-age=31536000, immutable",
+      "sha256": "7b6a9d128d6a26d568d8324aa5b83d63875ed8dd88d8a69b6ad54e386745bf5f",
+      "matches": true
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "encoding": "gzip",
+      "contentType": "text/html",
+      "cacheControl": "no-store, max-age=0",
+      "sha256": "aa723f37cde234b365905fecc8f403313475b110691554d26105203ffc559056",
+      "matches": true
+    }
+  ],
+  "success": true
+}

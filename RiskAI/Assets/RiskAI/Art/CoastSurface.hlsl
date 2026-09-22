@@ -5,12 +5,14 @@ TEXTURE2D(_RiskCoastField); SAMPLER(sampler_RiskCoastField);
 float4 _RiskCoastGrid;
 float4 _RiskCoastSize;
 float _RiskSandThreshold;
-float3 RiskCoastSurface(float2 world)
+float _RiskCoastDepthRange;
+float4 RiskCoastSurfaceData(float2 world)
 {
  float2 texel=(world-_RiskCoastGrid.xy)*_RiskCoastGrid.z;
  float2 uv=(texel+.5)*_RiskCoastSize.zw;
- return SAMPLE_TEXTURE2D_LOD(_RiskCoastField,sampler_RiskCoastField,uv,0).rgb;
+ return SAMPLE_TEXTURE2D_LOD(_RiskCoastField,sampler_RiskCoastField,uv,0);
 }
+float3 RiskCoastSurface(float2 world){return RiskCoastSurfaceData(world).rgb;}
 float RiskSandBlend(float sand)
 {
  return smoothstep(_RiskSandThreshold-.05,_RiskSandThreshold+.05,sand);

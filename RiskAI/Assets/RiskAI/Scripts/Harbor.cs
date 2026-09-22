@@ -22,6 +22,7 @@ namespace RiskAI
         public Settlement LinkedTown { get; private set; }
         public BuildingId BuildingId { get; private set; }
         public DefenseTower Defense { get; private set; }
+        public BuildingVariant VisualVariant { get; private set; }
         public TownState State=>state;
         public bool IsIsland=>!LinkedTown;
         public bool IsImportedPort=>sharesTown;
@@ -39,6 +40,7 @@ namespace RiskAI
         {
             get
             {
+                if(sharesTown&&LinkedTown)return LinkedTown.PortLandEntry;
                 var landward=Landing-Berth;landward.y=0;
                 if(landward.sqrMagnitude<.01f)landward=Vector3.back;
                 else landward.Normalize();
@@ -64,28 +66,37 @@ namespace RiskAI
         BuildingTrainingView trainingView;
         LineRenderer rallyRing;
 
-        public void Initialize(NavalWorld naval,BuildingId buildingId,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth)
+        public void Initialize(NavalWorld naval,BuildingId buildingId,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth,BuildingVariant? visualVariant=null)
         {
             transportLandingCached=false;cachedTransportLanding=default;cachedTransportBerth=default;
+            VisualVariant=visualVariant??BuildingVariant.PierHarbor;
+            if(!BuildingVariants.IsHarbor(VisualVariant))throw new System.ArgumentException("A harbor requires a harbor building variant.",nameof(visualVariant));
             sharesTown=false;canLaunch=SeaNavigation.HasClearance(berth);launchBlockReason=canLaunch?null:"El puerto no tiene una salida marítima segura.";
             world=naval;BuildingId=buildingId;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;landRally=LandEntry;lastOwner=Owner;
-            var entrance=NavalArt.CreateHarbor(this);
+            var entrance=NavalArt.CreateHarbor(this,VisualVariant);
             trainingView=BuildingTrainingView.Create(transform,entrance);
-            claimZone=new CityClaimZone(Landing);claimZone.AttachHarbor(this);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));claimRing.transform.position=Landing;
+            claimZone=new CityClaimZone(Landing);claimZone.AttachHarbor(this);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,CityClaimZone.RingWidth,CityClaimZone.RingColor);claimRing.transform.position=Landing;
             var towerObject=new GameObject("Torre de "+name);towerObject.transform.SetParent(transform,false);
             Vector3 direction=Berth-Landing;direction.y=0;direction=direction.sqrMagnitude>.001f?direction.normalized:Vector3.forward;
-            // Opposite the harbormaster's house, with a clear silhouette and landing corridor.
-            Vector3 side=new Vector3(-direction.z,0,direction.x);Vector3 towerPoint=Landing-side*4.8f;
-            if(!MapLayout.IsLand(towerPoint.x,towerPoint.z))towerPoint=Landing-side*3.8f;
-            towerPoint=MapLayout.Point(towerPoint.x,towerPoint.z);towerObject.transform.position=towerPoint;
-            Defense=towerObject.AddComponent<DefenseTower>();Defense.Initialize(world.Session,this,true);
+            if(VisualVariant==BuildingVariant.IntegratedHarbor)towerObject.transform.position=Landing;
+            else
+            {
+                // Opposite the harbormaster's house, with a clear silhouette and landing corridor.
+                Vector3 side=new Vector3(-direction.z,0,direction.x);Vector3 towerPoint=Landing-side*4.8f;
+                if(!MapLayout.IsLand(towerPoint.x,towerPoint.z))towerPoint=Landing-side*3.8f;
+                towerPoint=MapLayout.Point(towerPoint.x,towerPoint.z);towerObject.transform.position=towerPoint;
+            }
+            Defense=towerObject.AddComponent<DefenseTower>();Defense.Initialize(world.Session,this,true,VisualVariant);
             selectionRing=BuildingSelection.CreateRing(this);
             CreateNavalClaimRing();
             rallyRing=VisualFactory.Ring(transform,.6f,.09f,new Color(.8f,1,.5f));rallyRing.transform.position=landRally;rallyRing.enabled=false;
         }
-        internal void InitializeImported(NavalWorld naval,BuildingId buildingId,Settlement town,Vector3 berth,string unavailableReason)
+        internal void InitializeImported(NavalWorld naval,BuildingId buildingId,Settlement town,Vector3 berth,string unavailableReason,BuildingVariant? visualVariant=null)
         {
             transportLandingCached=false;cachedTransportLanding=default;cachedTransportBerth=default;
+            VisualVariant=visualVariant??town.VisualVariant;
+            if(!BuildingVariants.IsHarbor(VisualVariant))throw new System.ArgumentException("An imported port requires a harbor building variant.",nameof(visualVariant));
+            if(VisualVariant!=town.VisualVariant)throw new System.ArgumentException("A linked harbor must share its settlement variant.",nameof(visualVariant));
             world=naval;BuildingId=buildingId;DisplayName=town.DisplayName;LinkedTown=town;state=town.State;claimZone=town.ClaimZone;Defense=town.Defense;
             Landing=town.ClaimPoint;Berth=berth;lastOwner=Owner;sharesTown=true;
             claimZone.AttachHarbor(this);
@@ -99,8 +110,8 @@ namespace RiskAI
         }
         void CreateNavalClaimRing()
         {
-            navalClaimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,.065f,VisualFactory.TeamColor(Owner));
-            navalClaimRing.transform.position=Berth;navalClaimRing.enabled=false;
+            navalClaimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,CityClaimZone.RingWidth,CityClaimZone.RingColor);
+            navalClaimRing.transform.position=Landing;navalClaimRing.enabled=false;
         }
         internal bool InitializeGarrison()
         {
@@ -132,11 +143,11 @@ namespace RiskAI
         }
         internal bool IsInBerthCircle(Vector3 point)=>FlatDistance(point,Berth)<=ClaimRules.CircleRadius*ClaimRules.CircleRadius;
         public bool IsShipDocked(Ship ship)=>ship&&FlatDistance(ship.transform.position,Berth)<=BerthRadius*BerthRadius;
-        internal bool CanSnapToBerth(Ship ship) => ship && ship.IsAlive && ship.Kind==ShipKind.Galley &&
+        internal bool CanSnapToBerth(Ship ship) => ship && ship.IsAlive && ship.Profile.CanCapture &&
             IsShipDocked(ship) && SeaNavigation.HasClearance(ship.transform.position) &&
             SeaNavigation.HasClearance(Berth) && SeaNavigation.ClearSegment(ship.transform.position,Berth);
         public bool HasLivingDefender=>Defender&&Defender.IsAlive;
-        public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Kind==ShipKind.Galley&&
+        public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Profile.CanCapture&&
             navalDefender.Team==Owner&&IsShipDocked(navalDefender)?navalDefender:null;
         public bool HasNavalDefender=>NavalDefender;
         public LineRenderer NavalClaimRing=>navalClaimRing;
@@ -154,7 +165,7 @@ namespace RiskAI
             Selected=selected;
             if(selectionRing)selectionRing.enabled=selected;
             if(rallyRing)rallyRing.enabled=selected&&Owner==0;
-            if(claimRing)claimRing.widthMultiplier=selected ? .11f : .065f;
+            if(claimRing)claimRing.widthMultiplier=selected ? .11f : CityClaimZone.RingWidth;
         }
         public bool SetRally(Vector3 target)
         {
@@ -170,9 +181,9 @@ namespace RiskAI
             if(navalClaimRing)
             {
                 navalClaimRing.enabled=navalGuard;
-                navalClaimRing.transform.position=Berth;
+                navalClaimRing.transform.position=Landing;
                 navalClaimRing.widthMultiplier=Selected ? .11f : .065f;
-                navalClaimRing.startColor=navalClaimRing.endColor=State.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,State.Capture*.65f);
+                navalClaimRing.startColor=navalClaimRing.endColor=CityClaimZone.VisibleRingColor(State.Contested);
             }
             if(sharesTown&&LinkedTown)LinkedTown.SetNavalClaimVisual(navalGuard);
         }
@@ -187,8 +198,7 @@ namespace RiskAI
             Ship best=null;float bestDistance=float.MaxValue;
             foreach(var ship in world.Ships)
             {
-                if(!ship||ship==excluded||!ship.IsAlive||ship.Kind!=ShipKind.Galley||
-                    ship.Garrison&&ship.Garrison!=this)continue;
+                if(!ship||ship==excluded||!ship.IsAlive||!ship.Profile.CanCapture||ship.Garrison&&ship.Garrison!=this)continue;
                 if(alliesOnly&&ship.Team!=owner)continue;
                 float distance=FlatDistance(ship.transform.position,Berth);
                 float radius=alliesOnly?ClaimRules.ReliefRadius:ship.Team==owner?ClaimRules.ProtectionRadius:ClaimRules.TakeoverRadius;
@@ -289,7 +299,7 @@ namespace RiskAI
             {
                 int owner=StepClaim(delta);
                 if(owner!=state.Owner){state.Owner=owner;Captured();}
-                claimRing.startColor=claimRing.endColor=state.Contested?new Color(1,.7f,.15f):Color.Lerp(VisualFactory.TeamColor(Owner),Color.white,state.Capture*.65f);
+                claimRing.startColor=claimRing.endColor=CityClaimZone.VisibleRingColor(state.Contested);
             }
             if(!sharesTown&&Defense&&Defense.UnderConstruction)
             {

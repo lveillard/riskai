@@ -1,0 +1,12 @@
+{
+  "name": "riesgus-cloudflare-proxy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/worker.js",
+    "test": "node ../../scripts/test_cloudflare_worker.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.136.1"
+  }
+}

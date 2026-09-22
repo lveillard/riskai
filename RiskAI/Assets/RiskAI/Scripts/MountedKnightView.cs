@@ -29,7 +29,7 @@ namespace RiskAI
             view.motionRig=new GameObject("Mounted motion rig").transform;view.motionRig.SetParent(root,false);
             var artRoot=view.motionRig;
             Color coat=new Color(.29f,.17f,.085f),dark=new Color(.075f,.060f,.045f),steel=new Color(.57f,.65f,.70f);
-            Color team=VisualFactory.TeamColor(teamId),gold=new Color(.77f,.58f,.23f);
+            Color team=VisualFactory.TeamMaterialColor(teamId),gold=new Color(.77f,.58f,.23f);
             Oval(artRoot,"Horse barrel",new Vector3(0,1.12f,0),new Vector3(.88f,.93f,1.85f),coat);
             Oval(artRoot,"Horse haunch",new Vector3(0,1.17f,-.69f),new Vector3(.95f,1.02f,.91f),coat);
             Oval(artRoot,"Horse chest",new Vector3(0,1.24f,.65f),new Vector3(.82f,1.12f,.78f),coat);
@@ -128,7 +128,7 @@ namespace RiskAI
         {
             foreach(var mesh in ownedMeshes)if(mesh){if(Application.isPlaying)Destroy(mesh);else DestroyImmediate(mesh);}
         }
-        void OnEnable() => ResetPose();
+        void OnEnable(){ResetPose();RefreshPose();}
         void OnDisable() => ResetPose();
         void ResetPose()
         {
@@ -145,7 +145,8 @@ namespace RiskAI
             if(tail)tail.localRotation=Quaternion.Euler(-25,0,0);
             if(lance){lance.localPosition=lanceRestPosition;lance.localRotation=Quaternion.Euler(-18,0,0);}
         }
-        void Update()
+        void Update()=>RefreshPose();
+        void RefreshPose()
         {
             var battle=BattleSession.Current;
             if(!soldier||!soldier.IsAlive||!soldier.Agent||!soldier.Agent.enabled||!battle||battle.Paused||battle.Winner>=0)return;

@@ -70,7 +70,7 @@ namespace RiskAI
                 { name="Territory IDs and coast", filterMode=FilterMode.Point, wrapMode=TextureWrapMode.Clamp };
             Regions.SetPixels32(pixels); Regions.Apply(false,true);
             palette = new Color32[Mathf.NextPowerOfTwo(Mathf.Max(2,Sites.Count))];
-            Palette = new Texture2D(palette.Length,1,TextureFormat.RGBA32,false,true)
+            Palette = new Texture2D(palette.Length,1,TextureFormat.RGBA32,false,false)
                 { name="Live territory ownership", filterMode=FilterMode.Point, wrapMode=TextureWrapMode.Clamp };
             RefreshOwners();
         }

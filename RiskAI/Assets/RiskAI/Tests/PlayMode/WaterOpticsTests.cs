@@ -8,7 +8,7 @@ namespace RiskAI.Tests
     public sealed class WaterOpticsTests
     {
         [UnityTest]
-        public IEnumerator OceanColorIgnoresSourceBedTilesButContactAndAboveWaterRemainTransparent()
+        public IEnumerator OpenSeaHidesTilesWhileSharedShallowsRevealTheBedAndFadeBeforeDeepWater()
         {
             var shader=Shader.Find("Hidden/RiskAI/Tests/WaterOpticsProbe");Assert.That(shader,Is.Not.Null);
             var material=new Material(shader);
@@ -23,6 +23,17 @@ namespace RiskAI.Tests
                 var deepBed=Render(material,target,readback,4.608f,0,Color.white);
                 AssertColor(shallowBed,normalBed);AssertColor(normalBed,deepBed);
                 Assert.That(normalBed.a,Is.EqualTo(1).Within(.005f));
+
+                foreach(float depth in new[]{.27f,.538f,.75f})
+                {
+                    var sharedRed=Render(material,target,readback,depth,1,Color.red);
+                    var sharedBlue=Render(material,target,readback,depth,1,Color.blue);
+                    float minimumTransmission=depth<.4f?.72f:depth<.7f?.62f:.55f;
+                    Assert.That(sharedRed.r-sharedBlue.r,Is.GreaterThan(minimumTransmission),depth+" m shared red bed");
+                    Assert.That(sharedBlue.b-sharedRed.b,Is.GreaterThan(minimumTransmission),depth+" m shared blue bed");
+                }
+                AssertColor(Render(material,target,readback,1.5f,1,Color.red),Render(material,target,readback,1.5f,1,Color.blue));
+                AssertColor(Render(material,target,readback,1.8f,1,Color.red),Render(material,target,readback,1.8f,1,Color.blue));
                 var contactRed=Render(material,target,readback,.02f,1,Color.red);
                 var contactBlue=Render(material,target,readback,.02f,1,Color.blue);
                 Assert.That(contactRed.r-contactBlue.r,Is.GreaterThan(.5f),"Contact shallows must retain the actual opaque shore color.");
@@ -32,8 +43,6 @@ namespace RiskAI.Tests
                 var aboveWaterHull=Render(material,target,readback,-.3f,1,Color.red);
                 Assert.That(waterline.a,Is.Zero);
                 Assert.That(aboveWaterHull.a,Is.Zero,"Opaque geometry above the water must not acquire water effects.");
-                var coastal=Render(material,target,readback,.538f,1,Color.blue);
-                Assert.That(coastal.r+coastal.g+coastal.b,Is.GreaterThan(normalBed.r+normalBed.g+normalBed.b),"The continuous coastal field retains readable shallows.");
             }
             finally
             {

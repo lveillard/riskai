@@ -56,6 +56,11 @@ namespace RiskAI.Tests
             Assert.That(NavalProfiles.Galley.Armor, Is.EqualTo(6f), "Classic h00Q overrides armor to four; it is a different unit.");
             Assert.That(NavalProfiles.Galley.BaseDamage, Is.EqualTo(30f));
             Assert.That(NavalProfiles.Galley.Range, Is.EqualTo(1000f / 50f));
+            Assert.That(NavalProfiles.Galley.CanAttack,Is.True);
+            Assert.That(NavalProfiles.Galley.CanCapture,Is.True);
+            Assert.That(NavalProfiles.Galley.CanTransport,Is.False);
+            Assert.That(NavalProfiles.Transport.CanAttack,Is.False);
+            Assert.That(NavalProfiles.Transport.CanTransport,Is.True);
             Assert.Throws<ArgumentOutOfRangeException>(() => NavalProfiles.Profile((NavalUnitKind)999));
         }
     }

@@ -28,6 +28,7 @@ namespace RiskAI
         public static Rect Bounds(Camera camera, CombatTarget target)
         {
             float height = target is Ship ? 4.8f : target is DefenseTower ? VisualMetrics.TowerHeight : target is Soldier soldier?VisualMetrics.HeightFor(soldier.Kind):VisualMetrics.UnitHeight;
+            if(target is DefenseTower tower && BuildingVariants.IsIntegrated(tower.VisualVariant))height+=VisualMetrics.IntegratedTowerVisualLift;
             float radius = target is Ship ? 1.8f : target is DefenseTower ? VisualMetrics.TowerRadius : target is Soldier unit?VisualMetrics.RadiusFor(unit.Kind):VisualMetrics.UnitRadius;
             Vector3 foot = camera.WorldToScreenPoint(target.transform.position);
             Vector3 head = camera.WorldToScreenPoint(target.transform.position + Vector3.up * height);
@@ -47,7 +48,7 @@ namespace RiskAI
             foreach (var town in battle.Towns)
             {
                 if (!town.Selected && !(Keyboard.current != null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed))) continue;
-                Vector3 label = camera.WorldToScreenPoint(town.transform.position + Vector3.up * 4.8f);
+                Vector3 label = camera.WorldToScreenPoint(town.transform.position + Vector3.up * VisualMetrics.BuildingLabelHeight(town.VisualVariant));
                 float s=BattleHud.Scale;
                 if (label.z > 0 && new Rect(label.x - 88*s, label.y - 22*s, 176*s, 28*s).Contains(pointer)) return town;
             }

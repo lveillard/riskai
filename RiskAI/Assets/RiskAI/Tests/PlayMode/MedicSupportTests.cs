@@ -60,8 +60,8 @@ namespace RiskAI.Tests
             var healer = medic.GetComponent<MedicSupport>();
             Assert.That(healer, Is.Not.Null);
             Assert.That(healer.CastCount, Is.EqualTo(1));
-            Assert.That(healer.TotalHealing, Is.EqualTo(15).Within(.001f));
-            Assert.That(heavilyWounded.Health, Is.EqualTo(heavilyWounded.MaxHealth - 27).Within(.001f));
+            Assert.That(healer.TotalHealing, Is.EqualTo(25).Within(.001f));
+            Assert.That(heavilyWounded.Health, Is.EqualTo(heavilyWounded.MaxHealth - 17).Within(.001f));
             Assert.That(lightlyWounded.Health, Is.EqualTo(lightlyWounded.MaxHealth - 8).Within(.001f));
             Assert.That(enemy.Health, Is.LessThanOrEqualTo(enemyBefore + .001f));
         }
@@ -119,9 +119,24 @@ namespace RiskAI.Tests
             yield return new WaitForSeconds(1.1f);
 
             Assert.That(healer.CastCount, Is.EqualTo(1));
-            Assert.That(healer.TotalHealing, Is.EqualTo(15).Within(.001f));
-            Assert.That(blocked.Health, Is.EqualTo(blocked.MaxHealth - 15).Within(.001f));
+            Assert.That(healer.TotalHealing, Is.EqualTo(25).Within(.001f));
+            Assert.That(blocked.Health, Is.EqualTo(blocked.MaxHealth - 5).Within(.001f));
             Assert.That(distant.Health, Is.EqualTo(distant.MaxHealth - 30).Within(.001f));
+        }
+
+        [UnityTest]
+        public IEnumerator MedicHealAndWeaponContactNeverResolveOnTheSameSimulationTick()
+        {
+            var medic=battle.Spawn(0,UnitKind.Medic,new Vector3(-30,0,-16));
+            var ally=battle.Spawn(0,UnitKind.Footman,new Vector3(-28,0,-16));
+            var enemy=battle.Spawn(1,UnitKind.Footman,new Vector3(-26,0,-16));
+            ally.TakeDamage(40,1);enemy.HoldPosition();medic.Attack(enemy);
+            var healer=medic.GetComponent<MedicSupport>();
+            float deadline=Time.realtimeSinceStartup+2;
+            while(healer.CastCount==0&&Time.realtimeSinceStartup<deadline)yield return null;
+            Assert.That(healer.CastCount,Is.EqualTo(1));
+            Assert.That(medic.LastAttackContactTick,Is.Not.EqualTo(healer.LastCastTick),
+                "Ahea is an autocast order; its heal cannot share a simulation tick with weapon contact.");
         }
     }
 }

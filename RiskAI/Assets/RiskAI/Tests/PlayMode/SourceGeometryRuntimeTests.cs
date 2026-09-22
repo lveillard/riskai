@@ -66,14 +66,14 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator MortarUsesHumanGunnerAndHandCannonAtSourceHeight()
+        public IEnumerator MortarUsesCompactWheeledCarriageAtSourceHeight()
         {
             var mortar=BattleTestScenario.Mobile(battle,0,UnitKind.Mortar,new Vector3(-24,0,-16));
             var model=mortar.transform.Find("Mortar model");
             Assert.That(model,Is.Not.Null);
-            Assert.That(model.Find("Hand cannon pivot"),Is.Not.Null);
-            Assert.That(model.Find("Oak carriage"),Is.Null);
-            Assert.That(model.Find("Mortar gunner team cloth"),Is.Not.Null);
+            Assert.That(model.Find("Mortar barrel"),Is.Not.Null);
+            Assert.That(model.Find("Oak carriage"),Is.Not.Null);
+            Assert.That(model.Find("Hand cannon pivot"),Is.Null);
             float renderedHeight=ModelMetrics.Measure(model).size.y*model.lossyScale.y;
             Assert.That(renderedHeight,Is.EqualTo(SourceGeometry.StandingHeight(UnitKind.Mortar)).Within(.01f));
             yield return null;

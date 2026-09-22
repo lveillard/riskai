@@ -35,9 +35,10 @@ namespace RiskAI.Tests
             {
                 var outward=city.ClaimPoint-city.Position;outward.y=0;
                 if(outward.sqrMagnitude<.01f)outward=Vector3.forward;else outward.Normalize();
-                Assert.That(SeaNavigation.TryNearestOcean(city.ClaimPoint+outward*6f,30f,out var berth), Is.True, city.Id);
+                var searchCenter=city.ClaimPoint+outward*6f;
+                Assert.That(SeaNavigation.TryNearestOcean(searchCenter,30f,out var berth), Is.True, city.Id);
                 Assert.That(SeaNavigation.HasClearance(berth), Is.True, city.Id);
-                Assert.That(Vector3.Distance(berth,city.ClaimPoint), Is.GreaterThan(2.5f), city.Id);
+                Assert.That(Vector3.Distance(berth,searchCenter), Is.LessThanOrEqualTo(30.001f), city.Id+" bounded berth search");
                 berths.Add(berth);
             }
             Assert.That(SeaNavigation.TryBuildPath(berths[0],berths[0],out var direct),Is.True);

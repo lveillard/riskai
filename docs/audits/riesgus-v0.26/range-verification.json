@@ -1,0 +1,7 @@
+{
+  "url": "https://riesgus.com/release-20260922T015400Z-riesgus-v026/Build/Web-v0.26.framework.js.unityweb?range-audit=20260922T0205",
+  "acceptEncoding": "gzip",
+  "rangeRequest": {"range": "bytes=0-10", "status": 206, "bytes": 11, "cache": "MISS", "contentRange": "bytes 0-10/88998"},
+  "subsequentFullRequest": {"status": 200, "bytes": 88998, "cache": "HIT", "sha256": "a2303a8caae26b2df947dd6d715012f081a1df13e4fcf185116bbc3cfd9e37f0", "matchesManifest": true},
+  "partialCachePoisoningReproduced": false
+}

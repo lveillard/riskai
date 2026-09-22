@@ -35,7 +35,7 @@ namespace RiskAI
                 return;
             }
 
-            Color teamColor=VisualFactory.TeamColor(team);
+            Color teamColor=VisualFactory.TeamMaterialColor(team);
             foreach(var renderer in model.GetComponentsInChildren<Renderer>(true))
             {
                 var source=renderer.sharedMaterial;
@@ -80,7 +80,7 @@ namespace RiskAI
         static void AddFallbackTabard(GameObject model,int team)
         {
             var tabard=VisualFactory.Shape(model.transform,PrimitiveType.Cube,"Team tabard",
-                new Vector3(0,1.04f,.36f),new Vector3(.42f,.5f,.035f),VisualFactory.TeamColor(team));
+                new Vector3(0,1.04f,.36f),new Vector3(.42f,.5f,.035f),VisualFactory.TeamMaterialColor(team));
             tabard.GetComponent<Renderer>().shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
         }
     }

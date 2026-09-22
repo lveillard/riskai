@@ -151,21 +151,34 @@ namespace RiskAI
         public void Message(string message) { Messages.Insert(0, message); if (Messages.Count > 5) Messages.RemoveAt(5); }
         public void TogglePause() { if (Winner >= 0 || IsStarting) return; manuallyPaused = !manuallyPaused; SuspendMovement(Paused); }
 
-        public void BeginStartCountdown(float seconds=3)
+        public void BeginStartCountdown(float seconds=5)
         {
             if(Clock.TickCount>0 || Winner>=0 || seconds<=0 || float.IsNaN(seconds) || float.IsInfinity(seconds))return;
             StartCountdownRemaining=seconds;countdownStartFrame=Time.frameCount;
             countdownLastTime=Time.realtimeSinceStartupAsDouble;SuspendMovement(true);
         }
 
+        // Background tabs and suspended mobile apps must not consume the briefing.
+        // The player is configured not to run in the background, so discard the
+        // time gap when Unity resumes instead of skipping straight into battle.
+        void OnApplicationFocus(bool focused)
+        {
+            if(focused && IsStarting)countdownLastTime=Time.realtimeSinceStartupAsDouble;
+        }
+        void OnApplicationPause(bool paused)
+        {
+            if(!paused && IsStarting)countdownLastTime=Time.realtimeSinceStartupAsDouble;
+        }
+
         void Update()
         {
             if(IsStarting)
             {
-                // The scene-building frame may be long. Show the first number before
-                // consuming real time, and never feed pre-match time into simulation.
-                if(Time.frameCount==countdownStartFrame)return;
                 double now=Time.realtimeSinceStartupAsDouble;
+                // The first rendered frame may compile shaders or upload the map.
+                // Start measuring after it, so cold WebGL loads still show the full
+                // briefing instead of spending its first seconds behind a frozen frame.
+                if(Time.frameCount<=countdownStartFrame+1){countdownLastTime=now;return;}
                 StartCountdownRemaining=Mathf.Max(0,StartCountdownRemaining-(float)(now-countdownLastTime));
                 countdownLastTime=now;
                 if(!IsStarting)SuspendMovement(Paused);
@@ -251,6 +264,36 @@ namespace RiskAI
             soldier.OriginCountry=originCountry;
             Units.Add(soldier);
             return soldier;
+        }
+
+        public Soldier SpawnSeparated(int team, UnitKind kind, Vector3 position, int originCountry = -1)
+        {
+            if (IsPlayerEliminated(team)) return null;
+            float radius=VisualMetrics.SpawnRadiusFor(kind),step=radius*2+.16f;
+            Vector3 fallback=position;float fallbackClearance=float.NegativeInfinity;
+            // Test the requested point, then deterministic concentric rings. This
+            // runs only when an actor is created, never in the simulation hot path.
+            for(int attempt=0;attempt<49;attempt++)
+            {
+                Vector3 probe=position;
+                if(attempt>0)
+                {
+                    int index=attempt-1,ring=index/12+1;
+                    float angle=(index%12)*Mathf.PI/6+(Units.Count%12)*2.399963f;
+                    probe+=new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*step*ring;
+                }
+                if(!NavMesh.SamplePosition(probe,out var hit,.7f,NavMesh.AllAreas))continue;
+                Vector3 candidate=hit.position;float clearance=float.MaxValue;
+                for(int i=0;i<Units.Count;i++)
+                {
+                    var other=Units[i];if(!other||!other.IsAlive)continue;
+                    Vector3 delta=other.transform.position-candidate;delta.y=0;
+                    clearance=Mathf.Min(clearance,delta.magnitude-radius-VisualMetrics.SpawnRadiusFor(other.Kind));
+                }
+                if(clearance>=.12f)return Spawn(team,kind,candidate,originCountry);
+                if(clearance>fallbackClearance){fallbackClearance=clearance;fallback=candidate;}
+            }
+            return Spawn(team,kind,fallback,originCountry);
         }
 
         void CountryReinforcements() => Reinforcements.CreditRound();

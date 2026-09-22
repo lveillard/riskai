@@ -14,7 +14,7 @@ namespace RiskAI
 
         static Label AddMetric(VisualElement parent,RtsHudGlyph glyph,string value,string tooltip, System.Action action=null, string name=null)
         {
-            var row=action==null?new VisualElement():ResourceButton(action,name);row.tooltip=tooltip;RtsUiStyle.Row(row);
+            var row=action==null?new VisualElement():ResourceButton(action,name);row.tooltip=GameText.Localize(tooltip);RtsUiStyle.Row(row);
             row.style.flexGrow=1;row.style.minWidth=0;row.style.marginRight=5;
             var icon=new RtsHudIcon(glyph);icon.style.width=20;icon.style.height=20;
             row.Add(icon);
@@ -31,7 +31,7 @@ namespace RiskAI
         static Button ActionButton(string title,RtsHudGlyph glyph,System.Action action)
         {
             var button=RtsUiStyle.Button("",action,"HUD action "+title);
-            button.tooltip=title;button.style.flexBasis=0;button.style.flexGrow=1;button.style.minWidth=0;
+            button.tooltip=GameText.Localize(title);button.style.flexBasis=0;button.style.flexGrow=1;button.style.minWidth=0;
             button.style.marginLeft=0;button.style.marginTop=0;button.style.marginRight=2;button.style.marginBottom=5;
             button.style.paddingLeft=1;button.style.paddingRight=1;button.style.paddingTop=3;button.style.paddingBottom=3;
             button.style.height=48;button.style.minHeight=48;button.style.flexShrink=0;button.style.alignItems=Align.Center;
@@ -121,9 +121,29 @@ namespace RiskAI
                 bool valid = SameLiveActor();
                 button.SetEnabled(valid);
                 health.style.width = Length.Percent(valid && actor.MaxHealth > 0 ? Mathf.Clamp01(actor.Health / actor.MaxHealth) * 100 : 0);
-                button.tooltip = valid ? name + " · " + Mathf.CeilToInt(actor.Health) + " / " + actor.MaxHealth + " vida" : "Unidad retirada";
+                button.tooltip = GameText.Localize(valid ? name + " · " + Mathf.CeilToInt(actor.Health) + " / " + actor.MaxHealth + " vida" : "Unidad retirada");
             };
             liveContext.Add(refresh); refresh();
+        }
+
+        void BuildCargoRoster(VisualElement root,Ship transport)
+        {
+            var label=RtsUiStyle.Label("A BORDO · "+transport.CargoCount+" / "+transport.CargoCapacity+" · pulsa para desembarcar",null,11);
+            label.style.color=RtsUiStyle.Bronze;label.style.whiteSpace=WhiteSpace.Normal;root.Add(label);
+            var cargo=new VisualElement { name="HUD transport cargo" };cargo.style.flexDirection=FlexDirection.Row;cargo.style.flexWrap=Wrap.Wrap;
+            foreach(var passenger in transport.Cargo)
+            {
+                var soldier=passenger;
+                if(!soldier)continue;
+                var button=RtsUiStyle.Button("",()=>controller.UnloadCargo(transport,soldier),"Unload cargo "+soldier.EntityId);
+                button.tooltip=GameText.Localize(BattleRules.Name(soldier.Kind)+" · desembarcar esta unidad");
+                button.style.width=button.style.minWidth=UiViewport.IsCompact?44:52;
+                button.style.height=button.style.minHeight=UiViewport.IsCompact?48:56;
+                button.style.paddingLeft=button.style.paddingRight=4;button.style.paddingTop=button.style.paddingBottom=4;
+                button.style.marginRight=button.style.marginBottom=4;
+                button.Add(PortraitFrame(PortraitResource(soldier.Kind),UiViewport.IsCompact?32:40));cargo.Add(button);
+            }
+            root.Add(cargo);
         }
     }
 }

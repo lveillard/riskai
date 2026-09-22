@@ -6,11 +6,11 @@ namespace RiskAI
 {
     public readonly struct ProjectileVisualState
     {
-        public readonly Vector3 From, To;
+        public readonly Vector3 From, To, Position;
         public readonly float Progress, Duration;
         public readonly AttackKind Attack;
-        public ProjectileVisualState(Vector3 from, Vector3 to, float progress, float duration, AttackKind attack)
-        { From = from; To = to; Progress = progress; Duration = duration; Attack = attack; }
+        public ProjectileVisualState(Vector3 from, Vector3 to, Vector3 position, float progress, float duration, AttackKind attack)
+        { From = from; To = to; Position = position; Progress = progress; Duration = duration; Attack = attack; }
     }
 
     /// <summary>Damage and flight lifetime belong to simulation, even if every effect is disabled.</summary>
@@ -19,7 +19,7 @@ namespace RiskAI
         struct Projectile
         {
             public int Id, TargetId, SourceId, Team;
-            public Vector3 From, To;
+            public Vector3 From, To, Position;
             public float Elapsed, Duration, Damage;
             public AttackKind Attack;
             public WeaponProfile Weapon;
@@ -29,11 +29,12 @@ namespace RiskAI
         readonly List<Projectile> projectiles = new List<Projectile>(256);
         readonly Dictionary<int, int> projectileIndices = new Dictionary<int, int>(256);
         readonly List<CombatTarget> splash = new List<CombatTarget>(128);
-        int nextId;
+        int nextId,firstProjectileCreatedThisTick=int.MaxValue;
         public bool PresentationEnabled { get; set; } = true;
         public int ActiveProjectileCount => projectiles.Count;
         public int ResolvedProjectiles { get; private set; }
         public CombatWorld(BattleSession battle) { session = battle; }
+        public void BeginSimulationTick() => firstProjectileCreatedThisTick=nextId+1;
 
         public int FireProjectile(Vector3 from, Vector3 to, CombatTarget target, float damage, int team,
             CombatTarget source = null, AttackKind attack = AttackKind.Piercing)
@@ -56,6 +57,9 @@ namespace RiskAI
                 weapon.DamageType, target.transform.position.y - source.transform.position.y));
             if (!weapon.IsProjectile)
             {
+                if (PresentationEnabled && source is Soldier soldier &&
+                    (soldier.Kind == UnitKind.Archer || soldier.Kind == UnitKind.MarinePrivate))
+                    VisualFactory.InstantProjectileView(from, to, weapon.DamageType);
                 if (!miss && target && target.CanBeAttacked)
                     target.ReceiveAttack(damage, weapon.DamageType, team, source);
                 return 0;
@@ -69,7 +73,7 @@ namespace RiskAI
             var shot = new Projectile
             {
                 Id = ++nextId, TargetId = target ? target.EntityId : 0, SourceId = source ? source.EntityId : 0,
-                Team = team, From = from, To = to, Damage = damage, Attack = weapon.DamageType, Weapon = weapon,
+                Team = team, From = from, To = to, Position = from, Damage = damage, Attack = weapon.DamageType, Weapon = weapon,
                 Miss = knownMiss ?? source && target && session.RollMiss(CombatRules.UphillMissChance(
                     weapon.DamageType, target.transform.position.y-source.transform.position.y)),
                 Duration = weapon.FlightTime(Vector3.Distance(from, to)), LegacyRules = legacyRules
@@ -85,8 +89,11 @@ namespace RiskAI
             if (projectileIndices.TryGetValue(id, out int index))
             {
                 var shot = projectiles[index];
-                state = new ProjectileVisualState(shot.From, shot.To,
-                    shot.Duration > 0 ? Mathf.Clamp01(shot.Elapsed / shot.Duration) : 1, shot.Duration, shot.Attack);
+                float progress=shot.Duration>0?Mathf.Clamp01(shot.Elapsed/shot.Duration):1;
+                Vector3 position=shot.LegacyRules||shot.Weapon.Delivery==WeaponDelivery.Artillery
+                    ? ArcPosition(shot.From,shot.To,progress,shot.Attack)
+                    : shot.Position;
+                state = new ProjectileVisualState(shot.From, shot.To, position, progress, shot.Duration, shot.Attack);
                 return true;
             }
             state = default;
@@ -100,8 +107,22 @@ namespace RiskAI
                 var shot = projectiles[i];
                 var target = session.FindTarget(shot.TargetId);
                 if (shot.Weapon.TracksTarget && target && target.IsAlive) shot.To = target.AimPoint;
+                // A shot launched by Soldier/Tower/Ship earlier in this simulation
+                // tick starts travelling on the next quantum instead of receiving a
+                // free 50 ms step immediately at release.
+                if(shot.Id>=firstProjectileCreatedThisTick){projectiles[i++]=shot;continue;}
                 shot.Elapsed += delta;
-                if (shot.Elapsed + .00001f < shot.Duration) { projectiles[i++] = shot; continue; }
+                bool arrived;
+                if(shot.LegacyRules||shot.Weapon.Delivery==WeaponDelivery.Artillery)
+                    arrived=shot.Elapsed+.00001f>=shot.Duration;
+                else
+                {
+                    Vector3 remaining=shot.To-shot.Position;
+                    float step=shot.Weapon.ProjectileSpeed*delta;
+                    arrived=remaining.sqrMagnitude<=step*step+.000001f;
+                    shot.Position=arrived?shot.To:shot.Position+remaining.normalized*step;
+                }
+                if (!arrived) { projectiles[i++] = shot; continue; }
                 projectiles.RemoveAt(i);
                 projectileIndices.Remove(shot.Id);
                 for (int j = i; j < projectiles.Count; j++) projectileIndices[projectiles[j].Id] = j;
@@ -155,6 +176,13 @@ namespace RiskAI
                 if (PresentationEnabled)
                     VisualFactory.Impact(shot.To, shot.Attack, radius > 0 ? .75f : .32f);
             }
+            firstProjectileCreatedThisTick=int.MaxValue;
+        }
+
+        static Vector3 ArcPosition(Vector3 from,Vector3 to,float progress,AttackKind attack)
+        {
+            float arc=attack==AttackKind.Siege?Mathf.Lerp(1.6f,3.4f,Mathf.Clamp01(Vector3.Distance(from,to)/18f)):.5f;
+            return Vector3.Lerp(from,to,progress)+Vector3.up*Mathf.Sin(progress*Mathf.PI)*arc;
         }
 
         static bool EligibleForSplash(Projectile shot, CombatTarget target)
