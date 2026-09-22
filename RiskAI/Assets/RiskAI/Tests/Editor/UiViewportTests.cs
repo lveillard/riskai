@@ -5,6 +5,9 @@ namespace RiskAI.Tests
 {
     public class UiViewportTests
     {
+        [Test] public void TouchTargetContractIsAtLeastFortyFourLogicalPixels() =>
+            Assert.That(UiViewport.MinimumTouchTarget,Is.GreaterThanOrEqualTo(44));
+
         [TestCase(360,800,1)]
         [TestCase(800,360,1)]
         [TestCase(1536,2048,2)]

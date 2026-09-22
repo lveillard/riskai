@@ -39,6 +39,7 @@ namespace RiskAI
                     case "riskai-probe-seconds":case "riskai-probe-warmup":case "riskai-probe-recruits":case "riskai-restart-cycles":case "riskai-path-budget":
                         args.Add("--"+key);args.Add(value);break;
                     case "riskai-probe":case "riskai-probe-sustained":case "riskai-probe-warmup-commander":case "riskai-frame-trace":case "riskai-probe-no-unit-shadows":case "riskai-probe-hide-unit-renderers":case "riskai-probe-disable-unit-animation":case "riskai-probe-bake-unit-skins":case "riskai-disable-unit-lod":case "riskai-restart-probe":case "riskai-play":
+                    case "riskai-disable-architecture-batching":case "riskai-disable-unit-presentation-culling":case "riskai-manual-architecture-batching":case "riskai-native-architecture-batching":
                         if(value=="1"||value=="true")args.Add("--"+key);break;
                 }
             }

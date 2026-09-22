@@ -128,7 +128,7 @@ namespace RiskAI
         {
             foreach(var mesh in ownedMeshes)if(mesh){if(Application.isPlaying)Destroy(mesh);else DestroyImmediate(mesh);}
         }
-        void OnEnable() => ResetPose();
+        void OnEnable(){ResetPose();RefreshPose();}
         void OnDisable() => ResetPose();
         void ResetPose()
         {
@@ -145,7 +145,8 @@ namespace RiskAI
             if(tail)tail.localRotation=Quaternion.Euler(-25,0,0);
             if(lance){lance.localPosition=lanceRestPosition;lance.localRotation=Quaternion.Euler(-18,0,0);}
         }
-        void Update()
+        void Update()=>RefreshPose();
+        void RefreshPose()
         {
             var battle=BattleSession.Current;
             if(!soldier||!soldier.IsAlive||!soldier.Agent||!soldier.Agent.enabled||!battle||battle.Paused||battle.Winner>=0)return;

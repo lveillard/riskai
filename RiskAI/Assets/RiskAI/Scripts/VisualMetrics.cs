@@ -7,6 +7,12 @@ namespace RiskAI
         public const float UnitScale = .46f;
         public const float TownScale = .72f;
         public const float TowerScale = .70f;
+        public const float IntegratedTowerGalleryHeight = 4.58f * TowerScale;
+        public const float IntegratedTowerAttackHeight = 4.72f * TowerScale;
+        // Extra silhouette height only; acquisition and projectile anchors stay fixed.
+        public const float IntegratedTowerVisualLift = .45f;
+        public static float BuildingLabelHeight(BuildingVariant variant) => 4.8f +
+            (BuildingVariants.IsIntegrated(variant) ? IntegratedTowerVisualLift : 0);
         public const float UnitHeight = 1.4f;
         public static float HeightFor(Core.UnitKind kind) => Core.SourceGeometry.StandingHeight(kind)>0?Core.SourceGeometry.StandingHeight(kind):UnitHeight;
         public static float RadiusFor(Core.UnitKind kind) => Core.SourceGeometry.StandingWidth(kind)>0?Core.SourceGeometry.StandingWidth(kind)*.5f:UnitRadius;

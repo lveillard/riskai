@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#151611">
-  <title>RiskAI · Dominios</title>
+  <meta name="description" content="Riesgus: conquista ciudades, reúne ejércitos y domina el mapa en un juego de estrategia en tiempo real.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23151611' stroke='%23ddb66f' stroke-width='3' d='M8 5h48v35L32 59 8 40z'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Georgia,serif' font-weight='bold' font-size='38' fill='%23ddb66f'%3ER%3C/text%3E%3C/svg%3E">
+  <title>Riesgus · Dominios</title>
   <style>
     *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10130f;color:#efedde;font:16px system-ui,sans-serif}
     #game{position:fixed;display:block;width:100%;height:100%;outline:none;touch-action:none}
@@ -16,15 +18,16 @@
   </style>
 </head>
 <body>
-  <canvas id="game" tabindex="0" aria-label="RiskAI. Conquista ciudades y controla territorios."></canvas>
+  <canvas id="game" tabindex="0" aria-label="Riesgus. Conquista ciudades y controla territorios."></canvas>
   <div id="safe"></div>
-  <div id="cover"><div class="card"><h1>DOMINIOS</h1><p id="status">Preparando RiskAI…</p><progress id="progress" value="0" max="1" aria-label="Descarga del juego"></progress><p id="hint">Elige mapa y jugadores al terminar la carga.</p><button id="retry" hidden>Volver a intentar</button></div></div>
+  <div id="cover"><div class="card"><h1>RIESGUS</h1><p id="status">Preparando Riesgus…</p><progress id="progress" value="0" max="1" aria-label="Descarga del juego"></progress><p id="hint">Elige mapa y jugadores al terminar la carga.</p><button id="retry" hidden>Volver a intentar</button></div></div>
   <script src="riskai-pen.js"></script>
   <script>
     const canvas=document.getElementById('game'),cover=document.getElementById('cover'),status=document.getElementById('status'),progress=document.getElementById('progress');
     // Installed before the Unity loader so pen compatibility mouse events cannot
     // reach Unity before the shared Pen device receives their original input.
     window.riskaiPen=window.RiskAIPen?window.RiskAIPen.attach(canvas):null;
+    window.riskaiWheel=window.RiskAIPen?window.RiskAIPen.attachWheel(canvas):null;
     let instance=null;
     window.riskaiSafeInsets=[0,0,0,0];
     function refreshViewport(){
@@ -41,22 +44,21 @@
     if(window.visualViewport){window.visualViewport.addEventListener('resize',refreshViewport);window.visualViewport.addEventListener('scroll',refreshViewport);}
     refreshViewport();
     canvas.addEventListener('contextmenu',event=>event.preventDefault());
-    canvas.addEventListener('wheel',event=>event.preventDefault(),{passive:false});
     canvas.addEventListener('pointerdown',()=>canvas.focus({preventScroll:true}));
     document.getElementById('retry').onclick=()=>location.reload();
     function fail(message){cover.hidden=false;status.textContent='No se pudo iniciar la partida.';document.getElementById('hint').textContent=String(message);progress.hidden=true;document.getElementById('retry').hidden=false;}
     const config={
       dataUrl:'Build/{{{ DATA_FILENAME }}}',frameworkUrl:'Build/{{{ FRAMEWORK_FILENAME }}}',codeUrl:'Build/{{{ CODE_FILENAME }}}',
-      streamingAssetsUrl:'StreamingAssets',companyName:'RiskAI',productName:'RiskAI · Dominios',productVersion:'{{{ PRODUCT_VERSION }}}',
+      streamingAssetsUrl:'StreamingAssets',companyName:'Riesgus',productName:'Riesgus · Dominios',productVersion:'{{{ PRODUCT_VERSION }}}',
       devicePixelRatio:Math.min(window.devicePixelRatio||1,2),
       showBanner:(message,type)=>{if(type==='error')console.error(message);else console.warn(message);}
     };
     const loader=document.createElement('script');loader.src='Build/{{{ LOADER_FILENAME }}}';
     loader.onerror=()=>fail('La descarga del juego no respondió. Revisa la conexión y vuelve a intentar.');
-    loader.onload=()=>createUnityInstance(canvas,config,value=>{progress.value=value;status.textContent=value<1?'Cargando RiskAI · '+Math.round(value*100)+' %':'Preparando el menú…';})
+    loader.onload=()=>createUnityInstance(canvas,config,value=>{progress.value=value;status.textContent=value<1?'Cargando Riesgus · '+Math.round(value*100)+' %':'Preparando el menú…';})
       .then(game=>{instance=game;window.riskaiInstance=game;cover.hidden=true;canvas.focus({preventScroll:true});})
       .catch(fail);
-    if(window.riskaiPen)document.body.appendChild(loader);
+    if(window.riskaiPen&&window.riskaiWheel)document.body.appendChild(loader);
     else fail('No se pudieron cargar los controles. Vuelve a intentar la descarga.');
   </script>
 </body>

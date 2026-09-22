@@ -7,6 +7,99 @@
 
   var MaxQueue = 64;
   var CompatibilityMouseMilliseconds = 500;
+  var WheelSampleMilliseconds = 160;
+  var FinePixelMaximum = 40;
+  var WheelPixelMinimum = 80;
+
+  // This is an event-shape heuristic, not hardware detection. Small pixel-mode
+  // events are typical of continuous touchpads; 100/120 px events are typical
+  // wheel notches. Smoothstep avoids a sensitivity jump between both ranges.
+  function splitWheelPixelDelta(delta) {
+    var magnitude = Math.abs(delta);
+    var blend = (magnitude - FinePixelMaximum) / (WheelPixelMinimum - FinePixelMaximum);
+    blend = blend < 0 ? 0 : blend > 1 ? 1 : blend;
+    blend = blend * blend * (3 - 2 * blend);
+    return [delta * (1 - blend), delta * blend];
+  }
+
+  // Preserve browser wheel units and per-event granularity until C# consumes
+  // them once per frame. InputSystem accumulates scroll events inside the frame,
+  // after which a touchpad stream can no longer be distinguished from wheel ticks.
+  function attachWheel(canvas, options) {
+    if (!canvas || typeof canvas.addEventListener !== "function")
+      throw new TypeError("RiskAIPen.attachWheel requires a canvas EventTarget");
+    options = options || {};
+    var clock = options.now || function() {
+      return typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+    };
+    var maximumAge = Number(options.maximumAgeMilliseconds);
+    if (!isFinite(maximumAge) || maximumAge <= 0) maximumAge = WheelSampleMilliseconds;
+    var ownerDocument = canvas.ownerDocument || null;
+    var ownerWindow = ownerDocument && ownerDocument.defaultView ? ownerDocument.defaultView :
+      (typeof window !== "undefined" ? window : null);
+    // Fine pixels, coarse wheel pixels, lines and pages. Chromium typically emits
+    // 100/120 pixel events for a physical wheel and smaller events for a touchpad.
+    var deltas = [0, 0, 0, 0];
+    var lastEventAt = -Infinity;
+    var disposed = false;
+
+    function reset() {
+      deltas[0] = deltas[1] = deltas[2] = deltas[3] = 0;
+      lastEventAt = -Infinity;
+    }
+    function onWheel(event) {
+      if (disposed) return;
+      var delta = Number(event.deltaY);
+      if (!isFinite(delta)) delta = 0;
+      var mode = Number(event.deltaMode);
+      var current = clock();
+      if (current - lastEventAt > maximumAge) reset();
+      if (mode === 1) deltas[2] += delta;
+      else if (mode === 2) deltas[3] += delta;
+      else {
+        var split = splitWheelPixelDelta(delta);
+        deltas[0] += split[0];deltas[1] += split[1];
+      }
+      lastEventAt = current;
+      // Keep the gesture inside the canvas, including ctrl+wheel trackpad pinch,
+      // but deliberately leave propagation intact for Unity UI Toolkit scrolling.
+      if (event.preventDefault) event.preventDefault();
+    }
+    function onVisibilityChange() {
+      if (ownerDocument && ownerDocument.visibilityState === "hidden") reset();
+    }
+    var optionsNonPassive = { passive: false };
+    canvas.addEventListener("wheel", onWheel, optionsNonPassive);
+    canvas.addEventListener("pointerleave", reset);
+    if (ownerWindow) {
+      ownerWindow.addEventListener("blur", reset);
+      ownerWindow.addEventListener("pagehide", reset);
+    }
+    if (ownerDocument) ownerDocument.addEventListener("visibilitychange", onVisibilityChange);
+
+    return {
+      readSample: function() {
+        if (clock() - lastEventAt > maximumAge) reset();
+        if (lastEventAt === -Infinity) return null;
+        var sample = deltas.slice();
+        reset();
+        return sample;
+      },
+      reset: reset,
+      dispose: function() {
+        if (disposed) return;
+        disposed = true;
+        canvas.removeEventListener("wheel", onWheel, optionsNonPassive);
+        canvas.removeEventListener("pointerleave", reset);
+        if (ownerWindow) {
+          ownerWindow.removeEventListener("blur", reset);
+          ownerWindow.removeEventListener("pagehide", reset);
+        }
+        if (ownerDocument) ownerDocument.removeEventListener("visibilitychange", onVisibilityChange);
+        reset();
+      }
+    };
+  }
 
   function attach(canvas) {
     if (!canvas || typeof canvas.addEventListener !== "function")
@@ -290,5 +383,5 @@
     };
   }
 
-  return { attach: attach };
+  return { attach: attach, attachWheel: attachWheel, splitWheelPixelDelta: splitWheelPixelDelta };
 });

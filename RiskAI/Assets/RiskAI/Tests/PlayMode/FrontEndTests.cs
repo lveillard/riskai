@@ -25,11 +25,13 @@ namespace RiskAI.Tests
             Assert.That(runtime.Root,Is.Not.Null);
             Assert.That(runtime.Theme,Is.Not.Null,"The retained UI must use the portable project theme.");
             Assert.That(runtime.Root.Q("Front end content"),Is.Not.Null);
-            Assert.That(runtime.Root.Query<Label>().ToList().Any(label=>label.text=="DOMINIONS"),Is.True);
+            Assert.That(runtime.Root.Query<Label>().ToList().Any(label=>label.text=="RIESGUS"),Is.True);
+            Assert.That(runtime.Root.Q<Label>("Campaign setup eyebrow").text,Does.StartWith("WAR ROOM"));
             var language=runtime.Root.Q<Button>("Switch language");Assert.That(language.text,Is.EqualTo("ES"));
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=language;language.SendEvent(evt);}
             yield return null;
-            Assert.That(runtime.Root.Query<Label>().ToList().Any(label=>label.text=="DOMINIOS"),Is.True);
+            Assert.That(runtime.Root.Query<Label>().ToList().Any(label=>label.text=="RIESGUS"),Is.True);
+            Assert.That(runtime.Root.Q<Label>("Campaign setup eyebrow").text,Does.StartWith("SALA DE GUERRA"));
             GameText.Set(GameLanguage.English);
             foreach(var root in scene.GetRootGameObjects())
             {

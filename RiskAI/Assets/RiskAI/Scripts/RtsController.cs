@@ -504,6 +504,10 @@ namespace RiskAI
         static bool InsideScreen(Vector2 point) => point.x>=0&&point.x<=Screen.width&&point.y>=0&&point.y<=Screen.height;
         void Update()
         {
+            // Consume the browser bridge before every focus/modal/HUD early return.
+            // A menu scroll or stale pre-load touchpad burst must never zoom later.
+            var mouse=Mouse.current;
+            float wheelSteps=PlatformPresentation.ConsumeWheelSteps(mouse==null?0:mouse.scroll.ReadValue().y);
             if(session&&!session.Paused&&session.Winner<0)ProcessPendingBoarding();
             AnimateOrderMarker();
             // Ownership is released before any focus/modal early return: a dead
@@ -517,7 +521,7 @@ namespace RiskAI
             }
             SyncPauseInput();
             ApplyCursorCapture();
-            var mouse=Mouse.current;var key=Keyboard.current;
+            var key=Keyboard.current;
             if(key!=null)
             {
             if(key.f1Key.wasPressedThisFrame)HelpVisible=!HelpVisible;
@@ -653,7 +657,7 @@ namespace RiskAI
             if(!CameraDragging)
             {
                 if(pan.sqrMagnitude>.001f)CameraRig.Pan(pan,Time.unscaledDeltaTime*panMultiplier);
-                if(!mouse.middleButton.isPressed&&insideScreen&&!OverHud(point))CameraRig.ZoomAt(mouse.scroll.ReadValue().y,point);
+                if(!mouse.middleButton.isPressed&&insideScreen&&!OverHud(point))CameraRig.ZoomAt(wheelSteps,point);
                 previousMouse=point;
             }
             if(mouse.leftButton.wasPressedThisFrame&&!OverHud(point))

@@ -140,7 +140,7 @@ namespace RiskAI
             foreach (var town in session.Towns)
             {
                 bool visible = town.Selected || hoveredTown == town || controller.ShowHealthBars;
-                Vector3 p = cam.WorldToScreenPoint(town.transform.position + Vector3.up * 4.8f) / Scale;
+                Vector3 p = cam.WorldToScreenPoint(town.transform.position + Vector3.up * VisualMetrics.BuildingLabelHeight(town.VisualVariant)) / Scale;
                 float y = height - p.y; if (p.z <= 0 || y < TopPixels/Scale+20 || y > bottom - 20) continue;
                 if (!visible) continue;
                 DrawBuildingName(new Vector2(p.x,y),town.DisplayName,town.State.Owner);

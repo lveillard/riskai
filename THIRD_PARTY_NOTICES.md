@@ -35,10 +35,10 @@ Full text: `references/wc3-risk-system/LICENSE`.
 
 ## Risk map geography references
 
-`RiskAI/Assets/RiskAI/Resources/Maps/Europe.json` derives numerical terrain, city, capture-circle and country placement from **Risk Reforged v3.0 by Saran**. `NewWorld.json` derives the corresponding numerical layout from **Risk - New World v3.0**. Credit for the source map designs remains with their creators; RiskAI's terrain rendering, models, materials and port platforms are independently authored.
+`RiskAI/Assets/RiskAI/Resources/Maps/Europe.json` derives numerical terrain, WPM pathing, city, capture-circle and country placement from **Risk Reforged v3.0 by Saran**. `NewWorld.json` derives the corresponding numerical layout from **Risk - New World v3.0**. Credit for the source map designs remains with their creators; Riesgus's terrain rendering, models, materials and building variants are independently authored.
 
 - Risk Reforged listing: https://maps.w3reforged.com/maps/categories/risk/risk-reforged
 - Risk New World v3.0 listing: https://www.wc3maps.com/map/167651/Risk_-_New_World_v3.0
-- Extraction method, source archive hashes and adaptation details: `docs/ITERATION-v0.14.md` and each JSON's `metadata`.
+- Extraction method, source archive hashes and adaptation details: `docs/ITERATION-v0.14.md`, `docs/audits/SOURCE-SHALLOWS-v0.27.md` and each JSON's `metadata`.
 
 The original archives and Warcraft art are not bundled. These numeric data files are source-derived map layouts; they should not be described as wholly original maps or as KayKit CC0 content.

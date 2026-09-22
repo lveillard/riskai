@@ -7,11 +7,25 @@ namespace RiskAI
     /// <summary>Device capabilities affect presentation and input, never map rules or the simulation clock.</summary>
     public static class PlatformPresentation
     {
+        const int WheelSampleLength=4;
+        static readonly float[] wheelSample=new float[WheelSampleLength];
 #if UNITY_WEBGL && !UNITY_EDITOR
         [DllImport("__Internal")] static extern float RiskAI_CanvasDensity();
         [DllImport("__Internal")] static extern int RiskAI_TouchCapable();
         [DllImport("__Internal")] static extern float RiskAI_SafeInset(int edge);
+        [DllImport("__Internal")]
+        static extern int RiskAI_ReadWheelDeltas([Out,MarshalAs(UnmanagedType.LPArray,SizeConst=WheelSampleLength)] float[] destination);
 #endif
+
+        /// <summary>Consumes one frame of wheel input, preserving raw DOM units in WebGL.</summary>
+        public static float ConsumeWheelSteps(float inputSystemFallback)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            if(RiskAI_ReadWheelDeltas(wheelSample)!=0)
+                return RtsCameraPolicy.NormalizeWebWheelDeltas(wheelSample[0],wheelSample[1],wheelSample[2],wheelSample[3]);
+#endif
+            return inputSystemFallback;
+        }
         public static bool TouchCapable
         {
             get

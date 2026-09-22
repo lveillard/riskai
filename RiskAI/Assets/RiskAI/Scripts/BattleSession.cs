@@ -151,21 +151,34 @@ namespace RiskAI
         public void Message(string message) { Messages.Insert(0, message); if (Messages.Count > 5) Messages.RemoveAt(5); }
         public void TogglePause() { if (Winner >= 0 || IsStarting) return; manuallyPaused = !manuallyPaused; SuspendMovement(Paused); }
 
-        public void BeginStartCountdown(float seconds=3)
+        public void BeginStartCountdown(float seconds=5)
         {
             if(Clock.TickCount>0 || Winner>=0 || seconds<=0 || float.IsNaN(seconds) || float.IsInfinity(seconds))return;
             StartCountdownRemaining=seconds;countdownStartFrame=Time.frameCount;
             countdownLastTime=Time.realtimeSinceStartupAsDouble;SuspendMovement(true);
         }
 
+        // Background tabs and suspended mobile apps must not consume the briefing.
+        // The player is configured not to run in the background, so discard the
+        // time gap when Unity resumes instead of skipping straight into battle.
+        void OnApplicationFocus(bool focused)
+        {
+            if(focused && IsStarting)countdownLastTime=Time.realtimeSinceStartupAsDouble;
+        }
+        void OnApplicationPause(bool paused)
+        {
+            if(!paused && IsStarting)countdownLastTime=Time.realtimeSinceStartupAsDouble;
+        }
+
         void Update()
         {
             if(IsStarting)
             {
-                // The scene-building frame may be long. Show the first number before
-                // consuming real time, and never feed pre-match time into simulation.
-                if(Time.frameCount==countdownStartFrame)return;
                 double now=Time.realtimeSinceStartupAsDouble;
+                // The first rendered frame may compile shaders or upload the map.
+                // Start measuring after it, so cold WebGL loads still show the full
+                // briefing instead of spending its first seconds behind a frozen frame.
+                if(Time.frameCount<=countdownStartFrame+1){countdownLastTime=now;return;}
                 StartCountdownRemaining=Mathf.Max(0,StartCountdownRemaining-(float)(now-countdownLastTime));
                 countdownLastTime=now;
                 if(!IsStarting)SuspendMovement(Paused);

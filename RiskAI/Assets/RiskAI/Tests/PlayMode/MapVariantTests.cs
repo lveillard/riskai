@@ -41,6 +41,11 @@ namespace RiskAI.Tests
             Assert.That(battle.Units.Count, Is.EqualTo(MapLayout.Towns.Length + NavalWorld.Current.Harbors.Count));
             Assert.That(battle.Towns.All(town => town.Defender && town.Defender.Kind == UnitKind.Archer && town.Defender.IsGarrison), Is.True);
             Assert.That(NavalWorld.Current.Harbors.All(harbor => harbor.Defender && harbor.Defender.Kind == UnitKind.Archer && harbor.Defender.IsGarrison), Is.True);
+            Assert.That(battle.Towns.All(town=>town.VisualVariant==BuildingVariant.DetachedTown&&town.Defense.VisualVariant==BuildingVariant.DetachedTown),Is.True,"Custom maps retain detached town architecture.");
+            Assert.That(battle.Towns.All(town=>new Vector2(town.Defense.transform.position.x-town.transform.position.x,town.Defense.transform.position.z-town.transform.position.z).magnitude>3.5f),Is.True);
+            Assert.That(NavalWorld.Current.Harbors.All(harbor=>harbor.VisualVariant==BuildingVariant.PierHarbor&&harbor.Defense.VisualVariant==BuildingVariant.PierHarbor),Is.True,"Custom ports retain the authored pier family.");
+            Assert.That(NavalWorld.Current.Harbors.All(harbor=>harbor.GetComponentsInChildren<Transform>().Any(item=>item.name=="Harbor pier")),Is.True);
+            Assert.That(NavalWorld.Current.Harbors.All(harbor=>harbor.Defense.GetComponent<NavMeshObstacle>()!=null),Is.True,"Only legacy detached harbor towers retain their established carving obstacle.");
             Assert.That(battle.Units.All(unit => unit.IsGarrison), Is.True);
             Assert.That(NavalWorld.Current.Ships, Is.Empty);
             Assert.That(MapLayout.HalfDepth, Is.EqualTo(112 * MapLayout.Spacing).Within(.001f));

@@ -3,7 +3,8 @@
 The released .w3x archives remain research inputs under references/maps (which
 is ignored).  This exporter reads their extracted W3E/JASS/DOO members and
 emits only numeric terrain, city, claim-circle, recruitment-spawn, camera-bound,
-and static-tree data.
+static-tree, and authored WPM pathing data. WPM bytes stay byte-for-byte
+numeric; the export does not pretend to reproduce engine pathing queries.
 
 W3E version 11 uses 128 native units per cell.  The coordinate conversion here
 keeps Warcraft x as Unity x and Warcraft y as Unity z, scales by 50, and shifts
@@ -13,6 +14,7 @@ normalized to Unity height -0.24, as required by the runtime water plane.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import math
@@ -32,6 +34,7 @@ UNITY_WATER_LEVEL = -0.24
 WATER_ZERO_NATIVE = -89.6
 WATER_FLAG = 0x40
 BOUNDARY_FLAG = 0x4000
+WPM_CELL_SIZE_NATIVE = 32.0
 
 # `war3map.w3b` in the Europe source identifies these custom rawcodes as
 # variants of Warcraft's destructible tree bases.  `B00Q` is intentionally
@@ -126,6 +129,10 @@ def w3e(path: Path) -> dict:
     land: list[int] = []
     tiles: list[int] = []
     water_raw_values: list[int] = []
+    ground_native_values: list[float] = []
+    water_native_values: list[float] = []
+    terrain_flags_values: list[int] = []
+    water_boundary_values: list[int] = []
     for i in range(count):
         ground_raw, water_raw_with_boundary, flags, variation, cliff = struct.unpack_from("<HHBBB", data, p + i * 7)
         water_raw = water_raw_with_boundary & 0x3FFF
@@ -140,6 +147,10 @@ def w3e(path: Path) -> dict:
         is_land = not water_enabled or ground > water
         ground_native.append(ground)
         water_native.append(water)
+        ground_native_values.append(ground)
+        water_native_values.append(water)
+        terrain_flags_values.append(flags)
+        water_boundary_values.append(water_raw_with_boundary & BOUNDARY_FLAG)
         land.append(1 if is_land else 0)
         water_raw_values.append(water_raw)
         # Runtime format: variation byte | cliff/layer byte << 8 |
@@ -159,11 +170,50 @@ def w3e(path: Path) -> dict:
         "water_samples": [(value - sea_native) / NATIVE_PER_UNITY + UNITY_WATER_LEVEL for value in water_native],
         "land_samples": land,
         "tile_samples": tiles,
+        # Kept as exporter-side numeric provenance.  Runtime JSON carries the
+        # authored values only at city/claim anchors, not another full grid.
+        "ground_native_values": ground_native_values,
+        "water_native_values": water_native_values,
+        "terrain_flags_values": terrain_flags_values,
+        "water_boundary_values": water_boundary_values,
         "source": {
             "path": rel(path), "sha256": sha256(path), "version": version, "tileset": tileset,
             "customTileset": custom_tileset, "groundTiles": ground_tiles, "cliffTiles": cliff_tiles,
             "dominantWaterRaw": dominant_water_raw, "dominantWaterCount": dominant_count,
             "dominantWaterNative": sea_native,
+        },
+    }
+
+
+def wpm(path: Path) -> dict:
+    """Read authored MP3W bytes without claiming complete engine semantics.
+
+    WPM is one byte per 32-native-unit cell.  The byte values are retained as
+    source evidence: Warcraft's walkability/floatability queries remain engine
+    semantics even when numeric anchor correlations are recorded below.
+    """
+    data = path.read_bytes()
+    if len(data) < 16 or data[:4] != b"MP3W":
+        raise ValueError(f"{path}: missing MP3W magic")
+    version, width, height = struct.unpack_from("<iii", data, 4)
+    expected = 16 + width * height
+    if version != 0 or width < 1 or height < 1 or len(data) != expected:
+        raise ValueError(f"{path}: invalid MP3W v{version} {width}x{height} payload")
+    cells = data[16:]
+    return {
+        "width": width, "height": height, "cell_size_native": WPM_CELL_SIZE_NATIVE,
+        "cells": cells,
+        "source": {
+            "path": rel(path), "sha256": sha256(path), "magic": "MP3W", "version": version,
+            "dimensions": [width, height], "cellNative": WPM_CELL_SIZE_NATIVE,
+            "rawByteCounts": {str(value): count for value, count in sorted(Counter(cells).items())},
+            "coordinateTransform": "cellX=floor((nativeX-sourceOriginX)/32); cellY=floor((nativeY-sourceOriginY)/32)",
+            "semantics": "raw-bytes-with-blocking-bit-correlation",
+            "bitSemantics": {
+                "0x02": "blocksGround",
+                "0x40": "blocksBoats",
+                "basis": "numeric anchor correlation; original engine fidelity still requires runtime validation",
+            },
         },
     }
 
@@ -358,6 +408,43 @@ def node_index(native_x: float, native_y: float, terrain: dict) -> int | None:
     return iy * terrain["width"] + ix
 
 
+def wpm_index(native_x: float, native_y: float, pathing: dict) -> tuple[int, int] | None:
+    """Return the authored WPM cell containing a native point."""
+    ix = math.floor((native_x - pathing["origin_x"]) / pathing["cell_size_native"])
+    iy = math.floor((native_y - pathing["origin_y"]) / pathing["cell_size_native"])
+    if not (0 <= ix < pathing["width"] and 0 <= iy < pathing["height"]):
+        return None
+    return ix, iy
+
+
+def authored_navigation(native_x: float, native_y: float, terrain: dict, pathing: dict) -> dict:
+    """Describe one authored point using W3E surface data and raw WPM data."""
+    terrain_index = node_index(native_x, native_y, terrain)
+    if terrain_index is None:
+        w3e_cell = None
+    else:
+        flags = terrain["terrain_flags_values"][terrain_index]
+        ground = terrain["ground_native_values"][terrain_index]
+        water = terrain["water_native_values"][terrain_index]
+        water_enabled = bool(flags & WATER_FLAG)
+        land_by_rule = not water_enabled or ground > water
+        w3e_cell = {
+            "x": terrain_index % terrain["width"], "y": terrain_index // terrain["width"],
+            "groundNative": ground, "waterNative": water,
+            "waterDepthNative": max(0.0, water - ground) if water_enabled else 0.0,
+            "terrainFlags": flags, "waterFlag": bool(flags & WATER_FLAG),
+            "boundaryFlag": terrain["water_boundary_values"][terrain_index],
+            "landByW3eRule": land_by_rule,
+        }
+    cell = wpm_index(native_x, native_y, pathing)
+    if cell is None:
+        wpm_cell = None
+    else:
+        ix, iy = cell
+        wpm_cell = {"x": ix, "y": iy, "rawByte": pathing["cells"][iy * pathing["width"] + ix]}
+    return {"w3e": w3e_cell, "wpm": wpm_cell}
+
+
 def validate_positions(cities: list[dict], terrain: dict) -> list[dict]:
     defects = []
     for city in cities:
@@ -374,12 +461,17 @@ def export(spec: dict) -> dict:
     source_dir: Path = spec["source_dir"]
     terrain_path = source_dir / "war3map.w3e"
     info_path = source_dir / "war3map.w3i"
+    pathing_path = source_dir / "war3map.wpm"
     jass_path = source_dir / "war3map.j"
     doodad_path = source_dir / "war3map.doo"
-    for path in (terrain_path, info_path, jass_path, doodad_path, spec["placements"]):
+    for path in (terrain_path, info_path, pathing_path, jass_path, doodad_path, spec["placements"]):
         if not path.exists():
             raise FileNotFoundError(f"missing required local research input: {path}")
     terrain = w3e(terrain_path)
+    pathing = wpm(pathing_path)
+    pathing["origin_x"] = terrain["source_origin_x"]
+    pathing["origin_y"] = terrain["source_origin_y"]
+    pathing["source"]["sourceOriginNative"] = [terrain["source_origin_x"], terrain["source_origin_y"]]
     info = w3i(info_path)
     doodads = parse_doodads(doodad_path)
     trees, tree_species = parse_trees(doodads, terrain)
@@ -410,19 +502,31 @@ def export(spec: dict) -> dict:
             # array directly.  The group display name remains in city.name.
             "country": row["region_id"] - 1, "port": row["raw_id"] == "h00O",
             "nativeX": row["x"], "nativeY": row["y"],
+            "sourceNativeX": row["x"], "sourceNativeY": row["y"],
             "claimNativeX": circle["x"], "claimNativeY": circle["y"],
+            "sourceRawId": row["raw_id"],
+            "sourceNavigation": {
+                "city": authored_navigation(row["x"], row["y"], terrain, pathing),
+                "claim": authored_navigation(circle["x"], circle["y"], terrain, pathing),
+                "semantics": "w3e-surface-rule-plus-raw-wpm; blocking-bit-correlation-needs-engine-validation",
+            },
         }
         cities.append(city)
     counts = Counter(row["region_id"] for row in cities_source)
     countries = []
     for index in range(1, spec["expected_countries"] + 1):
         name = country_names[index]
-        x, z = centered(*spawn_centers[index], terrain)
-        countries.append({"name": name, "x": round(x, 6), "z": round(z, 6), "count": counts[index]})
+        spawn_x, spawn_y = spawn_centers[index]
+        x, z = centered(spawn_x, spawn_y, terrain)
+        countries.append({
+            "name": name, "x": round(x, 6), "z": round(z, 6), "count": counts[index],
+            "sourceNativeX": spawn_x, "sourceNativeY": spawn_y,
+            "sourceNavigation": authored_navigation(spawn_x, spawn_y, terrain, pathing),
+        })
     defects = validate_positions(cities, terrain)
     # Native audit fields are only used above; omit them from the runtime schema.
     for city in cities:
-        for key in ("nativeX", "nativeY", "claimNativeX", "claimNativeY"):
+        for key in ("nativeX", "nativeY"):
             del city[key]
     cell_size = terrain["cell_size"]
     playable_min_x, playable_min_z = centered(info["left"], info["bottom"], terrain)
@@ -433,6 +537,12 @@ def export(spec: dict) -> dict:
         "originX": round(-(terrain["width"] - 1) * cell_size / 2.0, 6),
         "originZ": round(-(terrain["height"] - 1) * cell_size / 2.0, 6),
         "cellSize": cell_size,
+        "pathingWidth": pathing["width"], "pathingHeight": pathing["height"],
+        "pathingCellSize": pathing["cell_size_native"] / NATIVE_PER_UNITY,
+        "pathingOriginX": round(-(terrain["width"] - 1) * cell_size / 2.0, 6),
+        "pathingOriginZ": round(-(terrain["height"] - 1) * cell_size / 2.0, 6),
+        "pathingSamples": base64.b64encode(pathing["cells"]).decode("ascii"),
+        "pathingEncoding": "base64-u8-row-major",
         # Authored W3I camera rectangle, transformed with the same grid centre
         # as cities. It is a limit only: keeping the samples untrimmed makes
         # existing city and country coordinates byte-for-byte stable.
@@ -457,6 +567,7 @@ def export(spec: dict) -> dict:
                 "waterFlag": "terrainFlags&0x40", "landRule": "no water flag OR groundNative > waterNative",
                 "tileSamples": "variation | cliffTextureLayer<<8 | terrainFlagsAndTexture<<16 | waterBoundaryBit<<24",
             },
+            "pathing": pathing["source"],
             "sources": {
                 "archive": {"path": rel(spec["archive"]), "sha256": sha256(spec["archive"])},
                 "terrain": terrain["source"],

@@ -6,6 +6,9 @@ namespace RiskAI
     /// <summary>Screen-space presentation only. All maps, cameras and pointer adapters share this viewport.</summary>
     public static class UiViewport
     {
+        /// <summary>Minimum logical hit size for controls used by compact or touch layouts.</summary>
+        public const float MinimumTouchTarget = 44f;
+
         public readonly struct Layout
         {
             public readonly Rect Safe, World;

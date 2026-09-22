@@ -206,8 +206,11 @@ namespace RiskAI
             return line;
         }
         public static Renderer Town(Transform root, int team, bool capital) => WorldArt.Town(root,team,capital);
+        public static Renderer Town(Transform root, int team, bool capital, BuildingVariant variant) => WorldArt.Town(root,team,capital,variant);
         public static void Tower(Transform root, int team, out GameObject upper, out GameObject scaffold, out Renderer banner)
             => WorldArt.Tower(root,team,out upper,out scaffold,out banner);
+        public static void Tower(Transform root, int team, BuildingVariant variant, out GameObject upper, out GameObject scaffold, out Renderer banner)
+            => WorldArt.Tower(root,team,variant,out upper,out scaffold,out banner);
         public static void TownUpgrade(Transform root)
         {
             Color gold=new Color(.85f,.68f,.32f);
@@ -215,6 +218,7 @@ namespace RiskAI
             Shape(root,PrimitiveType.Cube,"Fortress cornice",new Vector3(0,2.62f,0),new Vector3(2.9f,.18f,2.9f),gold);
             for(int side=-1;side<=1;side+=2)
                 Shape(root,PrimitiveType.Cube,"Fortress banner",new Vector3(side*.82f,1.65f,-1.34f),new Vector3(.4f,1.2f,.08f),gold);
+            StaticArchitectureBatching.Combine(root);
         }
         public static GameObject Cone(Transform parent,string name,Vector3 position,float radius,float height,Color color,int sides=8,float rotation=0)
         {
@@ -225,7 +229,7 @@ namespace RiskAI
                 int start=vertices.Count;vertices.Add(new Vector3(Mathf.Cos(a)*radius,0,Mathf.Sin(a)*radius));vertices.Add(Vector3.up*height);vertices.Add(new Vector3(Mathf.Cos(b)*radius,0,Mathf.Sin(b)*radius));
                 triangles.Add(start);triangles.Add(start+1);triangles.Add(start+2);
             }
-            var mesh=new Mesh();mesh.SetVertices(vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+            var mesh=GeneratedResourceOwner.For(parent).Track(new Mesh());mesh.SetVertices(vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var go=new GameObject(name);go.transform.SetParent(parent,false);go.transform.localPosition=position;
             go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Mat(color);return go;
         }
@@ -469,9 +473,25 @@ namespace RiskAI
         {
             var part=GameObject.CreatePrimitive(type);part.name=name;part.transform.SetParent(parent,false);
             part.transform.localPosition=position;part.transform.localScale=scale;
-            var collider=part.GetComponent<Collider>();if(collider){collider.enabled=false;Object.Destroy(collider);}
+            var collider=part.GetComponent<Collider>();if(collider){collider.enabled=false;if(Application.isPlaying)Object.Destroy(collider);else Object.DestroyImmediate(collider);}
             var renderer=part.GetComponent<Renderer>();renderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;renderer.receiveShadows=false;renderer.sharedMaterial=VisualFactory.Mat(color);
             return renderer;
+        }
+        static Mesh BoltFletchingMesh(Transform owner)
+        {
+            const float rear=.065f,front=.015f,halfLength=.09f;
+            var vertices=new[]{new Vector3(-rear,0,-halfLength),new Vector3(rear,0,-halfLength),new Vector3(-front,0,halfLength),new Vector3(front,0,halfLength),
+                new Vector3(-rear,0,-halfLength),new Vector3(rear,0,-halfLength),new Vector3(-front,0,halfLength),new Vector3(front,0,halfLength)};
+            var normals=new[]{Vector3.up,Vector3.up,Vector3.up,Vector3.up,Vector3.down,Vector3.down,Vector3.down,Vector3.down};
+            var mesh=GeneratedResourceOwner.For(owner).Track(new Mesh{name="Crossbow bolt fletching"});
+            mesh.vertices=vertices;mesh.normals=normals;mesh.triangles=new[]{0,2,1,1,2,3,4,5,6,5,7,6};mesh.RecalculateBounds();return mesh;
+        }
+        static Renderer FletchingPart(Transform parent,Mesh mesh,string name,float rotation,Material material)
+        {
+            var go=new GameObject(name);go.transform.SetParent(parent,false);go.transform.localPosition=new Vector3(0,0,-.27f);
+            go.transform.localRotation=Quaternion.Euler(0,0,rotation);go.AddComponent<MeshFilter>().sharedMesh=mesh;
+            var renderer=go.AddComponent<MeshRenderer>();renderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows=false;renderer.sharedMaterial=material;return renderer;
         }
         static Transform Group(Transform parent,string name)
         {
@@ -481,14 +501,15 @@ namespace RiskAI
         {
             if(piercingView)return;
             var rootRenderer=GetComponent<Renderer>();if(rootRenderer)rootRenderer.enabled=false;
-            Color wood=new Color(.30f,.16f,.065f),metal=new Color(.72f,.76f,.79f),feather=new Color(.84f,.73f,.46f);
+            Color wood=new Color(.30f,.16f,.065f),metal=new Color(.72f,.76f,.79f),feather=new Color(.63f,.48f,.25f);
             piercingView=Group(transform,"Piercing projectile");
-            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",Vector3.zero,new Vector3(.09f,.09f,.92f),wood);
-            var tip=Part(piercingView,PrimitiveType.Capsule,"Bolt metal point",new Vector3(0,0,.54f),new Vector3(.13f,.21f,.13f),metal);tip.transform.localRotation=Quaternion.Euler(90,0,0);
-            var streak=Part(piercingView,PrimitiveType.Cube,"Bright bolt streak",new Vector3(0,0,-.08f),new Vector3(.11f,.11f,.94f),feather);
-            streak.sharedMaterial=VisualFactory.EmissiveMat(new Color(1f,.78f,.30f),.65f);
-            Part(piercingView,PrimitiveType.Cube,"Bolt fletching top",new Vector3(0,.09f,-.43f),new Vector3(.19f,.03f,.17f),feather);
-            Part(piercingView,PrimitiveType.Cube,"Bolt fletching side",new Vector3(.09f,0,-.43f),new Vector3(.03f,.19f,.17f),feather);
+            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",new Vector3(0,0,-.02f),new Vector3(.045f,.045f,.62f),wood);
+            var tip=VisualFactory.Cone(piercingView,"Bolt metal point",new Vector3(0,0,.29f),.055f,.18f,metal,4,45);
+            tip.transform.localRotation=Quaternion.Euler(90,0,0);
+            var tipRenderer=tip.GetComponent<Renderer>();tipRenderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;tipRenderer.receiveShadows=false;
+            var fletchingMesh=BoltFletchingMesh(piercingView);var fletchingMaterial=VisualFactory.Mat(feather);
+            FletchingPart(piercingView,fletchingMesh,"Bolt fletching top",0,fletchingMaterial);
+            FletchingPart(piercingView,fletchingMesh,"Bolt fletching side",90,fletchingMaterial);
 
             magicView=Group(transform,"Magic projectile");
             Part(magicView,PrimitiveType.Sphere,"Arcane orb",Vector3.zero,Vector3.one*.22f,new Color(.42f,.55f,1f));

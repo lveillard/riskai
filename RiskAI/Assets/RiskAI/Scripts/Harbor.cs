@@ -22,6 +22,7 @@ namespace RiskAI
         public Settlement LinkedTown { get; private set; }
         public BuildingId BuildingId { get; private set; }
         public DefenseTower Defense { get; private set; }
+        public BuildingVariant VisualVariant { get; private set; }
         public TownState State=>state;
         public bool IsIsland=>!LinkedTown;
         public bool IsImportedPort=>sharesTown;
@@ -65,28 +66,37 @@ namespace RiskAI
         BuildingTrainingView trainingView;
         LineRenderer rallyRing;
 
-        public void Initialize(NavalWorld naval,BuildingId buildingId,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth)
+        public void Initialize(NavalWorld naval,BuildingId buildingId,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth,BuildingVariant? visualVariant=null)
         {
             transportLandingCached=false;cachedTransportLanding=default;cachedTransportBerth=default;
+            VisualVariant=visualVariant??BuildingVariant.PierHarbor;
+            if(!BuildingVariants.IsHarbor(VisualVariant))throw new System.ArgumentException("A harbor requires a harbor building variant.",nameof(visualVariant));
             sharesTown=false;canLaunch=SeaNavigation.HasClearance(berth);launchBlockReason=canLaunch?null:"El puerto no tiene una salida marítima segura.";
             world=naval;BuildingId=buildingId;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;landRally=LandEntry;lastOwner=Owner;
-            var entrance=NavalArt.CreateHarbor(this);
+            var entrance=NavalArt.CreateHarbor(this,VisualVariant);
             trainingView=BuildingTrainingView.Create(transform,entrance);
             claimZone=new CityClaimZone(Landing);claimZone.AttachHarbor(this);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,CityClaimZone.RingWidth,CityClaimZone.RingColor);claimRing.transform.position=Landing;
             var towerObject=new GameObject("Torre de "+name);towerObject.transform.SetParent(transform,false);
             Vector3 direction=Berth-Landing;direction.y=0;direction=direction.sqrMagnitude>.001f?direction.normalized:Vector3.forward;
-            // Opposite the harbormaster's house, with a clear silhouette and landing corridor.
-            Vector3 side=new Vector3(-direction.z,0,direction.x);Vector3 towerPoint=Landing-side*4.8f;
-            if(!MapLayout.IsLand(towerPoint.x,towerPoint.z))towerPoint=Landing-side*3.8f;
-            towerPoint=MapLayout.Point(towerPoint.x,towerPoint.z);towerObject.transform.position=towerPoint;
-            Defense=towerObject.AddComponent<DefenseTower>();Defense.Initialize(world.Session,this,true);
+            if(VisualVariant==BuildingVariant.IntegratedHarbor)towerObject.transform.position=Landing;
+            else
+            {
+                // Opposite the harbormaster's house, with a clear silhouette and landing corridor.
+                Vector3 side=new Vector3(-direction.z,0,direction.x);Vector3 towerPoint=Landing-side*4.8f;
+                if(!MapLayout.IsLand(towerPoint.x,towerPoint.z))towerPoint=Landing-side*3.8f;
+                towerPoint=MapLayout.Point(towerPoint.x,towerPoint.z);towerObject.transform.position=towerPoint;
+            }
+            Defense=towerObject.AddComponent<DefenseTower>();Defense.Initialize(world.Session,this,true,VisualVariant);
             selectionRing=BuildingSelection.CreateRing(this);
             CreateNavalClaimRing();
             rallyRing=VisualFactory.Ring(transform,.6f,.09f,new Color(.8f,1,.5f));rallyRing.transform.position=landRally;rallyRing.enabled=false;
         }
-        internal void InitializeImported(NavalWorld naval,BuildingId buildingId,Settlement town,Vector3 berth,string unavailableReason)
+        internal void InitializeImported(NavalWorld naval,BuildingId buildingId,Settlement town,Vector3 berth,string unavailableReason,BuildingVariant? visualVariant=null)
         {
             transportLandingCached=false;cachedTransportLanding=default;cachedTransportBerth=default;
+            VisualVariant=visualVariant??town.VisualVariant;
+            if(!BuildingVariants.IsHarbor(VisualVariant))throw new System.ArgumentException("An imported port requires a harbor building variant.",nameof(visualVariant));
+            if(VisualVariant!=town.VisualVariant)throw new System.ArgumentException("A linked harbor must share its settlement variant.",nameof(visualVariant));
             world=naval;BuildingId=buildingId;DisplayName=town.DisplayName;LinkedTown=town;state=town.State;claimZone=town.ClaimZone;Defense=town.Defense;
             Landing=town.ClaimPoint;Berth=berth;lastOwner=Owner;sharesTown=true;
             claimZone.AttachHarbor(this);

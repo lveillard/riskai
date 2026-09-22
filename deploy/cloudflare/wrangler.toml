@@ -1,0 +1,24 @@
+name = "riesgus-web-proxy"
+main = "src/worker.js"
+compatibility_date = "2026-09-22"
+account_id = "a06ddf06699d135d76b0cd45a95a3223"
+workers_dev = true
+
+# This is a public origin hostname, not a credential. Keep it pinned: requests
+# must never be able to choose an arbitrary upstream host.
+[vars]
+AZURE_ORIGIN = "https://riskai-demo.spaincentral.cloudapp.azure.com"
+
+# `wrangler deploy` without --env is the workers.dev verification deployment.
+# Production attaches both hostnames only when the operator explicitly selects
+# this environment. The worker redirects www to the apex before proxying.
+[env.production]
+name = "riesgus-web-proxy"
+workers_dev = false
+routes = [
+  { pattern = "riesgus.com/*", zone_name = "riesgus.com" },
+  { pattern = "www.riesgus.com/*", zone_name = "riesgus.com" }
+]
+
+[env.production.vars]
+AZURE_ORIGIN = "https://riskai-demo.spaincentral.cloudapp.azure.com"

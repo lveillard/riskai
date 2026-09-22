@@ -33,7 +33,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator FourMapsRequireALandGuardianAtEveryHarbor()
+        public IEnumerator FourMapsShareOneLandOrSourceEligibleNavalGuardianAtEveryHarbor()
         {
             foreach (var map in new[] { ScenarioMap.Classic, ScenarioMap.Riverlands, ScenarioMap.Europe, ScenarioMap.NewWorld })
                 yield return RunMap(map);
@@ -67,11 +67,16 @@ namespace RiskAI.Tests
             DisableOtherSoldiers(battle);
             var frigate = BattleTestScenario.Ship(naval, 0, ShipKind.Galley, port.Berth);
             TickPort(battle, port);
-            Assert.That(port.Owner, Is.EqualTo(PlayerRules.NeutralOwner));
-            Assert.That(port.ClaimZone.Guardian, Is.Null);
-            Assert.That(frigate.IsGarrison,Is.False);
+            Assert.That(port.Owner, Is.EqualTo(0));
+            Assert.That(port.ClaimZone.Guardian, Is.SameAs(frigate));
+            Assert.That(frigate.IsGarrison,Is.True);
 
             var enemyFootman = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, port.Landing);
+            TickPort(battle,port);
+            Assert.That(port.Owner,Is.EqualTo(0),"A living naval guardian must not be displaced by a landed enemy.");
+            Assert.That(port.ClaimZone.Guardian,Is.SameAs(frigate));
+
+            frigate.TakeDamage(frigate.MaxHealth+1,1);
             TickPort(battle,port);
             Assert.That(port.Owner,Is.EqualTo(1));
             Assert.That(port.ClaimZone.Guardian,Is.SameAs(enemyFootman));

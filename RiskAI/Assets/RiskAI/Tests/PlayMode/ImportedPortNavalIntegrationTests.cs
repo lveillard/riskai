@@ -26,10 +26,19 @@ namespace RiskAI.Tests
                 yield return null;
 
                 var home=battle.Towns.First(town=>town.IsPort&&town.State.Owner==0);var homePort=home.Port;
-                Assert.That(home.GetComponentsInChildren<Transform>().Count(t=>t.name=="Common harbor building"),Is.EqualTo(1),"Imported ports use the same harbor catalog as authored ports, without a duplicate town hall.");
+                Assert.That(home.VisualVariant,Is.EqualTo(BuildingVariant.IntegratedHarbor));
+                Assert.That(homePort.VisualVariant,Is.EqualTo(BuildingVariant.IntegratedHarbor));
+                Assert.That(home.GetComponentsInChildren<Transform>().Count(t=>t.name=="Integrated harbor building"),Is.EqualTo(1),"Imported ports use one compact source-position harbor, without a duplicate town hall.");
+                Assert.That(home.GetComponentsInChildren<Transform>().Any(t=>t.name=="Common harbor building"),Is.False);
                 Assert.That(home.GetComponentsInChildren<Transform>().Any(t=>t.name=="Masonry hall"),Is.False);
                 Assert.That(homePort.GetComponentsInChildren<Transform>().Any(t=>t.name=="Harbor berth pier"),Is.False,
                     "An imported port uses the source Circle of Power instead of drawing a second offshore pier.");
+                Assert.That(Vector2.Distance(new Vector2(home.Defense.transform.position.x,home.Defense.transform.position.z),new Vector2(home.transform.position.x,home.transform.position.z)),Is.LessThan(.001f));
+                Assert.That(Vector2.Distance(new Vector2(home.Defense.AttackOrigin.x,home.Defense.AttackOrigin.z),new Vector2(home.transform.position.x,home.transform.position.z)),Is.LessThan(.001f));
+                Assert.That(home.Defense.GetComponentsInChildren<UnityEngine.AI.NavMeshObstacle>(),Is.Empty,"The integrated tower must not carve a second obstacle over the source post.");
+                Assert.That(home.Defense.GetComponentsInChildren<Collider>().Any(collider=>collider.enabled&&!collider.isTrigger),Is.False,"Integrated tower art must not add a solid collider over shared terrain.");
+                Assert.That(home.GetComponentsInChildren<Collider>().Count(collider=>collider.enabled&&!collider.isTrigger),Is.EqualTo(1),"Only the compact harbormaster body blocks walking; platform and turret remain terrain-owned.");
+                Assert.That(Vector2.Distance(new Vector2(home.Defender.transform.position.x,home.Defender.transform.position.z),new Vector2(home.transform.position.x,home.transform.position.z)),Is.GreaterThan(3f));
                 Assert.That(Vector3.Distance(homePort.Berth,home.ClaimPoint),Is.LessThanOrEqualTo(ClaimRules.TakeoverRadius),
                     "The hull-safe berth must remain inside the shared source-circle capture radius.");
                 battle.Economy.Gold[0]=BattleRules.Cost(UnitKind.MarinePrivate);

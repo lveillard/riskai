@@ -8,13 +8,17 @@ namespace RiskAI
     {
         public Settlement Town { get; private set; }
         public Harbor Harbor { get; private set; }
+        public BuildingVariant VisualVariant { get; private set; }
         public int HostOwner => Town ? Town.State.Owner : Harbor ? Harbor.Owner : -1;
         public string HostName => Town ? Town.DisplayName : Harbor ? Harbor.DisplayName : "torre";
         public override float MaxHealth => BattleRules.TowerHealth;
         public override bool CanBeAttacked => false;
         public Soldier Defender => Town ? Town.Defender : Harbor ? Harbor.Defender : null;
         public CombatTarget Guardian => Town ? Town.ClaimZone.Guardian : Harbor ? Harbor.ClaimZone.Guardian : null;
-        public override Vector3 AimPoint => transform.position + Vector3.up * 2.8f;
+        public override Vector3 AimPoint => transform.position + Vector3.up *
+            (BuildingVariants.IsIntegrated(VisualVariant)?VisualMetrics.IntegratedTowerGalleryHeight:2.8f);
+        public Vector3 AttackOrigin => transform.position + Vector3.up *
+            (BuildingVariants.IsIntegrated(VisualVariant)?VisualMetrics.IntegratedTowerAttackHeight:3.8f);
         public override AttackKind AttackType => AttackKind.Piercing;
         public override ArmorKind ArmorType => ArmorKind.Divine;
         public override float Armor => 3;
@@ -32,11 +36,13 @@ namespace RiskAI
         float AttackCooldown=>ReforgedProfiles.CapturableTower.Cooldown;
         float AttackRange=>ReforgedProfiles.CapturableTower.Range;
 
-        public void Initialize(BattleSession battle, Settlement town, bool built)
+        public void Initialize(BattleSession battle, Settlement town, bool built, BuildingVariant? visualVariant=null)
         {
             session = battle; Town = town; Harbor = null; Team = CombatTeam(town.State.Owner);
-            VisualFactory.Tower(transform, Team, out upper, out scaffolding, out banner);
-            // The permanent stone foundation defines this slot's NavMesh footprint.
+            VisualVariant=visualVariant??town.VisualVariant;
+            VisualFactory.Tower(transform, Team,VisualVariant,out upper, out scaffolding, out banner);
+            // Targeting stays trigger-only. The selected host variant/terrain owns
+            // navigation collision, so an integrated turret adds no second footprint.
             var targetCollider = gameObject.AddComponent<BoxCollider>();
             targetCollider.center = Vector3.up * 1.6f; targetCollider.size = new Vector3(1.8f, 3.3f, 1.8f);
             targetCollider.isTrigger = true;
@@ -44,16 +50,20 @@ namespace RiskAI
             if (built) CompleteBuild(); else RefreshVisuals();
         }
 
-        public void Initialize(BattleSession battle, Harbor harbor, bool built)
+        public void Initialize(BattleSession battle, Harbor harbor, bool built, BuildingVariant? visualVariant=null)
         {
             session = battle; Town = null; Harbor = harbor; Team = CombatTeam(harbor.Owner);
-            VisualFactory.Tower(transform, Team, out upper, out scaffolding, out banner);
+            VisualVariant=visualVariant??harbor.VisualVariant;
+            VisualFactory.Tower(transform, Team,VisualVariant,out upper, out scaffolding, out banner);
             var targetCollider = gameObject.AddComponent<BoxCollider>();
             targetCollider.center = Vector3.up * 1.6f; targetCollider.size = new Vector3(1.8f, 3.3f, 1.8f);
             targetCollider.isTrigger = true;
-            var obstacle = gameObject.AddComponent<NavMeshObstacle>();
-            obstacle.shape = NavMeshObstacleShape.Box; obstacle.center = Vector3.up * .4f; obstacle.size = new Vector3(2.8f, .8f, 2.8f);
-            obstacle.carving = true; obstacle.carveOnlyStationary = true;
+            if(VisualVariant==BuildingVariant.PierHarbor)
+            {
+                var obstacle = gameObject.AddComponent<NavMeshObstacle>();
+                obstacle.shape = NavMeshObstacleShape.Box; obstacle.center = Vector3.up * .4f; obstacle.size = new Vector3(2.8f, .8f, 2.8f);
+                obstacle.carving = true; obstacle.carveOnlyStationary = true;
+            }
             session.Towers.Add(this);
             if (built) CompleteBuild(); else RefreshVisuals();
         }
@@ -102,7 +112,7 @@ namespace RiskAI
                     CurrentTarget = launchTarget;
                     ShotsFired++;
                     var weapon = Town ? SourceWeapons.MilitaryBase : SourceWeapons.Shipyard;
-                    session.Combat.FireWeapon(AimPoint + Vector3.up, launchTarget.AimPoint, launchTarget,
+                    session.Combat.FireWeapon(AttackOrigin, launchTarget.AimPoint, launchTarget,
                         session.RollDamage(ReforgedProfiles.CapturableTower), Team, this, weapon);
                 }
             }

@@ -141,7 +141,9 @@ namespace RiskAI
             var result=telemetry;telemetry=default;return result;
         }
 
-        public static bool IsOcean(Vector3 point)=>MapLayout.IsOcean(point.x,point.z);
+        public static bool IsOcean(Vector3 point)=>MapLayout.IsImported
+            ? MapLayout.Imported.IsShipNavigable(point.x,point.z)
+            : MapLayout.IsOcean(point.x,point.z);
         static int Reverse(int direction)=>7-direction;
         public static bool HasClearance(Vector3 point,float clearance=HullClearance)
         {

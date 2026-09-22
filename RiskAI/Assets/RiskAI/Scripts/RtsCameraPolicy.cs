@@ -6,6 +6,29 @@ namespace RiskAI
     public static class RtsCameraPolicy
     {
         public const float EdgeBandPixels=20f;
+        public const float WheelZoomExponent=.24f;
+        public const float MaximumWheelStepsPerFrame=4f;
+        public const float WebPixelUnitsPerStep=100f;
+        public const float WebTouchpadPixelUnitsPerStep=400f;
+        public const float WebLineUnitsPerStep=3f;
+
+        /// <summary>
+        /// Converts accumulated browser deltas to wheel-notch units. Pixel-mode
+        /// fine pixel events use one quarter sensitivity while 100/120 px mouse
+        /// wheels stay close to one ordinary notch. DOM positive Y means zoom out.
+        /// </summary>
+        public static float NormalizeWebWheelDeltas(float touchpadPixels,float wheelPixels,float lines,float pages)
+        {
+            if(float.IsNaN(touchpadPixels)||float.IsInfinity(touchpadPixels))touchpadPixels=0;
+            if(float.IsNaN(wheelPixels)||float.IsInfinity(wheelPixels))wheelPixels=0;
+            if(float.IsNaN(lines)||float.IsInfinity(lines))lines=0;
+            if(float.IsNaN(pages)||float.IsInfinity(pages))pages=0;
+            float steps=-(touchpadPixels/WebTouchpadPixelUnitsPerStep+wheelPixels/WebPixelUnitsPerStep+lines/WebLineUnitsPerStep+pages);
+            return Mathf.Clamp(steps,-MaximumWheelStepsPerFrame,MaximumWheelStepsPerFrame);
+        }
+
+        public static float WheelZoomMultiplier(float steps) =>
+            Mathf.Exp(-Mathf.Clamp(steps,-MaximumWheelStepsPerFrame,MaximumWheelStepsPerFrame)*WheelZoomExponent);
 
         /// <summary>Equal zoom ratios settle at the same rate at every camera height.</summary>
         public static float SmoothZoom(float current,float target,ref float logarithmicVelocity,float deltaTime)

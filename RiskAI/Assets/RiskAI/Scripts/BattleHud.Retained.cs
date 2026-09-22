@@ -13,6 +13,8 @@ namespace RiskAI
         Label goldLabel, citiesLabel, populationLabel, roundLabel;
         VisualElement startCountdown, pauseNotice;
         Label startCountdownNumber;
+        VisualElement startCountdownProgress;
+        readonly Label[] startCountdownMilestones = new Label[3];
         Button pauseButton;
         int retainedTab;
         bool showMinimap = true;
@@ -35,8 +37,8 @@ namespace RiskAI
         bool FooterVisible => HasSelection || (showMinimap && retainedTab == 3);
         bool MinimapVisible => showMinimap && FooterVisible && (!UiViewport.IsPortrait || retainedTab == 3);
 
-        float RequestedHeaderHeight => !UiViewport.IsCompact ? 48 : UiViewport.IsPortrait ? 76 : 44;
-        float RequestedFooterHeight => FooterVisible ? UiViewport.IsPortrait ? 210 : 188 : 0;
+        float RequestedHeaderHeight => !UiViewport.IsCompact ? 48 : UiViewport.IsPortrait ? 94 : 50;
+        float RequestedFooterHeight => FooterVisible ? UiViewport.IsPortrait ? 210 : UiViewport.IsCompact ? 164 : 188 : 0;
         float HeaderHeight => Mathf.Max(0, (UiViewport.SafeRect.yMax - UiViewport.WorldRect.yMax) / UiViewport.Scale);
         float FooterHeight => Mathf.Max(0, (UiViewport.BottomPixels - UiViewport.SafeRect.yMin) / UiViewport.Scale);
 
@@ -169,19 +171,52 @@ namespace RiskAI
         {
             startCountdown=RtsUiStyle.Panel("Match start countdown");startCountdown.pickingMode=PickingMode.Ignore;
             startCountdown.style.position=Position.Absolute;startCountdown.style.left=Length.Percent(50);
-            startCountdown.style.top=Length.Percent(34);startCountdown.style.width=236;startCountdown.style.marginLeft=-118;
-            startCountdown.style.alignItems=Align.Center;startCountdown.style.paddingTop=14;startCountdown.style.paddingBottom=14;
-            var title=RtsUiStyle.Label("LA CONQUISTA EMPIEZA EN",null,12);title.pickingMode=PickingMode.Ignore;
-            startCountdown.Add(title);
-            startCountdownNumber=RtsUiStyle.Title("3","Countdown number",48);startCountdownNumber.pickingMode=PickingMode.Ignore;
-            startCountdown.Add(startCountdownNumber);root.Add(startCountdown);RefreshStartCountdown();
+            startCountdown.style.top=Length.Percent(UiViewport.IsPortrait?23:27);
+            float countdownWidth=Mathf.Min(UiViewport.IsPortrait?360:540,UiViewport.LogicalWidth-24);
+            startCountdown.style.width=countdownWidth;startCountdown.style.marginLeft=-countdownWidth*.5f;
+            startCountdown.style.paddingLeft=UiViewport.IsCompact?16:22;startCountdown.style.paddingRight=UiViewport.IsCompact?16:22;
+            startCountdown.style.paddingTop=14;startCountdown.style.paddingBottom=16;
+
+            var heading=new VisualElement();RtsUiStyle.Row(heading);heading.pickingMode=PickingMode.Ignore;
+            var title=RtsUiStyle.Title("RIESGUS · DESPLIEGUE",null,UiViewport.IsCompact?15:18);title.pickingMode=PickingMode.Ignore;title.style.flexGrow=1;
+            heading.Add(title);
+            startCountdownNumber=RtsUiStyle.Title("5","Countdown number",UiViewport.IsCompact?38:44);startCountdownNumber.pickingMode=PickingMode.Ignore;
+            heading.Add(startCountdownNumber);startCountdown.Add(heading);
+
+            var progressTrack=new VisualElement { name="Countdown progress",pickingMode=PickingMode.Ignore };
+            progressTrack.style.height=4;progressTrack.style.marginTop=4;progressTrack.style.marginBottom=10;progressTrack.style.backgroundColor=RtsUiStyle.Slate;
+            startCountdownProgress=new VisualElement { name="Countdown progress fill",pickingMode=PickingMode.Ignore };
+            startCountdownProgress.style.height=4;startCountdownProgress.style.backgroundColor=RtsUiStyle.Gold;progressTrack.Add(startCountdownProgress);startCountdown.Add(progressTrack);
+
+            var milestones=new VisualElement { name="Countdown milestones",pickingMode=PickingMode.Ignore };
+            string[] names={
+                "1 · Selecciona una ciudad. Crea unidades e invade.",
+                "2 · La guarnición no sale sin un relevo aliado.",
+                "3 · Completa países para obtener oro y refuerzos."
+            };
+            for(int i=0;i<startCountdownMilestones.Length;i++)
+            {
+                var label=RtsUiStyle.Label(names[i],"Countdown milestone "+(i+1),UiViewport.IsCompact?13:14);label.pickingMode=PickingMode.Ignore;
+                label.style.whiteSpace=WhiteSpace.Normal;label.style.marginBottom=i<2?5:0;
+                startCountdownMilestones[i]=label;milestones.Add(label);
+            }
+            startCountdown.Add(milestones);root.Add(startCountdown);RefreshStartCountdown();
         }
 
         void RefreshStartCountdown()
         {
             if(startCountdown==null)return;
             startCountdown.style.display=session.IsStarting?DisplayStyle.Flex:DisplayStyle.None;
-            if(session.IsStarting)startCountdownNumber.text=Mathf.CeilToInt(session.StartCountdownRemaining).ToString();
+            if(!session.IsStarting)return;
+            float remaining=session.StartCountdownRemaining;
+            startCountdownNumber.text=Mathf.CeilToInt(remaining).ToString();
+            startCountdownProgress.style.width=Length.Percent(Mathf.Clamp01((5f-remaining)/5f)*100);
+            int stage=remaining>3f?0:remaining>1f?1:2;
+            for(int i=0;i<startCountdownMilestones.Length;i++)
+            {
+                startCountdownMilestones[i].style.color=i==stage?RtsUiStyle.Gold:RtsUiStyle.Muted;
+                startCountdownMilestones[i].style.opacity=i==stage?1:.82f;
+            }
         }
 
         void BuildHeader(VisualElement root)
@@ -196,7 +231,7 @@ namespace RiskAI
         void BuildWideHeader()
         {
             RtsUiStyle.Row(header);
-            var title = RtsUiStyle.Title("DOMINIOS", null, 17); header.Add(title);
+            var title = RtsUiStyle.Title("RIESGUS", null, 17); header.Add(title);
             AddGoldDisplay(header);
             AddCitiesDisplay(header);
             AddPopulationDisplay(header);
@@ -209,7 +244,7 @@ namespace RiskAI
 
         void BuildCompactHeader()
         {
-            var top = new VisualElement { name="HUD resource row" }; RtsUiStyle.Row(top);top.style.height=UiViewport.IsPortrait?36:38;top.style.flexShrink=0;
+            var top = new VisualElement { name="HUD resource row" }; RtsUiStyle.Row(top);top.style.height=UiViewport.MinimumTouchTarget;top.style.flexShrink=0;
             AddGoldDisplay(top);
             AddCitiesDisplay(top);
             AddPopulationDisplay(top);
@@ -222,7 +257,7 @@ namespace RiskAI
             header.Add(top);
             if (UiViewport.IsPortrait)
             {
-                var lower = new VisualElement { name="HUD navigation row" }; RtsUiStyle.Row(lower);lower.style.height=34;lower.style.flexShrink=0;
+                var lower = new VisualElement { name="HUD navigation row" }; RtsUiStyle.Row(lower);lower.style.height=UiViewport.MinimumTouchTarget;lower.style.flexShrink=0;
                 roundLabel = HeaderLabel("RONDA " + hud.Round); roundLabel.style.flexGrow = 1; lower.Add(roundLabel);
                 lower.Add(HeaderButton("Mapa", ToggleMinimap));
                 lower.Add(HeaderButton("Menú", OpenMenu));
@@ -232,14 +267,15 @@ namespace RiskAI
 
         Label HeaderLabel(string text)
         {
-            var label = RtsUiStyle.Label(text, null, 11); label.style.marginLeft = 4; label.style.marginRight = 4; label.style.marginTop=0;label.style.marginBottom=0;return label;
+            var label = RtsUiStyle.Label(text, null, UiViewport.IsTouchLayout?12:11); label.style.marginLeft = 4; label.style.marginRight = 4; label.style.marginTop=0;label.style.marginBottom=0;return label;
         }
         string CitiesText => hud.OwnedTowns + " / " + MapLayout.Towns.Length;
 
         static Button HeaderButton(string text, System.Action action)
         {
             var button = RtsUiStyle.Button(text, action);
-            button.style.height=button.style.minHeight=UiViewport.IsPortrait?32:36;
+            float height=UiViewport.IsTouchLayout?UiViewport.MinimumTouchTarget:36;
+            button.style.height=button.style.minHeight=height;
             button.style.paddingTop=2;button.style.paddingBottom=2;button.style.marginBottom=0;button.style.marginTop=0;button.style.marginLeft=0;button.style.marginRight=4;
             button.style.fontSize=11;button.style.flexShrink=0;
             return button;
@@ -554,7 +590,7 @@ namespace RiskAI
 
         void BuildHelp(VisualElement panel)
         {
-            AddTitle(panel, "DOMINIOS · " + MapLayout.MapName);
+            AddTitle(panel, "RIESGUS · " + MapLayout.MapName);
             var tabs = new VisualElement(); RtsUiStyle.Row(tabs, true);
             tabs.Add(RtsUiStyle.Button("Partida", () => { menuTab = 0; BuildRetainedUi(false); }));
             tabs.Add(RtsUiStyle.Button("Controles", () => { menuTab = 1; BuildRetainedUi(false); }));

@@ -21,7 +21,7 @@ namespace RiskAI
 
         static readonly Dictionary<string,string> Exact = new Dictionary<string,string>
         {
-            ["DOMINIOS"]="DOMINIONS", ["CONQUISTA"]="CONQUEST", ["PAUSADO"]="PAUSED",
+            ["RIESGUS"]="RIESGUS", ["DOMINIOS"]="DOMINIONS", ["CONQUISTA"]="CONQUEST", ["PAUSADO"]="PAUSED",
             ["PAUSA"]="PAUSE", ["Pausa"]="Pause", ["CONTINUAR"]="RESUME", ["Continuar"]="Resume",
             ["VOLVER"]="BACK", ["Menú"]="Menu", ["Mapa"]="Map", ["Ranking"]="Ranking",
             ["Partida"]="Match", ["Controles"]="Controls", ["VICTORIA"]="VICTORY", ["DERROTA"]="DEFEAT",
@@ -29,6 +29,8 @@ namespace RiskAI
             ["ELEGIDO"]="SELECTED", ["NUEVA SEMILLA"]="NEW SEED", ["SEMILLA"]="SEED",
             ["REPARTO INICIAL"]="STARTING LAYOUT", ["DIFICULTAD DE IA"]="AI DIFFICULTY",
             ["RELIEVE IMPORTADO"]="IMPORTED RELIEF", ["NUEVA PARTIDA"]="NEW MATCH",
+            ["SALA DE GUERRA · CONFIGURA TU CAMPAÑA"]="WAR ROOM · CONFIGURE YOUR CAMPAIGN",
+            ["RIESGUS · DESPLIEGUE"]="RIESGUS · DEPLOYMENT",
             ["NUEVA PARTIDA · ELEGIR MAPA"]="NEW MATCH · CHOOSE MAP", ["CENTRAR MAPA"]="CENTER MAP",
             ["RESTABLECER CÁMARA"]="RESET CAMERA", ["OCULTAR MAPA TÁCTICO"]="HIDE TACTICAL MAP",
             ["MOSTRAR MAPA TÁCTICO"]="SHOW TACTICAL MAP", ["DESGLOSE DEL ORO"]="GOLD BREAKDOWN",
@@ -58,13 +60,17 @@ namespace RiskAI
         };
 
         static readonly KeyValuePair<string,string>[] Phrases = {
-            Pair("RISKAI  ·  Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.","Real-time territorial conquest."),
+            Pair("RIESGUS · Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.","RIESGUS · Plot your conquest. Rally your armies. Defend every frontier."),
             Pair("Conquista territorial en tiempo real.","Real-time territorial conquest."),
             Pair("Cuatro Riberas","Four Riverlands"), Pair("Las Marcas","The Marches"),
             Pair("Los refuerzos esperan en la hoguera hasta fijar una salida.","Reinforcements wait at the camp until you set a rally point."),
             Pair("Salida fijada. Clic derecho cambia el punto de reunión.","Rally set. Right-click to change it."),
             Pair("Clic derecho en terreno fija la salida de los refuerzos del país.","Right-click terrain to set the country's reinforcement rally."),
             Pair("Cada ciudad de un país completo aporta oro. Las ciudades de países incompletos no añaden ingresos.","Each city in a completed country provides gold. Cities in incomplete countries provide no income."),
+            Pair("1 · Selecciona una ciudad. Crea unidades e invade.","1 · Select a city. Recruit units and invade."),
+            Pair("2 · La guarnición no sale sin un relevo aliado.","2 · The garrison cannot leave without an allied replacement."),
+            Pair("3 · Completa países para obtener oro y refuerzos.","3 · Complete countries to gain gold and reinforcements."),
+            Pair("+4 oro base por ronda si conservas una ciudad · País completo: +1 por ciudad y refuerzos · Conquista el 60 %.","+4 base gold each round while you hold a city · Complete country: +1 per city and reinforcements · Conquer 60%."),
             Pair("Las bajas enemigas conceden aparte ¼ de su valor de recompensa; las fracciones se acumulan hasta completar una moneda. No forman parte del ingreso por ronda.","Enemy losses also grant ¼ of their reward value; fractions accumulate into a full coin. This is separate from round income."),
             Pair("falta oro","not enough gold"), Pair(" oro en "," gold in "),
             Pair("Escribe una semilla numérica válida.","Enter a valid numeric seed."), Pair("No se encontró la escena de batalla.","The battle scene could not be found."),

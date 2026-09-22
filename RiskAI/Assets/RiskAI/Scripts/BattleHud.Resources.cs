@@ -16,7 +16,7 @@ namespace RiskAI
             button.style.backgroundColor=Color.clear;button.style.borderTopWidth=button.style.borderBottomWidth=button.style.borderLeftWidth=button.style.borderRightWidth=0;
             button.style.marginLeft=button.style.marginRight=button.style.marginTop=button.style.marginBottom=0;
             button.style.paddingLeft=button.style.paddingRight=3;button.style.paddingTop=button.style.paddingBottom=0;
-            button.style.height=34;button.style.minWidth=0;button.style.flexGrow=1;
+            button.style.height=UiViewport.IsTouchLayout?UiViewport.MinimumTouchTarget:34;button.style.minWidth=0;button.style.flexGrow=1;
             button.style.unityTextAlign=TextAnchor.MiddleLeft;
             return button;
         }

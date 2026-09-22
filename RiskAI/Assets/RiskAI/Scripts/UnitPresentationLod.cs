@@ -8,6 +8,7 @@ namespace RiskAI
     /// <summary>Zoom thresholds for the shared strategic unit proxy.</summary>
     public static class UnitPresentationLodPolicy
     {
+        public const float ViewportMargin = .08f;
         public const float DesktopEnterZoom = 96f;
         public const float DesktopExitZoom = 86f;
         public const float CompactEnterZoom = 88f;
@@ -18,6 +19,13 @@ namespace RiskAI
             float enter = compact ? CompactEnterZoom : DesktopEnterZoom;
             float exit = compact ? CompactExitZoom : DesktopExitZoom;
             return currentlyUsingProxy ? zoom > exit : zoom >= enter;
+        }
+
+        public static bool IsInsideViewport(Vector3 center,float horizontalRadius,float verticalRadius,float margin=ViewportMargin)
+        {
+            if(center.z<=0)return false;
+            return center.x+horizontalRadius>=-margin&&center.x-horizontalRadius<=1+margin&&
+                center.y+verticalRadius>=-margin&&center.y-verticalRadius<=1+margin;
         }
     }
 
@@ -32,11 +40,14 @@ namespace RiskAI
         readonly List<Animation> legacyAnimations = new List<Animation>(2);
         readonly List<Behaviour> animationControllers = new List<Behaviour>(2);
         MeshRenderer proxyRenderer;
-        bool initialized, globalProxy, selected;
+        Bounds localPresentationBounds;
+        bool initialized, globalProxy, selected, inCameraView=true, proxyApplied, controllersApplied, controllersActive;
 
         public bool UsingProxy { get; private set; }
         public int DetailRendererCount => detailRenderers.Count;
         public Renderer ProxyRenderer => proxyRenderer;
+        public int AnimationControllerCount => animationControllers.Count;
+        public bool ControllersActive => controllersActive;
 
         public void Initialize(UnitKind kind, int team)
         {
@@ -55,6 +66,8 @@ namespace RiskAI
             foreach (var knight in GetComponentsInChildren<MountedKnightView>(true))
                 if (knight.enabled) animationControllers.Add(knight);
 
+            CachePresentationBounds();
+
             var proxy = new GameObject("Shared strategic unit proxy");
             proxy.transform.SetParent(transform, false);
             proxy.transform.localScale = ProxyScale(kind);
@@ -65,6 +78,7 @@ namespace RiskAI
             proxyRenderer.receiveShadows = false;
             proxyRenderer.enabled = false;
             initialized = true;
+            Apply();
             if (Application.isPlaying) UnitPresentationLodManager.Register(this);
         }
 
@@ -80,20 +94,68 @@ namespace RiskAI
             Apply();
         }
 
+        public void SetInCameraView(bool value)
+        {
+            inCameraView=value;
+            Apply();
+        }
+
+        public bool IsInCameraView(Camera camera)
+        {
+            if(!camera)return true;
+            Vector3 center=transform.TransformPoint(localPresentationBounds.center);
+            float scale=Mathf.Max(Mathf.Abs(transform.lossyScale.x),Mathf.Abs(transform.lossyScale.y),Mathf.Abs(transform.lossyScale.z));
+            float radius=localPresentationBounds.extents.magnitude*scale;
+            Vector3 viewportCenter=camera.WorldToViewportPoint(center);
+            Vector3 viewportRight=camera.WorldToViewportPoint(center+camera.transform.right*radius);
+            Vector3 viewportUp=camera.WorldToViewportPoint(center+camera.transform.up*radius);
+            return UnitPresentationLodPolicy.IsInsideViewport(viewportCenter,
+                Mathf.Abs(viewportRight.x-viewportCenter.x),Mathf.Abs(viewportUp.y-viewportCenter.y));
+        }
+
         void Apply()
         {
             if (!initialized) return;
             bool useProxy = globalProxy && !selected;
-            if (UsingProxy == useProxy) return;
-            UsingProxy = useProxy;
-            foreach (var renderer in detailRenderers) if (renderer) renderer.enabled = !useProxy;
-            foreach (var animation in legacyAnimations) if (animation) animation.enabled = !useProxy;
-            foreach (var controller in animationControllers) if (controller) controller.enabled = !useProxy;
-            if (proxyRenderer) proxyRenderer.enabled = useProxy;
+            bool enableControllers=!useProxy&&inCameraView;
+            bool proxyChanged=!proxyApplied||UsingProxy!=useProxy;
+            bool controllersChanged=!controllersApplied||controllersActive!=enableControllers;
+            if(proxyChanged)
+            {
+                proxyApplied=true;UsingProxy=useProxy;
+                foreach (var renderer in detailRenderers) if (renderer) renderer.enabled = !useProxy;
+                foreach (var animation in legacyAnimations) if (animation) animation.enabled = !useProxy;
+                if (proxyRenderer) proxyRenderer.enabled = useProxy;
+            }
+            if(controllersChanged)
+            {
+                controllersApplied=true;controllersActive=enableControllers;
+                foreach (var controller in animationControllers) if (controller) controller.enabled = enableControllers;
+            }
+        }
+
+        void CachePresentationBounds()
+        {
+            bool found=false;Vector3 minimum=default,maximum=default;
+            foreach(var renderer in detailRenderers)
+            {
+                if(!renderer)continue;Bounds bounds=renderer.bounds;
+                for(int corner=0;corner<8;corner++)
+                {
+                    var world=new Vector3((corner&1)==0?bounds.min.x:bounds.max.x,
+                        (corner&2)==0?bounds.min.y:bounds.max.y,(corner&4)==0?bounds.min.z:bounds.max.z);
+                    Vector3 local=transform.InverseTransformPoint(world);
+                    if(!found){minimum=maximum=local;found=true;}else{minimum=Vector3.Min(minimum,local);maximum=Vector3.Max(maximum,local);}
+                }
+            }
+            localPresentationBounds=found?new Bounds((minimum+maximum)*.5f,maximum-minimum):new Bounds(Vector3.up,new Vector3(1,2,1));
         }
 
         void OnEnable()
         {
+            inCameraView=true;
+            controllersApplied=false;
+            Apply();
             if (initialized && Application.isPlaying) UnitPresentationLodManager.Register(this);
         }
 
@@ -157,6 +219,7 @@ namespace RiskAI
         readonly List<UnitPresentationLodView> views = new List<UnitPresentationLodView>(512);
         float nextRefresh;
         bool proxyActive;
+        bool? previousCullingDisabled;
 
         internal static void Register(UnitPresentationLodView view)
         {
@@ -183,16 +246,19 @@ namespace RiskAI
             var camera = Camera.main;
             if (!camera) return;
             bool disabled = LaunchArguments.HasFlag("--riskai-disable-unit-lod");
+            bool cullingDisabled=LaunchArguments.HasFlag("--riskai-disable-unit-presentation-culling");
             bool next = !disabled && UnitPresentationLodPolicy.UseProxy(camera.orthographicSize, UiViewport.IsCompact, proxyActive);
-            if (next == proxyActive) return;
+            bool changed=next!=proxyActive||previousCullingDisabled!=cullingDisabled;
             proxyActive = next;
+            previousCullingDisabled=cullingDisabled;
             for (int i = views.Count - 1; i >= 0; i--)
             {
                 var view = views[i];
                 if (!view) { views.RemoveAt(i); continue; }
                 view.SetGlobalProxy(proxyActive);
+                view.SetInCameraView(cullingDisabled||view.IsInCameraView(camera));
             }
-            Debug.Log($"RISKAI_UNIT_LOD proxy={proxyActive} views={views.Count} zoom={camera.orthographicSize:F2} compact={UiViewport.IsCompact} disabled={disabled}");
+            if(changed)Debug.Log($"RISKAI_UNIT_LOD proxy={proxyActive} views={views.Count} zoom={camera.orthographicSize:F2} compact={UiViewport.IsCompact} disabled={disabled} cullingDisabled={cullingDisabled}");
         }
 
         void OnDestroy()

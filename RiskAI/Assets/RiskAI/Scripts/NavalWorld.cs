@@ -77,22 +77,31 @@ namespace RiskAI
         }
         void AddImportedHarbor(Settlement town)
         {
+            bool found=TryResolveImportedBerth(town,out var berth);
+            var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;
+            var harbor=go.AddComponent<Harbor>();
+            harbor.InitializeImported(this,new BuildingId(BuildingKind.Harbor,"imported/"+town.State.Id),town,berth,
+                found?null:"El puerto no tiene una salida marítima segura.",town.VisualVariant);
+            Harbors.Add(harbor);AddEmbarkZone(harbor);
+        }
+        // Adapter seam for the pending source shallow-water query. Building art
+        // already stays on the exact source h00O position; this method owns only
+        // the hull-safe simulation berth and never moves the claim coordinate.
+        static bool TryResolveImportedBerth(Settlement town,out Vector3 berth)
+        {
             var outward=town.PortSeaward;
             // Warcraft's B00R post is amphibious. Keep that exact circle and find
             // a hull-safe point inside its capture radius instead of inventing a
             // second offshore objective.
             var probe=town.ClaimPoint+outward*.5f;
-            bool found=SeaNavigation.TryNearestOcean(probe,ClaimRules.TakeoverRadius-.5f,out var berth);
+            bool found=SeaNavigation.TryNearestOcean(probe,ClaimRules.TakeoverRadius-.5f,out berth);
             if(!found)berth=new Vector3(probe.x,-.24f,probe.z);
-            var go=new GameObject("Puerto de "+town.DisplayName);go.transform.SetParent(transform,false);go.transform.position=berth;
-            var harbor=go.AddComponent<Harbor>();
-            harbor.InitializeImported(this,new BuildingId(BuildingKind.Harbor,"imported/"+town.State.Id),town,berth,found?null:"El puerto no tiene una salida marítima segura.");
-            Harbors.Add(harbor);AddEmbarkZone(harbor);
+            return found;
         }
-        void AddHarbor(BuildingId buildingId,string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth)
+        void AddHarbor(BuildingId buildingId,string name,Settlement linked,TownState state,Vector3 landing,Vector3 berth,BuildingVariant? visualVariant=null)
         {
             var go=new GameObject(name);go.transform.SetParent(transform,false);go.transform.position=berth;
-            var harbor=go.AddComponent<Harbor>();harbor.Initialize(this,buildingId,name,linked,state,landing,berth);Harbors.Add(harbor);AddEmbarkZone(harbor);
+            var harbor=go.AddComponent<Harbor>();harbor.Initialize(this,buildingId,name,linked,state,landing,berth,visualVariant);Harbors.Add(harbor);AddEmbarkZone(harbor);
         }
         void AddEmbarkZone(Harbor harbor)
         {

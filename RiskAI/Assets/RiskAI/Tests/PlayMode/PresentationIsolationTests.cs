@@ -97,6 +97,51 @@ namespace RiskAI.Tests
             Assert.That(views.Any(view=>view.transform.Find("Piercing projectile").gameObject.activeSelf),Is.True);
             Assert.That(views.Any(view=>view.transform.Find("Magic projectile").gameObject.activeSelf),Is.True);
             Assert.That(views.Any(view=>view.transform.Find("Siege projectile").gameObject.activeSelf),Is.True);
+            var piercing=views.Select(view=>view.transform.Find("Piercing projectile")).First(group=>group.gameObject.activeSelf);
+            var piercingParts=piercing.GetComponentsInChildren<MeshRenderer>();
+            CollectionAssert.AreEquivalent(new[]{"Bolt shaft","Bolt metal point","Bolt fletching top","Bolt fletching side"},
+                piercingParts.Select(renderer=>renderer.name));
+            Assert.That(piercing.Find("Bright bolt streak"),Is.Null);
+            Assert.That(piercingParts.All(renderer=>renderer.shadowCastingMode==UnityEngine.Rendering.ShadowCastingMode.Off&&!renderer.receiveShadows),Is.True);
+            foreach(var renderer in piercingParts)foreach(var material in renderer.sharedMaterials)
+            {
+                Assert.That(material.IsKeywordEnabled("_EMISSION"),Is.False,renderer.name+" must use an ordinary physical material.");
+                if(material.HasProperty("_EmissionColor"))
+                {
+                    var emission=material.GetColor("_EmissionColor");
+                    Assert.That(Mathf.Max(emission.r,Mathf.Max(emission.g,emission.b)),Is.LessThan(.001f));
+                }
+            }
+            var filters=piercing.GetComponentsInChildren<MeshFilter>();
+            Assert.That(filters.Sum(filter=>filter.sharedMesh.vertexCount),Is.LessThanOrEqualTo(96),"A pooled bolt must not contain capsule-grade geometry.");
+            var tipFilter=filters.Single(filter=>filter.name=="Bolt metal point");
+            Assert.That(Mathf.Max(tipFilter.sharedMesh.bounds.size.x,tipFilter.sharedMesh.bounds.size.z),Is.LessThanOrEqualTo(.111f),
+                "The metal point must read as a needle, not an arrow icon.");
+            var fletching=filters.Where(filter=>filter.name.StartsWith("Bolt fletching")).ToArray();
+            Assert.That(fletching.Length,Is.EqualTo(2));Assert.That(fletching[0].sharedMesh,Is.SameAs(fletching[1].sharedMesh));
+            Assert.That(fletching[0].sharedMesh.vertexCount,Is.EqualTo(8));Assert.That(fletching[0].sharedMesh.triangles.Length,Is.EqualTo(12));
+            bool found=false;var localBounds=default(Bounds);
+            foreach(var filter in filters)foreach(var vertex in filter.sharedMesh.vertices)
+            {
+                var local=piercing.InverseTransformPoint(filter.transform.TransformPoint(vertex));
+                if(!found){localBounds=new Bounds(local,Vector3.zero);found=true;}else localBounds.Encapsulate(local);
+            }
+            Assert.That(found,Is.True);Assert.That(localBounds.size.z,Is.InRange(.70f,.95f));
+            Assert.That(localBounds.size.x,Is.LessThan(.15f));Assert.That(localBounds.size.y,Is.LessThan(.15f));
+            foreach(var filter in fletching)
+            {
+                var finBounds=default(Bounds);bool hasVertex=false;
+                foreach(var vertex in filter.sharedMesh.vertices)
+                {
+                    var local=piercing.InverseTransformPoint(filter.transform.TransformPoint(vertex));
+                    if(!hasVertex){finBounds=new Bounds(local,Vector3.zero);hasVertex=true;}else finBounds.Encapsulate(local);
+                }
+                // Transforming world-space vertices back to this moving local
+                // frame can leave a tiny rounding residue on the shaft axis.
+                const float axisTolerance=.0001f;
+                Assert.That(finBounds.min.x,Is.LessThanOrEqualTo(axisTolerance));Assert.That(finBounds.max.x,Is.GreaterThanOrEqualTo(-axisTolerance));
+                Assert.That(finBounds.min.y,Is.LessThanOrEqualTo(axisTolerance));Assert.That(finBounds.max.y,Is.GreaterThanOrEqualTo(-axisTolerance));
+            }
             int created=VisualFactory.ProjectilePoolCreatedCount;
             Assert.That(created,Is.GreaterThanOrEqualTo(3));
 

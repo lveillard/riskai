@@ -80,7 +80,7 @@ namespace RiskAI.Tests
                     new TouchState { touchId=101,position=center+new Vector2(-70,20),delta=new Vector2(-20,20),phase=UnityEngine.InputSystem.TouchPhase.Moved },
                     new TouchState { touchId=102,position=center+new Vector2(70,20),delta=new Vector2(20,20),phase=UnityEngine.InputSystem.TouchPhase.Moved });
                 Assert.That(Vector3.Distance(beforeFocus,controller.CameraRig.FocusPoint),Is.GreaterThan(.01f),"A paused two-finger drag must pan the camera.");
-                Assert.That(controller.CameraRig.TargetZoom,Is.Not.EqualTo(beforeZoom),"A paused two-finger spread must pinch-zoom the camera.");
+                Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(beforeZoom/1.4f).Within(.05f),"A paused two-finger spread must preserve the physical pinch ratio.");
                 Pump(touch,
                     new TouchState { touchId=101,position=center+new Vector2(-70,20),phase=UnityEngine.InputSystem.TouchPhase.Ended },
                     new TouchState { touchId=102,position=center+new Vector2(70,20),phase=UnityEngine.InputSystem.TouchPhase.Ended });

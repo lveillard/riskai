@@ -68,12 +68,12 @@ namespace RiskAI
         {
             if(Mathf.Abs(wheelSteps)<.001f)return;
             zoomAnchor=Ground(screen);anchorScreen=screen;anchorZoom=true;
-            TargetZoom=Mathf.Clamp(TargetZoom*Mathf.Exp(-Mathf.Clamp(wheelSteps,-4,4)*.24f),MinimumZoom,MaximumZoom);
+            TargetZoom=Mathf.Clamp(TargetZoom*RtsCameraPolicy.WheelZoomMultiplier(wheelSteps),MinimumZoom,MaximumZoom);
         }
         public void ZoomByRatio(float ratio,Vector2 screen)
         {
             if(float.IsNaN(ratio)||float.IsInfinity(ratio)||ratio<=0)return;
-            ZoomAt(Mathf.Log(ratio)/.24f,screen);
+            ZoomAt(Mathf.Log(ratio)/RtsCameraPolicy.WheelZoomExponent,screen);
         }
         public void CancelMotion() { targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;zoomVelocity=0;if(cam)TargetZoom=cam.orthographicSize; }
         void LateUpdate()

@@ -1,0 +1,27 @@
+{
+  "url": "http://127.0.0.1:8086",
+  "viewport": [
+    390,
+    844
+  ],
+  "dpr": 2.0,
+  "physicalMobile": false,
+  "errors": [],
+  "captures": [
+    "menu",
+    "briefing-early",
+    "briefing-middle",
+    "briefing-late",
+    "playing"
+  ],
+  "actualStartInput": true,
+  "title": "Riesgus · Dominios",
+  "canvas": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "success": true,
+  "seconds": 18.69
+}

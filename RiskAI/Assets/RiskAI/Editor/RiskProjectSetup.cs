@@ -9,7 +9,7 @@ namespace RiskAI.Editor
 {
     public static class RiskProjectSetup
     {
-        const string Version="0.25";
+        const string Version="0.29.1";
         const string FrontEndScenePath="Assets/RiskAI/Scenes/FrontEnd.unity";
         const string ScenePath="Assets/RiskAI/Scenes/LasMarcas.unity";
         [MenuItem("RiskAI/Prepare playable scene")]
@@ -22,12 +22,12 @@ namespace RiskAI.Editor
             EnsureBattlefieldScene();
             EnsureFrontEndScene();
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(FrontEndScenePath,true),new EditorBuildSettingsScene(ScenePath,true)};
-            PlayerSettings.companyName="RiskAI";PlayerSettings.productName="RiskAI — Dominios v"+Version;
+            PlayerSettings.companyName="Riesgus";PlayerSettings.productName="Riesgus — Dominios v"+Version;
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android,"com.lveillard.riskai");
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Standalone,"com.lveillard.riskai");
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.iOS,"com.lveillard.riskai");
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.WindowsStoreApps,"com.lveillard.riskai");
-            PlayerSettings.bundleVersion=Version+".0";PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
+            PlayerSettings.bundleVersion=Version;PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
             PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;PlayerSettings.runInBackground=false;
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
             PlayerSettings.colorSpace=ColorSpace.Linear;

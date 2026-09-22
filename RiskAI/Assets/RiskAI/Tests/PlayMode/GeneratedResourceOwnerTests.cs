@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -83,6 +84,26 @@ namespace RiskAI.Tests
             Assert.That(fresh.Count,Is.Zero,"A new match starts with no resources inherited from the prior scene.");
             SceneManager.SetActiveScene(previous);
             yield return SceneManager.UnloadSceneAsync(restarted);
+        }
+
+        [UnityTest]
+        public IEnumerator ProceduralConeRoofAndBannerMeshesShareTheirArchitectureLifetime()
+        {
+            var root=new GameObject("Procedural architecture ownership");
+            var cone=VisualFactory.Cone(root.transform,"Owned cone",Vector3.zero,1,2,Color.white);
+            var coneMesh=cone.GetComponent<MeshFilter>().sharedMesh;
+            var banner=VisualFactory.Town(root.transform,0,false);
+            var roofFilter=root.GetComponentsInChildren<MeshFilter>(true)
+                .First(filter=>filter.name=="Faction roof");
+            var roofMesh=roofFilter.sharedMesh;
+            var bannerMesh=banner.GetComponent<MeshFilter>().sharedMesh;
+
+            Assert.That(coneMesh,Is.Not.Null);Assert.That(roofMesh,Is.Not.Null);Assert.That(bannerMesh,Is.Not.Null);
+            Object.Destroy(root);yield return null;yield return null;
+
+            Assert.That(coneMesh==null,Is.True,"VisualFactory.Cone meshes must be released with their parent.");
+            Assert.That(roofMesh==null,Is.True,"WorldArt roof meshes must be released with their architecture.");
+            Assert.That(bannerMesh==null,Is.True,"WorldArt banner meshes must be released with their architecture.");
         }
     }
 }

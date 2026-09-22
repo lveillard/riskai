@@ -9,6 +9,7 @@ namespace RiskAI
     {
         public const float DefaultHalfExtent = ClaimRules.CircleRadius;
         public const float VerticalExtent = 1.25f;
+        public const float AnchorSearchRadius = .9f;
         public const float RingWidth = .07f;
         public static readonly Color RingColor = Color.white;
         public static readonly Color ContestedRingColor = new Color(1f,.68f,.12f);
@@ -38,7 +39,7 @@ namespace RiskAI
                 anchor = garrisonAnchor;
                 return true;
             }
-            if (!NavMesh.SamplePosition(Center, out var hit, .9f, NavMesh.AllAreas))
+            if (!NavMesh.SamplePosition(Center, out var hit, AnchorSearchRadius, NavMesh.AllAreas))
             {
                 anchor = default;
                 return false;

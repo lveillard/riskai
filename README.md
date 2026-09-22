@@ -1,8 +1,32 @@
-# RiskAI · v0.22
+# Riesgus · v0.29.1
 
-Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP y arte propio/CC0. Abre **Play-RiskAI.cmd** para jugar la compilación local. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`.
+Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.29.1
+(`20260922T194407Z-tower-v0291`). La verificación pública coincide en 10/10
+hashes. El ajuste de altura aprueba 32 tests de ejecución; la base v0.29 aprobó
+221 tests Unity y comprobaciones Web de escritorio, móvil y tablet emulados,
+no hardware móvil físico.
+[Torre más alta v0.29.1](docs/VALIDATION-RIESGUS-v0.29.1.md) ·
+[Agua, torres y virotes v0.29](docs/VALIDATION-RIESGUS-v0.29.md) ·
+[Mediciones de rendimiento](docs/audits/PERFORMANCE-PARETO-v0.28.md) · [Mapas
+y aguas someras v0.27](docs/VALIDATION-RIESGUS-v0.27.md).
+
+Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP y arte propio/CC0. Abre **Play-Riesgus.cmd** para jugar la compilación local; **Play-RiskAI.cmd** se conserva como alias histórico. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`.
+
+La v0.26 presenta la interfaz Riesgus y un onboarding de campaña de 5 s: la cuenta atrás muestra tres hitos —seleccionar una ciudad y reclutar, asegurar el relevo aliado, y obtener oro y refuerzos— antes de liberar el campo de batalla.
+
+La v0.27 incorpora el pathing numérico original WPM: las zonas someras de Europe/New World admiten tropas y barcos y sustituyen las pasarelas artificiales. Sus ciudades y astilleros usan torres integradas en el centro del edificio, sin aumentar daño o alcance ni mover coordenadas. Las Marcas/Cuatro Riberas conservan las variantes separadas.
+
+La v0.28 evita actualizar los controladores de animación de unidades fuera de cámara, sin detener su simulación, y libera explícitamente las mallas procedurales de conos, tejados y banderas. Los experimentos de agrupación de edificios quedan desactivados por defecto: reducir dibujos no demostró suficiente ahorro y la variante manual aumentó la memoria reservada. La prueba de 900 unidades todavía puede saturar el hilo principal; no se promete una mejora fija de FPS ni rendimiento móvil físico.
+
+La v0.29 deja visible el fondo de las aguas someras con textura de piedra fina y agua azul sin grandes vetas. Las torres integradas ganan parapetos de piedra más claros; los ballesteros disparan virotes de madera, metal y plumas, sin estela luminosa. No cambian navegación, capturas, daño ni tiempos de impacto.
+
+La v0.29.1 eleva 0,45 m las torres integradas (aproximadamente un 10 %), conservando anchura y detalles. El rótulo y la selección acompañan la altura visual; los puntos de disparo y las reglas permanecen iguales.
 
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
+
+## Historial de la base v0.22
+
+Los párrafos siguientes describen la base histórica v0.22 y sus validaciones; no son el estado de publicación actual.
 
 La v0.22 distingue los círculos navales, mantiene al guardián anclado al disparar y hace visible la luz de entrenamiento en la puerta. Arena, roca y reglas de desembarco comparten el mismo campo. Europe y NewWorld también suavizan esquinas de costa hasta 0,512 m: terreno, agua, colisión y consultas de navegación usan la misma geometría, con ciudades y muelles protegidos. El caballero articula el trote y sincroniza la lanza con el golpe real.
 
@@ -18,7 +42,9 @@ El catálogo original completo está auditado; faltan unidades, modos y datos he
 
 [Animación del caballero: trote, pausa y ataque](docs/audits/v0.22/knight-animation.webp).
 
-## Escenarios y reglas comunes
+## Estado actual v0.29.1
+
+### Escenarios y reglas comunes
 
 | Mapa | Ciudades y grupos | Terreno |
 | --- | --- | --- |
@@ -37,13 +63,13 @@ El límite es uniforme: **100 tropas móviles por equipo**, excluidas las guarni
 
 Los países completos reciben créditos de refuerzo y sus unidades aparecen en la hoguera. Sin salida asignada, esperan allí; clic derecho en terreno fija el punto de salida. Los puestos de frontera muestran propietario y la inspección de una hoguera dibuja su territorio y los puertos miembros.
 
-Cada 60 segundos, conservar al menos una ciudad concede 4 de oro base más 1 por ciudad propia. Cada país completo recibe `ceil(ciudades / 2)` créditos de ballesteros; emite uno cada 0,5 segundos, con un máximo de cinco puntos vivos por ciudad del país. Las torres permanentes del puesto usan 46–50 de daño perforante, 0,9 segundos de cadencia y alcance 13. [Reglas y costes](docs/RISK-RULES-v0.16.md) · [Counters](docs/audits/COUNTERS-v0.17.md) · [Escala y procedencia de mapas](docs/MAP-SCALE-v0.15.md).
+Cada 60 segundos, conservar al menos una ciudad concede 4 de oro base. Cada ciudad propia de un país completo añade 1 de oro; los países incompletos no aportan ese ingreso. Cada país completo recibe `ceil(ciudades / 2)` créditos de ballesteros; emite uno cada 0,5 segundos, con un máximo de cinco puntos vivos por ciudad del país. Las torres permanentes del puesto usan 46–50 de daño perforante, 0,9 segundos de cadencia y alcance 13. [Reglas y costes](docs/RISK-RULES-v0.16.md) · [Counters](docs/audits/COUNTERS-v0.17.md) · [Escala y procedencia de mapas](docs/MAP-SCALE-v0.15.md).
 
-## Selección, colas y estrategia
+### Selección, colas y estrategia
 
 La caja de selección prioriza tropas móviles y, cuando no las contiene, permite seleccionar edificios propios. Shift añade. Un doble clic en una ciudad propia agrupa ciudades propias cercanas y visibles. Casa y torre remiten al mismo puesto y el anillo de selección cubre su huella. Los puertos importados conservan una única identidad de selección.
 
-La selección múltiple muestra las colas de cada edificio y permite cancelar encargos concretos. Una compra añade una unidad total a la cola compatible más corta; no multiplica coste ni unidades por los edificios seleccionados. Las ciudades y los puertos mantienen colas independientes de tierra y mar.
+La selección múltiple muestra las colas de cada edificio y permite cancelar encargos concretos. Una compra encarga una unidad por cada edificio compatible seleccionado y descuenta el oro de cada encargo; las colas no disponibles se omiten. Las ciudades y los puertos mantienen colas independientes de tierra y mar.
 
 ![v0.20: ciudad y producción simultáneas](docs/images/v0.20-city.png)
 
@@ -69,7 +95,7 @@ La selección múltiple muestra las colas de cada edificio y permite cancelar en
 | Marcadores | Mantener Tab |
 | Pausa / menú | F10 / F1 |
 
-## Perfiles, arte y mapas
+### Perfiles, arte y mapas
 
 Los perfiles compartidos incluyen los tiempos de preparación de ataque comprobados en las fuentes locales; el backswing queda como metadato y no crea un bloqueo de movimiento inventado. El soldado local no se presenta como una unidad extraída de Europe. La evidencia y los campos aún no resueltos están en la [auditoría de combate v0.18](docs/audits/v0.18-combat-source.md).
 
@@ -84,18 +110,23 @@ Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. La batalla está en `Ass
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
 .\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
-.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.22/RiskAI.exe
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.29.1/RiskAI.exe
 .\scripts\Unity.ps1 -Action BuildWeb   # Requiere Web Build Support del mismo editor
 ```
 
 Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map classic`, `riverlands`, `europe` o `newworld`.
 
-Tras exportar Web, `python scripts/serve_web.py` sirve la build v0.22 en
-`http://127.0.0.1:8080`. Para probar desde una tablet en la misma red, usa
+Tras exportar Web, `python scripts/serve_web.py --directory Builds/Web-v0.29.1`
+sirve la build v0.29.1 en `http://127.0.0.1:8080`. Para probar desde una tablet en la misma red, usa
 `--bind 0.0.0.0` y la IP local del equipo. Las utilidades
 `check_web_player.py` y `check_web_ui.py` conservan resultados, consola y
 capturas del reproductor real con Playwright y Edge. Su ejecución en Windows
 no certifica rendimiento en Android/ARM.
+
+El proxy público de `riesgus.com` se prepara y verifica con
+[`docs/DEPLOY-RIESGUS-CLOUDFLARE.md`](docs/DEPLOY-RIESGUS-CLOUDFLARE.md).
+El `Check` local no publica ni necesita credenciales; la asociación de las
+rutas de producción queda como operación explícita.
 
 La v0.18 tiene build Windows, 171 casos Unity aprobados y 7 pruebas Python. Las sondas incluyen una partida avanzada de 16 jugadores y una carga de hasta 660 unidades; registran respuesta a órdenes, tiempos de fotograma y coste naval. Persisten esperas de navegación y picos: [mediciones y límites](docs/VALIDATION-v0.18.md). [Cambios v0.18](docs/ITERATION-v0.18.md) · [Estructura del código](RiskAI/README.md) · [Diagnóstico en vivo](docs/OBSERVABILITY.md) · [Pendientes](TODO.md).
 

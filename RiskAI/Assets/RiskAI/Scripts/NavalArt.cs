@@ -116,6 +116,7 @@ namespace RiskAI
                     Block(root,"Mooring iron cap",new(point.x,top,point.z),new(.39f,.1f,.39f),2,new Color(.32f,.34f,.31f));
                 }
             }
+            StaticArchitectureBatching.Combine(root);
         }
 
         public static HarborVisual CreateHarborBuilding(Transform parent,int owner,Vector3 worldPosition,Vector3 waterward,bool solid)
@@ -151,11 +152,19 @@ namespace RiskAI
             Beam(root,new(houseX+1.65f,0,houseZ+.3f),new(houseX+1.65f,4.25f,houseZ+.3f),.12f);
             var flag=Block(root,"Harbor standard",new(houseX+2.22f,3.63f,houseZ+.3f),new(1.08f,.82f,.07f),0).GetComponent<Renderer>();
             flag.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamMaterialColor(owner));
+            StaticArchitectureBatching.Combine(root,roof,flag);
             return new HarborVisual(root,entrance,roof,flag);
         }
 
         public static HarborVisual CreateHarborBuildingCentered(Transform parent,int owner,Vector3 houseCenter,Vector3 waterward,bool solid)
+            => CreateHarborBuildingCentered(parent,owner,houseCenter,waterward,solid,BuildingVariant.PierHarbor);
+
+        public static HarborVisual CreateHarborBuildingCentered(Transform parent,int owner,Vector3 houseCenter,Vector3 waterward,bool solid,BuildingVariant variant)
         {
+            if(variant==BuildingVariant.IntegratedHarbor)
+                return CreateIntegratedHarborBuilding(parent,owner,houseCenter,waterward);
+            if(variant!=BuildingVariant.PierHarbor)
+                throw new System.ArgumentException("A harbor requires a harbor building variant.",nameof(variant));
             waterward.y=0;if(waterward.sqrMagnitude<.01f)waterward=Vector3.forward;else waterward.Normalize();
             Quaternion rotation=Quaternion.LookRotation(waterward);
             // The shared model leaves its central pier lane open by keeping the
@@ -165,8 +174,55 @@ namespace RiskAI
             return CreateHarborBuilding(parent,owner,root,waterward,solid);
         }
 
-        public static BuildingEntranceAnchor CreateHarbor(Harbor harbor)
+        public static HarborVisual CreateIntegratedHarborBuilding(Transform parent,int owner,Vector3 sourceCenter,Vector3 waterward)
         {
+            waterward.y=0;if(waterward.sqrMagnitude<.01f)waterward=Vector3.forward;else waterward.Normalize();
+            var root=new GameObject("Integrated harbor building").transform;root.SetParent(parent,false);
+            root.SetPositionAndRotation(sourceCenter,Quaternion.LookRotation(waterward));
+            // This compact platform represents the source shallow-water shipyard.
+            // It is visual only: terrain/pathing owns walkability and ship clearance.
+            Block(root,"Shallow harbor platform",new(0,.08f,0),new(6.2f,.16f,4.6f),2,new Color(.9f,.68f,.39f));
+            Block(root,"Integrated tower plinth",new(0,.2f,0),new(2.75f,.24f,2.65f),0,new Color(.94f,.9f,.78f));
+            Block(root,"Integrated tower tie",new(-1.04f,.35f,-.9f),new(.63f,.14f,.14f),2,new Color(.72f,.46f,.24f));
+            Block(root,"Integrated tower tie",new(-1.04f,.35f,.18f),new(.63f,.14f,.14f),2,new Color(.72f,.46f,.24f));
+            for(int side=-1;side<=1;side+=2)
+            {
+                Beam(root,new(side*2.85f,-.55f,-1.85f),new(side*2.85f,.3f,-1.85f),.18f,new Color(.62f,.39f,.2f));
+                Beam(root,new(side*2.85f,-.55f,1.85f),new(side*2.85f,.3f,1.85f),.18f,new Color(.62f,.39f,.2f));
+                Beam(root,new(side*2.82f,.18f,-1.9f),new(side*2.82f,.18f,1.9f),.11f,new Color(.74f,.48f,.25f));
+            }
+            // Keep the source-to-claim lane clear for guards and Marines. Only
+            // this compact side house contributes navigation collision.
+            const float houseX=-1.9f,houseZ=-.72f;
+            Block(root,"Integrated harbormaster foundation",new(houseX,.22f,houseZ),new(2.55f,.4f,2.45f),0,new Color(.94f,.9f,.78f));
+            var house=Block(root,"Integrated harbormaster",new(houseX,1.08f,houseZ),new(2.2f,1.55f,2.05f),0,new Color(1.1f,1.03f,.82f));
+            house.AddComponent<BoxCollider>();
+            Block(root,"Integrated boathouse door",new(houseX,.78f,houseZ-1.06f),new(.9f,1.22f,.1f),2,new Color(.37f,.24f,.14f));
+            var entrance=BuildingEntranceAnchor.Create(root,"Integrated harbor entrance anchor",new(houseX,0,houseZ-1.08f),Vector3.back);
+            var roof=VisualFactory.Cone(root,"Faction roof",new(houseX,1.85f,houseZ),1.72f,1.05f,Color.white,4,45).GetComponent<Renderer>();
+            roof.sharedMaterial=WorldArt.RoofMaterial(owner);
+            Beam(root,new(.95f,.18f,-.4f),new(.95f,2.75f,-.4f),.13f,new Color(.9f,.6f,.31f));
+            Beam(root,new(.95f,2.67f,-.4f),new(.95f,2.67f,1.8f),.11f,new Color(.9f,.6f,.31f));
+            Beam(root,new(.95f,2.65f,1.75f),new(.95f,.32f,1.75f),.025f,new Color(.2f,.16f,.11f));
+            for(int i=0;i<3;i++)Block(root,"Integrated dock cargo",new(1.75f+i*.58f,.35f,-1.05f),new(.48f,.62f,.5f),2,new Color(1.15f,.88f,.5f));
+            var flag=Block(root,"Integrated harbor standard",new(2.15f,2.85f,-.12f),new(.98f,.72f,.06f),0).GetComponent<Renderer>();
+            flag.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamMaterialColor(owner));
+            StaticArchitectureBatching.Combine(root,roof,flag);
+            return new HarborVisual(root,entrance,roof,flag);
+        }
+
+        public static BuildingEntranceAnchor CreateHarbor(Harbor harbor) => CreateHarbor(harbor,BuildingVariant.PierHarbor);
+        public static BuildingEntranceAnchor CreateHarbor(Harbor harbor,BuildingVariant variant)
+        {
+            if(variant==BuildingVariant.IntegratedHarbor)
+            {
+                var integrated=CreateIntegratedHarborBuilding(harbor.transform,harbor.Owner,harbor.Landing,harbor.Berth-harbor.Landing);
+                var integratedAppearance=harbor.gameObject.AddComponent<HarborAppearance>();
+                integratedAppearance.Initialize(harbor,integrated.Roof,integrated.Flag);
+                return integrated.Entrance;
+            }
+            if(variant!=BuildingVariant.PierHarbor)
+                throw new System.ArgumentException("A harbor requires a harbor building variant.",nameof(variant));
             var root=new GameObject("Harbor architecture").transform;root.SetParent(harbor.transform,false);root.position=harbor.Landing;
             var grade=harbor.Berth-harbor.Landing;var direction=grade;direction.y=0;if(direction.sqrMagnitude<.01f)direction=Vector3.forward;
             root.rotation=Quaternion.LookRotation(direction);float length=direction.magnitude;

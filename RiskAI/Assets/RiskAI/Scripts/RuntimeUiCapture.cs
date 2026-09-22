@@ -147,6 +147,13 @@ namespace RiskAI
                 if(!town){Debug.LogError("RISKAI_UI_REVIEW: Denmark source port is unavailable");yield break;}
                 controller.SelectTown(town);controller.CameraRig.FocusAndZoom(town.ClaimPoint,22f);
             }
+            else if(stage.StartsWith("post:",StringComparison.Ordinal))
+            {
+                var town=session.Towns.FirstOrDefault(t=>t.State.Id==stage.Substring(5));
+                if(!town){Debug.LogError("RISKAI_UI_REVIEW: requested source post is unavailable");yield break;}
+                controller.SelectTown(town);
+                controller.CameraRig.FocusAndZoom((town.transform.position+town.ClaimPoint)*.5f,22f);
+            }
             else if(stage=="income")hud.ShowIncome();
             else if(stage=="ranking")hud.ShowPlayers();
             else if(stage=="strategic"){controller.Clear();controller.CameraRig.FrameMap();}

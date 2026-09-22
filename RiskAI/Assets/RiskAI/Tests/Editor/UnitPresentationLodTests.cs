@@ -18,6 +18,15 @@ namespace RiskAI.Tests
         }
 
         [Test]
+        public void ViewportPolicyKeepsPartialSilhouettesAndRejectsUnitsBehindTheCamera()
+        {
+            Assert.That(UnitPresentationLodPolicy.IsInsideViewport(new Vector3(-.10f,.5f,10),.03f,.05f),Is.True,
+                "The visual radius plus the 8% margin keeps an edge silhouette active.");
+            Assert.That(UnitPresentationLodPolicy.IsInsideViewport(new Vector3(-.20f,.5f,10),.03f,.05f),Is.False);
+            Assert.That(UnitPresentationLodPolicy.IsInsideViewport(new Vector3(.5f,.5f,-1),.1f,.1f),Is.False);
+        }
+
+        [Test]
         public void SharedProxyReplacesDetailButSelectionRestoresIt()
         {
             var root = new GameObject("LOD test unit");
@@ -59,5 +68,41 @@ namespace RiskAI.Tests
             }
             finally { Object.DestroyImmediate(first);Object.DestroyImmediate(second); }
         }
+
+
+        [Test]
+        public void OffscreenStateStopsOnlyControllersAndCombinesWithProxyAndSelection()
+        {
+            var root=new GameObject("Culled unit");var detailObject=new GameObject("Detailed model");
+            detailObject.transform.SetParent(root.transform,false);var detail=detailObject.AddComponent<MeshRenderer>();
+            var legacyAnimation=detailObject.AddComponent<Animation>();
+            var controller=root.AddComponent<SoldierAnimator>();var view=root.AddComponent<UnitPresentationLodView>();
+            view.Initialize(UnitKind.Archer,0);
+            try
+            {
+                Assert.That(view.AnimationControllerCount,Is.EqualTo(1));
+                Assert.That(view.ControllersActive,Is.True);
+                detail.enabled=false;legacyAnimation.enabled=false;
+                view.SetInCameraView(false);
+                Assert.That(controller.enabled,Is.False);
+                Assert.That(detail.enabled,Is.False,"Camera culling must not undo an external renderer override.");
+                Assert.That(legacyAnimation.enabled,Is.False,"Camera culling must not undo an external animation override.");
+                view.SetInCameraView(true);
+                Assert.That(detail.enabled,Is.False);
+                Assert.That(legacyAnimation.enabled,Is.False);
+                detail.enabled=true;legacyAnimation.enabled=true;
+                view.SetInCameraView(false);
+
+                view.SetGlobalProxy(true);
+                Assert.That(view.UsingProxy,Is.True);
+                view.SetSelected(true);
+                Assert.That(view.UsingProxy,Is.False,"Selection still restores the detailed silhouette.");
+                Assert.That(controller.enabled,Is.False,"Selection outside the camera does not restart per-frame animation work.");
+                view.SetInCameraView(true);
+                Assert.That(controller.enabled,Is.True);
+            }
+            finally{Object.DestroyImmediate(root);}
+        }
+
     }
 }

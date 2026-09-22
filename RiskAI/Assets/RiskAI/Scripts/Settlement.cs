@@ -16,6 +16,7 @@ namespace RiskAI
         public int FoundingTeam { get; private set; }
         public DefenseTower Defense { get; private set; }
         public bool IsPort { get; private set; }
+        public BuildingVariant VisualVariant { get; private set; }
         public Harbor Port { get; internal set; }
         public CityClaimZone ClaimZone { get; private set; }
         public Soldier Defender => ClaimZone != null ? ClaimZone.Defender : null;
@@ -61,9 +62,11 @@ namespace RiskAI
         enum BuildingProject { None, Tower, Upgrade }
         sealed class Training { public int Team; public UnitKind Kind; public float Remaining; }
 
-        public void Initialize(BattleSession battle, string id, string displayName, int owner, int region, bool capital, int country = -1, Vector3? sourceClaim = null, bool isPort = false)
+        public void Initialize(BattleSession battle, string id, string displayName, int owner, int region, bool capital, int country = -1, Vector3? sourceClaim = null, bool isPort = false, BuildingVariant? visualVariant = null)
         {
             session = battle; State = new TownState(id, owner, region, country); DisplayName = displayName; IsCapital = capital; FoundingTeam = owner;IsPort=isPort;
+            VisualVariant=visualVariant??BuildingVariants.DefaultFor(isPort);
+            if(!BuildingVariants.Matches(VisualVariant,isPort))throw new System.ArgumentException("The building variant does not match the settlement kind.",nameof(visualVariant));
             Rally = DefaultLandEntry;
             Vector3 claimProbe = transform.position + new Vector3(0, 0, -4.2f);
             ClaimPoint = sourceClaim ?? MapLayout.Point(claimProbe.x, claimProbe.z);
@@ -72,30 +75,37 @@ namespace RiskAI
             {
                 var anchors=ImportedPortLayout.Resolve(transform.position,ClaimPoint);
                 // ClaimPoint stays at the exact source B00R coordinate. Only the
-                // presentation and land access adapt to the coastline.
-                PortBuildingPoint=anchors.Building;PortLandEntry=anchors.Shore;PortSeaward=anchors.Seaward;
+                // land access adapts to the coastline. IntegratedHarbor keeps
+                // the h00O visual and tower on the exact source city position.
+                PortBuildingPoint=VisualVariant==BuildingVariant.IntegratedHarbor?transform.position:anchors.Building;
+                PortLandEntry=anchors.Shore;PortSeaward=anchors.Seaward;
             }
             ClaimZone = new CityClaimZone(ClaimPoint);
             session.Towns.Add(this); session.Economy.Towns.Add(State);
             BuildingEntranceAnchor entrance;
             if(IsPort)
             {
-                var visual=NavalArt.CreateHarborBuildingCentered(transform,owner,PortBuildingPoint,PortSeaward,true);
+                var visual=NavalArt.CreateHarborBuildingCentered(transform,owner,PortBuildingPoint,PortSeaward,
+                    VisualVariant==BuildingVariant.PierHarbor,VisualVariant);
                 flag=visual.Flag;entrance=visual.Entrance;
             }
             else
             {
-                flag = VisualFactory.Town(transform, owner, capital && !MapLayout.IsImported);
+                flag = VisualFactory.Town(transform, owner, capital,VisualVariant);
                 entrance=BuildingEntranceAnchor.Find(transform);
             }
             Ring = VisualFactory.Ring(transform, CityClaimZone.DefaultHalfExtent, CityClaimZone.RingWidth, CityClaimZone.RingColor);
             Ring.transform.position = ClaimPoint; Ring.enabled=false;
             var towerObject = new GameObject("Torre de " + displayName);
             towerObject.transform.SetParent(transform, false);
-            towerObject.transform.localPosition = new Vector3(transform.position.x < 0 ? 3.8f : -3.8f, 0, 0);
-            if(sourceClaim.HasValue) towerObject.transform.position=ImportedTowerPoint();
+            if(BuildingVariants.IsIntegrated(VisualVariant))towerObject.transform.position=PortBuildingPoint;
+            else
+            {
+                towerObject.transform.localPosition = new Vector3(transform.position.x < 0 ? 3.8f : -3.8f, 0, 0);
+                if(sourceClaim.HasValue) towerObject.transform.position=ImportedTowerPoint();
+            }
             if(IsPort&&MapLayout.IsImported)towerObject.transform.rotation=Quaternion.LookRotation(PortSeaward);
-            Defense = towerObject.AddComponent<DefenseTower>(); Defense.Initialize(session, this, true);
+            Defense = towerObject.AddComponent<DefenseTower>(); Defense.Initialize(session, this, true,VisualVariant);
             SelectionRing=BuildingSelection.CreateRing(this);
             var rallyObject = new GameObject("Punto de reunión"); rallyObject.transform.SetParent(transform, false);
             rallyRing = VisualFactory.Ring(rallyObject.transform, .6f, .09f, new Color(.8f, 1, .5f));

@@ -49,11 +49,12 @@ namespace RiskAI
         {
             public readonly string Id, Name; public readonly Vector3 Position; public readonly int Owner, Region, Country; public readonly bool Capital;
             public readonly bool IsPort;
+            public readonly BuildingVariant Variant;
             public readonly Vector3 ClaimPoint;
             public City(string id, string name, float x, float z, int owner, int region, int country, bool capital = false)
-            { Id = id; Name = name; Position = Point(x * Spacing, z * Spacing); Owner = owner; Region = region; Country = country; Capital = capital; IsPort=false;ClaimPoint=Point(Position.x,Position.z-4.2f); }
+            { Id = id; Name = name; Position = Point(x * Spacing, z * Spacing); Owner = owner; Region = region; Country = country; Capital = capital; IsPort=false;Variant=BuildingVariant.DetachedTown;ClaimPoint=Point(Position.x,Position.z-4.2f); }
             public City(ImportedMapData.City city)
-            { Id=city.id;Name=city.name;Position=city.port?new Vector3(city.x,.55f,city.z):Point(city.x,city.z);Owner=city.country%2;Region=Country=city.country;Capital=false;IsPort=city.port;ClaimPoint=city.port?new Vector3(city.claimX,.55f,city.claimZ):Point(city.claimX,city.claimZ); }
+            { Id=city.id;Name=city.name;Position=Point(city.x,city.z);Owner=city.country%2;Region=Country=city.country;Capital=false;IsPort=city.port;Variant=city.port?BuildingVariant.IntegratedHarbor:BuildingVariant.IntegratedTown;ClaimPoint=Point(city.claimX,city.claimZ); }
         }
         public readonly struct Country
         {
@@ -212,7 +213,10 @@ namespace RiskAI
             bool land = (z <= Coast(x) && !IsPond(x, z)) || AnyIslandAt(x, z);
             return land && (!IsExpanded || !TerrainHydrology.IsChannel(x, z));
         }
-        public static bool IsOcean(float x, float z) => IsImported ? Imported.Contains(x,z) && !Imported.IsLand(x,z) && Mathf.Abs(Imported.WaterAt(x,z)+.24f)<.4f : Mathf.Abs(x) < HalfWidth && Mathf.Abs(z) < HalfDepth && z > Coast(x) && !AnyIslandAt(x, z);
+        // Dry appearance, ground traversal and naval traversal are independent:
+        // source shallows can be wet while admitting both ground units and ships.
+        public static bool IsWalkable(float x,float z) => IsImported ? Imported.IsWalkable(x,z) : IsLand(x,z);
+        public static bool IsOcean(float x, float z) => IsImported ? Imported.IsShipNavigable(x,z) : Mathf.Abs(x) < HalfWidth && Mathf.Abs(z) < HalfDepth && z > Coast(x) && !AnyIslandAt(x, z);
         static bool AnyIslandAt(float x, float z) { for (int i = 0; i < Islands.Length; i++) if (IslandDistance(x, z, i) >= 0) return true; return false; }
         public static bool IsPond(float x, float z)
         {

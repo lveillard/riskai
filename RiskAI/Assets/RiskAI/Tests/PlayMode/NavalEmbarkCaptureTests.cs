@@ -26,7 +26,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator TransportBoardsByRadiusAndFrigateCannotTakeAnUnguardedHarbor()
+        public IEnumerator TransportBoardsByRadiusAndFrigateTakesAnUnguardedHarbor()
         {
             var home = naval.Harbors.First(harbor => harbor.Owner == 0);
             var transport = BattleTestScenario.Ship(naval, 0, ShipKind.Transport, home.Berth);
@@ -56,9 +56,9 @@ namespace RiskAI.Tests
             if(guard)guard.TakeDamage(guard.MaxHealth+1,guard.Team==0?1:0);
             var frigate = BattleTestScenario.Ship(naval, 0, ShipKind.Galley, target.Berth);
             target.SimTick(.1f);
-            Assert.That(target.Owner, Is.EqualTo(-1), "An undefended harbor becomes neutral instead of being captured by a warship.");
-            Assert.That(target.NavalDefender,Is.Null);
-            Assert.That(frigate.IsGarrison,Is.False);
+            Assert.That(target.Owner, Is.EqualTo(0), "Source-eligible h00W warships capture an empty harbor.");
+            Assert.That(target.NavalDefender,Is.SameAs(frigate));
+            Assert.That(frigate.IsGarrison,Is.True);
             yield return null;
         }
 
@@ -88,19 +88,25 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator DockedWarshipCannotBlockALandedEnemyCapture()
+        public IEnumerator DockedWarshipBlocksALandedEnemyUntilTheGuardianDies()
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
             var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
             var guard=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
             port.SimTick(.1f);
-            Assert.That(port.NavalDefender,Is.Null);
-            Assert.That(port.Owner,Is.EqualTo(PlayerRules.NeutralOwner));
+            Assert.That(port.NavalDefender,Is.SameAs(guard));
+            Assert.That(port.Owner,Is.EqualTo(0));
 
             var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,port.ClaimZone.Center);
             port.SimTick(.1f);
 
             Assert.That(enemy.IsAlive,Is.True);
+            Assert.That(port.Owner,Is.EqualTo(0),"A living naval guardian retains the same post as a land guardian.");
+            Assert.That(port.ClaimZone.Guardian,Is.SameAs(guard));
+            Assert.That(port.ClaimZone.Contested,Is.True);
+
+            guard.TakeDamage(guard.MaxHealth+1,1);
+            port.SimTick(.1f);
             Assert.That(port.Owner,Is.EqualTo(1));
             Assert.That(port.Defender,Is.SameAs(enemy));
             Assert.That(port.NavalDefender,Is.Null);
@@ -159,16 +165,23 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator MultipleWarshipsAtABerthNeverBecomeReliefGuards()
+        public IEnumerator NearestWarshipOccupiesAnEmptyPortAndTheSecondCanRelieveIt()
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
             var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
             var first=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
             var second=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth+Vector3.right);
             port.SimTick(.1f);
-            Assert.That(port.Owner,Is.EqualTo(PlayerRules.NeutralOwner));
-            Assert.That(port.NavalDefender,Is.Null);
-            Assert.That(first.IsGarrison||second.IsGarrison,Is.False);
+            Assert.That(port.Owner,Is.EqualTo(0));
+            Assert.That(port.NavalDefender,Is.SameAs(first));
+            Assert.That(first.IsGarrison,Is.True);
+            Assert.That(second.IsGarrison,Is.False);
+
+            first.SailToHarbor(naval.Harbors.First(h=>h!=port&&h.CanLaunch));
+            Assert.That(first.LastActionError,Is.Null);
+            Assert.That(port.NavalDefender,Is.SameAs(second),"The old guardian may leave only after an in-circle allied handoff.");
+            Assert.That(first.IsGarrison,Is.False);
+            Assert.That(second.IsGarrison,Is.True);
             yield return null;
         }
 

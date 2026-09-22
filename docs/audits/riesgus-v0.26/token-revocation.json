@@ -1,0 +1,8 @@
+{
+  "at": "2026-09-22T02:07:15.6090059Z",
+  "deploymentTokenDeleted": true,
+  "bootstrapTokenDeleted": true,
+  "deploymentVerificationStatus": 401,
+  "bootstrapVerificationStatus": 401,
+  "localEncryptedCredentialRemoved": true
+}

@@ -1,0 +1,288 @@
+{
+  "url": "http://127.0.0.1:8086",
+  "viewport": [
+    1600,
+    900
+  ],
+  "dpr": 1,
+  "errors": [],
+  "cases": {
+    "fine-burst-200px": {
+      "sum": [
+        200,
+        0,
+        0,
+        0
+      ],
+      "steps": -0.5,
+      "targetZoomMultiplierDerived": 1.1274968515793757,
+      "oldTargetZoomMultiplierDerived": 1.6160744021928934,
+      "targetZoomMeasured": false,
+      "reads": [
+        [
+          200,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "trusted-fine-burst-50px": {
+      "sum": [
+        50,
+        0,
+        0,
+        0
+      ],
+      "steps": -0.125,
+      "targetZoomMultiplierDerived": 1.030454533953517,
+      "oldTargetZoomMultiplierDerived": 1.1274968515793757,
+      "targetZoomMeasured": false,
+      "reads": [
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "wheel-100px": {
+      "sum": [
+        0,
+        100,
+        0,
+        0
+      ],
+      "steps": -1.0,
+      "targetZoomMultiplierDerived": 1.2712491503214047,
+      "oldTargetZoomMultiplierDerived": 1.2712491503214047,
+      "targetZoomMeasured": false,
+      "reads": [
+        [
+          0,
+          100,
+          0,
+          0
+        ]
+      ]
+    },
+    "wheel-120px": {
+      "sum": [
+        0,
+        120,
+        0,
+        0
+      ],
+      "steps": -1.2,
+      "targetZoomMultiplierDerived": 1.3337573041233846,
+      "oldTargetZoomMultiplierDerived": 1.3337573041233846,
+      "targetZoomMeasured": false,
+      "reads": [
+        [
+          0,
+          120,
+          0,
+          0
+        ]
+      ]
+    },
+    "fine-burst-reverse-200px": {
+      "sum": [
+        -200,
+        0,
+        0,
+        0
+      ],
+      "steps": 0.5,
+      "targetZoomMultiplierDerived": 0.8869204367171575,
+      "oldTargetZoomMultiplierDerived": 0.6187833918061408,
+      "targetZoomMeasured": false,
+      "reads": [
+        [
+          -200,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "ctrl-trusted-fine-50px": {
+      "sum": [
+        50,
+        0,
+        0,
+        0
+      ],
+      "steps": -0.125,
+      "targetZoomMultiplierDerived": 1.030454533953517,
+      "oldTargetZoomMultiplierDerived": 1.1274968515793757,
+      "targetZoomMeasured": false,
+      "reads": [
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "hud-then-map-no-replay": {
+      "sum": [
+        0,
+        100,
+        0,
+        0
+      ],
+      "steps": -1.0,
+      "targetZoomMultiplierDerived": 1.2712491503214047,
+      "oldTargetZoomMultiplierDerived": 1.2712491503214047,
+      "targetZoomMeasured": false,
+      "reads": [
+        [
+          0,
+          100,
+          0,
+          0
+        ]
+      ],
+      "application": "not measured; compare paused world in hud-before.png and hud-return-map.png"
+    }
+  },
+  "captures": [
+    "before",
+    "fine-burst-200px-after",
+    "trusted-fine-burst-50px-after",
+    "wheel-100px-after",
+    "wheel-120px-after",
+    "fine-burst-reverse-200px-after",
+    "ctrl-trusted-fine-50px-after",
+    "hud-before",
+    "hud-return-map"
+  ],
+  "targetZoomMeasured": false,
+  "browserViewport": {
+    "before": {
+      "scale": 1,
+      "dpr": 1,
+      "innerWidth": 1600,
+      "innerHeight": 900
+    },
+    "after": {
+      "scale": 1,
+      "dpr": 1,
+      "innerWidth": 1600,
+      "innerHeight": 900
+    }
+  },
+  "success": true,
+  "seconds": 35.55
+}

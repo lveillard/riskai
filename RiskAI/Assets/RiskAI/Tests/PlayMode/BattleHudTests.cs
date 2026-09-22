@@ -355,4 +355,53 @@ namespace RiskAI.Tests
             SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);
         }
     }
+
+    public sealed class BattleHudCountdownTests
+    {
+        Scene scene, previous;
+        ScenarioMap previousMap;
+        BattleSession.StartLayout previousLayout;
+        BattleSession.VictoryMode previousMode;
+        int previousPlayers, previousSeed;
+        bool previousCountdown;
+        BattleHud hud;
+
+        [UnitySetUp]
+        public IEnumerator SetUp()
+        {
+            previous=SceneManager.GetActiveScene();previousMap=BattleSession.MapForNewMatch;previousLayout=BattleSession.LayoutForNewMatch;
+            previousMode=BattleSession.ModeForNewMatch;previousPlayers=BattleSession.PlayerCountForNewMatch;previousSeed=BattleSession.SeedForNewMatch;
+            previousCountdown=BattleSession.CountdownForNewMatch;
+            BattleSession.MapForNewMatch=ScenarioMap.Classic;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.Fixed;
+            BattleSession.ModeForNewMatch=BattleSession.VictoryMode.Conquest;BattleSession.PlayerCountForNewMatch=2;BattleSession.SeedForNewMatch=19031;
+            BattleSession.CountdownForNewMatch=true;GameText.Set(GameLanguage.English);
+            scene=SceneManager.CreateScene("Battle HUD countdown onboarding");SceneManager.SetActiveScene(scene);
+            new GameObject("Battle HUD countdown bootstrap").AddComponent<RiskBootstrap>();yield return null;
+            BattleSession.Current.AiEnabled=false;Object.FindFirstObjectByType<RtsController>().enabled=false;
+            hud=Object.FindFirstObjectByType<BattleHud>();
+        }
+
+        [UnityTest]
+        public IEnumerator StartCountdownPresentsTheThreeStepCampaignOnboarding()
+        {
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            var overlay=root.Q<VisualElement>("Match start countdown");
+            Assert.That(BattleSession.Current.IsStarting,Is.True);
+            Assert.That(overlay,Is.Not.Null);
+            Assert.That(overlay.resolvedStyle.display,Is.EqualTo(DisplayStyle.Flex));
+            Assert.That(root.Q<Label>("Countdown milestone 1").text,Is.EqualTo("1 · Select a city. Recruit units and invade."));
+            Assert.That(root.Q<Label>("Countdown milestone 2").text,Does.Contain("allied replacement"));
+            Assert.That(root.Q<Label>("Countdown milestone 3").text,Does.Contain("gain gold and reinforcements"));
+            yield return null;
+        }
+
+        [UnityTearDown]
+        public IEnumerator TearDown()
+        {
+            UiViewport.ResetHudHeights();GameText.Set(GameLanguage.English);BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
+            BattleSession.ModeForNewMatch=previousMode;BattleSession.PlayerCountForNewMatch=previousPlayers;BattleSession.SeedForNewMatch=previousSeed;
+            BattleSession.CountdownForNewMatch=previousCountdown;
+            SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);
+        }
+    }
 }
