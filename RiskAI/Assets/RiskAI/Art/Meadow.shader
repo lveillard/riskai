@@ -24,7 +24,7 @@ Shader "RiskAI/Meadow"
    int _RiskCityCount;
    #include "MapSurface.hlsl"
    #include "NaturalNoise.hlsl"
-   #include "CoastSurface.hlsl"
+   #include "BiomeField.hlsl"
    struct A {float4 p:POSITION;float3 n:NORMAL;float2 coast:TEXCOORD1;};
    struct V {float4 p:SV_POSITION;float3 w:TEXCOORD0;half fog:TEXCOORD1;float3 n:TEXCOORD2;float river:TEXCOORD3;float2 coast:TEXCOORD4;};
    V Vert(A a){V o;VertexPositionInputs p=GetVertexPositionInputs(a.p.xyz);o.p=p.positionCS;o.w=p.positionWS;o.n=TransformObjectToWorldNormal(a.n);o.fog=ComputeFogFactor(o.p.z);o.river=RiskRiverDistance(o.w.xz);o.coast=a.coast;return o;}
@@ -93,6 +93,8 @@ Shader "RiskAI/Meadow"
     Light sun=GetMainLight(TransformWorldToShadowCoord(i.w),i.w,half4(1,1,1,1));
     float terrainShadow=lerp(.24,1,saturate(sun.shadowAttenuation));
     color*=half3(.36,.41,.43)+sun.color*saturate(dot(n,sun.direction))*terrainShadow*.78;
+    // The continental backdrop beyond the board recedes into the camera background.
+    color=lerp(color,_RiskHorizonColor.rgb,RiskHorizonFade(i.w.xz));
     return half4(MixFog(color,i.fog),1);
    }
    ENDHLSL

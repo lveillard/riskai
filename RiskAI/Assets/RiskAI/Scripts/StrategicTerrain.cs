@@ -4,10 +4,14 @@ namespace RiskAI
 {
     public static class StrategicTerrain
     {
+        // The backdrop reaches past the end of the horizon fade on every side.
+        const float HorizonFadeStart=10f,HorizonFadeEnd=88f,BackdropReach=112f;
         public static void Create(Transform root)
         {
             var resources=GeneratedResourceOwner.For(root);
             ShoreAccess.BakeSurface(root);
+            // Ground and sea beyond the board recede into the camera background instead of ending at a hard edge.
+            TerrainBiomes.Horizon(new Vector4(-MapLayout.HalfWidth,-MapLayout.HalfDepth,MapLayout.HalfWidth,MapLayout.HalfDepth),HorizonFadeStart,HorizonFadeEnd,TerrainBiomes.Enabled);
             // Sub-metre sampling keeps the bevel and river banks continuous with the walkable surface.
             const int nx=360,nz=400;
             var vertices=new Vector3[(nx+1)*(nz+1)];var triangles=new List<int>(nx*nz*6);
@@ -33,7 +37,8 @@ namespace RiskAI
             land.AddComponent<MeshCollider>().sharedMesh=collisionMesh;
             var clearings = BuildingClearings();
             CreateIslands(root,resources);CreateSeabed(root,resources);CreateBackdrop(clearings,resources);
-            var sea=VisualFactory.Shape(null,PrimitiveType.Cube,"Northern sea",new Vector3(0,-.3f,0),new Vector3(420,.12f,420),Color.white);
+            float seaSize=2*(Mathf.Max(MapLayout.HalfWidth,MapLayout.HalfDepth)+BackdropReach+20);
+            var sea=VisualFactory.Shape(null,PrimitiveType.Cube,"Northern sea",new Vector3(0,-.3f,0),new Vector3(seaSize,.12f,seaSize),Color.white);
             sea.GetComponent<Renderer>().sharedMaterial=Resources.Load<Material>("RiverWater");
             var trees=new GameObject("Pine forests");trees.transform.SetParent(root,false);
             var random=new System.Random(4019);int seed=0;
@@ -180,7 +185,8 @@ namespace RiskAI
             // It has no colliders and therefore cannot expand the gameplay NavMesh.
             var root=new GameObject("Distant continental woodland");
             var vertices=new List<Vector3>();var triangles=new List<int>();
-            for(float bx=-140;bx<140;bx+=2)for(float bz=-140;bz<100;bz+=2)
+            float reachX=Mathf.Ceil((MapLayout.HalfWidth+BackdropReach)/MapLayout.Spacing/2)*2,reachZ=Mathf.Ceil((MapLayout.HalfDepth+BackdropReach)/MapLayout.Spacing/2)*2;
+            for(float bx=-reachX;bx<reachX;bx+=2)for(float bz=-reachZ;bz<100;bz+=2)
             {
                 if(bx>=-MapLayout.HalfWidth/MapLayout.Spacing&&bx<MapLayout.HalfWidth/MapLayout.Spacing&&bz>=-MapLayout.HalfDepth/MapLayout.Spacing&&bz<MapLayout.HalfDepth/MapLayout.Spacing)continue;
                 float x=bx*MapLayout.Spacing,z=bz*MapLayout.Spacing,step=2*MapLayout.Spacing;
@@ -196,14 +202,21 @@ namespace RiskAI
             mesh.SetVertices(vertices);BakeCoastWeights(mesh,vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             root.AddComponent<MeshFilter>().sharedMesh=mesh;root.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
             var random=new System.Random(561);
-            for(float x=-104;x<104;x+=3.1f)for(float z=-88;z<83;z+=3.1f)
+            // A thin band of the adjacent biome's trees continues the edge woods; farther out
+            // the ground has faded enough that trees would only pop against the horizon.
+            const float treeBand=22f;
+            for(float x=-MapLayout.HalfWidth-treeBand;x<MapLayout.HalfWidth+treeBand;x+=3.1f)for(float z=-MapLayout.HalfDepth-treeBand;z<MapLayout.HalfDepth+treeBand;z+=3.1f)
             {
-                if(Mathf.Abs(x)<MapLayout.HalfWidth&&Mathf.Abs(z)<MapLayout.HalfDepth||z>MapLayout.Coast(x)-1.5f||random.NextDouble()<.4)continue;
+                if(Mathf.Abs(x)<MapLayout.HalfWidth&&Mathf.Abs(z)<MapLayout.HalfDepth||z>MapLayout.Coast(x)-1.5f||random.NextDouble()<.45)continue;
                 float px=x+(float)random.NextDouble()*1.8f,pz=z+(float)random.NextDouble()*1.8f;
+                float outside=Mathf.Max(Mathf.Abs(px)-MapLayout.HalfWidth,Mathf.Abs(pz)-MapLayout.HalfDepth);
+                if(random.NextDouble()<outside/treeBand)continue;
                 var point=new Vector3(px,MapLayout.Height(px,pz),pz);
                 float treeHeight=3.1f+(float)random.NextDouble()*1.5f;
                 if(ObscuresBuilding(point,treeHeight,clearings))continue;
-                WorldArt.Tree(root.transform,point,treeHeight,(int)(x*17+z*31)&32767,false);
+                int treeSeed=(int)(x*17+z*31)&32767;
+                if(TerrainBiomes.Enabled)BiomeVegetation.Tree(root.transform,point,treeHeight,treeSeed);
+                else WorldArt.Tree(root.transform,point,treeHeight,treeSeed,false);
             }
             StaticBatchingUtility.Combine(root);
         }

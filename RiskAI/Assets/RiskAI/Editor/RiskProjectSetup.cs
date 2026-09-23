@@ -9,7 +9,16 @@ namespace RiskAI.Editor
 {
     public static class RiskProjectSetup
     {
-        const string Version="0.29.1";
+        // Single version source: ../VERSION at the repository root (Unity's working directory is the project folder).
+        static string Version=>ReadVersion();
+        static string ReadVersion()
+        {
+            string path=Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(),"..","VERSION"));
+            if(!File.Exists(path))throw new FileNotFoundException("Riesgus VERSION file not found at "+path,path);
+            string version=File.ReadAllText(path).Trim();
+            if(version.Length==0)throw new System.InvalidOperationException("Riesgus VERSION file is empty: "+path);
+            return version;
+        }
         const string FrontEndScenePath="Assets/RiskAI/Scenes/FrontEnd.unity";
         const string ScenePath="Assets/RiskAI/Scenes/LasMarcas.unity";
         [MenuItem("RiskAI/Prepare playable scene")]
@@ -27,6 +36,8 @@ namespace RiskAI.Editor
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Standalone,"com.lveillard.riskai");
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.iOS,"com.lveillard.riskai");
             PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.WindowsStoreApps,"com.lveillard.riskai");
+            // Unity 6 makes the "Made with Unity" splash optional on every plan; start straight in the menu.
+            PlayerSettings.SplashScreen.show=false;PlayerSettings.SplashScreen.showUnityLogo=false;
             PlayerSettings.bundleVersion=Version;PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
             PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;PlayerSettings.runInBackground=false;
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);

@@ -12,6 +12,7 @@ namespace RiskAI
 #if UNITY_WEBGL && !UNITY_EDITOR
         [DllImport("__Internal")] static extern float RiskAI_CanvasDensity();
         [DllImport("__Internal")] static extern int RiskAI_TouchCapable();
+        [DllImport("__Internal")] static extern int RiskAI_PrefersSpanish();
         [DllImport("__Internal")] static extern float RiskAI_SafeInset(int edge);
         [DllImport("__Internal")]
         static extern int RiskAI_ReadWheelDeltas([Out,MarshalAs(UnmanagedType.LPArray,SizeConst=WheelSampleLength)] float[] destination);
@@ -25,6 +26,18 @@ namespace RiskAI
                 return RtsCameraPolicy.NormalizeWebWheelDeltas(wheelSample[0],wheelSample[1],wheelSample[2],wheelSample[3]);
 #endif
             return inputSystemFallback;
+        }
+        /// <summary>Browser (navigator.languages) or OS language is Spanish (es-*).</summary>
+        public static bool PrefersSpanish
+        {
+            get
+            {
+#if UNITY_WEBGL && !UNITY_EDITOR
+                return RiskAI_PrefersSpanish()!=0;
+#else
+                return Application.systemLanguage==SystemLanguage.Spanish;
+#endif
+            }
         }
         public static bool TouchCapable
         {

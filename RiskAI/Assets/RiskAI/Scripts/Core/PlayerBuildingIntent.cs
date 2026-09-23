@@ -5,7 +5,8 @@ namespace RiskAI.Core
     public enum BuildingKind { Settlement, Harbor, CountryCamp }
     public enum ProductionQueueChannel { Land, Naval }
     public enum RallyDestination { Land, Naval }
-    public enum PlayerBuildingIntentKind { RecruitUnit, BuyShip, CancelTraining, SetRally, ClearRally, BuildTower }
+    // v0.30 removed BuildTower: city/harbor posts cannot be attacked, so a rebuild order was unreachable.
+    public enum PlayerBuildingIntentKind { RecruitUnit, BuyShip, CancelTraining, SetRally, ClearRally }
 
     /// <summary>Typed local building identity. Stable within its map roster and free of scene references.</summary>
     public readonly struct BuildingId : IEquatable<BuildingId>
@@ -44,6 +45,5 @@ namespace RiskAI.Core
         public static PlayerBuildingIntent SetLandRally(BuildingId buildingId,float x,float y,float z) => SetRally(buildingId,RallyDestination.Land,x,y,z);
         public static PlayerBuildingIntent SetNavalRally(BuildingId buildingId,float x,float y,float z) => SetRally(buildingId,RallyDestination.Naval,x,y,z);
         public static PlayerBuildingIntent ClearRally(BuildingId buildingId) => new PlayerBuildingIntent(buildingId,PlayerBuildingIntentKind.ClearRally,default,default,0,ProductionQueueChannel.Land,RallyDestination.Land,0,0,0);
-        public static PlayerBuildingIntent BuildTower(BuildingId buildingId) => new PlayerBuildingIntent(buildingId,PlayerBuildingIntentKind.BuildTower,default,default,0,ProductionQueueChannel.Land,RallyDestination.Land,0,0,0);
     }
 }

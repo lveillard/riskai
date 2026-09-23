@@ -69,6 +69,12 @@ namespace RiskAI
         bool wasFighting, simulationPaused, stoppedBeforePause;
         float simDelta;
         MedicSupport medic;
+        RoarSupport roar;
+        float roarUntil = -1;
+        /// <summary>Aroa buff: +25% rolled damage until the source duration ends.</summary>
+        public bool IsRoaring => session && roarUntil > session.BattleTime;
+        public void ApplyRoar(float until) { if (IsAlive) roarUntil = Mathf.Max(roarUntil, until); }
+        public ManaPool Mana => medic ? medic.Mana : roar ? roar.Mana : null;
         readonly List<CombatTarget> nearby = new List<CombatTarget>(64);
         readonly List<CombatTarget> alerted = new List<CombatTarget>(32);
         readonly Queue<Order> orders = new Queue<Order>();
@@ -77,7 +83,7 @@ namespace RiskAI
         {
             ClearHumanMoveTelemetry(true);
             session=battle; Team=team; Kind=kind; Health=MaxHealth; OriginCountry=-1;
-            Garrison=null; simulationPaused=false; enabled=true;
+            Garrison=null; simulationPaused=false; enabled=true; roarUntil=-1;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
             mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; orders.Clear();
             nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
@@ -102,11 +108,13 @@ namespace RiskAI
                 VisualFactory.Soldier(this);
                 presentationLod=gameObject.AddComponent<UnitPresentationLodView>();presentationLod.Initialize(kind,team);
                 if(kind==UnitKind.Medic)medic=gameObject.AddComponent<MedicSupport>();
+                if(SupportAbilities.CanRoar(kind))roar=gameObject.AddComponent<RoarSupport>();
                 visualAnimator=GetComponent<SoldierAnimator>();
                 ring=VisualFactory.Ring(transform,Mathf.Max(.43f,SourceGeometry.AgentRadius(kind)*1.15f),.045f,new Color(.5f,1f,.6f));
             }
             GetComponent<Collider>().enabled=true;
             if(medic)medic.Initialize(this,battle);
+            if(roar)roar.Initialize(this,battle);
             if(visualAnimator)visualAnimator.ResetForReuse();
             Select(false);nextSense=session.BattleTime+(EntityId%4)*.05f;
         }
@@ -157,7 +165,7 @@ namespace RiskAI
             if(Agent.isOnNavMesh && (Agent.nextPosition-garrisonAnchor).sqrMagnitude>.000001f)Agent.Warp(garrisonAnchor);
         }
 
-        public void Select(bool value) { Selected = value; if (ring) ring.enabled = value; if(presentationLod)presentationLod.SetSelected(value); }
+        public void Select(bool value) { bool pop = value && !Selected; Selected = value; if (ring) { ring.enabled = value; if (pop) GameFeel.PopRing(ring); } if(presentationLod)presentationLod.SetSelected(value); }
         public string LastMoveError { get; private set; }
         internal bool PathPendingForTelemetry => Agent && Agent.enabled && Agent.isOnNavMesh && Agent.pathPending;
         internal float PathPendingAgeForTelemetry => pathPendingSince >= 0 && session != null ? Mathf.Max(0, session.BattleTime-pathPendingSince) : 0;
@@ -319,16 +327,17 @@ namespace RiskAI
             // Warcraft's Ahea heal is an autocast order. A medic can resume combat
             // afterwards, but cannot resolve a heal and an attack in the same tick.
             bool healed=medic&&medic.SimTick(delta);
+            if(roar)roar.SimTick(delta);
             if(healed){CancelStrike();nextAttack=Mathf.Max(nextAttack,session.BattleTime+MedicSupport.CastInterval);}
             if (!healed && strikeAt >= 0 && session.BattleTime >= strikeAt)
             {
                 attackPresentationContactTick=session.Clock.TickCount;
                 if(visualAnimator)visualAnimator.SampleStrikeContact();
-                if (strikeTarget && strikeTarget.Health > 0 && Vector3.Distance(transform.position, strikeTarget.ApproachPoint(transform.position)) <= BattleRules.Range(Kind) + .55f && Vector3.Distance(transform.position,strikeTarget.ApproachPoint(transform.position))>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
+                if (strikeTarget && strikeTarget.Health > 0 && AttackDistance(strikeTarget) <= BattleRules.Range(Kind) + .55f && AttackDistance(strikeTarget)>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
                 {
-                    float damage = session.RollDamage(BattleRules.Profile(Kind));
+                    float damage = session.RollDamage(BattleRules.Profile(Kind)) * SupportAbilities.DamageMultiplier(IsRoaring);
                     if (BattleRules.Ranged(Kind)) session.Combat.FireWeapon(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, SourceWeapons.For(Kind, AttackType));
-                    else strikeTarget.ReceiveAttack(damage, AttackType, Team, this);
+                    else { strikeTarget.ReceiveAttack(damage, AttackType, Team, this); session.Feedback.RaiseImpact(strikeTarget.AimPoint, AttackType, 0, ImpactKind.Melee, this); }
                 }
                 strikeAt = -1; strikeTarget = null;
             }
@@ -401,9 +410,39 @@ namespace RiskAI
                 Weapon.localRotation = Quaternion.Euler(-15-pose*95,0,0);
             }
         }
+        /// <summary>Collision radius used for melee reach (source ucol).</summary>
+        public float BodyRadius => SourceGeometry.AgentRadius(Kind);
+        static float ReachRadius(CombatTarget other) => other is Soldier soldier ? soldier.BodyRadius : 0;
+        /// <summary>A melee unit opens its first blow once this far inside its reach...</summary>
+        public const float MeleeReachMargin = .2f;
+        /// <summary>...and paths to a point this far inside it, so braking short still engages.</summary>
+        public const float MeleeApproachMargin = .4f;
+        /// <summary>
+        /// Distance the attack range is measured over. Melee reach is edge to edge, as in the
+        /// source (gap between the two collision circles; building/ship approach points already
+        /// lie on their surface). Ranged units keep the centre-to-approach-point distance.
+        /// </summary>
+        float AttackDistance(CombatTarget other)
+        {
+            float distance = Vector3.Distance(transform.position, other.ApproachPoint(transform.position));
+            return BattleRules.Ranged(Kind) ? distance : distance - BodyRadius - ReachRadius(other);
+        }
+        /// <summary>Centre distance at which a melee unit of <paramref name="kind"/> engages a target of the given radius.</summary>
+        public static float MeleeEngageDistance(UnitKind kind, float targetRadius) =>
+            SourceGeometry.AgentRadius(kind) + targetRadius + Mathf.Max(.05f, BattleRules.Range(kind) - MeleeApproachMargin);
+        CombatTarget meleeEngaged;
         void Fight()
         {
-            float distance = Vector3.Distance(transform.position, target.ApproachPoint(transform.position));
+            float distance = AttackDistance(target);
+            // Melee hysteresis: close to just inside the reach before the first blow, then
+            // keep striking anywhere within it. Without this a charging lancer halts at the
+            // very edge and every small drift restarts the approach.
+            float reach = BattleRules.Range(Kind);
+            if (!BattleRules.Ranged(Kind))
+            {
+                if (meleeEngaged != target) reach = Mathf.Max(.05f, reach - MeleeReachMargin);
+                if (distance > BattleRules.Range(Kind)) meleeEngaged = null;
+            }
             bool visible = Visible(target);
             if(distance<BattleRules.MinimumRange(Kind))
             {
@@ -417,8 +456,9 @@ namespace RiskAI
                 }
                 return;
             }
-            if (distance <= BattleRules.Range(Kind) && visible)
+            if (distance <= reach && visible)
             {
+                if (!BattleRules.Ranged(Kind)) meleeEngaged = target;
                 Agent.isStopped = true;
                 Vector3 direction = target.transform.position - transform.position; direction.y = 0;
                 if (direction.sqrMagnitude > .001f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(direction), 650 * simDelta);
@@ -455,6 +495,22 @@ namespace RiskAI
                         Agent.stoppingDistance = .05f;
                         RequestAutonomousPath(firing.position);
                         return;
+                    }
+                }
+                if (!BattleRules.Ranged(Kind))
+                {
+                    // Stop at the edge of the reach instead of pressing into the target.
+                    var from = transform.position - approach; from.y = 0;
+                    if (from.sqrMagnitude > .0001f)
+                    {
+                        var probe = approach + from.normalized * MeleeEngageDistance(Kind, ReachRadius(target));
+                        if (NavMesh.SamplePosition(probe, out var spot, .75f, NavMesh.AllAreas) &&
+                            !NavMesh.Raycast(transform.position, spot.position, out _, NavMesh.AllAreas))
+                        {
+                            Agent.stoppingDistance = .05f;
+                            RequestAutonomousPath(spot.position);
+                            return;
+                        }
                     }
                 }
                 // An obstructed firing position still requires following the
@@ -520,7 +576,8 @@ namespace RiskAI
                 if (PlayerRules.IsPlayer(attacker) && attacker < session.PlayerCount) { session.Kills[attacker]++; session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind)); }
                 Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);Select(false);Agent.enabled=false;GetComponent<Collider>().enabled=false;enabled=false;
                 if(visualAnimator)visualAnimator.Die();
-                session.SoldierPool.Retire(this,visualAnimator?1.4f:0);
+                session.Feedback.RaiseDied(this);
+                session.SoldierPool.Retire(this,SoldierPool.CorpseDelay(session,visualAnimator));
                 return;
             }
             if (source && mode != OrderMode.Move && mode != OrderMode.Hold && mode != OrderMode.Follow && !target)

@@ -50,7 +50,9 @@ namespace RiskAI.Tests
             Assert.That(BattleRules.Model(UnitKind.MarinePrivate),Is.EqualTo("MarinePrivate"));
             Assert.That(BattleRules.Model(UnitKind.MarinePrivate),Is.Not.EqualTo(BattleRules.Model(UnitKind.Archer)));
             Assert.That(AttackPresentationTiming.ContactNormalizedTime(UnitKind.Mage),Is.EqualTo(9f/28f));
-            Assert.That(AttackPresentationTiming.ContactNormalizedTime(UnitKind.MarineMajor),Is.EqualTo(13f/33f));
+            // Mounted marines use the procedural lance curve (contact halfway), like the Caballero.
+            Assert.That(AttackPresentationTiming.Clip(UnitKind.MarineMajor),Is.Null);
+            Assert.That(AttackPresentationTiming.ContactNormalizedTime(UnitKind.MarineMajor),Is.EqualTo(.5f));
             Assert.That(AttackPresentationTiming.Clip(UnitKind.Mortar),Is.Null);
             Assert.That(AttackPresentationTiming.ContactNormalizedTime(UnitKind.Mortar),Is.EqualTo(.5f));
         }

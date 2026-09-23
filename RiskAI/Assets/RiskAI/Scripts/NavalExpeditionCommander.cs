@@ -14,18 +14,24 @@ namespace RiskAI
         const float NoPlanRetrySeconds = 6f;
         const float RetrySeconds = 10f;
         const int MinimumTroops = 2;
-        const int MaximumTroops = 4;
+        // A transport carries ten; the difficulty profile decides how much of it a wave fills.
+        const int TroopCapacity = 10;
         const int SourceProbeBudget = 4;
-        const int TroopRouteProbeBudget = 8;
+        const int TroopRouteProbeBudget = 12;
         const int TargetProbeBudget = 6;
+        const float TroopSearchRadius = 40f;
+        const float BoardingGraceSeconds = 8f;
+        const float LandingThreatRadius = 16f;
+        const float BerthThreatRadius = 24f;
         readonly NavalWorld world;
         readonly BattleSession session;
         readonly PlayerBuildingCommands buildingCommands;
         readonly int team;
         // This is the session-owned reservation. NavalWorld only queries its
         // handful of commanders, so it cannot survive into a later match.
-        readonly List<Soldier> troops = new List<Soldier>(MaximumTroops);
-        readonly List<Soldier> scratchTroops = new List<Soldier>(MaximumTroops);
+        readonly List<Soldier> troops = new List<Soldier>(TroopCapacity);
+        readonly List<Soldier> scratchTroops = new List<Soldier>(TroopCapacity);
+        readonly List<CombatTarget> nearbyTargets = new List<CombatTarget>(32);
         struct TargetCandidate { public Settlement Town; public Harbor Harbor; }
         struct TargetPair : System.IEquatable<TargetPair>
         {
@@ -57,19 +63,21 @@ namespace RiskAI
         readonly HashSet<Harbor> examinedSources = new HashSet<Harbor>();
         readonly Dictionary<Harbor,int> targetHarborCursors = new Dictionary<Harbor,int>();
         readonly Dictionary<TargetPair,int> targetTownCursors = new Dictionary<TargetPair,int>();
-        readonly List<Soldier> landed = new List<Soldier>(MaximumTroops);
+        readonly List<Soldier> landed = new List<Soldier>(TroopCapacity);
         readonly NavMeshPath landPath = new NavMeshPath();
+        SkirmishCommander landCommander;
         Phase phase;
         Harbor source, destination, returnHarbor;
         Vector3 sourceLanding, sourceTransportBerth, destinationTransportBerth;
         Settlement target;
         Ship transport;
         float nextDecision, phaseDeadline, retryAt;
-        float plannedSeaDistance, plannedGatherDistance;
+        float plannedSeaDistance, plannedGatherDistance, boardingDeadline;
         int sourceHarborCursor, troopCursor, recoveryHarborCursor, recoveryPass;
         bool embarkOrdersIssued, sailOrderIssued, attackOrderIssued;
 
         public bool IsActive => phase != Phase.Planning && phase != Phase.Cooldown;
+        int MaximumTroops => Mathf.Clamp(session.AiProfile.ExpeditionTroops, MinimumTroops, TroopCapacity);
 
         public NavalExpeditionCommander(NavalWorld naval,int player)
         {
@@ -174,7 +182,8 @@ namespace RiskAI
                     var soldier=troops[i];if(!Eligible(soldier))continue;
                     if(!world.TryOrderEmbarkAt(transport,soldier,source,out _)){Fail();return;}
                 }
-                embarkOrdersIssued=true;return;
+                // Wait briefly for the whole squad instead of sailing with the first two aboard.
+                embarkOrdersIssued=true;boardingDeadline=session.BattleTime+BoardingGraceSeconds;return;
             }
             int viable=transport.CargoCount;
             for(int i=0;i<troops.Count;i++)
@@ -188,7 +197,7 @@ namespace RiskAI
             // harbor circle. Do not hold the only mission slot until timeout when
             // fewer than a legal wave remain able to board.
             if(viable<MinimumTroops){Fail();return;}
-            if(transport.CargoCount>=MinimumTroops)
+            if(transport.CargoCount>=MinimumTroops&&(transport.CargoCount>=viable||transport.CargoCount>=transport.Profile.Capacity||session.BattleTime>=boardingDeadline))
             {
                 // Only people actually aboard can be part of an overseas order.
                 // A full four-unit candidate list may legally leave with two cargo.
@@ -206,6 +215,7 @@ namespace RiskAI
             {
                 world.OrderDisembark(transport,destination);
                 if(!string.IsNullOrEmpty(transport.LastActionError)){Fail();return;}
+                if(session.AiProfile.NavalEscort)OrderEscort();
                 sailOrderIssued=true;return;
             }
             if(transport.CargoCount==0)
@@ -285,15 +295,27 @@ namespace RiskAI
         void CollectTroops(Vector3 landing,List<Soldier> result)
         {
             result.Clear();if(session.Units.Count==0)return;
-            int probes=0,count=session.Units.Count,start=PositiveModulo(troopCursor,count);
+            int probes=0,maximum=MaximumTroops;
+            // Nearest idle troops first; the roster cursor below fills any remainder.
+            session.Spatial.Query(landing,TroopSearchRadius,nearbyTargets);
+            SortByDistance(nearbyTargets,landing);
+            for(int i=0;i<nearbyTargets.Count&&probes<TroopRouteProbeBudget&&result.Count<maximum;i++)
+            {
+                var soldier=nearbyTargets[i] as Soldier;
+                if(!Eligible(soldier)||(!soldier.IsIdle&&!soldier.IsHolding)||DistanceXZ(soldier.transform.position,landing)>TroopSearchRadius||LandCommitted(soldier))continue;
+                probes++;
+                if(CanWalk(soldier.transform.position,landing))result.Add(soldier);
+            }
+            if(result.Count>=maximum)return;
+            int count=session.Units.Count,start=PositiveModulo(troopCursor,count);
             troopCursor=(start+TroopRouteProbeBudget)%count;
             for(int offset=0;offset<count&&probes<TroopRouteProbeBudget;offset++)
             {
                 var soldier=session.Units[(start+offset)%count];
-                if(!Eligible(soldier)||(!soldier.IsIdle&&!soldier.IsHolding))continue;
+                if(!Eligible(soldier)||(!soldier.IsIdle&&!soldier.IsHolding)||result.Contains(soldier)||LandCommitted(soldier))continue;
                 probes++;
                 if(CanWalk(soldier.transform.position,landing))result.Add(soldier);
-                if(result.Count>=MaximumTroops)break;
+                if(result.Count>=maximum)break;
             }
         }
 
@@ -322,7 +344,10 @@ namespace RiskAI
             {
                 var candidate=targetCandidates[i];var town=candidate.Town;var harbor=candidate.Harbor;
                 if(CanWalk(sourceLanding,town.ClaimPoint))continue;
-                if(!harbor||!harbor.TryTransportLanding(out var landingPoint,out var transportBerth)||!CanWalk(landingPoint,town.ClaimPoint)||!SeaNavigation.TryBuildPath(sourceTransportBerth,transportBerth,out var seaPath))continue;
+                if(!harbor||!harbor.TryTransportLanding(out var landingPoint,out var transportBerth))continue;
+                // Skip beaches held by a mobile army or covered by enemy warships.
+                if(troops.Count>0&&LandingThreat(landingPoint,transportBerth)>TroopPower())continue;
+                if(!CanWalk(landingPoint,town.ClaimPoint)||!SeaNavigation.TryBuildPath(sourceTransportBerth,transportBerth,out var seaPath))continue;
                 selected=town;landing=harbor;destinationTransportBerth=transportBerth;plannedSeaDistance=PathDistance(sourceTransportBerth,seaPath,transportBerth);return true;
             }
             return false;
@@ -376,6 +401,56 @@ namespace RiskAI
             }
             recoveryPass=0;
             return null;
+        }
+
+        // Do not strip a land wave that is assembling at its staging point.
+        bool LandCommitted(Soldier soldier)
+        {
+            if(landCommander==null&&session.Commanders!=null)
+                for(int i=0;i<session.Commanders.Count;i++)if(session.Commanders[i].Team==team)landCommander=session.Commanders[i];
+            return landCommander!=null&&landCommander.IsCommitted(soldier);
+        }
+
+        float TroopPower()
+        {
+            float power=0;
+            for(int i=0;i<troops.Count;i++)if(troops[i])power+=AiUnitAnalysis.For(troops[i].Kind).Value;
+            return power;
+        }
+
+        float LandingThreat(Vector3 landing,Vector3 berth)
+        {
+            float threat=0;
+            session.Spatial.Query(landing,LandingThreatRadius,nearbyTargets);
+            for(int i=0;i<nearbyTargets.Count;i++)
+                if(nearbyTargets[i] is Soldier soldier&&soldier.IsAlive&&!soldier.IsGarrison&&soldier.Team!=team&&PlayerRules.IsPlayer(soldier.Team)&&
+                   DistanceXZ(soldier.transform.position,landing)<=LandingThreatRadius)threat+=AiUnitAnalysis.For(soldier.Kind).Value;
+            foreach(var ship in world.Ships)
+                if(ship&&ship.IsAlive&&ship.Team!=team&&PlayerRules.IsPlayer(ship.Team)&&ship.Profile.CanAttack&&DistanceXZ(ship.transform.position,berth)<=BerthThreatRadius)
+                    threat+=AiUnitAnalysis.ShipValue(ship.Profile)*1.5f;
+            return threat;
+        }
+
+        void OrderEscort()
+        {
+            Ship best=null;float distance=float.MaxValue;
+            foreach(var ship in world.Ships)
+            {
+                if(!ship||!ship.IsAlive||ship.Team!=team||!ship.Profile.CanAttack||ship.IsGarrison||ship.CurrentTarget)continue;
+                float next=DistanceXZ(ship.transform.position,transport.transform.position);
+                if(next<distance&&SeaNavigation.AreConnected(ship.transform.position,destinationTransportBerth)){distance=next;best=ship;}
+            }
+            if(best&&!best.IsAtOrRoutingTo(destinationTransportBerth))best.MoveTo(destinationTransportBerth,true);
+        }
+
+        static void SortByDistance(List<CombatTarget> targets,Vector3 point)
+        {
+            for(int i=1;i<targets.Count;i++)
+            {
+                var target=targets[i];float distance=target?DistanceXZ(target.transform.position,point):float.MaxValue;int j=i-1;
+                while(j>=0&&(targets[j]?DistanceXZ(targets[j].transform.position,point):float.MaxValue)>distance){targets[j+1]=targets[j];j--;}
+                targets[j+1]=target;
+            }
         }
 
         bool RecoverLoadedTransport()
@@ -466,7 +541,7 @@ namespace RiskAI
         void Defer(){retryAt=session.BattleTime+RetrySeconds;ClearPlan();}
         void ClearPlan()
         {
-            source=null;destination=null;target=null;returnHarbor=null;sourceLanding=sourceTransportBerth=destinationTransportBerth=default;troops.Clear();plannedSeaDistance=plannedGatherDistance=0;
+            source=null;destination=null;target=null;returnHarbor=null;sourceLanding=sourceTransportBerth=destinationTransportBerth=default;troops.Clear();plannedSeaDistance=plannedGatherDistance=boardingDeadline=0;
             embarkOrdersIssued=sailOrderIssued=attackOrderIssued=false;
         }
         static int PositiveModulo(int value,int divisor) => divisor<=0?0:(value%divisor+divisor)%divisor;

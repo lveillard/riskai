@@ -155,10 +155,10 @@ namespace RiskAI.Tests
             var root=new GameObject("Manual tower batching contract");
             VisualFactory.Tower(root.transform,0,BuildingVariant.IntegratedTown,out var upper,out var scaffold,out var banner);
             var roof=upper.GetComponentsInChildren<MeshRenderer>().Single(renderer=>renderer.name=="Faction roof");
-            var originalGallery=upper.GetComponentsInChildren<MeshRenderer>(true).First(renderer=>renderer.name=="Integrated gallery");
             var combined=upper.GetComponentsInChildren<MeshRenderer>().Where(renderer=>renderer.gameObject.name.StartsWith("Manual architecture batch · ")).ToArray();
-
-            Assert.That(originalGallery.enabled,Is.False);Assert.That(combined,Is.Not.Empty);
+            // The integrated keep is already a few process-shared meshes, one per
+            // material, so manual batching has nothing left to merge on it.
+            Assert.That(upper.GetComponentsInChildren<MeshRenderer>().Count(renderer=>renderer.enabled),Is.LessThanOrEqualTo(8));
             Assert.That(roof.enabled,Is.True);Assert.That(banner.enabled,Is.True);
             Assert.That(scaffold.GetComponentsInChildren<MeshRenderer>().Any(renderer=>renderer.gameObject.name.StartsWith("Manual architecture batch · ")),Is.False);
             var replacement=VisualFactory.Mat(new Color(.19f,.58f,.72f));

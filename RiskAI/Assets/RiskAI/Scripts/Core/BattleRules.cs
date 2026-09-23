@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace RiskAI.Core
 {
-    public enum UnitKind { Footman, Archer, Guard, Mage, Mortar, Medic, MarinePrivate, MarineMajor, MarineGeneral }
+    // Ordinals are persisted/public: append new identities at the end only.
+    public enum UnitKind { Footman, Archer, Guard, Mage, Mortar, Medic, MarinePrivate, MarineMajor, MarineGeneral, EliteRifleman, Roarer, ArmyGeneral, Artillery, Tank }
 
     public static class BattleRules
     {
@@ -25,7 +26,6 @@ namespace RiskAI.Core
         public const float CountryReinforcementStepSeconds = .5f;
         public static int CountryReinforcementPointsPerRound(int cityCount) => cityCount < 1 ? 0 : (cityCount + 1) / 2;
 
-        public const int TowerCost = 60;
         public const int UpgradeCost = 90;
         // No upgrade income is defined by the extracted map. Settlement owns
         // the product decision to disable upgrades until an authoritative rule
@@ -54,8 +54,14 @@ namespace RiskAI.Core
         public static int RequiredLevel(UnitKind kind) => Profile(kind).Level;
         public static string Name(UnitKind kind) => UnitCatalog.Definition(kind).Name;
         public static string Role(UnitKind kind) => UnitCatalog.Definition(kind).Role;
-        public static string Hotkey(UnitKind kind) => UnitCatalog.Definition(kind).Hotkey;
+        // The effective key is the unit's command-card cell (WC3 grid hotkeys). The catalog's
+        // per-unit letter is kept only as documented source metadata.
+        public static string Hotkey(UnitKind kind) => ProductionHotkeys.Hotkey(kind);
+        public static string SourceHotkey(UnitKind kind) => UnitCatalog.Definition(kind).Hotkey;
         public static string Model(UnitKind kind) => UnitCatalog.Definition(kind).Model;
+        // Ahea only targets organic units; W3U utyp=Mechanical marks h00M/h01A.
+        public static bool Mechanical(UnitKind kind) => UnitCatalog.Definition(kind).Mechanical;
+        public static string SourceRawId(UnitKind kind) => UnitCatalog.Definition(kind).SourceRawId;
     }
 
     [Serializable]

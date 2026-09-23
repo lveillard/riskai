@@ -49,6 +49,8 @@ namespace RiskAI.Tests
             Assert.That(guard.Agent.radius, Is.EqualTo(.64f));
             Assert.That(mortar.Agent.radius, Is.EqualTo(.64f));
             Assert.That(archer.Agent.height, Is.EqualTo(1.3f), "Navigation clearance is separate from presentation.");
+            // Presentation spawns grow in from 0.6 scale; measure the settled size in the spawn pose.
+            foreach(var unit in new[]{archer,medic,guard,mortar})unit.transform.localScale=Vector3.one;
             foreach(var unit in new[]{archer,medic,guard,mortar})
             {
                 Transform model=unit.transform.Find(BattleRules.Model(unit.Kind)+"(Clone)");
@@ -69,6 +71,8 @@ namespace RiskAI.Tests
         public IEnumerator MortarUsesCompactWheeledCarriageAtSourceHeight()
         {
             var mortar=BattleTestScenario.Mobile(battle,0,UnitKind.Mortar,new Vector3(-24,0,-16));
+            // Presentation spawns grow in from 0.6 scale; measure the settled size in the spawn pose.
+            mortar.transform.localScale=Vector3.one;
             var model=mortar.transform.Find("Mortar model");
             Assert.That(model,Is.Not.Null);
             Assert.That(model.Find("Mortar barrel"),Is.Not.Null);
@@ -83,6 +87,8 @@ namespace RiskAI.Tests
         public IEnumerator GuardUsesCalibratedOriginalMountedGeometry()
         {
             var guard=BattleTestScenario.Mobile(battle,0,UnitKind.Guard,new Vector3(-26,0,-16));
+            // Presentation spawns grow in from 0.6 scale; measure the settled size in the spawn pose.
+            guard.transform.localScale=Vector3.one;
             var model=guard.transform.Find("RoyalGuard(Clone)");
             Assert.That(model,Is.Not.Null);
             Assert.That(model.GetComponent<MountedKnightView>(),Is.Not.Null);

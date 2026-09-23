@@ -96,28 +96,26 @@ namespace RiskAI.Tests
                             Assert.That(FlatDistance(town.Defense.AttackOrigin,town.transform.position),Is.LessThan(.001f),town.State.Id+" tower launch center");
                             Assert.That(town.Defense.AimPoint.y-town.Defense.transform.position.y,Is.EqualTo(VisualMetrics.IntegratedTowerGalleryHeight).Within(.001f),town.State.Id+" tower aim height");
                             Assert.That(town.Defense.AttackOrigin.y-town.Defense.transform.position.y,Is.EqualTo(VisualMetrics.IntegratedTowerAttackHeight).Within(.001f),town.State.Id+" tower launch height");
-                            var turret=town.Defense.GetComponentsInChildren<Renderer>().Single(renderer=>renderer.name=="Integrated stone turret");
-                            Assert.That(turret.bounds.min.y,Is.EqualTo(town.transform.position.y).Within(.01f),town.State.Id+" tower base must reach the building floor");
-                            Assert.That(turret.bounds.size.x,Is.GreaterThanOrEqualTo(2.35f*VisualMetrics.TowerScale-.01f),town.State.Id+" embedded keep width");
-                            var parapets=town.Defense.GetComponentsInChildren<MeshFilter>().Where(item=>item.name=="Integrated battlement parapet").ToArray();
-                            Assert.That(parapets.Length,Is.EqualTo(4),town.State.Id+" four crenellated parapets");
-                            Assert.That(parapets.Select(item=>item.sharedMesh).Distinct().Count(),Is.EqualTo(1),town.State.Id+" parapets share one scene-owned mesh");
-                            Assert.That(parapets[0].sharedMesh.vertexCount,Is.EqualTo(72),town.State.Id+" bounded three-piece parapet mesh");
-                            var gallery=town.Defense.GetComponentsInChildren<Renderer>().Single(renderer=>renderer.name=="Integrated gallery");
-                            Assert.That(gallery.bounds.center.y-town.Defense.transform.position.y,
-                                Is.EqualTo(VisualMetrics.IntegratedTowerGalleryHeight+.45f).Within(.01f),town.State.Id+" visual gallery raised independently of combat anchors");
-                            Assert.That(gallery.bounds.size.x,Is.GreaterThanOrEqualTo(3.15f*VisualMetrics.TowerScale-.01f),town.State.Id+" visible watch platform");
-                            foreach(var parapet in parapets)
-                            {
-                                var bounds=parapet.GetComponent<Renderer>().bounds;
-                                Assert.That(bounds.min.x,Is.GreaterThanOrEqualTo(gallery.bounds.min.x-.02f),town.State.Id+" parapet inside gallery west edge");
-                                Assert.That(bounds.max.x,Is.LessThanOrEqualTo(gallery.bounds.max.x+.02f),town.State.Id+" parapet inside gallery east edge");
-                                Assert.That(bounds.min.z,Is.GreaterThanOrEqualTo(gallery.bounds.min.z-.02f),town.State.Id+" parapet inside gallery south edge");
-                                Assert.That(bounds.max.z,Is.LessThanOrEqualTo(gallery.bounds.max.z+.02f),town.State.Id+" parapet inside gallery north edge");
-                            }
-                            Assert.That(town.Defense.GetComponentsInChildren<Renderer>().Count(renderer=>renderer.enabled),Is.LessThanOrEqualTo(10),town.State.Id+" bounded integrated tower renderer budget");
-                            float towerTop=town.Defense.GetComponentsInChildren<Renderer>().Max(renderer=>renderer.bounds.max.y)-town.Defense.transform.position.y;
-                            Assert.That(towerTop,Is.InRange(VisualMetrics.TowerHeight+.33f,VisualMetrics.TowerHeight+.47f),town.State.Id+" integrated silhouette is modestly taller without extra geometry");
+                            var towerRenderers=town.Defense.GetComponentsInChildren<Renderer>();
+                            var footing=towerRenderers.Single(renderer=>renderer.name=="Integrated tower base");
+                            Assert.That(footing.bounds.min.y,Is.EqualTo(town.transform.position.y).Within(.01f),town.State.Id+" tower base must reach the building floor");
+                            var turret=towerRenderers.Single(renderer=>renderer.name=="Integrated stone turret");
+                            // Renderer.bounds is a world AABB of the local box, so a port keep turned
+                            // seaward reads up to sqrt(2) wider. Check the shared mesh in its own frame,
+                            // and only a yaw-independent envelope for the placed renderer.
+                            float crownWidth=2*TowerArt.CrownRadius*VisualMetrics.TowerScale;
+                            Assert.That(TowerArt.Stone.bounds.size.x*VisualMetrics.TowerScale,Is.EqualTo(crownWidth).Within(.03f),town.State.Id+" slender keep with a corbelled crown");
+                            Assert.That(TowerArt.Stone.bounds.size.z*VisualMetrics.TowerScale,Is.EqualTo(crownWidth).Within(.03f),town.State.Id+" round crown depth");
+                            Assert.That(turret.bounds.size.x,Is.InRange(crownWidth-.03f,crownWidth*1.415f+.03f),town.State.Id+" placed keep footprint");
+                            Assert.That(turret.bounds.max.y-town.Defense.transform.position.y,Is.EqualTo(TowerArt.CrownTop*VisualMetrics.TowerScale).Within(.01f),town.State.Id+" crenellated crown height");
+                            Assert.That(VisualMetrics.IntegratedTowerAttackHeight,Is.InRange(VisualMetrics.IntegratedTowerGalleryHeight,turret.bounds.max.y-town.Defense.transform.position.y),
+                                town.State.Id+" bolts leave from the battlements");
+                            Assert.That(towerRenderers.Count(renderer=>renderer.name=="Integrated arrow slits"),Is.EqualTo(1),town.State.Id+" loopholes");
+                            Assert.That(towerRenderers.Count(renderer=>renderer.name=="Faction roof"||renderer.name=="Faction pennant"),Is.EqualTo(2),town.State.Id+" conical roof and pennant carry the owner colour");
+                            Assert.That(towerRenderers.Count(renderer=>renderer.enabled),Is.LessThanOrEqualTo(10),town.State.Id+" bounded integrated tower renderer budget");
+                            float towerTop=towerRenderers.Max(renderer=>renderer.bounds.max.y)-town.Defense.transform.position.y;
+                            Assert.That(towerTop,Is.EqualTo(TowerArt.MastTop*VisualMetrics.TowerScale).Within(.08f),town.State.Id+" integrated keep rises clearly above the civic hall");
+                            Assert.That(VisualMetrics.BuildingLabelHeight(town.VisualVariant),Is.GreaterThan(towerTop),town.State.Id+" label clears the mast");
                             Assert.That(town.Defense.GetComponentsInChildren<NavMeshObstacle>(),Is.Empty,town.State.Id+" integrated tower cannot carve the shared surface");
                             Assert.That(town.Defense.GetComponentsInChildren<Collider>().Any(collider=>collider.enabled&&!collider.isTrigger),Is.False,town.State.Id+" integrated tower cannot add a solid footprint");
                             Assert.That(town.GetComponentsInChildren<Collider>().Count(collider=>collider.enabled&&!collider.isTrigger),

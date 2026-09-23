@@ -42,3 +42,16 @@ Full text: `references/wc3-risk-system/LICENSE`.
 - Extraction method, source archive hashes and adaptation details: `docs/ITERATION-v0.14.md`, `docs/audits/SOURCE-SHALLOWS-v0.27.md` and each JSON's `metadata`.
 
 The original archives and Warcraft art are not bundled. These numeric data files are source-derived map layouts; they should not be described as wholly original maps or as KayKit CC0 content.
+
+## NASA Blue Marble Next Generation (ground colour)
+
+`RiskAI/Assets/RiskAI/Resources/Maps/EuropeGround.bytes` and `NewWorldGround.bytes` are small PNGs
+(one texel per W3E cell) baked by `scripts/bake_ground_colors.py` from NASA's **Blue Marble Next
+Generation** land-surface mosaics (Reto Stöckli, NASA Earth Observatory), May and July 2004,
+5400×2700: https://visibleearth.nasa.gov/collection/1484/blue-marble (records 74042 and 74092).
+NASA imagery is not copyrighted and is used under NASA's media usage guidelines
+(https://www.nasa.gov/nasa-brand-center/images-and-media/); credit: "NASA Earth Observatory — Blue
+Marble Next Generation". The source images are downloaded to `references/bluemarble/`
+(git-ignored); each imported map is georeferenced to approximate latitude/longitude with an
+affine + thin-plate warp fitted to its country positions, and the map's own coastline stays
+authoritative (only colour and a derived aridity value are taken from the imagery).

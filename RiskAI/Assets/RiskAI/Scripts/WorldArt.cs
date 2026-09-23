@@ -48,8 +48,9 @@ namespace RiskAI
             Beam(root,basePoint+v[3],basePoint+v[4],.2f);Beam(root,basePoint+v[4],basePoint+v[5],.2f);
             Beam(root,basePoint+v[1],basePoint+v[4],.2f);return go;
         }
-        // Roof slopes spend much of the match outside direct light. Retaining some of the
-        // painted albedo keeps light blue and navy visibly separate without changing the palette.
+        // Roof slopes spend much of the match outside direct light. Retaining most of the
+        // painted albedo keeps the player hue on shaded slopes: with less lift, shaded
+        // orange read as brown and light blue as navy, colliding with those players.
         public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamMaterialColor(team),.32f,true,colorLift:.38f);
         static Renderer Banner(Transform root,Vector3 position,int team,float width=.7f,float height=1.6f)
         {
@@ -194,42 +195,28 @@ namespace RiskAI
             var model=new GameObject("Integrated tower architecture");model.transform.SetParent(root,false);
             model.transform.localScale=Vector3.one*VisualMetrics.TowerScale;root=model.transform;
             upper=new GameObject("Integrated watchtower");upper.transform.SetParent(root,false);
-            // Raise the silhouette without stretching the parapets/roof or moving
-            // the floor and the independent gameplay aim/launch anchors.
-            float lift=VisualMetrics.IntegratedTowerVisualLift/VisualMetrics.TowerScale;
-            var shaft=Block(upper.transform,"Integrated stone turret",new Vector3(0,2.29f+lift*.5f,0),new Vector3(2.35f,4.58f+lift,2.35f));
-            shaft.GetComponent<Renderer>().sharedMaterial=Painted(0);
-            Block(upper.transform,"Integrated gallery",new Vector3(0,4.58f+lift,0),new Vector3(3.15f,.34f,3.15f));
-            var parapetMesh=IntegratedParapetMesh(root,shaft.GetComponent<MeshFilter>().sharedMesh);
-            var parapetMaterial=Painted(0);
-            for(int side=0;side<4;side++)
-            {
-                float angle=side*90;var direction=Quaternion.Euler(0,angle,0)*Vector3.forward;
-                var parapet=new GameObject("Integrated battlement parapet");parapet.transform.SetParent(upper.transform,false);
-                parapet.transform.localPosition=direction*1.34f+Vector3.up*(4.82f+lift);parapet.transform.localRotation=Quaternion.Euler(0,angle,0);
-                parapet.AddComponent<MeshFilter>().sharedMesh=parapetMesh;parapet.AddComponent<MeshRenderer>().sharedMaterial=parapetMaterial;
-            }
-            var roof=VisualFactory.Cone(upper.transform,"Faction roof",new Vector3(0,5.18f+lift,0),1.2f,1.15f,Color.white,4,45);
-            roof.GetComponent<Renderer>().sharedMaterial=RoofMaterial(team);
-            Beam(upper.transform,new Vector3(0,5.75f+lift,0),new Vector3(0,6.45f+lift,0),.1f);
-            banner=Banner(upper.transform,new Vector3(0,4.55f+lift,-1.48f),team,.72f,1.18f);
+            // A slender round keep that clearly rises out of the civic hall: dark
+            // battered footing, string course, loopholes, corbelled crenellated crown,
+            // conical faction roof and a pennant. All meshes are process-shared.
+            TowerPart(upper.transform,"Integrated tower base",TowerArt.DarkStone,Painted(0,new Color(.6f,.58f,.56f)));
+            TowerPart(upper.transform,"Integrated stone turret",TowerArt.Stone,Painted(0));
+            TowerPart(upper.transform,"Integrated arrow slits",TowerArt.ArrowSlits,VisualFactory.Mat(new Color(.045f,.04f,.035f)));
+            TowerPart(upper.transform,"Faction roof",TowerArt.Roof,RoofMaterial(team));
+            float roofTip=TowerArt.RoofBase+TowerArt.RoofHeight;
+            Beam(upper.transform,new Vector3(0,roofTip-.25f,0),new Vector3(0,TowerArt.MastTop,0),.08f);
+            TowerPart(upper.transform,"Faction pennant",TowerArt.Pennant,RoofMaterial(team)).shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
+            banner=Banner(upper.transform,new Vector3(0,5.72f,-TowerArt.ShaftRadius-.05f),team,.62f,1.2f);
             scaffold=new GameObject("Integrated scaffolding");scaffold.transform.SetParent(root,false);
             for(int side=-1;side<=1;side+=2)
             {
-                Beam(scaffold.transform,new Vector3(side*1.05f,1.7f,-1.05f),new Vector3(side*1.05f,5+lift,-1.05f),.15f);
-                Block(scaffold.transform,"Integrated scaffold",new Vector3(0,side>0?4.35f+lift:2.45f,-1.05f),new Vector3(2.35f,.14f,.5f),2);
+                Beam(scaffold.transform,new Vector3(side*.85f,1.5f,-1.2f),new Vector3(side*.85f,6.3f,-1.2f),.13f);
+                Block(scaffold.transform,"Integrated scaffold",new Vector3(0,side>0?5.3f:3.3f,-1.2f),new Vector3(2.0f,.12f,.45f),2);
             }
         }
-        static Mesh IntegratedParapetMesh(Transform owner,Mesh cube)
+        static MeshRenderer TowerPart(Transform parent,string name,Mesh mesh,Material material)
         {
-            var pieces=new[]
-            {
-                new CombineInstance{mesh=cube,transform=Matrix4x4.TRS(Vector3.zero,Quaternion.identity,new Vector3(2.65f,.28f,.3f))},
-                new CombineInstance{mesh=cube,transform=Matrix4x4.TRS(new Vector3(-1.03f,.32f,0),Quaternion.identity,new Vector3(.5f,.65f,.38f))},
-                new CombineInstance{mesh=cube,transform=Matrix4x4.TRS(new Vector3(1.03f,.32f,0),Quaternion.identity,new Vector3(.5f,.65f,.38f))}
-            };
-            var mesh=GeneratedResourceOwner.For(owner).Track(new Mesh{name="Integrated stone battlement parapet"});
-            mesh.CombineMeshes(pieces,true,true,false);mesh.RecalculateBounds();return mesh;
+            var go=new GameObject(name);go.transform.SetParent(parent,false);
+            go.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=material;return renderer;
         }
         public static void ResetRoads() {roadCount=0;Shader.SetGlobalInt("_RiskRoadCount",0);}
         public static void Road(Vector3 a,Vector3 b,float width)

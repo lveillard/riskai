@@ -62,6 +62,13 @@ namespace RiskAI
                 if (!AcceptPatch(x, z) || !SuitableGround(x, z) || !ClearOfPosts(session, x, z)) continue;
 
                 bool dry=MapLayout.Scenario==ScenarioMap.Classic&&z<-43*MapLayout.Spacing;
+                if(MapLayout.IsImported)
+                {
+                    // Geographic biome: sparse dry tufts in deserts, none on ice.
+                    var biome=TerrainBiomes.Sample(x,z);
+                    if(biome.Cold>.86f||biome.Arid>.86f&&random.Next(4)!=0)continue;
+                    dry=biome.Arid>.3f||biome.Cold>.62f;
+                }
                 int material = (dry?3:0)+random.Next(3);
                 int cellX = Mathf.FloorToInt(x / CellSize), cellZ = Mathf.FloorToInt(z / CellSize);
                 long key = CellKey(cellX, cellZ, material);

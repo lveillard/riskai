@@ -141,6 +141,15 @@ namespace RiskAI.Core
                     return 8; // h00E explicitly overrides acquisition to 400 native.
                 case UnitKind.Mortar:
                     return 18; // h00H explicitly overrides acquisition to 900 native.
+                case UnitKind.EliteRifleman:
+                    return 12; // h00F inherits hrif uacq=600.
+                case UnitKind.Roarer:
+                    return 8;  // h00I explicitly overrides acquisition to 400 native.
+                case UnitKind.ArmyGeneral:
+                case UnitKind.Tank:
+                    return 10; // h00J inherits hkni 500; h01A inherits hfoo 500.
+                case UnitKind.Artillery:
+                    return 20; // h00M explicitly overrides acquisition to 1000 native.
                 case UnitKind.Mage:
                     return 11; // Preserve the local profile's former range + 1 behavior.
                 default:
@@ -171,6 +180,23 @@ namespace RiskAI.Core
                 case UnitKind.Mortar:
                     return new WeaponProfile(damageType, WeaponDelivery.Artillery, 18, WeaponTargeting.LaunchPoint,
                         .5f, 3, 5, .35f, .1f, splashTargets: MortarSplash, sourceRawId: "h00H");
+                // h00F keeps the inherited Rifleman instant firearm (ua1w=instant).
+                case UnitKind.EliteRifleman:
+                    return new WeaponProfile(damageType, WeaponDelivery.Instant, sourceRawId: "h00F");
+                // h00I explicitly overrides ua1z=900 (18 Unity/s); homing is inherited like h00E.
+                case UnitKind.Roarer:
+                    return new WeaponProfile(damageType, WeaponDelivery.Missile, 18, WeaponTargeting.Target,
+                        sourceRawId: "h00I");
+                // h00M explicitly sets artillery, ua1z=900, areas 25/100/170 native, factors .35/.1
+                // and the same tree/ground/structure splash mask as the Mortar.
+                case UnitKind.Artillery:
+                    return new WeaponProfile(damageType, WeaponDelivery.Artillery, 18, WeaponTargeting.LaunchPoint,
+                        .5f, 2, 3.4f, .35f, .1f, splashTargets: MortarSplash, sourceRawId: "h00M");
+                // h01A overrides ua1w=msplash and ua1z=1000 but inherits no hfoo splash areas,
+                // so the source weapon resolves as a single-target missile.
+                case UnitKind.Tank:
+                    return new WeaponProfile(damageType, WeaponDelivery.MissileSplash, 20, WeaponTargeting.Target,
+                        sourceRawId: "h01A");
                 // These prototype-only identities retain an explicit version of their former behavior.
                 case UnitKind.Mage:
                     return new WeaponProfile(damageType, WeaponDelivery.Missile, 25, WeaponTargeting.Target,
@@ -192,6 +218,13 @@ namespace RiskAI.Core
                     // Homing is unresolved, so Target preserves the deployed behavior.
                     return new WeaponProfile(damageType, WeaponDelivery.MissileSplash, 22, WeaponTargeting.Target,
                         .5f, .7f, 1, .3f, .1f, splashTargets: WarshipSplash, sourceRawId: "h00W");
+                // h00U/h001 explicitly set ua1z=1000; inherited hdes msplash radii/factors match h00W.
+                case NavalUnitKind.Warship:
+                    return new WeaponProfile(damageType, WeaponDelivery.MissileSplash, 20, WeaponTargeting.Target,
+                        .5f, .7f, 1, .3f, .1f, splashTargets: WarshipSplash, sourceRawId: "h00U");
+                case NavalUnitKind.Battleship:
+                    return new WeaponProfile(damageType, WeaponDelivery.MissileSplash, 20, WeaponTargeting.Target,
+                        .5f, .7f, 1, .3f, .1f, splashTargets: WarshipSplash, sourceRawId: "h001");
                 default:
                     return default;
             }

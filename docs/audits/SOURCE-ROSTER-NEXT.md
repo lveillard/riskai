@@ -1,5 +1,7 @@
 # Propuesta de altas de unidades: pendiente de decisión
 
+> **v0.30:** las ocho altas están implementadas; tabla final y adaptaciones en [RISK-RULES-v0.30.md](../RISK-RULES-v0.30.md).
+
 No se ha añadido ninguna unidad al runtime. La identidad es el rawcode W3U,
 no el nombre visible ni el objeto base de Blizzard. Coste = `ugol` explícito
 del mapa, sin convertirlo a otra economía. HP indicados como explícitos están

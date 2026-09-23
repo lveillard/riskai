@@ -211,10 +211,8 @@ namespace RiskAI
         /// <summary>Expedition reservations are bounded by one small mission per AI player.</summary>
         public bool IsReserved(Soldier soldier)
         {
-            if(!soldier)return false;
-            foreach(var expedition in expeditions.Values)
-                if(expedition.Reserves(soldier))return true;
-            return false;
+            // A mission only ever reserves its own team's troops, so one lookup suffices.
+            return soldier&&expeditions.TryGetValue(soldier.Team,out var expedition)&&expedition.Reserves(soldier);
         }
         void EnsureAiSchedule()
         {
@@ -235,24 +233,108 @@ namespace RiskAI
         void RunAiDecision(int team)
         {
             if (Session.IsPlayerEliminated(team)) return;
-            int fleet=PendingShips(team);
-            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team)fleet++;
+            var profile=Session.AiProfile;
+            int fleet=PendingShips(team),warships=0;
+            Vector3 fleetCenter=Vector3.zero;
+            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team)
+            {
+                fleet++;
+                if(ship.Profile.CanAttack){warships++;fleetCenter+=ship.transform.position;}
+            }
+            if(warships>0)fleetCenter/=warships;
+            // Harbors under naval attack are both a purchase and an order priority.
+            Harbor besieged=null;float siege=0;
+            foreach(var harbor in Harbors)
+            {
+                if(!harbor||harbor.Owner!=team)continue;
+                float threat=EnemyFleetPower(team,harbor.Berth);
+                if(threat>siege){siege=threat;besieged=harbor;}
+            }
+            int wanted=profile.FleetTarget+(besieged?1:0);
             // Each AI still receives one decision every 18 simulation seconds, but
             // their phase is staggered to avoid rebuilding every fleet route together.
-            if(fleet<2&&Session.Economy.Gold[team]>=Harbor.Cost(ShipKind.Galley))
+            if(fleet<wanted&&TryChooseWarship(Session.Economy.Gold[team],out var kind))
                 foreach(var harbor in Harbors)
-                    if(harbor.Owner==team&&harbor.QueueCount==0&&buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Galley))==null)break;
+                    if(harbor.Owner==team&&harbor.QueueCount==0&&buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(harbor.BuildingId,kind))==null)break;
+            Harbor target=null;
             foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Profile.CanAttack&&!ship.IsGarrison&&!ship.CurrentTarget)
             {
-                Harbor target=null;float distance=float.MaxValue;
-                foreach(var harbor in Harbors)
+                if(besieged&&siege>0)
                 {
-                    if(!harbor||!PlayerRules.IsPlayer(harbor.Owner)||harbor.Owner==team||!harbor.CanLaunch)continue;
-                    float next=FlatDistance(harbor.Berth,ship.transform.position);
-                    if(next<distance){distance=next;target=harbor;}
+                    if(!ship.IsAtOrRoutingTo(besieged.Berth))ship.MoveTo(besieged.Berth,true);
+                    continue;
                 }
+                // Keep an accepted, progressing route to a still valid objective.
+                if(RoutingToValidTarget(ship,team))continue;
+                // Badly damaged galleys fall back to an own port instead of dying alone.
+                if(profile.Level>0&&ship.Health<ship.MaxHealth*.35f)
+                {
+                    var home=NearestOwnHarbor(team,ship.transform.position);
+                    if(home&&!ship.IsAtOrRoutingTo(home.Berth))ship.MoveTo(home.Berth,true);
+                    continue;
+                }
+                // The whole squadron shares one objective so galleys arrive together.
+                if(!target)target=ChooseNavalTarget(team,warships>0?fleetCenter:ship.transform.position,profile);
                 if(target&&!ship.IsAtOrRoutingTo(target.Berth))ship.MoveTo(target.Berth,true);
             }
+        }
+        bool RoutingToValidTarget(Ship ship,int team)
+        {
+            foreach(var harbor in Harbors)
+                if(harbor&&PlayerRules.IsPlayer(harbor.Owner)&&harbor.Owner!=team&&harbor.CanLaunch&&ship.IsAtOrRoutingTo(harbor.Berth)&&
+                   FlatDistance(ship.transform.position,harbor.Berth)>2.25f)return true;
+            return false;
+        }
+        static bool TryChooseWarship(int gold,out NavalUnitKind kind)
+        {
+            kind=NavalUnitKind.Galley;float best=float.NegativeInfinity;bool found=false;
+            var options=ProductionCatalog.HarborShips;
+            for(int i=0;i<options.Count;i++)
+            {
+                var profile=UnitCatalog.Profile(options[i]);
+                if(!profile.CanAttack||profile.Cost>gold)continue;
+                float score=AiUnitAnalysis.ShipValue(profile)/Mathf.Pow(Mathf.Max(1,profile.Cost),.7f);
+                if(score>best){best=score;kind=options[i];found=true;}
+            }
+            return found;
+        }
+        float EnemyFleetPower(int team,Vector3 point,float radius=24f)
+        {
+            float power=0;
+            foreach(var ship in Ships)
+                if(ship&&ship.IsAlive&&ship.Team!=team&&PlayerRules.IsPlayer(ship.Team)&&ship.Profile.CanAttack&&FlatDistance(ship.transform.position,point)<=radius*radius)
+                    power+=AiUnitAnalysis.ShipValue(ship.Profile)*ship.Health/Mathf.Max(1,ship.MaxHealth);
+            return power;
+        }
+        Harbor NearestOwnHarbor(int team,Vector3 point)
+        {
+            Harbor best=null;float distance=float.MaxValue;
+            foreach(var harbor in Harbors)
+            {
+                if(!harbor||harbor.Owner!=team||!harbor.CanLaunch)continue;
+                float next=FlatDistance(harbor.Berth,point);
+                if(next<distance){distance=next;best=harbor;}
+            }
+            return best;
+        }
+        /// <summary>Nearest enemy harbor, discounted by its escorting fleet and a live guardian tower.</summary>
+        Harbor ChooseNavalTarget(int team,Vector3 from,AiDifficultyProfile profile)
+        {
+            Harbor best=null;float score=float.MaxValue;
+            foreach(var harbor in Harbors)
+            {
+                if(!harbor||!PlayerRules.IsPlayer(harbor.Owner)||harbor.Owner==team||!harbor.CanLaunch)continue;
+                float distance=Mathf.Sqrt(FlatDistance(harbor.Berth,from));
+                float next=distance;
+                if(profile.Level>0)
+                {
+                    next+=EnemyFleetPower(team,harbor.Berth)*.25f;
+                    var guardian=harbor.ClaimZone!=null?harbor.ClaimZone.Guardian:null;
+                    if(harbor.Defense&&harbor.Defense.IsAlive&&!harbor.Defense.UnderConstruction&&guardian)next+=15f;
+                }
+                if(next<score){score=next;best=harbor;}
+            }
+            return best;
         }
         void OnDestroy(){if(Current==this)Current=null;}
     }

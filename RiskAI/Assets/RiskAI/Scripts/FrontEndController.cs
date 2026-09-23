@@ -327,6 +327,7 @@ namespace RiskAI
             var row = NewFieldRow(parent, "DIFICULTAD DE IA");
             Choice(row, "Relajada · tácticas sencillas", selectedDifficulty == BattleSession.AiDifficulty.Relaxed, () => selectedDifficulty = BattleSession.AiDifficulty.Relaxed);
             Choice(row, "Estándar · mayor coordinación", selectedDifficulty == BattleSession.AiDifficulty.Standard, () => selectedDifficulty = BattleSession.AiDifficulty.Standard);
+            Choice(row, "Difícil · oleadas coordinadas", selectedDifficulty == BattleSession.AiDifficulty.Hard, () => selectedDifficulty = BattleSession.AiDifficulty.Hard);
         }
 
         void AddMountains(VisualElement parent)

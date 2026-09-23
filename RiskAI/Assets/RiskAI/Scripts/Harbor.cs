@@ -62,7 +62,6 @@ namespace RiskAI
         public float TrainingProgress=>queue.Count==0?0:1-queue[0].Remaining/TrainTime(queue[0].Kind);
         public ShipKind QueuedKind(int index)=>queue[index].Kind;
         public bool BuildingTower=>Defense&&Defense.UnderConstruction;
-        int towerBuilder=-1;float towerBuildRemaining;
         BuildingTrainingView trainingView;
         LineRenderer rallyRing;
 
@@ -269,19 +268,6 @@ namespace RiskAI
             if(index<0||index>=queue.Count)return "Este encargo ya no está en la cola.";
             var item=queue[index];queue.RemoveAt(index);world.Session.Economy.Refund(item.Team,Cost(item.Kind));return null;
         }
-        public string BuildTower(int team=0)
-        {
-            if(sharesTown)return LinkedTown?LinkedTown.BuildTower(team):"Este puerto no tiene ciudad.";
-            if(!world||!world.Session)return "No hay una batalla activa.";
-            if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
-            if(world.Session.Winner>=0)return "La batalla ha terminado.";
-            if(world.Session.Paused)return "Reanuda la partida para construir.";
-            if(Owner!=team)return "Este puerto no pertenece a tu bando.";
-            if(!Defense||Defense.IsAlive)return "Este puerto ya tiene una torre.";
-            if(Defense.UnderConstruction)return "Ya hay una obra en marcha en este puerto.";
-            if(!world.Session.Economy.Spend(team,BattleRules.TowerCost))return "Oro insuficiente para esta obra.";
-            towerBuilder=team;towerBuildRemaining=BattleRules.ConstructionSeconds;Defense.BeginBuild();return null;
-        }
         public static ShipProfile Profile(ShipKind kind)=>NavalProfiles.Profile((NavalUnitKind)kind);
         public static int Cost(ShipKind kind)=>Profile(kind).Cost;
         public static float TrainTime(ShipKind kind)=>Profile(kind).TrainSeconds;
@@ -292,19 +278,14 @@ namespace RiskAI
             if(Owner!=lastOwner)
             {
                 RefundQueue();RefundLandQueue();
-                if(!sharesTown){CancelTowerBuild(true);Defense.ChangeOwner();}
+                if(!sharesTown)Defense.ChangeOwner();
                 lastOwner=Owner;
             }
             if(!sharesTown&&state!=null)
             {
                 int owner=StepClaim(delta);
-                if(owner!=state.Owner){state.Owner=owner;Captured();}
+                if(owner!=state.Owner){int previous=state.Owner;state.Owner=owner;Captured();world.Session.Feedback.RaiseCaptured(new CaptureEvent(Landing,previous,owner,DisplayName,null,true,-1,false,false));}
                 claimRing.startColor=claimRing.endColor=CityClaimZone.VisibleRingColor(state.Contested);
-            }
-            if(!sharesTown&&Defense&&Defense.UnderConstruction)
-            {
-                towerBuildRemaining-=delta;Defense.SetBuildProgress(1-towerBuildRemaining/BattleRules.ConstructionSeconds);
-                if(towerBuildRemaining<=0){Defense.CompleteBuild();towerBuildRemaining=0;towerBuilder=-1;}
             }
             if(queue.Count>0)
             {
@@ -316,13 +297,7 @@ namespace RiskAI
         }
         void Captured()
         {
-            RefundQueue();RefundLandQueue();CancelTowerBuild(true);Defense.ChangeOwner();lastOwner=Owner;world.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".");
-        }
-        void CancelTowerBuild(bool refund)
-        {
-            if(!Defense||!Defense.UnderConstruction)return;
-            if(refund&&towerBuilder>=0)world.Session.Economy.Refund(towerBuilder,BattleRules.TowerCost);
-            towerBuilder=-1;towerBuildRemaining=0;Defense.CancelBuild();
+            RefundQueue();RefundLandQueue();Defense.ChangeOwner();lastOwner=Owner;world.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".");
         }
         void RefundQueue(){foreach(var item in queue)world.Session.Economy.Refund(item.Team,Cost(item.Kind));queue.Clear();}
         void RefundLandQueue(){foreach(var item in landQueue)world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));landQueue.Clear();}
@@ -345,6 +320,9 @@ namespace RiskAI
             {
                 case ShipKind.Galley:catalogKind=NavalUnitKind.Galley;return true;
                 case ShipKind.Transport:catalogKind=NavalUnitKind.Transport;return true;
+                case ShipKind.Warship:catalogKind=NavalUnitKind.Warship;return true;
+                case ShipKind.Battleship:catalogKind=NavalUnitKind.Battleship;return true;
+                case ShipKind.ArmoredTransport:catalogKind=NavalUnitKind.ArmoredTransport;return true;
                 default:catalogKind=default;return false;
             }
         }

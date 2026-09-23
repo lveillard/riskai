@@ -8,8 +8,8 @@ namespace RiskAI
     {
         sealed class RankingRow
         {
-            public VisualElement Root;
-            public Label Name,Cities,Units;
+            public VisualElement Root,Chip;
+            public Label Name,Cities,Units,Income,Countries;
         }
 
         static Label AddMetric(VisualElement parent,RtsHudGlyph glyph,string value,string tooltip, System.Action action=null, string name=null)
@@ -19,6 +19,8 @@ namespace RiskAI
             var icon=new RtsHudIcon(glyph);icon.style.width=20;icon.style.height=20;
             row.Add(icon);
             var label=RtsUiStyle.Label(value,null,11);label.style.marginLeft=3;label.style.minWidth=0;label.pickingMode=PickingMode.Ignore;
+            label.style.whiteSpace=WhiteSpace.NoWrap;label.style.overflow=Overflow.Hidden;label.style.textOverflow=TextOverflow.Ellipsis;
+            if(UiViewport.IsCompact){row.style.flexGrow=0;row.style.flexShrink=1;row.style.marginRight=3;icon.style.width=icon.style.height=18;}
             row.Add(label);parent.Add(row);return label;
         }
 
@@ -28,17 +30,22 @@ namespace RiskAI
             populationLabel.name="HUD unit population";
         }
 
-        static Button ActionButton(string title,RtsHudGlyph glyph,System.Action action)
+        static Button ActionButton(string title,RtsHudGlyph glyph,System.Action action,string hotkey=null)
         {
             var button=RtsUiStyle.Button("",action,"HUD action "+title);
             button.tooltip=GameText.Localize(title);button.style.flexBasis=0;button.style.flexGrow=1;button.style.minWidth=0;
             button.style.marginLeft=0;button.style.marginTop=0;button.style.marginRight=2;button.style.marginBottom=5;
             button.style.paddingLeft=1;button.style.paddingRight=1;button.style.paddingTop=3;button.style.paddingBottom=3;
             button.style.height=48;button.style.minHeight=48;button.style.flexShrink=0;button.style.alignItems=Align.Center;
-            var icon=new RtsHudIcon(glyph);icon.style.width=24;icon.style.height=24;button.Add(icon);
+            bool cell=!UiViewport.IsCompact;
+            // Desktop: the same square command-cell language as the production grid.
+            if(cell){SquareCell(button,CommandCellSize);button.style.alignItems=Align.Center;}
+            var icon=new RtsHudIcon(glyph);icon.style.width=cell?26:24;icon.style.height=cell?26:24;button.Add(icon);
             var label=RtsUiStyle.Label(title,null,9);label.pickingMode=PickingMode.Ignore;
             label.style.maxWidth=Length.Percent(100);label.style.overflow=Overflow.Hidden;label.style.textOverflow=TextOverflow.Ellipsis;
-            button.Add(label);return button;
+            button.Add(label);
+            if(cell&&ShowGridHotkeys&&!string.IsNullOrEmpty(hotkey))button.Add(Badge(hotkey,RtsUiStyle.Gold,true,true,10));
+            return button;
         }
 
         // A polynomial hash can collide for different, valid army selections.

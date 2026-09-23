@@ -127,6 +127,9 @@ namespace RiskAI
         bool hovered;
         public RtsOrnamentButton(Action action):base(action)
         {
+            // HUD buttons all have hotkeys: a focused button would re-fire on Enter/Space
+            // while the same keypress also reaches the game's global shortcuts.
+            focusable=false;
             generateVisualContent+=Paint;
             RegisterCallback<PointerEnterEvent>(_=>{hovered=true;MarkDirtyRepaint();});
             RegisterCallback<PointerLeaveEvent>(_=>{hovered=false;MarkDirtyRepaint();});
@@ -205,6 +208,117 @@ namespace RiskAI
             RtsOrnamentDrawing.Line(p,new Vector2(0,y),new Vector2(r.width*.46f,y),edge,1);
             RtsOrnamentDrawing.Line(p,new Vector2(r.width*.54f,y),new Vector2(r.width,y),edge,1);
             RtsOrnamentDrawing.Diamond(p,new Vector2(r.width*.5f,y),4,RtsUiStyle.Gold);
+        }
+    }
+
+    /// <summary>Round-timer dial beside the gold: fills clockwise until the next income.</summary>
+    public sealed class RtsIncomeRing : VisualElement
+    {
+        float progress;
+        public RtsIncomeRing()
+        {
+            name="HUD income ring";pickingMode=PickingMode.Ignore;
+            style.width=18;style.height=18;style.flexShrink=0;
+            generateVisualContent+=Paint;
+        }
+        public float Progress
+        {
+            get=>progress;
+            set { value=Mathf.Clamp01(value); if(Mathf.Abs(value-progress)<.004f)return; progress=value; MarkDirtyRepaint(); }
+        }
+        void Paint(MeshGenerationContext context)
+        {
+            var p=context.painter2D;var r=contentRect;
+            float radius=Mathf.Min(r.width,r.height)*.5f-2;if(radius<=1)return;
+            p.lineWidth=3;p.lineCap=LineCap.Butt;
+            p.strokeColor=new Color(.2f,.17f,.1f,1);p.BeginPath();p.Arc(r.center,radius,Angle.Degrees(0),Angle.Degrees(359.9f));p.Stroke();
+            if(progress<=.001f)return;
+            p.strokeColor=RtsUiStyle.Gold;p.BeginPath();
+            p.Arc(r.center,radius,Angle.Degrees(-90),Angle.Degrees(-90+Mathf.Min(359.9f,360*progress)));p.Stroke();
+        }
+    }
+
+    /// <summary>Drawer handle mark: points up to expand, down to collapse.</summary>
+    public sealed class RtsChevron : VisualElement
+    {
+        readonly bool up;
+        public RtsChevron(bool up)
+        {
+            this.up=up;pickingMode=PickingMode.Ignore;
+            style.width=20;style.height=12;style.flexShrink=0;generateVisualContent+=Paint;
+        }
+        void Paint(MeshGenerationContext context)
+        {
+            var p=context.painter2D;var r=contentRect;float top=r.height*.2f,bottom=r.height*.8f;
+            p.strokeColor=RtsUiStyle.Gold;p.lineWidth=2.5f;p.lineJoin=LineJoin.Round;p.BeginPath();
+            p.MoveTo(new Vector2(r.width*.15f,up?bottom:top));
+            p.LineTo(new Vector2(r.width*.5f,up?top:bottom));
+            p.LineTo(new Vector2(r.width*.85f,up?bottom:top));
+            p.Stroke();
+        }
+    }
+
+    public enum RtsQuickGlyph { Speaker, Note, Ranking, Map, Chat, Close }
+
+    /// <summary>Quick-bar and window marks: thin vector glyphs, struck through when that feature is off.</summary>
+    public sealed class RtsQuickIcon : VisualElement
+    {
+        static readonly Color Ink = new Color(.88f, .82f, .63f), Off = new Color(.55f, .55f, .5f), Strike = new Color(1f, .42f, .36f);
+        readonly RtsQuickGlyph glyph;
+        bool struck, active;
+        public RtsQuickIcon(RtsQuickGlyph glyph)
+        {
+            this.glyph = glyph; name = "HUD quick icon " + glyph; pickingMode = PickingMode.Ignore;
+            style.width = 20; style.height = 20; style.flexShrink = 0; generateVisualContent += Paint;
+        }
+        public bool Struck { get => struck; set { if (struck == value) return; struck = value; MarkDirtyRepaint(); } }
+        public bool Active { get => active; set { if (active == value) return; active = value; MarkDirtyRepaint(); } }
+
+        void Paint(MeshGenerationContext context)
+        {
+            var p = context.painter2D; var r = contentRect; float w = r.width, h = r.height;
+            if (w < 4 || h < 4) return;
+            Vector2 P(float x, float y) => new Vector2(x * w, y * h);
+            var ink = struck ? Off : active ? RtsUiStyle.Gold : Ink;
+            p.strokeColor = ink; p.fillColor = ink; p.lineWidth = Mathf.Max(1.5f, w * .08f); p.lineJoin = LineJoin.Round; p.lineCap = LineCap.Round;
+            switch (glyph)
+            {
+                case RtsQuickGlyph.Speaker:
+                    p.BeginPath(); p.MoveTo(P(.12f, .38f)); p.LineTo(P(.3f, .38f)); p.LineTo(P(.52f, .17f)); p.LineTo(P(.52f, .83f));
+                    p.LineTo(P(.3f, .62f)); p.LineTo(P(.12f, .62f)); p.ClosePath(); p.Fill();
+                    if (!struck)
+                    {
+                        p.BeginPath(); p.Arc(P(.52f, .5f), w * .18f, Angle.Degrees(-50), Angle.Degrees(50)); p.Stroke();
+                        p.BeginPath(); p.Arc(P(.52f, .5f), w * .33f, Angle.Degrees(-50), Angle.Degrees(50)); p.Stroke();
+                    }
+                    break;
+                case RtsQuickGlyph.Note:
+                    p.BeginPath(); p.MoveTo(P(.62f, .72f)); p.LineTo(P(.62f, .14f)); p.LineTo(P(.86f, .28f)); p.Stroke();
+                    p.BeginPath(); p.Arc(P(.49f, .74f), w * .15f, Angle.Degrees(0), Angle.Degrees(359.9f)); p.Fill();
+                    break;
+                case RtsQuickGlyph.Ranking:
+                    RtsOrnamentDrawing.Box(p, .1f * w, .5f * h, .22f * w, .38f * h, ink);
+                    RtsOrnamentDrawing.Box(p, .39f * w, .2f * h, .22f * w, .68f * h, ink);
+                    RtsOrnamentDrawing.Box(p, .68f * w, .36f * h, .22f * w, .52f * h, ink);
+                    break;
+                case RtsQuickGlyph.Map:
+                    p.BeginPath(); p.MoveTo(P(.1f, .24f)); p.LineTo(P(.37f, .14f)); p.LineTo(P(.63f, .24f)); p.LineTo(P(.9f, .14f));
+                    p.LineTo(P(.9f, .76f)); p.LineTo(P(.63f, .86f)); p.LineTo(P(.37f, .76f)); p.LineTo(P(.1f, .86f)); p.ClosePath(); p.Stroke();
+                    p.BeginPath(); p.MoveTo(P(.37f, .14f)); p.LineTo(P(.37f, .76f)); p.MoveTo(P(.63f, .24f)); p.LineTo(P(.63f, .86f)); p.Stroke();
+                    break;
+                case RtsQuickGlyph.Chat:
+                    p.BeginPath(); p.MoveTo(P(.12f, .2f)); p.LineTo(P(.88f, .2f)); p.LineTo(P(.88f, .66f)); p.LineTo(P(.46f, .66f));
+                    p.LineTo(P(.26f, .86f)); p.LineTo(P(.28f, .66f)); p.LineTo(P(.12f, .66f)); p.ClosePath(); p.Stroke();
+                    break;
+                case RtsQuickGlyph.Close:
+                    p.BeginPath(); p.MoveTo(P(.22f, .22f)); p.LineTo(P(.78f, .78f)); p.MoveTo(P(.78f, .22f)); p.LineTo(P(.22f, .78f)); p.Stroke();
+                    break;
+            }
+            if (struck)
+            {
+                p.strokeColor = Strike; p.lineWidth = Mathf.Max(1.8f, w * .09f);
+                p.BeginPath(); p.MoveTo(P(.12f, .88f)); p.LineTo(P(.88f, .12f)); p.Stroke();
+            }
         }
     }
 

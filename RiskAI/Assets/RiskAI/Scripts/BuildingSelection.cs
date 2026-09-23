@@ -37,6 +37,16 @@ namespace RiskAI
             return nearest;
         }
         public static Bounds Bounds(Component building)=>Geometry(building).Combined;
+        /// <summary>
+        /// Height above the town origin where its name plate sits: clear of the tallest
+        /// rendered roof, keep or mast (never below the authored metric), so the plate
+        /// never overlaps the silhouette at any camera pitch.
+        /// </summary>
+        public static float LabelHeight(Settlement town)
+        {
+            float authored=VisualMetrics.BuildingLabelHeight(town.VisualVariant);
+            return Mathf.Max(authored,Bounds(town).max.y-town.transform.position.y+.3f);
+        }
         public static LineRenderer CreateRing(Component building)
         {
             var bounds=Bounds(building);

@@ -8,7 +8,7 @@ import unittest
 import urllib.error
 import urllib.request
 
-from serve_web import UnityHandler
+from serve_web import REPO_ROOT, UnityHandler, read_version
 
 
 class QuietHandler(UnityHandler):
@@ -40,6 +40,13 @@ class ServeWebTests(unittest.TestCase):
                 server.shutdown()
                 thread.join()
                 server.server_close()
+
+    def test_version_file_is_single_semver_line(self):
+        self.assertRegex(read_version(), r'^\d+\.\d+\.\d+$')
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, 'VERSION').write_text(' 1.2.3\r\n', encoding='utf-8')
+            self.assertEqual(read_version(directory), '1.2.3')
+        self.assertTrue((REPO_ROOT / 'VERSION').is_file())
 
 
 if __name__ == '__main__':

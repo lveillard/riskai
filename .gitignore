@@ -11,6 +11,7 @@
 /references/visual/
 /references/visual-v07/
 /references/*.jpg
+/references/bluemarble/
 /RiskAI/Screenshots/
 /RiskAI/Screenshots.meta
 *.log
@@ -26,3 +27,4 @@ __pycache__/
 !.env.example
 
 /Captures/
+/.playwright-mcp/

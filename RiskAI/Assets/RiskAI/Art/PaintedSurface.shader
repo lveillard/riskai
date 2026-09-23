@@ -30,7 +30,13 @@ Shader "RiskAI/PaintedSurface"
    {
     float3 n=normalize(i.n);float3 weights=pow(abs(n),8);weights/=max(dot(weights,float3(1,1,1)),.0001);
     half3 c=Tile(i.w.zy*_Scale)*weights.x+Tile(i.w.xz*_Scale)*weights.y+Tile(i.w.xy*_Scale)*weights.z;
-    c=lerp(c*_Tint.rgb,dot(c,half3(.2126,.7152,.0722))*_Tint.rgb*2.7,_Recolor);
+    // Recolour (faction roofs): the tile supplies relief over a wide band so shingles
+    // and seams stay visible, while a slightly softened tint keeps saturated WC3
+    // colours (red, orange) distinct without reading as flat neon.
+    half luminance=dot(c,half3(.2126,.7152,.0722));
+    half relief=lerp(.42,1,saturate(luminance*2.6));
+    half3 tint=lerp(dot(_Tint.rgb,half3(.2126,.7152,.0722)).xxx,_Tint.rgb,.92)*.92;
+    c=lerp(c*_Tint.rgb,relief*tint,_Recolor);
     Light sun=GetMainLight(TransformWorldToShadowCoord(i.w),i.w,half4(1,1,1,1));
     float paintedShadow=lerp(.34,1,saturate(sun.shadowAttenuation));
     half3 painted=c;

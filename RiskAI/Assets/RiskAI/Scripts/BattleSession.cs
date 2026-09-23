@@ -15,7 +15,8 @@ namespace RiskAI
         public static VictoryMode ModeForNewMatch = VictoryMode.Conquest;
         public enum StartLayout { RandomCities, RandomCountries, Fixed }
         public static StartLayout LayoutForNewMatch = StartLayout.RandomCities;
-        public enum AiDifficulty { Relaxed, Standard }
+        // Append new levels at the end: tests and saved menus rely on the ordinals.
+        public enum AiDifficulty { Relaxed, Standard, Hard }
         public static AiDifficulty DifficultyForNewMatch = AiDifficulty.Relaxed;
         public static int SeedForNewMatch = System.Environment.TickCount & int.MaxValue;
         public static int PlayerCountForNewMatch = PlayerRules.MaxPlayers;
@@ -26,8 +27,22 @@ namespace RiskAI
         public StartLayout Layout { get; private set; }
         public string LayoutName => Layout == StartLayout.RandomCities ? "Reparto Risk" : Layout == StartLayout.RandomCountries ? "Países iniciales" : "Escenario de práctica";
         public AiDifficulty Difficulty { get; private set; }
-        public string DifficultyName => Difficulty == AiDifficulty.Relaxed ? "Relajado" : "Estándar";
-        public float AiInterval => Difficulty == AiDifficulty.Relaxed ? 12f : 7f;
+        public string DifficultyName => DifficultyLabel(Difficulty);
+        public static string DifficultyLabel(AiDifficulty difficulty) => difficulty == AiDifficulty.Relaxed ? "Relajado" : difficulty == AiDifficulty.Hard ? "Difícil" : "Estándar";
+        public AiDifficultyProfile AiProfile => AiDifficultyProfile.For((int)Difficulty);
+        /// <summary>Accepts relaxed/standard/hard (also 0/1/2 and the Spanish labels) for launch arguments.</summary>
+        public static bool TryParseDifficulty(string text, out AiDifficulty difficulty)
+        {
+            difficulty = AiDifficulty.Relaxed;
+            switch ((text ?? "").Trim().ToLowerInvariant())
+            {
+                case "0": case "relaxed": case "relajado": case "relajada": case "easy": difficulty = AiDifficulty.Relaxed; return true;
+                case "1": case "standard": case "estándar": case "estandar": case "normal": difficulty = AiDifficulty.Standard; return true;
+                case "2": case "hard": case "difícil": case "dificil": difficulty = AiDifficulty.Hard; return true;
+                default: return false;
+            }
+        }
+        public float AiInterval => AiProfile.DecisionInterval;
         public float AiFirstRecruitmentTime => 0f;
         public float AiFirstOffensiveTime => 0f;
         public float AiFirstNavalOffensiveTime => 0f;
@@ -55,6 +70,8 @@ namespace RiskAI
         public BattleCommands Commands { get; private set; }
         public CountryRecruitment Reinforcements { get; private set; }
         public NavalWorld Naval { get; internal set; }
+        /// <summary>Presentation-only event hub: HUD log, effects and audio subscribe here.</summary>
+        public BattleFeedback Feedback { get; private set; }
         readonly Dictionary<int, CombatTarget> entities = new Dictionary<int, CombatTarget>(256);
         // Rebuilt once before the ordered victory pass.  Keeping these buffers avoids
         // rescanning every entity for every potential winner on every simulation tick.
@@ -89,6 +106,7 @@ namespace RiskAI
             combatRandom = new System.Random(Seed ^ 0x2945);
             Clock = new SimClock();
             Combat = new CombatWorld(this);
+            Feedback = new BattleFeedback(this);
             SoldierPool = new SoldierPool(this);
             var commanders = new CommanderGroup(this, PlayerCount);
             Commanders = commanders.Commanders;
@@ -148,7 +166,12 @@ namespace RiskAI
         {
             for(int i=0;i<Units.Count;i++) if(Units[i]) Units[i].SetSimulationPaused(suspended);
         }
-        public void Message(string message) { Messages.Insert(0, message); if (Messages.Count > 5) Messages.RemoveAt(5); }
+        public void Message(string message) => Message(message, MessageLog.Classify(message));
+        public void Message(string message, MessageKind kind, int team = -1, Vector3? focus = null)
+        {
+            Messages.Insert(0, message); if (Messages.Count > 5) Messages.RemoveAt(5);
+            Feedback?.Post(message, kind, team, focus);
+        }
         public void TogglePause() { if (Winner >= 0 || IsStarting) return; manuallyPaused = !manuallyPaused; SuspendMovement(Paused); }
 
         public void BeginStartCountdown(float seconds=5)
@@ -197,7 +220,7 @@ namespace RiskAI
                 Message(VisualFactory.TeamName(team) + " ha sido eliminado.");
                 PlayerEliminated?.Invoke(team);
             }
-            if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro"); CountryReinforcements(); }
+            if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro", MessageKind.Income, 0); Feedback.RaiseIncome(0, Economy.Income(0)); CountryReinforcements(); }
             Reinforcements.Tick(delta);
             BuildVictorySnapshot();
             for (int team = 0; team < PlayerCount; team++)
@@ -208,7 +231,8 @@ namespace RiskAI
                 if (VictoryProgress[team] >= BattleRules.VictoryHoldSeconds || OtherPlayersEliminated(team))
                 {
                     Winner = team; SuspendMovement(true);
-                    Message(team == 0 ? "¡Victoria! Las Marcas son tuyas." : VisualFactory.TeamName(team) + " ha ganado.");
+                    Message(team == 0 ? "¡Victoria! Las Marcas son tuyas." : VisualFactory.TeamName(team) + " ha ganado.", team == 0 ? MessageKind.Victory : MessageKind.Defeat, team);
+                    Feedback.RaiseWinner(team);
                     break;
                 }
             }
@@ -263,6 +287,7 @@ namespace RiskAI
             var soldier=SoldierPool.Rent(team,kind,hit.position);
             soldier.OriginCountry=originCountry;
             Units.Add(soldier);
+            Feedback.RaiseSpawned(soldier);
             return soldier;
         }
 

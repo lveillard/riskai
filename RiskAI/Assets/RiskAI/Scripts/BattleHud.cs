@@ -27,7 +27,7 @@ namespace RiskAI
         {
             session = battle; controller = input; cam = camera;
             session.PlayerEliminated += OnPlayerEliminated;
-            RefreshHudSnapshot();ConfigureViewport();InitializeRetainedUi();
+            RefreshHudSnapshot();ConfigureViewport();InitializeRetainedUi();InitializeFeedback();
         }
         void LateUpdate()
         {
@@ -49,6 +49,7 @@ namespace RiskAI
             if (hudDirty || hud.Gold != session.Economy.Gold[0] || lastHudTick / 2 != session.Clock.TickCount / 2) RefreshHudSnapshot();
             RefreshRetainedUi();
             RefreshWorldQueues();
+            RefreshFeedback();
         }
         void RefreshHudSnapshot()
         {
@@ -61,6 +62,7 @@ namespace RiskAI
         void OnDestroy()
         {
             if (session) session.PlayerEliminated -= OnPlayerEliminated;
+            DisposeFeedback();
             if(minimapTexture)Destroy(minimapTexture);
             DisposeMinimapMarkers();
             UiViewport.ResetHudHeights();
@@ -70,7 +72,7 @@ namespace RiskAI
         void OnGUI()
         {
             if (!session || !controller) return;
-            if(controller.HelpVisible||controller.ScoreboardVisible||session.Winner>=0)return;
+            if(controller.HelpVisible||session.Winner>=0)return;
             if (Event.current.type != EventType.Repaint) return;
             RtsSkin.Initialize(); ConfigureViewport(); width = Screen.width / Scale; height = Screen.height / Scale; bottom = (Screen.height - BottomPixels) / Scale;
             Matrix4x4 previous = GUI.matrix; GUI.matrix = Matrix4x4.Scale(Vector3.one * Scale);
@@ -92,11 +94,7 @@ namespace RiskAI
                 Rect real = controller.SelectionRect; var r = new Rect(real.x / Scale, real.y / Scale, real.width / Scale, real.height / Scale);
                 RtsSkin.Fill(r, new Color(.4f, 1, .4f, .12f)); Outline(r, new Color(.55f, 1, .5f));
             }
-            for (int i = 0; i < Mathf.Min(1, session.Messages.Count); i++)
-            {
-                var r = new Rect(UiViewport.SafeRect.xMin/Scale+16, bottom - 28 - i * 23, Mathf.Min(680,UiViewport.LogicalWidth-32), 22); RtsSkin.Fill(r, new Color(.035f, .04f, .03f, .83f));
-                Label(r.x + 7, r.y, r.width - 12, session.Messages[i], RtsSkin.Small);
-            }
+            // Recent messages render in the retained feedback overlay (BattleHud.Feedback).
             DrawEliminationNotice();
         }
         void OnPlayerEliminated(int player) => eliminationNotices.Enqueue(player);
@@ -127,7 +125,7 @@ namespace RiskAI
                 if(harbor.IsImportedPort)continue; // Its town already renders the shared post label.
                 bool capturing=harbor.CaptureProgress>0&&harbor.CaptureProgress<1&&harbor.State.Capturing>=0;
                 if(controller.SelectedHarbor!=harbor&&!capturing&&!harbor.State.Contested&&!controller.ShowHealthBars)continue;
-                var hp=cam.WorldToScreenPoint(harbor.Landing+Vector3.up*4.8f)/Scale;float hy=height-hp.y;if(hp.z<=0||hy<TopPixels/Scale+20||hy>bottom-20)continue;
+                var hp=cam.WorldToScreenPoint(harbor.Landing+Vector3.up*4.8f)/Scale;float hy=height-hp.y;if(hp.z<=0||hy<TopPixels/Scale+20||hy>bottom-20||UnderHudPanel(hp.x,hy))continue;
                 DrawBuildingName(new Vector2(hp.x,hy),harbor.DisplayName,harbor.Owner);
                 if(capturing)
                 {
@@ -140,15 +138,18 @@ namespace RiskAI
             foreach (var town in session.Towns)
             {
                 bool visible = town.Selected || hoveredTown == town || controller.ShowHealthBars;
-                Vector3 p = cam.WorldToScreenPoint(town.transform.position + Vector3.up * VisualMetrics.BuildingLabelHeight(town.VisualVariant)) / Scale;
-                float y = height - p.y; if (p.z <= 0 || y < TopPixels/Scale+20 || y > bottom - 20) continue;
                 if (!visible) continue;
-                DrawBuildingName(new Vector2(p.x,y),town.DisplayName,town.State.Owner);
+                // Anchored at the top of the tallest roof/keep/mast; the plate and any
+                // capture bar stack upward from there so the silhouette never hides them.
+                Vector3 p = cam.WorldToScreenPoint(town.transform.position + Vector3.up * RiskAI.BuildingSelection.LabelHeight(town)) / Scale;
+                float y = height - p.y; if (p.z <= 0 || y < TopPixels/Scale+26 || y > bottom - 4 || UnderHudPanel(p.x, y - 12)) continue;
+                float plateTop = y - 22;
+                DrawBuildingName(new Vector2(p.x,plateTop+2),town.DisplayName,town.State.Owner);
                 // Succession is immediate; nearby enemies or a bound guard are not a progress bar.
-                if (town.State.Capture > 0 && town.State.Capture < 1 && town.State.Capturing >= 0)
+                if (town.State.Capture > 0 && town.State.Capture < 1 && town.State.Capturing >= 0 && plateTop-30 > TopPixels/Scale)
                 {
-                    RtsSkin.Bar(new Rect(p.x - 65, y + 25, 130, 7), town.State.Capture, VisualFactory.TeamColor(town.State.Capturing));
-                    Label(p.x-65,y+33,170,"CONVERSIÓN "+Mathf.RoundToInt(town.State.Capture*100)+"%",RtsSkin.Tiny);
+                    RtsSkin.Bar(new Rect(p.x - 65, plateTop - 10, 130, 7), town.State.Capture, VisualFactory.TeamColor(town.State.Capturing));
+                    Label(p.x-65,plateTop-30,170,"CONVERSIÓN "+Mathf.RoundToInt(town.State.Capture*100)+"%",RtsSkin.Tiny);
                 }
             }
             foreach (var target in session.Targets)
@@ -159,15 +160,37 @@ namespace RiskAI
                 if (!target.IsAlive || !target.isActiveAndEnabled || (!persistentShipHealth && !controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth && !canopyOccludedUnits.Contains(target.EntityId))) continue;
                 float healthHeight=target is Soldier person?VisualMetrics.HeightFor(person.Kind)+.15f:4.8f;
                 var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * healthHeight) / Scale;
-                float y = height - p.y; if(p.z<=0||y<TopPixels/Scale+16||y>bottom-8)continue;
+                float y = height - p.y; if(p.z<=0||y<TopPixels/Scale+16||y>bottom-8||UnderHudPanel(p.x,y))continue;
                 float size = target is Ship ? 56 : 28;
                 RtsSkin.WorldHealthBar(new Rect(p.x-size/2,y,size,target is Ship?9:7),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
             }
         }
+        // Relief plus the country borders of the shared territory field (the same source as
+        // the strategic atlas, camp inspection and border posts).
+        static Texture2D BuildMinimapTexture()
+        {
+            const int resolution=192;
+            var texture=new Texture2D(resolution,resolution,TextureFormat.RGBA32,false){filterMode=FilterMode.Point};
+            var field=TerritoryField.Current;var colors=new Color[resolution*resolution];var countries=new int[colors.Length];
+            for (int iz=0;iz<resolution;iz++) for (int ix=0;ix<resolution;ix++)
+            {
+                float x=Mathf.Lerp(MapLayout.PlayableMin.x,MapLayout.PlayableMax.x,(ix+.5f)/resolution),z=Mathf.Lerp(MapLayout.PlayableMin.y,MapLayout.PlayableMax.y,(iz+.5f)/resolution);
+                int i=iz*resolution+ix;bool land=MapLayout.IsLand(x,z);countries[i]=land?field.CountryAt(x,z):-2;
+                colors[i]=land?TerrainBiomes.MinimapLand(x,z,MapLayout.Height(x,z)):new Color(.10f,.25f,.34f);
+            }
+            for (int iz=1;iz<resolution;iz++) for (int ix=1;ix<resolution;ix++)
+            {
+                int i=iz*resolution+ix,c=countries[i];
+                if (c<0) continue;
+                int left=countries[i-1],below=countries[i-resolution];
+                if ((left>=0&&left!=c)||(below>=0&&below!=c)) colors[i]=Color.Lerp(colors[i],Color.black,.45f);
+            }
+            texture.SetPixels(colors);texture.Apply();return texture;
+        }
         void DrawMinimap(Rect r)
         {
             RtsSkin.Frame(new Rect(r.x-3,r.y-3,r.width+6,r.height+6));
-            if (!minimapTexture) { const int resolution=192; minimapTexture = new Texture2D(resolution,resolution,TextureFormat.RGBA32,false); for (int ix=0;ix<resolution;ix++) for(int iz=0;iz<resolution;iz++){float x=Mathf.Lerp(MapLayout.PlayableMin.x,MapLayout.PlayableMax.x,(ix+.5f)/resolution),z=Mathf.Lerp(MapLayout.PlayableMin.y,MapLayout.PlayableMax.y,(iz+.5f)/resolution);float h=MapLayout.Height(x,z); minimapTexture.SetPixel(ix,iz,MapLayout.IsLand(x,z)?Color.Lerp(new Color(.24f,.38f,.20f),new Color(.56f,.63f,.30f),Mathf.Clamp01(h/6.2f)):new Color(.10f,.25f,.34f));} minimapTexture.Apply(); minimapTexture.filterMode=FilterMode.Point; }
+            if (!minimapTexture) minimapTexture=BuildMinimapTexture();
             GUI.DrawTexture(r,minimapTexture,ScaleMode.StretchToFill,false);
             DrawMinimapMarkers(r);
             Vector2[] corners={new Vector2(0,BottomPixels),new Vector2(Screen.width,BottomPixels),new Vector2(Screen.width,Screen.height-TopPixels),new Vector2(0,Screen.height-TopPixels)};

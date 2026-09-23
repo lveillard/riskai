@@ -22,7 +22,10 @@ namespace RiskAI
         public virtual void ReceiveAttack(float damage, AttackKind attack, int attacker, CombatTarget source = null)
         {
             if (!IsAlive || damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage) || attacker == Team) return;
+            float before = Health;
             TakeDamage(CombatRules.ResolveDamage(damage, attack, ArmorType, Armor), attacker, source);
+            var battle = BattleSession.Current;
+            if (Health < before && battle && battle.Feedback != null) battle.Feedback.RaiseDamaged(this, attacker, source);
         }
         public void ReceiveAttack(float damage, int attacker, AttackKind attack, CombatTarget source = null) => ReceiveAttack(damage, attack, attacker, source);
         public void ReceiveAttack(float damage, AttackKind attack, CombatTarget source = null) => ReceiveAttack(damage, attack, source ? source.Team : -1, source);

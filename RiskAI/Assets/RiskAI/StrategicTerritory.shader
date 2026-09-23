@@ -61,8 +61,10 @@ Shader "RiskAI/StrategicTerritory"
                     return half4(lerp(half3(1,.79,.28),half3(1,.97,.79),border),lerp(.16,.88,border));
                 }
                 half3 owner=SAMPLE_TEXTURE2D(_Palette,sampler_Palette,float2((id+.5)/_PaletteWidth,.5)).rgb;
-                float relief=.80+.2*saturate(dot(normalize(i.normal),normalize(float3(-.4,1,.3))));
-                half3 color=lerp(half3(.22,.29,.25),owner,.68)*relief;
+                float relief=.86+.14*saturate(dot(normalize(i.normal),normalize(float3(-.4,1,.3))));
+                // Keep the canonical player hue: only a light neutral (not green) wash,
+                // so red/orange/maroon/brown stay apart instead of drifting to salmon/tan.
+                half3 color=lerp(half3(.16,.16,.16),owner,.88)*relief;
                 color=lerp(color,half3(1,.85,.45),selected*.38);
                 color=lerp(color,half3(.105,.125,.105),outer*.48);
                 color=lerp(color,selected>.5?half3(.34,.245,.075):half3(.035,.047,.043),core*.94);

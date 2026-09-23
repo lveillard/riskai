@@ -3,17 +3,22 @@ using UnityEngine;
 namespace RiskAI
 {
     /// <summary>
-    /// Automatic support behavior for Medic soldiers. Healing is deliberately a local
-    /// gameplay rule: there is no mana pool or resource cost in this version.
+    /// Automatic Ahea autocast for Medic soldiers. Each heal spends source mana
+    /// (hmpr 200 max / 75 initial, h00E regeneration 1.5 per second).
     /// </summary>
-    public sealed class MedicSupport : MonoBehaviour
+    public sealed class MedicSupport : MonoBehaviour, IManaUser
     {
-        // Ahea: 250 native range, 25 points and a one-second cooldown.
-        public const float HealRadius = 5f;
+        // Ahea: 250 native range, 25 points, 5 mana and a one-second cooldown.
+        public const float HealRadius = Core.SupportAbilities.HealRange;
         public const float MaxVerticalDelta = 3f;
-        public const float HealAmount = 25f;
-        public const float CastInterval = 1f;
+        public const float HealAmount = Core.SupportAbilities.HealAmount;
+        public const float CastInterval = Core.SupportAbilities.HealCooldown;
+        public const float ManaCost = Core.SupportAbilities.HealManaCost;
+        // Cheap rescan throttle while nobody needs healing: at most ~4 sweeps per second.
+        const float RescanInterval = CastInterval / 4f;
 
+        readonly Core.ManaPool mana = new Core.ManaPool();
+        public Core.ManaPool Mana => mana;
         public int CastCount { get; private set; }
         public float TotalHealing { get; private set; }
         public long LastCastTick { get; private set; } = -1;
@@ -21,6 +26,7 @@ namespace RiskAI
         Soldier self;
         BattleSession session;
         float nextCastTime;
+        float nextScanTime;
         readonly System.Collections.Generic.List<CombatTarget> nearby = new System.Collections.Generic.List<CombatTarget>(32);
 
         /// <summary>Initializes the support behavior after the owning Soldier is ready.</summary>
@@ -29,26 +35,31 @@ namespace RiskAI
             self = owner;
             session = battle;
             nextCastTime = session.BattleTime + CastInterval;
+            nextScanTime = session.BattleTime;
             CastCount=0;TotalHealing=0;LastCastTick=-1;
+            mana.Reset(Core.SupportAbilities.Mana(owner.Kind));
         }
 
         public bool SimTick(float delta)
         {
             if (!self || self.Kind != Core.UnitKind.Medic || !self.IsAlive || !self.isActiveAndEnabled ||
-                !session || session.Paused || session.Winner >= 0 || session.BattleTime < nextCastTime)
+                !session || session.Paused || session.Winner >= 0)
                 return false;
+            mana.Tick(delta);
+            if (session.BattleTime < nextCastTime || session.BattleTime < nextScanTime || !mana.CanSpend(ManaCost)) return false;
 
-            nextCastTime = session.BattleTime + CastInterval;
             var target = FindMostInjuredAlly();
-            if (!target) return false;
+            if (!target) { nextScanTime = session.BattleTime + RescanInterval; return false; }
 
             float healed = target.Heal(HealAmount);
-            if (healed <= 0) return false;
+            if (healed <= 0) { nextScanTime = session.BattleTime + RescanInterval; return false; }
+            nextCastTime = session.BattleTime + CastInterval;
+            mana.TrySpend(ManaCost);
 
             CastCount++;
             TotalHealing += healed;
             LastCastTick=session.Clock.TickCount;
-            VisualFactory.Impact(target.AimPoint, new Color(.72f, .96f, .36f), .25f);
+            if(session.Combat.PresentationEnabled)VisualFactory.Impact(target.AimPoint, new Color(.72f, .96f, .36f), .25f);
             return true;
         }
 
@@ -64,6 +75,8 @@ namespace RiskAI
                 var candidate=entity as Soldier;
                 if (!candidate || candidate.Team != self.Team || !candidate.IsAlive || !candidate.isActiveAndEnabled)
                     continue;
+                // Ahea targets organic units only; h00M/h01A are mechanical.
+                if (Core.BattleRules.Mechanical(candidate.Kind)) continue;
                 if (!candidate.Agent || !candidate.Agent.enabled || !candidate.Agent.isOnNavMesh)
                     continue;
 

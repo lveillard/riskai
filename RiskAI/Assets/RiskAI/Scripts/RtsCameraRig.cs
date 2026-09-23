@@ -19,6 +19,17 @@ namespace RiskAI
         float FocusSpeedCap => Mathf.Max(120,MapLayout.HalfDepth*1.25f);
         Camera cam;Vector3 focus,targetFocus,panVelocity,zoomAnchor,homePoint=new Vector3(-26,0,-17);Vector2 anchorScreen;
         float zoomVelocity;bool anchorZoom;
+        // Long focus jumps (F2, Space, group double-tap, alerts) ease in/out instead of
+        // snapping through the 0.1 s pan smoothing. Short moves keep the responsive damping.
+        bool jumping;Vector3 jumpFrom;float jumpElapsed,jumpDuration;
+        public bool IsJumping => jumping;
+        public static float JumpDuration(float distance,float zoom) => Mathf.Lerp(.3f,.42f,Mathf.Clamp01(distance/Mathf.Max(1,zoom*4)));
+        void BeginJump()
+        {
+            float distance=Vector3.Distance(focus,targetFocus);
+            if(!cam||distance<Mathf.Max(6f,cam.orthographicSize*.6f)){jumping=false;return;}
+            jumping=true;jumpFrom=focus;jumpElapsed=0;jumpDuration=JumpDuration(distance,cam.orthographicSize);panVelocity=Vector3.zero;
+        }
         float yaw,pitch=55;
         public void Initialize(Camera camera)
         {
@@ -31,11 +42,11 @@ namespace RiskAI
             if(Physics.Raycast(ray,out var hit,cam.farClipPlane,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))return hit.point;
             new Plane(Vector3.up,Vector3.zero).Raycast(ray,out float distance);return ray.GetPoint(distance);
         }
-        public void Focus(Vector3 point) { targetFocus=Clamp(point,TargetZoom);anchorZoom=false; }
+        public void Focus(Vector3 point) { targetFocus=Clamp(point,TargetZoom);anchorZoom=false;BeginJump(); }
         public void FocusAndZoom(Vector3 point,float zoom=DefaultZoom)
         {
             TargetZoom=Mathf.Clamp(zoom,MinimumZoom,MaximumZoom);
-            targetFocus=Clamp(point,TargetZoom);anchorZoom=false;
+            targetFocus=Clamp(point,TargetZoom);anchorZoom=false;BeginJump();
         }
         public void SetHome(Vector3 point) { homePoint=point;focus=targetFocus=Clamp(point);Apply(); }
         public void ResetView() { yaw=0;pitch=55;cam.transform.rotation=DefaultRotation;Apply();TargetZoom=InitialZoom;targetFocus=Clamp(homePoint,TargetZoom);anchorZoom=false; }
@@ -49,7 +60,7 @@ namespace RiskAI
             // Normalize after projecting the camera basis so diagonals do not move faster.
             Vector3 planar=right*direction.x+forward*direction.z;
             if(planar.sqrMagnitude>.001f)planar.Normalize();
-            targetFocus=Clamp(targetFocus+planar*TargetZoom*.9f*PanSpeed*dt);anchorZoom=false;
+            targetFocus=Clamp(targetFocus+planar*TargetZoom*.9f*PanSpeed*dt);anchorZoom=false;jumping=false;
         }
         public void Orbit(Vector2 delta)
         {
@@ -62,12 +73,12 @@ namespace RiskAI
         public void Drag(Vector2 previous,Vector2 current)
         {
             // Ground-space grabbing is independent of frame rate, resolution and zoom.
-            Vector3 grabbed=Ground(previous),delta=grabbed-AtHeight(current,grabbed.y);focus=Clamp(focus+delta);targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;Apply();
+            jumping=false;Vector3 grabbed=Ground(previous),delta=grabbed-AtHeight(current,grabbed.y);focus=Clamp(focus+delta);targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;Apply();
         }
         public void ZoomAt(float wheelSteps,Vector2 screen)
         {
             if(Mathf.Abs(wheelSteps)<.001f)return;
-            zoomAnchor=Ground(screen);anchorScreen=screen;anchorZoom=true;
+            jumping=false;zoomAnchor=Ground(screen);anchorScreen=screen;anchorZoom=true;
             TargetZoom=Mathf.Clamp(TargetZoom*RtsCameraPolicy.WheelZoomMultiplier(wheelSteps),MinimumZoom,MaximumZoom);
         }
         public void ZoomByRatio(float ratio,Vector2 screen)
@@ -75,18 +86,28 @@ namespace RiskAI
             if(float.IsNaN(ratio)||float.IsInfinity(ratio)||ratio<=0)return;
             ZoomAt(Mathf.Log(ratio)/RtsCameraPolicy.WheelZoomExponent,screen);
         }
-        public void CancelMotion() { targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;zoomVelocity=0;if(cam)TargetZoom=cam.orthographicSize; }
+        public void CancelMotion() { jumping=false;targetFocus=focus;panVelocity=Vector3.zero;anchorZoom=false;zoomVelocity=0;if(cam)TargetZoom=cam.orthographicSize; }
         void LateUpdate()
         {
             if(!cam)return;float dt=Mathf.Min(Time.unscaledDeltaTime,.05f);
             cam.orthographicSize=RtsCameraPolicy.SmoothZoom(cam.orthographicSize,TargetZoom,ref zoomVelocity,dt);
-            focus=Vector3.SmoothDamp(focus,Clamp(targetFocus),ref panVelocity,.1f,FocusSpeedCap,dt);Apply();
+            if(jumping)
+            {
+                jumpElapsed+=dt;float t=Mathf.Clamp01(jumpElapsed/Mathf.Max(.01f,jumpDuration));
+                float eased=t<.5f?4*t*t*t:1-Mathf.Pow(-2*t+2,3)*.5f;
+                focus=Vector3.LerpUnclamped(jumpFrom,Clamp(targetFocus),eased);panVelocity=Vector3.zero;
+                if(t>=1)jumping=false;
+                Apply();
+            }
+            else{focus=Vector3.SmoothDamp(focus,Clamp(targetFocus),ref panVelocity,.1f,FocusSpeedCap,dt);Apply();}
             if(anchorZoom)
             {
                 // Keep the original surface point under the cursor, including on cliff edges.
                 Vector3 delta=zoomAnchor-AtHeight(anchorScreen,zoomAnchor.y);focus=Clamp(focus+delta);targetFocus=Clamp(targetFocus+delta);Apply();
                 if(Mathf.Abs(Mathf.Log(cam.orthographicSize/TargetZoom))<.0001f)anchorZoom=false;
             }
+            // Presentation-only: rebuilt from focus by the next Apply, so it never drifts.
+            if(GameFeel.ShakeEnabled)cam.transform.position+=GameFeel.ShakeOffset();
         }
         Vector3 AtHeight(Vector2 screen,float height)
         {
