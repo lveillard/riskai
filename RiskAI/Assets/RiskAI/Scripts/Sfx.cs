@@ -185,7 +185,8 @@ namespace RiskAI
         public static void SetEffectsVolume(float value) { EffectsVolume = Mathf.Clamp01(value); SavePreferences(); }
         public static void SetMuted(bool value) { Muted = value; SavePreferences(); if (Current) Current.ApplyListenerVolume(); }
 
-        void ApplyListenerVolume() => AudioListener.volume = Muted || !focused ? 0 : MasterVolume;
+        // Batch runs (automated tests, builds) keep every audio decision but never make noise.
+        void ApplyListenerVolume() => AudioListener.volume = Muted || !focused || Application.isBatchMode ? 0 : MasterVolume;
 
         void OnApplicationFocus(bool hasFocus) { focused = hasFocus; ApplyListenerVolume(); }
         void OnApplicationPause(bool paused) { focused = !paused; ApplyListenerVolume(); }

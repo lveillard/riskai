@@ -105,7 +105,10 @@ namespace RiskAI
                 // Exposed stone: rocky rims along cliffs and slopes of raised ground, with
                 // scattered outcrops; plateau tops stay mostly grass.
                 float plateau=Smooth(2.4f,4.8f,blurred[i]+(Fbm(bx*.07f+21,bz*.07f+4)-.5f)*1.6f);
+                // Cliff outlines are straight polygon segments, so a rim of constant width reads as
+                // a ruler band: its reach and presence vary along the cliff with warped noise.
                 float rim=Smooth(.18f,.7f,edge[i]+(Fbm(bx*.21f+2,bz*.21f+6)-.5f)*.25f);
+                rim*=Smooth(.3f,.62f,Fbm(bx*.085f+12.7f,bz*.085f+3.9f));
                 float outcrop=Smooth(.70f,.84f,Fbm(bx*.11f+44,bz*.11f+17));
                 float stone=Mathf.Clamp01(Mathf.Max(rim*(.3f+.7f*plateau),plateau*outcrop*.6f));
                 field[i]=new Color32(Byte(dry),Byte(arid),Byte(autumn),Byte(stone));

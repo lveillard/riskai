@@ -115,6 +115,62 @@ namespace RiskAI.Tests
             finally{MapLayout.Configure(previous);}
         }
 
+        [TestCase(ScenarioMap.Classic)]
+        [TestCase(ScenarioMap.Riverlands)]
+        public void AuthoredStoneAsRenderedHasNoStraightBands(ScenarioMap map)
+        {
+            // The shader interpolates the stone channel; sample it finely, as drawn.
+            var previous=MapLayout.Scenario;
+            try
+            {
+                MapLayout.Configure(map);
+                const float step=.7f;
+                int width=Mathf.FloorToInt(2*MapLayout.HalfWidth/step),height=Mathf.FloorToInt(2*MapLayout.HalfDepth/step);
+                var mask=new bool[width*height];
+                for(int y=0;y<height;y++)for(int x=0;x<width;x++)
+                    mask[y*width+x]=FictionalGround.Sample(-MapLayout.HalfWidth+(x+.5f)*step,-MapLayout.HalfDepth+(y+.5f)*step).Stone>=.5f;
+                int run=MaxStraightBoundaryRun(mask,width,height,out var at);
+                Debug.Log($"RISKAI_ZONE_SHAPE map={map} zone=stone-rendered maxStraightRun={run} at={at} dir={LastDirection}");
+                // Measured: 20 before the rim breakup (Las Marcas), 17 after.
+                Assert.That(run,Is.LessThanOrEqualTo(18),$"{map} rendered stone runs straight for {run*step:F1} m near {at}");
+            }
+            finally{MapLayout.Configure(previous);}
+        }
+
+        [TestCase(ScenarioMap.Europe)]
+        [TestCase(ScenarioMap.NewWorld)]
+        public void ImportedSandAsRenderedHasNoStraightBoundaries(ScenarioMap map)
+        {
+            var previous=MapLayout.Scenario;
+            try
+            {
+                MapLayout.Configure(map);
+                var data=MapLayout.Imported;const float step=.64f;
+                float minX=data.PlayableMinX,minZ=data.PlayableMinZ;
+                int width=Mathf.FloorToInt((data.PlayableMaxX-minX)/step),height=Mathf.FloorToInt((data.PlayableMaxZ-minZ)/step);
+                var mask=new bool[width*height];var land=new bool[width*height];
+                for(int y=0;y<height;y++)for(int x=0;x<width;x++)
+                {
+                    float wx=minX+(x+.5f)*step,wz=minZ+(y+.5f)*step;
+                    mask[y*width+x]=ShoreAccess.IsSandySurface(wx,wz);land[y*width+x]=data.IsLand(wx,wz);
+                }
+                // Sand meeting water is the coastline (terrain); judge only sand edges on dry land.
+                var visible=new bool[mask.Length];const int margin=3;
+                for(int y=margin;y<height-margin;y++)for(int x=margin;x<width-margin;x++)
+                {
+                    bool inland=true;
+                    for(int dy=-margin;dy<=margin&&inland;dy++)for(int dx=-margin;dx<=margin;dx++)if(!land[(y+dy)*width+x+dx]){inland=false;break;}
+                    visible[y*width+x]=inland;
+                }
+                int run=MaxStraightBoundaryRun(mask,width,height,out var at,visible);
+                float fraction=StraightFraction(mask,width,height,6,visible);
+                Debug.Log($"RISKAI_ZONE_SHAPE map={map} zone=sand-rendered maxStraightRun={run} straightFraction={fraction:F3} at={at} dir={LastDirection} world=({minX+at.x*step:F1},{minZ+at.y*step:F1})");
+                // Measured on cell-aligned sand: Europe 12, New World 16; smoothed: 9 and 10.
+                Assert.That(run,Is.LessThanOrEqualTo(11),$"{map} sand runs straight for {run*step:F1} m near {at}");
+            }
+            finally{MapLayout.Configure(previous);}
+        }
+
         [TestCase(ScenarioMap.Europe)]
         [TestCase(ScenarioMap.NewWorld)]
         public void ImportedBiomeZonesHaveNoStraightBoundaries(ScenarioMap map)
@@ -168,6 +224,35 @@ namespace RiskAI.Tests
             return mask;
         }
 
+        /// <summary>
+        /// Share of boundary texels lying on straight lattice runs of at least minRun texels.
+        /// A polygonal outline (cell-aligned sand) is mostly such runs; an organic one is not.
+        /// </summary>
+        public static float StraightFraction(bool[] mask,int width,int height,int minRun,bool[] visible=null)
+        {
+            var boundary=new bool[mask.Length];int total=0;
+            for(int y=2;y<height-3;y++)for(int x=2;x<width-3;x++)
+            {
+                int i=y*width+x;
+                boundary[i]=(visible==null||visible[i])&&(mask[i]!=mask[i+1]||mask[i]!=mask[i+width]);
+                if(boundary[i])total++;
+            }
+            if(total==0)return 0;
+            var straight=new bool[mask.Length];
+            foreach(var d in Directions)
+                for(int y=0;y<height;y++)for(int x=0;x<width;x++)
+                {
+                    if(!boundary[y*width+x])continue;
+                    int px=x-d.x,py=y-d.y;
+                    if(px>=0&&py>=0&&px<width&&py<height&&boundary[py*width+px])continue;
+                    int run=0,cx=x,cy=y;
+                    while(cx>=0&&cy>=0&&cx<width&&cy<height&&boundary[cy*width+cx]){run++;cx+=d.x;cy+=d.y;}
+                    if(run<minRun)continue;
+                    for(int k=0,ax=x,ay=y;k<run;k++,ax+=d.x,ay+=d.y)straight[ay*width+ax]=true;
+                }
+            int count=0;for(int i=0;i<straight.Length;i++)if(straight[i])count++;
+            return count/(float)total;
+        }
         public static Vector2Int LastDirection;
         static readonly Vector2Int[] Directions={new(1,0),new(0,1),new(1,1),new(1,-1),new(2,1),new(1,2),new(2,-1),new(1,-2)};
         /// <summary>Longest run of boundary texels along a single straight lattice direction.</summary>
