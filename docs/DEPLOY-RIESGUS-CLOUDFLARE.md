@@ -1,6 +1,6 @@
 # Despliegue Web de Riesgus en Cloudflare
 
-Estado actual: [Riesgus v0.29.1](VALIDATION-RIESGUS-v0.29.1.md) está publicado.
+Estado actual: [Riesgus v0.30.0](VALIDATION-RIESGUS-v0.30.md) está publicado (`20260923T120008Z-v030-c73fd2f`).
 Las nuevas builds se actualizan en el origen Azure y se verifican con
 `scripts/verify_web_release.py`; no necesitan volver a desplegar el Worker ni
 crear tokens Cloudflare. Los datos de v0.25/v0.26 siguientes documentan la

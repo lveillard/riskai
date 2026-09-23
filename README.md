@@ -1,9 +1,8 @@
 # Riesgus · v0.30.0
 
-Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.29.1
-(`20260922T194407Z-tower-v0291`). El sitio sigue sirviendo la v0.29.1 hasta
-que se despliegue la v0.30.0. La verificación pública coincide en 10/10
-hashes. El ajuste de altura aprueba 32 tests de ejecución; la base v0.29 aprobó
+Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.30.0
+(`20260923T120008Z-v030-c73fd2f`). La verificación pública coincide en 10/10 hashes
+([validación v0.30](docs/VALIDATION-RIESGUS-v0.30.md)). El ajuste de altura aprueba 32 tests de ejecución; la base v0.29 aprobó
 221 tests Unity y comprobaciones Web de escritorio, móvil y tablet emulados,
 no hardware móvil físico.
 [Torre más alta v0.29.1](docs/VALIDATION-RIESGUS-v0.29.1.md) ·
