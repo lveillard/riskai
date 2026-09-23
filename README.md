@@ -1,7 +1,7 @@
 # Riesgus · v0.30.0
 
 Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.30.0
-(`20260923T120008Z-v030-c73fd2f`). La verificación pública coincide en 10/10 hashes
+(`20260923T150510Z-v030-050e773`). La verificación pública coincide en 10/10 hashes
 ([validación v0.30](docs/VALIDATION-RIESGUS-v0.30.md)). El ajuste de altura aprueba 32 tests de ejecución; la base v0.29 aprobó
 221 tests Unity y comprobaciones Web de escritorio, móvil y tablet emulados,
 no hardware móvil físico.
