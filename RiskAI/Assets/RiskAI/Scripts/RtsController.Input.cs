@@ -126,6 +126,7 @@ namespace RiskAI
             {
                 foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Attack, targetId: victim.EntityId));
                 foreach (var ship in Fleet) if (IsSelectableShip(ship)) ship.Attack(victim);
+                ShowOrder(victim.transform.position, true); GameFeel.FlashTarget(victim);
                 CancelCursor();
             }
             else OrderAt(Ground(point), AttackCursor);
@@ -147,7 +148,7 @@ namespace RiskAI
                 CancelBoardingForSelection();
                 foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Attack, targetId: enemy.EntityId));
                 foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Profile.CanAttack) ship.Attack(enemy);
-                ShowOrder(enemy.transform.position, true);
+                ShowOrder(enemy.transform.position, true); GameFeel.FlashTarget(enemy);
             }
             else if (ownShip && ownShip.Profile.CanTransport && Selection.Count > 0) BeginBoarding(ownShip);
             else if (harbor && Fleet.Count > 0) MoveFleetToHarbor(harbor);

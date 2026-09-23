@@ -1,7 +1,8 @@
-# Riesgus · v0.29.1
+# Riesgus · v0.30.0
 
 Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.29.1
-(`20260922T194407Z-tower-v0291`). La verificación pública coincide en 10/10
+(`20260922T194407Z-tower-v0291`). El sitio sigue sirviendo la v0.29.1 hasta
+que se despliegue la v0.30.0. La verificación pública coincide en 10/10
 hashes. El ajuste de altura aprueba 32 tests de ejecución; la base v0.29 aprobó
 221 tests Unity y comprobaciones Web de escritorio, móvil y tablet emulados,
 no hardware móvil físico.
@@ -21,6 +22,8 @@ La v0.28 evita actualizar los controladores de animación de unidades fuera de c
 La v0.29 deja visible el fondo de las aguas someras con textura de piedra fina y agua azul sin grandes vetas. Las torres integradas ganan parapetos de piedra más claros; los ballesteros disparan virotes de madera, metal y plumas, sin estela luminosa. No cambian navegación, capturas, daño ni tiempos de impacto.
 
 La v0.29.1 eleva 0,45 m las torres integradas (aproximadamente un 10 %), conservando anchura y detalles. El rótulo y la selección acompañan la altura visual; los puntos de disparo y las reglas permanecen iguales.
+
+La v0.30 incorpora ocho unidades nuevas del mapa original —Fusilero de élite, Rugidor, General, Artillería, Tanque, Buque de guerra, Acorazado y Transporte blindado— con las estadísticas de la fuente, y un Sanador con maná (200, 5 por curación) y 220 de vida. La IA se reescribe: plan de composición, defensa proporcional, oleadas agrupadas fuera del alcance de la torre y desembarcos con escolta; la nueva dificultad Difícil no usa trampas. Añade registro de mensajes, chat con teclado en móvil, alertas de ataque en el minimapa y efectos de impacto, muerte y conquista. El sonido se genera con ElevenLabs y la música de fondo se activa con F8. Las órdenes de producción usan una rejilla 4×3 con atajos QWER/ASDF/ZXCV. Los colores de jugador se corrigen —el color se linealizaba dos veces—, la torre de ciudad pasa a torreón y la ballesta es nueva. El arranque ya no muestra la pantalla de Unity.
 
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
@@ -42,7 +45,7 @@ El catálogo original completo está auditado; faltan unidades, modos y datos he
 
 [Animación del caballero: trote, pausa y ataque](docs/audits/v0.22/knight-animation.webp).
 
-## Estado actual v0.29.1
+## Estado actual v0.30.0
 
 ### Escenarios y reglas comunes
 
@@ -87,13 +90,15 @@ La selección múltiple muestra las colas de cada edificio y permite cancelar en
 | Detener / mantener | S / H |
 | Ejército / flota | E / N |
 | Base inicial / puerto | F2 / F3 |
-| Comprar unidades en ciudad | Q, W, D, F, R, C; o botones |
-| Comprar fragata / transporte | Q / W en un puerto |
+| Comprar unidades en ciudad o puerto | Q W E R / A S D F / Z X C V con ciudad o puerto seleccionado; o botones |
 | Embarcar / desembarcar | B / D con transporte seleccionado |
 | Guardar / recuperar grupo | Ctrl + 1…9 / 1…9 |
 | Ver grupo territorial / fijar salida | Clic en hoguera / clic derecho en terreno |
 | Marcadores | Mantener Tab |
 | Pausa / menú | F10 / F1 |
+| Chat | Intro (escritorio) o botón Chat (táctil) |
+| Música | F8 |
+| Saltar a la última alerta | Espacio sin selección |
 
 ### Perfiles, arte y mapas
 
@@ -105,19 +110,21 @@ La actividad de entrenamiento ilumina la entrada existente de cada edificio. El 
 
 ## Desarrollo
 
+Guía de entorno, comandos y publicación: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Controles completos: [docs/CONTROLS-v0.30.md](docs/CONTROLS-v0.30.md).
+
 Abre **Open-Unity.cmd** o añade `RiskAI/` a Unity Hub. La batalla está en `Assets/RiskAI/Scenes/LasMarcas.unity`; la escena de inicio se prepara como índice 0. Con el editor cerrado:
 
 ```powershell
 .\scripts\Unity.ps1 -Action Test       # Reglas en EditMode
 .\scripts\Unity.ps1 -Action PlayTests  # Batallas reales, navegación e input
-.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v0.29.1/RiskAI.exe
+.\scripts\Unity.ps1 -Action Build      # Builds/Windows-v<VERSION>/RiskAI.exe
 .\scripts\Unity.ps1 -Action BuildWeb   # Requiere Web Build Support del mismo editor
 ```
 
 Ejecuta una operación Unity por proyecto a la vez. Informes: `TestResults/`; logs: `RiskAI/Logs/`. El ejecutable acepta `--riskai-seed 701` y `--riskai-map classic`, `riverlands`, `europe` o `newworld`.
 
-Tras exportar Web, `python scripts/serve_web.py --directory Builds/Web-v0.29.1`
-sirve la build v0.29.1 en `http://127.0.0.1:8080`. Para probar desde una tablet en la misma red, usa
+Tras exportar Web, `python scripts/serve_web.py`
+sirve la build actual en `http://127.0.0.1:8080`. Para probar desde una tablet en la misma red, usa
 `--bind 0.0.0.0` y la IP local del equipo. Las utilidades
 `check_web_player.py` y `check_web_ui.py` conservan resultados, consola y
 capturas del reproductor real con Playwright y Edge. Su ejecución en Windows

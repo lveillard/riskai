@@ -93,7 +93,7 @@ namespace RiskAI.Tests
             deadId=actor.EntityId;var kind=actor.Kind;var point=actor.transform.position;
             actor.TakeDamage(actor.MaxHealth+1,1);
             Assert.That(battle.FindTarget(deadId),Is.Null,"The kill must retire the simulation identity.");
-            SimulateSeconds(2.5f);
+            SimulateSeconds(SoldierPool.CorpseSeconds+.5f);
             Assert.That(actor.gameObject.activeSelf,Is.False,"The dead actor must reach the pool before rent.");
             var reused=battle.Spawn(0,kind,point);
             Assert.That(reused,Is.SameAs(actor),"This fixture must actually reuse the pooled view, not a fresh object.");

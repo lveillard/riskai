@@ -45,7 +45,7 @@ namespace RiskAI
             }
         }
         public bool Building => project != BuildingProject.None;
-        public string ProjectName => project == BuildingProject.Tower ? "Torre de guardia" : "Mejora de ciudad";
+        public string ProjectName => "Mejora de ciudad";
         public float ProjectProgress => Building ? 1 - projectRemaining / BattleRules.ConstructionSeconds : 0;
         public int PotentialIncome => BattleRules.TownIncome + (State.Level - 1) * BattleRules.UpgradeIncome;
         public int Income => State.Owner >= 0 ? PotentialIncome : 0;
@@ -59,7 +59,7 @@ namespace RiskAI
         BuildingTrainingView trainingView;
         bool portNavalTraining;
         public LineRenderer SelectionRing { get; private set; }
-        enum BuildingProject { None, Tower, Upgrade }
+        enum BuildingProject { None, Upgrade }
         sealed class Training { public int Team; public UnitKind Kind; public float Remaining; }
 
         public void Initialize(BattleSession battle, string id, string displayName, int owner, int region, bool capital, int country = -1, Vector3? sourceClaim = null, bool isPort = false, BuildingVariant? visualVariant = null)
@@ -178,12 +178,6 @@ namespace RiskAI
             var item = queue[index]; session.Economy.Refund(item.Team, BattleRules.Cost(item.Kind)); queue.RemoveAt(index);
             return null;
         }
-        public string BuildTower(int team = 0)
-        {
-            string error = CanManage(team); if (error != null) return error;
-            if (Defense.IsAlive) return "Esta ciudad ya tiene una torre.";
-            return BeginProject(BuildingProject.Tower, team, BattleRules.TowerCost);
-        }
         public string Upgrade(int team = 0)
         {
             return "Las ciudades conservan su nivel: compra las unidades directamente.";
@@ -193,7 +187,6 @@ namespace RiskAI
             if (Building) return "Ya hay una obra en marcha en esta ciudad.";
             if (!session.Economy.Spend(team, cost)) return "Oro insuficiente para esta obra.";
             project = next; projectOwner = team; projectRemaining = BattleRules.ConstructionSeconds;
-            if (next == BuildingProject.Tower) Defense.BeginBuild();
             return null;
         }
         public bool SetRally(Vector3 target)
@@ -235,20 +228,24 @@ namespace RiskAI
             return true;
         }
 
-        void Captured()
+        void Captured(int previousOwner)
         {
             foreach (var item in queue) session.Economy.Refund(item.Team, BattleRules.Cost(item.Kind));
             queue.Clear();
             if (Building)
             {
-                session.Economy.Refund(projectOwner, project == BuildingProject.Tower ? BattleRules.TowerCost : BattleRules.UpgradeCost);
-                project = BuildingProject.None; Defense.CancelBuild();
+                session.Economy.Refund(projectOwner, BattleRules.UpgradeCost);
+                project = BuildingProject.None;
             }
             flag.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamMaterialColor(State.Owner)); Defense.ChangeOwner();
             foreach(var roof in GetComponentsInChildren<Renderer>())if(roof.name=="Faction roof"&&!roof.GetComponentInParent<DefenseTower>())roof.sharedMaterial=WorldArt.RoofMaterial(State.Owner);
-            session.Message((State.Owner < 0 ? "Queda neutral " : State.Owner == 0 ? "Has conquistado " : VisualFactory.TeamName(State.Owner) + " ha conquistado ") + DisplayName);
-            if (State.Owner >= 0 && State.Country >= 0 && session.Economy.CountryOwner(State.Country) == State.Owner)
-                session.Message((State.Owner==0?"País completado: ":VisualFactory.TeamName(State.Owner)+" completa ") + MapLayout.Countries[State.Country].Name + ". Refuerzos activos.");
+            bool countryLost = previousOwner >= 0 && BattleFeedback.CountryWasComplete(session, State.Country, previousOwner, this);
+            session.Message((State.Owner < 0 ? "Queda neutral " : State.Owner == 0 ? "Has conquistado " : VisualFactory.TeamName(State.Owner) + " ha conquistado ") + DisplayName,
+                previousOwner == 0 && State.Owner != 0 ? MessageKind.Loss : MessageKind.Capture, State.Owner, ClaimPoint);
+            bool completed = State.Owner >= 0 && State.Country >= 0 && session.Economy.CountryOwner(State.Country) == State.Owner;
+            if (completed)
+                session.Message((State.Owner==0?"País completado: ":VisualFactory.TeamName(State.Owner)+" completa ") + MapLayout.Countries[State.Country].Name + ". Refuerzos activos.", MessageKind.Country, State.Owner, ClaimPoint);
+            session.Feedback.RaiseCaptured(new CaptureEvent(ClaimPoint, previousOwner, State.Owner, DisplayName, flag ? flag.transform : null, IsPort, State.Country, completed, countryLost));
         }
         void Update()
         {
@@ -266,15 +263,13 @@ namespace RiskAI
             int nextOwner = IsPort && Port ? Port.StepClaim(delta) : ClaimZone.Step(session, State.Owner, delta);
             State.Capture = ClaimZone.Progress; State.Capturing = ClaimZone.CapturingTeam; State.Contested = ClaimZone.Contested;
             if (Defender && Defender != previousDefender) Defender.HoldPosition();
-            if (nextOwner != previousOwner) { State.Owner = nextOwner; Captured(); }
+            if (nextOwner != previousOwner) { State.Owner = nextOwner; Captured(previousOwner); }
             if (Building)
             {
                 projectRemaining -= delta;
-                if (project == BuildingProject.Tower) Defense.SetBuildProgress(ProjectProgress);
                 if (projectRemaining <= 0)
                 {
-                    if (project == BuildingProject.Tower) Defense.CompleteBuild();
-                    else { State.Level = 2; VisualFactory.TownUpgrade(transform); }
+                    State.Level = 2; VisualFactory.TownUpgrade(transform);
                     session.Message(DisplayName + ": " + ProjectName + " completada.");
                     project = BuildingProject.None;
                 }

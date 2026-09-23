@@ -175,7 +175,7 @@ namespace RiskAI
         }
         public static Button Button(string text, System.Action action, string name = null)
         {
-            var button = new RtsOrnamentButton(action) { text = GameText.Localize(text), name = name };
+            var button = new RtsOrnamentButton(action == null ? (System.Action)null : () => { Sfx.Ui(SfxId.UiClick); action(); }) { text = GameText.Localize(text), name = name };
             button.style.minHeight = 44; button.style.paddingLeft = 12; button.style.paddingRight = 12;
             button.style.marginRight = 8; button.style.marginBottom = 8;
             button.style.backgroundColor = Card; button.style.borderTopColor = Bronze; button.style.borderBottomColor = Bronze;

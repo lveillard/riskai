@@ -3,10 +3,14 @@ using System;
 namespace RiskAI.Core
 {
     /// <summary>Engine-independent identity for the prototype's naval units.</summary>
+    /// <remarks>Ordinals are public and cast to ShipKind: append new identities at the end only.</remarks>
     public enum NavalUnitKind
     {
         Galley,
-        Transport
+        Transport,
+        Warship,
+        Battleship,
+        ArmoredTransport
     }
 
     /// <summary>Immutable combat and economy values for a naval unit.</summary>
@@ -14,6 +18,7 @@ namespace RiskAI.Core
     {
         public readonly string Name;
         public readonly string SourceRawId;
+        public readonly string Hotkey;
         public readonly bool CanCapture;
         public readonly float Health;
         public readonly float Damage;
@@ -47,9 +52,10 @@ namespace RiskAI.Core
             int cost,
             float trainSeconds,
             int capacity,
-            int pointValue,int dice=0,int sides=0,string sourceRawId=null,bool canCapture=false)
+            int pointValue,int dice=0,int sides=0,string sourceRawId=null,bool canCapture=false,string hotkey=null)
         {
             Name = name;
+            Hotkey = hotkey;
             SourceRawId = sourceRawId;
             CanCapture = canCapture;
             Health = health;
@@ -79,6 +85,10 @@ namespace RiskAI.Core
         // n008 uabi@0x3588 attaches Sch3: W3A Car1@0x395 sets capacity 10.
         // The UI's Normal attack token does not enable a weapon.
         public static ShipProfile Transport=>UnitCatalog.Profile(NavalUnitKind.Transport);
+        // h00U Warship A / h001 Battleship SS (hdes) and n007 Armoured Transport Ship (nzep).
+        public static ShipProfile Warship=>UnitCatalog.Profile(NavalUnitKind.Warship);
+        public static ShipProfile Battleship=>UnitCatalog.Profile(NavalUnitKind.Battleship);
+        public static ShipProfile ArmoredTransport=>UnitCatalog.Profile(NavalUnitKind.ArmoredTransport);
 
         public static ShipProfile Profile(NavalUnitKind kind)
         {

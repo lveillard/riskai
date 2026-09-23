@@ -293,7 +293,8 @@ namespace RiskAI.Tests
             actor.TakeDamage(actor.MaxHealth+1,1);
             Assert.That(battle.FindTarget(oldId),Is.Null);
             battle.TogglePause();
-            for(int i=0;i<40;i++)battle.Clock.Advance(SimClock.StepSeconds,false,battle.World.Tick);
+            int corpseTicks=Mathf.CeilToInt((SoldierPool.CorpseSeconds+.5f)/(float)SimClock.StepSeconds);
+            for(int i=0;i<corpseTicks;i++)battle.Clock.Advance(SimClock.StepSeconds,false,battle.World.Tick);
             Assert.That(actor.gameObject.activeSelf,Is.False,"The dead actor must reach the pool before rent.");
             var replacement=battle.Spawn(0,UnitKind.Archer,point);
             battle.TogglePause();

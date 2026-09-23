@@ -95,10 +95,12 @@ namespace RiskAI
                 landRow.style.display=land>0?DisplayStyle.Flex:DisplayStyle.None;
                 if(navalRow!=null)navalRow.style.display=naval>0?DisplayStyle.Flex:DisplayStyle.None;
                 float width=Mathf.Max(land,naval)*46,height=(land>0?46:0)+(naval>0?46:0);
-                var anchor=town?town.transform.position:harbor.IsImportedPort?harbor.LinkedTown.transform.position:harbor.Landing;
-                Vector3 point=hud.cam.WorldToScreenPoint(anchor+Vector3.up*6.8f);
+                var labelled=town?town:harbor.IsImportedPort?harbor.LinkedTown:null;
+                // Stack above the town's name plate (anchor + 3..22 px) instead of covering it.
+                Vector3 point=labelled?hud.cam.WorldToScreenPoint(labelled.transform.position+Vector3.up*RiskAI.BuildingSelection.LabelHeight(labelled))
+                    :hud.cam.WorldToScreenPoint(harbor.Landing+Vector3.up*6.8f);
                 Rect world=UiViewport.WorldRect;
-                float x=point.x-width*UiViewport.Scale*.5f,y=point.y+8*UiViewport.Scale;
+                float x=point.x-width*UiViewport.Scale*.5f,y=point.y+(labelled?26:8)*UiViewport.Scale;
                 var screen=new Rect(x,y,width*UiViewport.Scale,height*UiViewport.Scale);
                 bool onScreen=point.z>0&&screen.xMin>=world.xMin&&screen.xMax<=world.xMax&&screen.yMin>=world.yMin&&screen.yMax<=world.yMax;
                 Root.style.display=onScreen?DisplayStyle.Flex:DisplayStyle.None;

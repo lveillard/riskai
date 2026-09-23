@@ -35,7 +35,7 @@ namespace RiskAI
     /// </summary>
     public sealed class UnitPresentationLodView : MonoBehaviour
     {
-        static readonly Mesh[] ProxyMeshes = new Mesh[9];
+        static readonly Mesh[] ProxyMeshes = new Mesh[System.Enum.GetValues(typeof(UnitKind)).Length];
         readonly List<Renderer> detailRenderers = new List<Renderer>(8);
         readonly List<Animation> legacyAnimations = new List<Animation>(2);
         readonly List<Behaviour> animationControllers = new List<Behaviour>(2);
@@ -65,6 +65,8 @@ namespace RiskAI
                 if (animator.enabled) animationControllers.Add(animator);
             foreach (var knight in GetComponentsInChildren<MountedKnightView>(true))
                 if (knight.enabled) animationControllers.Add(knight);
+            foreach (var siege in GetComponentsInChildren<SiegeUnitView>(true))
+                if (siege.enabled) animationControllers.Add(siege);
 
             CachePresentationBounds();
 
@@ -168,23 +170,26 @@ namespace RiskAI
         {
             float height = Mathf.Max(.9f, VisualMetrics.HeightFor(kind));
             float width = Mathf.Max(.52f, VisualMetrics.RadiusFor(kind) * 1.75f);
-            float depth = kind == UnitKind.Guard || kind == UnitKind.MarineMajor || kind == UnitKind.MarineGeneral
-                ? width * 1.45f : kind == UnitKind.Mortar ? width * 1.25f : width * .82f;
+            float depth = Mounted(kind) ? width * 1.45f : Siege(kind) ? width * 1.25f : width * .82f;
             return new Vector3(width, height, depth);
         }
+
+        static bool Mounted(UnitKind kind) => kind == UnitKind.Guard || kind == UnitKind.MarineMajor || kind == UnitKind.MarineGeneral || kind == UnitKind.ArmyGeneral;
+        static bool Siege(UnitKind kind) => kind == UnitKind.Mortar || kind == UnitKind.Artillery || kind == UnitKind.Tank;
 
         static Mesh ProxyMesh(UnitKind kind)
         {
             int index = (int)kind;
             if (ProxyMeshes[index]) return ProxyMeshes[index];
-            bool mounted = kind == UnitKind.Guard || kind == UnitKind.MarineMajor || kind == UnitKind.MarineGeneral;
-            bool ranged = kind == UnitKind.Archer || kind == UnitKind.Mage || kind == UnitKind.Medic || kind == UnitKind.MarinePrivate;
+            bool mounted = Mounted(kind);
+            bool ranged = kind == UnitKind.Archer || kind == UnitKind.Mage || kind == UnitKind.Medic || kind == UnitKind.MarinePrivate ||
+                kind == UnitKind.EliteRifleman || kind == UnitKind.Roarer;
             float[] heights = { 0f, .18f, .68f, .96f, 1.18f };
             float[] radii = mounted
                 ? new[] { .30f, .50f, .46f, .27f, .10f }
                 : kind == UnitKind.MarinePrivate
                     ? new[] { .25f, .40f, .42f, .34f, .20f }
-                : kind == UnitKind.Mortar
+                : Siege(kind)
                     ? new[] { .34f, .52f, .48f, .25f, .12f }
                     : ranged
                         ? new[] { .24f, .38f, .42f, .28f, .04f }

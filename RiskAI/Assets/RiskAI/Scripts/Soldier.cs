@@ -69,6 +69,12 @@ namespace RiskAI
         bool wasFighting, simulationPaused, stoppedBeforePause;
         float simDelta;
         MedicSupport medic;
+        RoarSupport roar;
+        float roarUntil = -1;
+        /// <summary>Aroa buff: +25% rolled damage until the source duration ends.</summary>
+        public bool IsRoaring => session && roarUntil > session.BattleTime;
+        public void ApplyRoar(float until) { if (IsAlive) roarUntil = Mathf.Max(roarUntil, until); }
+        public ManaPool Mana => medic ? medic.Mana : roar ? roar.Mana : null;
         readonly List<CombatTarget> nearby = new List<CombatTarget>(64);
         readonly List<CombatTarget> alerted = new List<CombatTarget>(32);
         readonly Queue<Order> orders = new Queue<Order>();
@@ -77,7 +83,7 @@ namespace RiskAI
         {
             ClearHumanMoveTelemetry(true);
             session=battle; Team=team; Kind=kind; Health=MaxHealth; OriginCountry=-1;
-            Garrison=null; simulationPaused=false; enabled=true;
+            Garrison=null; simulationPaused=false; enabled=true; roarUntil=-1;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
             mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; orders.Clear();
             nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
@@ -102,11 +108,13 @@ namespace RiskAI
                 VisualFactory.Soldier(this);
                 presentationLod=gameObject.AddComponent<UnitPresentationLodView>();presentationLod.Initialize(kind,team);
                 if(kind==UnitKind.Medic)medic=gameObject.AddComponent<MedicSupport>();
+                if(SupportAbilities.CanRoar(kind))roar=gameObject.AddComponent<RoarSupport>();
                 visualAnimator=GetComponent<SoldierAnimator>();
                 ring=VisualFactory.Ring(transform,Mathf.Max(.43f,SourceGeometry.AgentRadius(kind)*1.15f),.045f,new Color(.5f,1f,.6f));
             }
             GetComponent<Collider>().enabled=true;
             if(medic)medic.Initialize(this,battle);
+            if(roar)roar.Initialize(this,battle);
             if(visualAnimator)visualAnimator.ResetForReuse();
             Select(false);nextSense=session.BattleTime+(EntityId%4)*.05f;
         }
@@ -157,7 +165,7 @@ namespace RiskAI
             if(Agent.isOnNavMesh && (Agent.nextPosition-garrisonAnchor).sqrMagnitude>.000001f)Agent.Warp(garrisonAnchor);
         }
 
-        public void Select(bool value) { Selected = value; if (ring) ring.enabled = value; if(presentationLod)presentationLod.SetSelected(value); }
+        public void Select(bool value) { bool pop = value && !Selected; Selected = value; if (ring) { ring.enabled = value; if (pop) GameFeel.PopRing(ring); } if(presentationLod)presentationLod.SetSelected(value); }
         public string LastMoveError { get; private set; }
         internal bool PathPendingForTelemetry => Agent && Agent.enabled && Agent.isOnNavMesh && Agent.pathPending;
         internal float PathPendingAgeForTelemetry => pathPendingSince >= 0 && session != null ? Mathf.Max(0, session.BattleTime-pathPendingSince) : 0;
@@ -319,6 +327,7 @@ namespace RiskAI
             // Warcraft's Ahea heal is an autocast order. A medic can resume combat
             // afterwards, but cannot resolve a heal and an attack in the same tick.
             bool healed=medic&&medic.SimTick(delta);
+            if(roar)roar.SimTick(delta);
             if(healed){CancelStrike();nextAttack=Mathf.Max(nextAttack,session.BattleTime+MedicSupport.CastInterval);}
             if (!healed && strikeAt >= 0 && session.BattleTime >= strikeAt)
             {
@@ -326,9 +335,9 @@ namespace RiskAI
                 if(visualAnimator)visualAnimator.SampleStrikeContact();
                 if (strikeTarget && strikeTarget.Health > 0 && Vector3.Distance(transform.position, strikeTarget.ApproachPoint(transform.position)) <= BattleRules.Range(Kind) + .55f && Vector3.Distance(transform.position,strikeTarget.ApproachPoint(transform.position))>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
                 {
-                    float damage = session.RollDamage(BattleRules.Profile(Kind));
+                    float damage = session.RollDamage(BattleRules.Profile(Kind)) * SupportAbilities.DamageMultiplier(IsRoaring);
                     if (BattleRules.Ranged(Kind)) session.Combat.FireWeapon(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, SourceWeapons.For(Kind, AttackType));
-                    else strikeTarget.ReceiveAttack(damage, AttackType, Team, this);
+                    else { strikeTarget.ReceiveAttack(damage, AttackType, Team, this); session.Feedback.RaiseImpact(strikeTarget.AimPoint, AttackType, 0, ImpactKind.Melee, this); }
                 }
                 strikeAt = -1; strikeTarget = null;
             }
@@ -520,7 +529,8 @@ namespace RiskAI
                 if (PlayerRules.IsPlayer(attacker) && attacker < session.PlayerCount) { session.Kills[attacker]++; session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind)); }
                 Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);Select(false);Agent.enabled=false;GetComponent<Collider>().enabled=false;enabled=false;
                 if(visualAnimator)visualAnimator.Die();
-                session.SoldierPool.Retire(this,visualAnimator?1.4f:0);
+                session.Feedback.RaiseDied(this);
+                session.SoldierPool.Retire(this,SoldierPool.CorpseDelay(session,visualAnimator));
                 return;
             }
             if (source && mode != OrderMode.Move && mode != OrderMode.Hold && mode != OrderMode.Follow && !target)

@@ -1,0 +1,39 @@
+# Basic whitespace/charset only. It matches the current code on purpose: no formatting or
+# naming rules that would reformat the dense existing C#.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+indent_size = 4
+
+[*.py]
+indent_size = 4
+
+[*.{json,asmdef,inputactions,yml,yaml,toml}]
+indent_size = 2
+
+# Most JSON is generated (exporters and audits write it without a trailing newline); leave as written.
+[*.json]
+insert_final_newline = unset
+
+[*.{js,mjs,cjs,html,css,uss,uxml}]
+indent_size = 2
+
+[*.{ps1,cmd,bat}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+# Unity-serialized files are written by the editor; do not let editors touch them.
+[*.{unity,prefab,asset,mat,anim,controller,meta}]
+indent_size = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset

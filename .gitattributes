@@ -1,0 +1,70 @@
+# Line endings: every text file is stored and checked out as LF (matches the current index).
+* text=auto eol=lf
+
+# Windows launchers/scripts are tracked and checked out as LF today and run fine that way;
+# they stay LF on purpose to avoid churn. Switch to eol=crlf only with a deliberate renormalize.
+*.cmd text eol=lf
+*.bat text eol=lf
+*.ps1 text eol=lf
+
+# Source and data
+*.cs      text eol=lf diff=csharp
+*.py      text eol=lf diff=python
+*.md      text eol=lf diff=markdown
+*.json    text eol=lf
+*.xml     text eol=lf
+*.shader  text eol=lf
+*.hlsl    text eol=lf
+*.cginc   text eol=lf
+*.uss     text eol=lf
+*.uxml    text eol=lf
+*.tss     text eol=lf
+*.asmdef  text eol=lf
+*.inputactions text eol=lf
+*.jslib   text eol=lf
+
+# Unity YAML (Force Text serialization). The merge driver is optional: configure it with
+#   git config merge.unityyamlmerge.driver '"<Editor>/Data/Tools/UnityYAMLMerge.exe" merge -p %O %B %A %A'
+# (see docs/DEVELOPMENT.md); without it git falls back to its normal text merge.
+*.unity      merge=unityyamlmerge eol=lf
+*.prefab     merge=unityyamlmerge eol=lf
+*.asset      merge=unityyamlmerge eol=lf
+*.mat        merge=unityyamlmerge eol=lf
+*.anim       merge=unityyamlmerge eol=lf
+*.controller merge=unityyamlmerge eol=lf
+*.overrideController merge=unityyamlmerge eol=lf
+*.physicMaterial merge=unityyamlmerge eol=lf
+*.meta       merge=unityyamlmerge eol=lf
+# Unity writes these as binary even with Force Text.
+LightingData.asset binary
+*.bytes binary
+
+# Binary assets (kept as regular git blobs; existing files are NOT migrated to LFS)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.tga  binary
+*.psd  binary
+*.exr  binary
+*.hdr  binary
+*.tif  binary
+*.tiff binary
+*.fbx  binary
+*.blend binary
+*.mdx  binary
+*.blp  binary
+*.ttf  binary
+*.otf  binary
+*.woff binary
+*.woff2 binary
+*.unitypackage binary
+*.zip  binary
+*.dll  binary
+*.pdf  binary
+
+# New audio goes through Git LFS (none is tracked in history yet).
+*.wav  filter=lfs diff=lfs merge=lfs -text
+*.ogg  filter=lfs diff=lfs merge=lfs -text
+*.mp3  filter=lfs diff=lfs merge=lfs -text

@@ -13,7 +13,7 @@ namespace RiskAI
 
         public static void MatchStandingHeight(GameObject model,UnitKind kind)
         {
-            float target=SourceGeometry.StandingHeight(kind);
+            float target=VisualMetrics.StandingHeightTarget(kind);
             if(target<=0)return;
             // Put every fresh instance into the same pose, including cache hits;
             // imported animation curves can also set the rig-root transform.

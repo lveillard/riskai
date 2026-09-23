@@ -6,7 +6,8 @@ using UnityEngine.AI;
 
 namespace RiskAI
 {
-    public enum ShipKind { Galley, Transport }
+    // Mirrors Core.NavalUnitKind ordinals (cast directly): append new kinds at the end only.
+    public enum ShipKind { Galley, Transport, Warship, Battleship, ArmoredTransport }
 
     public sealed class Ship : CombatTarget
     {

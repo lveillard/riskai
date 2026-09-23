@@ -6,6 +6,10 @@ mergeInto(LibraryManager.library, {
   RiskAI_TouchCapable: function () {
     return navigator.maxTouchPoints > 0 ? 1 : 0;
   },
+  RiskAI_PrefersSpanish: function () {
+    var tag = (navigator.languages && navigator.languages.length ? navigator.languages[0] : navigator.language) || "";
+    return /^es([-_]|$)/i.test(tag) ? 1 : 0;
+  },
   RiskAI_SafeInset: function (edge) {
     var insets = window.riskaiSafeInsets;
     return insets && edge >= 0 && edge < 4 ? insets[edge] : 0;

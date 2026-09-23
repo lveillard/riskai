@@ -21,6 +21,7 @@ namespace RiskAI
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-map")BattleSession.MapForNewMatch=args[a+1]=="europe"?ScenarioMap.Europe:args[a+1]=="world"||args[a+1]=="newworld"?ScenarioMap.NewWorld:args[a+1]=="riverlands"?ScenarioMap.Riverlands:ScenarioMap.Classic;
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-seed" && int.TryParse(args[a+1],out int seed))BattleSession.SeedForNewMatch=seed;
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-players" && int.TryParse(args[a+1],out int players))BattleSession.PlayerCountForNewMatch=Mathf.Clamp(players,2,PlayerRules.MaxPlayers);
+            for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-difficulty" && BattleSession.TryParseDifficulty(args[a+1],out var difficulty))BattleSession.DifficultyForNewMatch=difficulty;
             for(int a=0;a<args.Length-1;a++)if(args[a]=="--riskai-path-budget" && int.TryParse(args[a+1],out int budget))PathfindingIterationsPerFrame=Mathf.Clamp(budget,MinPathfindingIterationsPerFrame,MaxPathfindingIterationsPerFrame);
         }
         void Start()

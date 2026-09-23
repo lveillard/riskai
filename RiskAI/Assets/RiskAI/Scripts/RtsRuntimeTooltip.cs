@@ -35,6 +35,10 @@ namespace RiskAI
         TouchControl holdTouch;
         VisualElement captureTarget;
         bool dispatchingCancel;
+        // Browsers follow a touch with compatibility mouse events at the same spot,
+        // and a lifted pen may still hover there. Neither is a deliberate hover.
+        bool directContact;
+        Vector2 directPosition;
 
         public RtsRuntimeTooltip(VisualElement rootVisualElement)
         {
@@ -88,13 +92,13 @@ namespace RiskAI
                     EndHold(); // Leave native drag/scroll handling intact.
                 return;
             }
-            if(!SupportsHover(evt.pointerType) || evt.pressedButtons != 0 || holdPointer >= 0) return;
+            if(!SupportsHover(evt.pointerType) || evt.pressedButtons != 0 || holdPointer >= 0 || FollowsDirectContact(evt.position)) return;
             SetPending(evt.target as VisualElement, evt.position);
         }
 
         void OnPointerOver(PointerOverEvent evt)
         {
-            if(!SupportsHover(evt.pointerType) || evt.pressedButtons != 0 || holdPointer >= 0) return;
+            if(!SupportsHover(evt.pointerType) || evt.pressedButtons != 0 || holdPointer >= 0 || FollowsDirectContact(evt.position)) return;
             SetPending(evt.target as VisualElement, evt.position);
         }
 
@@ -103,6 +107,7 @@ namespace RiskAI
             bool anotherHold = holdPointer >= 0;
             CancelHold();
             if(evt.pointerId == suppressedPointer) suppressedPointer = -1;
+            if(IsDirect(evt.pointerType)) NoteDirectContact(evt.position);
             if(anotherHold || evt.button != 0 || evt.pressedButtons != 1 ||
                 (evt.pointerType != UnityEngine.UIElements.PointerType.touch && evt.pointerType != UnityEngine.UIElements.PointerType.pen)) return;
             var target = evt.target as VisualElement;
@@ -126,6 +131,25 @@ namespace RiskAI
         {
             if(evt.pointerId == suppressedPointer) evt.StopImmediatePropagation();
             if(evt.pointerId == holdPointer) EndHold();
+            // A lifted finger or pen never leaves help (or a pending hover) on screen.
+            if(IsDirect(evt.pointerType)) { NoteDirectContact(evt.position); Hide(); }
+        }
+
+        static bool IsDirect(string pointerType) =>
+            pointerType == UnityEngine.UIElements.PointerType.touch || pointerType == UnityEngine.UIElements.PointerType.pen;
+
+        void NoteDirectContact(Vector2 position) { directContact = true; directPosition = position; }
+
+        /// <summary>
+        /// Hover near the last touch/pen contact is treated as emulated until the
+        /// pointer genuinely moves away, so a tapped card never gains a sticky tooltip.
+        /// </summary>
+        bool FollowsDirectContact(Vector2 position)
+        {
+            if(!directContact) return false;
+            if((position - directPosition).sqrMagnitude <= HoldSlop * HoldSlop) return true;
+            directContact = false;
+            return false;
         }
 
         void OnClick(ClickEvent evt)

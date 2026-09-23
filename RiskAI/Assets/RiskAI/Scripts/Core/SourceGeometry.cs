@@ -45,6 +45,11 @@ namespace RiskAI.Core
                 case UnitKind.MarinePrivate: return 16f / NativePerUnity; // h012 / hrif inherited ucol=16
                 case UnitKind.MarineMajor:
                 case UnitKind.MarineGeneral: return 32f / NativePerUnity; // h014,h015 / hkni inherited ucol=32
+                case UnitKind.EliteRifleman: return 16f / NativePerUnity; // h00F explicit ucol=16
+                case UnitKind.Roarer: return 16f / NativePerUnity; // h00I / hmpr inherited ucol=16
+                case UnitKind.ArmyGeneral: return 36f / NativePerUnity; // h00J explicit ucol=36
+                case UnitKind.Artillery: return 48f / NativePerUnity; // h00M / hmtt inherited ucol=48
+                case UnitKind.Tank: return 40f / NativePerUnity; // h01A explicit ucol=40
                 default: return LocalUnverifiedRadius;
             }
         }

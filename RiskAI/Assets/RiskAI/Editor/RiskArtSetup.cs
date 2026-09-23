@@ -16,6 +16,7 @@ namespace RiskAI.Editor
             var prepared=new System.Collections.Generic.HashSet<string>();
             foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
+                if(System.Array.IndexOf(UnitVariantViews.PortraitKinds,kind)>=0)continue; // rendered below from their variant views
                 string name = BattleRules.Model(kind);
                 if(!prepared.Add(name))continue;
                 if(kind==UnitKind.Mortar)
@@ -65,6 +66,7 @@ namespace RiskAI.Editor
                         if(part.name=="Rogue_Cape"||part.name=="Rogue_Head_Hooded")part.gameObject.SetActive(false);
                 var prefab = PrefabUtility.SaveAsPrefabAsset(root, "Assets/RiskAI/Resources/Units/" + name + ".prefab");
                 UnitTeamColor.Apply(root,kind,0);
+                if(kind==UnitKind.Archer)CrossbowView.Apply(visual);
                 if(kind==UnitKind.MarinePrivate)MarinePrivateView.Apply(visual,0);
                 RenderPortrait(root, animation, name);
                 Object.DestroyImmediate(root);
@@ -73,6 +75,23 @@ namespace RiskAI.Editor
             MountedKnightView.Create(mountedRoot.transform,0);
             RenderPortrait(mountedRoot,null,"MountedKnight");
             Object.DestroyImmediate(mountedRoot);
+            foreach(var kind in UnitVariantViews.PortraitKinds)
+            {
+                var variantRoot=new GameObject(kind+" portrait model");Animation variantAnimation=null;
+                if(kind==UnitKind.ArmyGeneral)UnitVariantViews.General(variantRoot.transform,0);
+                else if(kind==UnitKind.Artillery)UnitVariantViews.ArtilleryModel(variantRoot.transform,VisualFactory.TeamColor(0));
+                else if(kind==UnitKind.Tank)UnitVariantViews.TankModel(variantRoot.transform,VisualFactory.TeamColor(0));
+                else
+                {
+                    var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/RiskAI/Resources/Units/"+BattleRules.Model(kind)+".prefab");
+                    if(!prefab)throw new System.InvalidOperationException("Missing base prefab for "+kind);
+                    var visual=(GameObject)Object.Instantiate(prefab,variantRoot.transform,false);
+                    UnitTeamColor.Apply(visual,kind,0);UnitVariantViews.Decorate(visual,kind,0);
+                    variantAnimation=visual.GetComponentInChildren<Animation>();
+                }
+                RenderPortrait(variantRoot,variantAnimation,UnitVariantViews.PortraitName(kind));
+                Object.DestroyImmediate(variantRoot);
+            }
             foreach(ShipKind kind in System.Enum.GetValues(typeof(ShipKind)))
             {
                 var shipRoot=new GameObject(kind+" portrait");
@@ -90,9 +109,10 @@ namespace RiskAI.Editor
             var cameraObject = new GameObject("Portrait camera");
             var camera = cameraObject.AddComponent<Camera>(); camera.cullingMask = 1 << 31;
             camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.075f,.085f,.09f);
-            bool ship=name==ShipKind.Galley.ToString()||name==ShipKind.Transport.ToString();
-            camera.orthographic = true; camera.orthographicSize = ship?3.35f:name=="Mortar"?1.35f:name=="MountedKnight"?1.85f:1.4f;
-            Vector3 focus = root.transform.position + Vector3.up * (ship?2.15f:name=="Mortar"?1.15f:1.75f);
+            bool ship=System.Enum.IsDefined(typeof(ShipKind),name);
+            bool siege=name=="Mortar"||name=="Artillery"||name=="Tank";
+            camera.orthographic = true; camera.orthographicSize = ship?(name==ShipKind.Battleship.ToString()?4.2f:name==ShipKind.Warship.ToString()?3.8f:3.35f):siege?(name=="Mortar"?1.35f:1.7f):name=="MountedKnight"?1.85f:name=="ArmyGeneral"?2.1f:1.4f;
+            Vector3 focus = root.transform.position + Vector3.up * (ship?2.15f:siege?1.15f:name=="ArmyGeneral"?1.95f:1.75f);
             camera.transform.position = focus + (ship?new Vector3(4.8f,3.1f,6.8f):new Vector3(2,1,5)); camera.transform.LookAt(focus);
             var keyObject = new GameObject("Portrait light"); var key = keyObject.AddComponent<Light>();
             key.type = LightType.Directional; key.intensity = 1.8f; key.cullingMask = 1 << 31; key.transform.rotation = Quaternion.Euler(35, -30, 0);

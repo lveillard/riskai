@@ -18,6 +18,9 @@ namespace RiskAI
                 case UnitKind.Footman: return "1H_Melee_Attack_Slice_Horizontal";
                 case UnitKind.Mage: return "Spellcast_Shoot";
                 case UnitKind.Guard:
+                case UnitKind.ArmyGeneral:
+                case UnitKind.Artillery:
+                case UnitKind.Tank:
                 case UnitKind.Mortar: return null;
                 case UnitKind.MarineMajor:
                 case UnitKind.MarineGeneral: return "2H_Melee_Attack_Slice";
@@ -38,6 +41,8 @@ namespace RiskAI
                 // The ranged release starts its recoil after frame 8/32.
                 case UnitKind.Archer:
                 case UnitKind.Medic:
+                case UnitKind.EliteRifleman:
+                case UnitKind.Roarer:
                 case UnitKind.MarinePrivate: return 8f/32f;
                 // Procedural mortar and mounted-lance curves define contact halfway.
                 default: return .5f;

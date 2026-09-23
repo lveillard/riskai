@@ -1,5 +1,7 @@
 # Reglas Risk Reforged v0.16
 
+> v0.30: roster ampliado, Sanador a 220 HP (adaptación local) con maná, sin botón de torre. Véase [RISK-RULES-v0.30.md](RISK-RULES-v0.30.md).
+
 > Corrección de auditoría (2026-09-09): la sección de ingresos omitía la condición de país completo del trigger llamador. Véase [auditoría v0.22](audits/ECONOMY-RULES-v0.22.md).
 
 ## Alcance y procedencia

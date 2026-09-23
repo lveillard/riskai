@@ -27,7 +27,7 @@ namespace RiskAI
         {
             session = battle; controller = input; cam = camera;
             session.PlayerEliminated += OnPlayerEliminated;
-            RefreshHudSnapshot();ConfigureViewport();InitializeRetainedUi();
+            RefreshHudSnapshot();ConfigureViewport();InitializeRetainedUi();InitializeFeedback();
         }
         void LateUpdate()
         {
@@ -49,6 +49,7 @@ namespace RiskAI
             if (hudDirty || hud.Gold != session.Economy.Gold[0] || lastHudTick / 2 != session.Clock.TickCount / 2) RefreshHudSnapshot();
             RefreshRetainedUi();
             RefreshWorldQueues();
+            RefreshFeedback();
         }
         void RefreshHudSnapshot()
         {
@@ -61,6 +62,7 @@ namespace RiskAI
         void OnDestroy()
         {
             if (session) session.PlayerEliminated -= OnPlayerEliminated;
+            DisposeFeedback();
             if(minimapTexture)Destroy(minimapTexture);
             DisposeMinimapMarkers();
             UiViewport.ResetHudHeights();
@@ -92,11 +94,7 @@ namespace RiskAI
                 Rect real = controller.SelectionRect; var r = new Rect(real.x / Scale, real.y / Scale, real.width / Scale, real.height / Scale);
                 RtsSkin.Fill(r, new Color(.4f, 1, .4f, .12f)); Outline(r, new Color(.55f, 1, .5f));
             }
-            for (int i = 0; i < Mathf.Min(1, session.Messages.Count); i++)
-            {
-                var r = new Rect(UiViewport.SafeRect.xMin/Scale+16, bottom - 28 - i * 23, Mathf.Min(680,UiViewport.LogicalWidth-32), 22); RtsSkin.Fill(r, new Color(.035f, .04f, .03f, .83f));
-                Label(r.x + 7, r.y, r.width - 12, session.Messages[i], RtsSkin.Small);
-            }
+            // Recent messages render in the retained feedback overlay (BattleHud.Feedback).
             DrawEliminationNotice();
         }
         void OnPlayerEliminated(int player) => eliminationNotices.Enqueue(player);
@@ -140,15 +138,18 @@ namespace RiskAI
             foreach (var town in session.Towns)
             {
                 bool visible = town.Selected || hoveredTown == town || controller.ShowHealthBars;
-                Vector3 p = cam.WorldToScreenPoint(town.transform.position + Vector3.up * VisualMetrics.BuildingLabelHeight(town.VisualVariant)) / Scale;
-                float y = height - p.y; if (p.z <= 0 || y < TopPixels/Scale+20 || y > bottom - 20) continue;
                 if (!visible) continue;
-                DrawBuildingName(new Vector2(p.x,y),town.DisplayName,town.State.Owner);
+                // Anchored at the top of the tallest roof/keep/mast; the plate and any
+                // capture bar stack upward from there so the silhouette never hides them.
+                Vector3 p = cam.WorldToScreenPoint(town.transform.position + Vector3.up * RiskAI.BuildingSelection.LabelHeight(town)) / Scale;
+                float y = height - p.y; if (p.z <= 0 || y < TopPixels/Scale+26 || y > bottom - 4) continue;
+                float plateTop = y - 22;
+                DrawBuildingName(new Vector2(p.x,plateTop+2),town.DisplayName,town.State.Owner);
                 // Succession is immediate; nearby enemies or a bound guard are not a progress bar.
-                if (town.State.Capture > 0 && town.State.Capture < 1 && town.State.Capturing >= 0)
+                if (town.State.Capture > 0 && town.State.Capture < 1 && town.State.Capturing >= 0 && plateTop-30 > TopPixels/Scale)
                 {
-                    RtsSkin.Bar(new Rect(p.x - 65, y + 25, 130, 7), town.State.Capture, VisualFactory.TeamColor(town.State.Capturing));
-                    Label(p.x-65,y+33,170,"CONVERSIÓN "+Mathf.RoundToInt(town.State.Capture*100)+"%",RtsSkin.Tiny);
+                    RtsSkin.Bar(new Rect(p.x - 65, plateTop - 10, 130, 7), town.State.Capture, VisualFactory.TeamColor(town.State.Capturing));
+                    Label(p.x-65,plateTop-30,170,"CONVERSIÓN "+Mathf.RoundToInt(town.State.Capture*100)+"%",RtsSkin.Tiny);
                 }
             }
             foreach (var target in session.Targets)

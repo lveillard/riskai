@@ -22,7 +22,7 @@ namespace RiskAI
         public bool OrderCursor => AttackCursor || MoveCursor || PatrolCursor || UnloadCursor;
         public bool ShowHealthBars => Keyboard.current!=null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed);
         public bool HelpVisible;
-        public bool ScoreboardVisible => !HelpVisible && Keyboard.current!=null && Keyboard.current.tabKey.isPressed;
+        public bool ScoreboardVisible => !HelpVisible && !ChatInput.IsTyping && Keyboard.current!=null && Keyboard.current.tabKey.isPressed;
         public bool EdgePan=true;
         public bool Dragging { get; private set; }
         public bool CameraDragging { get; private set; }
@@ -261,7 +261,6 @@ namespace RiskAI
             if(error!=null)session.Message(error);
             else session.Message(LastProductionResult.Feedback(BattleRules.Name(kind)));
         }
-        public void BuildTower() { if(SelectedHarbor)Feedback(ExecuteBuilding(PlayerBuildingIntent.BuildTower(SelectedHarbor.BuildingId)));else if(SelectedTown)Feedback(ExecuteBuilding(PlayerBuildingIntent.BuildTower(SelectedTown.BuildingId)));else session.Message("Selecciona una ciudad o un puerto tuyo para reconstruir su torre."); }
         public void UpgradeTown() { if(SelectedTown)Feedback(SelectedTown.Upgrade());else session.Message("Selecciona una ciudad tuya para mejorarla."); }
         public void Feedback(string error) { if(error!=null)session.Message(error); }
         void OnApplicationFocus(bool hasFocus)
@@ -398,6 +397,7 @@ namespace RiskAI
             orderMarker.startColor=orderMarker.endColor=orderMarkerColor;
             orderMarker.transform.localScale=Vector3.one*1.6f;
             orderMarkerUntil=Time.unscaledTime+.7f;
+            Sfx.Ui(attack?SfxId.OrderAttack:SfxId.OrderMove);
         }
         void AnimateOrderMarker()
         {
@@ -521,7 +521,8 @@ namespace RiskAI
             }
             SyncPauseInput();
             ApplyCursorCapture();
-            var key=Keyboard.current;
+            // Chat owns the keyboard while typing: no game hotkey or arrow pan may fire.
+            var key=ChatInput.IsTyping?null:Keyboard.current;
             if(key!=null)
             {
             if(key.f1Key.wasPressedThisFrame)HelpVisible=!HelpVisible;
@@ -547,28 +548,32 @@ namespace RiskAI
             }
             if(key!=null)
             {
+            if(key.f8Key.wasPressedThisFrame)session.Message(Music.ToggleMusic()?"Música activada":"Música desactivada");
             if(key.f2Key.wasPressedThisFrame)FocusHome();
             if(key.escapeKey.wasPressedThisFrame) { ReleaseCursor();if(OrderCursor)CancelCursor();else Clear();return; }
             if(key.backspaceKey.wasPressedThisFrame)CameraRig.ResetView();
-            if(key.eKey.wasPressedThisFrame)SelectAll();
-            if(key.aKey.wasPressedThisFrame)ArmAttack();
-            if(key.mKey.wasPressedThisFrame)ArmMove();
-            if(key.pKey.wasPressedThisFrame)ArmPatrol();
-            if(key.hKey.wasPressedThisFrame)Hold();
-            if(key.sKey.wasPressedThisFrame)Stop();
-            if(key.qKey.wasPressedThisFrame){if(SelectedHarbor)BuyShip(ShipKind.Galley);else Recruit(UnitKind.Footman);}
-            if(key.wKey.wasPressedThisFrame){if(SelectedHarbor)BuyShip(ShipKind.Transport);else Recruit(UnitKind.Archer);}
-            if(key.dKey.wasPressedThisFrame){if(Fleet.Count>0)UnloadFleet();else Recruit(UnitKind.Guard);}
-            if(key.fKey.wasPressedThisFrame)Recruit(UnitKind.Mage);
-            if(key.rKey.wasPressedThisFrame)Recruit(UnitKind.Mortar);
-            if(key.cKey.wasPressedThisFrame)Recruit(SelectedHarbor?UnitKind.MarineGeneral:UnitKind.Medic);
-            if(key.vKey.wasPressedThisFrame&&SelectedHarbor)Recruit(UnitKind.MarinePrivate);
-            if(key.bKey.wasPressedThisFrame){if(SelectedHarbor)Recruit(UnitKind.MarineMajor);else BoardNearby();}
-            if(key.tKey.wasPressedThisFrame)BuildTower();
+            if(TryGetProductionCard(out var productionCard))
+            {
+                // WC3 grid hotkeys: while an own city/harbor is selected its command card
+                // owns Q W E R / A S D F / Z X C V, shadowing E/A/S/D unit keys.
+                for(int cell=0;cell<ProductionGridKeys.Length;cell++)
+                    if(key[ProductionGridKeys[cell]].wasPressedThisFrame)TriggerProductionCell(productionCard,cell);
+            }
+            else
+            {
+                if(key.eKey.wasPressedThisFrame)SelectAll();
+                if(key.aKey.wasPressedThisFrame)ArmAttack();
+                if(key.mKey.wasPressedThisFrame)ArmMove();
+                if(key.pKey.wasPressedThisFrame)ArmPatrol();
+                if(key.hKey.wasPressedThisFrame)Hold();
+                if(key.sKey.wasPressedThisFrame)Stop();
+                if(key.dKey.wasPressedThisFrame&&Fleet.Count>0)UnloadFleet();
+                if(key.bKey.wasPressedThisFrame)BoardNearby();
+            }
             if(key.uKey.wasPressedThisFrame)UpgradeTown();
             if(key.nKey.wasPressedThisFrame)SelectFleet();
             if(key.f3Key.wasPressedThisFrame)FocusHarbor();
-            if(key.spaceKey.wasPressedThisFrame){if(Fleet.Count>0)FocusFleet();else FocusSelection();}
+            if(key.spaceKey.wasPressedThisFrame){if(Fleet.Count>0)FocusFleet();else if(!FocusLastAlertWhenIdle())FocusSelection();}
             for(int i=1;i<=9;i++)if(key[(Key)((int)Key.Digit1+i-1)].wasPressedThisFrame)
             {
                 if(key.leftCtrlKey.isPressed||key.rightCtrlKey.isPressed)

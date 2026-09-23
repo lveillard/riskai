@@ -164,7 +164,7 @@ namespace RiskAI
             if(renderer.gameObject.name.StartsWith("Manual architecture batch · ",StringComparison.Ordinal))return false;
             var filter=renderer.GetComponent<MeshFilter>();
             if(!filter||!filter.sharedMesh||filter.sharedMesh.vertexCount==0)return false;
-            if(renderer.name=="Soft ground shadow"||renderer.name=="Faction roof"||renderer.name=="Banner")return false;
+            if(renderer.name=="Soft ground shadow"||renderer.name=="Faction roof"||renderer.name=="Faction pennant"||renderer.name=="Banner")return false;
             if(renderer.GetComponentInParent<MillSails>())return false;
             var materials=renderer.sharedMaterials;
             if(materials==null||materials.Length==0)return false;

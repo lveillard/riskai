@@ -244,6 +244,7 @@ namespace RiskAI
                 post.HeadB.sharedMaterial = VisualFactory.Mat(TeamColor(ownerB));
                 post.Visible = ShouldShow(post.CountryA, post.CountryB, ownerA, ownerB);
                 post.Object.SetActive(post.Visible);
+                if (post.Visible) GameFeel.PopTransform(post.Object.transform, .35f, .35f, true);
             }
         }
     }

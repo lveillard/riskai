@@ -7,6 +7,13 @@ import functools
 import http.server
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def read_version(root=REPO_ROOT):
+    """Return the release version from the repository VERSION file (single source)."""
+    return (Path(root) / 'VERSION').read_text(encoding='utf-8').strip()
+
 
 class UnityHandler(http.server.SimpleHTTPRequestHandler):
     def guess_type(self, path):
@@ -31,7 +38,7 @@ class UnityHandler(http.server.SimpleHTTPRequestHandler):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--directory', type=Path, default=Path(__file__).resolve().parents[1] / 'Builds' / 'Web-v0.29.1')
+    parser.add_argument('--directory', type=Path, default=REPO_ROOT / 'Builds' / f'Web-v{read_version()}')
     parser.add_argument('--bind', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8080)
     args = parser.parse_args()

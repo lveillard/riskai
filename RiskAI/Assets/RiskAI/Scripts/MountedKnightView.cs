@@ -151,12 +151,17 @@ namespace RiskAI
             var battle=BattleSession.Current;
             if(!soldier||!soldier.IsAlive||!soldier.Agent||!soldier.Agent.enabled||!battle||battle.Paused||battle.Winner>=0)return;
             float speed=soldier.Agent.velocity.magnitude;
-            float normalizedSpeed=Mathf.Clamp01(speed/Mathf.Max(.01f,soldier.Agent.speed));
+            // Normalise by the unit's base speed, not the forest-scaled agent speed: a knight
+            // slowed by trees must take shorter, slower strides instead of galloping in place.
+            float normalizedSpeed=Mathf.Clamp01(speed/Mathf.Max(.01f,Core.BattleRules.Speed(soldier.Kind)));
             float targetGait=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.02f,.075f,normalizedSpeed));
             gaitBlend=Mathf.MoveTowards(gaitBlend,targetGait,Time.deltaTime*(targetGait>gaitBlend?6f:4f));
             float elapsed=lastGaitTime<0?0:Mathf.Max(0,battle.BattleTime-lastGaitTime);
             lastGaitTime=battle.BattleTime;
-            float strideFrequency=Mathf.Lerp(1.4f,10.5f,normalizedSpeed)*gaitBlend;
+            // Stride length grows from a walk (~1.6 m) to the authored gallop (~4.2 m per cycle at
+            // full speed), so hoof cadence follows the ground actually covered.
+            float strideLength=Mathf.Lerp(1.6f,4.2f,normalizedSpeed);
+            float strideFrequency=Mathf.Max(1.4f,speed/strideLength*Mathf.PI*2)*gaitBlend;
             gaitPhase=Mathf.Repeat(gaitPhase+elapsed*strideFrequency,Mathf.PI*2);
             float stridePhase=gaitPhase+soldier.EntityId*.41f;
             for(int i=0;i<legs.Count;i++)

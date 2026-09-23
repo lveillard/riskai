@@ -72,7 +72,8 @@ namespace RiskAI.Tests
             Assert.That(major.Health, Is.EqualTo(650)); Assert.That(major.Armor, Is.EqualTo(6));
             Assert.That(major.AttackPoint, Is.EqualTo(.66f));
             Assert.That(general.Health, Is.EqualTo(800)); Assert.That(general.Cost, Is.EqualTo(10)); Assert.That(general.PointValue, Is.EqualTo(10)); Assert.That(general.AttackPoint, Is.EqualTo(.66f));
-            Assert.That(BattleRules.Hotkey(UnitKind.MarinePrivate), Is.EqualTo("V"));
+            Assert.That(BattleRules.Hotkey(UnitKind.MarinePrivate), Is.EqualTo("Q"), "Cheapest harbor product takes the first grid cell.");
+            Assert.That(BattleRules.SourceHotkey(UnitKind.MarinePrivate), Is.EqualTo("V"));
             Assert.That(BattleRules.Ranged(UnitKind.MarinePrivate), Is.True); Assert.That(BattleRules.Ranged(UnitKind.MarineMajor), Is.False);
         }
 

@@ -7,8 +7,10 @@ namespace RiskAI
 {
     public sealed partial class BattleHud
     {
-        string GoldText => hud.Gold+" ORO"+(UiViewport.IsPortrait?"\n+":" · +")+hud.Income;
-        string PopulationText => hud.PlayerUnits[0]+" unidades"+(UiViewport.IsPortrait?"\n":" · ")+hud.RecruitmentReservations+"/"+BattleRules.PopulationLimit+" reclutadas";
+        // Compact bars stay on one line: numbers only, the long form lives in the tooltip.
+        string GoldText => DisplayedGold+" ORO"+(UiViewport.IsCompact?" +":" · +")+hud.Income;
+        string PopulationText => UiViewport.IsCompact ? hud.RecruitmentReservations+"/"+BattleRules.PopulationLimit
+            : hud.PlayerUnits[0]+" unidades · "+hud.RecruitmentReservations+"/"+BattleRules.PopulationLimit+" reclutadas";
 
         static Button ResourceButton(System.Action action,string name)
         {
@@ -27,6 +29,19 @@ namespace RiskAI
             RtsUiStyle.Row(row);row.Add(new RtsGoldIcon());
             goldLabel=HeaderLabel(GoldText);goldLabel.name="HUD gold";goldLabel.style.color=RtsUiStyle.Gold;
             goldLabel.pickingMode=PickingMode.Ignore;row.Add(goldLabel);parent.Add(row);
+            if(UiViewport.IsCompact)row.style.flexGrow=0;
+        }
+
+        /// <summary>Countdown to the next income with a dial, beside the gold. Round number stays compact ("R3") or in the tooltip.</summary>
+        void AddIncomeDisplay(VisualElement parent)
+        {
+            var row=ResourceButton(ShowIncome,"HUD income countdown");RtsUiStyle.Row(row);
+            row.tooltip=GameText.Localize(IncomeCountdown.Detail(session.Economy.Round,session.Economy.ElapsedInRound,hud.Income));
+            if(UiViewport.IsCompact)row.style.flexGrow=0;
+            incomeRing=new RtsIncomeRing();incomeRing.Progress=IncomeCountdown.Progress(session.Economy.ElapsedInRound);row.Add(incomeRing);
+            roundLabel=HeaderLabel(IncomeCountdown.Label(session.Economy.Round,session.Economy.ElapsedInRound,UiViewport.IsCompact));
+            roundLabel.name="HUD income countdown label";roundLabel.pickingMode=PickingMode.Ignore;row.Add(roundLabel);
+            incomeButton=row;parent.Add(row);
         }
 
         void AddCitiesDisplay(VisualElement parent)
@@ -86,30 +101,17 @@ namespace RiskAI
             frame.Add(portrait);return frame;
         }
 
-        static Button PurchaseButton(string name,string resource,string title,string cost,System.Action action,bool enabled=true)
-        {
-            var button=RtsUiStyle.Button("",action,name);
-            button.SetEnabled(enabled);
-            button.AddToClassList("riskai-purchase-card");button.tooltip=GameText.Localize(title+" · "+cost);
-            bool landscape=UiViewport.IsCompact&&!UiViewport.IsPortrait;
-            button.style.width=Length.Percent(UiViewport.IsPortrait?48:31);
-            button.style.minWidth=0;button.style.height=button.style.minHeight=button.style.maxHeight=UiViewport.IsPortrait?54:landscape?50:60;
-            button.style.marginLeft=button.style.marginTop=0;button.style.marginRight=5;button.style.marginBottom=5;
-            button.style.paddingLeft=button.style.paddingRight=4;button.style.paddingTop=button.style.paddingBottom=3;
-            RtsUiStyle.Row(button);
-            var frame=PortraitFrame(resource,landscape?36:40);frame.style.marginRight=6;button.Add(frame);
-            var text=new VisualElement { pickingMode=PickingMode.Ignore };text.style.flexGrow=1;text.style.minWidth=0;
-            var heading=RtsUiStyle.Label(title,null,11);heading.style.whiteSpace=WhiteSpace.Normal;heading.pickingMode=PickingMode.Ignore;
-            var price=RtsUiStyle.Label(cost,null,10);price.style.whiteSpace=WhiteSpace.Normal;price.style.color=RtsUiStyle.Gold;price.pickingMode=PickingMode.Ignore;
-            text.Add(heading);text.Add(price);button.Add(text);return button;
-        }
-
         void DrawBuildingName(Vector2 point,string name,int owner)
         {
             var style=RtsSkin.TownLabelFor(owner);
             float size=Mathf.Clamp(style.CalcSize(new GUIContent(name)).x+14,48,148);
             var rect=new Rect(point.x-size*.5f,point.y-2,size,19);
-            RtsSkin.Fill(rect,new Color(.025f,.035f,.025f,.86f));Text(rect,name,style);
+            // Subtle dark backing plate with a soft rim and an owner-coloured underline.
+            RtsSkin.Fill(new Rect(rect.x-1,rect.y-1,rect.width+2,rect.height+2),new Color(0,0,0,.35f));
+            RtsSkin.Fill(rect,new Color(.025f,.03f,.025f,.88f));
+            var accent=PlayerRules.IsPlayer(owner)?VisualFactory.TeamColor(owner):new Color(.6f,.58f,.5f);accent.a=.75f;
+            RtsSkin.Fill(new Rect(rect.x+3,rect.yMax-2,rect.width-6,1.5f),accent);
+            Text(rect,name,style);
         }
 
         void BuildingInfo(VisualElement root,System.Func<string> value)

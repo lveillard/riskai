@@ -46,6 +46,7 @@ namespace RiskAI
             var weapon = new WeaponProfile(attack, WeaponDelivery.Missile, 25, WeaponTargeting.Target,
                 0, radius, radius, radius > 0 ? attack == AttackKind.Magic ? .5f : .35f : 0,
                 radius > 0 ? attack == AttackKind.Magic ? .5f : .35f : 0, .15f, .6f);
+            session.Feedback.RaiseFired(source, from, to, attack);
             return EnqueueProjectile(from, to, target, damage, team, source, weapon, legacyRules: true);
         }
 
@@ -55,13 +56,17 @@ namespace RiskAI
             if (!weapon.IsValid || damage < 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return 0;
             bool miss = source && target && session.RollMiss(CombatRules.UphillMissChance(
                 weapon.DamageType, target.transform.position.y - source.transform.position.y));
+            session.Feedback.RaiseFired(source, from, to, weapon.Delivery == WeaponDelivery.Artillery ? AttackKind.Siege : weapon.DamageType);
             if (!weapon.IsProjectile)
             {
                 if (PresentationEnabled && source is Soldier soldier &&
-                    (soldier.Kind == UnitKind.Archer || soldier.Kind == UnitKind.MarinePrivate))
+                    (soldier.Kind == UnitKind.Archer || soldier.Kind == UnitKind.MarinePrivate || soldier.Kind == UnitKind.EliteRifleman))
                     VisualFactory.InstantProjectileView(from, to, weapon.DamageType);
                 if (!miss && target && target.CanBeAttacked)
+                {
                     target.ReceiveAttack(damage, weapon.DamageType, team, source);
+                    session.Feedback.RaiseImpact(to, weapon.DamageType, 0, ImpactKind.Instant, source);
+                }
                 return 0;
             }
             return EnqueueProjectile(from, to, target, damage, team, source, weapon, miss);
@@ -80,7 +85,9 @@ namespace RiskAI
             };
             projectileIndices.Add(shot.Id, projectiles.Count);
             projectiles.Add(shot);
-            if (PresentationEnabled) VisualFactory.ProjectileView(session, shot.Id, from, to, shot.Duration, weapon.DamageType);
+            // Artillery deliveries (h00H mortar, h00M pierce artillery) always read as an arcing shell.
+            if (PresentationEnabled) VisualFactory.ProjectileView(session, shot.Id, from, to, shot.Duration,
+                weapon.Delivery == WeaponDelivery.Artillery ? AttackKind.Siege : weapon.DamageType);
             return shot.Id;
         }
 
@@ -91,7 +98,7 @@ namespace RiskAI
                 var shot = projectiles[index];
                 float progress=shot.Duration>0?Mathf.Clamp01(shot.Elapsed/shot.Duration):1;
                 Vector3 position=shot.LegacyRules||shot.Weapon.Delivery==WeaponDelivery.Artillery
-                    ? ArcPosition(shot.From,shot.To,progress,shot.Attack)
+                    ? ArcPosition(shot.From,shot.To,progress,shot.Weapon.Delivery==WeaponDelivery.Artillery?AttackKind.Siege:shot.Attack)
                     : shot.Position;
                 state = new ProjectileVisualState(shot.From, shot.To, position, progress, shot.Duration, shot.Attack);
                 return true;
@@ -174,7 +181,10 @@ namespace RiskAI
                     target.ReceiveAttack(shot.Damage, shot.Attack, shot.Team, source);
                 ResolvedProjectiles++;
                 if (PresentationEnabled)
+                {
                     VisualFactory.Impact(shot.To, shot.Attack, radius > 0 ? .75f : .32f);
+                    session.Feedback.RaiseImpact(shot.To, shot.Weapon.Delivery == WeaponDelivery.Artillery ? AttackKind.Siege : shot.Attack, radius, ImpactKind.Projectile, source);
+                }
             }
             firstProjectileCreatedThisTick=int.MaxValue;
         }

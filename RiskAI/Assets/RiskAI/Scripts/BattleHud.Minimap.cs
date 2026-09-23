@@ -19,6 +19,7 @@ namespace RiskAI
             GUI.color = Color.white;
             GUI.DrawTexture(rect, minimapMarkers, ScaleMode.StretchToFill, true);
             GUI.color = previous;
+            DrawAlertPings(rect);
         }
 
         void RefreshMinimapMarkers(Rect rect, float now)

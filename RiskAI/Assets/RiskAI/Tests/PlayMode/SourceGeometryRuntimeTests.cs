@@ -49,6 +49,8 @@ namespace RiskAI.Tests
             Assert.That(guard.Agent.radius, Is.EqualTo(.64f));
             Assert.That(mortar.Agent.radius, Is.EqualTo(.64f));
             Assert.That(archer.Agent.height, Is.EqualTo(1.3f), "Navigation clearance is separate from presentation.");
+            // Presentation spawns grow in from 0.6 scale over 0.25 s; measure the settled model.
+            yield return new WaitForSecondsRealtime(.4f);
             foreach(var unit in new[]{archer,medic,guard,mortar})
             {
                 Transform model=unit.transform.Find(BattleRules.Model(unit.Kind)+"(Clone)");

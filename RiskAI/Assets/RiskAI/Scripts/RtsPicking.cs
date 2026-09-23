@@ -28,7 +28,7 @@ namespace RiskAI
         public static Rect Bounds(Camera camera, CombatTarget target)
         {
             float height = target is Ship ? 4.8f : target is DefenseTower ? VisualMetrics.TowerHeight : target is Soldier soldier?VisualMetrics.HeightFor(soldier.Kind):VisualMetrics.UnitHeight;
-            if(target is DefenseTower tower && BuildingVariants.IsIntegrated(tower.VisualVariant))height+=VisualMetrics.IntegratedTowerVisualLift;
+            if(target is DefenseTower tower && BuildingVariants.IsIntegrated(tower.VisualVariant))height=VisualMetrics.IntegratedTowerTopHeight;
             float radius = target is Ship ? 1.8f : target is DefenseTower ? VisualMetrics.TowerRadius : target is Soldier unit?VisualMetrics.RadiusFor(unit.Kind):VisualMetrics.UnitRadius;
             Vector3 foot = camera.WorldToScreenPoint(target.transform.position);
             Vector3 head = camera.WorldToScreenPoint(target.transform.position + Vector3.up * height);
@@ -48,9 +48,10 @@ namespace RiskAI
             foreach (var town in battle.Towns)
             {
                 if (!town.Selected && !(Keyboard.current != null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed))) continue;
-                Vector3 label = camera.WorldToScreenPoint(town.transform.position + Vector3.up * VisualMetrics.BuildingLabelHeight(town.VisualVariant));
+                Vector3 label = camera.WorldToScreenPoint(town.transform.position + Vector3.up * BuildingSelection.LabelHeight(town));
                 float s=BattleHud.Scale;
-                if (label.z > 0 && new Rect(label.x - 88*s, label.y - 22*s, 176*s, 28*s).Contains(pointer)) return town;
+                // The name plate sits just above its anchor (BattleHud.DrawWorld).
+                if (label.z > 0 && new Rect(label.x - 88*s, label.y - 2*s, 176*s, 28*s).Contains(pointer)) return town;
             }
             var ray=camera.ScreenPointToRay(pointer);Settlement best=null;float nearest=camera.farClipPlane;
             foreach (var town in battle.Towns)

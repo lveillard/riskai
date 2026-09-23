@@ -63,5 +63,50 @@ namespace RiskAI.Tests
             Assert.That(NavalProfiles.Transport.CanTransport,Is.True);
             Assert.Throws<ArgumentOutOfRangeException>(() => NavalProfiles.Profile((NavalUnitKind)999));
         }
+
+        // h00U, h001 and n007 explicit W3U overrides (hp, gold, points, armor, speed, damage, cooldown).
+        [TestCase(NavalUnitKind.Warship, "h00U", 1250f, 20, 10f, 450f, 90f, 1.5f, "R")]
+        [TestCase(NavalUnitKind.Battleship, "h001", 2350f, 45, 20f, 330f, 130f, 1.4f, "F")]
+        [TestCase(NavalUnitKind.ArmoredTransport, "n007", 300f, 6, 30f, 370f, 0f, 0f, "X")]
+        public void V030HullsUseTheirExplicitSourceOverrides(NavalUnitKind kind, string rawId, float health, int gold,
+            float armor, float nativeSpeed, float baseDamage, float cooldown, string hotkey)
+        {
+            var profile = NavalProfiles.Profile(kind);
+            Assert.That(profile.SourceRawId, Is.EqualTo(rawId));
+            Assert.That(profile.Health, Is.EqualTo(health));
+            Assert.That(profile.Cost, Is.EqualTo(gold));
+            Assert.That(profile.PointValue, Is.EqualTo(gold), "upoi equals ugol for every v0.30 hull.");
+            Assert.That(profile.Armor, Is.EqualTo(armor));
+            Assert.That(profile.Speed, Is.EqualTo(nativeSpeed / 50f).Within(.0001f));
+            Assert.That(profile.BaseDamage, Is.EqualTo(baseDamage));
+            Assert.That(profile.Cooldown, Is.EqualTo(cooldown).Within(.0001f));
+            Assert.That(profile.TrainSeconds, Is.EqualTo(1f));
+            Assert.That(profile.Hotkey, Is.EqualTo(hotkey));
+            if (profile.CanAttack)
+            {
+                Assert.That(profile.Range, Is.EqualTo(1500f / 50f));
+                Assert.That(profile.CanCapture, Is.True);
+                var weapon = SourceWeapons.For(kind, profile.Attack);
+                Assert.That(weapon.Delivery, Is.EqualTo(WeaponDelivery.MissileSplash));
+                Assert.That(weapon.ProjectileSpeed, Is.EqualTo(1000f / 50f));
+                Assert.That(weapon.SmallDamageRadius, Is.EqualTo(1f));
+            }
+            else
+            {
+                Assert.That(profile.Capacity, Is.EqualTo(NavalProfiles.Transport.Capacity), "n007 attaches the same Sch3 cargo ability as n008.");
+                Assert.That(profile.CanTransport, Is.True);
+                Assert.That(profile.CanCapture, Is.False);
+            }
+        }
+
+        [Test]
+        public void V030HullOrdinalsAreAppendedAndMirroredByRuntimeShipKind()
+        {
+            Assert.That((int)NavalUnitKind.Warship, Is.EqualTo(2));
+            Assert.That((int)NavalUnitKind.Battleship, Is.EqualTo(3));
+            Assert.That((int)NavalUnitKind.ArmoredTransport, Is.EqualTo(4));
+            foreach (NavalUnitKind kind in Enum.GetValues(typeof(NavalUnitKind)))
+                Assert.That(((RiskAI.ShipKind)(int)kind).ToString(), Is.EqualTo(kind.ToString()));
+        }
     }
 }

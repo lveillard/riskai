@@ -66,7 +66,6 @@ namespace RiskAI
                     return intent.QueueChannel!=ProductionQueueChannel.Land?InvalidKind():InvalidCancelIndex(intent.CancelIndex)??town.CancelTraining(intent.CancelIndex,team);
                 case PlayerBuildingIntentKind.SetRally:
                     return intent.RallyDestination!=RallyDestination.Land?InvalidKind():!Finite(intent)?"Punto de reunión inválido.":town.SetRally(Rally(intent))?null:"El punto de reunión no es transitable.";
-                case PlayerBuildingIntentKind.BuildTower:return town.BuildTower(team);
                 default:return InvalidKind();
             }
         }
@@ -84,7 +83,6 @@ namespace RiskAI
                     return intent.QueueChannel==ProductionQueueChannel.Land?harbor.CancelLandTraining(intent.CancelIndex,team):intent.QueueChannel==ProductionQueueChannel.Naval?harbor.CancelTraining(intent.CancelIndex,team):InvalidKind();
                 case PlayerBuildingIntentKind.SetRally:
                     return intent.RallyDestination!=RallyDestination.Land?InvalidKind():!Finite(intent)?"Punto de reunión inválido.":harbor.SetRally(Rally(intent))?null:"El punto de reunión no es transitable.";
-                case PlayerBuildingIntentKind.BuildTower:return harbor.BuildTower(team);
                 default:return InvalidKind();
             }
         }

@@ -45,6 +45,16 @@ namespace RiskAI.Tests
         }
 
         [Test]
+        public void MaterialColoursAreNotLinearisedTwice()
+        {
+            // Material.SetColor already converts sRGB to linear in a Linear project.
+            // A pre-linearised input turned orange FE8A0E into red-orange FD4101.
+            for(int team=0;team<16;team++)
+                Assert.That(ColorUtility.ToHtmlStringRGB(VisualFactory.TeamMaterialColor(team)),
+                    Is.EqualTo(ColorUtility.ToHtmlStringRGB(VisualFactory.TeamColor(team))),"team "+team);
+        }
+
+        [Test]
         public void ClaimCirclesStayWhiteIndependentlyOfPlayerColour()
         {
             Assert.That(CityClaimZone.VisibleRingColor(false),Is.EqualTo(Color.white));

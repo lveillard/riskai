@@ -13,10 +13,43 @@ namespace RiskAI
         public static bool IsSpanish => Language == GameLanguage.Spanish;
         public static string SwitchLabel => IsSpanish ? "EN" : "ES";
 
+        const string PreferenceKey = "riskai.language";
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetOnLoad() => Language = GameLanguage.English;
 
-        public static void Toggle() => Language = IsSpanish ? GameLanguage.English : GameLanguage.Spanish;
+        // Players start in their own language: an explicit toggle (PlayerPrefs) wins,
+        // then the browser (navigator.language) or OS language; Spanish for es-*, else English.
+        // Editor and batch runs keep the deterministic English default that tests assume.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void DetectOnLoad()
+        {
+            if (Application.isEditor || Application.isBatchMode) return;
+            Language = Initial(StoredPreference(), PlatformPresentation.PrefersSpanish);
+        }
+
+        /// <summary>Resolution order for the starting language. A stored choice beats detection.</summary>
+        public static GameLanguage Initial(GameLanguage? stored, bool systemPrefersSpanish) =>
+            stored ?? (systemPrefersSpanish ? GameLanguage.Spanish : GameLanguage.English);
+
+        static GameLanguage? StoredPreference()
+        {
+            try
+            {
+                if (!PlayerPrefs.HasKey(PreferenceKey)) return null;
+                return PlayerPrefs.GetInt(PreferenceKey) == (int)GameLanguage.Spanish ? GameLanguage.Spanish : GameLanguage.English;
+            }
+            catch (Exception) { return null; }
+        }
+
+        /// <summary>The player's explicit choice: applied and remembered for later sessions.</summary>
+        public static void Toggle()
+        {
+            Language = IsSpanish ? GameLanguage.English : GameLanguage.Spanish;
+            try { PlayerPrefs.SetInt(PreferenceKey, (int)Language); PlayerPrefs.Save(); }
+            catch (Exception) { }
+        }
+        /// <summary>Sets the language for this session only (tests, probes); not persisted.</summary>
         public static void Set(GameLanguage language) => Language = language;
 
         static readonly Dictionary<string,string> Exact = new Dictionary<string,string>
@@ -44,6 +77,12 @@ namespace RiskAI
             ["Daño de área"]="Area damage", ["Área a larga distancia"]="Long-range area damage",
             ["Sana aliados · 25 vida"]="Heals allies · 25 health", ["Pistolero de puerto"]="Harbor pistolier",
             ["Caballería de puerto"]="Harbor cavalry", ["Caballería veterana de puerto"]="Veteran harbor cavalry",
+            ["Sana aliados · 25 vida · 5 maná"]="Heals allies · 25 health · 5 mana", ["maná"]="mana", ["rugido +25%"]="roar +25%",
+            ["Fusilero de élite"]="Elite rifleman", ["Fusilería de élite"]="Elite marksmanship", ["Rugidor"]="Roarer",
+            ["Rugido · +25% daño aliado"]="Roar · +25% allied damage", ["Caballería de mando · Rugido"]="Command cavalry · Roar",
+            ["Artillería"]="Artillery", ["Asedio de área a gran distancia"]="Long-range area siege", ["Tanque"]="Tank",
+            ["Blindado de asedio"]="Armoured siege vehicle", ["Buque de guerra"]="Warship", ["Acorazado"]="Battleship",
+            ["Transporte blindado"]="Armoured transport", ["Fragata"]="Frigate", ["· carga "]="· cargo ", [" daño · "]=" damage · ",
             ["Preparado"]="Ready", ["Moviendo"]="Moving", ["En combate"]="In combat", ["Patrullando"]="Patrolling",
             ["Siguiendo"]="Following", ["Manteniendo posición"]="Holding position", ["En puerto"]="In harbor",
             ["Navegando"]="Sailing", ["Neutral"]="Neutral", ["Tú"]="You",
@@ -56,10 +95,39 @@ namespace RiskAI
             ["NEW WORLD · EUROPA Y AMÉRICA"]="NEW WORLD · EUROPE AND AMERICA",
             ["Elige tu campo de batalla"]="Choose a battlefield", ["Prepara la expedición"]="Prepare the expedition",
             ["Ciudades al azar"]="Random cities", ["Países iniciales"]="Starting countries", ["Posiciones fijas"]="Fixed positions",
-            ["Relajada · tácticas sencillas"]="Relaxed · simple tactics", ["Estándar · mayor coordinación"]="Standard · coordinated tactics"
+            ["Relajada · tácticas sencillas"]="Relaxed · simple tactics", ["Estándar · mayor coordinación"]="Standard · coordinated tactics",
+            ["Difícil · oleadas coordinadas"]="Hard · coordinated waves", ["Relajado"]="Relaxed", ["Estándar"]="Standard", ["Difícil"]="Hard"
         };
 
         static readonly KeyValuePair<string,string>[] Phrases = {
+            // Top bar, command card and controls table (BattleHud.CommandCard). Listed first so
+            // generic word pairs below (Cancelar, oro...) cannot pre-empt these sentences.
+            Pair("Desglose del oro y del próximo ingreso","Gold breakdown and next income"),
+            Pair("Ingreso en ","Income in "), Pair("próximo ingreso","next income"),
+            Pair("Más opciones · página ","More options · page "), Pair("Ampliar panel","Expand panel"), Pair("Reducir panel","Collapse panel"),
+            Pair("Con un edificio seleccionado, su cuadrícula tiene prioridad: Q W E R / A S D F / Z X C V producen y E, A, S, D no dan órdenes de tropa.",
+                "With a building selected its grid takes priority: Q W E R / A S D F / Z X C V produce, and E, A, S, D do not issue unit orders."),
+            Pair("Con una ciudad o puerto propio seleccionado: produce la unidad de esa casilla de la cuadrícula","With your city or harbor selected: produce the unit in that grid cell"),
+            Pair("Si la cuadrícula tiene más de 12 opciones: cambia de página","When the grid has more than 12 options: switch page"),
+            Pair("Con tropas: atacar, mover, patrullar, detener, mantener posición","With units: attack, move, patrol, stop, hold position"),
+            Pair("Embarcar tropas cercanas · desembarcar la flota","Board nearby troops · unload the fleet"),
+            Pair("Seleccionar todo el ejército","Select the whole army"), Pair("Seleccionar la flota","Select the fleet"),
+            Pair("Recuperar o guardar un grupo; doble pulsación centra la cámara","Recall or store a group; double-press centers the camera"),
+            Pair("Centrar en la selección, la flota o la última alerta","Center on the selection, fleet or latest alert"),
+            Pair("Menú · ir a tu base · ir a tu puerto","Menu · go to your base · go to your harbor"),
+            Pair("Mantener para ver la clasificación","Hold to show the ranking"), Pair("Escribir en el chat","Type in chat"),
+            Pair("Cancelar la orden o deseleccionar","Cancel the order or deselect"), Pair("Mostrar vida y nombres","Show health and names"),
+            Pair("Mover la cámara · restablecer la cámara","Pan the camera · reset the camera"),
+            Pair("Flechas · Retroceso","Arrows · Backspace"), Pair("Espacio","Space"), Pair("Intro","Enter"),
+            // Feedback overlay: log, toasts, alerts, chat and audio settings (BattleHud.Feedback).
+            Pair("¡País completado: ","Country completed: "), Pair("Has perdido el país ","You lost the country "), Pair("Has perdido ","You lost "),
+            Pair("¡Te atacan en ","Under attack at "), Pair("¡Te atacan!","Under attack!"), Pair(" de oro"," gold"),
+            Pair("Escribir un mensaje (Intro)","Write a message (Enter)"), Pair("Escribe un mensaje…","Type a message…"),
+            Pair("Enviar","Send"), Pair("Cancelar","Cancel"),
+            Pair("SONIDO: SILENCIADO","SOUND: MUTED"), Pair("SONIDO: ACTIVO","SOUND: ON"), Pair("VOLUMEN","VOLUME"), Pair("EFECTOS","EFFECTS"),
+            Pair("TEMBLOR DE CÁMARA: ACTIVO","CAMERA SHAKE: ON"), Pair("TEMBLOR DE CÁMARA: INACTIVO","CAMERA SHAKE: OFF"),
+            Pair("Volumen general ","Master volume "), Pair(" · efectos "," · effects "), Pair(" · música "," · music "), Pair(" · F8 música"," · F8 music"),
+            Pair("MÚSICA: ACTIVA","MUSIC: ON"), Pair("MÚSICA: DESACTIVADA","MUSIC: OFF"), Pair("MÚSICA −","MUSIC −"), Pair("MÚSICA +","MUSIC +"), Pair("Música activada","Music on"), Pair("Música desactivada","Music off"),
             Pair("RIESGUS · Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.","RIESGUS · Plot your conquest. Rally your armies. Defend every frontier."),
             Pair("Conquista territorial en tiempo real.","Real-time territorial conquest."),
             Pair("Cuatro Riberas","Four Riverlands"), Pair("Las Marcas","The Marches"),

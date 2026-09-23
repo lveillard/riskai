@@ -208,6 +208,53 @@ namespace RiskAI
         }
     }
 
+    /// <summary>Round-timer dial beside the gold: fills clockwise until the next income.</summary>
+    public sealed class RtsIncomeRing : VisualElement
+    {
+        float progress;
+        public RtsIncomeRing()
+        {
+            name="HUD income ring";pickingMode=PickingMode.Ignore;
+            style.width=18;style.height=18;style.flexShrink=0;
+            generateVisualContent+=Paint;
+        }
+        public float Progress
+        {
+            get=>progress;
+            set { value=Mathf.Clamp01(value); if(Mathf.Abs(value-progress)<.004f)return; progress=value; MarkDirtyRepaint(); }
+        }
+        void Paint(MeshGenerationContext context)
+        {
+            var p=context.painter2D;var r=contentRect;
+            float radius=Mathf.Min(r.width,r.height)*.5f-2;if(radius<=1)return;
+            p.lineWidth=3;p.lineCap=LineCap.Butt;
+            p.strokeColor=new Color(.2f,.17f,.1f,1);p.BeginPath();p.Arc(r.center,radius,Angle.Degrees(0),Angle.Degrees(359.9f));p.Stroke();
+            if(progress<=.001f)return;
+            p.strokeColor=RtsUiStyle.Gold;p.BeginPath();
+            p.Arc(r.center,radius,Angle.Degrees(-90),Angle.Degrees(-90+Mathf.Min(359.9f,360*progress)));p.Stroke();
+        }
+    }
+
+    /// <summary>Drawer handle mark: points up to expand, down to collapse.</summary>
+    public sealed class RtsChevron : VisualElement
+    {
+        readonly bool up;
+        public RtsChevron(bool up)
+        {
+            this.up=up;pickingMode=PickingMode.Ignore;
+            style.width=20;style.height=12;style.flexShrink=0;generateVisualContent+=Paint;
+        }
+        void Paint(MeshGenerationContext context)
+        {
+            var p=context.painter2D;var r=contentRect;float top=r.height*.2f,bottom=r.height*.8f;
+            p.strokeColor=RtsUiStyle.Gold;p.lineWidth=2.5f;p.lineJoin=LineJoin.Round;p.BeginPath();
+            p.MoveTo(new Vector2(r.width*.15f,up?bottom:top));
+            p.LineTo(new Vector2(r.width*.5f,up?top:bottom));
+            p.LineTo(new Vector2(r.width*.85f,up?bottom:top));
+            p.Stroke();
+        }
+    }
+
     static class RtsOrnamentDrawing
     {
         public static void Box(Painter2D p,float x,float y,float w,float h,Color color)

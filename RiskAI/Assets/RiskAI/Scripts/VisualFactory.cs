@@ -133,10 +133,13 @@ namespace RiskAI
         };
         static readonly string[] PlayerColorNames = {"Rojo","Azul","Turquesa","Violeta","Amarillo","Naranja","Verde","Rosa","Gris","Azul claro","Verde oscuro","Marrón","Granate","Azul marino","Cian","Magenta"};
         public static Color TeamColor(int team) => PlayerRules.IsPlayer(team)?PlayerColors[team]:Color.white;
-        // Shader constants are linear in this project. Converting the canonical WC3
-        // sRGB code prevents dark colours such as maroon from being gamma-lifted
-        // toward bright red on roofs, cloth and strategic proxies.
-        public static Color TeamMaterialColor(int team) => QualitySettings.activeColorSpace==ColorSpace.Linear?TeamColor(team).linear:TeamColor(team);
+        // Colour for Material.SetColor/Material.color, LineRenderer and vertex tints.
+        // Unity already converts those sRGB inputs to linear in a Linear project, so
+        // this must stay the canonical sRGB code. Pre-linearising it (v0.29) applied
+        // the gamma curve twice: orange FE8A0E reached the GPU as FD4101 (a red-orange
+        // indistinguishable from FF0303), and maroon, violet, brown and dark green
+        // collapsed toward black. Only raw SetVector/compute uploads need .linear.
+        public static Color TeamMaterialColor(int team) => TeamColor(team);
         public static string TeamName(int team) => !PlayerRules.IsPlayer(team)?"Neutral":(team==0?"Tú":"IA "+team)+" · "+PlayerColorNames[team];
         public static Material Mat(Color color)
         {
@@ -243,6 +246,7 @@ namespace RiskAI
                 MountedKnightView.Create(soldier);
                 Ring(root,.74f,.025f,team);return;
             }
+            if(UnitVariantViews.TryCreate(soldier,team))return;
             if(soldier.Kind==UnitKind.Mortar)
             {
                 var model=new GameObject("Mortar model");model.transform.SetParent(root,false);
@@ -256,7 +260,9 @@ namespace RiskAI
                 model.transform.localScale*=VisualMetrics.UnitScale;
                 ModelMetrics.MatchStandingHeight(model,soldier.Kind);
                 UnitTeamColor.Apply(model,soldier.Kind,soldier.Team);
+                if(soldier.Kind==UnitKind.Archer)CrossbowView.Apply(model);
                 if(soldier.Kind==UnitKind.MarinePrivate)MarinePrivateView.Apply(model,soldier.Team);
+                UnitVariantViews.Decorate(model,soldier.Kind,soldier.Team);
                 soldier.gameObject.AddComponent<SoldierAnimator>().Initialize(soldier,model);
                 Ring(root,Mathf.Max(.33f,SourceGeometry.AgentRadius(soldier.Kind)*1.1f),.022f,team);return;
             }
@@ -635,6 +641,9 @@ namespace RiskAI
     {
         enum Profile { Piercing, Magic, Siege }
         const float Lifetime = .22f;
+        // Siege shells read heavier: a longer, larger blast (scorch decal lives in GameFeel).
+        const float SiegeLifetime = .45f;
+        float lifetime = Lifetime;
         BattleSession session;
         float remaining;
         bool pooled;
@@ -684,10 +693,10 @@ namespace RiskAI
         {
             EnsureAppearance();
             session = owner;
-            remaining = Lifetime;
             transform.position = point;
             profile = attack == AttackKind.Magic ? Profile.Magic : attack == AttackKind.Siege ? Profile.Siege : Profile.Piercing;
-            baseScale = Vector3.one * size; transform.localScale = baseScale;
+            lifetime = profile == Profile.Siege ? SiegeLifetime : Lifetime; remaining = lifetime;
+            baseScale = Vector3.one * size * (profile == Profile.Siege ? 1.45f : 1f); transform.localScale = baseScale;
             var material = VisualFactory.Mat(color);
             if (coreRenderer) coreRenderer.sharedMaterial = material;
             if (ringRenderer) ringRenderer.sharedMaterial = material;
@@ -706,11 +715,11 @@ namespace RiskAI
             if (session && (session.Paused || session.Winner >= 0)) return;
             float delta = Time.unscaledDeltaTime;
             remaining -= delta;
-            float t = Mathf.Clamp01(1 - remaining / Lifetime);
+            float t = Mathf.Clamp01(1 - remaining / lifetime);
             transform.localScale = baseScale * Mathf.Lerp(1f, .24f, t);
             if (ring && ring.gameObject.activeSelf)
             {
-                float radius = profile == Profile.Siege ? Mathf.Lerp(.65f, 2f, t) : Mathf.Lerp(.42f, 1.28f, t);
+                float radius = profile == Profile.Siege ? Mathf.Lerp(.65f, 2.6f, 1 - (1 - t) * (1 - t)) : Mathf.Lerp(.42f, 1.28f, t);
                 ring.localScale = new Vector3(radius, profile == Profile.Siege ? .045f : .025f, radius);
             }
             if (sparks && sparks.gameObject.activeSelf)
