@@ -173,10 +173,14 @@ namespace RiskAI
             }
             // These are authored landscape choices, not extra map-specific rules.
             // Bake the same weights into terrain vertices; commands read this field.
-            float sandWeight=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.44f,.60f,Mathf.PerlinNoise(x*.024f+19,z*.024f+57)));
+            // Domain-warped noise: a single Perlin lattice cell can vary along one axis only,
+            // which thresholded into a straight sand edge; the warp bends that lattice.
+            float warpX=(Mathf.PerlinNoise(x*.011f+5.1f,z*.011f+2.7f)-.5f)*1.6f,warpZ=(Mathf.PerlinNoise(x*.011f+9.4f,z*.011f+6.2f)-.5f)*1.6f;
+            float sandNoise=.5f+(FictionalGround.Fbm(x*.024f+19+warpX,z*.024f+57+warpZ)-.5f)*1.35f;
+            float sandWeight=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.44f,.60f,sandNoise));
             var ports=AuthoredPorts();
             for(int i=0;i<ports.Length;i++)sandWeight=Mathf.Max(sandWeight,NearPort(x,z,ports[i]));
-            float rockWeight=(1-sandWeight)*Mathf.SmoothStep(0,1,Mathf.InverseLerp(.46f,.61f,Mathf.PerlinNoise(x*.031f+71,z*.031f+9)));
+            float rockWeight=(1-sandWeight)*Mathf.SmoothStep(0,1,Mathf.InverseLerp(.46f,.61f,.5f+(FictionalGround.Fbm(x*.031f+71+warpZ,z*.031f+9+warpX)-.5f)*1.35f));
             return new Vector2(sandWeight,rockWeight);
         }
         static float NearPort(float x,float z,Vector3 port)
@@ -189,14 +193,20 @@ namespace RiskAI
             float wobble=(Mathf.PerlinNoise(x*.11f+port.x*.37f+7.1f,z*.11f+port.z*.29f+3.3f)-.5f)*6.5f+1.3f*Mathf.Sin(angle*3+port.x*.7f);
             float radial=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(6,14,distance+wobble));
             float core=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(3.5f,6.5f,distance));
-            float shore=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(2.5f,8.5f,ShoreDistance(x,z)+(Mathf.PerlinNoise(x*.21f+11,z*.21f+5)-.5f)*3));
+            // The inland reach of the beach varies along the coast so it never runs parallel to it.
+            float reach=8.5f+(Mathf.PerlinNoise(x*.07f+3.9f,z*.07f+8.3f)-.5f)*9;
+            float shore=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(2.5f,Mathf.Max(4,reach),ShoreDistance(x,z)+(Mathf.PerlinNoise(x*.21f+11,z*.21f+5)-.5f)*3));
             return radial*Mathf.Max(core,shore);
         }
         // Authored maps: metres to the mainland coast or the nearest island shore.
         static float ShoreDistance(float x,float z)
         {
-            float d=Mathf.Abs(z-MapLayout.Coast(x));
+            // Cross-shore distance to the curved coast (not the vertical offset, which
+            // stretches the beach into a straight band where the coast is nearly level).
+            float probe=2f,slope=(MapLayout.Coast(x+probe)-MapLayout.Coast(x-probe))/(2*probe);
+            float d=Mathf.Abs(z-MapLayout.Coast(x))/Mathf.Sqrt(1+slope*slope);
             for(int i=0;i<MapLayout.Islands.Length;i++)d=Mathf.Min(d,Mathf.Abs(MapLayout.IslandDistance(x,z,i)));
+            if(MapLayout.IsExpanded)d=Mathf.Min(d,Mathf.Max(0,TerrainHydrology.DistanceToRiver(x,z)));
             return d;
         }
         static bool Gentle(Vector3 point)

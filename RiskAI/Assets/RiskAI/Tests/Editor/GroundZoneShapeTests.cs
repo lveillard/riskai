@@ -62,6 +62,59 @@ namespace RiskAI.Tests
             finally{MapLayout.Configure(previous);}
         }
 
+        [TestCase(ScenarioMap.Classic)]
+        [TestCase(ScenarioMap.Riverlands)]
+        public void AuthoredSandFieldHasNoStraightBoundaries(ScenarioMap map)
+        {
+            var previous=MapLayout.Scenario;
+            try
+            {
+                MapLayout.Configure(map);
+                const float step=1.4f;
+                int width=Mathf.FloorToInt(2*MapLayout.HalfWidth/step),height=Mathf.FloorToInt(2*MapLayout.HalfDepth/step);
+                var mask=new bool[width*height];
+                for(int y=0;y<height;y++)for(int x=0;x<width;x++)
+                    mask[y*width+x]=ShoreAccess.IsSandySurface(-MapLayout.HalfWidth+(x+.5f)*step,-MapLayout.HalfDepth+(y+.5f)*step);
+                // Only sand boundaries inside land count: where sand meets water the edge is
+                // the coastline itself (terrain), which may legitimately run straight.
+                var land=new bool[mask.Length];var visible=new bool[mask.Length];
+                for(int y=0;y<height;y++)for(int x=0;x<width;x++)land[y*width+x]=MapLayout.IsLand(-MapLayout.HalfWidth+(x+.5f)*step,-MapLayout.HalfDepth+(y+.5f)*step);
+                // A beach runs parallel to its coast, so keep a 4 m margin from any water.
+                const int margin=3;
+                for(int y=margin;y<height-margin;y++)for(int x=margin;x<width-margin;x++)
+                {
+                    bool inland=true;
+                    for(int dy=-margin;dy<=margin&&inland;dy++)for(int dx=-margin;dx<=margin;dx++)if(!land[(y+dy)*width+x+dx]){inland=false;break;}
+                    visible[y*width+x]=inland;
+                }
+                int run=MaxStraightBoundaryRun(mask,width,height,out var at,visible);
+                Debug.Log($"RISKAI_ZONE_SHAPE map={map} zone=sand maxStraightRun={run} at={at} dir={LastDirection}");
+                Assert.That(run,Is.LessThanOrEqualTo(MaximumStraightRun+4),$"{map} sand boundary runs straight for {run} cells near {at}");
+            }
+            finally{MapLayout.Configure(previous);}
+        }
+
+        [TestCase(ScenarioMap.Classic)]
+        [TestCase(ScenarioMap.Riverlands)]
+        public void SeabedShelfStaysBelowIslandLand(ScenarioMap map)
+        {
+            // A shelf that rises through the coarser island mesh draws straight intersection lines.
+            var previous=MapLayout.Scenario;
+            try
+            {
+                MapLayout.Configure(map);
+                int checkedPoints=0;
+                for(float x=-MapLayout.HalfWidth;x<=MapLayout.HalfWidth;x+=.7f)for(float z=0;z<=MapLayout.HalfDepth+16;z+=.7f)
+                {
+                    float island=-1;for(int i=0;i<MapLayout.Islands.Length;i++)island=Mathf.Max(island,MapLayout.IslandDistance(x,z,i));
+                    if(island<.6f)continue;checkedPoints++;
+                    Assert.That(StrategicTerrain.SeabedHeight(x,z),Is.LessThanOrEqualTo(MapLayout.Height(x,z)-.4f),$"{map} shelf at ({x:F1},{z:F1}) rises into island land");
+                }
+                Assert.That(checkedPoints,Is.GreaterThan(100));
+            }
+            finally{MapLayout.Configure(previous);}
+        }
+
         [TestCase(ScenarioMap.Europe)]
         [TestCase(ScenarioMap.NewWorld)]
         public void ImportedBiomeZonesHaveNoStraightBoundaries(ScenarioMap map)

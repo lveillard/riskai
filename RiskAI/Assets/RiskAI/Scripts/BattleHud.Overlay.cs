@@ -13,7 +13,9 @@ namespace RiskAI
     public sealed partial class BattleHud
     {
         const float DesktopConsoleHeight = 188;
-        const string MinimapPreference = "riskai.hud.minimap";
+        // v2 (v0.32): the desktop minimap is visible by default. A "hidden" saved by an older build
+        // (or its test runs on the same machine) must not greet a new session with only the quick bar.
+        public const string MinimapPreference = "riskai.hud.minimap.v2";
         VisualElement minimapPanel, rankingBoard;
         bool rankingShown, lastRankingVisible;
         readonly List<QuickButton> quickButtons = new List<QuickButton>();
@@ -38,13 +40,19 @@ namespace RiskAI
         {
             try
             {
-                if (!UiViewport.IsCompact && PlayerPrefs.HasKey(MinimapPreference)) showMinimap = PlayerPrefs.GetInt(MinimapPreference) != 0;
+                if (!UiViewport.IsCompact) showMinimap = DesktopMinimapPreference();
                 if (controller.CameraRig != null && PlayerPrefs.HasKey(CameraSpeedPreference)) controller.CameraRig.PanSpeed = Mathf.Clamp(PlayerPrefs.GetFloat(CameraSpeedPreference), .5f, 3f);
                 if (PlayerPrefs.HasKey(EdgePanPreference)) controller.EdgePan = PlayerPrefs.GetInt(EdgePanPreference) != 0;
             }
             catch (System.Exception) { }
         }
 
+        /// <summary>The desktop minimap: visible unless the player explicitly hid it in this build line.</summary>
+        public static bool DesktopMinimapPreference()
+        {
+            try { return !PlayerPrefs.HasKey(MinimapPreference) || PlayerPrefs.GetInt(MinimapPreference) != 0; }
+            catch (System.Exception) { return true; }
+        }
         static void SavePreference(string key, int value) { try { PlayerPrefs.SetInt(key, value); PlayerPrefs.Save(); } catch (System.Exception) { } }
         static void SavePreference(string key, float value) { try { PlayerPrefs.SetFloat(key, value); PlayerPrefs.Save(); } catch (System.Exception) { } }
 

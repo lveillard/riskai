@@ -114,7 +114,9 @@ namespace RiskAI.Editor
             // The same camps are inspected for every tag, chosen by the first run.
             string focusPath=Path.Combine(directory,"focus-"+map.ToString().ToLowerInvariant()+".txt");
             List<string> focus;
-            if(File.Exists(focusPath))focus=File.ReadAllLines(focusPath).Where(l=>l.Length>0).ToList();
+            var focusOverride=Argument("--riskai-territory-focus");
+            if(focusOverride!=null)focus=focusOverride.Split(';').Where(n=>Array.FindIndex(MapLayout.Countries,c=>c.Name==n)>=0).ToList();
+            else if(File.Exists(focusPath))focus=File.ReadAllLines(focusPath).Where(l=>l.Length>0).ToList();
             else
             {
                 focus=metrics.OrderByDescending(m=>m.Badness).Take(5).Select(m=>m.Name).ToList();
@@ -139,6 +141,13 @@ namespace RiskAI.Editor
                     camp.Select(true);
                     string safe=new string(name.Select(ch=>char.IsLetterOrDigit(ch)?char.ToLowerInvariant(ch):'-').ToArray());
                     Render(camera,readback,Path.Combine(directory,prefix+"-camp-"+safe+".png"),center,Mathf.Clamp(extent*.7f,14,110),72);
+                    // Gameplay camera (55 degrees) close to the territory, with and without the inspection overlay.
+                    if(focusOverride!=null)
+                    {
+                        Render(camera,readback,Path.Combine(directory,prefix+"-tactical-"+safe+".png"),center,Mathf.Clamp(extent*.45f,14,60),55);
+                        camp.Select(false);
+                        Render(camera,readback,Path.Combine(directory,prefix+"-tactical-"+safe+"-plain.png"),center,Mathf.Clamp(extent*.45f,14,60),55);
+                    }
                     camp.Select(false);
                 }
                 // Strategic readability at an early-game ownership: every country neutral except

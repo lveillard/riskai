@@ -77,6 +77,9 @@ namespace RiskAI
             if (lastCompact != UiViewport.IsCompact || orientationChanged || lastModalKind != modalKind || lastFooterVisible != FooterVisible || resized)
             {
                 if (orientationChanged) { showMinimap = !UiViewport.IsPortrait; if(retainedTab==3)retainedTab=0; }
+                // Entering the desktop layout (e.g. a web canvas that starts small) restores the
+                // desktop default instead of keeping a compact-layout state.
+                if (!UiViewport.IsCompact && (lastCompact || orientationChanged)) showMinimap = DesktopMinimapPreference();
                 BuildRetainedUi(false);
                 return;
             }

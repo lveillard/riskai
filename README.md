@@ -1,4 +1,4 @@
-# Riesgus · v0.31.0
+# Riesgus · v0.32.0
 
 Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.30.0
 (`20260923T150510Z-v030-050e773`). La verificación pública coincide en 10/10 hashes
@@ -26,6 +26,8 @@ La v0.30 incorpora ocho unidades nuevas del mapa original —Fusilero de élite,
 
 La v0.31 sustituye las zonas de suelo geométricas por un campo continuo guiado por el relieve (sin rectángulos, círculos ni diagonales forzadas; una prueba lo vigila), da a la vista estratégica rellenos por dueño y bordes de país claros al estilo WC3, y reagrupa Las Marcas y Cuatro Riberas en países compactos con hogueras centradas. [Detalle](docs/audits/MAPS-POLISH-v0.31.md).
 
+La v0.32 hace que los países de los mapas propios sigan acantilados, ríos y lagos (crecimiento en 16 direcciones con coste de acantilado), elimina las líneas rectas del fondo marino y la arena de las islas, y restablece el minimapa visible por defecto en escritorio. [Detalle](docs/audits/TERRITORY-RELIEF-v0.32.md).
+
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
 ## Historial de la base v0.22
@@ -46,7 +48,7 @@ El catálogo original completo está auditado; faltan unidades, modos y datos he
 
 [Animación del caballero: trote, pausa y ataque](docs/audits/v0.22/knight-animation.webp).
 
-## Estado actual v0.31.0
+## Estado actual v0.32.0
 
 ### Escenarios y reglas comunes
 

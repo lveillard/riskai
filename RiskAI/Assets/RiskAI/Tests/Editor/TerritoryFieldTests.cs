@@ -120,6 +120,65 @@ namespace RiskAI.Tests
             Assert.That(agree / (float)total, Is.GreaterThan(.97f), $"{map}: {agree}/{total} painted land cells follow the source country paint.");
         }
 
+        // Straight runs of the drawn country mask, in 1-unit samples. A two-city bisector on an open
+        // plain used to run ruler-straight for 40-60 units (the "straight band" on the tactical ground).
+        const int MaximumStraightBorder = 24;
+
+        [TestCase(ScenarioMap.Classic)]
+        [TestCase(ScenarioMap.Riverlands)]
+        public void AuthoredCountryOverlayMasksHaveNoStraightBorders(ScenarioMap map)
+        {
+            // Guard like GroundZoneShapeTests, on the exact mask the atlas and the camp overlay draw.
+            MapLayout.Configure(map);
+            var field = TerritoryField.Current;
+            Vector2 min = MapLayout.PlayableMin, max = MapLayout.PlayableMax; const float step = 1f;
+            int w = Mathf.FloorToInt((max.x - min.x) / step), h = Mathf.FloorToInt((max.y - min.y) / step);
+            var labels = new int[w * h]; var land = new bool[w * h];
+            for (int z = 0; z < h; z++) for (int x = 0; x < w; x++)
+            {
+                float wx = min.x + (x + .5f) * step, wz = min.y + (z + .5f) * step; int i = z * w + x;
+                land[i] = MapLayout.IsLand(wx, wz);
+                field.Sample(wx, wz, out labels[i], out _);
+            }
+            // Coasts are the map's own shape, not a territory border: only land-to-land edges count.
+            var visible = new bool[w * h];
+            for (int z = 0; z < h - 1; z++) for (int x = 0; x < w - 1; x++) { int i = z * w + x; visible[i] = land[i] && land[i + 1] && land[i + w]; }
+            int worst = 0; string where = "";
+            for (int c = 0; c < MapLayout.Countries.Length; c++)
+            {
+                var mask = new bool[w * h]; for (int i = 0; i < mask.Length; i++) mask[i] = labels[i] == c;
+                int run = GroundZoneShapeTests.MaxStraightBoundaryRun(mask, w, h, out var at, visible);
+                if (run > worst) { worst = run; where = MapLayout.Countries[c].Name + " near " + at; }
+            }
+            Debug.Log($"RISKAI_TERRITORY_SHAPE map={map} maxStraightRun={worst} at={where}");
+            Assert.That(worst, Is.LessThanOrEqualTo(MaximumStraightBorder), $"{map}: a country border runs straight for {worst} units ({where}).");
+        }
+
+        [TestCase(ScenarioMap.Classic)]
+        [TestCase(ScenarioMap.Riverlands)]
+        public void AuthoredBordersPreferCliffsOverTheTerrainBelow(ScenarioMap map)
+        {
+            // Borders should run along precipices: a field step that climbs a cliff must be a
+            // country border far more often than a step on open ground. With the plain grid growth
+            // (v0.31) cliff steps were borders less often than flat steps (0.4 % vs 1 % on Las
+            // Marcas): borders cut across the lower terrain below the plateaus.
+            MapLayout.Configure(map);
+            var field = TerritoryField.Current; int cliffs = 0, cliffBorders = 0, flat = 0, flatBorders = 0;
+            for (int z = 0; z < field.Height - 1; z++) for (int x = 0; x < field.Width - 1; x++)
+            foreach (var d in new[] { new Vector2Int(1, 0), new Vector2Int(0, 1) })
+            {
+                int nx = x + d.x, nz = z + d.y;
+                if (!field.IsLandCell(x, z) || !field.IsLandCell(nx, nz)) continue;
+                bool across = field.CellCountry(x, z) != field.CellCountry(nx, nz);
+                if (field.IsCliffStep(x, z, nx, nz)) { cliffs++; if (across) cliffBorders++; }
+                else { flat++; if (across) flatBorders++; }
+            }
+            float cliffShare = cliffBorders / (float)Mathf.Max(1, cliffs), flatShare = flatBorders / (float)Mathf.Max(1, flat);
+            Debug.Log($"RISKAI_TERRITORY_CLIFFS map={map} cliffSteps={cliffs} onBorder={cliffBorders} cliffShare={cliffShare:P2} flatShare={flatShare:P2}");
+            Assert.That(cliffs, Is.GreaterThan(0), map + " has authored cliffs.");
+            Assert.That(cliffShare, Is.GreaterThan(flatShare * 3), $"{map}: {cliffShare:P2} of cliff steps are borders vs {flatShare:P2} of flat steps.");
+        }
+
         [TestCase(ScenarioMap.Europe)]
         [TestCase(ScenarioMap.NewWorld)]
         public void SourceCampsStandInsideTheirTerritoryAwayFromCities(ScenarioMap map)

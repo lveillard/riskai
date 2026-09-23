@@ -221,18 +221,39 @@ namespace RiskAI
         static void CreateSeabed(Transform root,GeneratedResourceOwner resources)
         {
             // Extend sand under the shoreline; no collider, so this cannot bake walkable ocean.
-            var v=new List<Vector3>();var t=new List<int>();const int columns=360,rows=64;
+            // Rows of about half a metre, like the columns: a coarse shelf grid shows its cell
+            // edges in the shallow-water shading where the shore curves across it.
+            var v=new List<Vector3>();var t=new List<int>();const int columns=360,rows=160;
+            var onIsland=new bool[(columns+1)*(rows+1)];
             for(int x=0;x<=columns;x++)for(int z=0;z<=rows;z++)
             {
                 float wx=Mathf.Lerp(-MapLayout.HalfWidth,MapLayout.HalfWidth,x/(float)columns);
                 float wz=Mathf.Lerp(MapLayout.Coast(wx),MapLayout.HalfDepth+16,z/(float)rows);
-                v.Add(new Vector3(wx,MapLayout.Height(wx,wz)-.012f,wz));
-                if(x==columns||z==rows)continue;int i=x*(rows+1)+z,b=i+rows+1;
-                t.Add(i);t.Add(i+1);t.Add(b);t.Add(i+1);t.Add(b+1);t.Add(b);
+                v.Add(new Vector3(wx,SeabedHeight(wx,wz),wz));
+                for(int island=0;island<MapLayout.Islands.Length;island++)onIsland[x*(rows+1)+z]|=MapLayout.IslandDistance(wx,wz,island)>.3f;
+            }
+            // The island meshes own their land: shelf triangles wholly on an island would poke
+            // their coarse chords through the sand (straight lines) and hide the territory overlay.
+            for(int x=0;x<columns;x++)for(int z=0;z<rows;z++)
+            {
+                int i=x*(rows+1)+z,b=i+rows+1;
+                if(!(onIsland[i]&&onIsland[i+1]&&onIsland[b]))t.AddRange(new[]{i,i+1,b});
+                if(!(onIsland[i+1]&&onIsland[b+1]&&onIsland[b]))t.AddRange(new[]{i+1,b+1,b});
             }
             var mesh=resources.Track(new Mesh{name="Submerged continental and island shelf"});mesh.SetVertices(v);BakeCoastWeights(mesh,v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var go=new GameObject("Sandy sea bed · visual only");go.transform.SetParent(root,false);
             go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=Resources.Load<Material>("Meadow");
+        }
+        /// <summary>
+        /// Shelf height. Under island land the shelf sinks well below the island surface:
+        /// a shelf triangle that crosses the shore then disappears beneath the island mesh
+        /// instead of intersecting its coarser chords along a ruler-straight line.
+        /// </summary>
+        public static float SeabedHeight(float x,float z)
+        {
+            float island=-1;
+            for(int i=0;i<MapLayout.Islands.Length;i++)island=Mathf.Max(island,MapLayout.IslandDistance(x,z,i));
+            return MapLayout.Height(x,z)-.012f-.45f*Mathf.SmoothStep(0,1,Mathf.InverseLerp(.05f,.6f,island));
         }
         static void CreateBackdrop(List<Vector4> clearings,GeneratedResourceOwner resources)
         {
