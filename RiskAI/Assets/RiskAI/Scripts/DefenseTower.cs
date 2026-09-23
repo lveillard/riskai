@@ -33,8 +33,8 @@ namespace RiskAI
         float nextShot, launchAt = -1;
         int launchTargetId;
         readonly System.Collections.Generic.List<CombatTarget> nearby = new System.Collections.Generic.List<CombatTarget>(48);
-        float AttackCooldown=>ReforgedProfiles.CapturableTower.Cooldown;
-        float AttackRange=>ReforgedProfiles.CapturableTower.Range;
+        float AttackCooldown=>UnitCatalog.CapturableTower.Cooldown;
+        float AttackRange=>UnitCatalog.CapturableTower.Range;
 
         public void Initialize(BattleSession battle, Settlement town, bool built, BuildingVariant? visualVariant=null)
         {
@@ -113,13 +113,13 @@ namespace RiskAI
                     ShotsFired++;
                     var weapon = Town ? SourceWeapons.MilitaryBase : SourceWeapons.Shipyard;
                     session.Combat.FireWeapon(AttackOrigin, launchTarget.AimPoint, launchTarget,
-                        session.RollDamage(ReforgedProfiles.CapturableTower), Team, this, weapon);
+                        session.RollDamage(UnitCatalog.CapturableTower), Team, this, weapon);
                 }
             }
             if (!IsValidTarget(CurrentTarget)) CurrentTarget=FindTarget();
             if (!CurrentTarget || launchAt >= 0 || session.BattleTime < nextShot) return;
             nextShot = session.BattleTime + AttackCooldown;
-            launchAt = session.BattleTime + ReforgedProfiles.CapturableTower.AttackPoint;
+            launchAt = session.BattleTime + UnitCatalog.CapturableTower.AttackPoint;
             launchTargetId = CurrentTarget.EntityId;
         }
 

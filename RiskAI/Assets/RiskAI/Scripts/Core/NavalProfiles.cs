@@ -3,10 +3,10 @@ using System;
 namespace RiskAI.Core
 {
     /// <summary>Engine-independent identity for the prototype's naval units.</summary>
-    /// <remarks>Ordinals are public and cast to ShipKind: append new identities at the end only.</remarks>
+    /// <remarks>Ordinals index UnitCatalog.Naval: append new identities at the end only.</remarks>
     public enum NavalUnitKind
     {
-        Galley,
+        Frigate,
         Transport,
         Warship,
         Battleship,
@@ -18,7 +18,6 @@ namespace RiskAI.Core
     {
         public readonly string Name;
         public readonly string SourceRawId;
-        public readonly string Hotkey;
         public readonly bool CanCapture;
         public readonly float Health;
         public readonly float Damage;
@@ -55,10 +54,9 @@ namespace RiskAI.Core
             int cost,
             float trainSeconds,
             int capacity,
-            int pointValue,int dice=0,int sides=0,string sourceRawId=null,bool canCapture=false,string hotkey=null)
+            int pointValue,int dice=0,int sides=0,string sourceRawId=null,bool canCapture=false)
         {
             Name = name;
-            Hotkey = hotkey;
             SourceRawId = sourceRawId;
             CanCapture = canCapture;
             Health = health;
@@ -77,11 +75,8 @@ namespace RiskAI.Core
 
     public static class NavalProfiles
     {
-        // The prototype keeps the Galley identity for public compatibility,
-        // while its source-aligned profile is the documented h00W Warship B.
-        public static ShipProfile Galley=>UnitCatalog.Profile(NavalUnitKind.Galley);
-
-        public static ShipProfile Frigate => Galley;
+        // Frigate ("Fragata") is the source-aligned h00W Warship B.
+        public static ShipProfile Frigate=>UnitCatalog.Profile(NavalUnitKind.Frigate);
 
         // n008 (old nzep) overrides HP300, speed340/50 and cost/point2.
         // Its inherited nzep armor is 0 and it has no enabled weapon.

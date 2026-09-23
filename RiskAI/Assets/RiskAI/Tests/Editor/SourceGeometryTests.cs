@@ -14,7 +14,7 @@ namespace RiskAI.Tests
             Assert.That(SourceGeometry.AgentRadius(UnitKind.MarinePrivate), Is.EqualTo(.32f));
             Assert.That(SourceGeometry.AgentRadius(UnitKind.MarineMajor), Is.EqualTo(.64f));
             Assert.That(SourceGeometry.AgentRadius(UnitKind.MarineGeneral), Is.EqualTo(.64f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Guard), Is.EqualTo(.64f));
+            Assert.That(SourceGeometry.AgentRadius(UnitKind.Knight), Is.EqualTo(.64f));
             Assert.That(SourceGeometry.AgentRadius(UnitKind.Mortar), Is.EqualTo(.64f));
             Assert.That(SourceGeometry.AgentRadius(UnitKind.EliteRifleman), Is.EqualTo(.32f));
             Assert.That(SourceGeometry.AgentRadius(UnitKind.Roarer), Is.EqualTo(.32f));

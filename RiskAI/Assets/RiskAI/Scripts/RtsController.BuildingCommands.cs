@@ -45,7 +45,7 @@ namespace RiskAI
 
         public void Produce(ProductionOption option)
         {
-            if(option.IsShip)BuyShip((ShipKind)option.Ship);
+            if(option.IsShip)BuyShip(option.Ship);
             else Recruit(option.Unit);
         }
 

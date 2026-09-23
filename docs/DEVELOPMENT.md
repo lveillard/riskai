@@ -51,6 +51,7 @@ y puede usarse en paralelo.
 | `.\scripts\Unity.ps1 -Action QuickCompile [-Assemblies Core,Runtime]` | Igual que `python scripts/quick_compile.py [Core Runtime Tests PlayTests Editor]`: compila con el Roslyn del editor sin abrir Unity (~1-2 min) | Salida 0 = OK, 1 = errores, 2 = faltan editor/`.csproj`/`Library` |
 | `.\scripts\Unity.ps1 -Action CleanResults [-Days 14] [-Apply]` | Igual que `python scripts/clean_test_results.py`: borra `TestResults/*.xml` antiguos salvo `editmode.xml`/`playmode.xml`. Sin `-Apply` solo simula | — |
 | `python -m unittest discover -s scripts -p "test_*.py"` | Tests Python de las herramientas (no hay pytest) | — |
+| `python scripts/summarize_tests.py TestResults/*.xml` | Resume uno o varios informes NUnit (total, fallidos y su primer mensaje); sale con 1 si alguno falla | — |
 | `node scripts/test_browser_pen.cjs` | Puente de lápiz/rueda del reproductor Web | — |
 | `node scripts/test_cloudflare_worker.mjs` | Worker de Cloudflare (también `cd deploy/cloudflare; npm test`) | — |
 | `.\scripts\deploy_cloudflare.ps1 -Action Check` | Sintaxis + tests del worker y tamaño de `Builds/Web-v<VERSION>`; no publica | — |

@@ -133,7 +133,7 @@ namespace RiskAI.Core
                 case UnitKind.Archer:
                 case UnitKind.MarinePrivate:
                     return 12; // h00B/h012/h00R: 600 native.
-                case UnitKind.Guard:
+                case UnitKind.Knight:
                 case UnitKind.MarineMajor:
                 case UnitKind.MarineGeneral:
                     return 10; // h00G/h014/h015: 500 native.
@@ -212,7 +212,7 @@ namespace RiskAI.Core
         {
             switch (kind)
             {
-                case NavalUnitKind.Galley:
+                case NavalUnitKind.Frigate:
                     // h00W explicitly supplies speed and splash targets. Its radii and factors
                     // remain TFT-only historical candidates retained by the deployed profile.
                     // Homing is unresolved, so Target preserves the deployed behavior.

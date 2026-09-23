@@ -37,7 +37,7 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator RecentMessagesStackNewestFirstInTheOverlay()
         {
-            battle.Message("primero");battle.Message("segundo");battle.Message("tercero");
+            battle.Message("primero", MessageKind.Info);battle.Message("segundo", MessageKind.Info);battle.Message("tercero", MessageKind.Info);
             yield return null;yield return null;
             var root=Overlay();
             Assert.That(root.Q<Label>("HUD message 0").text,Is.EqualTo("tercero"));

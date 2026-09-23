@@ -123,7 +123,7 @@ namespace RiskAI.Tests
             Assert.That(foot.CurrentTarget,Is.Null);Assert.That(Vector2.Distance(new Vector2(foot.transform.position.x,foot.transform.position.z),new Vector2(footPoint.position.x,footPoint.position.z)),Is.LessThan(.2f),"Hold keeps its XZ position while the agent settles onto sculpted ground.");
             foot.Stop();yield return new WaitForSeconds(2);
             Assert.That(enemy.Health,Is.LessThan(enemy.MaxHealth),$"Stop must acquire and approach nearby enemies. Target: {foot.CurrentTarget}, positions: {foot.transform.position} / {enemy.transform.position}; path: {foot.Agent.pathStatus}, remaining: {foot.Agent.remainingDistance}, visible: {!NavMesh.Raycast(foot.transform.position,enemy.transform.position,out _,NavMesh.AllAreas)}");
-            foot.MoveTo(retreat.position,false,false);yield return new WaitForSeconds(.25f);
+            foot.TryMoveTo(retreat.position,false,false);yield return new WaitForSeconds(.25f);
             Assert.That(foot.CurrentTarget,Is.Null,"Explicit movement must remain usable for retreating.");
         }
         [UnityTest] public IEnumerator AttackMoveResumesAfterKillingItsTarget()
@@ -131,7 +131,7 @@ namespace RiskAI.Tests
             var archer=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,new Vector3(-30,0,-16));
             var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,new Vector3(-29,0,-21));
             archer.Agent.Warp(new Vector3(-30,0,-16));enemy.Agent.Warp(new Vector3(-29,0,-21));enemy.HoldPosition();enemy.TakeDamage(enemy.MaxHealth-5,0);
-            archer.MoveTo(new Vector3(-30,0,-30),true,false);
+            archer.TryMoveTo(new Vector3(-30,0,-30),true,false);
             yield return new WaitForSeconds(5.5f);
             Assert.That(enemy.IsAlive,Is.False);
             Assert.That(battle.Units.Contains(enemy),Is.False,"A pooled casualty must leave the active army registry.");
@@ -194,7 +194,7 @@ namespace RiskAI.Tests
         [UnityTest] public IEnumerator RecruitmentPurchasesEveryProfileAtItsDeclaredCost()
         {
             var town=battle.Towns.First(t=>t.State.Owner==0);
-            var profiles=new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Guard,UnitKind.Mage,UnitKind.Mortar,UnitKind.Medic};
+            var profiles=new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Knight,UnitKind.Mage,UnitKind.Mortar,UnitKind.Medic};
             foreach(var kind in profiles)
             {
                 int cost=BattleRules.Cost(kind);battle.Economy.Gold[0]=cost;
@@ -245,10 +245,10 @@ namespace RiskAI.Tests
         [UnityTest] public IEnumerator FormationPlacesMeleeBeforeRanged()
         {
             var spawnedArcher=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,new Vector3(-20,0,-12));
-            var spawnedGuard=BattleTestScenario.Mobile(battle,0,UnitKind.Guard,new Vector3(-18.8f,0,-12));
-            var units=new[]{spawnedArcher,spawnedGuard};
+            var spawnedKnight=BattleTestScenario.Mobile(battle,0,UnitKind.Knight,new Vector3(-18.8f,0,-12));
+            var units=new[]{spawnedArcher,spawnedKnight};
             Assert.That(units.Select(u=>u.Kind),Does.Contain(UnitKind.Archer));
-            Assert.That(units.Select(u=>u.Kind),Does.Contain(UnitKind.Guard));
+            Assert.That(units.Select(u=>u.Kind),Does.Contain(UnitKind.Knight));
             for(int i=0;i<units.Length;i++){Assert.That(units[i].Agent.Warp(new Vector3(-20+i*1.2f,0,-12)),Is.True);units[i].Stop();}
             var forward = new Vector3(-20,0,0) - (units[0].transform.position+units[1].transform.position)*.5f;
             forward.y=0;forward.Normalize();
@@ -256,7 +256,7 @@ namespace RiskAI.Tests
             float deadline=Time.realtimeSinceStartup+2;
             while(battle.Commands.PendingCount>0&&Time.realtimeSinceStartup<deadline)yield return null;
             Assert.That(battle.Commands.PendingCount,Is.Zero,"Formation commands must be applied by the next simulation tick.");
-            var archer=units.First(u=>u.Kind==UnitKind.Archer);var guard=units.First(u=>u.Kind==UnitKind.Guard);
+            var archer=units.First(u=>u.Kind==UnitKind.Archer);var guard=units.First(u=>u.Kind==UnitKind.Knight);
             Assert.That(Vector3.Dot(guard.Agent.destination-archer.Agent.destination,forward),Is.GreaterThan(.75f),"Even a two-unit squad needs melee ahead of ranged along its travel direction.");
             yield return null;
         }
@@ -274,7 +274,7 @@ namespace RiskAI.Tests
         [UnityTest] public IEnumerator FreshRecruitsUseStableVisualFootprintsInsteadOfStacking()
         {
             var center=battle.Towns.First(t=>t.State.Owner==0).Rally;
-            var kinds=new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Guard,UnitKind.Medic};
+            var kinds=new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Knight,UnitKind.Medic};
             var recruits=kinds.Select(kind=>battle.SpawnSeparated(0,kind,center)).ToArray();
             Assert.That(recruits,Has.All.Not.Null);
             for(int i=0;i<recruits.Length;i++)for(int j=i+1;j<recruits.Length;j++)

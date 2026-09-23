@@ -61,13 +61,46 @@ namespace RiskAI
         }
     }
 
+    /// <summary>
+    /// Pending centre toasts. Big announcements (country completed/lost) go ahead of every
+    /// normal toast and are never dropped to make room for one; a burst of city captures
+    /// can therefore not bury or evict a broken-country warning. Pure and testable.
+    /// </summary>
+    public sealed class ToastQueue
+    {
+        public const int Capacity = 4;
+        readonly System.Collections.Generic.List<(string text, Color color, bool big)> items = new System.Collections.Generic.List<(string, Color, bool)>();
+        public int Count => items.Count;
+        public (string text, Color color, bool big) Peek(int index) => items[index];
+
+        public void Add(string text, Color color, bool big)
+        {
+            int index = items.Count;
+            if (big) { index = items.FindIndex(item => !item.big); if (index < 0) index = items.Count; }
+            items.Insert(index, (text, color, big));
+            while (items.Count > Capacity)
+            {
+                int drop = items.FindIndex(item => !item.big);
+                items.RemoveAt(drop >= 0 ? drop : items.Count - 1);
+            }
+        }
+
+        public bool TryTake(out (string text, Color color, bool big) toast)
+        {
+            if (items.Count == 0) { toast = default; return false; }
+            toast = items[0]; items.RemoveAt(0); return true;
+        }
+
+        public void Clear() => items.Clear();
+    }
+
     /// <summary>Feedback overlay: recent message log, toasts, chat, gold juice and attack alerts.</summary>
     public sealed partial class BattleHud
     {
         const int DesktopLogRows = 4, CompactLogRows = 3;
         /// <summary>Feedback overlay panel order; the HUD rises above it while a modal is open.</summary>
         const int FeedbackSortingOrder = 21;
-        const float ToastSeconds = 2.6f;
+        const float ToastSeconds = 2.6f, BigToastSeconds = 4f;
         static readonly Color AlertRed = new Color(1f, .36f, .3f);
         GameObject feedbackHost;
         RtsUiRuntime feedbackUi;
@@ -85,7 +118,8 @@ namespace RiskAI
         bool chatOpen, webChat;
         float goldFloatStart = -10, goldPulseStart = -10, goldFlashStart = -10, toastStart = -10, lastTrained = -10;
         GoldTween goldTween;
-        readonly System.Collections.Generic.Queue<(string text, Color color, bool big)> toasts = new System.Collections.Generic.Queue<(string, Color, bool)>();
+        readonly ToastQueue toasts = new ToastQueue();
+        bool toastShowingBig;
         bool feedbackCompact, goldTweenShown;
         Texture2D pingTexture;
 
@@ -359,17 +393,20 @@ namespace RiskAI
 
         void Toast(string text, Color color, bool big)
         {
-            if (toasts.Count >= 3) toasts.Dequeue();
-            toasts.Enqueue((text, color, big));
+            toasts.Add(text, color, big);
+            // A big announcement replaces a normal toast already on screen at once.
+            if (big && !toastShowingBig) toastStart = -10;
         }
 
         void RefreshToast(float now)
         {
             float age = now - toastStart;
-            if (age >= ToastSeconds || toastBox.style.display == DisplayStyle.None)
+            // Country completed/lost announcements stay up longer than routine city toasts.
+            float duration = toastShowingBig ? BigToastSeconds : ToastSeconds;
+            if (age >= duration || toastBox.style.display == DisplayStyle.None)
             {
-                if (toasts.Count == 0) { if (toastBox.style.display != DisplayStyle.None) toastBox.style.display = DisplayStyle.None; return; }
-                var next = toasts.Dequeue();
+                if (!toasts.TryTake(out var next)) { toastShowingBig = false; if (toastBox.style.display != DisplayStyle.None) toastBox.style.display = DisplayStyle.None; return; }
+                toastShowingBig = next.big; duration = next.big ? BigToastSeconds : ToastSeconds;
                 toastStart = now; age = 0;
                 // Two-line toasts (headline + consequence) localize each line on its own.
                 int split = next.text.IndexOf('\n');
@@ -381,7 +418,7 @@ namespace RiskAI
             }
             float pop = age < .18f ? 1 + .12f * Mathf.Sin(age / .18f * Mathf.PI) : 1;
             toastLabel.style.scale = new Scale(new Vector3(pop, pop, 1));
-            toastBox.style.opacity = age < .12f ? age / .12f : age > ToastSeconds - .5f ? Mathf.Clamp01((ToastSeconds - age) / .5f) : 1;
+            toastBox.style.opacity = age < .12f ? age / .12f : age > duration - .5f ? Mathf.Clamp01((duration - age) / .5f) : 1;
         }
 
         void RefreshGold(float now)

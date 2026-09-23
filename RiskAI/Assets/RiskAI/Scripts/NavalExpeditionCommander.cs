@@ -132,7 +132,7 @@ namespace RiskAI
                 // paid harbor command.
                 if(!CanFundTransportPurchase()||!CanQueueTransportAt(source)){Defer();return;}
                 if(buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(source.BuildingId,NavalUnitKind.Transport))!=null){Fail();return;}
-                phase=Phase.WaitingForTransport;phaseDeadline=session.BattleTime+Harbor.TrainTime(ShipKind.Transport)+PhaseTimeout;return;
+                phase=Phase.WaitingForTransport;phaseDeadline=session.BattleTime+Harbor.TrainTime(NavalUnitKind.Transport)+PhaseTimeout;return;
             }
             BeginGathering();
         }
@@ -471,7 +471,7 @@ namespace RiskAI
 
         bool CanFundTransportPurchase()
         {
-            int transportCost=Harbor.Cost(ShipKind.Transport);
+            int transportCost=Harbor.Cost(NavalUnitKind.Transport);
             return session.Economy.Gold[team]>=transportCost+world.FirstFleetSavingsTargetFor(team)&&TeamNavalCount()<Harbor.FleetCapacity;
         }
         bool CanQueueTransportAt(Harbor harbor) => harbor&&harbor.Owner==team&&harbor.QueueCount==0;

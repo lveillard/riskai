@@ -174,7 +174,7 @@ namespace RiskAI
             return new Vector3(width, height, depth);
         }
 
-        static bool Mounted(UnitKind kind) => kind == UnitKind.Guard || kind == UnitKind.MarineMajor || kind == UnitKind.MarineGeneral || kind == UnitKind.ArmyGeneral;
+        static bool Mounted(UnitKind kind) => kind == UnitKind.Knight || kind == UnitKind.MarineMajor || kind == UnitKind.MarineGeneral || kind == UnitKind.ArmyGeneral;
         static bool Siege(UnitKind kind) => kind == UnitKind.Mortar || kind == UnitKind.Artillery || kind == UnitKind.Tank;
 
         static Mesh ProxyMesh(UnitKind kind)

@@ -7,8 +7,6 @@ using UnityEngine.AI;
 namespace RiskAI
 {
     // Mirrors Core.NavalUnitKind ordinals (cast directly): append new kinds at the end only.
-    public enum ShipKind { Galley, Transport, Warship, Battleship, ArmoredTransport }
-
     public sealed class Ship : CombatTarget
     {
         readonly List<Soldier> cargo=new List<Soldier>();
@@ -24,7 +22,7 @@ namespace RiskAI
         internal bool IsOrderedToHarbor(Harbor harbor) => orderedHarbor && orderedHarbor == harbor;
         bool pendingShoreUnload;
         Vector3 pendingShore;
-        public ShipKind Kind { get; private set; }
+        public NavalUnitKind Kind { get; private set; }
         public bool Selected { get; private set; }
         public Harbor Garrison=>harborGuard;
         public bool IsGarrison=>harborGuard;
@@ -32,7 +30,7 @@ namespace RiskAI
         public int CargoCount=>cargo.Count;
         public int CargoCapacity=>Capacity;
         public CombatTarget CurrentTarget=>target;
-        public ShipProfile Profile=>NavalProfiles.Profile((NavalUnitKind)Kind);
+        public ShipProfile Profile=>NavalProfiles.Profile(Kind);
         public string DisplayName=>Profile.Name;
         public string OrderLabel=>IsGarrison?"Guarnición · mantiene el puerto":target?"En combate":route.Count>routeIndex?"Navegando":"En puerto";
         public string LastActionError { get; private set; }
@@ -81,7 +79,7 @@ namespace RiskAI
             return targetVolume ? targetVolume.ClosestPoint(from) : transform.position;
         }
 
-        internal void Initialize(NavalWorld naval,int team,ShipKind kind)
+        internal void Initialize(NavalWorld naval,int team,NavalUnitKind kind)
         {
             world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
             NavalArt.CreateShip(this);
@@ -128,7 +126,7 @@ namespace RiskAI
         {
             if(!IsAlive||!Profile.CanAttack||!enemy||enemy.Team==Team||!enemy.CanBeAttacked)return;
             var next=new List<Vector3>();
-            float distance=DistanceXZ(transform.position,enemy.transform.position);
+            float distance=RangeTo(enemy);
             if(distance>AttackRange)
             {
                 if(!SeaNavigation.TryNearestOcean(enemy.transform.position,8,out var ocean)||!SeaNavigation.TryBuildPath(transform.position,ocean,out next))return;
@@ -227,7 +225,7 @@ namespace RiskAI
             if(pendingShoreUnload&&DistanceXZ(transform.position,pendingShore)<=LoadRadius)
             {
                 if(UnloadAt(pendingShore)&&CargoCount==0)pendingShoreUnload=false;
-                else if(!string.IsNullOrEmpty(LastActionError)){if(Team==0)world.Message(LastActionError);pendingShoreUnload=false;}
+                else if(!string.IsNullOrEmpty(LastActionError)){if(Team==0)world.Session.Message(LastActionError,MessageKind.Info);pendingShoreUnload=false;}
             }
             if(!object.ReferenceEquals(target,null)&&(!target||!target.CanBeAttacked||target.Team==Team))
             {
@@ -236,12 +234,12 @@ namespace RiskAI
             }
             // A garrison can fire and turn in place, but autonomous targeting may
             // not move it off the same fixed anchor used by the capture circle.
-            if(IsGarrison&&target&&DistanceXZ(transform.position,target.transform.position)>AttackRange)target=null;
+            if(IsGarrison&&target&&RangeTo(target)>AttackRange)target=null;
             if(!target&&Profile.CanAttack&&world.Session.BattleTime>=nextSense&&(attackMoveOrder||routeIndex>=route.Count)){nextSense=world.Session.BattleTime+.2f;target=FindNearbyEnemy();}
-            if(target&&DistanceXZ(transform.position,target.transform.position)<=AttackRange&&Visible(target))
+            if(target&&RangeTo(target)<=AttackRange&&Visible(target))
             {
                 Face(target.transform.position);
-                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Profile),Team,this,SourceWeapons.For((NavalUnitKind)Kind,AttackType));}
+                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Profile),Team,this,SourceWeapons.For(Kind,AttackType));}
             }
             else if(!IsGarrison&&target&&world.Session.BattleTime>=nextTargetPath)
             {
@@ -257,11 +255,12 @@ namespace RiskAI
         CombatTarget FindNearbyEnemy()
         {
             CombatTarget best=null;float score=float.MaxValue;
-            world.Session.Spatial.Query(transform.position,AttackRange,nearby);
+            // Query a little wider: a long hull can be in range while its pivot is not.
+            world.Session.Spatial.Query(transform.position,AttackRange+6f,nearby);
             foreach(var ship in nearby)
             {
                 if(!ship||ship==this||!ship.CanBeAttacked||ship.Team==Team)continue;
-                float distance=DistanceXZ(transform.position,ship.transform.position);if(distance<=AttackRange&&distance<score&&Visible(ship)){best=ship;score=distance;}
+                float distance=RangeTo(ship);if(distance<=AttackRange&&distance<score&&Visible(ship)){best=ship;score=distance;}
             }
             return best;
         }
@@ -351,5 +350,14 @@ namespace RiskAI
             VisualFactory.Impact(AimPoint,new Color(.72f,.78f,.86f),.75f);Destroy(gameObject);
         }
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}
+        // Weapon range is measured to the target's attackable surface (a ship's hull,
+        // a soldier's position), the same surface soldiers use against ships.
+        float RangeTo(CombatTarget enemy)=>enemy?DistanceXZ(transform.position,enemy.ApproachPoint(transform.position)):float.MaxValue;
+        /// <summary>World bounds of the clickable hull volume, for pointer picking.</summary>
+        public bool TryGetHullBounds(out Bounds bounds)
+        {
+            if(targetVolume){bounds=targetVolume.bounds;return true;}
+            bounds=default;return false;
+        }
     }
 }

@@ -48,12 +48,11 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void LegacyMessagesAreClassified()
+        public void ProductionResultsCarryTheirMessageKind()
         {
-            Assert.That(MessageLog.Classify("Ronda 4 · +7 de oro"), Is.EqualTo(MessageKind.Income));
-            Assert.That(MessageLog.Classify("Oro insuficiente para comprar este barco."), Is.EqualTo(MessageKind.NoGold));
-            Assert.That(MessageLog.Classify("×2 Espadachín encargados · 6 oro"), Is.EqualTo(MessageKind.Purchase));
-            Assert.That(MessageLog.Classify("Embarque terminado: 2 / 10."), Is.EqualTo(MessageKind.Info));
+            Assert.That(new ProductionBatchResult(2, 2, 6, null, false).Kind, Is.EqualTo(MessageKind.Purchase));
+            Assert.That(new ProductionBatchResult(1, 0, 0, "Oro insuficiente para comprar este barco.", true).Kind, Is.EqualTo(MessageKind.NoGold));
+            Assert.That(new ProductionBatchResult(1, 0, 0, "Cola llena.", false).Kind, Is.EqualTo(MessageKind.Info));
         }
 
         [Test]
@@ -161,6 +160,23 @@ namespace RiskAI.Tests
         }
 
         [Test]
+        public void BigAnnouncementsJumpTheToastQueueAndAreNeverEvicted()
+        {
+            var queue = new ToastQueue();
+            queue.Add("Has perdido A", Color.red, false);
+            queue.Add("Has perdido B", Color.red, false);
+            queue.Add("¡Has perdido España!", Color.red, true);
+            Assert.That(queue.Peek(0).text, Is.EqualTo("¡Has perdido España!"), "The broken country is shown next, ahead of routine city losses.");
+            for (int i = 0; i < 10; i++) queue.Add("Has perdido " + i, Color.red, false);
+            Assert.That(queue.Count, Is.EqualTo(ToastQueue.Capacity));
+            Assert.That(queue.Peek(0).big, Is.True, "A burst of city toasts cannot evict the announcement.");
+            queue.Add("¡País completado: Francia!", Color.blue, true);
+            Assert.That(queue.TryTake(out var first), Is.True); Assert.That(first.text, Is.EqualTo("¡Has perdido España!"));
+            Assert.That(queue.TryTake(out var second), Is.True); Assert.That(second.big, Is.True, "Big toasts keep their own order.");
+            Assert.That(queue.TryTake(out var third), Is.True); Assert.That(third.big, Is.False);
+        }
+
+        [Test]
         public void CountryLostSoundIsAppendedWithoutMovingOtherClips()
         {
             Assert.That((int)SfxId.Chat, Is.EqualTo(24));
@@ -201,6 +217,8 @@ namespace RiskAI.Tests
         [TestCase("/light blue go", 9, "go")]
         [TestCase("/MARRÓN ok", 11, "ok")]
         [TestCase("/marron ok", 11, "ok")]
+        [TestCase("/burdeos hola", 12, "hola")]
+        [TestCase("/w burgundy hi", 12, "hi")]
         [TestCase("/todos hola", ChatMessage.Everyone, "hola")]
         [TestCase("/all hi", ChatMessage.Everyone, "hi")]
         public void ChatShortcutsNameTheRecipient(string line, int recipient, string body)
@@ -242,7 +260,7 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void HeadlessCorpseDelayKeepsHistoricalTiming()
+        public void HeadlessCorpseDelayIsShort()
         {
             Assert.That(SoldierPool.CorpseDelay(null, true), Is.EqualTo(1.4f));
             Assert.That(SoldierPool.CorpseDelay(null, false), Is.EqualTo(0));

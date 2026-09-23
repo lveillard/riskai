@@ -23,7 +23,7 @@ namespace RiskAI
                 CreateChunk(root,resources,data,x,z,Mathf.Min(chunk,data.width-1-x),Mathf.Min(chunk,data.height-1-z),ground);
             if(data.HasSourcePathing)CreateFineGroundNavigation(root,resources,data,ground);
             CreateWaterSurface(root,resources,data,water);
-            if(ImportedMapSkirt.Enabled)CreateHorizonSkirt(root,resources,data,ground,water);
+            CreateHorizonSkirt(root,resources,data,ground,water);
             // Old hand-authored fixtures have no WPM grid and retain their explicit
             // causeway. Source-backed maps use their flooded walkable ground instead.
             if(!data.HasSourcePathing)CreatePortPlatforms(root,data);
@@ -306,7 +306,6 @@ namespace RiskAI
         static bool BiomeTree(ImportedMapData data,BiomeVegetation.ImportedTreeForm source,float x,float z,int seed,out BiomeVegetation.ImportedTreeForm form,out float heightScale)
         {
             form=source;heightScale=1;
-            if(!TerrainBiomes.Enabled)return true;
             var biome=TerrainBiomes.Sample(x,z);
             float roll=(((uint)seed*2654435761u)>>8&1023)/1023f;
             if(biome.Cold>.9f)return false;

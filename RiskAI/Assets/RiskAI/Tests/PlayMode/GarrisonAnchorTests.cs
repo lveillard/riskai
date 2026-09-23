@@ -78,7 +78,7 @@ namespace RiskAI.Tests
                 float angle = (i + .5f) * Mathf.PI * 2f / 4f;
                 var crowd = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman,
                     anchor + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * 2.4f);
-                crowd.MoveTo(anchor, false, false);
+                crowd.TryMoveTo(anchor, false, false);
             }
 
             float maxDrift = 0;
@@ -124,7 +124,7 @@ namespace RiskAI.Tests
             var town = battle.Towns.First(t => t.State.Owner == 0 && t.Defender && !t.IsPort);
             var defender = town.Defender;
             var target = town.Rally + Vector3.right * 3;
-            var relief=BattleTestScenario.Mobile(battle,0,UnitKind.Guard,town.ClaimZone.Center+Vector3.right*2.1f);
+            var relief=BattleTestScenario.Mobile(battle,0,UnitKind.Knight,town.ClaimZone.Center+Vector3.right*2.1f);
             Assert.That(FlatDistance(relief.transform.position,town.ClaimZone.Center),Is.GreaterThan(ClaimRules.ReliefRadius));
             Assert.That(battle.Commands.Submit(new UnitCommand(0,defender.EntityId,UnitCommandKind.Move,target.x,target.y,target.z)),Is.False,
                 "The only candidate is beyond the relief margin.");

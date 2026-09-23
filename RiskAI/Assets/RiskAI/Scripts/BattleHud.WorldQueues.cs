@@ -116,7 +116,7 @@ namespace RiskAI
                     string resource,name;float progress;
                     if(slot.Naval)
                     {
-                        var kind=harbor.QueuedKind(slot.Index);resource=ShipPortrait.Resource(kind);name=Harbor.Profile(kind).Name;progress=harbor.TrainingProgress;
+                        var kind=harbor.QueuedKind(slot.Index);resource=UnitVariantViews.PortraitResource(kind);name=NavalProfiles.Profile(kind).Name;progress=harbor.TrainingProgress;
                     }
                     else
                     {

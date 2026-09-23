@@ -92,7 +92,7 @@ namespace RiskAI
             ["Rojo"]="Red", ["Azul"]="Blue", ["Turquesa"]="Teal", ["Violeta"]="Purple",
             ["Amarillo"]="Yellow", ["Naranja"]="Orange", ["Verde"]="Green", ["Rosa"]="Pink",
             ["Gris"]="Gray", ["Azul claro"]="Light Blue", ["Verde oscuro"]="Dark Green",
-            ["Marrón"]="Brown", ["Granate"]="Maroon", ["Azul marino"]="Navy", ["Cian"]="Cyan", ["Magenta"]="Magenta",
+            ["Marrón"]="Brown", ["Burdeos"]="Burgundy", ["Azul marino"]="Navy", ["Cian"]="Cyan", ["Magenta"]="Magenta",
             ["Las Marcas"]="The Marches", ["Cuatro Riberas"]="Four Riverlands",
             ["LAS MARCAS"]="THE MARCHES", ["CUATRO RIBERAS"]="FOUR RIVERLANDS",
             ["NEW WORLD · EUROPA Y AMÉRICA"]="NEW WORLD · EUROPE AND AMERICA",

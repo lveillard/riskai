@@ -41,10 +41,10 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void MixedAndLegacyTownsRemainDistinguishable()
+        public void MixedAndCountrylessTownsRemainDistinguishable()
         {
             var economy = new Economy();
-            economy.Towns.Add(new TownState("legacy", 0, 0));
+            economy.Towns.Add(new TownState("countryless", 0, 0));
             economy.Towns.Add(new TownState("mixed-a", 0, 0, 4));
             economy.Towns.Add(new TownState("mixed-b", -1, 0, 4));
             Assert.That(economy.CountryOwner(4), Is.EqualTo(-1));
@@ -153,30 +153,28 @@ namespace RiskAI.Tests
         [Test]
         public void SourceGoldCostsAndNavalProfilesAreNotScaledByPrototypeMultiplier()
         {
-            var economy = new Economy();
             Assert.That(BattleRules.Cost(UnitKind.Footman), Is.EqualTo(1));
             Assert.That(BattleRules.Cost(UnitKind.Archer), Is.EqualTo(1));
-            Assert.That(BattleRules.Cost(UnitKind.Guard), Is.EqualTo(5));
+            Assert.That(BattleRules.Cost(UnitKind.Knight), Is.EqualTo(5));
             Assert.That(BattleRules.Cost(UnitKind.Mage), Is.EqualTo(4));
             Assert.That(BattleRules.Cost(UnitKind.Mortar), Is.EqualTo(3));
             Assert.That(BattleRules.Cost(UnitKind.Medic), Is.EqualTo(2));
-            Assert.That(economy.RegionBonuses, Is.EqualTo(new[] { 0, 0, 0 }));
-            Assert.That(ReforgedProfiles.Tower.Health, Is.EqualTo(550));
-            Assert.That(ReforgedProfiles.CapturableTower.BaseDamage, Is.EqualTo(45));
-            Assert.That(ReforgedProfiles.CapturableTower.Dice, Is.EqualTo(1));
-            Assert.That(ReforgedProfiles.CapturableTower.Sides, Is.EqualTo(5));
-            Assert.That(ReforgedProfiles.CapturableTower.Range, Is.EqualTo(13f));
-            Assert.That(ReforgedProfiles.CapturableTower.Cooldown, Is.EqualTo(.9f));
-            Assert.That(NavalProfiles.Galley.Health, Is.EqualTo(400));
-            Assert.That(NavalProfiles.Galley.MinimumDamage, Is.EqualTo(31));
-            Assert.That(NavalProfiles.Galley.MaximumDamage, Is.EqualTo(45));
-            Assert.That(NavalProfiles.Galley.Cooldown, Is.EqualTo(1.5f));
+            Assert.That(UnitCatalog.Tower.Health, Is.EqualTo(550));
+            Assert.That(UnitCatalog.CapturableTower.BaseDamage, Is.EqualTo(45));
+            Assert.That(UnitCatalog.CapturableTower.Dice, Is.EqualTo(1));
+            Assert.That(UnitCatalog.CapturableTower.Sides, Is.EqualTo(5));
+            Assert.That(UnitCatalog.CapturableTower.Range, Is.EqualTo(13f));
+            Assert.That(UnitCatalog.CapturableTower.Cooldown, Is.EqualTo(.9f));
+            Assert.That(NavalProfiles.Frigate.Health, Is.EqualTo(400));
+            Assert.That(NavalProfiles.Frigate.MinimumDamage, Is.EqualTo(31));
+            Assert.That(NavalProfiles.Frigate.MaximumDamage, Is.EqualTo(45));
+            Assert.That(NavalProfiles.Frigate.Cooldown, Is.EqualTo(1.5f));
             var first=new System.Random(16016);var replay=new System.Random(16016);
             for(int i=0;i<64;i++)
             {
-                float damage=NavalProfiles.Galley.RollDamage(first);
+                float damage=NavalProfiles.Frigate.RollDamage(first);
                 Assert.That(damage,Is.InRange(31f,45f));
-                Assert.That(damage,Is.EqualTo(NavalProfiles.Galley.RollDamage(replay)));
+                Assert.That(damage,Is.EqualTo(NavalProfiles.Frigate.RollDamage(replay)));
             }
             Assert.That(NavalProfiles.Transport.Cost, Is.EqualTo(2));
             Assert.That(NavalProfiles.Transport.Speed, Is.EqualTo(6.8f));

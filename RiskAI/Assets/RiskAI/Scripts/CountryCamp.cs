@@ -116,7 +116,7 @@ namespace RiskAI
         {
             if(!unit||!unit.IsAlive)return;
             ReconcileOwner(session.Economy.CountryOwner(Country));
-            if(hasRally)unit.MoveTo(rallyPoint,true,false);
+            if(hasRally)unit.TryMoveTo(rallyPoint,true,false);
             else unit.HoldPosition();
         }
 

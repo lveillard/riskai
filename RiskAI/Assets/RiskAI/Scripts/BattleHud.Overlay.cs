@@ -13,9 +13,8 @@ namespace RiskAI
     public sealed partial class BattleHud
     {
         const float DesktopConsoleHeight = 188;
-        // v2 (v0.32): the desktop minimap is visible by default. A "hidden" saved by an older build
-        // (or its test runs on the same machine) must not greet a new session with only the quick bar.
-        public const string MinimapPreference = "riskai.hud.minimap.v2";
+        // The desktop minimap is visible unless the player explicitly hid it.
+        public const string MinimapPreference = "riskai.hud.minimap";
         VisualElement minimapPanel, rankingBoard;
         bool rankingShown, lastRankingVisible;
         readonly List<QuickButton> quickButtons = new List<QuickButton>();
@@ -134,7 +133,7 @@ namespace RiskAI
         void ToggleEffects(bool announce)
         {
             Sfx.SetMuted(!Sfx.Muted);
-            if (announce) session.Message(Sfx.Muted ? "Efectos silenciados" : "Efectos activados");
+            if (announce) session.Message(Sfx.Muted ? "Efectos silenciados" : "Efectos activados", MessageKind.Info);
         }
 
         /// <summary>F7 effects, F9 minimap. F8 music lives in RtsController; Enter opens chat.</summary>

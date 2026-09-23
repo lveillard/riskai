@@ -53,27 +53,26 @@ namespace RiskAI.Tests
         [Test]
         public void ExtractedReforgedProfilesUseMapAttackAndDefenseTypes()
         {
-            var rifleman = ReforgedProfiles.Units[(int)UnitKind.Archer];
-            var knight = ReforgedProfiles.Units[(int)UnitKind.Guard];
-            var mortar = ReforgedProfiles.Units[(int)UnitKind.Mortar];
-            var medic = ReforgedProfiles.Units[(int)UnitKind.Medic];
+            var rifleman = BattleRules.Profile(UnitKind.Archer);
+            var knight = BattleRules.Profile(UnitKind.Knight);
+            var mortar = BattleRules.Profile(UnitKind.Mortar);
+            var medic = BattleRules.Profile(UnitKind.Medic);
             Assert.That(rifleman.Cooldown, Is.EqualTo(1.6f)); Assert.That(rifleman.Defense, Is.EqualTo(ArmorKind.Light));
             Assert.That(rifleman.AttackPoint, Is.EqualTo(.17f)); Assert.That(rifleman.Backswing, Is.EqualTo(.7f));
             Assert.That(knight.Range, Is.EqualTo(2f)); Assert.That(knight.Cooldown, Is.EqualTo(1.36f));
             Assert.That(knight.AttackPoint, Is.EqualTo(.66f)); Assert.That(knight.Backswing, Is.EqualTo(.44f));
             Assert.That(mortar.Defense, Is.EqualTo(ArmorKind.Medium)); Assert.That(mortar.AttackPoint, Is.EqualTo(1f)); Assert.That(mortar.Backswing, Is.EqualTo(1.1f));
             Assert.That(medic.Attack, Is.EqualTo(AttackKind.Piercing)); Assert.That(medic.Defense, Is.EqualTo(ArmorKind.Light)); Assert.That(medic.AttackPoint, Is.EqualTo(.59f)); Assert.That(medic.Backswing, Is.EqualTo(.58f));
-            Assert.That(BattleRules.Name(UnitKind.Guard), Is.EqualTo("Caballero"));
-            Assert.That(BattleRules.Role(UnitKind.Guard), Is.EqualTo("Caballer\u00eda pesada"));
-            var privateMarine = ReforgedProfiles.Units[(int)UnitKind.MarinePrivate];
-            var major = ReforgedProfiles.Units[(int)UnitKind.MarineMajor];
-            var general = ReforgedProfiles.Units[(int)UnitKind.MarineGeneral];
+            Assert.That(BattleRules.Name(UnitKind.Knight), Is.EqualTo("Caballero"));
+            Assert.That(BattleRules.Role(UnitKind.Knight), Is.EqualTo("Caballer\u00eda pesada"));
+            var privateMarine = BattleRules.Profile(UnitKind.MarinePrivate);
+            var major = BattleRules.Profile(UnitKind.MarineMajor);
+            var general = BattleRules.Profile(UnitKind.MarineGeneral);
             Assert.That(privateMarine.MinimumDamage, Is.EqualTo(18)); Assert.That(privateMarine.MaximumDamage, Is.EqualTo(24)); Assert.That(privateMarine.AttackPoint, Is.EqualTo(.17f));
             Assert.That(major.Health, Is.EqualTo(650)); Assert.That(major.Armor, Is.EqualTo(6));
             Assert.That(major.AttackPoint, Is.EqualTo(.66f));
             Assert.That(general.Health, Is.EqualTo(800)); Assert.That(general.Cost, Is.EqualTo(10)); Assert.That(general.PointValue, Is.EqualTo(10)); Assert.That(general.AttackPoint, Is.EqualTo(.66f));
-            Assert.That(BattleRules.Hotkey(UnitKind.MarinePrivate), Is.EqualTo("Q"), "Cheapest harbor product takes the first grid cell.");
-            Assert.That(BattleRules.SourceHotkey(UnitKind.MarinePrivate), Is.EqualTo("V"));
+            Assert.That(ProductionHotkeys.Hotkey(UnitKind.MarinePrivate), Is.EqualTo("Q"), "Cheapest harbor product takes the first grid cell.");
             Assert.That(BattleRules.Ranged(UnitKind.MarinePrivate), Is.True); Assert.That(BattleRules.Ranged(UnitKind.MarineMajor), Is.False);
         }
 
@@ -90,7 +89,7 @@ namespace RiskAI.Tests
             Assert.That(BattleRules.Range(UnitKind.Mortar),Is.EqualTo(18f));
             Assert.That(BattleRules.Ranged(UnitKind.Mortar),Is.True);
             Assert.That(BattleRules.RequiredLevel(UnitKind.Mortar),Is.EqualTo(1));
-            Assert.That(BattleRules.Hotkey(UnitKind.Mortar),Is.EqualTo("R"));
+            Assert.That(ProductionHotkeys.Hotkey(UnitKind.Mortar),Is.EqualTo("R"));
             Assert.That(BattleRules.Model(UnitKind.Mortar),Is.EqualTo("Mortar"));
         }
     }

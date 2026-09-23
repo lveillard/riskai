@@ -14,7 +14,7 @@ namespace RiskAI.Tests
                 "FF0303","0042FF","1CE6B9","540081",
                 "FFFC01","FE8A0E","20C000","E55BB0",
                 "959697","7EBFF1","106246","4E2A04",
-                "9B0000","0000C3","00EAFF","BE00FE"
+                "800048","0000C3","00EAFF","BE00FE" // player 13: local burgundy, see VisualFactory
             };
 
             CollectionAssert.AreEqual(expected,Enumerable.Range(0,expected.Length)
@@ -39,7 +39,7 @@ namespace RiskAI.Tests
                 Assert.That(Vector4.Distance(renderer.sharedMaterial.GetColor("_TeamColor"),surface),Is.LessThan(.00001f));
                 Assert.That(Vector4.Distance(WorldArt.RoofMaterial(12).GetColor("_Tint"),surface),Is.LessThan(.00001f));
                 Assert.That(canonical.maxColorComponent,Is.LessThan(VisualFactory.TeamColor(0).maxColorComponent-.3f),
-                    "WC3 red and maroon must retain their visible brightness gap on every faction surface.");
+                    "Red and burgundy must retain their visible brightness gap on every faction surface.");
             }
             finally { Object.DestroyImmediate(root); }
         }

@@ -7,11 +7,11 @@ float4 _RiskIslands[8];
 float4 _RiskCoastParams0;
 float4 _RiskCoastParams1;
 // World-space x/z bounds uploaded by TerrainHydrology with maxWidth + 6 margin.
-// A zero-sized value keeps the legacy producer compatible until it uploads bounds.
+// Zero bounds (no river uploaded) mean no river anywhere.
 float4 _RiskRiverBounds;
 float4 _RiskRiver[57];
-float4 RiskLegacyIsland(int index){return index==0?float4(-47,53,12,8):float4(-8,69,13,9);}
-float4 RiskIslandData(int index){return _RiskExpandedMap>.5?_RiskIslands[index]:RiskLegacyIsland(index);}
+float4 RiskClassicIsland(int index){return index==0?float4(-47,53,12,8):float4(-8,69,13,9);}
+float4 RiskIslandData(int index){return _RiskExpandedMap>.5?_RiskIslands[index]:RiskClassicIsland(index);}
 float RiskCoast(float x)
 {
  float4 p0=_RiskExpandedMap>.5?_RiskCoastParams0:float4(40,.26,4,3);
@@ -36,8 +36,7 @@ float RiskShore(float2 b)
 }
 float RiskRiverDistance(float2 p)
 {
- float2 size=_RiskRiverBounds.zw-_RiskRiverBounds.xy;
- if(size.x>.001&&size.y>.001&&(p.x<_RiskRiverBounds.x||p.x>_RiskRiverBounds.z||p.y<_RiskRiverBounds.y||p.y>_RiskRiverBounds.w))return 1e5;
+ if(p.x<_RiskRiverBounds.x||p.x>_RiskRiverBounds.z||p.y<_RiskRiverBounds.y||p.y>_RiskRiverBounds.w)return 1e5;
  float d=1e5;
  for(int i=0;i<56;i++){float2 a=_RiskRiver[i].xz,e=_RiskRiver[i+1].xz-a;float t=saturate(dot(p-a,e)/max(dot(e,e),.01));d=min(d,length(p-a-e*t)-lerp(_RiskRiver[i].w,_RiskRiver[i+1].w,t));}return d;
 }

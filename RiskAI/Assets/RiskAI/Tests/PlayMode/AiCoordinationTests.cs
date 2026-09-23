@@ -95,19 +95,19 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator GalleyBombardingAHarborIsAnsweredByRangedDefendersOnly()
+        public IEnumerator FrigateBombardingAHarborIsAnsweredByRangedDefendersOnly()
         {
             var naval=NavalWorld.Current;
             var harbor=naval.Harbors.FirstOrDefault(h=>h.Owner==1&&h.CanLaunch&&!h.IsIsland)??naval.Harbors.First(h=>h.CanLaunch&&!h.IsIsland);
             harbor.State.Owner=1;
             foreach(var ship in naval.Ships.ToArray())if(ship)ship.gameObject.SetActive(false);
-            var galley=BattleTestScenario.Ship(naval,0,ShipKind.Galley,harbor.Berth);
-            galley.Stop();
+            var frigate=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,harbor.Berth);
+            frigate.Stop();
             var archer=BattleTestScenario.Mobile(battle,1,UnitKind.Archer,Sample(harbor.Landing+Vector3.right*6,6));
             var footman=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,Sample(harbor.Landing+Vector3.left*6,6));
             Invoke("DecideDefense");
             battle.Commands.Tick();
-            Assert.That(archer.IsIdle,Is.False,"A galley at the berth is a threat, answered by ranged troops.");
+            Assert.That(archer.IsIdle,Is.False,"A frigate at the berth is a threat, answered by ranged troops.");
             Assert.That(footman.IsIdle,Is.True,"Swordsmen cannot reach a ship and stay free for other orders.");
             yield return null;
         }

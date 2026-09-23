@@ -76,7 +76,7 @@ namespace RiskAI
                     () => town.TrainingProgress, i => controller.CancelTraining(town, i));
                 else if (harbor && !town && harbor.LandQueueCount > 0) QueueStrip(details, "Cola", harbor.LandQueueCount, i => PortraitResource(harbor.QueuedLandKind(i)), i => BattleRules.Name(harbor.QueuedLandKind(i)),
                     () => harbor.LandTrainingProgress, i => controller.CancelTraining(harbor, i, false));
-                if (harbor && harbor.QueueCount > 0) QueueStrip(details, "Astillero", harbor.QueueCount, i => ShipPortrait.Resource(harbor.QueuedKind(i)), i => Harbor.Profile(harbor.QueuedKind(i)).Name,
+                if (harbor && harbor.QueueCount > 0) QueueStrip(details, "Astillero", harbor.QueueCount, i => UnitVariantViews.PortraitResource(harbor.QueuedKind(i)), i => NavalProfiles.Profile(harbor.QueuedKind(i)).Name,
                     () => harbor.TrainingProgress, i => controller.CancelTraining(harbor, i, true));
                 if (!UiViewport.IsTouchLayout) DetailLine(details, () => "Clic derecho en el mapa fija la salida de las nuevas unidades.", true);
             }
@@ -175,9 +175,9 @@ namespace RiskAI
             string key = showKey ? slot.Key : null;
             if (option.IsShip)
             {
-                var kind = (ShipKind)option.Ship; var preview = controller.PreviewShipPurchase(kind); var profile = Harbor.Profile(kind);
+                var kind = option.Ship; var preview = controller.PreviewShipPurchase(kind); var profile = NavalProfiles.Profile(kind);
                 string detail = profile.Health + " vida · armadura " + profile.Armor + (profile.CanAttack ? " · " + profile.DamageText + " daño · alcance " + profile.Range : "") + (profile.CanTransport ? " · carga " + profile.Capacity : "");
-                return CommandCell("Build ship " + kind, ShipPortrait.Resource(kind), PurchaseTitle(profile.Name, preview) + " · " + PurchaseCost(preview, profile.Cost, key) + " · " + detail,
+                return CommandCell("Build ship " + kind, UnitVariantViews.PortraitResource(kind), PurchaseTitle(profile.Name, preview) + " · " + PurchaseCost(preview, profile.Cost, key) + " · " + detail,
                     () => controller.Produce(option), preview, profile.Cost, key, QueuedCount(option), size);
             }
             var unit = option.Unit; var unitPreview = controller.PreviewRecruitSelected(unit);
@@ -255,7 +255,7 @@ namespace RiskAI
             int count = 0;
             if (option.IsShip)
             {
-                var kind = (ShipKind)option.Ship;
+                var kind = option.Ship;
                 foreach (var harbor in controller.SelectedHarbors)
                     if (harbor && harbor.Owner == 0) for (int i = 0; i < harbor.QueueCount; i++) if (harbor.QueuedKind(i) == kind) count++;
             }

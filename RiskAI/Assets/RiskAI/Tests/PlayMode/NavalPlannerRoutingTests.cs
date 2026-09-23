@@ -95,7 +95,7 @@ namespace RiskAI.Tests
             var isolated=Dock("isolated source",1,isolatedBerth,land.position);
             var reachable=Dock("reachable source",1,reachableBerth,land.position);
             naval.Harbors.Add(isolated);naval.Harbors.Add(reachable);
-            var transport=naval.Spawn(1,ShipKind.Transport,transportPoint);
+            var transport=naval.Spawn(1,NavalUnitKind.Transport,transportPoint);
             Assert.That(transport,Is.Not.Null);
             BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,land.position);
             var planner=new NavalExpeditionCommander(naval,1);PlannerTransport.SetValue(planner,transport);
@@ -181,7 +181,7 @@ namespace RiskAI.Tests
         {
             var home=naval.Harbors.First(h=>h.Owner==1&&h.CanLaunch);
             Assert.That(home.TryTransportLanding(out var landing,out var berth),Is.True);
-            var transport=BattleTestScenario.Ship(naval,1,ShipKind.Transport,berth);
+            var transport=BattleTestScenario.Ship(naval,1,NavalUnitKind.Transport,berth);
             var near=BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,landing);
             var inland=landing-berth;inland.y=0;if(inland.sqrMagnitude<.01f)inland=Vector3.forward;else inland.Normalize();
             Assert.That(NavMesh.SamplePosition(landing+inland*14f,out var far,8f,NavMesh.AllAreas),Is.True);
@@ -266,14 +266,14 @@ namespace RiskAI.Tests
             typeof(Harbor).GetField("<Berth>k__BackingField",PrivateInstance).SetValue(home,homeBerth);
             var destination=Dock("island destination",-1,new Vector3(12,-.24f,14),islandLanding.position);
             EnableCandidateDock(destination,islandLanding.position);naval.Harbors.Add(home);naval.Harbors.Add(destination);
-            var isolated=BattleTestScenario.Ship(naval,1,ShipKind.Transport,new Vector3(-20,-.24f,0));
+            var isolated=BattleTestScenario.Ship(naval,1,NavalUnitKind.Transport,new Vector3(-20,-.24f,0));
             Assert.That(SeaNavigation.AreConnected(isolated.transform.position,homeBerth),Is.False);
-            int gold=Harbor.Cost(ShipKind.Transport)+naval.FirstFleetSavingsTargetFor(1);battle.Economy.Gold[1]=gold;
+            int gold=Harbor.Cost(NavalUnitKind.Transport)+naval.FirstFleetSavingsTargetFor(1);battle.Economy.Gold[1]=gold;
             while(battle.BattleTime<=battle.AiFirstNavalOffensiveTime)battle.Clock.Advance(1,false,_=>{});
 
             var planner=new NavalExpeditionCommander(naval,1);Plan.Invoke(planner,null);
             Assert.That(home.QueueCount,Is.EqualTo(1),"An unusable empty boat must not veto a paid mission in the other ocean.");
-            Assert.That(battle.Economy.Gold[1],Is.EqualTo(gold-Harbor.Cost(ShipKind.Transport)));
+            Assert.That(battle.Economy.Gold[1],Is.EqualTo(gold-Harbor.Cost(NavalUnitKind.Transport)));
             var wait=typeof(NavalExpeditionCommander).GetMethod("WaitForTransport",PrivateInstance);
             wait.Invoke(planner,null);
             Assert.That(PlannerTransport.GetValue(planner),Is.Null,"Waiting must ignore the old boat in the wrong sea component.");
@@ -281,8 +281,8 @@ namespace RiskAI.Tests
 
             // Complete the actual paid harbor queue. These synthetic sea adapters
             // isolate source/boat selection; the full crossing has its own test.
-            home.SimTick(Harbor.TrainTime(ShipKind.Transport)+.1f);
-            var local=naval.Ships.FirstOrDefault(s=>s&&s.Team==1&&s.Kind==ShipKind.Transport&&s!=isolated);
+            home.SimTick(Harbor.TrainTime(NavalUnitKind.Transport)+.1f);
+            var local=naval.Ships.FirstOrDefault(s=>s&&s.Team==1&&s.Kind==NavalUnitKind.Transport&&s!=isolated);
             Assert.That(local,Is.Not.Null);Assert.That(home.QueueCount,Is.Zero);
             Assert.That(SeaNavigation.AreConnected(local.transform.position,homeBerth),Is.True);
             PlannerTroopCursor.SetValue(planner,0);wait.Invoke(planner,null);
@@ -296,7 +296,7 @@ namespace RiskAI.Tests
         {
             var home=naval.Harbors.First(h=>h.Owner==1&&h.CanLaunch);
             Assert.That(home.TryTransportLanding(out var landing,out var berth),Is.True);
-            var transport=BattleTestScenario.Ship(naval,1,ShipKind.Transport,berth);
+            var transport=BattleTestScenario.Ship(naval,1,NavalUnitKind.Transport,berth);
             var troops=BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,landing);
             Assert.That(transport.TryEmbark(null),Is.False,"A previous failed command must leave a real error on this reusable boat.");
             Assert.That(transport.LastActionError,Is.Not.Null.And.Not.Empty);

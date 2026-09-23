@@ -24,7 +24,7 @@ namespace RiskAI.Editor
                     var cart=new GameObject("Mortar portrait model");VisualFactory.MortarModel(cart.transform,VisualFactory.TeamColor(0));
                     RenderPortrait(cart,null,name);Object.DestroyImmediate(cart);continue;
                 }
-                string model = kind == UnitKind.Guard ? "Knight" : kind==UnitKind.Medic?"Mage":kind==UnitKind.MarinePrivate?"RogueHooded":name;
+                string model = kind == UnitKind.Knight ? "Knight" : kind==UnitKind.Medic?"Mage":kind==UnitKind.MarinePrivate?"RogueHooded":name;
                 string path = Folder + model + ".fbx";
                 var importer = (ModelImporter)AssetImporter.GetAtPath(path);
                 if(!importer)throw new System.InvalidOperationException("Missing own unit art importer: "+path);
@@ -40,12 +40,12 @@ namespace RiskAI.Editor
                 if (!material) { material = new Material(Shader.Find("Universal Render Pipeline/Lit")); AssetDatabase.CreateAsset(material, materialPath); }
                 material.mainTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(Folder + texture + "_texture.png");
                 material.SetFloat("_Smoothness", .18f);
-                material.color = kind == UnitKind.Guard ? new Color(1, .88f, .6f) : Color.white;
+                material.color = kind == UnitKind.Knight ? new Color(1, .88f, .6f) : Color.white;
                 EditorUtility.SetDirty(material);
                 var root = new GameObject(name);
                 var visual = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(path));
                 visual.transform.SetParent(root.transform, false);
-                visual.transform.localScale = Vector3.one * (kind == UnitKind.Guard ? 1.43f : 1.25f);
+                visual.transform.localScale = Vector3.one * (kind == UnitKind.Knight ? 1.43f : 1.25f);
                 foreach (var renderer in visual.GetComponentsInChildren<Renderer>(true)) renderer.sharedMaterial = material;
                 var animation = visual.GetComponent<Animation>();
                 if (!animation) animation = visual.AddComponent<Animation>();
@@ -56,7 +56,7 @@ namespace RiskAI.Editor
                     foreach (Transform item in hand)
                     {
                         bool visible = kind == UnitKind.Footman ? item.name == "1H_Sword" || item.name == "Badge_Shield" :
-                            kind == UnitKind.Guard ? item.name == "2H_Sword" :
+                            kind == UnitKind.Knight ? item.name == "2H_Sword" :
                             kind == UnitKind.Archer ? item.name == "2H_Crossbow" : item.name.ToLowerInvariant().Contains("staff");
                         item.gameObject.SetActive(visible);
                     }
@@ -72,7 +72,7 @@ namespace RiskAI.Editor
                 Object.DestroyImmediate(root);
             }
             RenderVariantPortraitsOnly();
-            foreach(ShipKind kind in System.Enum.GetValues(typeof(ShipKind)))
+            foreach(NavalUnitKind kind in System.Enum.GetValues(typeof(NavalUnitKind)))
             {
                 var shipRoot=new GameObject(kind+" portrait");
                 NavalArt.CreateShipModel(shipRoot.transform,0,kind);
@@ -148,9 +148,9 @@ namespace RiskAI.Editor
             var cameraObject = new GameObject("Portrait camera");
             var camera = cameraObject.AddComponent<Camera>(); camera.cullingMask = 1 << 31;
             camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.075f,.085f,.09f);
-            bool ship=System.Enum.IsDefined(typeof(ShipKind),name);
+            bool ship=System.Enum.IsDefined(typeof(NavalUnitKind),name);
             bool siege=name=="Mortar"||name=="Artillery"||name=="Tank";
-            camera.orthographic = true; camera.orthographicSize = ship?(name==ShipKind.Battleship.ToString()?4.2f:name==ShipKind.Warship.ToString()?3.8f:3.35f):siege?(name=="Mortar"?1.35f:1.7f):name=="MountedKnight"?1.85f:name=="ArmyGeneral"?2.1f:1.4f;
+            camera.orthographic = true; camera.orthographicSize = ship?(name==NavalUnitKind.Battleship.ToString()?4.2f:name==NavalUnitKind.Warship.ToString()?3.8f:3.35f):siege?(name=="Mortar"?1.35f:1.7f):name=="MountedKnight"?1.85f:name=="ArmyGeneral"?2.1f:1.4f;
             Vector3 focus = root.transform.position + Vector3.up * (ship?2.15f:siege?1.15f:name=="ArmyGeneral"?1.95f:1.75f);
             camera.transform.position = focus + (ship?new Vector3(4.8f,3.1f,6.8f):new Vector3(2,1,5)); camera.transform.LookAt(focus);
             if (name == "MountedKnight" || name == "ArmyGeneral" || name == "MarineMajor" || name == "MarineGeneral" || name == "Roarer")

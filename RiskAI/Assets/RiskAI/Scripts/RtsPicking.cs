@@ -5,6 +5,18 @@ namespace RiskAI
 {
     public static class RtsPicking
     {
+        static Rect ScreenRect(Camera camera, Bounds bounds)
+        {
+            float xMin = float.MaxValue, yMin = float.MaxValue, xMax = float.MinValue, yMax = float.MinValue;
+            for (int i = 0; i < 8; i++)
+            {
+                var corner = new Vector3((i & 1) == 0 ? bounds.min.x : bounds.max.x, (i & 2) == 0 ? bounds.min.y : bounds.max.y, (i & 4) == 0 ? bounds.min.z : bounds.max.z);
+                var screen = camera.WorldToScreenPoint(corner);
+                if (screen.z <= 0) return Rect.zero;
+                xMin = Mathf.Min(xMin, screen.x); xMax = Mathf.Max(xMax, screen.x); yMin = Mathf.Min(yMin, screen.y); yMax = Mathf.Max(yMax, screen.y);
+            }
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
         // Screen-space padding stays useful when the player zooms out.
         public static CombatTarget Target(BattleSession battle, Camera camera, Vector2 pointer, int relation = 0)
         {
@@ -27,6 +39,10 @@ namespace RiskAI
         }
         public static Rect Bounds(Camera camera, CombatTarget target)
         {
+            // Warships and battleships are long hulls: a pivot-centred 1.8 m box
+            // missed clicks on the bow or stern, which then became a plain move
+            // order that sailed the fleet into its target.
+            if (target is Ship ship && ship.TryGetHullBounds(out var hull)) return ScreenRect(camera, hull);
             float height = target is Ship ? 4.8f : target is DefenseTower ? VisualMetrics.TowerHeight : target is Soldier soldier?VisualMetrics.HeightFor(soldier.Kind):VisualMetrics.UnitHeight;
             if(target is DefenseTower tower && BuildingVariants.IsIntegrated(tower.VisualVariant))height=VisualMetrics.IntegratedTowerTopHeight;
             float radius = target is Ship ? 1.8f : target is DefenseTower ? VisualMetrics.TowerRadius : target is Soldier unit?VisualMetrics.RadiusFor(unit.Kind):VisualMetrics.UnitRadius;

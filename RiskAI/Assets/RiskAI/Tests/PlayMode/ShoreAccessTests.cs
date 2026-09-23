@@ -111,7 +111,7 @@ namespace RiskAI.Tests
             var naval=NavalWorld.Current;
             var port=naval.Harbors.FirstOrDefault(h=>h.IsImportedPort&&h.CanLaunch);
             Assert.That(port,Is.Not.Null,map+" must have an imported launchable port.");
-            var transport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,port.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,port.Berth);
             var soldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.Landing);
             Assert.That(transport.TryEmbark(soldier),Is.True,"The imported port landing must pass the real embark path.");
             Assert.That(transport.UnloadAt(port.Landing),Is.True,"The imported port landing must pass the real unload path.");
@@ -122,7 +122,7 @@ namespace RiskAI.Tests
             Assert.That(ShoreAccess.TryLanding(beach+seaward*1.5f,out var tolerantBeach,out _),Is.True,
                 map+" a click on the painted waterline must resolve back onto its visible beach.");
             Assert.That(Vector3.Distance(new Vector3(tolerantBeach.x,0,tolerantBeach.z),new Vector3(beach.x,0,beach.z)),Is.LessThanOrEqualTo(3.1f));
-            var beachTransport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,beachWater);
+            var beachTransport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,beachWater);
             var beachSoldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,beach);
             Assert.That(beachTransport.TryEmbark(beachSoldier),Is.True,"Visible safe beach must accept real boarding.");
             Assert.That(beachTransport.UnloadAt(beach),Is.True,"The same sandy beach must accept real unloading.");
@@ -132,12 +132,12 @@ namespace RiskAI.Tests
             Assert.That(IsSourceNonBeach(MapLayout.Imported,shore.x,shore.z),Is.True,"The selected point must be non-beach according to the imported terrain.");
             Assert.That(ShoreAccess.TryLanding(shore,out _,out var error),Is.False);
             Assert.That(error,Does.Contain("orillas"));
-            var rejectedTransport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,water);
+            var rejectedTransport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,water);
             var rejectedSoldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,shore);
             Assert.That(rejectedTransport.TryEmbark(rejectedSoldier),Is.False,"A flat reachable non-sand shore must fail real embark validation.");
             Assert.That(rejectedTransport.LastActionError,Does.Contain("orillas"));
 
-            var unloadTransport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,port.Berth);
+            var unloadTransport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,port.Berth);
             var unloadSoldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.Landing);
             Assert.That(unloadTransport.TryEmbark(unloadSoldier),Is.True);
             unloadTransport.transform.position=new Vector3(water.x,-.24f,water.z);
