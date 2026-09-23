@@ -18,6 +18,12 @@ namespace RiskAI
     public sealed class TerritoryField
     {
         const float WaterCost = 6f;
+        // Authored maps: climbing a cliff (slope above CliffSlope, full cost CliffSlopeRange later)
+        // costs like a wide strait, so borders follow precipices instead of eating the terrain below.
+        const float CliffCost = 14f, CliffSlope = .55f, CliffSlopeRange = .45f;
+        // Authored maps: a gentle deterministic cost relief (plus or minus Roughness) bends the
+        // otherwise ruler-straight bisectors between two cities on open plains.
+        const float Roughness = .35f, RoughnessScale = .07f;
         const float ForeignTileCost = 16f;
         const float ProceduralCell = .7f;
         const int SmoothingPasses = 2;
@@ -26,6 +32,7 @@ namespace RiskAI
         readonly float originX, originZ, cell;
         readonly bool sourceGrid;
         readonly bool[] land;
+        readonly float[] heights, roughness;
         readonly short[] country;
         readonly short[] city;
         readonly ImportedMapData imported;
@@ -62,10 +69,17 @@ namespace RiskAI
             }
             int count = Width * Height;
             land = new bool[count]; country = new short[count]; city = new short[count];
+            // Relief only steers authored maps: on Warcraft maps the source country paint is the border.
+            if (imported == null) { heights = new float[count]; roughness = new float[count]; }
             for (int z = 0; z < Height; z++) for (int x = 0; x < Width; x++)
             {
                 var p = CellWorld(x, z);
                 land[z * Width + x] = MapLayout.IsLand(p.x, p.y);
+                if (heights == null) continue;
+                heights[z * Width + x] = MapLayout.Height(p.x, p.y);
+                float n = .65f * Mathf.PerlinNoise(p.x * RoughnessScale + 31.7f, p.y * RoughnessScale + 7.3f)
+                    + .35f * Mathf.PerlinNoise(p.x * RoughnessScale * 2.3f + 3.1f, p.y * RoughnessScale * 2.3f + 57.9f);
+                roughness[z * Width + x] = 1 + Roughness * (2 * n - 1);
             }
             int[] tiles = null, countryTile = null;
             if (imported != null) PrepareTiles(out tiles, out countryTile);
@@ -297,19 +311,52 @@ namespace RiskAI
                 heap.Pop(out float d, out int i);
                 if (d > distance[i]) continue;
                 int owner = country[i], x = i % Width, z = i / Width, paint = tiles != null ? countryTile[owner] : -1;
-                for (int k = 0; k < 8; k++)
+                for (int k = 0; k < Neighbours; k++)
                 {
                     int nx = x + Dx[k], nz = z + Dz[k];
                     if (nx < 0 || nz < 0 || nx >= Width || nz >= Height) continue;
                     int j = nz * Width + nx;
-                    float step = Step[k];
-                    if (!land[j]) step *= WaterCost;
-                    else if (paints != null && paints.Contains(tiles[j]) && tiles[j] != paint) step *= ForeignTileCost;
+                    float step = Step[k] * TerrainFactor(i, x, z, k);
+                    if (land[j] && paints != null && paints.Contains(tiles[j]) && tiles[j] != paint) step *= ForeignTileCost;
                     float next = d + step;
                     if (next < distance[j] || (next == distance[j] && owner < country[j]))
                     { distance[j] = next; country[j] = (short)owner; heap.Push(next, j); }
                 }
             }
+        }
+
+        /// <summary>
+        /// Cost multiplier of one growth step: water (also for any cell a knight move passes),
+        /// cliffs and the authored roughness. 16 neighbours keep the growth nearly isotropic, so
+        /// open-plain borders are not locked to the axes and diagonals.
+        /// </summary>
+        float TerrainFactor(int from, int x, int z, int k)
+        {
+            int to = (z + Dz[k]) * Width + x + Dx[k];
+            if (!land[to]) return WaterCost;
+            if (k >= 8)
+            {
+                int sx = Dx[k] > 0 ? 1 : -1, sz = Dz[k] > 0 ? 1 : -1;
+                int a, b;
+                if (Dx[k] == 2 || Dx[k] == -2) { a = z * Width + x + sx; b = (z + Dz[k]) * Width + x + sx; }
+                else { a = (z + sz) * Width + x; b = (z + sz) * Width + x + Dx[k]; }
+                if (!land[a] || !land[b]) return WaterCost;
+            }
+            if (heights == null || !land[from]) return 1;
+            return CliffFactor(from, to, Step[k]) * .5f * (roughness[from] + roughness[to]);
+        }
+        float CliffFactor(int from, int to, float step)
+        {
+            float slope = Mathf.Abs(heights[to] - heights[from]) / (step * cell);
+            return 1 + CliffCost * Mathf.Clamp01((slope - CliffSlope) / CliffSlopeRange);
+        }
+        /// <summary>Whether a field step between two neighbouring cells climbs a cliff (authored maps).</summary>
+        public bool IsCliffStep(int x0, int z0, int x1, int z1)
+        {
+            if (heights == null) return false;
+            int a = z0 * Width + x0, b = z1 * Width + x1;
+            float step = Mathf.Sqrt((x1 - x0) * (x1 - x0) + (z1 - z0) * (z1 - z0)) * cell;
+            return land[a] && land[b] && Mathf.Abs(heights[b] - heights[a]) / step > CliffSlope + CliffSlopeRange * .5f;
         }
 
         // Land cells within four field cells of a country's own seed hold that country's pieces in place.
@@ -411,14 +458,14 @@ namespace RiskAI
                 heap.Pop(out float d, out int i);
                 if (d > distance[i]) continue;
                 int owner = city[i], ownerCountry = towns[owner].Country, x = i % Width, z = i / Width;
-                for (int k = 0; k < 8; k++)
+                for (int k = 0; k < Neighbours; k++)
                 {
                     int nx = x + Dx[k], nz = z + Dz[k];
                     if (nx < 0 || nz < 0 || nx >= Width || nz >= Height) continue;
                     int j = nz * Width + nx;
                     // A city spreads over its own country's land; it only crosses water or
                     // foreign land to reach detached pieces of that country.
-                    float step = Step[k] * (land[j] ? (country[j] == ownerCountry ? 1 : 40) : WaterCost);
+                    float step = Step[k] * TerrainFactor(i, x, z, k) * (land[j] && country[j] != ownerCountry ? 40 : 1);
                     float next = d + step;
                     if (next < distance[j]) { distance[j] = next; city[j] = (short)owner; heap.Push(next, j); }
                 }
@@ -431,9 +478,11 @@ namespace RiskAI
                 if (country[i] >= 0 && (city[i] < 0 || towns[city[i]].Country != country[i])) city[i] = first[country[i]];
         }
 
-        static readonly int[] Dx = { 1, -1, 0, 0, 1, 1, -1, -1 };
-        static readonly int[] Dz = { 0, 0, 1, -1, 1, -1, 1, -1 };
-        static readonly float[] Step = { 1, 1, 1, 1, 1.41421356f, 1.41421356f, 1.41421356f, 1.41421356f };
+        const int Neighbours = 16;
+        static readonly int[] Dx = { 1, -1, 0, 0, 1, 1, -1, -1, 2, 1, -1, -2, -2, -1, 1, 2 };
+        static readonly int[] Dz = { 0, 0, 1, -1, 1, -1, 1, -1, 1, 2, 2, 1, -1, -2, -2, -1 };
+        static readonly float[] Step = { 1, 1, 1, 1, 1.41421356f, 1.41421356f, 1.41421356f, 1.41421356f,
+            2.23606798f, 2.23606798f, 2.23606798f, 2.23606798f, 2.23606798f, 2.23606798f, 2.23606798f, 2.23606798f };
 
         sealed class MinHeap
         {

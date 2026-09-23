@@ -191,6 +191,11 @@ namespace RiskAI.Editor
                     foreach(var harbor in NavalWorld.Current.Harbors.Where(h=>h).Take(4))Render(camera,readback,directory,prefix+"-post-harbor"+(shot++),harbor.Landing,14,55,0);
                     shot=0;
                     foreach(var camp in UnityEngine.Object.FindObjectsByType<CountryCamp>(FindObjectsSortMode.InstanceID).Take(3))Render(camera,readback,directory,prefix+"-post-camp"+(shot++),camp.SpawnPoint,13,55,0);
+                    if(!MapLayout.IsImported)for(int island=0;island<MapLayout.Islands.Length;island++)
+                    {
+                        var c=MapLayout.Islands[island];
+                        Render(camera,readback,directory,prefix+"-post-island"+island,MapLayout.Point(c.x*MapLayout.Spacing,c.y*MapLayout.Spacing),Mathf.Max(c.z,c.w)*MapLayout.Spacing*.9f,55,0);
+                    }
                     return;
                 }
                 // Edges: the camera clamp keeps focus inside the playable rectangle, so view from inside looking out.
