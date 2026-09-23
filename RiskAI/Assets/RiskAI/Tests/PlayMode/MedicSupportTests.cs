@@ -116,7 +116,9 @@ namespace RiskAI.Tests
 
             Object.Destroy(blocker);
             Physics.SyncTransforms();
-            yield return new WaitForSeconds(1.1f);
+            // The cooldown only starts on a real heal, so the first cast follows the
+            // blocker removal at once; stay inside one cooldown to count exactly one.
+            yield return new WaitForSeconds(.6f);
 
             Assert.That(healer.CastCount, Is.EqualTo(1));
             Assert.That(healer.TotalHealing, Is.EqualTo(25).Within(.001f));

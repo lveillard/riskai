@@ -20,7 +20,8 @@ namespace RiskAI
         AudioClip[] tracks;
         int[] order;
         int orderIndex = -1, active, lastTrack = -1;
-        float fade = 1, fadeSpeed = 1 / FadeInSeconds;
+        float fade = 1, fadeSpeed = 1 / FadeInSeconds, retryAt;
+        bool started;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Current = null; preferencesLoaded = false; }
@@ -60,7 +61,7 @@ namespace RiskAI
             if (!first) active = 1 - active;
             var source = sources[active];
             source.clip = tracks[track]; source.volume = 0; source.Play();
-            lastTrack = track; fade = 0; fadeSpeed = 1 / (first ? FadeInSeconds : CrossfadeSeconds);
+            lastTrack = track; fade = 0; fadeSpeed = 1 / (first ? FadeInSeconds : CrossfadeSeconds); started = false; retryAt = Time.unscaledTime + 2;
         }
 
         void Shuffle()
@@ -81,9 +82,12 @@ namespace RiskAI
             current.volume = target * fade;
             previous.volume = target * (1 - fade);
             if (fade >= 1 && previous.isPlaying) previous.Stop();
+            if (current.isPlaying && current.time > 0) started = true;
             // Start the crossfade shortly before the current track ends; streaming clips report time reliably.
             if (current.clip && current.isPlaying && current.clip.length - current.time <= CrossfadeSeconds) PlayNext(false);
-            else if (!current.isPlaying && fade >= 1) PlayNext(false);
+            else if (!current.isPlaying && started) PlayNext(false);
+            // Browsers may block audio until the first gesture: retry the same track instead of skipping through the list.
+            else if (!current.isPlaying && Time.unscaledTime >= retryAt) { retryAt = Time.unscaledTime + 2; current.Play(); }
         }
 
         static void LoadPreferences()

@@ -65,7 +65,7 @@ namespace RiskAI
         public override float MaxHealth=>Profile.Health;
         public override Vector3 AimPoint=>transform.position+Vector3.up*.55f;
         public override AttackKind AttackType=>Profile.Attack;
-        public override ArmorKind ArmorType=>ArmorKind.Heavy;
+        public override ArmorKind ArmorType=>Profile.Defense;
         public override float Armor=>Profile.Armor;
         public float Speed=>Profile.Speed;
         int Capacity=>Profile.Capacity;

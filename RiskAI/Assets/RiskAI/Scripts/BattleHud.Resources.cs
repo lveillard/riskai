@@ -14,7 +14,7 @@ namespace RiskAI
 
         static Button ResourceButton(System.Action action,string name)
         {
-            var button=new Button(action) { name=name };
+            var button=new Button(action) { name=name, focusable=false };
             button.style.backgroundColor=Color.clear;button.style.borderTopWidth=button.style.borderBottomWidth=button.style.borderLeftWidth=button.style.borderRightWidth=0;
             button.style.marginLeft=button.style.marginRight=button.style.marginTop=button.style.marginBottom=0;
             button.style.paddingLeft=button.style.paddingRight=3;button.style.paddingTop=button.style.paddingBottom=0;

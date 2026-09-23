@@ -14,6 +14,8 @@ namespace RiskAI
         public const float HealAmount = Core.SupportAbilities.HealAmount;
         public const float CastInterval = Core.SupportAbilities.HealCooldown;
         public const float ManaCost = Core.SupportAbilities.HealManaCost;
+        // Cheap rescan throttle while nobody needs healing: at most ~4 sweeps per second.
+        const float RescanInterval = CastInterval / 4f;
 
         readonly Core.ManaPool mana = new Core.ManaPool();
         public Core.ManaPool Mana => mana;
@@ -24,6 +26,7 @@ namespace RiskAI
         Soldier self;
         BattleSession session;
         float nextCastTime;
+        float nextScanTime;
         readonly System.Collections.Generic.List<CombatTarget> nearby = new System.Collections.Generic.List<CombatTarget>(32);
 
         /// <summary>Initializes the support behavior after the owning Soldier is ready.</summary>
@@ -32,6 +35,7 @@ namespace RiskAI
             self = owner;
             session = battle;
             nextCastTime = session.BattleTime + CastInterval;
+            nextScanTime = session.BattleTime;
             CastCount=0;TotalHealing=0;LastCastTick=-1;
             mana.Reset(Core.SupportAbilities.Mana(owner.Kind));
         }
@@ -42,20 +46,20 @@ namespace RiskAI
                 !session || session.Paused || session.Winner >= 0)
                 return false;
             mana.Tick(delta);
-            if (session.BattleTime < nextCastTime || !mana.CanSpend(ManaCost)) return false;
+            if (session.BattleTime < nextCastTime || session.BattleTime < nextScanTime || !mana.CanSpend(ManaCost)) return false;
 
-            nextCastTime = session.BattleTime + CastInterval;
             var target = FindMostInjuredAlly();
-            if (!target) return false;
+            if (!target) { nextScanTime = session.BattleTime + RescanInterval; return false; }
 
             float healed = target.Heal(HealAmount);
-            if (healed <= 0) return false;
+            if (healed <= 0) { nextScanTime = session.BattleTime + RescanInterval; return false; }
+            nextCastTime = session.BattleTime + CastInterval;
             mana.TrySpend(ManaCost);
 
             CastCount++;
             TotalHealing += healed;
             LastCastTick=session.Clock.TickCount;
-            VisualFactory.Impact(target.AimPoint, new Color(.72f, .96f, .36f), .25f);
+            if(session.Combat.PresentationEnabled)VisualFactory.Impact(target.AimPoint, new Color(.72f, .96f, .36f), .25f);
             return true;
         }
 

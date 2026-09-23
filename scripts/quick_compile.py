@@ -7,7 +7,8 @@ Usage: python scripts/quick_compile.py [Core Runtime Tests PlayTests Editor]
 
 The editor is resolved from RiskAI/ProjectSettings/ProjectVersion.txt under the
 Unity Hub editor folder; set RISKAI_UNITY_EDITOR to override it. Exit codes:
-0 compiled, 1 compile errors, 2 missing editor/.csproj/Library prerequisites.
+0 compiled, 1 compile errors, 2 missing editor/.csproj/Library prerequisites or
+incomplete .csproj settings.
 """
 import json, os, re, subprocess, sys, tempfile, pathlib
 
@@ -100,8 +101,15 @@ def compile_one(short, name, folder, internal_refs):
             dll = SCRIPTS / f"{proj}.dll"
             if dll.exists():
                 refs.append(str(dll))
-    defines = re.search(r"<DefineConstants>(.*?)</DefineConstants>", csproj).group(1)
-    lang = re.search(r"<LangVersion>(.*?)</LangVersion>", csproj).group(1)
+    defines_match = re.search(r"<DefineConstants>(.*?)</DefineConstants>", csproj)
+    lang_match = re.search(r"<LangVersion>(.*?)</LangVersion>", csproj)
+    if not defines_match or not lang_match:
+        missing_tags = [tag for tag, match in (("<DefineConstants>", defines_match), ("<LangVersion>", lang_match)) if not match]
+        print(f"quick_compile: {' and '.join(missing_tags)} missing from {name}.csproj; regenerate the "
+              ".csproj files (Unity Preferences > External Tools > Generate .csproj files)", file=sys.stderr)
+        sys.exit(2)
+    defines = defines_match.group(1)
+    lang = lang_match.group(1)
     OUT.mkdir(exist_ok=True)
     rsp = OUT / f"{name}.rsp"
     lines = ["-target:library", "-nologo", "-nostdlib+", "-unsafe", "-nowarn:1701,1702,0618,0649,0169,0414,0219",
@@ -130,13 +138,19 @@ if __name__ == "__main__":
     if unknown:
         sys.exit(f"quick_compile: unknown assembly {', '.join(sorted(unknown))}; choose from "
                  + " ".join(a[0] for a in ASSEMBLIES))
-    last = max(i for i, a in enumerate(ASSEMBLIES) if a[0] in wanted)
-    check_prerequisites([a[1] for a in ASSEMBLIES[:last + 1]])
+    # A subset compiles the requested assemblies plus their real internal
+    # dependencies (the `internal` refs of each ASSEMBLIES entry), nothing else.
+    short_of = {a[1]: a[0] for a in ASSEMBLIES}
+    entry_of = {a[0]: a for a in ASSEMBLIES}
+    needed = set(wanted)
+    pending = list(wanted)
+    while pending:
+        for dep in entry_of[pending.pop()][3]:
+            if short_of[dep] not in needed:
+                needed.add(short_of[dep]); pending.append(short_of[dep])
+    check_prerequisites([a[1] for a in ASSEMBLIES if a[0] in needed])
     ok = True
     for short, name, folder, internal in ASSEMBLIES:
-        if short in wanted or any(short == dep.split(".")[-1] for dep in []):
-            ok = compile_one(short, name, folder, internal) and ok
-        elif any(w in [a[0] for a in ASSEMBLIES[ASSEMBLIES.index((short, name, folder, internal)) + 1:]] for w in wanted):
-            # dependencies of a later requested assembly must be rebuilt first
+        if short in needed:
             ok = compile_one(short, name, folder, internal) and ok
     sys.exit(0 if ok else 1)

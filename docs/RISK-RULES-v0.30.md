@@ -52,8 +52,9 @@ La tecla T ya no construye torres (ver abajo) y pasa al Fusilero de élite.
   `Adis` (Rugidor) y `Afzy` (General, Caballero) siguen sin representar.
 - **Tanque**: `h01A` fija `ua1w=msplash` pero no hereda áreas de `hfoo`, así que el arma resuelve como misil
   de objetivo único (sin splash). Se representa tal cual, sin inventar radios.
-- **Tipo de armadura de barcos**: el runtime sigue usando `Heavy` para todos los barcos (como Fragata/Transporte);
-  `hdes` es `small` en la fuente. Pendiente de una revisión naval conjunta.
+- **Tipo de armadura de barcos**: sigue la fuente. Los buques de guerra `hdes` (Fragata h00W, Buque h00U, Acorazado h001)
+  son `small` (Light) y los transportes `nzep` (n008, n007) son `large` (Heavy). Hasta v0.30 todos eran `Heavy`, lo que
+  reducía a la mitad el daño perforante contra los buques de guerra.
 - **Arte**: modelos originales derivados de KayKit y piezas procedurales (fusilero con penacho y rifle, rugidor
   con yelmo de cuernos y cuerno de guerra, general montado mayor con capa y estandarte, cañón de campaña, tanque
   de vapor, cascos navales escalados ×1.15/×1.3/×1.05). Las alturas son objetivos visuales locales relativos al

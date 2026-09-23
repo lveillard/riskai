@@ -39,6 +39,9 @@ namespace RiskAI.Core
         public readonly int Capacity;
         public bool CanAttack=>Damage>0&&Range>0;
         public bool CanTransport=>Capacity>0;
+        // Source defence types: hdes warships (h00W/h00U/h001) are `small` (Light);
+        // nzep transports (n008/n007) are `large` (Heavy).
+        public ArmorKind Defense=>CanTransport?ArmorKind.Heavy:ArmorKind.Light;
 
         public ShipProfile(
             string name,

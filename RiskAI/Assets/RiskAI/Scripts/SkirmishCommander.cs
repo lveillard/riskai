@@ -60,6 +60,9 @@ namespace RiskAI
         readonly List<Soldier> melee = new List<Soldier>(16);
         readonly List<Soldier> ranged = new List<Soldier>(16);
         readonly List<TargetCandidate> candidates = new List<TargetCandidate>(TargetShortlist + 1);
+        // Cached sort comparisons: per-pass lambdas would allocate a delegate each time.
+        static readonly System.Comparison<DefenseSite> CompareThreats = (a, b) => a.Priority == b.Priority ? a.Key.CompareTo(b.Key) : b.Priority.CompareTo(a.Priority);
+        static readonly System.Comparison<TargetCandidate> CompareTargets = (a, b) => a.Score == b.Score ? a.Index.CompareTo(b.Index) : b.Score.CompareTo(a.Score);
         readonly List<Army> armies = new List<Army>(4);
         readonly Stack<Army> spareArmies = new Stack<Army>(4);
         readonly Dictionary<int, Army> armyOf = new Dictionary<int, Army>(64);
@@ -170,7 +173,7 @@ namespace RiskAI
                         harbor.ClaimZone != null ? harbor.ClaimZone.Guardian : null, -1, true, profile);
                 }
             if (threats.Count == 0) { defenseAssignments.Clear(); dispatchedAgainst.Clear(); return; }
-            threats.Sort((a, b) => a.Priority == b.Priority ? a.Key.CompareTo(b.Key) : b.Priority.CompareTo(a.Priority));
+            threats.Sort(CompareThreats);
             RemoveStaleAssignments();
             RefreshOwn();
             // Keep a quarter of a sizeable mobile force out of local fights.
@@ -889,7 +892,7 @@ namespace RiskAI
                     AiTargetScoring.Feasibility(Mathf.Max(committedPower, availablePower), candidate.Defense, profile.AttackMargin));
                 candidates[c] = candidate;
             }
-            candidates.Sort((a, b) => a.Score == b.Score ? a.Index.CompareTo(b.Index) : b.Score.CompareTo(a.Score));
+            candidates.Sort(CompareTargets);
         }
 
         float TargetDefense(Settlement town)

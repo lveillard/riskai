@@ -233,7 +233,7 @@ namespace RiskAI
                     row.text = entry.Repeat > 1 ? text + "  ×" + entry.Repeat : text;
                     var color = KindColor(entry);
                     row.style.borderLeftColor = color;
-                    row.style.color = entry.Kind == MessageKind.Info ? RtsUiStyle.Text : Color.Lerp(color, Color.white, .25f);
+                    row.style.color = entry.Kind == MessageKind.Info ? RtsUiStyle.Text : Readable(color);
                     row.style.display = DisplayStyle.Flex;
                     row.pickingMode = entry.HasFocus ? PickingMode.Position : PickingMode.Ignore;
                 }
@@ -245,6 +245,15 @@ namespace RiskAI
         {
             int split = entry.Text.IndexOf(": ", System.StringComparison.Ordinal);
             return split < 0 ? entry.Text : GameText.Localize(entry.Text.Substring(0, split)) + entry.Text.Substring(split);
+        }
+
+        // Dark WC3 team colours (violet, navy, maroon, dark green, brown) keep their hue but are
+        // lifted toward white until they reach a readable luminance on the dark HUD panels.
+        static Color Readable(Color color)
+        {
+            float luminance = .2126f * color.r + .7152f * color.g + .0722f * color.b;
+            float lift = Mathf.Clamp01((.62f - luminance) / Mathf.Max(.01f, 1 - luminance));
+            return Color.Lerp(color, Color.white, Mathf.Max(.2f, lift));
         }
 
         static Color KindColor(MessageEntry entry)
@@ -284,7 +293,7 @@ namespace RiskAI
                 var next = toasts.Dequeue();
                 toastStart = now; age = 0;
                 toastLabel.text = GameText.Localize(next.text);
-                toastLabel.style.color = Color.Lerp(next.color, Color.white, .2f);
+                toastLabel.style.color = Readable(next.color);
                 toastLabel.style.borderTopColor = toastLabel.style.borderBottomColor = next.color;
                 toastLabel.style.fontSize = next.big ? (UiViewport.IsCompact ? 18 : 22) : (UiViewport.IsCompact ? 14 : 16);
                 toastBox.style.display = DisplayStyle.Flex;

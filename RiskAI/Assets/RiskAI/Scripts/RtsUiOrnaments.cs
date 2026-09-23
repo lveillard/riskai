@@ -127,6 +127,9 @@ namespace RiskAI
         bool hovered;
         public RtsOrnamentButton(Action action):base(action)
         {
+            // HUD buttons all have hotkeys: a focused button would re-fire on Enter/Space
+            // while the same keypress also reaches the game's global shortcuts.
+            focusable=false;
             generateVisualContent+=Paint;
             RegisterCallback<PointerEnterEvent>(_=>{hovered=true;MarkDirtyRepaint();});
             RegisterCallback<PointerLeaveEvent>(_=>{hovered=false;MarkDirtyRepaint();});

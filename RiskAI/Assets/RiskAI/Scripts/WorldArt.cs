@@ -51,7 +51,7 @@ namespace RiskAI
         // Roof slopes spend much of the match outside direct light. Retaining most of the
         // painted albedo keeps the player hue on shaded slopes: with less lift, shaded
         // orange read as brown and light blue as navy, colliding with those players.
-        public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamMaterialColor(team),.32f,true,colorLift:.45f);
+        public static Material RoofMaterial(int team) => Painted(1,VisualFactory.TeamMaterialColor(team),.32f,true,colorLift:.38f);
         static Renderer Banner(Transform root,Vector3 position,int team,float width=.7f,float height=1.6f)
         {
             var go=new GameObject("Banner");go.transform.SetParent(root,false);go.transform.localPosition=position;
