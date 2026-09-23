@@ -108,6 +108,23 @@ La versión vive **solo** en el archivo `VERSION` de la raíz (una línea, p. ej
    [DEPLOY-RIESGUS-CLOUDFLARE.md](DEPLOY-RIESGUS-CLOUDFLARE.md).
 6. Actualiza el texto de versión del README y añade `docs/VALIDATION-RIESGUS-v<VERSION>.md`.
 
+## Añadir una unidad
+
+Los números de una unidad viven solo en `RiskAI/Assets/RiskAI/Resources/Config/units.json`.
+No hay una tabla C# que copiar.
+
+1. Añade un objeto en `units` con un `id` estable (`Footman`, `Frigate`, …). El esquema
+   `scripts/config/units.schema.ts` dice qué campos son obligatorios: nombres, dominio
+   (`Land`, `Sea` o `Static`), edificio de producción, vida, arma o `hostWeapons`,
+   adquisición y capacidades.
+2. Desde `scripts/config`: `npm test`. Si el id es nuevo, `npm run build` regenera
+   `UnitKind` y el contrato C#. Un id duplicado, un campo de más o un enum desconocido
+   fallan aquí.
+3. El modelo y el retrato se nombran en `presentation`. La casilla del edificio la sigue
+   calculando `ProductionHotkeys` (coste, orden del JSON, tierra antes que mar).
+4. Regenera el resumen: `python scripts/generate_unit_rules.py`
+   (`docs/RISK-RULES-v0.34.md`). Lo que no venga de la fuente va en `adaptation`.
+
 ## Normas del repositorio
 
 - `.gitattributes`: todo el texto en LF; imágenes, modelos y fuentes como binarios; YAML de Unity con `merge=unityyamlmerge`.
