@@ -491,8 +491,7 @@ namespace RiskAI
         (string title,RtsHudGlyph glyph,System.Action action,string key)[] PrimaryOrders() => new (string,RtsHudGlyph,System.Action,string)[]
         {
             ("Mover",RtsHudGlyph.Move,controller.ArmMove,"M"),("Atacar",RtsHudGlyph.Sword,controller.ArmAttack,"A"),
-            ("Patrullar",RtsHudGlyph.Patrol,controller.ArmPatrol,"P"),("Encolar",RtsHudGlyph.Patrol,controller.ToggleQueueOrders,null),
-            ("Detener",RtsHudGlyph.Stop,controller.Stop,"S"),
+            ("Patrullar",RtsHudGlyph.Patrol,controller.ArmPatrol,"P"),("Detener",RtsHudGlyph.Stop,controller.Stop,"S"),
             ("Mantener",RtsHudGlyph.Shield,controller.Hold,"H"),("Centrar",RtsHudGlyph.Focus,controller.FocusSelection,null)
         };
         (string title,RtsHudGlyph glyph,System.Action action,string key)[] NavalOrders() => new (string,RtsHudGlyph,System.Action,string)[]

@@ -258,7 +258,7 @@ namespace RiskAI
         }
     }
 
-    public enum RtsQuickGlyph { Speaker, Note, Ranking, Map, Chat, Close }
+    public enum RtsQuickGlyph { Speaker, Note, Ranking, Map, Chat, Close, Queue }
 
     /// <summary>Quick-bar and window marks: thin vector glyphs, struck through when that feature is off.</summary>
     public sealed class RtsQuickIcon : VisualElement
@@ -312,6 +312,12 @@ namespace RiskAI
                     break;
                 case RtsQuickGlyph.Close:
                     p.BeginPath(); p.MoveTo(P(.22f, .22f)); p.LineTo(P(.78f, .78f)); p.MoveTo(P(.78f, .22f)); p.LineTo(P(.22f, .78f)); p.Stroke();
+                    break;
+                case RtsQuickGlyph.Queue:
+                    p.BeginPath(); p.MoveTo(P(.16f, .74f)); p.LineTo(P(.84f, .26f)); p.Stroke();
+                    p.BeginPath(); p.Arc(P(.16f, .74f), w * .09f, Angle.Degrees(0), Angle.Degrees(359.9f)); p.Fill();
+                    p.BeginPath(); p.Arc(P(.5f, .5f), w * .09f, Angle.Degrees(0), Angle.Degrees(359.9f)); p.Fill();
+                    p.BeginPath(); p.Arc(P(.84f, .26f), w * .09f, Angle.Degrees(0), Angle.Degrees(359.9f)); p.Fill();
                     break;
             }
             if (struck)
