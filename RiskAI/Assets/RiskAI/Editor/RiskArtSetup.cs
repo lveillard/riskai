@@ -71,6 +71,27 @@ namespace RiskAI.Editor
                 RenderPortrait(root, animation, name);
                 Object.DestroyImmediate(root);
             }
+            RenderVariantPortraitsOnly();
+            foreach(ShipKind kind in System.Enum.GetValues(typeof(ShipKind)))
+            {
+                var shipRoot=new GameObject(kind+" portrait");
+                NavalArt.CreateShipModel(shipRoot.transform,0,kind);
+                RenderPortrait(shipRoot,null,kind.ToString());
+                Object.DestroyImmediate(shipRoot);
+            }
+            AssetDatabase.Refresh(); AssetDatabase.SaveAssets(); Debug.Log("RISKAI_ART_OK");
+        }
+        /// <summary>
+        /// Re-renders only the procedural/variant portraits (mounted knights, Roarer, General,
+        /// siege) without re-saving unit prefabs. Batch: -executeMethod RiskAI.Editor.RiskArtSetup.RenderVariantPortraits
+        /// </summary>
+        public static void RenderVariantPortraits()
+        {
+            RenderVariantPortraitsOnly();
+            AssetDatabase.Refresh(); AssetDatabase.SaveAssets(); Debug.Log("RISKAI_VARIANT_PORTRAITS_OK");
+        }
+        static void RenderVariantPortraitsOnly()
+        {
             var mountedRoot=new GameObject("Original mounted portrait");
             MountedKnightView.Create(mountedRoot.transform,0);
             RenderPortrait(mountedRoot,null,"MountedKnight");
@@ -78,7 +99,7 @@ namespace RiskAI.Editor
             foreach(var kind in UnitVariantViews.PortraitKinds)
             {
                 var variantRoot=new GameObject(kind+" portrait model");Animation variantAnimation=null;
-                if(kind==UnitKind.ArmyGeneral)UnitVariantViews.General(variantRoot.transform,0);
+                if(MountedKnightView.IsMounted(kind))MountedKnightView.CreateVariant(variantRoot.transform,0,kind);
                 else if(kind==UnitKind.Artillery)UnitVariantViews.ArtilleryModel(variantRoot.transform,VisualFactory.TeamColor(0));
                 else if(kind==UnitKind.Tank)UnitVariantViews.TankModel(variantRoot.transform,VisualFactory.TeamColor(0));
                 else
@@ -92,14 +113,32 @@ namespace RiskAI.Editor
                 RenderPortrait(variantRoot,variantAnimation,UnitVariantViews.PortraitName(kind));
                 Object.DestroyImmediate(variantRoot);
             }
-            foreach(ShipKind kind in System.Enum.GetValues(typeof(ShipKind)))
+        }
+        /// <summary>Frames the whole model (upper part only when <paramref name="upperFraction"/> &lt; 1) with a small margin.</summary>
+        static void FitPortrait(Camera camera, GameObject root, float upperFraction, Vector3 view)
+        {
+            var bounds = new Bounds(); bool found = false;
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>())
             {
-                var shipRoot=new GameObject(kind+" portrait");
-                NavalArt.CreateShipModel(shipRoot.transform,0,kind);
-                RenderPortrait(shipRoot,null,kind.ToString());
-                Object.DestroyImmediate(shipRoot);
+                if (!renderer.enabled || renderer is LineRenderer || renderer.name == "Soft ground shadow") continue;
+                if (!found) { bounds = renderer.bounds; found = true; } else bounds.Encapsulate(renderer.bounds);
             }
-            AssetDatabase.Refresh(); AssetDatabase.SaveAssets(); Debug.Log("RISKAI_ART_OK");
+            if (!found) return;
+            if (upperFraction < 1)
+            {
+                float bottom = bounds.max.y - bounds.size.y * upperFraction;
+                bounds.SetMinMax(new Vector3(bounds.min.x, bottom, bounds.min.z), bounds.max);
+            }
+            var direction = view.normalized;
+            camera.transform.position = bounds.center + direction * 8; camera.transform.LookAt(bounds.center);
+            float halfX = 0, halfY = 0;
+            for (int corner = 0; corner < 8; corner++)
+            {
+                var point = new Vector3((corner & 1) == 0 ? bounds.min.x : bounds.max.x, (corner & 2) == 0 ? bounds.min.y : bounds.max.y, (corner & 4) == 0 ? bounds.min.z : bounds.max.z);
+                var local = camera.transform.InverseTransformPoint(point);
+                halfX = Mathf.Max(halfX, Mathf.Abs(local.x)); halfY = Mathf.Max(halfY, Mathf.Abs(local.y));
+            }
+            camera.orthographicSize = Mathf.Max(halfX, halfY) * 1.06f;
         }
         static void RenderPortrait(GameObject root, Animation animation, string name)
         {
@@ -114,6 +153,8 @@ namespace RiskAI.Editor
             camera.orthographic = true; camera.orthographicSize = ship?(name==ShipKind.Battleship.ToString()?4.2f:name==ShipKind.Warship.ToString()?3.8f:3.35f):siege?(name=="Mortar"?1.35f:1.7f):name=="MountedKnight"?1.85f:name=="ArmyGeneral"?2.1f:1.4f;
             Vector3 focus = root.transform.position + Vector3.up * (ship?2.15f:siege?1.15f:name=="ArmyGeneral"?1.95f:1.75f);
             camera.transform.position = focus + (ship?new Vector3(4.8f,3.1f,6.8f):new Vector3(2,1,5)); camera.transform.LookAt(focus);
+            if (name == "MountedKnight" || name == "ArmyGeneral" || name == "MarineMajor" || name == "MarineGeneral" || name == "Roarer")
+                FitPortrait(camera, root, name == "Roarer" ? .78f : .8f, name == "Roarer" ? new Vector3(2, 1, 5) : new Vector3(4.5f, 1.6f, 3));
             var keyObject = new GameObject("Portrait light"); var key = keyObject.AddComponent<Light>();
             key.type = LightType.Directional; key.intensity = 1.8f; key.cullingMask = 1 << 31; key.transform.rotation = Quaternion.Euler(35, -30, 0);
             var output = new RenderTexture(192, 192, 24); camera.targetTexture = output;

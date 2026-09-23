@@ -41,8 +41,9 @@ namespace RiskAI.Editor
                 // --riskai-art-legacy reproduces the pre-biome, flat-border terrain for comparisons.
                 bool legacy=Environment.GetCommandLineArgs().Contains("--riskai-art-legacy");
                 TerrainBiomes.Enabled=!legacy;ImportedMapSkirt.Enabled=!legacy;
+                TerrainBiomes.SatelliteEnabled=!Environment.GetCommandLineArgs().Contains("--riskai-art-no-satellite");
                 try{CaptureMap(map,directory,tag);}
-                finally{TerrainBiomes.Enabled=true;ImportedMapSkirt.Enabled=true;}
+                finally{TerrainBiomes.Enabled=true;ImportedMapSkirt.Enabled=true;TerrainBiomes.SatelliteEnabled=true;}
                 Debug.Log("RISKAI_ART_REVIEW_OK: "+directory);
             }
             catch(Exception error){Debug.LogException(error);throw;}
@@ -93,6 +94,7 @@ namespace RiskAI.Editor
             var readback=new RenderTexture(Width,Height,24,RenderTextureFormat.ARGB32){antiAliasing=1,name="Risk art review readback"};readback.Create();
             try
             {
+                if(Environment.GetCommandLineArgs().Contains("--riskai-art-units")){CaptureUnits(lineup,camera,readback,directory,prefix);return;}
                 Vector3 origin=lineup.position;
                 Render(camera,readback,directory,prefix+"-lineup16",origin+new Vector3(15*Spacing*.5f,0,1),27,55,0);
                 Render(camera,readback,directory,prefix+"-closeup-red-orange",origin+new Vector3(Spacing,0,1.2f),7.5f,55,0);
@@ -164,7 +166,7 @@ namespace RiskAI.Editor
                 if(MapLayout.IsImported)
                 {
                     string[] names=MapLayout.Scenario==ScenarioMap.Europe
-                        ?new[]{"Sweden:60","Norway:30","Spain:60","Portugal:25","Algeria:60","Lybia:45","Egypt:40","Moscov (Russia):60","Northwestern District (Russia):45","Ukraine:50","Switzerland:40","Turkey:55","England:40","Sami:45","Italy:40"}
+                        ?new[]{"Slovakia:22","Netherlands:22","Czech Republic:35","Sweden:60","Norway:30","Spain:60","Portugal:25","Algeria:60","Lybia:45","Egypt:40","Moscov (Russia):60","Northwestern District (Russia):45","Ukraine:50","Switzerland:40","Turkey:55","England:40","Sami:45","Italy:40"}
                         :new[]{"Florida:55","Quebec:60","Ontario:40","Cuba:55","Yucatan:35","West Greenland:55","Virginia:45","Algeria:60","Sweden:60","Spain:60","Egypt:40","Moscov (Russia):60"};
                     foreach(var entry in names)
                     {
@@ -235,10 +237,71 @@ namespace RiskAI.Editor
             model.transform.localScale*=VisualMetrics.UnitScale;
             ModelMetrics.MatchStandingHeight(model,kind);
             UnitTeamColor.Apply(model,kind,team);
+            UnitVariantViews.Decorate(model,kind,team);
             // Future unit presentation hooks, when present, are applied like VisualFactory.Soldier.
             var hook=typeof(VisualFactory).Assembly.GetType("RiskAI.CrossbowView")?.GetMethod("Apply",BindingFlags.Public|BindingFlags.Static);
             if(hook!=null&&kind==UnitKind.Archer)hook.Invoke(null,new object[]{model});
             VisualFactory.Ring(holder,.33f,.022f,VisualFactory.TeamMaterialColor(team));
+        }
+
+        // Mounted knights, their variants, the lance reach and the Roarer/Mage pair.
+        static void CaptureUnits(Transform lineup,Camera camera,RenderTexture readback,string directory,string prefix)
+        {
+            var root=new GameObject("Unit review").transform;root.SetParent(lineup,false);root.localPosition=new Vector3(-60,0,0);
+            var mountedKinds=new[]{UnitKind.Guard,UnitKind.MarineMajor,UnitKind.MarineGeneral,UnitKind.ArmyGeneral};
+            var views=new List<GameObject>();
+            for(int i=0;i<mountedKinds.Length;i++)
+            {
+                var holder=new GameObject("Review "+mountedKinds[i]).transform;holder.SetParent(root,false);holder.localPosition=new Vector3(i*4.2f,0,0);
+                holder.localRotation=Quaternion.Euler(0,-60,0);
+                views.Add(Mounted(holder,mountedKinds[i],i==1?1:i==2?5:0));
+            }
+            var poser=typeof(MountedKnightView).GetMethod("PreviewPose",BindingFlags.Public|BindingFlags.Instance);
+            Vector3 origin=root.position;
+            Render(camera,readback,directory,prefix+"-mounted-variants",origin+new Vector3(6.3f,0,0),5.2f,30,0);
+            Render(camera,readback,directory,prefix+"-mounted-variants-rts",origin+new Vector3(6.3f,0,0),6.5f,55,0);
+            var knight=views[0].GetComponent<MountedKnightView>();
+            foreach(var pose in new[]{("idle",0f,0f,0f),("trot",1f,1.1f,0f),("gallop",1f,2.6f,0f),("attack",0f,0f,1f)})
+            {
+                if(poser!=null&&knight)poser.Invoke(knight,new object[]{pose.Item2,pose.Item3,pose.Item4});
+                Render(camera,readback,directory,prefix+"-knight-"+pose.Item1+"-side",origin+Vector3.up*1.4f,2.3f,10,90);
+                Render(camera,readback,directory,prefix+"-knight-"+pose.Item1+"-rts",origin+Vector3.up*1.2f,3.2f,55,0);
+            }
+            if(poser!=null&&knight)poser.Invoke(knight,new object[]{0f,0f,0f});
+            // Lance reach: a Guard facing a Footman at the engagement distance the melee logic uses.
+            var reach=new GameObject("Reach review").transform;reach.SetParent(root,false);reach.localPosition=new Vector3(0,0,-9);
+            var rider=new GameObject("Reach knight").transform;rider.SetParent(reach,false);
+            var riderView=Mounted(rider,UnitKind.Guard,0).GetComponent<MountedKnightView>();
+            var engage=typeof(Soldier).GetMethod("MeleeEngageDistance",BindingFlags.Public|BindingFlags.Static);
+            float centre=engage!=null?(float)engage.Invoke(null,new object[]{UnitKind.Guard,SourceGeometry.AgentRadius(UnitKind.Footman)}):BattleRules.Range(UnitKind.Guard)*.76f;
+            Unit(reach,UnitKind.Footman,5,new Vector3(0,0,centre),"Reach target");
+            reach.Find("Reach target").localRotation=Quaternion.Euler(0,180,0);
+            Debug.Log($"RISKAI_ART_REACH: centre={centre:F2} gap={centre-SourceGeometry.AgentRadius(UnitKind.Guard)-SourceGeometry.AgentRadius(UnitKind.Footman):F2}");
+            if(poser!=null&&riderView)poser.Invoke(riderView,new object[]{0f,0f,1f});
+            Render(camera,readback,directory,prefix+"-reach-contact-side",reach.position+new Vector3(0,1.3f,centre*.5f),2.6f,8,90);
+            Render(camera,readback,directory,prefix+"-reach-contact-rts",reach.position+new Vector3(0,1f,centre*.5f),3.6f,55,0);
+            // Roarer vs Mage (and Medic, which shares the Mage base).
+            var pair=new GameObject("Support review").transform;pair.SetParent(root,false);pair.localPosition=new Vector3(0,0,-18);
+            Unit(pair,UnitKind.Mage,0,new Vector3(-1.2f,0,0),"Review mage");
+            Unit(pair,UnitKind.Roarer,0,new Vector3(0,0,0),"Review roarer");
+            Unit(pair,UnitKind.Medic,0,new Vector3(1.2f,0,0),"Review medic");
+            Unit(pair,UnitKind.Roarer,5,new Vector3(2.4f,0,0),"Review roarer orange");
+            SampleIdlePoses();
+            foreach(var bone in pair.Find("Review roarer").GetComponentsInChildren<Transform>(true))
+                if(bone.name=="head"||bone.name=="chest"||bone.name=="spine"||bone.name=="handslot.r"||bone.name=="hips")
+                    Debug.Log($"RISKAI_ART_BONE: {bone.name} y={bone.position.y-pair.position.y:F3} lossy={bone.lossyScale.x:F3} fwd={bone.forward:F2} up={bone.up:F2} right={bone.right:F2}");
+            Render(camera,readback,directory,prefix+"-roarer-vs-mage",pair.position+new Vector3(.6f,1f,0),2.2f,15,0);
+            Render(camera,readback,directory,prefix+"-roarer-vs-mage-rts",pair.position+new Vector3(.6f,.6f,0),3f,55,0);
+            Render(camera,readback,directory,prefix+"-roarer-back",pair.position+new Vector3(0,1f,0),1.4f,15,180);
+        }
+
+        static GameObject Mounted(Transform holder,UnitKind kind,int team)
+        {
+            var variant=typeof(MountedKnightView).GetMethod("CreateVariant",BindingFlags.Public|BindingFlags.Static);
+            if(variant!=null)return (GameObject)variant.Invoke(null,new object[]{holder,team,kind,null});
+            if(kind==UnitKind.ArmyGeneral)return UnitVariantViews.General(holder,team);
+            if(kind==UnitKind.Guard)return MountedKnightView.Create(holder,team);
+            Unit(holder,kind,team,Vector3.zero,"Standing "+kind);return holder.GetChild(holder.childCount-1).gameObject;
         }
 
         static void LogWeapon(Transform archer)

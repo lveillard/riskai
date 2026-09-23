@@ -5,14 +5,16 @@ using UnityEngine;
 namespace RiskAI
 {
     /// <summary>
-    /// Sound ids. Files live in Resources/Audio/&lt;id&gt; or &lt;id&gt;_1..&lt;id&gt;_4 (mp3/ogg/wav);
+    /// Sound ids. Files live in Resources/Audio/&lt;id&gt; or &lt;id&gt;_1..&lt;id&gt;_12 (mp3/ogg/wav);
     /// see docs/AUDIO-PROMPTS.md and Resources/Audio/clips.json.
     /// </summary>
     public enum SfxId
     {
         HitSword, HitLance, ShotCrossbow, ShotRifle, HitArrow, MagicBolt, MagicImpact, MortarFire, Explosion, ShipCannon, Death,
         OrderMove, OrderAttack, UiClick, Purchase, NoGold, UnitTrained, CityCaptured, CityLost, CountryCompleted, Income,
-        UnderAttack, Victory, Defeat, Chat
+        UnderAttack, Victory, Defeat, Chat,
+        // Appended: ordinals index Table below.
+        CountryLost
     }
 
     /// <summary>Per-clip rate limit: at most <c>budget</c> plays inside a sliding window. Pure and allocation-free.</summary>
@@ -74,7 +76,8 @@ namespace RiskAI
             new ClipInfo("city_captured", false, .7f, 1, 5), new ClipInfo("city_lost", false, .7f, 1, 5),
             new ClipInfo("country_completed", false, .8f, 1, 6), new ClipInfo("income", false, .45f, 1, 3),
             new ClipInfo("under_attack", false, .75f, 1, 5), new ClipInfo("victory", false, .85f, 1, 7),
-            new ClipInfo("defeat", false, .85f, 1, 7), new ClipInfo("chat", false, .4f, 1, 3)
+            new ClipInfo("defeat", false, .85f, 1, 7), new ClipInfo("chat", false, .4f, 1, 3),
+            new ClipInfo("country_lost", false, .8f, 1, 6)
         };
         public const int WorldVoices = 16;
         public const int InterfaceVoices = 2;
@@ -208,7 +211,7 @@ namespace RiskAI
             string id = Table[index].Id;
             var single = Resources.Load<AudioClip>("Audio/" + id);
             if (single) list.Add(single);
-            for (int variant = 1; variant <= 4; variant++)
+            for (int variant = 1; variant <= 12; variant++)
             {
                 var clip = Resources.Load<AudioClip>("Audio/" + id + "_" + variant);
                 if (clip) list.Add(clip);

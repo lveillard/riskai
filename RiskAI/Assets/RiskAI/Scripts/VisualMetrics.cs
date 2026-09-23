@@ -26,8 +26,11 @@ namespace RiskAI
             switch(kind)
             {
                 case Core.UnitKind.EliteRifleman:return Core.SourceGeometry.StandingHeight(Core.UnitKind.Archer)*1.1f;
-                case Core.UnitKind.Roarer:return Core.SourceGeometry.StandingHeight(Core.UnitKind.Medic)*1.05f;
+                case Core.UnitKind.Roarer:return Core.SourceGeometry.StandingHeight(Core.UnitKind.Archer)*1.12f; // war herald on the Rogue base
                 case Core.UnitKind.ArmyGeneral:return Core.SourceGeometry.StandingHeight(Core.UnitKind.Guard)*1.12f;
+                // Mounted marines (h014/h015 inherit hkni): the knight's mount, the general a little larger.
+                case Core.UnitKind.MarineMajor:return Core.SourceGeometry.StandingHeight(Core.UnitKind.Guard);
+                case Core.UnitKind.MarineGeneral:return Core.SourceGeometry.StandingHeight(Core.UnitKind.Guard)*1.05f;
                 case Core.UnitKind.Artillery:return 1.95f;
                 case Core.UnitKind.Tank:return 2.3f;
                 default:return 0;
@@ -39,8 +42,10 @@ namespace RiskAI
             switch(kind)
             {
                 case Core.UnitKind.EliteRifleman:return Core.SourceGeometry.StandingWidth(Core.UnitKind.Archer)*1.1f;
-                case Core.UnitKind.Roarer:return Core.SourceGeometry.StandingWidth(Core.UnitKind.Medic)*1.05f;
+                case Core.UnitKind.Roarer:return Core.SourceGeometry.StandingWidth(Core.UnitKind.Archer)*1.12f;
                 case Core.UnitKind.ArmyGeneral:return Core.SourceGeometry.StandingWidth(Core.UnitKind.Guard)*1.12f;
+                case Core.UnitKind.MarineMajor:return Core.SourceGeometry.StandingWidth(Core.UnitKind.Guard);
+                case Core.UnitKind.MarineGeneral:return Core.SourceGeometry.StandingWidth(Core.UnitKind.Guard)*1.05f;
                 case Core.UnitKind.Artillery:return 2.7f;
                 case Core.UnitKind.Tank:return 2.9f;
                 default:return 0;

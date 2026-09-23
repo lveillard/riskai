@@ -116,13 +116,111 @@ namespace RiskAI.Tests
             Assert.That(ChatChannel.Sanitize(new string('x', 400)).Length, Is.EqualTo(ChatChannel.MaxLength));
             var channel = new ChatChannel();
             string received = null; int from = -1;
-            channel.MessageReceived += (sender, text) => { from = sender; received = text; };
+            int to = 99;
+            channel.MessageReceived += message => { from = message.Sender; to = message.Recipient; received = message.Text; };
             Assert.That(channel.Submit(0, "   "), Is.False);
             Assert.That(received, Is.Null);
             Assert.That(channel.Submit(0, " ¡a por ellos! "), Is.True);
             Assert.That(received, Is.EqualTo("¡a por ellos!"));
             Assert.That(from, Is.EqualTo(0));
-            Assert.That(ChatChannel.Format(0, received), Is.EqualTo("Tú: ¡a por ellos!"));
+            Assert.That(to, Is.EqualTo(ChatMessage.Everyone));
+            Assert.That(ChatChannel.Format(new ChatMessage(0, ChatMessage.Everyone, received)), Is.EqualTo("Tú → Todos: ¡a por ellos!"));
+            Assert.That(channel.Submit(0, "hola", 2), Is.True);
+            Assert.That(to, Is.EqualTo(2));
+            Assert.That(ChatChannel.Format(new ChatMessage(0, 2, "hola")), Is.EqualTo("Tú → IA 2 · Turquesa: hola"));
+            Assert.That(ChatChannel.Format(new ChatMessage(3, 0, "hola")), Is.EqualTo("IA 3 · Violeta → Tú: hola"));
+        }
+
+        static CaptureEvent Capture(int previous, int owner, bool completed = false, bool lost = false) =>
+            new CaptureEvent(Vector3.zero, previous, owner, "Encinar Bajo", null, false, 0, completed, lost);
+
+        [Test]
+        public void LosingACompleteCountryIsItsOwnLouderEvent()
+        {
+            Assert.That(CaptureCue.For(Capture(0, 2, lost: true), "España", out var broken), Is.True);
+            Assert.That(broken.Sound, Is.EqualTo(SfxId.CountryLost), "A broken country must not reuse city_lost.");
+            Assert.That(broken.Headline, Is.EqualTo("¡Has perdido España!"));
+            Assert.That(broken.Detail, Is.EqualTo("País roto: sin oro ni refuerzos de España"));
+            Assert.That(broken.Loss && broken.Big, Is.True);
+
+            Assert.That(CaptureCue.For(Capture(0, 2), "España", out var city), Is.True);
+            Assert.That(city.Sound, Is.EqualTo(SfxId.CityLost));
+            Assert.That(city.Text, Is.EqualTo("Has perdido Encinar Bajo"));
+            Assert.That(city.Big, Is.False, "A plain city loss stays the smaller toast.");
+
+            Assert.That(CaptureCue.For(Capture(0, 2, lost: true), null, out var unnamed), Is.True);
+            Assert.That(unnamed.Sound, Is.EqualTo(SfxId.CityLost), "Without a country name there is nothing to announce as broken.");
+
+            Assert.That(CaptureCue.For(Capture(2, 0, completed: true), "España", out var completed), Is.True);
+            Assert.That(completed.Sound, Is.EqualTo(SfxId.CountryCompleted));
+            Assert.That(completed.Headline, Is.EqualTo("¡País completado: España!"));
+            Assert.That(CaptureCue.For(Capture(2, 0), "España", out var captured), Is.True);
+            Assert.That(captured.Sound, Is.EqualTo(SfxId.CityCaptured));
+
+            Assert.That(CaptureCue.For(Capture(2, 3, lost: true), "España", out _), Is.False, "Captures between other players are silent.");
+        }
+
+        [Test]
+        public void CountryLostSoundIsAppendedWithoutMovingOtherClips()
+        {
+            Assert.That((int)SfxId.Chat, Is.EqualTo(24));
+            Assert.That((int)SfxId.CountryLost, Is.EqualTo(25));
+            var json = System.IO.File.ReadAllText("Assets/RiskAI/Resources/Audio/clips.json");
+            Assert.That(json, Does.Contain("\"id\": \"country_lost\""));
+        }
+
+        [Test]
+        public void BrokenCountryToastReadsPlainlyInEnglish()
+        {
+            GameText.Set(GameLanguage.English);
+            try
+            {
+                Assert.That(GameText.Localize("¡Has perdido Las Marcas!"), Is.EqualTo("You lost The Marches!"));
+                Assert.That(GameText.Localize("País roto: sin oro ni refuerzos de Las Marcas"), Is.EqualTo("Country broken: no gold or reinforcements from The Marches"));
+                Assert.That(GameText.Localize("Has perdido Encinar Bajo"), Is.EqualTo("You lost Lower Oakwood"));
+            }
+            finally { GameText.Set(GameLanguage.English); }
+        }
+
+        [Test]
+        public void PrivateChatIsVisibleOnlyToItsTwoPlayers()
+        {
+            Assert.That(new ChatMessage(2, ChatMessage.Everyone, "x").VisibleTo(0), Is.True);
+            Assert.That(new ChatMessage(0, 3, "x").VisibleTo(0), Is.True);
+            Assert.That(new ChatMessage(2, 0, "x").VisibleTo(0), Is.True);
+            Assert.That(new ChatMessage(2, 3, "x").VisibleTo(0), Is.False);
+            Assert.That(new ChatMessage(0, -7, "x").ToEveryone, Is.True);
+        }
+
+        [TestCase("/w azul hola", 1, "hola")]
+        [TestCase("/w Blue hola", 1, "hola")]
+        [TestCase("/azul hola que tal", 1, "hola que tal")]
+        [TestCase("/blue hi", 1, "hi")]
+        [TestCase("/w 3 cuidado", 3, "cuidado")]
+        [TestCase("/azul claro vamos", 9, "vamos")]
+        [TestCase("/light blue go", 9, "go")]
+        [TestCase("/MARRÓN ok", 11, "ok")]
+        [TestCase("/marron ok", 11, "ok")]
+        [TestCase("/todos hola", ChatMessage.Everyone, "hola")]
+        [TestCase("/all hi", ChatMessage.Everyone, "hi")]
+        public void ChatShortcutsNameTheRecipient(string line, int recipient, string body)
+        {
+            Assert.That(ChatChannel.TryParseRecipient(line, 16, player => player != 0, out int parsed, out string text, out bool unknown), Is.True);
+            Assert.That(parsed, Is.EqualTo(recipient));
+            Assert.That(text, Is.EqualTo(body));
+            Assert.That(unknown, Is.False);
+        }
+
+        [Test]
+        public void ChatShortcutsIgnorePlainTextAndReportUnknownWhispers()
+        {
+            Assert.That(ChatChannel.TryParseRecipient("hola a todos", 16, p => p != 0, out _, out string body, out bool unknown), Is.False);
+            Assert.That(body, Is.EqualTo("hola a todos")); Assert.That(unknown, Is.False);
+            Assert.That(ChatChannel.TryParseRecipient("/w nadie hola", 16, p => p != 0, out _, out _, out unknown), Is.False);
+            Assert.That(unknown, Is.True, "A whisper to nobody is reported instead of broadcast.");
+            Assert.That(ChatChannel.TryParseRecipient("/azul hola", 16, p => p != 1, out _, out _, out unknown), Is.False, "Eliminated or absent players cannot be named.");
+            Assert.That(ChatChannel.TryParseRecipient("/azules hola", 16, p => p != 0, out _, out _, out _), Is.False, "Aliases match whole words only.");
+            Assert.That(ChatChannel.TryParseRecipient("/rojo hola", 16, p => p != 0, out _, out _, out _), Is.False, "The local player cannot whisper to themselves.");
         }
 
         [Test]

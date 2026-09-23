@@ -72,7 +72,7 @@ namespace RiskAI
         void OnGUI()
         {
             if (!session || !controller) return;
-            if(controller.HelpVisible||controller.ScoreboardVisible||session.Winner>=0)return;
+            if(controller.HelpVisible||session.Winner>=0)return;
             if (Event.current.type != EventType.Repaint) return;
             RtsSkin.Initialize(); ConfigureViewport(); width = Screen.width / Scale; height = Screen.height / Scale; bottom = (Screen.height - BottomPixels) / Scale;
             Matrix4x4 previous = GUI.matrix; GUI.matrix = Matrix4x4.Scale(Vector3.one * Scale);
@@ -125,7 +125,7 @@ namespace RiskAI
                 if(harbor.IsImportedPort)continue; // Its town already renders the shared post label.
                 bool capturing=harbor.CaptureProgress>0&&harbor.CaptureProgress<1&&harbor.State.Capturing>=0;
                 if(controller.SelectedHarbor!=harbor&&!capturing&&!harbor.State.Contested&&!controller.ShowHealthBars)continue;
-                var hp=cam.WorldToScreenPoint(harbor.Landing+Vector3.up*4.8f)/Scale;float hy=height-hp.y;if(hp.z<=0||hy<TopPixels/Scale+20||hy>bottom-20)continue;
+                var hp=cam.WorldToScreenPoint(harbor.Landing+Vector3.up*4.8f)/Scale;float hy=height-hp.y;if(hp.z<=0||hy<TopPixels/Scale+20||hy>bottom-20||UnderHudPanel(hp.x,hy))continue;
                 DrawBuildingName(new Vector2(hp.x,hy),harbor.DisplayName,harbor.Owner);
                 if(capturing)
                 {
@@ -142,7 +142,7 @@ namespace RiskAI
                 // Anchored at the top of the tallest roof/keep/mast; the plate and any
                 // capture bar stack upward from there so the silhouette never hides them.
                 Vector3 p = cam.WorldToScreenPoint(town.transform.position + Vector3.up * RiskAI.BuildingSelection.LabelHeight(town)) / Scale;
-                float y = height - p.y; if (p.z <= 0 || y < TopPixels/Scale+26 || y > bottom - 4) continue;
+                float y = height - p.y; if (p.z <= 0 || y < TopPixels/Scale+26 || y > bottom - 4 || UnderHudPanel(p.x, y - 12)) continue;
                 float plateTop = y - 22;
                 DrawBuildingName(new Vector2(p.x,plateTop+2),town.DisplayName,town.State.Owner);
                 // Succession is immediate; nearby enemies or a bound guard are not a progress bar.
@@ -160,7 +160,7 @@ namespace RiskAI
                 if (!target.IsAlive || !target.isActiveAndEnabled || (!persistentShipHealth && !controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth && !canopyOccludedUnits.Contains(target.EntityId))) continue;
                 float healthHeight=target is Soldier person?VisualMetrics.HeightFor(person.Kind)+.15f:4.8f;
                 var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * healthHeight) / Scale;
-                float y = height - p.y; if(p.z<=0||y<TopPixels/Scale+16||y>bottom-8)continue;
+                float y = height - p.y; if(p.z<=0||y<TopPixels/Scale+16||y>bottom-8||UnderHudPanel(p.x,y))continue;
                 float size = target is Ship ? 56 : 28;
                 RtsSkin.WorldHealthBar(new Rect(p.x-size/2,y,size,target is Ship?9:7),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
             }

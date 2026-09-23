@@ -103,7 +103,7 @@
     },
     {
       "id": "magic_bolt",
-      "variants": 2,
+      "variants": 4,
       "duration_seconds": 0.7,
       "spatial": "3D",
       "volume": 0.6,
@@ -116,6 +116,14 @@
         {
           "file": "magic_bolt_2.mp3",
           "prompt": "Blue magic missile launched, crackling energy zap with a sparkling tail. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
+        },
+        {
+          "file": "magic_bolt_3.wav",
+          "prompt": "review pick d24"
+        },
+        {
+          "file": "magic_bolt_4.wav",
+          "prompt": "Arcane spell cast, rising crystalline chime swirl ending in a soft magical pop."
         }
       ]
     },
@@ -197,23 +205,55 @@
     },
     {
       "id": "death",
-      "variants": 3,
+      "variants": 11,
       "duration_seconds": 0.8,
       "spatial": "3D",
       "volume": 0.55,
       "trigger": "A soldier dies",
       "files": [
         {
-          "file": "death_1.mp3",
-          "prompt": "Medieval soldier falling down in armor, short pained grunt and metal clatter on the ground. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
+          "file": "death_1.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
         },
         {
-          "file": "death_2.mp3",
-          "prompt": "Warrior collapsing, exhaled groan and armor plates hitting dirt. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
+          "file": "death_2.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
         },
         {
-          "file": "death_3.mp3",
-          "prompt": "Soldier death, brief cry and a body falling with chainmail rattle. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
+          "file": "death_3.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
+        },
+        {
+          "file": "death_4.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
+        },
+        {
+          "file": "death_5.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
+        },
+        {
+          "file": "death_6.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
+        },
+        {
+          "file": "death_7.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
+        },
+        {
+          "file": "death_8.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
+        },
+        {
+          "file": "death_9.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
+        },
+        {
+          "file": "death_10.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
+        },
+        {
+          "file": "death_11.wav",
+          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
         }
       ]
     },
@@ -418,6 +458,20 @@
         {
           "file": "chat.mp3",
           "prompt": "Quill scratching parchment briefly, short soft notification. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
+        }
+      ]
+    },
+    {
+      "id": "country_lost",
+      "variants": 1,
+      "duration_seconds": 2.0,
+      "spatial": "2D",
+      "volume": 0.8,
+      "trigger": "You lost a complete country/zone (its income and reinforcements stop)",
+      "files": [
+        {
+          "file": "country_lost.wav",
+          "prompt": "Deep war horn falling in pitch, a heavy war drum and a crumbling stone wall, grave and ominous. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
       ]
     }

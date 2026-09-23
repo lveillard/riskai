@@ -258,6 +258,70 @@ namespace RiskAI
         }
     }
 
+    public enum RtsQuickGlyph { Speaker, Note, Ranking, Map, Chat, Close }
+
+    /// <summary>Quick-bar and window marks: thin vector glyphs, struck through when that feature is off.</summary>
+    public sealed class RtsQuickIcon : VisualElement
+    {
+        static readonly Color Ink = new Color(.88f, .82f, .63f), Off = new Color(.55f, .55f, .5f), Strike = new Color(1f, .42f, .36f);
+        readonly RtsQuickGlyph glyph;
+        bool struck, active;
+        public RtsQuickIcon(RtsQuickGlyph glyph)
+        {
+            this.glyph = glyph; name = "HUD quick icon " + glyph; pickingMode = PickingMode.Ignore;
+            style.width = 20; style.height = 20; style.flexShrink = 0; generateVisualContent += Paint;
+        }
+        public bool Struck { get => struck; set { if (struck == value) return; struck = value; MarkDirtyRepaint(); } }
+        public bool Active { get => active; set { if (active == value) return; active = value; MarkDirtyRepaint(); } }
+
+        void Paint(MeshGenerationContext context)
+        {
+            var p = context.painter2D; var r = contentRect; float w = r.width, h = r.height;
+            if (w < 4 || h < 4) return;
+            Vector2 P(float x, float y) => new Vector2(x * w, y * h);
+            var ink = struck ? Off : active ? RtsUiStyle.Gold : Ink;
+            p.strokeColor = ink; p.fillColor = ink; p.lineWidth = Mathf.Max(1.5f, w * .08f); p.lineJoin = LineJoin.Round; p.lineCap = LineCap.Round;
+            switch (glyph)
+            {
+                case RtsQuickGlyph.Speaker:
+                    p.BeginPath(); p.MoveTo(P(.12f, .38f)); p.LineTo(P(.3f, .38f)); p.LineTo(P(.52f, .17f)); p.LineTo(P(.52f, .83f));
+                    p.LineTo(P(.3f, .62f)); p.LineTo(P(.12f, .62f)); p.ClosePath(); p.Fill();
+                    if (!struck)
+                    {
+                        p.BeginPath(); p.Arc(P(.52f, .5f), w * .18f, Angle.Degrees(-50), Angle.Degrees(50)); p.Stroke();
+                        p.BeginPath(); p.Arc(P(.52f, .5f), w * .33f, Angle.Degrees(-50), Angle.Degrees(50)); p.Stroke();
+                    }
+                    break;
+                case RtsQuickGlyph.Note:
+                    p.BeginPath(); p.MoveTo(P(.62f, .72f)); p.LineTo(P(.62f, .14f)); p.LineTo(P(.86f, .28f)); p.Stroke();
+                    p.BeginPath(); p.Arc(P(.49f, .74f), w * .15f, Angle.Degrees(0), Angle.Degrees(359.9f)); p.Fill();
+                    break;
+                case RtsQuickGlyph.Ranking:
+                    RtsOrnamentDrawing.Box(p, .1f * w, .5f * h, .22f * w, .38f * h, ink);
+                    RtsOrnamentDrawing.Box(p, .39f * w, .2f * h, .22f * w, .68f * h, ink);
+                    RtsOrnamentDrawing.Box(p, .68f * w, .36f * h, .22f * w, .52f * h, ink);
+                    break;
+                case RtsQuickGlyph.Map:
+                    p.BeginPath(); p.MoveTo(P(.1f, .24f)); p.LineTo(P(.37f, .14f)); p.LineTo(P(.63f, .24f)); p.LineTo(P(.9f, .14f));
+                    p.LineTo(P(.9f, .76f)); p.LineTo(P(.63f, .86f)); p.LineTo(P(.37f, .76f)); p.LineTo(P(.1f, .86f)); p.ClosePath(); p.Stroke();
+                    p.BeginPath(); p.MoveTo(P(.37f, .14f)); p.LineTo(P(.37f, .76f)); p.MoveTo(P(.63f, .24f)); p.LineTo(P(.63f, .86f)); p.Stroke();
+                    break;
+                case RtsQuickGlyph.Chat:
+                    p.BeginPath(); p.MoveTo(P(.12f, .2f)); p.LineTo(P(.88f, .2f)); p.LineTo(P(.88f, .66f)); p.LineTo(P(.46f, .66f));
+                    p.LineTo(P(.26f, .86f)); p.LineTo(P(.28f, .66f)); p.LineTo(P(.12f, .66f)); p.ClosePath(); p.Stroke();
+                    break;
+                case RtsQuickGlyph.Close:
+                    p.BeginPath(); p.MoveTo(P(.22f, .22f)); p.LineTo(P(.78f, .78f)); p.MoveTo(P(.78f, .22f)); p.LineTo(P(.22f, .78f)); p.Stroke();
+                    break;
+            }
+            if (struck)
+            {
+                p.strokeColor = Strike; p.lineWidth = Mathf.Max(1.8f, w * .09f);
+                p.BeginPath(); p.MoveTo(P(.12f, .88f)); p.LineTo(P(.88f, .12f)); p.Stroke();
+            }
+        }
+    }
+
     static class RtsOrnamentDrawing
     {
         public static void Box(Painter2D p,float x,float y,float w,float h,Color color)

@@ -3,7 +3,14 @@
 // focuses a real, visible <input> inside the finger-lift event instead.
 var RiskAIChatLibrary = {
   $RiskAIChat: {
-    el: null, state: -1, text: '', armed: false, placeholder: '', maxLength: 120,
+    el: null, state: -1, text: '', armed: false, placeholder: '', maxLength: 120, holding: false, blurTimer: 0,
+    finish: function () {
+      var chat = RiskAIChat;
+      if (chat.state !== 0 || !chat.el) return;
+      var value = (chat.el.value || '').trim();
+      chat.text = value; chat.state = value.length ? 1 : 2;
+      chat.el.style.display = 'none';
+    },
     ensure: function () {
       var chat = RiskAIChat;
       if (chat.el) return chat.el;
@@ -34,12 +41,15 @@ var RiskAIChatLibrary = {
       });
       el.addEventListener('keyup', function (e) { e.stopPropagation(); });
       el.addEventListener('keypress', function (e) { e.stopPropagation(); });
+      // A blur is finalised a moment later so a tap on a Unity control that keeps the
+      // field open (the recipient chip calls RiskAI_ChatHold) can cancel it.
       el.addEventListener('blur', function () {
-        if (chat.state === 0) {
-          var value = (el.value || '').trim();
-          chat.text = value; chat.state = value.length ? 1 : 2;
-        }
-        el.style.display = 'none';
+        if (chat.state !== 0) { el.style.display = 'none'; return; }
+        clearTimeout(chat.blurTimer);
+        chat.blurTimer = setTimeout(function () {
+          if (chat.holding || chat.state !== 0 || document.activeElement === el) return;
+          chat.finish();
+        }, 350);
       });
       if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', function () { if (el.style.display !== 'none') place(); });
@@ -87,8 +97,33 @@ var RiskAIChatLibrary = {
   RiskAI_ChatClose__deps: ['$RiskAIChat'],
   RiskAI_ChatClose: function () {
     var chat = RiskAIChat;
-    chat.state = -1; chat.text = '';
+    chat.state = -1; chat.text = ''; chat.holding = false; clearTimeout(chat.blurTimer);
     if (chat.el) { chat.el.style.display = 'none'; chat.el.blur(); }
+  },
+
+  RiskAI_ChatHold__deps: ['$RiskAIChat'],
+  RiskAI_ChatHold: function () {
+    var chat = RiskAIChat;
+    if (chat.state !== 0 || !chat.el || chat.holding) return;
+    chat.holding = true; clearTimeout(chat.blurTimer);
+    var refocus = function () {
+      window.removeEventListener('touchend', refocus, true);
+      window.removeEventListener('pointerup', refocus, true);
+      if (!chat.holding) return;
+      chat.holding = false;
+      if (chat.state !== 0) return;
+      chat.el.style.display = 'block'; chat.place(); chat.el.focus();
+    };
+    window.addEventListener('touchend', refocus, true);
+    window.addEventListener('pointerup', refocus, true);
+    setTimeout(refocus, 1500);
+  },
+
+  RiskAI_ChatPlaceholder__deps: ['$RiskAIChat'],
+  RiskAI_ChatPlaceholder: function (placeholder) {
+    var chat = RiskAIChat;
+    chat.placeholder = UTF8ToString(placeholder);
+    if (chat.el) chat.el.placeholder = chat.placeholder;
   },
 
   RiskAI_ChatPoll__deps: ['$RiskAIChat'],

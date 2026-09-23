@@ -102,16 +102,16 @@ namespace RiskAI
             for(int z=0;z<=nz;z++)for(int x=0;x<=nx;x++)
             {
                 int index=z*(nx+1)+x,gx=x0+x,gz=z0+z;float wx=data.originX+gx*step,wz=data.originZ+gz*step;
-                // W3I bounds lie on the W3E lattice, so every ring vertex extrudes a source edge sample.
-                int s=ImportedMapSkirt.SourceIndex(data,gx,gz);
-                float h=data.heightSamples[s],w=data.waterSamples[s];
+                // W3I bounds lie on the W3E lattice: every ring vertex extrudes the low-passed edge.
+                int s=ImportedMapSkirt.SourceIndex(data,gx,gz);var e=ImportedMapSkirt.Extrude(data,gx,gz);
+                float h=e.height,w=e.water;
                 vertices[index]=new Vector3(wx,h,wz);
-                normals[index]=new Vector3(data.heightSamples[ImportedMapSkirt.SourceIndex(data,gx-1,gz)]-data.heightSamples[ImportedMapSkirt.SourceIndex(data,gx+1,gz)],2*step,
-                    data.heightSamples[ImportedMapSkirt.SourceIndex(data,gx,gz-1)]-data.heightSamples[ImportedMapSkirt.SourceIndex(data,gx,gz+1)]).normalized;
+                normals[index]=new Vector3(ImportedMapSkirt.Extrude(data,gx-1,gz).height-ImportedMapSkirt.Extrude(data,gx+1,gz).height,2*step,
+                    ImportedMapSkirt.Extrude(data,gx,gz-1).height-ImportedMapSkirt.Extrude(data,gx,gz+1).height).normalized;
                 // Augmented ridges are inland; the ring never carries rock/snow ridge weight.
                 colors[index]=GroundTint(data.tileSamples[s],wx,wz);colors[index].a=0;
                 shoreBand[index]=ShoreAccess.ImportedSampleWeights(s);
-                land[index]=data.landSamples[s]!=0;bed[index]=land[index]||w-h<=VisibleBedDepth;
+                land[index]=e.land;bed[index]=land[index]||w-h<=VisibleBedDepth;
                 surface[index]=new Vector3(wx,w,wz);depth[index]=new Color(1,1,1,Mathf.Clamp01((w-h)/3f));
             }
             var groundTriangles=new List<int>();var waterTriangles=new List<int>();

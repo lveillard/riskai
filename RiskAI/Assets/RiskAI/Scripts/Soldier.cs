@@ -333,7 +333,7 @@ namespace RiskAI
             {
                 attackPresentationContactTick=session.Clock.TickCount;
                 if(visualAnimator)visualAnimator.SampleStrikeContact();
-                if (strikeTarget && strikeTarget.Health > 0 && Vector3.Distance(transform.position, strikeTarget.ApproachPoint(transform.position)) <= BattleRules.Range(Kind) + .55f && Vector3.Distance(transform.position,strikeTarget.ApproachPoint(transform.position))>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
+                if (strikeTarget && strikeTarget.Health > 0 && AttackDistance(strikeTarget) <= BattleRules.Range(Kind) + .55f && AttackDistance(strikeTarget)>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
                 {
                     float damage = session.RollDamage(BattleRules.Profile(Kind)) * SupportAbilities.DamageMultiplier(IsRoaring);
                     if (BattleRules.Ranged(Kind)) session.Combat.FireWeapon(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, SourceWeapons.For(Kind, AttackType));
@@ -410,9 +410,39 @@ namespace RiskAI
                 Weapon.localRotation = Quaternion.Euler(-15-pose*95,0,0);
             }
         }
+        /// <summary>Collision radius used for melee reach (source ucol).</summary>
+        public float BodyRadius => SourceGeometry.AgentRadius(Kind);
+        static float ReachRadius(CombatTarget other) => other is Soldier soldier ? soldier.BodyRadius : 0;
+        /// <summary>A melee unit opens its first blow once this far inside its reach...</summary>
+        public const float MeleeReachMargin = .2f;
+        /// <summary>...and paths to a point this far inside it, so braking short still engages.</summary>
+        public const float MeleeApproachMargin = .4f;
+        /// <summary>
+        /// Distance the attack range is measured over. Melee reach is edge to edge, as in the
+        /// source (gap between the two collision circles; building/ship approach points already
+        /// lie on their surface). Ranged units keep the centre-to-approach-point distance.
+        /// </summary>
+        float AttackDistance(CombatTarget other)
+        {
+            float distance = Vector3.Distance(transform.position, other.ApproachPoint(transform.position));
+            return BattleRules.Ranged(Kind) ? distance : distance - BodyRadius - ReachRadius(other);
+        }
+        /// <summary>Centre distance at which a melee unit of <paramref name="kind"/> engages a target of the given radius.</summary>
+        public static float MeleeEngageDistance(UnitKind kind, float targetRadius) =>
+            SourceGeometry.AgentRadius(kind) + targetRadius + Mathf.Max(.05f, BattleRules.Range(kind) - MeleeApproachMargin);
+        CombatTarget meleeEngaged;
         void Fight()
         {
-            float distance = Vector3.Distance(transform.position, target.ApproachPoint(transform.position));
+            float distance = AttackDistance(target);
+            // Melee hysteresis: close to just inside the reach before the first blow, then
+            // keep striking anywhere within it. Without this a charging lancer halts at the
+            // very edge and every small drift restarts the approach.
+            float reach = BattleRules.Range(Kind);
+            if (!BattleRules.Ranged(Kind))
+            {
+                if (meleeEngaged != target) reach = Mathf.Max(.05f, reach - MeleeReachMargin);
+                if (distance > BattleRules.Range(Kind)) meleeEngaged = null;
+            }
             bool visible = Visible(target);
             if(distance<BattleRules.MinimumRange(Kind))
             {
@@ -426,8 +456,9 @@ namespace RiskAI
                 }
                 return;
             }
-            if (distance <= BattleRules.Range(Kind) && visible)
+            if (distance <= reach && visible)
             {
+                if (!BattleRules.Ranged(Kind)) meleeEngaged = target;
                 Agent.isStopped = true;
                 Vector3 direction = target.transform.position - transform.position; direction.y = 0;
                 if (direction.sqrMagnitude > .001f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(direction), 650 * simDelta);
@@ -464,6 +495,22 @@ namespace RiskAI
                         Agent.stoppingDistance = .05f;
                         RequestAutonomousPath(firing.position);
                         return;
+                    }
+                }
+                if (!BattleRules.Ranged(Kind))
+                {
+                    // Stop at the edge of the reach instead of pressing into the target.
+                    var from = transform.position - approach; from.y = 0;
+                    if (from.sqrMagnitude > .0001f)
+                    {
+                        var probe = approach + from.normalized * MeleeEngageDistance(Kind, ReachRadius(target));
+                        if (NavMesh.SamplePosition(probe, out var spot, .75f, NavMesh.AllAreas) &&
+                            !NavMesh.Raycast(transform.position, spot.position, out _, NavMesh.AllAreas))
+                        {
+                            Agent.stoppingDistance = .05f;
+                            RequestAutonomousPath(spot.position);
+                            return;
+                        }
                     }
                 }
                 // An obstructed firing position still requires following the

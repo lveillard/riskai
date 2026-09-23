@@ -8,11 +8,11 @@ namespace RiskAI
     /// </summary>
     public sealed class Music : MonoBehaviour
     {
-        const string VolumeKey = "riskai.music.volume", EnabledKey = "riskai.music.enabled";
-        const float FadeInSeconds = 3, CrossfadeSeconds = 2;
+        const string VolumeKey = "riskai.music.volume.v2", EnabledKey = "riskai.music.enabled";
+        const float FadeInSeconds = 3, CrossfadeSeconds = 2, DefaultVolume = .15f;
 
         public static Music Current { get; private set; }
-        public static float MusicVolume { get; private set; } = .25f;
+        public static float MusicVolume { get; private set; } = DefaultVolume;
         public static bool MusicEnabled { get; private set; } = true;
         static bool preferencesLoaded;
 
@@ -83,8 +83,12 @@ namespace RiskAI
             previous.volume = target * (1 - fade);
             if (fade >= 1 && previous.isPlaying) previous.Stop();
             if (current.isPlaying && current.time > 0) started = true;
-            // Start the crossfade shortly before the current track ends; streaming clips report time reliably.
-            if (current.clip && current.isPlaying && current.clip.length - current.time <= CrossfadeSeconds) PlayNext(false);
+            // Crossfade shortly before the end. A streaming clip reports length 0 (or a stale time)
+            // until it has loaded, so only trust the clock once the track is loaded and well under way.
+            var clip = current.clip;
+            bool nearEnd = clip && clip.loadState == AudioDataLoadState.Loaded && clip.length > CrossfadeSeconds * 4 &&
+                current.time > CrossfadeSeconds && clip.length - current.time <= CrossfadeSeconds;
+            if (current.isPlaying && started && nearEnd) PlayNext(false);
             else if (!current.isPlaying && started) PlayNext(false);
             // Browsers may block audio until the first gesture: retry the same track instead of skipping through the list.
             else if (!current.isPlaying && Time.unscaledTime >= retryAt) { retryAt = Time.unscaledTime + 2; current.Play(); }
@@ -94,7 +98,7 @@ namespace RiskAI
         {
             if (preferencesLoaded) return;
             preferencesLoaded = true;
-            try { MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, .25f)); MusicEnabled = PlayerPrefs.GetInt(EnabledKey, 1) != 0; }
+            try { MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, DefaultVolume)); MusicEnabled = PlayerPrefs.GetInt(EnabledKey, 1) != 0; }
             catch (System.Exception) { }
         }
 

@@ -57,7 +57,10 @@ namespace RiskAI
             ["RIESGUS"]="RIESGUS", ["DOMINIOS"]="DOMINIONS", ["CONQUISTA"]="CONQUEST", ["PAUSADO"]="PAUSED",
             ["PAUSA"]="PAUSE", ["Pausa"]="Pause", ["CONTINUAR"]="RESUME", ["Continuar"]="Resume",
             ["VOLVER"]="BACK", ["Menú"]="Menu", ["Mapa"]="Map", ["Ranking"]="Ranking",
-            ["Partida"]="Match", ["Controles"]="Controls", ["VICTORIA"]="VICTORY", ["DERROTA"]="DEFEAT",
+            ["Partida"]="Match", ["Controles"]="Controls", ["Sonido"]="Sound", ["Cámara"]="Camera", ["Idioma"]="Language",
+            ["PARTIDA"]="MATCH", ["SONIDO"]="SOUND", ["CÁMARA"]="CAMERA", ["CONTROLES"]="CONTROLS", ["IDIOMA"]="LANGUAGE",
+            ["Volumen general"]="Master volume", ["Efectos"]="Effects", ["Música"]="Music", ["Minimapa"]="Minimap",
+            ["Activado"]="On", ["Desactivado"]="Off", ["Todos"]="All", ["Cola"]="Queue", ["Astillero"]="Shipyard", ["Ciudades"]="Cities", ["VICTORIA"]="VICTORY", ["DERROTA"]="DEFEAT",
             ["COMENZAR LA CONQUISTA"]="START CONQUEST", ["PREPARANDO LA CONQUISTA"]="PREPARING CONQUEST",
             ["ELEGIDO"]="SELECTED", ["NUEVA SEMILLA"]="NEW SEED", ["SEMILLA"]="SEED",
             ["REPARTO INICIAL"]="STARTING LAYOUT", ["DIFICULTAD DE IA"]="AI DIFFICULTY",
@@ -103,6 +106,28 @@ namespace RiskAI
             // Top bar, command card and controls table (BattleHud.CommandCard). Listed first so
             // generic word pairs below (Cancelar, oro...) cannot pre-empt these sentences.
             Pair("Desglose del oro y del próximo ingreso","Gold breakdown and next income"),
+            // Quick bar, ranking board, menu sections and chat recipients (BattleHud.Overlay, BattleMenu, Feedback).
+            Pair("Efectos de sonido (F7)","Sound effects (F7)"), Pair("Música (F8)","Music (F8)"), Pair("Clasificación (Tab)","Ranking (Tab)"),
+            Pair("Minimapa (F9)","Minimap (F9)"), Pair("Chat (Intro)","Chat (Enter)"), Pair("Efectos silenciados","Effects muted"), Pair("Efectos activados","Effects on"),
+            Pair("Unidades totales, incluidos defensores y barcos","Total units, including defenders and ships"), Pair("Ingreso por ronda","Income per round"),
+            Pair("Países completos","Completed countries"), Pair("Ciudades controladas / total · abrir clasificación","Controlled cities / total · open ranking"), Pair("CLASIFICACIÓN","RANKING"), Pair("Cerrar (Esc)","Close (Esc)"),
+            Pair("Volumen de la música","Music volume"), Pair("Atajos: F7 efectos · F8 música.","Shortcuts: F7 effects · F8 music."),
+            Pair("Velocidad de la cámara","Camera speed"), Pair("Paneo en los bordes","Edge panning"), Pair("Temblor de cámara","Camera shake"),
+            Pair("La elección se guarda para las próximas partidas.","Your choice is kept for future matches."),
+            Pair("Destinatario · Tab cambia · Mayús+Intro envía a todos","Recipient · Tab cycles · Shift+Enter sends to all"),
+            Pair("No hay ningún jugador con ese nombre o color.","No player has that name or colour."),
+            Pair("Efectos de sonido · música · minimapa (también en la barra rápida)","Sound effects · music · minimap (also in the quick bar)"),
+            Pair("Chat al destinatario elegido · enviar a todos","Chat to the chosen recipient · send to all"),
+            Pair("Cambiar de destinatario · mensaje privado (p. ej. /w azul hola, /azul hola)","Change recipient · private message (e.g. /w blue hi, /blue hi)"),
+            Pair("Tab en el chat · /w color","Tab in chat · /w colour"), Pair("Intro · Mayús+Intro","Enter · Shift+Enter"),
+            Pair("¡Has perdido ","You lost "), Pair("País roto: sin oro ni refuerzos de ","Country broken: no gold or reinforcements from "),
+            Pair("Oro y refuerzos de ","Gold and reinforcements from "), Pair(" cada ronda"," every round"),
+            Pair("Para: ","To: "), Pair("Para ","To "), Pair(" → Todos"," → All"),
+            Pair("Sin guarnición · un enemigo en el círculo la conquista","No garrison · an enemy in the circle captures it"),
+            Pair("Guarnición · ","Garrison · "), Pair("Torre en construcción","Tower under construction"), Pair(" · sin guarnición no dispara"," · no garrison, it does not fire"),
+            Pair("Torre destruida","Tower destroyed"), Pair("Sin barco guardia","No guard ship"), Pair("Barco guardia · ","Guard ship · "), Pair("País · ","Country · "),
+            Pair(" · cancelar encargo (devuelve el oro)"," · cancel order (refunds gold)"), Pair(" · cancelar encargo"," · cancel order"),
+            Pair("Clic derecho en el mapa fija la salida de las nuevas unidades.","Right-click the map to set where new units rally."),
             Pair("Ingreso en ","Income in "), Pair("próximo ingreso","next income"),
             Pair("Más opciones · página ","More options · page "), Pair("Ampliar panel","Expand panel"), Pair("Reducir panel","Collapse panel"),
             Pair("Con un edificio seleccionado, su cuadrícula tiene prioridad: Q W E R / A S D F / Z X C V producen y E, A, S, D no dan órdenes de tropa.",
@@ -272,9 +297,12 @@ namespace RiskAI
             return entries;
         }
 
-        public static string Localize(string source)
+        public static string Localize(string source) => IsSpanish ? source : EnglishOf(source);
+
+        /// <summary>English form of a Spanish source string, whatever the current language (chat aliases).</summary>
+        public static string EnglishOf(string source)
         {
-            if(IsSpanish||string.IsNullOrEmpty(source))return source;
+            if(string.IsNullOrEmpty(source))return source;
             if(Exact.TryGetValue(source,out string exact))return exact;
             string result=source;
             for(int i=0;i<Phrases.Length;i++)if(result.IndexOf(Phrases[i].Key,StringComparison.Ordinal)>=0)result=result.Replace(Phrases[i].Key,Phrases[i].Value);

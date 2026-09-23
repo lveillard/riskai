@@ -15,7 +15,7 @@ namespace RiskAI
         static void Reset() => resolvedPortraits.Clear();
 
         /// <summary>Kinds whose portrait is rendered from a variant rather than a shared model prefab.</summary>
-        public static readonly UnitKind[] PortraitKinds = { UnitKind.EliteRifleman, UnitKind.Roarer, UnitKind.ArmyGeneral, UnitKind.Artillery, UnitKind.Tank };
+        public static readonly UnitKind[] PortraitKinds = { UnitKind.EliteRifleman, UnitKind.Roarer, UnitKind.ArmyGeneral, UnitKind.MarineMajor, UnitKind.MarineGeneral, UnitKind.Artillery, UnitKind.Tank };
 
         public static string PortraitName(UnitKind kind)
         {
@@ -25,6 +25,8 @@ namespace RiskAI
                 case UnitKind.EliteRifleman: return "EliteRifleman";
                 case UnitKind.Roarer: return "Roarer";
                 case UnitKind.ArmyGeneral: return "ArmyGeneral";
+                case UnitKind.MarineMajor: return "MarineMajor";
+                case UnitKind.MarineGeneral: return "MarineGeneral";
                 case UnitKind.Artillery: return "Artillery";
                 case UnitKind.Tank: return "Tank";
                 default: return BattleRules.Model(kind);
@@ -35,7 +37,9 @@ namespace RiskAI
         {
             switch(kind)
             {
-                case UnitKind.ArmyGeneral: return "MountedKnight";
+                case UnitKind.ArmyGeneral:
+                case UnitKind.MarineMajor:
+                case UnitKind.MarineGeneral: return "MountedKnight";
                 case UnitKind.Tank: return "Mortar";
                 default: return BattleRules.Model(kind);
             }
@@ -117,47 +121,88 @@ namespace RiskAI
             VisualFactory.Shape(rifle,PrimitiveType.Cube,"Rifle brass lock",new Vector3(.065f,.01f,.16f),new Vector3(.03f,.09f,.16f),Gold);
         }
 
+        /// <summary>
+        /// h00I Roarer: a war herald on the Rogue base (hood off, no wizard hat): horned iron cap
+        /// and beard, fur mantle, a great curved war horn in hand, a drum on the hip and a tall
+        /// swallow-tailed team banner on the back that marks him at any zoom.
+        /// Bone frames (KayKit rig): chest/head +Z forward, +Y up, +X right; handslot.r +X up, +Y forward.
+        /// </summary>
         static void Roarer(GameObject model,int team)
         {
             if(model.transform.Find("Roarer identity"))return;
+            foreach(var part in model.GetComponentsInChildren<Transform>(true))
+                if(part.name=="1H_Crossbow"||part.name=="2H_Crossbow"||part.name=="Knife_Offhand"||part.name=="Rogue_Head_Hooded"||part.name=="Procedural crossbow")
+                    part.gameObject.SetActive(false);
             var identity=new GameObject("Roarer identity").transform;identity.SetParent(model.transform,false);
-            Color cloth=VisualFactory.TeamMaterialColor(team);
-            Transform head=Find(model.transform,"head")??identity;
-            // Horned war helm and fur mantle distinguish the Roarer from the Mage/Medic silhouettes.
-            VisualFactory.Shape(head,PrimitiveType.Sphere,"Roarer iron helm",new Vector3(0,.3f,0),new Vector3(.56f,.32f,.54f),Iron);
+            Color cloth=VisualFactory.TeamMaterialColor(team),beard=new Color(.46f,.22f,.08f),ivory=new Color(.9f,.84f,.66f),furLight=new Color(.62f,.5f,.36f);
+            // KayKit heads are oversized; match that proportion with a scaled head rig.
+            var head=new GameObject("Roarer head rig").transform;head.SetParent(Find(model.transform,"head")??identity,false);
+            head.localPosition=new Vector3(0,.1f,0);head.localScale=Vector3.one*1.35f;
+            // The hood carried the head; rebuild it bare (like the Marine) with a beard and horned cap.
+            Shape(head,PrimitiveType.Sphere,"Roarer face",new Vector3(0,-.02f,.02f),new Vector3(.5f,.56f,.48f),new Color(.8f,.56f,.38f));
+            Shape(head,PrimitiveType.Cube,"Roarer eyes",new Vector3(0,.03f,.245f),new Vector3(.24f,.045f,.02f),new Color(.05f,.04f,.04f));
+            var beardShape=Shape(head,PrimitiveType.Sphere,"Roarer braided beard",new Vector3(0,-.2f,.17f),new Vector3(.38f,.32f,.24f),beard);
+            beardShape.transform.localRotation=Quaternion.Euler(14,0,0);
+            Shape(head,PrimitiveType.Cylinder,"Roarer beard ring",new Vector3(0,-.36f,.22f),new Vector3(.08f,.03f,.08f),Gold);
+            Shape(head,PrimitiveType.Sphere,"Roarer iron cap",new Vector3(0,.19f,0),new Vector3(.55f,.38f,.53f),Iron);
+            Shape(head,PrimitiveType.Cylinder,"Roarer cap gold band",new Vector3(0,.1f,0),new Vector3(.57f,.03f,.55f),Gold);
             for(int side=-1;side<=1;side+=2)
             {
-                var horn=VisualFactory.Cone(head,"Roarer helm horn",new Vector3(side*.26f,.38f,0),.075f,.42f,new Color(.86f,.80f,.64f),6);
-                horn.transform.localRotation=Quaternion.Euler(0,0,side*-48);
+                // Curved horns: a thick base cone swept out and a thinner tip bent upward.
+                var hornBase=VisualFactory.Cone(head,"Roarer cap horn",new Vector3(side*.25f,.22f,0),.075f,.24f,ivory,6);
+                hornBase.transform.localRotation=Quaternion.Euler(0,0,side*-68);
+                var hornTip=VisualFactory.Cone(head,"Roarer cap horn tip",new Vector3(side*.43f,.3f,0),.048f,.22f,ivory,6);
+                hornTip.transform.localRotation=Quaternion.Euler(0,0,side*-14);
             }
             Transform chest=Find(model.transform,"chest")??Find(model.transform,"spine")??identity;
-            VisualFactory.Shape(chest,PrimitiveType.Sphere,"Roarer fur mantle",new Vector3(0,.5f,-.04f),new Vector3(.95f,.34f,.7f),Fur);
-            VisualFactory.Shape(chest,PrimitiveType.Cube,"Roarer team war sash",new Vector3(0,.18f,.25f),new Vector3(.5f,.28f,.05f),cloth);
-            Transform hand=Find(model.transform,"handslot.l")??identity;
-            var horn2=VisualFactory.Cone(hand,"Roarer war horn",new Vector3(0,.05f,.05f),.12f,.55f,new Color(.82f,.72f,.50f),8);
-            horn2.transform.localRotation=Quaternion.Euler(-70,0,0);
-            VisualFactory.Shape(hand,PrimitiveType.Cylinder,"Roarer horn gold rim",new Vector3(0,.05f,.05f),new Vector3(.26f,.025f,.26f),Gold);
+            Shape(chest,PrimitiveType.Sphere,"Roarer fur mantle",new Vector3(0,.1f,-.04f),new Vector3(1.12f,.4f,.82f),Fur);
+            Shape(chest,PrimitiveType.Sphere,"Roarer fur collar",new Vector3(0,.18f,.06f),new Vector3(.74f,.18f,.56f),furLight);
+            var baldric=Shape(chest,PrimitiveType.Cube,"Roarer leather baldric",new Vector3(0,-.2f,.3f),new Vector3(.1f,.8f,.05f),new Color(.3f,.16f,.07f));
+            baldric.transform.localRotation=Quaternion.Euler(0,0,-36);
+            // Back banner: pole, cross bar, gold finial and a tall swallow-tailed team banner.
+            Vector3 foot=new Vector3(.18f,-.55f,-.44f),top=new Vector3(.18f,1.95f,-.5f);
+            Segment(chest,"Roarer banner pole",foot,top,.05f,DarkWood);
+            VisualFactory.Cone(chest,"Roarer banner finial",top,.08f,.22f,Gold,6);
+            Shape(chest,PrimitiveType.Cube,"Roarer banner bar",new Vector3(.46f,1.82f,-.5f),new Vector3(.62f,.05f,.05f),Gold);
+            Shape(chest,PrimitiveType.Cube,"Roarer team banner",new Vector3(.48f,1.42f,-.51f),new Vector3(.58f,.78f,.03f),cloth);
+            for(int side=-1;side<=1;side+=2)
+            {
+                var tail=Shape(chest,PrimitiveType.Cube,"Roarer banner tail",new Vector3(.48f+side*.16f,.94f,-.51f),new Vector3(.24f,.3f,.03f),cloth);
+                tail.transform.localRotation=Quaternion.Euler(0,0,side*12);
+            }
+            Shape(chest,PrimitiveType.Cube,"Roarer banner emblem",new Vector3(.48f,1.46f,-.53f),new Vector3(.2f,.2f,.02f),Gold).transform.localRotation=Quaternion.Euler(0,0,45);
+            // War drum on the left hip.
+            var drum=Shape(chest,PrimitiveType.Cylinder,"Roarer war drum",new Vector3(-.5f,-.55f,.08f),new Vector3(.4f,.14f,.4f),new Color(.55f,.36f,.18f));
+            drum.transform.localRotation=Quaternion.Euler(0,0,78);
+            var band=Shape(chest,PrimitiveType.Cylinder,"Roarer drum team band",new Vector3(-.5f,-.55f,.08f),new Vector3(.42f,.05f,.42f),cloth);
+            band.transform.localRotation=Quaternion.Euler(0,0,78);
+            // Great curved war horn in the right hand: tapering ivory segments sweeping forward
+            // and up to a gold-rimmed bell.
+            Transform hand=Find(model.transform,"handslot.r")??identity;
+            var horn=new GameObject("Roarer war horn").transform;horn.SetParent(hand,false);
+            Vector3 previous=new Vector3(-.05f,-.12f,0);float radius=.045f;
+            for(int i=1;i<=6;i++)
+            {
+                float t=i/6f;var point=new Vector3(-.05f+.42f*t*t,-.12f+.7f*t,0);
+                Segment(horn,"Roarer horn segment",previous,point,radius,ivory);
+                previous=point;radius+=.02f;
+            }
+            var bellDirection=new Vector3(.84f,.7f,0).normalized;
+            Shape(horn,PrimitiveType.Cylinder,"Roarer horn gold ring",new Vector3(.05f,.24f,0),new Vector3(.16f,.025f,.16f),Gold).transform.localRotation=Quaternion.FromToRotation(Vector3.up,new Vector3(.4f,.7f,0).normalized);
+            var bell=VisualFactory.Cone(horn,"Roarer horn bell",previous+bellDirection*.2f,.24f,.26f,ivory,10);
+            bell.transform.localRotation=Quaternion.FromToRotation(Vector3.up,-bellDirection);
+            Shape(horn,PrimitiveType.Cylinder,"Roarer horn bell rim",previous+bellDirection*.2f,new Vector3(.5f,.03f,.5f),Gold).transform.localRotation=Quaternion.FromToRotation(Vector3.up,bellDirection);
         }
 
-        /// <summary>Army General: larger mounted commander with a team cape and standard.</summary>
-        public static GameObject General(Transform parent,int team,Soldier owner=null)
+        static void Segment(Transform parent,string name,Vector3 from,Vector3 to,float radius,Color color)
         {
-            var model=owner?MountedKnightView.Create(owner):MountedKnightView.Create(parent,team);
-            model.name="ArmyGeneral(Clone)";
-            // Measure the mount alone so the standard does not shrink the commander.
-            ModelMetrics.MatchStandingHeight(model,UnitKind.ArmyGeneral);
-            var rig=model.transform.Find("Mounted motion rig")??model.transform;
-            Color cloth=VisualFactory.TeamMaterialColor(team);
-            var cape=VisualFactory.Shape(rig,PrimitiveType.Cube,"General team cape",new Vector3(0,1.9f,-.48f),new Vector3(.78f,.95f,.06f),cloth*.85f);
-            cape.transform.localRotation=Quaternion.Euler(14,0,0);
-            VisualFactory.Shape(rig,PrimitiveType.Cube,"General gold cape clasp",new Vector3(0,2.36f,-.34f),new Vector3(.62f,.08f,.08f),Gold);
-            VisualFactory.Shape(rig,PrimitiveType.Sphere,"General gold crown",new Vector3(0,2.9f,-.15f),new Vector3(.42f,.12f,.42f),Gold);
-            var pole=VisualFactory.Shape(rig,PrimitiveType.Cylinder,"General standard pole",new Vector3(-.36f,2.7f,-.52f),new Vector3(.05f,1.25f,.05f),DarkWood);
-            pole.transform.localRotation=Quaternion.Euler(-6,0,0);
-            VisualFactory.Shape(rig,PrimitiveType.Cube,"General team standard",new Vector3(-.36f,3.45f,-.2f),new Vector3(.04f,.5f,.62f),cloth);
-            VisualFactory.Shape(rig,PrimitiveType.Cube,"General standard gold trim",new Vector3(-.36f,3.2f,-.2f),new Vector3(.045f,.06f,.62f),Gold);
-            return model;
+            var go=Shape(parent,PrimitiveType.Cylinder,name,(from+to)*.5f,new Vector3(radius*2,(to-from).magnitude*.5f,radius*2),color);
+            go.transform.localRotation=Quaternion.FromToRotation(Vector3.up,(to-from).normalized);
         }
+
+        /// <summary>Army General: mounted commander on a black charger, gilded armour, crown and command standard.</summary>
+        public static GameObject General(Transform parent,int team,Soldier owner=null) =>
+            MountedKnightView.CreateVariant(owner?owner.transform:parent,team,UnitKind.ArmyGeneral,owner);
 
         /// <summary>h00M: a longer field gun on tall wheels with a team gun shield. Returns the recoiling barrel.</summary>
         public static Transform ArtilleryModel(Transform root,Color team)

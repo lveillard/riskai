@@ -15,10 +15,12 @@ namespace RiskAI
     {
         /// <summary>Review/setup code may disable the field to reproduce the legacy look.</summary>
         public static bool Enabled { get; set; } = true;
+        /// <summary>Review code may disable the satellite colour grading (v0.30.0 look).</summary>
+        public static bool SatelliteEnabled { get; set; } = true;
         // Two source cells per texel: regions span tens of metres, the shader adds fine noise.
         const int CellsPerTexel = 2;
         // Horizon fade outside the playable rectangle, in metres.
-        public const float HorizonFadeStart = 14f, HorizonFadeEnd = 205f;
+        public const float HorizonFadeStart = 12f, HorizonFadeEnd = 165f;
         public static readonly Color HorizonColor = new Color(.035f, .075f, .13f);
         static Color32[] field;
         static ImportedMapData fieldMap;
@@ -106,13 +108,53 @@ namespace RiskAI
             }
             Horizon(data.PlayableBounds,HorizonFadeStart,HorizonFadeEnd,ImportedMapSkirt.Enabled);
             EnsureField(data);
-            var texture=new Texture2D(fieldWidth,fieldHeight,TextureFormat.RGBA32,false,true)
-            {name="Geographic biome field",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
-            texture.SetPixels32(field);texture.Apply(false,true);
+            // Mips only serve the blurred skirt beyond the playable edge (level 0 inside).
+            var texture=new Texture2D(fieldWidth,fieldHeight,TextureFormat.RGBA32,true,true)
+            {name="Geographic biome field",filterMode=FilterMode.Trilinear,wrapMode=TextureWrapMode.Clamp};
+            texture.SetPixels32(field);texture.Apply(true,true);
             GeneratedResourceOwner.For(root).Track(texture);
             Shader.SetGlobalTexture("_RiskBiomeField",texture);
             Shader.SetGlobalVector("_RiskBiomeGrid",new Vector4(fieldX,fieldZ,1/fieldStep,1));
             Shader.SetGlobalVector("_RiskBiomeSize",new Vector4(fieldWidth,fieldHeight,1f/fieldWidth,1f/fieldHeight));
+            if(ground==null){Shader.SetGlobalVector("_RiskGroundGrid",Vector4.zero);return;}
+            // sRGB colour so the shader receives linear albedo; alpha (aridity) stays linear.
+            var colour=new Texture2D(groundWidth,groundHeight,TextureFormat.RGBA32,true,false)
+            {name="Satellite ground colour",filterMode=FilterMode.Trilinear,wrapMode=TextureWrapMode.Clamp};
+            colour.SetPixels32(ground);colour.Apply(true,true);
+            GeneratedResourceOwner.For(root).Track(colour);
+            Shader.SetGlobalTexture("_RiskGroundColor",colour);
+            Shader.SetGlobalVector("_RiskGroundGrid",new Vector4(data.PlayableMinX,data.PlayableMinZ,GroundGain,1));
+            Shader.SetGlobalVector("_RiskGroundSize",new Vector4(1f/groundWidth,1f/groundHeight,GroundTexel,0));
+        }
+
+        // Satellite ground colour baked by scripts/bake_ground_colors.py (NASA Blue Marble NG,
+        // public domain). One texel per W3E cell over the playable rectangle, origin at its minimum.
+        const float GroundTexel=2.56f,GroundGain=.68f;
+        static Color32[] ground;
+        static int groundWidth,groundHeight;
+        static void LoadGround(ImportedMapData data)
+        {
+            ground=null;
+            if(!SatelliteEnabled)return;
+            var asset=Resources.Load<TextAsset>("Maps/"+(string.Equals(data.mapId,"NewWorld",StringComparison.OrdinalIgnoreCase)?"NewWorld":"Europe")+"Ground");
+            if(!asset)return;
+            var decoded=new Texture2D(2,2,TextureFormat.RGBA32,false,false);
+            try
+            {
+                if(!decoded.LoadImage(asset.bytes,false))return;
+                int expectedWidth=Mathf.RoundToInt((data.PlayableMaxX-data.PlayableMinX)/GroundTexel)+1;
+                int expectedHeight=Mathf.RoundToInt((data.PlayableMaxZ-data.PlayableMinZ)/GroundTexel)+1;
+                if(decoded.width!=expectedWidth||decoded.height!=expectedHeight)
+                {Debug.LogWarning($"RISKAI_GROUND_COLOR size {decoded.width}x{decoded.height} does not match {expectedWidth}x{expectedHeight}; rebake.");return;}
+                ground=decoded.GetPixels32();groundWidth=decoded.width;groundHeight=decoded.height;
+            }
+            finally{UnityEngine.Object.Destroy(decoded);}
+        }
+        static Color SampleGround(float x,float z)
+        {
+            float gx=Mathf.Clamp((x-fieldMap.PlayableMinX)/GroundTexel,0,groundWidth-1),gz=Mathf.Clamp((z-fieldMap.PlayableMinZ)/GroundTexel,0,groundHeight-1);
+            int ix=Mathf.Min(Mathf.FloorToInt(gx),groundWidth-2),iz=Mathf.Min(Mathf.FloorToInt(gz),groundHeight-2),k=iz*groundWidth+ix;
+            return Color.Lerp(Color.Lerp(ground[k],ground[k+1],gx-ix),Color.Lerp(ground[k+groundWidth],ground[k+groundWidth+1],gx-ix),gz-iz);
         }
 
         /// <summary>Fades ground and water beyond a playable rectangle into the camera background.</summary>
@@ -139,8 +181,14 @@ namespace RiskAI
         /// <summary>Minimap land colour: the legacy relief ramp, recoloured by the same biome texels.</summary>
         public static Color MinimapLand(float x,float z,float height)
         {
-            var color=Color.Lerp(new Color(.24f,.38f,.20f),new Color(.56f,.63f,.30f),Mathf.Clamp01(height/6.2f));
             var biome=Sample(x,z);
+            if(Enabled&&ground!=null&&MapLayout.IsImported)
+            {
+                // The same satellite colour as the ground, brightened slightly by relief.
+                var p=ImportedMapSkirt.Clamp(MapLayout.Imported,x,z);var satellite=SampleGround(p.x,p.y);satellite.a=1;
+                return satellite*Mathf.Lerp(.92f,1.12f,Mathf.Clamp01(height/6.2f));
+            }
+            var color=Color.Lerp(new Color(.24f,.38f,.20f),new Color(.56f,.63f,.30f),Mathf.Clamp01(height/6.2f));
             color=Color.Lerp(color,new Color(.55f,.52f,.30f),Mathf.SmoothStep(0,1,Mathf.InverseLerp(.16f,.5f,biome.Arid)));
             color=Color.Lerp(color,new Color(.80f,.66f,.40f),Mathf.SmoothStep(0,1,Mathf.InverseLerp(.72f,.94f,biome.Arid)));
             color=Color.Lerp(color,new Color(.20f,.33f,.25f),Mathf.SmoothStep(0,1,Mathf.InverseLerp(.3f,.55f,biome.Cold))*(1-Mathf.InverseLerp(.62f,.8f,biome.Cold)));
@@ -158,6 +206,7 @@ namespace RiskAI
             fieldWidth=Mathf.Max(2,Mathf.CeilToInt((data.PlayableMaxX-fieldX)/fieldStep)+1);
             fieldHeight=Mathf.Max(2,Mathf.CeilToInt((data.PlayableMaxZ-fieldZ)/fieldStep)+1);
             var anchors=Anchors(data,out float europeOffset);
+            LoadGround(data);
             field=new Color32[fieldWidth*fieldHeight];
             for(int z=0;z<fieldHeight;z++)for(int x=0;x<fieldWidth;x++)
             {
@@ -170,13 +219,15 @@ namespace RiskAI
                 // Latitude cues in Europe coordinates: the Sahara begins just south of the
                 // imported North African coast and the far north is always tundra or ice.
                 float ex=wx-europeOffset;
-                if(ex>-335)arid=Mathf.Lerp(arid,1,.9f*Mathf.SmoothStep(0,1,Mathf.InverseLerp(-266,-312,wz)));
+                // Satellite aridity (same bake as the ground colour) is authoritative where present.
+                if(ground!=null)arid=Mathf.Lerp(arid,SampleGround(wx,wz).a,.85f);
+                else if(ex>-335)arid=Mathf.Lerp(arid,1,.9f*Mathf.SmoothStep(0,1,Mathf.InverseLerp(-266,-312,wz)));
                 cold=Mathf.Max(cold,.86f*Mathf.SmoothStep(0,1,Mathf.InverseLerp(262,322,wz)));
                 float grain=Mathf.PerlinNoise(wx*.05f+11,wz*.05f+5)-.5f;
                 arid=Mathf.Clamp01(arid+grain*.10f*(1-arid));lush=Mathf.Clamp01(lush-grain*.12f);
                 field[z*fieldWidth+x]=new Color32(Byte(arid),Byte(cold),Byte(lush),Byte(rock));
             }
-            Debug.Log($"RISKAI_BIOME_FIELD map={data.mapId} size={fieldWidth}x{fieldHeight} anchors={anchors.Count} ms={started.Elapsed.TotalMilliseconds:F1}");
+            Debug.Log($"RISKAI_BIOME_FIELD map={data.mapId} size={fieldWidth}x{fieldHeight} anchors={anchors.Count} satellite={(ground!=null?groundWidth+"x"+groundHeight:"none")} ms={started.Elapsed.TotalMilliseconds:F1}");
         }
         static byte Byte(float value)=>(byte)Mathf.RoundToInt(Mathf.Clamp01(value)*255);
 
@@ -193,10 +244,7 @@ namespace RiskAI
                 Biome biome;
                 if(country.name=="Georgia")biome=newWorld&&country.x<-150?GeorgiaUnitedStates:GeorgiaCaucasus;
                 else if(!byName.TryGetValue(country.name,out biome))continue;
-                // A small deterministic offset per country separates neighbours that share a biome.
-                int hash=StableHash(country.name);
-                float jitterLush=((hash&255)/255f-.5f)*.16f,jitterArid=(((hash>>8)&255)/255f-.5f)*.08f;
-                var value=new Vector4(Mathf.Clamp01(biome.Arid+jitterArid*(1-biome.Arid)),biome.Cold,Mathf.Clamp01(biome.Lush+jitterLush),biome.Rock);
+                var value=new Vector4(biome.Arid,biome.Cold,biome.Lush,biome.Rock);
                 anchors.Add(new Anchor{x=country.x,z=country.z,strength=1,value=value});
             }
             foreach(var region in EuropeRegions)
@@ -218,10 +266,6 @@ namespace RiskAI
                 sum+=anchors[i].value*w;total+=w;
             }
             return total>0?sum/total:new Vector4(.1f,.1f,.45f,0);
-        }
-        static int StableHash(string text)
-        {
-            unchecked{int hash=23;foreach(char c in text)hash=hash*31+c;return hash^(hash>>13);}
         }
     }
 }

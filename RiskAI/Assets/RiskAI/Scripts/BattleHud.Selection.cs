@@ -8,8 +8,8 @@ namespace RiskAI
     {
         sealed class RankingRow
         {
-            public VisualElement Root;
-            public Label Name,Cities,Units;
+            public VisualElement Root,Chip;
+            public Label Name,Cities,Units,Income,Countries;
         }
 
         static Label AddMetric(VisualElement parent,RtsHudGlyph glyph,string value,string tooltip, System.Action action=null, string name=null)

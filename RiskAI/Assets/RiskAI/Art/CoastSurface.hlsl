@@ -16,6 +16,13 @@ float2 RiskClampPlayable(float2 p)
  if(hi.x<=lo.x||hi.y<=lo.y)return p;
  return clamp(p,lo,hi);
 }
+// Metres beyond the playable rectangle (0 inside, or when the clamp is disabled).
+float RiskOutsidePlayable(float2 p)
+{
+ float2 lo=_RiskPlayableBounds.xy,hi=_RiskPlayableBounds.zw;
+ if(hi.x<=lo.x||hi.y<=lo.y)return 0;
+ return length(max(max(lo-p,p-hi),0));
+}
 float4 RiskCoastSurfaceData(float2 world)
 {
  world=RiskClampPlayable(world);

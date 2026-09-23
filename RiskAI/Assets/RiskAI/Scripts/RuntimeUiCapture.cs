@@ -77,10 +77,12 @@ namespace RiskAI
             controller.HelpVisible=true;
             yield return Settle();
             yield return Capture("menu");
-            ActivateButton("Ranking");
+            // Ranking is the non-modal multiboard now (quick bar / Tab), not a menu tab.
+            controller.HelpVisible=false;
+            FindFirstObjectByType<BattleHud>().ShowPlayers();
             yield return Settle();
             yield return Capture("ranking");
-            controller.HelpVisible=false;
+            FindFirstObjectByType<BattleHud>().HideRanking();
             foreach(var harbor in session.Naval.Harbors)
             {
                 if(!harbor||harbor.Owner<0)continue;
@@ -113,6 +115,7 @@ namespace RiskAI
             var session=BattleSession.Current;var controller=FindFirstObjectByType<RtsController>();
             var hud=FindFirstObjectByType<BattleHud>();
             session.AiEnabled=false;controller.HelpVisible=false;
+            if(stage!="ranking")hud.HideRanking();
             if(stage=="empty")controller.Clear();
             else if(stage=="camp")
             {
@@ -156,6 +159,8 @@ namespace RiskAI
             }
             else if(stage=="income")hud.ShowIncome();
             else if(stage=="ranking")hud.ShowPlayers();
+            else if(stage.StartsWith("menu:",StringComparison.Ordinal))hud.OpenMenuSection(stage.Substring(5));
+            else if(stage=="chat")hud.ReviewChatRecipients();
             else if(stage=="strategic"){controller.Clear();controller.CameraRig.FrameMap();}
             else if(stage=="north"||stage=="south"||stage=="coast")
             {
@@ -190,22 +195,6 @@ namespace RiskAI
         {
             yield return null;yield return null;
             yield return new WaitForSecondsRealtime(.5f);
-        }
-
-        static void ActivateButton(string label)
-        {
-            foreach(var document in FindObjectsByType<UIDocument>(FindObjectsSortMode.None))
-            {
-                var buttons=document.rootVisualElement.Query<Button>().ToList();
-                foreach(var button in buttons)
-                    if(button.text==label||button.name==label)
-                    {
-                        button.Focus();
-                        using(var evt=NavigationSubmitEvent.GetPooled()) { evt.target=button;button.SendEvent(evt); }
-                        return;
-                    }
-            }
-            Debug.LogError("RISKAI_UI_CAPTURE_FAILED: button not found "+label);
         }
 
         static void ScrollToEnd(string name)

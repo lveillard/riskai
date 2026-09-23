@@ -20,7 +20,7 @@ Shader "RiskAI/ImportedWater"
    V Vert(A a){V o;VertexPositionInputs p=GetVertexPositionInputs(a.p.xyz);o.p=p.positionCS;o.w=p.positionWS;o.fog=ComputeFogFactor(o.p.z);return o;}
    half4 Frag(V i):SV_Target
    {
-    float3 coast=RiskCoastSurface(i.w.xz);
+    float3 coast=RiskCoastSurface(i.w.xz)*(1-smoothstep(4,24,RiskOutsidePlayable(i.w.xz)));
     half4 color=RiskWater(i.w,i.p,float3(0,1,0),0,0,coast.b);
     // Fine blue grain keeps source shallows alive without tinting whole W3E
     // quads or drawing a sine ridge along quantized coast-field contours.

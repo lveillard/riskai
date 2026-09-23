@@ -29,7 +29,7 @@ namespace RiskAI.Core
             // v0.30 source roster (h00N). Explicit W3U overrides win; inherited fields use the
             // same RoC baseline as the existing hrif/hkni/hmpr profiles (see docs/RISK-RULES-v0.30.md).
             new(new UnitProfile(450,36,2,4,7,1f,5.4f,1,AttackKind.Piercing,ArmorKind.Light,6,1,"h00F · Elite Rifleman ← hrif",6,.17f,.7f),"Fusilero de élite","Fusilería de élite","T","RogueHooded",1,true,sourceRawId:"h00F"),
-            new(new UnitProfile(400,29,1,3,10,2,5.4f,1,AttackKind.Piercing,ArmorKind.Light,4,1,"h00I · Roarer ← hmpr",4,.59f,.58f),"Rugidor","Rugido · +25% daño aliado","X","Mage",1,true,sourceRawId:"h00I"),
+            new(new UnitProfile(400,29,1,3,10,2,5.4f,1,AttackKind.Piercing,ArmorKind.Light,4,1,"h00I · Roarer ← hmpr",4,.59f,.58f),"Rugidor","Rugido · +25% daño aliado","X","RogueHooded",1,true,sourceRawId:"h00I"),
             new(new UnitProfile(800,55,2,5,2,1.45f,7,10,AttackKind.Normal,ArmorKind.Heavy,10,1,"h00J · Army General ← hkni",10,.66f,.44f),"General","Caballería de mando · Rugido","G","RoyalGuard",1,false,sourceRawId:"h00J"),
             new(new UnitProfile(900,55,1,13,20,3,4,3,AttackKind.Piercing,ArmorKind.Unarmored,15,1,"h00M · Artillery ← hmtt",15,.5f,.5f),"Artillería","Asedio de área a gran distancia","Z","Mortar",1,true,mechanical:true,sourceRawId:"h00M"),
             new(new UnitProfile(1500,80,1,11,10,1.8f,5.2f,9,AttackKind.Siege,ArmorKind.Fortified,25,1,"h01A · Tank ← hfoo",25,.2f,.5f),"Tanque","Blindado de asedio","Y","Tank",1,true,mechanical:true,sourceRawId:"h01A")

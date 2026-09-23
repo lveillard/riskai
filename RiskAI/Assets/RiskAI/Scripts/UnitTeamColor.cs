@@ -69,15 +69,15 @@ namespace RiskAI
             {
                 case UnitKind.Archer:
                 case UnitKind.EliteRifleman:
+                case UnitKind.Roarer:
                 case UnitKind.MarinePrivate:return .42f; // green hood and tunic
                 case UnitKind.Medic:
-                case UnitKind.Roarer:
                 case UnitKind.Mage:return .69f; // violet cloth
                 default:return .98f; // knight's red cloth accents
             }
         }
 
-        static float HueWidth(UnitKind kind) => (kind==UnitKind.Mage||kind==UnitKind.Medic||kind==UnitKind.Roarer)?.16f:(kind==UnitKind.Archer||kind==UnitKind.MarinePrivate||kind==UnitKind.EliteRifleman)?.14f:.085f;
+        static float HueWidth(UnitKind kind) => (kind==UnitKind.Mage||kind==UnitKind.Medic)?.16f:(kind==UnitKind.Archer||kind==UnitKind.MarinePrivate||kind==UnitKind.EliteRifleman||kind==UnitKind.Roarer)?.14f:.085f;
 
         static void AddFallbackTabard(GameObject model,int team)
         {

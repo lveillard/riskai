@@ -18,12 +18,12 @@ namespace RiskAI
                 case UnitKind.Footman: return "1H_Melee_Attack_Slice_Horizontal";
                 case UnitKind.Mage: return "Spellcast_Shoot";
                 case UnitKind.Guard:
+                case UnitKind.MarineMajor:
+                case UnitKind.MarineGeneral:
                 case UnitKind.ArmyGeneral:
                 case UnitKind.Artillery:
                 case UnitKind.Tank:
                 case UnitKind.Mortar: return null;
-                case UnitKind.MarineMajor:
-                case UnitKind.MarineGeneral: return "2H_Melee_Attack_Slice";
                 case UnitKind.MarinePrivate:return "1H_Ranged_Shoot";
                 default: return "2H_Ranged_Shoot";
             }
@@ -36,8 +36,6 @@ namespace RiskAI
                 // Keyframes are measured from the embedded 30 fps FBX takes.
                 case UnitKind.Footman: return 8f/32f;
                 case UnitKind.Mage: return 9f/28f;
-                case UnitKind.MarineMajor:
-                case UnitKind.MarineGeneral: return 13f/33f;
                 // The ranged release starts its recoil after frame 8/32.
                 case UnitKind.Archer:
                 case UnitKind.Medic:

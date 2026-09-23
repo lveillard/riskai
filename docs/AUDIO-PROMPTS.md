@@ -39,6 +39,7 @@ Shared style line appended to every prompt: *Medieval fantasy RTS game sound eff
 | `victory` | `victory.mp3` | 3.0 s | 2D | Match won | `victory.mp3`: Victorious army cheering, war horns blowing and banners flapping, triumphant ending |
 | `defeat` | `defeat.mp3` | 3.0 s | 2D | Match lost / you were eliminated | `defeat.mp3`: Defeated army retreating, low sorrowful horn, distant wind and a dropped sword |
 | `chat` | `chat.mp3` | 0.5 s | 2D | Chat message posted | `chat.mp3`: Quill scratching parchment briefly, short soft notification |
+| `country_lost` | `country_lost.wav` | 2 s | 2D | You lost a complete country/zone (its income and reinforcements stop); plays instead of `city_lost` | `country_lost.wav`: Deep war horn falling in pitch, a heavy war drum and a crumbling stone wall, grave and ominous |
 
 ## Runtime behaviour
 

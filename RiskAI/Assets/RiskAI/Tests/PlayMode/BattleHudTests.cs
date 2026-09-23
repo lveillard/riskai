@@ -79,6 +79,44 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator MenuHasCloseButtonAndDrawsAboveTheFeedbackOverlay()
+        {
+            var controller=Object.FindFirstObjectByType<RtsController>();
+            var runtime=hud.GetComponent<RtsUiRuntime>();
+            var feedback=GameObject.Find("Battle HUD feedback").GetComponent<RtsUiRuntime>();
+            Assert.That(runtime.SortingOrder,Is.LessThan(feedback.SortingOrder),"Without a modal the log and toasts draw above the HUD.");
+            controller.HelpVisible=true;yield return null;yield return null;
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(runtime.SortingOrder,Is.GreaterThan(feedback.SortingOrder),"The menu must render above (and take pointer events before) the message log.");
+            Assert.That(root.Q<Slider>("Audio master"),Is.Null,"Sound controls live in their own section.");
+            var sound=root.Q<Button>("HUD menu tab Sonido");Assert.That(sound,Is.Not.Null);
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=sound;sound.SendEvent(evt);}
+            yield return null;
+            root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Q<Slider>("Audio master"),Is.Not.Null);
+            Assert.That(root.Q<Slider>("Music volume"),Is.Not.Null);
+            var close=root.Q<Button>("HUD modal close");Assert.That(close,Is.Not.Null);
+            using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=close;close.SendEvent(evt);}
+            yield return null;yield return null;
+            Assert.That(controller.HelpVisible,Is.False);
+            Assert.That(runtime.SortingOrder,Is.LessThan(feedback.SortingOrder));
+        }
+
+        [UnityTest]
+        public IEnumerator RankingBoardListsEveryPlayerAndToggles()
+        {
+            var root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Q<VisualElement>("HUD ranking board"),Is.Null);
+            hud.ShowPlayers();yield return null;
+            root=hud.GetComponent<UIDocument>().rootVisualElement;
+            Assert.That(root.Q<VisualElement>("HUD ranking board"),Is.Not.Null);
+            Assert.That(root.Query<VisualElement>().ToList().Count(e=>e.name!=null&&e.name.StartsWith("HUD ranking row ")),Is.EqualTo(battle.PlayerCount));
+            Assert.That(Object.FindFirstObjectByType<RtsController>().HelpVisible,Is.False,"The multiboard is an overlay, not a modal.");
+            hud.HideRanking();yield return null;
+            Assert.That(hud.GetComponent<UIDocument>().rootVisualElement.Q<VisualElement>("HUD ranking board"),Is.Null);
+        }
+
+        [UnityTest]
         public IEnumerator OwnProductionFloatsWithoutSelectionAndNeverExposesEnemyQueues()
         {
             var controller=Object.FindFirstObjectByType<RtsController>();

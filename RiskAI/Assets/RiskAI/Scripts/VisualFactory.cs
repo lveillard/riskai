@@ -241,9 +241,9 @@ namespace RiskAI
         {
             var root=soldier.transform; var team=TeamMaterialColor(soldier.Team);
             WorldArt.GroundShadow(root,new Vector3(.07f,.045f,.1f),new Vector2(1.1f,.95f));
-            if(soldier.Kind==UnitKind.Guard)
+            if(MountedKnightView.IsMounted(soldier.Kind)&&soldier.Kind!=UnitKind.ArmyGeneral)
             {
-                MountedKnightView.Create(soldier);
+                MountedKnightView.CreateVariant(root,soldier.Team,soldier.Kind,soldier);
                 Ring(root,.74f,.025f,team);return;
             }
             if(UnitVariantViews.TryCreate(soldier,team))return;

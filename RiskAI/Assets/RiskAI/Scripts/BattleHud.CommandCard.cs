@@ -33,6 +33,89 @@ namespace RiskAI
             BuildSelection(info);
             BuildProduction(grids, info);
             card.Add(grids); card.Add(info); root.Add(card);
+            // Desktop uses the space right of the grid; compact stacks the details under it.
+            BuildBuildingDetails(UiViewport.IsCompact ? root : info);
+        }
+
+        /// <summary>Selected building facts: country, garrison, tower, queues with cancel and rally hint.</summary>
+        void BuildBuildingDetails(VisualElement root)
+        {
+            if (controller.SelectedTowns.Count + controller.SelectedHarbors.Count != 1) return;
+            var harbor = controller.SelectedHarbor;
+            var town = harbor ? (harbor.IsImportedPort ? harbor.LinkedTown : null) : controller.SelectedTown;
+            var state = town ? town.State : harbor ? harbor.State : null;
+            if (state == null) return;
+            var details = new VisualElement { name = "HUD building details" }; details.style.flexShrink = 0; details.style.marginTop = 2;
+            int country = state.Country;
+            if (country >= 0 && country < MapLayout.Countries.Length)
+                DetailLine(details, () =>
+                {
+                    var group = hud.Countries[country];
+                    return "País · " + MapLayout.Countries[country].Name + " · " + group.Owned + " / " + group.CityCount + " ciudades" + (group.Owner == state.Owner && PlayerRules.IsPlayer(state.Owner) ? " · completo" : "");
+                });
+            DetailLine(details, () =>
+            {
+                var defender = town ? town.Defender : harbor ? harbor.Defender : null;
+                return defender && defender.IsAlive
+                    ? "Guarnición · " + BattleRules.Name(defender.Kind) + " · " + Mathf.CeilToInt(defender.Health) + " / " + Mathf.CeilToInt(defender.MaxHealth) + " vida"
+                    : "Sin guarnición · un enemigo en el círculo la conquista";
+            });
+            var defense = town ? town.Defense : harbor ? harbor.Defense : null;
+            if (defense)
+                DetailLine(details, () => defense.UnderConstruction ? "Torre en construcción" : defense.IsAlive
+                    ? "Torre · " + Mathf.CeilToInt(defense.Health) + " / " + Mathf.CeilToInt(defense.MaxHealth) + " vida" + (defense.Guardian && defense.Guardian.IsAlive ? "" : " · sin guarnición no dispara")
+                    : "Torre destruida");
+            if (harbor)
+            {
+                DetailLine(details, () => harbor.HasNavalDefender ? "Barco guardia · " + harbor.NavalDefender.DisplayName : "Sin barco guardia");
+                if (!harbor.CanLaunch && !string.IsNullOrEmpty(harbor.LaunchBlockReason)) DetailLine(details, () => harbor.LaunchBlockReason);
+            }
+            if (state.Owner == 0)
+            {
+                if (town && town.QueueCount > 0) QueueStrip(details, "Cola", town.QueueCount, i => PortraitResource(town.QueuedKind(i)), i => BattleRules.Name(town.QueuedKind(i)),
+                    () => town.TrainingProgress, i => controller.CancelTraining(town, i));
+                else if (harbor && !town && harbor.LandQueueCount > 0) QueueStrip(details, "Cola", harbor.LandQueueCount, i => PortraitResource(harbor.QueuedLandKind(i)), i => BattleRules.Name(harbor.QueuedLandKind(i)),
+                    () => harbor.LandTrainingProgress, i => controller.CancelTraining(harbor, i, false));
+                if (harbor && harbor.QueueCount > 0) QueueStrip(details, "Astillero", harbor.QueueCount, i => ShipPortrait.Resource(harbor.QueuedKind(i)), i => Harbor.Profile(harbor.QueuedKind(i)).Name,
+                    () => harbor.TrainingProgress, i => controller.CancelTraining(harbor, i, true));
+                if (!UiViewport.IsTouchLayout) DetailLine(details, () => "Clic derecho en el mapa fija la salida de las nuevas unidades.", true);
+            }
+            root.Add(details);
+        }
+
+        void DetailLine(VisualElement root, System.Func<string> value, bool hint = false)
+        {
+            var label = RtsUiStyle.Label(value(), null, UiViewport.IsCompact ? 12 : 13);
+            label.style.color = hint ? new Color(.6f, .62f, .58f) : RtsUiStyle.Text;
+            label.style.whiteSpace = WhiteSpace.NoWrap; label.style.overflow = Overflow.Hidden; label.style.textOverflow = TextOverflow.Ellipsis;
+            label.style.marginTop = 0; label.style.marginBottom = 2;
+            root.Add(label); liveContext.Add(() => label.text = GameText.Localize(value()));
+        }
+
+        /// <summary>Queued orders as small portraits; the first shows training progress; a click cancels (refund).</summary>
+        void QueueStrip(VisualElement root, string title, int count, System.Func<int, string> portrait, System.Func<int, string> name, System.Func<float> progress, System.Action<int> cancel)
+        {
+            var row = new VisualElement { name = "HUD selection queue " + title }; RtsUiStyle.Row(row); row.style.marginTop = 3; row.style.marginBottom = 3;
+            var caption = RtsUiStyle.Label(title, null, 12); caption.style.color = RtsUiStyle.Bronze; caption.style.width = 64; caption.style.flexShrink = 0; row.Add(caption);
+            float size = UiViewport.IsTouchLayout ? UiViewport.MinimumTouchTarget : 36;
+            for (int i = 0; i < count; i++)
+            {
+                int index = i;
+                var button = RtsUiStyle.Button("", () => cancel(index), "HUD selection queue item " + i);
+                SquareCell(button, size);
+                button.tooltip = GameText.Localize(name(i) + " · cancelar encargo (devuelve el oro)");
+                button.Add(PortraitFrame(portrait(i), size - 8));
+                if (i == 0)
+                {
+                    var track = new VisualElement { pickingMode = PickingMode.Ignore }; track.style.position = Position.Absolute;
+                    track.style.left = 2; track.style.right = 2; track.style.bottom = 2; track.style.height = 4; track.style.backgroundColor = RtsUiStyle.Slate;
+                    var fill = new VisualElement { pickingMode = PickingMode.Ignore }; fill.style.height = 4; fill.style.backgroundColor = RtsUiStyle.Gold;
+                    track.Add(fill); button.Add(track);
+                    liveContext.Add(() => fill.style.width = Length.Percent(Mathf.Clamp01(progress()) * 100));
+                }
+                row.Add(button);
+            }
+            root.Add(row);
         }
 
         void BuildProduction(VisualElement grids, VisualElement info)
@@ -243,9 +326,11 @@ namespace RiskAI
             { "1–9 · Ctrl+1–9", "Recuperar o guardar un grupo; doble pulsación centra la cámara" },
             { "Espacio", "Centrar en la selección, la flota o la última alerta" },
             { "F1 · F2 · F3", "Menú · ir a tu base · ir a tu puerto" },
+            { "F7 · F8 · F9", "Efectos de sonido · música · minimapa (también en la barra rápida)" },
             { "F10", "Pausa" },
             { "Tab", "Mantener para ver la clasificación" },
-            { "Intro", "Escribir en el chat" },
+            { "Intro · Mayús+Intro", "Chat al destinatario elegido · enviar a todos" },
+            { "Tab en el chat · /w color", "Cambiar de destinatario · mensaje privado (p. ej. /w azul hola, /azul hola)" },
             { "Esc", "Cancelar la orden o deseleccionar" },
             { "Alt", "Mostrar vida y nombres" },
             { "Flechas · Retroceso", "Mover la cámara · restablecer la cámara" },

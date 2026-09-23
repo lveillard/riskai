@@ -167,6 +167,9 @@ namespace RiskAI.Tests
                         var a=vertices[triangles[t]];var b=vertices[triangles[t+1]];var c=vertices[triangles[t+2]];
                         if(!Rounded(data,a)&&!Rounded(data,b)&&!Rounded(data,c))continue;
                         var sample=(a+b+c)/3f;
+                        // Beyond the playable rectangle the render mesh extrudes the edge
+                        // terrain (ImportedMapSkirt) and has no collision; only compare inside.
+                        if(!data.InPlayable(sample.x,sample.z))continue;
                         float height=water?data.WaterAt(sample.x,sample.z):data.HeightAt(sample.x,sample.z);
                         Assert.That(height,Is.EqualTo(sample.y).Within(.001f),map+" deformed render triangle agrees with CPU height");
                         if(water){if(++waterChecks>=32)break;}else if(++landChecks>=32)break;

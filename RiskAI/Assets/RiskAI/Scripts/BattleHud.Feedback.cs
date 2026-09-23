@@ -26,10 +26,47 @@ namespace RiskAI
         }
     }
 
+    /// <summary>What the local player sees and hears for a capture. Pure, so the routing is testable.</summary>
+    public readonly struct CaptureCue
+    {
+        public readonly SfxId Sound;
+        public readonly string Headline, Detail;
+        public readonly bool Loss, Big;
+        public CaptureCue(SfxId sound, string headline, string detail, bool loss, bool big) { Sound = sound; Headline = headline; Detail = detail; Loss = loss; Big = big; }
+        /// <summary>Headline and detail on two lines (Spanish source; GameText localizes each).</summary>
+        public string Text => string.IsNullOrEmpty(Detail) ? Headline : Headline + "\n" + Detail;
+
+        /// <summary>
+        /// Losing a city of a country the player fully owned is its own event: the country breaks
+        /// and stops paying gold and reinforcements, so it gets CountryLost instead of CityLost.
+        /// Returns false for captures that do not involve player 0.
+        /// </summary>
+        public static bool For(in CaptureEvent capture, string country, out CaptureCue cue)
+        {
+            if (capture.Owner == 0)
+            {
+                cue = capture.CountryCompleted && country != null
+                    ? new CaptureCue(SfxId.CountryCompleted, "¡País completado: " + country + "!", "Oro y refuerzos de " + country + " cada ronda", false, true)
+                    : new CaptureCue(SfxId.CityCaptured, "Has conquistado " + capture.Name, null, false, false);
+                return true;
+            }
+            if (capture.Previous == 0)
+            {
+                cue = capture.CountryLost && country != null
+                    ? new CaptureCue(SfxId.CountryLost, "¡Has perdido " + country + "!", "País roto: sin oro ni refuerzos de " + country, true, true)
+                    : new CaptureCue(SfxId.CityLost, "Has perdido " + capture.Name, null, true, false);
+                return true;
+            }
+            cue = default; return false;
+        }
+    }
+
     /// <summary>Feedback overlay: recent message log, toasts, chat, gold juice and attack alerts.</summary>
     public sealed partial class BattleHud
     {
         const int DesktopLogRows = 4, CompactLogRows = 3;
+        /// <summary>Feedback overlay panel order; the HUD rises above it while a modal is open.</summary>
+        const int FeedbackSortingOrder = 21;
         const float ToastSeconds = 2.6f;
         static readonly Color AlertRed = new Color(1f, .36f, .3f);
         GameObject feedbackHost;
@@ -39,7 +76,10 @@ namespace RiskAI
         readonly int[] logRowKeys = new int[DesktopLogRows];
         readonly MessageEntry[] logRowEntries = new MessageEntry[DesktopLogRows];
         Label toastLabel, goldFloat;
-        Button chatButton;
+        Button chatButton, recipientChip, chatSend, chatCancel;
+        VisualElement recipientSwatch, recipientList, compactQuickBar;
+        Label recipientLabel;
+        int chatRecipient = ChatMessage.Everyone, chatTabFrame = -1;
         TextField chatField;
         readonly ChatChannel chat = new ChatChannel();
         bool chatOpen, webChat;
@@ -62,7 +102,7 @@ namespace RiskAI
             // A UIDocument nested under another UIDocument must share its PanelSettings,
             // so the overlay host is a sibling of the HUD rather than its child.
             feedbackHost.transform.SetParent(transform.parent, false);
-            feedbackUi = RtsUiRuntime.Attach(feedbackHost, "Battle feedback", 21);
+            feedbackUi = RtsUiRuntime.Attach(feedbackHost, "Battle feedback", FeedbackSortingOrder);
             BuildFeedbackUi();
             var feedback = session.Feedback;
             feedback.MessagePosted += OnFeedbackMessage;
@@ -132,22 +172,51 @@ namespace RiskAI
             chatBar.style.borderTopWidth = chatBar.style.borderBottomWidth = chatBar.style.borderLeftWidth = chatBar.style.borderRightWidth = 1;
             chatBar.style.borderTopColor = chatBar.style.borderBottomColor = chatBar.style.borderLeftColor = chatBar.style.borderRightColor = RtsUiStyle.Bronze;
             chatBar.style.paddingLeft = 4; chatBar.style.paddingRight = 4; chatBar.style.paddingTop = 2; chatBar.style.paddingBottom = 2;
+            // Recipient chip ("Para: Todos"): opens the list of living players; Tab cycles while typing.
+            recipientChip = CompactButton("", ToggleRecipientList, "HUD chat recipient");
+            recipientChip.style.marginLeft = 0; recipientChip.style.marginRight = 4; recipientChip.style.paddingLeft = 6; recipientChip.style.paddingRight = 6;
+            recipientChip.style.flexDirection = FlexDirection.Row; recipientChip.style.alignItems = Align.Center; recipientChip.style.flexShrink = 0;
+            recipientChip.tooltip = GameText.Localize("Destinatario · Tab cambia · Mayús+Intro envía a todos");
+            recipientSwatch = new VisualElement { pickingMode = PickingMode.Ignore }; recipientSwatch.style.width = recipientSwatch.style.height = 10; recipientSwatch.style.marginRight = 5;
+            recipientLabel = new Label { pickingMode = PickingMode.Ignore }; recipientLabel.style.fontSize = 12; recipientLabel.style.color = RtsUiStyle.Text;
+            var chevron = new RtsChevron(true); chevron.style.width = 12; chevron.style.height = 8; chevron.style.marginLeft = 5;
+            recipientChip.Add(recipientSwatch); recipientChip.Add(recipientLabel); recipientChip.Add(chevron);
+            // The WebGL DOM field would blur on this tap; keep it open and refocus it afterwards.
+            recipientChip.RegisterCallback<PointerDownEvent>(_ => { if (webChat) WebChatInput.Hold(); }, TrickleDown.TrickleDown);
+            chatBar.Add(recipientChip);
             chatField = new TextField { name = "HUD chat field", maxLength = ChatChannel.MaxLength };
             chatField.style.flexGrow = 1; chatField.style.minWidth = 0; chatField.style.fontSize = 13;
             chatField.RegisterCallback<KeyDownEvent>(OnChatKey, TrickleDown.TrickleDown);
+            chatField.RegisterCallback<NavigationMoveEvent>(OnChatNavigate, TrickleDown.TrickleDown);
             chatBar.Add(chatField);
-            var send = CompactButton("Enviar", () => CloseChat(true), "HUD chat send");
-            chatBar.Add(send);
-            chatBar.Add(CompactButton("Cancelar", () => CloseChat(false), "HUD chat cancel"));
+            chatSend = CompactButton("Enviar", () => CloseChat(true), "HUD chat send");
+            chatBar.Add(chatSend);
+            chatCancel = CompactButton("Cancelar", () => CloseChat(false), "HUD chat cancel");
+            chatBar.Add(chatCancel);
             chatBar.style.display = DisplayStyle.None;
             feedbackRoot.Add(chatBar);
 
+            recipientList = new VisualElement { name = "HUD chat recipients", pickingMode = PickingMode.Position };
+            recipientList.style.position = Position.Absolute; recipientList.style.left = 8; recipientList.style.minWidth = 190;
+            recipientList.style.backgroundColor = new Color(.035f, .04f, .03f, .96f);
+            recipientList.style.borderTopWidth = recipientList.style.borderBottomWidth = recipientList.style.borderLeftWidth = recipientList.style.borderRightWidth = 1;
+            recipientList.style.borderTopColor = recipientList.style.borderBottomColor = recipientList.style.borderLeftColor = recipientList.style.borderRightColor = RtsUiStyle.Bronze;
+            recipientList.style.paddingLeft = recipientList.style.paddingRight = recipientList.style.paddingTop = recipientList.style.paddingBottom = 4;
+            recipientList.style.display = DisplayStyle.None;
+            feedbackRoot.Add(recipientList);
+            UpdateRecipientChip();
+
+            // The old stand-alone chat button is superseded by the quick bar's chat icon.
             chatButton = CompactButton("Chat", OpenChat, "HUD chat button");
-            chatButton.tooltip = GameText.Localize("Escribir un mensaje (Intro)");
-            chatButton.style.position = Position.Absolute; chatButton.style.left = 8;
-            // Touch browsers need the DOM input armed inside the same finger gesture.
-            chatButton.RegisterCallback<PointerDownEvent>(_ => { if (WebChatInput.Supported) WebChatInput.Arm(GameText.Localize("Escribe un mensaje…")); }, TrickleDown.TrickleDown);
+            chatButton.style.position = Position.Absolute; chatButton.style.left = 8; chatButton.style.display = DisplayStyle.None;
             feedbackRoot.Add(chatButton);
+            compactQuickBar = null;
+            if (UiViewport.IsCompact)
+            {
+                compactQuickBar = BuildQuickBar(true);
+                compactQuickBar.style.position = Position.Absolute; compactQuickBar.style.left = 8;
+                feedbackRoot.Add(compactQuickBar);
+            }
 
             toastBox = new VisualElement { name = "HUD toast", pickingMode = PickingMode.Ignore };
             toastBox.style.position = Position.Absolute; toastBox.style.left = 0; toastBox.style.right = 0;
@@ -188,11 +257,19 @@ namespace RiskAI
             float bottom = FeedbackBottom;
             float width = Mathf.Min(UiViewport.IsCompact ? 360 : 440, UiViewport.LogicalWidth - 16);
             bool touch = UiViewport.IsTouchLayout;
-            chatButton.style.display = touch && !chatOpen && session.Winner < 0 ? DisplayStyle.Flex : DisplayStyle.None;
-            chatButton.style.bottom = bottom;
+            bool quick = compactQuickBar != null && !chatOpen && session.Winner < 0 && !controller.HelpVisible;
+            if (compactQuickBar != null) { compactQuickBar.style.display = quick ? DisplayStyle.Flex : DisplayStyle.None; compactQuickBar.style.bottom = bottom; }
             float chatHeight = touch ? Mathf.Max(34, UiViewport.MinimumTouchTarget * .8f) + 6 : 32;
-            chatBar.style.bottom = bottom; chatBar.style.width = width;
-            float logBottom = bottom + (chatOpen || touch ? chatHeight + 2 : 0);
+            float barHeight = compactQuickBar != null ? Mathf.Max(chatHeight, QuickSize + 2) : chatHeight;
+            // The WebGL DOM field sits above the on-screen keyboard; only the recipient chip stays in Unity, near the top.
+            if (webChat) { chatBar.style.top = HeaderHeight + 8; chatBar.style.bottom = StyleKeyword.Auto; chatBar.style.width = StyleKeyword.Auto; }
+            else { chatBar.style.top = StyleKeyword.Auto; chatBar.style.bottom = bottom; chatBar.style.width = width; }
+            if (recipientList.style.display == DisplayStyle.Flex)
+            {
+                if (webChat) { recipientList.style.top = HeaderHeight + 8 + chatHeight + 4; recipientList.style.bottom = StyleKeyword.Auto; }
+                else { recipientList.style.top = StyleKeyword.Auto; recipientList.style.bottom = bottom + chatHeight + 4; }
+            }
+            float logBottom = bottom + (chatOpen && !webChat || quick ? barHeight + 2 : 0);
             logBox.style.bottom = logBottom; logBox.style.width = width;
             toastBox.style.top = UiViewport.LogicalHeight * (UiViewport.IsPortrait ? .2f : .17f) + HeaderHeight * .5f;
         }
@@ -209,7 +286,9 @@ namespace RiskAI
             RefreshToast(now);
             RefreshGold(now);
             PollChat();
+            RefreshQuickBar();
             var keyboard = Keyboard.current;
+            PollQuickKeys(keyboard);
             if (!chatOpen && keyboard != null && !ChatInput.IsTyping && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
                 && !controller.HelpVisible && session.Winner < 0)
                 OpenChat();
@@ -292,7 +371,9 @@ namespace RiskAI
                 if (toasts.Count == 0) { if (toastBox.style.display != DisplayStyle.None) toastBox.style.display = DisplayStyle.None; return; }
                 var next = toasts.Dequeue();
                 toastStart = now; age = 0;
-                toastLabel.text = GameText.Localize(next.text);
+                // Two-line toasts (headline + consequence) localize each line on its own.
+                int split = next.text.IndexOf('\n');
+                toastLabel.text = split < 0 ? GameText.Localize(next.text) : GameText.Localize(next.text.Substring(0, split)) + "\n" + GameText.Localize(next.text.Substring(split + 1));
                 toastLabel.style.color = Readable(next.color);
                 toastLabel.style.borderTopColor = toastLabel.style.borderBottomColor = next.color;
                 toastLabel.style.fontSize = next.big ? (UiViewport.IsCompact ? 18 : 22) : (UiViewport.IsCompact ? 14 : 16);
@@ -352,17 +433,11 @@ namespace RiskAI
         void OnFeedbackCapture(CaptureEvent capture)
         {
             string country = capture.Country >= 0 && capture.Country < MapLayout.Countries.Length ? MapLayout.Countries[capture.Country].Name : null;
-            if (capture.Owner == 0)
-            {
-                if (capture.CountryCompleted && country != null) { Toast("¡País completado: " + country + "!", VisualFactory.TeamColor(0), true); Sfx.Ui(SfxId.CountryCompleted); }
-                else { Toast("Has conquistado " + capture.Name, VisualFactory.TeamColor(0), false); Sfx.Ui(SfxId.CityCaptured); }
-            }
-            else if (capture.Previous == 0)
-            {
-                if (capture.CountryLost && country != null) Toast("Has perdido el país " + country, AlertRed, true);
-                else Toast("Has perdido " + capture.Name, AlertRed, false);
-                Sfx.Ui(SfxId.CityLost);
-            }
+            if (!CaptureCue.For(capture, country, out var cue)) return;
+            Toast(cue.Text, cue.Loss ? AlertRed : VisualFactory.TeamColor(0), cue.Big);
+            Sfx.Ui(cue.Sound);
+            // A broken country is also logged plainly, with a jump to the lost city.
+            if (cue.Sound == SfxId.CountryLost) session.Feedback.Post(cue.Headline + " " + cue.Detail, MessageKind.Loss, 0, capture.Position);
         }
 
         void OnFeedbackDamage(CombatTarget victim, int attacker, CombatTarget source)
@@ -419,28 +494,132 @@ namespace RiskAI
             chatOpen = true; ChatInput.SetOpen(true);
             controller.CancelCursor();
             webChat = WebChatInput.Supported;
-            if (webChat) { WebChatInput.Open(GameText.Localize("Escribe un mensaje…")); return; }
+            if (!ChatRecipients().Contains(chatRecipient)) chatRecipient = ChatMessage.Everyone;
+            UpdateRecipientChip();
+            if (webChat) { WebChatInput.Open(ChatPlaceholder()); ShowChatBar(); return; }
             ShowChatBar();
+        }
+
+        /// <summary>UI capture fixture: opens the chat with its recipient list.</summary>
+        public void ReviewChatRecipients()
+        {
+            OpenChat();
+            if (chatOpen && recipientList.style.display != DisplayStyle.Flex) ToggleRecipientList();
         }
 
         void ShowChatBar()
         {
             chatBar.style.display = DisplayStyle.Flex;
+            var field = webChat ? DisplayStyle.None : DisplayStyle.Flex;
+            chatField.style.display = chatSend.style.display = chatCancel.style.display = field;
+            if (webChat) return;
             chatField.value = string.Empty;
             // Focusing a UI Toolkit TextField raises TouchScreenKeyboard on native mobile builds.
             chatField.schedule.Execute(() => { if (chatOpen) chatField.Focus(); });
             chatField.Focus();
         }
 
-        void CloseChat(bool send)
+        void CloseChat(bool send, bool everyone = false)
         {
             if (!chatOpen) return;
             string text = webChat ? WebChatInput.Take() : chatField != null ? chatField.value : string.Empty;
             chatOpen = false; ChatInput.SetOpen(false);
             if (webChat) WebChatInput.Close();
             webChat = false;
+            if (recipientList != null) recipientList.style.display = DisplayStyle.None;
             if (chatBar != null) { chatBar.style.display = DisplayStyle.None; chatField.value = string.Empty; chatField.Blur(); }
-            if (send) chat.Submit(0, text);
+            if (send) SendChat(text, everyone);
+        }
+
+        /// <summary>Resolves "/w name", "/color" and "/todos" shortcuts, then submits to the chosen recipient.</summary>
+        void SendChat(string text, bool everyone)
+        {
+            int recipient = everyone ? ChatMessage.Everyone : chatRecipient;
+            if (ChatChannel.TryParseRecipient(text, session.PlayerCount, CanReceiveChat, out int named, out string body, out bool unknown))
+            { recipient = named; text = body; }
+            else if (unknown) { session.Feedback.Post("No hay ningún jugador con ese nombre o color.", MessageKind.Info, 0); return; }
+            if (recipient != ChatMessage.Everyone && !CanReceiveChat(recipient)) recipient = ChatMessage.Everyone;
+            chat.Submit(0, text, recipient);
+        }
+
+        bool CanReceiveChat(int player) => player > 0 && player < session.PlayerCount && !session.IsPlayerEliminated(player);
+
+        /// <summary>"Todos" first, then every living opponent.</summary>
+        System.Collections.Generic.List<int> ChatRecipients()
+        {
+            var list = new System.Collections.Generic.List<int> { ChatMessage.Everyone };
+            for (int player = 1; player < session.PlayerCount; player++) if (CanReceiveChat(player)) list.Add(player);
+            return list;
+        }
+
+        static string ShortRecipient(int recipient)
+        {
+            if (recipient == ChatMessage.Everyone) return "Todos";
+            string name = VisualFactory.TeamName(recipient);
+            int split = name.LastIndexOf(" · ", System.StringComparison.Ordinal);
+            return split >= 0 ? name.Substring(split + 3) : name;
+        }
+
+        string ChatPlaceholder() => GameText.Localize("Para " + ShortRecipient(chatRecipient) + " · Escribe un mensaje…");
+
+        void SetChatRecipient(int recipient)
+        {
+            chatRecipient = recipient;
+            UpdateRecipientChip();
+            if (webChat) WebChatInput.SetPlaceholder(ChatPlaceholder());
+        }
+
+        void UpdateRecipientChip()
+        {
+            if (recipientLabel == null) return;
+            recipientLabel.text = GameText.Localize("Para: " + ShortRecipient(chatRecipient));
+            var colour = chatRecipient == ChatMessage.Everyone ? RtsUiStyle.Muted : VisualFactory.TeamColor(chatRecipient);
+            recipientSwatch.style.backgroundColor = colour;
+            recipientLabel.style.color = chatRecipient == ChatMessage.Everyone ? RtsUiStyle.Text : Readable(colour);
+        }
+
+        void CycleChatRecipient(int direction)
+        {
+            var list = ChatRecipients();
+            int index = Mathf.Max(0, list.IndexOf(chatRecipient));
+            SetChatRecipient(list[(index + direction + list.Count) % list.Count]);
+            if (recipientList.style.display == DisplayStyle.Flex) BuildRecipientList();
+        }
+
+        void ToggleRecipientList()
+        {
+            if (recipientList.style.display == DisplayStyle.Flex) { recipientList.style.display = DisplayStyle.None; RefocusChat(); return; }
+            BuildRecipientList();
+            recipientList.style.display = DisplayStyle.Flex;
+        }
+
+        void BuildRecipientList()
+        {
+            recipientList.Clear();
+            foreach (int recipient in ChatRecipients())
+            {
+                int target = recipient;
+                var option = RtsUiStyle.Button("", () => { SetChatRecipient(target); recipientList.style.display = DisplayStyle.None; RefocusChat(); },
+                    "HUD chat recipient option " + (target == ChatMessage.Everyone ? "all" : target.ToString()));
+                option.style.flexDirection = FlexDirection.Row; option.style.alignItems = Align.Center; option.style.justifyContent = Justify.FlexStart;
+                option.style.minHeight = option.style.height = UiViewport.IsTouchLayout ? 40 : 28;
+                option.style.marginRight = 0; option.style.marginBottom = 2; option.style.paddingLeft = 8;
+                if (target == chatRecipient) option.style.borderLeftWidth = 3;
+                option.style.borderLeftColor = RtsUiStyle.Gold;
+                var swatch = new VisualElement { pickingMode = PickingMode.Ignore }; swatch.style.width = swatch.style.height = 10; swatch.style.marginRight = 8;
+                swatch.style.backgroundColor = target == ChatMessage.Everyone ? RtsUiStyle.Muted : VisualFactory.TeamColor(target);
+                var text = new Label(GameText.Localize(target == ChatMessage.Everyone ? "Todos" : VisualFactory.TeamName(target))) { pickingMode = PickingMode.Ignore };
+                text.style.fontSize = 12; text.style.color = target == ChatMessage.Everyone ? RtsUiStyle.Text : Readable(VisualFactory.TeamColor(target));
+                option.Add(swatch); option.Add(text);
+                option.RegisterCallback<PointerDownEvent>(_ => { if (webChat) WebChatInput.Hold(); }, TrickleDown.TrickleDown);
+                recipientList.Add(option);
+            }
+        }
+
+        void RefocusChat()
+        {
+            if (!chatOpen || webChat || chatField == null) return;
+            chatField.schedule.Execute(() => { if (chatOpen) { chatField.Focus(); chatField.value = chatField.value.Replace("\t", ""); } });
         }
 
         void PollChat()
@@ -461,14 +640,35 @@ namespace RiskAI
 
         void OnChatKey(KeyDownEvent evt)
         {
-            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter) { CloseChat(true); evt.StopPropagation(); }
-            else if (evt.keyCode == KeyCode.Escape) { CloseChat(false); evt.StopPropagation(); }
+            // Shift+Enter always goes to everyone (WC3 "all chat").
+            if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter) { CloseChat(true, evt.shiftKey); evt.StopPropagation(); }
+            else if (evt.keyCode == KeyCode.Escape)
+            {
+                if (recipientList.style.display == DisplayStyle.Flex) { recipientList.style.display = DisplayStyle.None; RefocusChat(); }
+                else CloseChat(false);
+                evt.StopPropagation();
+            }
+            else if (evt.keyCode == KeyCode.Tab)
+            {
+                chatTabFrame = Time.frameCount;
+                CycleChatRecipient(evt.shiftKey ? -1 : 1);
+                evt.StopImmediatePropagation(); RefocusChat();
+            }
+            else if (evt.character == '\t') { evt.StopImmediatePropagation(); }
         }
 
-        void OnChatReceived(int sender, string text)
+        // Tab can also arrive as focus navigation; it never leaves the field while typing.
+        void OnChatNavigate(NavigationMoveEvent evt)
         {
-            if (string.IsNullOrEmpty(text)) return;
-            session.Feedback.Post(ChatChannel.Format(sender, text), MessageKind.Chat, sender);
+            if (evt.direction != NavigationMoveEvent.Direction.Next && evt.direction != NavigationMoveEvent.Direction.Previous) return;
+            if (chatTabFrame != Time.frameCount) CycleChatRecipient(evt.direction == NavigationMoveEvent.Direction.Previous ? -1 : 1);
+            evt.StopImmediatePropagation(); RefocusChat();
+        }
+
+        void OnChatReceived(ChatMessage message)
+        {
+            if (string.IsNullOrEmpty(message.Text) || !message.VisibleTo(0)) return;
+            session.Feedback.Post(ChatChannel.Format(message), MessageKind.Chat, message.Sender);
         }
 
         // ---------------------------------------------------------------- minimap pings
@@ -516,25 +716,6 @@ namespace RiskAI
                 }
             texture.SetPixels32(pixels); texture.Apply(false, true);
             return texture;
-        }
-
-        // ---------------------------------------------------------------- settings
-
-        void BuildFeedbackSettings(VisualElement panel)
-        {
-            int master = Mathf.RoundToInt(Sfx.MasterVolume * 100), effects = Mathf.RoundToInt(Sfx.EffectsVolume * 100);
-            var row = new VisualElement(); RtsUiStyle.Row(row, true);
-            row.Add(RtsUiStyle.Button(Sfx.Muted ? "SONIDO: SILENCIADO" : "SONIDO: ACTIVO", () => { Sfx.SetMuted(!Sfx.Muted); BuildRetainedUi(false); }, "Audio mute"));
-            row.Add(RtsUiStyle.Button("VOLUMEN −", () => { Sfx.SetMasterVolume(Sfx.MasterVolume - .1f); BuildRetainedUi(false); }, "Audio master down"));
-            row.Add(RtsUiStyle.Button("VOLUMEN +", () => { Sfx.SetMasterVolume(Sfx.MasterVolume + .1f); BuildRetainedUi(false); }, "Audio master up"));
-            row.Add(RtsUiStyle.Button("EFECTOS −", () => { Sfx.SetEffectsVolume(Sfx.EffectsVolume - .1f); BuildRetainedUi(false); }, "Audio effects down"));
-            row.Add(RtsUiStyle.Button("EFECTOS +", () => { Sfx.SetEffectsVolume(Sfx.EffectsVolume + .1f); BuildRetainedUi(false); }, "Audio effects up"));
-            row.Add(RtsUiStyle.Button(Music.MusicEnabled ? "MÚSICA: ACTIVA" : "MÚSICA: DESACTIVADA", () => { Music.ToggleMusic(); BuildRetainedUi(false); }, "Music toggle"));
-            row.Add(RtsUiStyle.Button("MÚSICA −", () => { Music.SetMusicVolume(Music.MusicVolume - .05f); BuildRetainedUi(false); }, "Music down"));
-            row.Add(RtsUiStyle.Button("MÚSICA +", () => { Music.SetMusicVolume(Music.MusicVolume + .05f); BuildRetainedUi(false); }, "Music up"));
-            row.Add(RtsUiStyle.Button(GameFeel.ShakeEnabled ? "TEMBLOR DE CÁMARA: ACTIVO" : "TEMBLOR DE CÁMARA: INACTIVO", () => { GameFeel.SetShakeEnabled(!GameFeel.ShakeEnabled); BuildRetainedUi(false); }, "Camera shake"));
-            panel.Add(row);
-            AddInfo(panel, "Volumen general " + master + " % · efectos " + effects + " % · música " + Mathf.RoundToInt(Music.MusicVolume * 100) + " % · F8 música");
         }
     }
 }

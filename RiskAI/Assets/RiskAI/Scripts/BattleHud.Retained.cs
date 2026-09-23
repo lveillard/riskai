@@ -23,7 +23,8 @@ namespace RiskAI
         int retainedContextKey;
         bool lastCompact, lastPortrait, lastFooterVisible;
         int lastModalKind;
-        int ModalKind => session.Winner >= 0 ? 3 : controller.ScoreboardVisible ? 2 : controller.HelpVisible ? 1 : 0;
+        // Holding Tab shows the non-modal ranking board (BattleHud.Overlay), not a modal sheet.
+        int ModalKind => session.Winner >= 0 ? 3 : controller.HelpVisible ? 1 : 0;
         Vector2 lastScreen;
         Rect lastSafe;
         float nextRetainedLabelRefresh;
@@ -36,8 +37,10 @@ namespace RiskAI
         bool wideFooter;
         bool BuildingSelection => controller.SelectedTowns.Count+controller.SelectedHarbors.Count>0;
         bool HasSelection => controller && (controller.SelectedTown || controller.SelectedHarbor || controller.SelectedCamp || controller.InspectedTarget || controller.Selection.Count + controller.Fleet.Count > 0);
-        bool FooterVisible => HasSelection || (showMinimap && retainedTab == 3);
-        bool MinimapVisible => showMinimap && FooterVisible && !FooterCollapsed && (!UiViewport.IsPortrait || retainedTab == 3);
+        // Compact layouts show the map inside the footer (tab 3); desktop keeps it in its own
+        // always-on console at the bottom-right, independent of the selection footer.
+        bool FooterVisible => HasSelection || (UiViewport.IsCompact && showMinimap && retainedTab == 3);
+        bool MinimapVisible => !UiViewport.IsCompact ? showMinimap : showMinimap && FooterVisible && !FooterCollapsed && (!UiViewport.IsPortrait || retainedTab == 3);
 
         // Compact bars are a single row of icon+number items in both orientations.
         float RequestedHeaderHeight => !UiViewport.IsCompact ? 48 : UiViewport.MinimumTouchTarget + 6;
@@ -59,6 +62,7 @@ namespace RiskAI
         {
             retainedUi = RtsUiRuntime.Attach(gameObject, "Battle HUD", 20);
             showMinimap = !UiViewport.IsPortrait;
+            LoadHudPreferences();
             BuildRetainedUi(true);
         }
 
@@ -76,6 +80,7 @@ namespace RiskAI
                 BuildRetainedUi(false);
                 return;
             }
+            RefreshRankingBoard(false);
             if (retainedContextKey != contextKey || RosterChanged())
             {
                 retainedContextKey = contextKey;
@@ -139,22 +144,6 @@ namespace RiskAI
             }
         }
 
-        void UpdateRankingLabels()
-        {
-            if(rankingRows.Count==0)return;
-            var order = RankedPlayers();
-            for (int rank=0;rank<rankingRows.Count && rank<order.Count;rank++)
-            {
-                int player=order[rank];var row=rankingRows[rank];
-                bool eliminated=session.IsPlayerEliminated(player);
-                row.Name.text=GameText.Localize((rank+1)+". "+VisualFactory.TeamName(player)+(eliminated?" · ELIMINADO":""));
-                row.Root.style.borderLeftColor=VisualFactory.TeamColor(player);
-                row.Root.style.opacity=eliminated?.55f:1;
-                row.Cities.text=hud.PlayerCities[player].ToString();
-                row.Units.text=hud.PlayerUnits[player].ToString();
-            }
-        }
-
         void BuildRetainedUi(bool initial)
         {
             ConfigureViewport();
@@ -167,11 +156,17 @@ namespace RiskAI
             retainedRoot.style.flexGrow = 1;
             BuildHeader(retainedRoot);
             if(FooterVisible) { BuildFooter(retainedRoot); BuildFooterHandle(retainedRoot); }
+            BuildDesktopMinimapPanel(retainedRoot);
             BuildWorldQueues(retainedRoot);
             if (MinimapVisible) BuildMinimapHitOverlay(retainedRoot);
             if (lastModalKind!=0) BuildModal(retainedRoot);
             BuildStartCountdown(retainedRoot);
             BuildPauseNotice(retainedRoot);
+            // Last, so the pause plaque never covers the board (the board hides while a modal is open).
+            rankingBoard=null;lastRankingVisible=false;
+            if (RankingVisible) BuildRankingBoard(retainedRoot);
+            // An open menu/result must draw above the feedback overlay (log, toasts) and take its pointer events.
+            retainedUi.SortingOrder = lastModalKind!=0 ? FeedbackSortingOrder + 1 : 20;
             retainedUi.SetContent(retainedRoot);
         }
 
@@ -256,8 +251,7 @@ namespace RiskAI
             AddCitiesDisplay(header);
             AddPopulationDisplay(header);
             var spacer = new VisualElement { pickingMode = PickingMode.Ignore }; spacer.style.flexGrow = 1; header.Add(spacer);
-            header.Add(HeaderButton("Ranking", ShowPlayers));
-            header.Add(HeaderButton(MinimapVisible ? "Ocultar mapa" : "Mapa", ToggleMinimap));
+            // Ranking and Map live in the quick bar beside the minimap.
             pauseButton = HeaderButton(session.Paused ? "Continuar" : "Pausa", () => { session.TogglePause(); UpdateRetainedLabels(); }); header.Add(pauseButton);
             header.Add(HeaderButton("Menú", OpenMenu));
         }
@@ -271,7 +265,6 @@ namespace RiskAI
             AddCitiesDisplay(top);
             AddPopulationDisplay(top);
             var spacer = new VisualElement { pickingMode = PickingMode.Ignore }; spacer.style.flexGrow = 1; spacer.style.flexShrink = 1; top.Add(spacer);
-            top.Add(HeaderButton("Mapa", ToggleMinimap));
             top.Add(HeaderButton("Menú", OpenMenu));
             header.Add(top);
         }
@@ -300,15 +293,18 @@ namespace RiskAI
         void CloseModal() { controller.CancelCursor(); controller.HelpVisible = false; menuTab = 0; BuildRetainedUi(false); }
         void ToggleMinimap()
         {
-            bool visible=MinimapVisible;showMinimap=!visible;retainedTab=visible?0:3;
-            if(!visible)footerCollapsed=false;
+            bool visible=MinimapVisible;showMinimap=!visible;
+            if(!UiViewport.IsCompact)SavePreference(MinimapPreference,showMinimap?1:0);
+            else { retainedTab=visible?0:3; if(!visible)footerCollapsed=false; }
             BuildRetainedUi(false);
         }
 
         void BuildFooter(VisualElement root)
         {
             footer = RtsUiStyle.Panel("HUD footer"); footer.style.position = Position.Absolute;
-            footer.style.left = MinimapVisible && !UiViewport.IsPortrait ? MinimapRect().xMax + 8 - UiViewport.SafeRect.xMin/UiViewport.Scale : 0; footer.style.right = 0; footer.style.bottom = 0;
+            footer.style.left = UiViewport.IsCompact && MinimapVisible && !UiViewport.IsPortrait ? MinimapRect().xMax + 8 - UiViewport.SafeRect.xMin/UiViewport.Scale : 0;
+            // Desktop: selection and command grid take the left/centre; the minimap console owns the right.
+            footer.style.right = UiViewport.IsCompact ? 0 : DesktopPanelWidth + 6; footer.style.bottom = 0;
             footer.style.height = FooterHeight;
             footer.style.paddingTop=6;footer.style.paddingBottom=6;
             wideFooter = !UiViewport.IsCompact;
@@ -377,6 +373,7 @@ namespace RiskAI
 
         Rect MinimapRect()
         {
+            if (!UiViewport.IsCompact) return DesktopMinimapRect();
             float mapHeight = Mathf.Min(156, Mathf.Max(80, FooterHeight - 52));
             float mapWidth = Mathf.Min(208, mapHeight * (208f / 156f));
             float safeTop = (Screen.height - UiViewport.SafeRect.yMax) / UiViewport.Scale;
@@ -556,90 +553,11 @@ namespace RiskAI
             return texture;
         }
 
-        void BuildModal(VisualElement root)
-        {
-            modal = new VisualElement { name = "HUD modal", pickingMode = PickingMode.Position };
-            modal.style.position = Position.Absolute; modal.style.left = 0; modal.style.top = 0; modal.style.right = 0; modal.style.bottom = 0;
-            modal.style.backgroundColor = new Color(.01f, .02f, .03f, .88f); modal.style.paddingLeft = UiViewport.IsCompact ? 12 : 80; modal.style.paddingRight = UiViewport.IsCompact ? 12 : 80;
-            modal.style.paddingTop = UiViewport.IsCompact ? 14 : 48; modal.style.paddingBottom = UiViewport.IsCompact ? 14 : 48;
-            var panel = RtsUiStyle.Panel("HUD modal panel"); panel.style.flexGrow = 1;
-            var scroll = new ScrollView(ScrollViewMode.Vertical) { name = "HUD modal scroll" }; scroll.style.flexGrow = 1;scroll.style.minHeight=0; RtsUiStyle.ConfigureScroll(scroll); panel.Add(scroll);
-            if (session.Winner >= 0) BuildResult(scroll);
-            else if (controller.ScoreboardVisible || menuTab == 2) BuildRanking(scroll);
-            else if(menuTab==3)BuildIncome(scroll);
-            else if(menuTab==4)BuildPopulation(scroll);
-            else BuildHelp(scroll);
-            var sticky = new VisualElement { name = "HUD modal actions" }; RtsUiStyle.Row(sticky, true);
-            sticky.Add(RtsUiStyle.Button("VOLVER", CloseModal));
-            sticky.style.flexShrink=0;
-            modalPauseButton=RtsUiStyle.Button(session.Paused ? "CONTINUAR" : "PAUSA", () => { session.TogglePause(); UpdateRetainedLabels(); });
-            sticky.Add(modalPauseButton);
-            sticky.Add(RtsUiStyle.Button(GameText.SwitchLabel,()=>{GameText.Toggle();BuildRetainedUi(false);},"Switch language"));
-            panel.Add(sticky);
-            root.Add(modal); modal.Add(panel);
-        }
-
-        void BuildHelp(VisualElement panel)
-        {
-            AddTitle(panel, "RIESGUS · " + MapLayout.MapName);
-            var tabs = new VisualElement(); RtsUiStyle.Row(tabs, true);
-            tabs.Add(RtsUiStyle.Button("Partida", () => { menuTab = 0; BuildRetainedUi(false); }));
-            tabs.Add(RtsUiStyle.Button("Controles", () => { menuTab = 1; BuildRetainedUi(false); }));
-            tabs.Add(RtsUiStyle.Button("Ranking", () => { menuTab = 2; BuildRetainedUi(false); })); panel.Add(tabs);
-            if (menuTab == 1)
-            {
-                AddInfo(panel, "Selección: clic o toque para seleccionar; arrastra un área para seleccionar tropas y edificios.");
-                AddInfo(panel, "Órdenes: clic derecho en PC o una acción seguida de toque en tabletas. B/D embarca y desembarca.");
-                AddInfo(panel, "Cámara: rueda para zoom, arrastre derecho para mover y botón central para girar. En pantalla táctil, dos dedos mueven y amplían; tres dedos giran.");
-                BuildControlsTable(panel);
-            }
-            else
-            {
-                AddInfo(panel, "Conquista el 60 % de las ciudades. Completa países para recibir refuerzos de sus hogueras.");
-                AddInfo(panel, "Semilla " + session.Seed + " · " + session.PlayerCount + " jugadores · " + session.DifficultyName);
-                panel.Add(RtsUiStyle.Button(MinimapVisible ? "OCULTAR MAPA TÁCTICO" : "MOSTRAR MAPA TÁCTICO", ToggleMinimap));
-                panel.Add(RtsUiStyle.Button("CENTRAR MAPA", controller.CameraRig.FrameMap));
-                panel.Add(RtsUiStyle.Button("RESTABLECER CÁMARA", controller.CameraRig.ResetView));
-                panel.Add(RtsUiStyle.Button(controller.EdgePan ? "PANEO EN BORDES: ACTIVO" : "PANEO EN BORDES: INACTIVO", () => { controller.EdgePan = !controller.EdgePan; BuildRetainedUi(false); }));
-                panel.Add(RtsUiStyle.Button("VELOCIDAD CÁMARA −", () => { controller.CameraRig.PanSpeed = Mathf.Max(.5f, controller.CameraRig.PanSpeed - .2f); BuildRetainedUi(false); }));
-                panel.Add(RtsUiStyle.Button("VELOCIDAD CÁMARA +", () => { controller.CameraRig.PanSpeed = Mathf.Min(3f, controller.CameraRig.PanSpeed + .2f); BuildRetainedUi(false); }));
-                BuildFeedbackSettings(panel);
-                AddInfo(panel, RuntimeDiagnostics.LatestReport == null ? "Recogiendo muestra de rendimiento…" : "Rendimiento: " + RuntimeDiagnostics.LatestAverageMs.ToString("F1") + " ms medio · " + RuntimeDiagnostics.LatestMaximumMs.ToString("F1") + " ms máximo · " + RuntimeDiagnostics.LatestUnits + " unidades · " + (RuntimeDiagnostics.LatestUnityAllocatedBytes/1048576f).ToString("F0") + " MB Unity.");
-                panel.Add(RtsUiStyle.Button("NUEVA PARTIDA · ELEGIR MAPA", FrontEndController.Open));
-            }
-        }
-
-        void BuildRanking(VisualElement panel)
-        {
-            AddTitle(panel,"CLASIFICACIÓN · CIUDADES");rankingRows.Clear();
-            for(int rank=0;rank<session.PlayerCount;rank++)
-            {
-                var row=new RankingRow();row.Root=new VisualElement { name="HUD ranking row "+rank };
-                row.Root.style.backgroundColor=new Color(.075f,.085f,.075f,.9f);
-                row.Root.style.borderLeftWidth=4;row.Root.style.paddingLeft=10;row.Root.style.paddingRight=8;
-                row.Root.style.paddingTop=7;row.Root.style.paddingBottom=7;row.Root.style.marginBottom=5;
-                row.Name=RtsUiStyle.Label("",null,14);row.Name.style.whiteSpace=WhiteSpace.Normal;
-                row.Root.Add(row.Name);
-                var metrics=new VisualElement();RtsUiStyle.Row(metrics);metrics.style.marginTop=3;
-                row.Cities=AddMetric(metrics,RtsHudGlyph.City,"","Ciudades controladas");
-                row.Units=AddMetric(metrics,RtsHudGlyph.Sword,"","Unidades totales, incluidos defensores y barcos");
-                row.Root.Add(metrics);panel.Add(row.Root);rankingRows.Add(row);
-            }
-            UpdateRankingLabels();
-        }
-
         List<int> RankedPlayers()
         {
             var order = new List<int>(); for (int i = 0; i < session.PlayerCount; i++) order.Add(i);
             order.Sort((a, b) => { int compare = hud.PlayerCities[b].CompareTo(hud.PlayerCities[a]); return compare != 0 ? compare : a.CompareTo(b); });
             return order;
-        }
-
-        void BuildResult(VisualElement panel)
-        {
-            AddTitle(panel, session.Winner == 0 ? "VICTORIA" : "DERROTA");
-            AddInfo(panel, VisualFactory.TeamName(session.Winner) + " controla " + MapLayout.MapName);
-            panel.Add(RtsUiStyle.Button("NUEVA PARTIDA", FrontEndController.Open));
         }
 
         static void AddTitle(VisualElement root, string text)

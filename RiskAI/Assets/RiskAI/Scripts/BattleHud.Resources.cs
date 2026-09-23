@@ -104,21 +104,33 @@ namespace RiskAI
         void DrawBuildingName(Vector2 point,string name,int owner)
         {
             var style=RtsSkin.TownLabelFor(owner);
-            float size=Mathf.Clamp(style.CalcSize(new GUIContent(name)).x+14,48,148);
+            // Measure the localized text (English names are longer) on a single line; very long
+            // names are ellipsized instead of wrapping and being clipped by the plate.
+            string shown=GameText.Localize(name);
+            float width=style.CalcSize(new GUIContent(shown)).x;
+            const float MaxLabel=210;
+            if(width+14>MaxLabel)
+            {
+                while(shown.Length>4&&style.CalcSize(new GUIContent(shown+"…")).x+14>MaxLabel)shown=shown.Substring(0,shown.Length-1);
+                shown=shown.TrimEnd()+"…";width=style.CalcSize(new GUIContent(shown)).x;
+            }
+            float size=Mathf.Clamp(width+14,48,MaxLabel);
             var rect=new Rect(point.x-size*.5f,point.y-2,size,19);
             // Subtle dark backing plate with a soft rim and an owner-coloured underline.
             RtsSkin.Fill(new Rect(rect.x-1,rect.y-1,rect.width+2,rect.height+2),new Color(0,0,0,.35f));
             RtsSkin.Fill(rect,new Color(.025f,.03f,.025f,.88f));
             var accent=PlayerRules.IsPlayer(owner)?VisualFactory.TeamColor(owner):new Color(.6f,.58f,.5f);accent.a=.75f;
             RtsSkin.Fill(new Rect(rect.x+3,rect.yMax-2,rect.width-6,1.5f),accent);
-            Text(rect,name,style);
+            GUI.Label(rect,shown,style);
         }
 
         void BuildingInfo(VisualElement root,System.Func<string> value)
         {
             var label=RtsUiStyle.Label(value(),"HUD building identity",UiViewport.IsCompact?11:14);
             label.style.color=RtsUiStyle.Gold;label.style.marginTop=0;label.style.marginBottom=4;
-            label.style.whiteSpace=WhiteSpace.NoWrap;label.style.overflow=Overflow.Hidden;label.style.textOverflow=TextOverflow.Ellipsis;
+            // The compact info column beside the grid is narrow: wrap the name rather than cut it.
+            if(UiViewport.IsCompact)label.style.whiteSpace=WhiteSpace.Normal;
+            else {label.style.whiteSpace=WhiteSpace.NoWrap;label.style.overflow=Overflow.Hidden;label.style.textOverflow=TextOverflow.Ellipsis;}
             root.Add(label);liveContext.Add(()=>label.text=GameText.Localize(value()));
         }
     }
