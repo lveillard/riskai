@@ -16,18 +16,4 @@ namespace RiskAI.Core
         public float RollDamage(Random random)
         {float result=BaseDamage;for(int i=0;i<Dice;i++)result+=random.Next(1,Sides+1);return result;}
     }
-    public static class ReforgedProfiles
-    {
-        // Custom-map overrides from war3map.w3u. Gold uses the raw ugol values;
-        // world distance is adapted by the prototype's existing scale.
-        // Inherited dice use the wc3libs historical SLK fixture; see docs/REFORGED-BASE-STATS-v0.9.md.
-        // Footman and Mage are local fantasy units. Art is original/KayKit, independent of stats.
-        public static readonly UnitProfile[] Units=System.Array.ConvertAll(UnitCatalog.Land,item=>item.Profile);
-        // The map's Bunker overrides HP550, base50, cooldown1.5 and armor3.
-        public static UnitProfile Tower=>UnitCatalog.Tower;
-        // h00N/h00O override base45, one die/five sides, .9 cooldown and
-        // 650 native range (13 Unity). Health and armor remain the shared
-        // runtime post shell; no local damage/range tuning is retained here.
-        public static UnitProfile CapturableTower=>UnitCatalog.CapturableTower;
-    }
 }

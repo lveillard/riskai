@@ -48,12 +48,11 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void LegacyMessagesAreClassified()
+        public void ProductionResultsCarryTheirMessageKind()
         {
-            Assert.That(MessageLog.Classify("Ronda 4 · +7 de oro"), Is.EqualTo(MessageKind.Income));
-            Assert.That(MessageLog.Classify("Oro insuficiente para comprar este barco."), Is.EqualTo(MessageKind.NoGold));
-            Assert.That(MessageLog.Classify("×2 Espadachín encargados · 6 oro"), Is.EqualTo(MessageKind.Purchase));
-            Assert.That(MessageLog.Classify("Embarque terminado: 2 / 10."), Is.EqualTo(MessageKind.Info));
+            Assert.That(new ProductionBatchResult(2, 2, 6, null, false).Kind, Is.EqualTo(MessageKind.Purchase));
+            Assert.That(new ProductionBatchResult(1, 0, 0, "Oro insuficiente para comprar este barco.", true).Kind, Is.EqualTo(MessageKind.NoGold));
+            Assert.That(new ProductionBatchResult(1, 0, 0, "Cola llena.", false).Kind, Is.EqualTo(MessageKind.Info));
         }
 
         [Test]
@@ -261,7 +260,7 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void HeadlessCorpseDelayKeepsHistoricalTiming()
+        public void HeadlessCorpseDelayIsShort()
         {
             Assert.That(SoldierPool.CorpseDelay(null, true), Is.EqualTo(1.4f));
             Assert.That(SoldierPool.CorpseDelay(null, false), Is.EqualTo(0));

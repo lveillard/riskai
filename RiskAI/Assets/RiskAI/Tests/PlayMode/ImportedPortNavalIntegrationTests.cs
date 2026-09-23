@@ -50,12 +50,12 @@ namespace RiskAI.Tests
                 guard.TakeDamage(guard.MaxHealth+1,0);
                 Assert.That(target.Defender,Is.Not.Null);
                 Assert.That(target.Defender.IsAlive,Is.False,"The dead source guard remains referenced until claim resolution.");
-                var frigate=BattleTestScenario.Ship(battle.Naval,0,ShipKind.Galley,target.Port.Berth);
+                var frigate=BattleTestScenario.Ship(battle.Naval,0,NavalUnitKind.Frigate,target.Port.Berth);
                 target.SimTick(.1f);
                 Assert.That(target.State.Owner,Is.EqualTo(0),"A capture-capable warship occupies an empty amphibious port.");
                 Assert.That(target.Port.ClaimZone.NavalDefender,Is.SameAs(frigate));
                 frigate.TakeDamage(frigate.MaxHealth+1,1);target.State.Owner=PlayerRules.NeutralOwner;target.SimTick(.1f);
-                var transport=BattleTestScenario.Ship(battle.Naval,0,ShipKind.Transport,target.Port.Berth);
+                var transport=BattleTestScenario.Ship(battle.Naval,0,NavalUnitKind.Transport,target.Port.Berth);
                 target.SimTick(.1f);
                 Assert.That(target.State.Owner,Is.EqualTo(PlayerRules.NeutralOwner),"Transport capability never implies capture capability.");
                 Assert.That(target.Port.ClaimZone.Guardian,Is.Null);

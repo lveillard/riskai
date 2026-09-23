@@ -113,7 +113,7 @@ namespace RiskAI
             button.style.paddingLeft = button.style.paddingRight = 4;
             button.style.paddingTop = button.style.paddingBottom = 4;
             button.style.marginRight = button.style.marginBottom = 4;
-            button.Add(PortraitFrame(soldier?PortraitResource(soldier.Kind):ShipPortrait.Resource(ship.Kind),UiViewport.IsCompact?32:40));
+            button.Add(PortraitFrame(soldier?PortraitResource(soldier.Kind):UnitVariantViews.PortraitResource(ship.Kind),UiViewport.IsCompact?32:40));
             var track = new VisualElement { pickingMode = PickingMode.Ignore };
             track.style.width = Length.Percent(100);
             track.style.height = 5; track.style.flexShrink = 0;

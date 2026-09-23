@@ -58,7 +58,7 @@ namespace RiskAI
                 controller.SelectTown(selected);
                 session.Economy.Grant(0,1000);
                 var commands=new PlayerBuildingCommands(session);
-                foreach(var kind in new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Guard})
+                foreach(var kind in new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Knight})
                     commands.Execute(0,PlayerBuildingIntent.Recruit(selected.BuildingId,kind));
             }
             yield return new WaitForSecondsRealtime(.12f);
@@ -91,7 +91,7 @@ namespace RiskAI
                 session.TogglePause();
                 session.Economy.Grant(harbor.Owner,100);
                 var commands=new PlayerBuildingCommands(session);
-                commands.Execute(harbor.Owner,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Galley));
+                commands.Execute(harbor.Owner,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Frigate));
                 commands.Execute(harbor.Owner,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Transport));
                 session.TogglePause();
                 controller.SelectHarbor(harbor);controller.Focus(harbor.Landing);
@@ -130,7 +130,7 @@ namespace RiskAI
                 if(stage=="queue")
                 {
                     if(session.Paused)session.TogglePause();session.Economy.Grant(0,20);
-                    foreach(var kind in new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Guard})
+                    foreach(var kind in new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Knight})
                         new PlayerBuildingCommands(session).Execute(0,PlayerBuildingIntent.Recruit(town.BuildingId,kind));
                 }
             }
@@ -140,7 +140,7 @@ namespace RiskAI
                 if(!harbor){Debug.LogError("RISKAI_UI_REVIEW: no owned harbor in fixture seed");yield break;}
                 if(session.Paused)session.TogglePause();session.Economy.Grant(0,30);
                 var commands=new PlayerBuildingCommands(session);
-                commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Galley));
+                commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Frigate));
                 commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Transport));
                 controller.SelectHarbor(harbor);controller.Focus(harbor.IsImportedPort?harbor.LinkedTown.transform.position:harbor.Landing);
             }

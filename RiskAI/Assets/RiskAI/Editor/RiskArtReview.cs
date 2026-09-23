@@ -38,12 +38,7 @@ namespace RiskAI.Editor
                 string tag=Argument("--riskai-art-tag")??"shot";
                 string mapArg=(Argument("--riskai-map")??"europe").ToLowerInvariant();
                 var map=mapArg=="world"||mapArg=="newworld"?ScenarioMap.NewWorld:mapArg=="classic"?ScenarioMap.Classic:mapArg=="riverlands"?ScenarioMap.Riverlands:ScenarioMap.Europe;
-                // --riskai-art-legacy reproduces the pre-biome, flat-border terrain for comparisons.
-                bool legacy=Environment.GetCommandLineArgs().Contains("--riskai-art-legacy");
-                TerrainBiomes.Enabled=!legacy;ImportedMapSkirt.Enabled=!legacy;
-                TerrainBiomes.SatelliteEnabled=!Environment.GetCommandLineArgs().Contains("--riskai-art-no-satellite");
-                try{CaptureMap(map,directory,tag);}
-                finally{TerrainBiomes.Enabled=true;ImportedMapSkirt.Enabled=true;TerrainBiomes.SatelliteEnabled=true;}
+                CaptureMap(map,directory,tag);
                 Debug.Log("RISKAI_ART_REVIEW_OK: "+directory);
             }
             catch(Exception error){Debug.LogException(error);throw;}
@@ -265,7 +260,7 @@ namespace RiskAI.Editor
         static void CaptureUnits(Transform lineup,Camera camera,RenderTexture readback,string directory,string prefix)
         {
             var root=new GameObject("Unit review").transform;root.SetParent(lineup,false);root.localPosition=new Vector3(-60,0,0);
-            var mountedKinds=new[]{UnitKind.Guard,UnitKind.MarineMajor,UnitKind.MarineGeneral,UnitKind.ArmyGeneral};
+            var mountedKinds=new[]{UnitKind.Knight,UnitKind.MarineMajor,UnitKind.MarineGeneral,UnitKind.ArmyGeneral};
             var views=new List<GameObject>();
             for(int i=0;i<mountedKinds.Length;i++)
             {
@@ -285,15 +280,15 @@ namespace RiskAI.Editor
                 Render(camera,readback,directory,prefix+"-knight-"+pose.Item1+"-rts",origin+Vector3.up*1.2f,3.2f,55,0);
             }
             if(poser!=null&&knight)poser.Invoke(knight,new object[]{0f,0f,0f});
-            // Lance reach: a Guard facing a Footman at the engagement distance the melee logic uses.
+            // Lance reach: a Knight facing a Footman at the engagement distance the melee logic uses.
             var reach=new GameObject("Reach review").transform;reach.SetParent(root,false);reach.localPosition=new Vector3(0,0,-9);
             var rider=new GameObject("Reach knight").transform;rider.SetParent(reach,false);
-            var riderView=Mounted(rider,UnitKind.Guard,0).GetComponent<MountedKnightView>();
+            var riderView=Mounted(rider,UnitKind.Knight,0).GetComponent<MountedKnightView>();
             var engage=typeof(Soldier).GetMethod("MeleeEngageDistance",BindingFlags.Public|BindingFlags.Static);
-            float centre=engage!=null?(float)engage.Invoke(null,new object[]{UnitKind.Guard,SourceGeometry.AgentRadius(UnitKind.Footman)}):BattleRules.Range(UnitKind.Guard)*.76f;
+            float centre=engage!=null?(float)engage.Invoke(null,new object[]{UnitKind.Knight,SourceGeometry.AgentRadius(UnitKind.Footman)}):BattleRules.Range(UnitKind.Knight)*.76f;
             Unit(reach,UnitKind.Footman,5,new Vector3(0,0,centre),"Reach target");
             reach.Find("Reach target").localRotation=Quaternion.Euler(0,180,0);
-            Debug.Log($"RISKAI_ART_REACH: centre={centre:F2} gap={centre-SourceGeometry.AgentRadius(UnitKind.Guard)-SourceGeometry.AgentRadius(UnitKind.Footman):F2}");
+            Debug.Log($"RISKAI_ART_REACH: centre={centre:F2} gap={centre-SourceGeometry.AgentRadius(UnitKind.Knight)-SourceGeometry.AgentRadius(UnitKind.Footman):F2}");
             if(poser!=null&&riderView)poser.Invoke(riderView,new object[]{0f,0f,1f});
             Render(camera,readback,directory,prefix+"-reach-contact-side",reach.position+new Vector3(0,1.3f,centre*.5f),2.6f,8,90);
             Render(camera,readback,directory,prefix+"-reach-contact-rts",reach.position+new Vector3(0,1f,centre*.5f),3.6f,55,0);
@@ -317,7 +312,7 @@ namespace RiskAI.Editor
             var variant=typeof(MountedKnightView).GetMethod("CreateVariant",BindingFlags.Public|BindingFlags.Static);
             if(variant!=null)return (GameObject)variant.Invoke(null,new object[]{holder,team,kind,null});
             if(kind==UnitKind.ArmyGeneral)return UnitVariantViews.General(holder,team);
-            if(kind==UnitKind.Guard)return MountedKnightView.Create(holder,team);
+            if(kind==UnitKind.Knight)return MountedKnightView.Create(holder,team);
             Unit(holder,kind,team,Vector3.zero,"Standing "+kind);return holder.GetChild(holder.childCount-1).gameObject;
         }
 

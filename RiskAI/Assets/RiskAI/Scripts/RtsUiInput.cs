@@ -99,14 +99,12 @@ namespace RiskAI
             var existing = Object.FindFirstObjectByType<EventSystem>();
             if (existing)
             {
-                // A scene-owned EventSystem is preserved, while its UI Toolkit module
-                // is supplied if the scene only created the legacy component.
+                // A scene-owned EventSystem is preserved; it receives the Input System UI module if missing.
                 if (!existing.GetComponent<InputSystemUIInputModule>())
                 {
                     var existingModule = existing.gameObject.AddComponent<InputSystemUIInputModule>();
                     existingModule.AssignDefaultActions();
                 }
-                foreach (var legacy in existing.GetComponents<StandaloneInputModule>()) legacy.enabled = false;
                 return;
             }
             var go = new GameObject("RiskAI UI EventSystem");

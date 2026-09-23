@@ -18,7 +18,7 @@ namespace RiskAI.Core
             {
                 case UnitKind.Archer:return 81.837f/NativePerUnity;
                 case UnitKind.Medic:return 122.367f/NativePerUnity;
-                case UnitKind.Guard:return 152.895f/NativePerUnity;
+                case UnitKind.Knight:return 152.895f/NativePerUnity;
                 case UnitKind.Mortar:return 80.253f/NativePerUnity;
                 default:return 0;
             }
@@ -29,7 +29,7 @@ namespace RiskAI.Core
             {
                 case UnitKind.Archer:return 94.895f/NativePerUnity;
                 case UnitKind.Medic:return 94.414f/NativePerUnity;
-                case UnitKind.Guard:return 148.094f/NativePerUnity;
+                case UnitKind.Knight:return 148.094f/NativePerUnity;
                 case UnitKind.Mortar:return 113.644f/NativePerUnity;
                 default:return 0;
             }
@@ -40,7 +40,7 @@ namespace RiskAI.Core
             {
                 case UnitKind.Archer: return 16f / NativePerUnity; // h00B / hrif ucol=16
                 case UnitKind.Medic: return 16f / NativePerUnity;  // h00E / hmpr inherited ucol=16
-                case UnitKind.Guard: return 32f / NativePerUnity;  // h00G / hkni inherited ucol=32
+                case UnitKind.Knight: return 32f / NativePerUnity;  // h00G / hkni inherited ucol=32
                 case UnitKind.Mortar: return 32f / NativePerUnity; // h00H / hmtm inherited ucol=32
                 case UnitKind.MarinePrivate: return 16f / NativePerUnity; // h012 / hrif inherited ucol=16
                 case UnitKind.MarineMajor:

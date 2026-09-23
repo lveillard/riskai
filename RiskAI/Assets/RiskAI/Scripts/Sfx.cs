@@ -268,7 +268,7 @@ namespace RiskAI
 
         // ---------------------------------------------------------------- world events
 
-        static bool Mounted(UnitKind kind) => kind == UnitKind.Guard || kind == UnitKind.MarineMajor || kind == UnitKind.MarineGeneral || kind == UnitKind.ArmyGeneral;
+        static bool Mounted(UnitKind kind) => kind == UnitKind.Knight || kind == UnitKind.MarineMajor || kind == UnitKind.MarineGeneral || kind == UnitKind.ArmyGeneral;
         static bool Firearm(UnitKind kind) => kind == UnitKind.MarinePrivate || kind == UnitKind.EliteRifleman;
 
         void OnFired(CombatTarget source, Vector3 from, Vector3 to, AttackKind attack)

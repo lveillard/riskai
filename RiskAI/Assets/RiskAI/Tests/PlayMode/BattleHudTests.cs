@@ -160,10 +160,10 @@ namespace RiskAI.Tests
             var harbor=battle.Naval.Harbors.First(item=>item.Owner==0);
             controller.SelectHarbor(harbor);
             yield return null;
-            Assert.That(root.Q<Button>("Build ship Galley"),Is.Not.Null);
+            Assert.That(root.Q<Button>("Build ship Frigate"),Is.Not.Null);
             harbor.State.Owner=1;
             yield return null;
-            Assert.That(root.Q<Button>("Build ship Galley"),Is.Null);
+            Assert.That(root.Q<Button>("Build ship Frigate"),Is.Null);
             Assert.That(root.Q<Button>("Recruit MarinePrivate"),Is.Null);
         }
 
@@ -197,7 +197,7 @@ namespace RiskAI.Tests
         {
             var controller=Object.FindFirstObjectByType<RtsController>();
             var port=battle.Naval.Harbors.First(item=>item.Owner==0);
-            var transport=BattleTestScenario.Ship(battle.Naval,0,ShipKind.Transport,port.Berth);
+            var transport=BattleTestScenario.Ship(battle.Naval,0,NavalUnitKind.Transport,port.Berth);
             var first=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.Landing);
             var second=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,port.Landing);
             Assert.That(transport.TryEmbark(first),Is.True);Assert.That(transport.TryEmbark(second),Is.True);
@@ -299,7 +299,7 @@ namespace RiskAI.Tests
             var home=battle.Towns.First(town=>town.State.Owner==0);
             BattleTestScenario.MobileArmy(battle,0,UnitKind.Archer,2,home.ClaimPoint);
             var naval=NavalWorld.Current;
-            var ship=BattleTestScenario.Ship(naval,0,ShipKind.Transport,naval.Harbors.First().Berth);
+            var ship=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,naval.Harbors.First().Berth);
             controller.SelectAll();controller.SelectShip(ship,true);battle.TogglePause();
             yield return null;yield return null;
             var root=hud.GetComponent<UIDocument>().rootVisualElement;
@@ -366,7 +366,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator DifferentArmiesWithTheSameLegacyHashRebuildTheRoster()
+        public IEnumerator DifferentArmiesWithTheSameIdHashRebuildTheRoster()
         {
             var controller=Object.FindFirstObjectByType<RtsController>();
             var home=battle.Towns.First(town=>town.State.Owner==0);

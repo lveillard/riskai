@@ -8,7 +8,7 @@ namespace RiskAI
     /// </summary>
     public sealed class Music : MonoBehaviour
     {
-        const string VolumeKey = "riskai.music.volume.v2", EnabledKey = "riskai.music.enabled";
+        const string VolumeKey = "riskai.music.volume", EnabledKey = "riskai.music.enabled";
         const float FadeInSeconds = 3, CrossfadeSeconds = 2, DefaultVolume = .15f;
 
         public static Music Current { get; private set; }

@@ -7,8 +7,6 @@ using UnityEngine.AI;
 namespace RiskAI
 {
     // Mirrors Core.NavalUnitKind ordinals (cast directly): append new kinds at the end only.
-    public enum ShipKind { Galley, Transport, Warship, Battleship, ArmoredTransport }
-
     public sealed class Ship : CombatTarget
     {
         readonly List<Soldier> cargo=new List<Soldier>();
@@ -24,7 +22,7 @@ namespace RiskAI
         internal bool IsOrderedToHarbor(Harbor harbor) => orderedHarbor && orderedHarbor == harbor;
         bool pendingShoreUnload;
         Vector3 pendingShore;
-        public ShipKind Kind { get; private set; }
+        public NavalUnitKind Kind { get; private set; }
         public bool Selected { get; private set; }
         public Harbor Garrison=>harborGuard;
         public bool IsGarrison=>harborGuard;
@@ -32,7 +30,7 @@ namespace RiskAI
         public int CargoCount=>cargo.Count;
         public int CargoCapacity=>Capacity;
         public CombatTarget CurrentTarget=>target;
-        public ShipProfile Profile=>NavalProfiles.Profile((NavalUnitKind)Kind);
+        public ShipProfile Profile=>NavalProfiles.Profile(Kind);
         public string DisplayName=>Profile.Name;
         public string OrderLabel=>IsGarrison?"Guarnición · mantiene el puerto":target?"En combate":route.Count>routeIndex?"Navegando":"En puerto";
         public string LastActionError { get; private set; }
@@ -81,7 +79,7 @@ namespace RiskAI
             return targetVolume ? targetVolume.ClosestPoint(from) : transform.position;
         }
 
-        internal void Initialize(NavalWorld naval,int team,ShipKind kind)
+        internal void Initialize(NavalWorld naval,int team,NavalUnitKind kind)
         {
             world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
             NavalArt.CreateShip(this);
@@ -227,7 +225,7 @@ namespace RiskAI
             if(pendingShoreUnload&&DistanceXZ(transform.position,pendingShore)<=LoadRadius)
             {
                 if(UnloadAt(pendingShore)&&CargoCount==0)pendingShoreUnload=false;
-                else if(!string.IsNullOrEmpty(LastActionError)){if(Team==0)world.Message(LastActionError);pendingShoreUnload=false;}
+                else if(!string.IsNullOrEmpty(LastActionError)){if(Team==0)world.Session.Message(LastActionError,MessageKind.Info);pendingShoreUnload=false;}
             }
             if(!object.ReferenceEquals(target,null)&&(!target||!target.CanBeAttacked||target.Team==Team))
             {
@@ -241,7 +239,7 @@ namespace RiskAI
             if(target&&RangeTo(target)<=AttackRange&&Visible(target))
             {
                 Face(target.transform.position);
-                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Profile),Team,this,SourceWeapons.For((NavalUnitKind)Kind,AttackType));}
+                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Profile),Team,this,SourceWeapons.For(Kind,AttackType));}
             }
             else if(!IsGarrison&&target&&world.Session.BattleTime>=nextTargetPath)
             {

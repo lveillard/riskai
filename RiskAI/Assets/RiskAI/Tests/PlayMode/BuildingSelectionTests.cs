@@ -238,13 +238,13 @@ namespace RiskAI.Tests
             var harbors=NavalWorld.Current.Harbors.Where(h=>h&&h.CanLaunch).Take(2).ToArray();
             Assert.That(harbors.Length,Is.EqualTo(2));
             foreach(var harbor in harbors)harbor.State.Owner=0;
-            battle.Economy.Gold[0]=Harbor.Cost(ShipKind.Galley)*4;
+            battle.Economy.Gold[0]=Harbor.Cost(NavalUnitKind.Frigate)*4;
             controller.SelectBuildings(null,harbors);
 
-            Assert.That(controller.TryBuySelected(ShipKind.Galley),Is.Null);
+            Assert.That(controller.TryBuySelected(NavalUnitKind.Frigate),Is.Null);
             Assert.That(harbors[0].QueueCount,Is.EqualTo(1));
             Assert.That(harbors[1].QueueCount,Is.EqualTo(1));
-            Assert.That(controller.TryBuySelected(ShipKind.Galley),Is.Null);
+            Assert.That(controller.TryBuySelected(NavalUnitKind.Frigate),Is.Null);
             Assert.That(harbors[0].QueueCount,Is.EqualTo(2));
             Assert.That(harbors[1].QueueCount,Is.EqualTo(2),"Repeated group ship purchases retain a balanced 2/2 split.");
             yield return null;

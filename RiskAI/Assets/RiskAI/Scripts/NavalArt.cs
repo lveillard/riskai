@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RiskAI.Core;
 using UnityEngine;
 namespace RiskAI
 {
@@ -20,10 +21,10 @@ namespace RiskAI
         }
         // The editor portrait generator calls the same model builder as live ships, so UI art
         // cannot drift from the silhouettes and team treatment seen in the world.
-        public static Transform CreateShipModel(Transform parent,int team,ShipKind kind)
+        public static Transform CreateShipModel(Transform parent,int team,NavalUnitKind kind)
         {
             var root=new GameObject("Ship model").transform;root.SetParent(parent,false);var resources=GeneratedResourceOwner.For(parent);bool war=IsWarship(kind);float length=war?7.2f:5.15f,width=war?1.65f:2.65f;
-            // v0.30 hulls reuse the galley/transport silhouettes, scaled roughly by source collision (h001 ucol=56).
+            // v0.30 hulls reuse the frigate/transport silhouettes, scaled roughly by source collision (h001 ucol=56).
             root.localScale=Vector3.one*HullScale(kind);
             var v=new List<Vector3>();var t=new List<int>();const int sections=12;
             for(int level=0;level<3;level++)for(int s=0;s<=sections;s++)
@@ -51,25 +52,25 @@ namespace RiskAI
                 Beam(root,new(-.7f,.95f,length*.22f),new(.7f,.95f,length*.22f),.12f);
             }
             else for(int i=0;i<6;i++)Block(root,"Transport cargo hold",new(-.85f+i%3*.85f,.88f,-1.15f+i/3*.8f),new(.68f,.55f,.62f));
-            if(kind==ShipKind.Warship||kind==ShipKind.Battleship)
-                for(int side=-1;side<=1;side+=2)for(int i=0;i<(kind==ShipKind.Battleship?3:2);i++)
+            if(kind==NavalUnitKind.Warship||kind==NavalUnitKind.Battleship)
+                for(int side=-1;side<=1;side+=2)for(int i=0;i<(kind==NavalUnitKind.Battleship?3:2);i++)
                 {
                     var gun=VisualFactory.Shape(root,PrimitiveType.Cylinder,"Broadside cannon",new(side*width*.5f,.62f,-1.2f+i*1.1f),new(.2f,.38f,.2f),new Color(.18f,.2f,.22f));
                     gun.transform.localRotation=Quaternion.Euler(0,0,90);
                 }
-            if(kind==ShipKind.Battleship)
+            if(kind==NavalUnitKind.Battleship)
             {
                 Block(root,"Battleship armoured citadel",new(0,1.05f,.35f),new(width*.7f,.55f,1.5f),2,new Color(.55f,.6f,.66f));
                 var turret=VisualFactory.Shape(root,PrimitiveType.Cylinder,"Battleship bow turret",new(0,1.42f,length*.3f),new(.8f,.16f,.8f),new Color(.3f,.34f,.38f));
                 var barrel=VisualFactory.Shape(turret.transform,PrimitiveType.Cylinder,"Battleship bow gun",new(0,.2f,.9f),new(.28f,1.1f,.28f),new Color(.18f,.2f,.22f));barrel.transform.localRotation=Quaternion.Euler(90,0,0);
             }
-            if(kind==ShipKind.ArmoredTransport)
+            if(kind==NavalUnitKind.ArmoredTransport)
                 for(int side=-1;side<=1;side+=2)Block(root,"Transport iron armour plate",new(side*width*.47f,.46f,0),new(.08f,.42f,length*.62f),2,new Color(.5f,.55f,.6f));
             Beam(root,new(0,.65f,length*.35f),new(0,1.05f,length*.58f),.13f,new Color(1.6f,1.15f,.4f));
             return root;
         }
-        public static bool IsWarship(ShipKind kind) => kind!=ShipKind.Transport&&kind!=ShipKind.ArmoredTransport;
-        public static float HullScale(ShipKind kind) => kind==ShipKind.Battleship?1.3f:kind==ShipKind.Warship?1.15f:kind==ShipKind.ArmoredTransport?1.05f:1f;
+        public static bool IsWarship(NavalUnitKind kind) => kind!=NavalUnitKind.Transport&&kind!=NavalUnitKind.ArmoredTransport;
+        public static float HullScale(NavalUnitKind kind) => kind==NavalUnitKind.Battleship?1.3f:kind==NavalUnitKind.Warship?1.15f:kind==NavalUnitKind.ArmoredTransport?1.05f:1f;
         static void Sail(Transform root,GeneratedResourceOwner resources,int team,bool war)
         {
             var v=new List<Vector3>();var t=new List<int>();const int nx=8,ny=6;

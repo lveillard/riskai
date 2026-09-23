@@ -32,7 +32,7 @@ namespace RiskAI.Tests
         }
 
         // Explicit W3U values, not inherited Warcraft defaults.
-        [TestCase(NavalUnitKind.Galley, "h00W", true, 400f, 5, 5)]
+        [TestCase(NavalUnitKind.Frigate, "h00W", true, 400f, 5, 5)]
         [TestCase(NavalUnitKind.Transport, "n008", false, 300f, 2, 2)]
         public void PublicKindsResolveToTheirSourceIdentityAndExplicitEconomy(
             NavalUnitKind kind, string rawId, bool canCapture, float health, int gold, int points)
@@ -48,28 +48,28 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void GalleyAliasRemainsH00WAndDoesNotSilentlySelectClassicH00Q()
+        public void FrigateIsH00WAndDoesNotSilentlySelectClassicH00Q()
         {
-            Assert.That((int)NavalUnitKind.Galley, Is.Zero);
+            Assert.That((int)NavalUnitKind.Frigate, Is.Zero);
             Assert.That((int)NavalUnitKind.Transport, Is.EqualTo(1));
             Assert.That(NavalProfiles.Frigate.SourceRawId, Is.EqualTo("h00W"));
-            Assert.That(NavalProfiles.Galley.Armor, Is.EqualTo(6f), "Classic h00Q overrides armor to four; it is a different unit.");
-            Assert.That(NavalProfiles.Galley.BaseDamage, Is.EqualTo(30f));
-            Assert.That(NavalProfiles.Galley.Range, Is.EqualTo(1000f / 50f));
-            Assert.That(NavalProfiles.Galley.CanAttack,Is.True);
-            Assert.That(NavalProfiles.Galley.CanCapture,Is.True);
-            Assert.That(NavalProfiles.Galley.CanTransport,Is.False);
+            Assert.That(NavalProfiles.Frigate.Armor, Is.EqualTo(6f), "Classic h00Q overrides armor to four; it is a different unit.");
+            Assert.That(NavalProfiles.Frigate.BaseDamage, Is.EqualTo(30f));
+            Assert.That(NavalProfiles.Frigate.Range, Is.EqualTo(1000f / 50f));
+            Assert.That(NavalProfiles.Frigate.CanAttack,Is.True);
+            Assert.That(NavalProfiles.Frigate.CanCapture,Is.True);
+            Assert.That(NavalProfiles.Frigate.CanTransport,Is.False);
             Assert.That(NavalProfiles.Transport.CanAttack,Is.False);
             Assert.That(NavalProfiles.Transport.CanTransport,Is.True);
             Assert.Throws<ArgumentOutOfRangeException>(() => NavalProfiles.Profile((NavalUnitKind)999));
         }
 
         // h00U, h001 and n007 explicit W3U overrides (hp, gold, points, armor, speed, damage, cooldown).
-        [TestCase(NavalUnitKind.Warship, "h00U", 1250f, 20, 10f, 450f, 90f, 1.5f, "R")]
-        [TestCase(NavalUnitKind.Battleship, "h001", 2350f, 45, 20f, 330f, 130f, 1.4f, "F")]
-        [TestCase(NavalUnitKind.ArmoredTransport, "n007", 300f, 6, 30f, 370f, 0f, 0f, "X")]
+        [TestCase(NavalUnitKind.Warship, "h00U", 1250f, 20, 10f, 450f, 90f, 1.5f)]
+        [TestCase(NavalUnitKind.Battleship, "h001", 2350f, 45, 20f, 330f, 130f, 1.4f)]
+        [TestCase(NavalUnitKind.ArmoredTransport, "n007", 300f, 6, 30f, 370f, 0f, 0f)]
         public void V030HullsUseTheirExplicitSourceOverrides(NavalUnitKind kind, string rawId, float health, int gold,
-            float armor, float nativeSpeed, float baseDamage, float cooldown, string hotkey)
+            float armor, float nativeSpeed, float baseDamage, float cooldown)
         {
             var profile = NavalProfiles.Profile(kind);
             Assert.That(profile.SourceRawId, Is.EqualTo(rawId));
@@ -81,7 +81,6 @@ namespace RiskAI.Tests
             Assert.That(profile.BaseDamage, Is.EqualTo(baseDamage));
             Assert.That(profile.Cooldown, Is.EqualTo(cooldown).Within(.0001f));
             Assert.That(profile.TrainSeconds, Is.EqualTo(1f));
-            Assert.That(profile.Hotkey, Is.EqualTo(hotkey));
             if (profile.CanAttack)
             {
                 Assert.That(profile.Range, Is.EqualTo(1500f / 50f));
@@ -100,13 +99,11 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void V030HullOrdinalsAreAppendedAndMirroredByRuntimeShipKind()
+        public void V030HullOrdinalsAreAppended()
         {
             Assert.That((int)NavalUnitKind.Warship, Is.EqualTo(2));
             Assert.That((int)NavalUnitKind.Battleship, Is.EqualTo(3));
             Assert.That((int)NavalUnitKind.ArmoredTransport, Is.EqualTo(4));
-            foreach (NavalUnitKind kind in Enum.GetValues(typeof(NavalUnitKind)))
-                Assert.That(((RiskAI.ShipKind)(int)kind).ToString(), Is.EqualTo(kind.ToString()));
         }
     }
 }

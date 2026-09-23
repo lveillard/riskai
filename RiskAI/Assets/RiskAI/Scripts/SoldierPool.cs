@@ -11,7 +11,7 @@ namespace RiskAI
         public const float CorpseSeconds = 3f;
         /// <summary>A corpse at least this old may be recycled early when no pooled actor is idle.</summary>
         public const float MinimumCorpseSeconds = 1.2f;
-        /// <summary>Pool return delay for a death. Headless fixtures keep the historical short delay.</summary>
+        /// <summary>Pool return delay for a death. Headless fixtures use a short delay.</summary>
         public static float CorpseDelay(BattleSession battle, bool animated) =>
             battle && battle.Feedback != null && battle.Feedback.Enabled ? CorpseSeconds : animated ? 1.4f : 0;
         readonly BattleSession session;

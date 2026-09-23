@@ -1,4 +1,4 @@
-"""Summarize one or more Unity NUnit result files: python scripts/test_summary.py TestResults/x*.xml"""
+"""Summarize one or more Unity NUnit result files: python scripts/summarize_tests.py TestResults/x*.xml"""
 import sys, glob, xml.etree.ElementTree as ET
 files = [f for a in sys.argv[1:] for f in glob.glob(a)]
 total = passed = failed = skipped = 0

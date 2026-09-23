@@ -56,7 +56,7 @@ namespace RiskAI.Tests
             Assert.That(AiUnitAnalysis.For(UnitKind.Mortar).Role,Is.EqualTo(AiUnitRole.Splash));
             Assert.That(AiUnitAnalysis.For(UnitKind.Mage).Role,Is.EqualTo(AiUnitRole.Splash));
             Assert.That(AiUnitAnalysis.For(UnitKind.Medic).Role,Is.EqualTo(AiUnitRole.Healer));
-            Assert.That(AiUnitAnalysis.For(UnitKind.Guard).Value,Is.GreaterThan(AiUnitAnalysis.For(UnitKind.Footman).Value));
+            Assert.That(AiUnitAnalysis.For(UnitKind.Knight).Value,Is.GreaterThan(AiUnitAnalysis.For(UnitKind.Footman).Value));
             // Every catalog entry, including kinds appended later, has usable traits.
             for(int i=0;i<UnitCatalog.Land.Length;i++)
             {

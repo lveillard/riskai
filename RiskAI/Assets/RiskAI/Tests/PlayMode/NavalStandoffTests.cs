@@ -30,23 +30,23 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator OrderedWarshipFiresFromRangeWithoutClosingIn()
         {
-            yield return Standoff(ShipKind.Warship,true);
+            yield return Standoff(NavalUnitKind.Warship,true);
         }
 
         [UnityTest]
         public IEnumerator IdleWarshipAcquiresAndHoldsItsPosition()
         {
-            yield return Standoff(ShipKind.Warship,false);
+            yield return Standoff(NavalUnitKind.Warship,false);
         }
 
         [UnityTest]
         public IEnumerator RangeIsMeasuredToTheTargetHullNotItsPivot()
         {
-            var probe=BattleTestScenario.Ship(naval,0,ShipKind.Warship,FirstClearBerth());
+            var probe=BattleTestScenario.Ship(naval,0,NavalUnitKind.Warship,FirstClearBerth());
             float range=probe.Profile.Range;probe.TakeDamage(1e6f,1);
             Assert.That(FindOpenWater(range+1.5f,out var a,out var b),Is.True);
-            var attacker=BattleTestScenario.Ship(naval,0,ShipKind.Warship,a);
-            var victim=BattleTestScenario.Ship(naval,1,ShipKind.Battleship,b);
+            var attacker=BattleTestScenario.Ship(naval,0,NavalUnitKind.Warship,a);
+            var victim=BattleTestScenario.Ship(naval,1,NavalUnitKind.Battleship,b);
             attacker.Stop();victim.Stop();
             // Present the long hull end-on, so its stern is inside range and its pivot is not.
             var along=b-a;along.y=0;victim.transform.rotation=Quaternion.LookRotation(along.normalized);
@@ -67,7 +67,7 @@ namespace RiskAI.Tests
         public IEnumerator ClickingTheBowOfALongHullPicksTheShip()
         {
             Assert.That(FindOpenWater(10f,out var a,out _),Is.True);
-            var victim=BattleTestScenario.Ship(naval,1,ShipKind.Battleship,a);victim.Stop();
+            var victim=BattleTestScenario.Ship(naval,1,NavalUnitKind.Battleship,a);victim.Stop();
             yield return null;
             Assert.That(victim.TryGetHullBounds(out var hull),Is.True);
             var cam=Camera.main;Assert.That(cam,Is.Not.Null);
@@ -86,7 +86,7 @@ namespace RiskAI.Tests
 
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}
 
-        IEnumerator Standoff(ShipKind kind,bool ordered)
+        IEnumerator Standoff(NavalUnitKind kind,bool ordered)
         {
             Assert.That(FindOpenWater(25f,out var a,out var b),Is.True,"The fixture needs two clear sea points 25 m apart.");
             var attacker=BattleTestScenario.Ship(naval,0,kind,a);

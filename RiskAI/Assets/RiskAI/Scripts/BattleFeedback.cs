@@ -106,19 +106,6 @@ namespace RiskAI
             }
             return visible;
         }
-
-        /// <summary>Kind for legacy text-only messages. Explicit callers pass their own kind.</summary>
-        public static MessageKind Classify(string text)
-        {
-            if (string.IsNullOrEmpty(text)) return MessageKind.Info;
-            if (text.StartsWith("Oro insuficiente", StringComparison.Ordinal)) return MessageKind.NoGold;
-            if (text.StartsWith("Ronda ", StringComparison.Ordinal) && text.IndexOf(" de oro", StringComparison.Ordinal) > 0) return MessageKind.Income;
-            if (text.IndexOf(" encargados · ", StringComparison.Ordinal) > 0) return MessageKind.Purchase;
-            if (text.StartsWith("¡Victoria", StringComparison.Ordinal)) return MessageKind.Victory;
-            if (text.StartsWith("Has conquistado", StringComparison.Ordinal)) return MessageKind.Capture;
-            if (text.StartsWith("País completado", StringComparison.Ordinal)) return MessageKind.Country;
-            return MessageKind.Info;
-        }
     }
 
     /// <summary>"Under attack" throttling: one alert per map area every <see cref="ThrottleSeconds"/>.</summary>

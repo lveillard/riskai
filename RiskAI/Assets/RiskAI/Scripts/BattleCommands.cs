@@ -100,7 +100,7 @@ namespace RiskAI
             if (command.PlayerId == 0) telemetry.HumanRejected++; else telemetry.AiRejected++;
             if(command.PlayerId==0 && Time.unscaledTime>=nextFailureMessage)
             {
-                nextFailureMessage=Time.unscaledTime+1;session.Message(reason);
+                nextFailureMessage=Time.unscaledTime+1;session.Message(reason,MessageKind.Info);
                 Debug.Log("RISKAI_ORDER_REJECTED: id="+command.UnitId+" kind="+command.Kind+" tick="+session.Clock.TickCount+" reason="+reason);
             }
         }

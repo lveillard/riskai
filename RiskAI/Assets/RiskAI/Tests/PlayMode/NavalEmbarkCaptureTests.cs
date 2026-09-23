@@ -29,7 +29,7 @@ namespace RiskAI.Tests
         public IEnumerator TransportBoardsByRadiusAndFrigateTakesAnUnguardedHarbor()
         {
             var home = naval.Harbors.First(harbor => harbor.Owner == 0);
-            var transport = BattleTestScenario.Ship(naval, 0, ShipKind.Transport, home.Berth);
+            var transport = BattleTestScenario.Ship(naval, 0, NavalUnitKind.Transport, home.Berth);
             var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Landing);
             Assert.That(transport.TryEmbark(soldier), Is.True);
             Assert.That(transport.CargoCount, Is.EqualTo(1));
@@ -54,7 +54,7 @@ namespace RiskAI.Tests
             var target = naval.Harbors.First(harbor => harbor!=home && harbor.Owner != 0 && !harbor.IsImportedPort);
             var guard=target.Defender;
             if(guard)guard.TakeDamage(guard.MaxHealth+1,guard.Team==0?1:0);
-            var frigate = BattleTestScenario.Ship(naval, 0, ShipKind.Galley, target.Berth);
+            var frigate = BattleTestScenario.Ship(naval, 0, NavalUnitKind.Frigate, target.Berth);
             target.SimTick(.1f);
             Assert.That(target.Owner, Is.EqualTo(0), "Source-eligible h00W warships capture an empty harbor.");
             Assert.That(target.NavalDefender,Is.SameAs(frigate));
@@ -66,7 +66,7 @@ namespace RiskAI.Tests
         public IEnumerator BoardingSurvivesDeselectionAndFocusLossButRespectsPause()
         {
             var home=naval.Harbors.First(h=>h.Owner==0);
-            var transport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,home.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,home.Berth);
             var inland=(home.Landing-home.Berth).normalized;
             var soldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,home.Landing+inland*16);
             var controller=Object.FindFirstObjectByType<RtsController>();
@@ -92,7 +92,7 @@ namespace RiskAI.Tests
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
             var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
-            var guard=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            var guard=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,port.Berth);
             port.SimTick(.1f);
             Assert.That(port.NavalDefender,Is.SameAs(guard));
             Assert.That(port.Owner,Is.EqualTo(0));
@@ -115,11 +115,11 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator LivingLandGuardianIsNotDisplacedByEnemyGalley()
+        public IEnumerator LivingLandGuardianIsNotDisplacedByEnemyFrigate()
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
             var defender=port.Defender;
-            var enemy=BattleTestScenario.Ship(naval,1,ShipKind.Galley,port.Berth);
+            var enemy=BattleTestScenario.Ship(naval,1,NavalUnitKind.Frigate,port.Berth);
             port.SimTick(.1f);
             Assert.That(port.Owner,Is.EqualTo(0));
             Assert.That(port.ClaimZone.Guardian,Is.SameAs(defender));
@@ -143,7 +143,7 @@ namespace RiskAI.Tests
                 start=hit.position;found=true;
             }
             Assert.That(found,Is.True,"The boarder must begin outside instant embark range.");
-            var ship=BattleTestScenario.Ship(naval,0,ShipKind.Transport,port.Berth);
+            var ship=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,port.Berth);
             var soldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,start);
             var controller=Object.FindFirstObjectByType<RtsController>();controller.SelectOnly(soldier);
             const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;
@@ -169,8 +169,8 @@ namespace RiskAI.Tests
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
             var landGuard=port.Defender;port.ClaimZone.SetDefender(null);landGuard.gameObject.SetActive(false);
-            var first=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
-            var second=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth+Vector3.right);
+            var first=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,port.Berth);
+            var second=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,port.Berth+Vector3.right);
             port.SimTick(.1f);
             Assert.That(port.Owner,Is.EqualTo(0));
             Assert.That(port.NavalDefender,Is.SameAs(first));
@@ -189,7 +189,7 @@ namespace RiskAI.Tests
         public IEnumerator WarshipAtBerthRemainsAControllableCombatUnit()
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
-            var ship=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            var ship=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,port.Berth);
             port.SimTick(.1f);
             Assert.That(ship.IsGarrison,Is.False);
             var destination=naval.Harbors.First(h=>h!=port&&h.CanLaunch).Berth;
@@ -203,7 +203,7 @@ namespace RiskAI.Tests
         public IEnumerator PortKeepsOneLandCircleWhenAWarshipIsSelected()
         {
             var port=naval.Harbors.First(h=>h.Owner==0&&!h.IsImportedPort&&h.Defender);
-            var ship=BattleTestScenario.Ship(naval,0,ShipKind.Galley,port.Berth);
+            var ship=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,port.Berth);
             ship.Select(true);yield return null;
             Assert.That(port.NavalDefender,Is.Null);
             Assert.That(port.NavalClaimRing.enabled,Is.False);
@@ -214,7 +214,7 @@ namespace RiskAI.Tests
         public IEnumerator FailedShipRouteDoesNotIssueTheSoldiersEmbarkOrder()
         {
             var home=naval.Harbors.First(h=>h.Owner==0);
-            var transport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,home.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,home.Berth);
             var soldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,home.Landing);
             transport.transform.position=home.Landing; // Valid transport, deliberately not in navigable water.
             Vector3 before=soldier.Agent.destination;

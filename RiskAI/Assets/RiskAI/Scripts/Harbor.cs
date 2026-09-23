@@ -8,7 +8,7 @@ namespace RiskAI
 {
     public sealed class Harbor : MonoBehaviour
     {
-        sealed class Order { public ShipKind Kind; public int Team; public float Remaining; }
+        sealed class Order { public NavalUnitKind Kind; public int Team; public float Remaining; }
         sealed class LandOrder { public UnitKind Kind; public int Team; public float Remaining; }
         readonly List<Order> queue=new List<Order>();
         readonly List<LandOrder> landQueue=new List<LandOrder>();
@@ -60,7 +60,7 @@ namespace RiskAI
         public const float EmbarkRadius = Ship.LoadRadius;
         public const float BerthRadius = 7.5f;
         public float TrainingProgress=>queue.Count==0?0:1-queue[0].Remaining/TrainTime(queue[0].Kind);
-        public ShipKind QueuedKind(int index)=>queue[index].Kind;
+        public NavalUnitKind QueuedKind(int index)=>queue[index].Kind;
         public bool BuildingTower=>Defense&&Defense.UnderConstruction;
         BuildingTrainingView trainingView;
         LineRenderer rallyRing;
@@ -218,9 +218,9 @@ namespace RiskAI
         {
             claimZone.SetNavalDefender(ship,this);
         }
-        public string Buy(ShipKind kind,int team=0)
+        public string Buy(NavalUnitKind kind,int team=0)
         {
-            if(!TryCatalogShip(kind,out var catalogKind)||!ProductionCatalog.AllowsHarborShip(catalogKind))return "Tipo de barco inválido.";
+            if(!ProductionCatalog.AllowsHarborShip(kind))return "Tipo de barco inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";
             if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
             if(!CanLaunch)return LaunchBlockReason;
@@ -268,9 +268,8 @@ namespace RiskAI
             if(index<0||index>=queue.Count)return "Este encargo ya no está en la cola.";
             var item=queue[index];queue.RemoveAt(index);world.Session.Economy.Refund(item.Team,Cost(item.Kind));return null;
         }
-        public static ShipProfile Profile(ShipKind kind)=>NavalProfiles.Profile((NavalUnitKind)kind);
-        public static int Cost(ShipKind kind)=>Profile(kind).Cost;
-        public static float TrainTime(ShipKind kind)=>Profile(kind).TrainSeconds;
+        public static int Cost(NavalUnitKind kind)=>NavalProfiles.Profile(kind).Cost;
+        public static float TrainTime(NavalUnitKind kind)=>NavalProfiles.Profile(kind).TrainSeconds;
         public void SimTick(float delta)
         {
             if(!world||world.Session.Paused||world.Session.Winner>=0)return;
@@ -297,7 +296,7 @@ namespace RiskAI
         }
         void Captured()
         {
-            RefundQueue();RefundLandQueue();Defense.ChangeOwner();lastOwner=Owner;world.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".");
+            RefundQueue();RefundLandQueue();Defense.ChangeOwner();lastOwner=Owner;world.Session.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".",MessageKind.Info);
         }
         void RefundQueue(){foreach(var item in queue)world.Session.Economy.Refund(item.Team,Cost(item.Kind));queue.Clear();}
         void RefundLandQueue(){foreach(var item in landQueue)world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));landQueue.Clear();}
@@ -312,19 +311,7 @@ namespace RiskAI
             landQueue[0].Remaining-=delta;if(landQueue[0].Remaining>0)return;
             var item=landQueue[0];if(world.Session.RecruitmentPopulation(item.Team)>=BattleRules.PopulationLimit)return;landQueue.RemoveAt(0);
             var unit=world.Session.Spawn(item.Team,item.Kind,LandEntry);
-            if(unit)unit.MoveTo(LandRally,true,false);else world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));
-        }
-        static bool TryCatalogShip(ShipKind kind,out NavalUnitKind catalogKind)
-        {
-            switch(kind)
-            {
-                case ShipKind.Galley:catalogKind=NavalUnitKind.Galley;return true;
-                case ShipKind.Transport:catalogKind=NavalUnitKind.Transport;return true;
-                case ShipKind.Warship:catalogKind=NavalUnitKind.Warship;return true;
-                case ShipKind.Battleship:catalogKind=NavalUnitKind.Battleship;return true;
-                case ShipKind.ArmoredTransport:catalogKind=NavalUnitKind.ArmoredTransport;return true;
-                default:catalogKind=default;return false;
-            }
+            if(unit)unit.TryMoveTo(LandRally,true,false);else world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
     }

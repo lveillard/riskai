@@ -27,7 +27,7 @@ namespace RiskAI.Tests
                         battle.Naval.Harbors.Any(h => h.Defense == tower && h.Defender == guard);
                     if (ownGuard) continue;
                     Assert.That(Vector3.Distance(tower.transform.position, guard.transform.position),
-                        Is.GreaterThan(ReforgedProfiles.CapturableTower.Range), tower.HostName);
+                        Is.GreaterThan(UnitCatalog.CapturableTower.Range), tower.HostName);
                 }
             foreach (var guard in guards)
                 foreach (var other in guards)

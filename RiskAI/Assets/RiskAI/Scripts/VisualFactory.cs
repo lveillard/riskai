@@ -318,17 +318,6 @@ namespace RiskAI
             Shape(pivot.transform,PrimitiveType.Cylinder,"Bore",new Vector3(0,.818f,0),new Vector3(.31f,.003f,.31f),new Color(.025f,.026f,.023f));
             if(soldier)soldier.Weapon=pivot.transform;
         }
-        public static void Arrow(Vector3 from, Vector3 to, CombatTarget target=null, float damage=0, int team=0, CombatTarget source=null, AttackKind attack=AttackKind.Piercing)
-        {
-            // CombatWorld owns projectile state and damage. This compatibility entry point
-            // only forwards the request so legacy callers keep using the simulation API.
-            var session = BattleSession.Current;
-            if (session) session.Combat.FireProjectile(from, to, target, damage, team, source, attack);
-        }
-        public static void Arrow(Vector3 from, Vector3 to, CombatTarget target, float damage, int team, CombatTarget source, bool magic)
-        {
-            Arrow(from,to,target,damage,team,source,magic?AttackKind.Magic:AttackKind.Piercing);
-        }
         public static void Impact(Vector3 point, Color color, float size) => Impact(point, color, size, AttackKind.Piercing);
         public static void Impact(Vector3 point, AttackKind attack, float size)
         {
@@ -471,7 +460,7 @@ namespace RiskAI
         Vector3 from, to;
         float elapsed, duration;
         AttackKind attack;
-        bool legacy;
+        bool visualOnly;
         bool pooled;
         bool poolOwned;
         AttackKind configuredAttack;
@@ -549,7 +538,7 @@ namespace RiskAI
             pooled = true;
             session = null;
             projectileId = -1;
-            legacy = false;
+            visualOnly = false;
             gameObject.SetActive(false);
         }
 
@@ -562,7 +551,7 @@ namespace RiskAI
             duration = Mathf.Max(.01f, travelDuration);
             elapsed = 0;
             attack = kind;
-            legacy = false;
+            visualOnly = false;
             pooled = false;
             VisualFactory.ConfigureProjectile(this, attack);
             gameObject.SetActive(true);
@@ -571,17 +560,9 @@ namespace RiskAI
             if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);
         }
 
-        internal void InitVisual(Vector3 a,Vector3 b,AttackKind kind)
+        /// <summary>Presentation-only flight (instant weapons, previews): no simulation projectile behind it.</summary>
+        public void InitVisual(Vector3 a,Vector3 b,AttackKind kind)
         {
-            Init(a,b,null,0,0,null,kind);
-        }
-
-        public void Init(Vector3 a,Vector3 b,CombatTarget victim,float hit,int attacker,CombatTarget shooter,bool arcane)
-        { Init(a,b,victim,hit,attacker,shooter,arcane?AttackKind.Magic:AttackKind.Piercing); }
-        public void Init(Vector3 a,Vector3 b,CombatTarget victim,float hit,int attacker,CombatTarget shooter,AttackKind kind)
-        {
-            // Kept for old callers and tests. Legacy initialization is presentation-only;
-            // damage and target references are deliberately ignored.
             session = null;
             projectileId = -1;
             from = a;
@@ -589,7 +570,7 @@ namespace RiskAI
             duration = Mathf.Clamp(Vector3.Distance(a, b) / 25f, .15f, .6f);
             elapsed = 0;
             attack = kind;
-            legacy = true;
+            visualOnly = true;
             pooled = false;
             VisualFactory.ConfigureProjectile(this, attack);
             gameObject.SetActive(true);
@@ -623,7 +604,7 @@ namespace RiskAI
                 return;
             }
 
-            if (!legacy) { VisualFactory.Release(this); return; }
+            if (!visualOnly) { VisualFactory.Release(this); return; }
             elapsed += Time.unscaledDeltaTime;
             SetPosition(elapsed / duration);
             if (elapsed >= duration) VisualFactory.Release(this);

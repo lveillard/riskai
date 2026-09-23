@@ -120,7 +120,7 @@ namespace RiskAI
             Vector3 fallback=transform.position+away*3.8f;
             // Rotate our added tower, keeping both source city and circle XY intact.
             // Independent starting posts must not bombard each other's defenders.
-            float clearance=ReforgedProfiles.CapturableTower.Range+1;
+            float clearance=UnitCatalog.CapturableTower.Range+1;
             for(int attempt=0;attempt<25;attempt++)
             {
                 float angle=attempt==0?0:((attempt+1)/2)*15*(attempt%2==0?-1:1);
@@ -270,7 +270,7 @@ namespace RiskAI
                 if (projectRemaining <= 0)
                 {
                     State.Level = 2; VisualFactory.TownUpgrade(transform);
-                    session.Message(DisplayName + ": " + ProjectName + " completada.");
+                    session.Message(DisplayName + ": " + ProjectName + " completada.", MessageKind.Info);
                     project = BuildingProject.None;
                 }
             }
@@ -283,7 +283,7 @@ namespace RiskAI
                 {
                     Vector3 spawn = IsPort && Port ? Port.LandEntry : DefaultLandEntry;
                     var unit = session.SpawnSeparated(first.Team, first.Kind, spawn);
-                    if (unit) { queue.RemoveAt(0); unit.MoveTo(Rally, true, false); }
+                    if (unit) { queue.RemoveAt(0); unit.TryMoveTo(Rally, true, false); }
                     else { queue.RemoveAt(0); session.Economy.Refund(first.Team, BattleRules.Cost(first.Kind)); }
                 }
             }

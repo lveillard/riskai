@@ -14,7 +14,9 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_LOG = ROOT / "RiskAI" / "Logs" / "v22-opened.log"
+_VERSION_FILE = ROOT / "VERSION"
+_VERSION = _VERSION_FILE.read_text(encoding="utf-8").split()[0] if _VERSION_FILE.exists() else "0"
+DEFAULT_LOG = ROOT / "RiskAI" / "Logs" / f"player-v{_VERSION}.log"
 MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024
 MAX_POLL_BYTES = 1024 * 1024
 MAX_PARTIAL_BYTES = 64 * 1024

@@ -41,7 +41,8 @@ namespace RiskAI.Tests
             target.enabled = false;
 
             float healthBefore = target.Health;
-            int projectileId = battle.Combat.FireProjectile(source.AimPoint, target.AimPoint, target, 24, source.Team, source, AttackKind.Piercing);
+            var bolt = SourceWeapons.For(UnitKind.Archer, AttackKind.Piercing);
+            int projectileId = battle.Combat.FireWeapon(source.AimPoint, target.AimPoint, target, 24, source.Team, source, bolt);
             Assert.That(projectileId, Is.GreaterThan(0));
 
             var views = Object.FindObjectsOfType<ArrowFlight>();
@@ -53,7 +54,7 @@ namespace RiskAI.Tests
                 else views[i].enabled = false;
             }
 
-            yield return new WaitForSecondsRealtime(.85f);
+            yield return new WaitForSecondsRealtime(bolt.FlightTime(Vector3.Distance(source.AimPoint, target.AimPoint)) + .35f);
             Assert.That(battle.Combat.ActiveProjectileCount, Is.Zero);
             Assert.That(target.Health, Is.LessThan(healthBefore), "Removing a projectile view must not remove its simulation hit.");
         }
@@ -88,9 +89,9 @@ namespace RiskAI.Tests
             Assert.That(VisualFactory.ActiveProjectileViewCount, Is.Zero);
 
             Vector3 from=new Vector3(280,2,280),to=new Vector3(290,2,280);
-            battle.Combat.FireProjectile(from,to,null,0,0,null,AttackKind.Piercing);
-            battle.Combat.FireProjectile(from,to,null,0,0,null,AttackKind.Magic);
-            battle.Combat.FireProjectile(from,to,null,0,0,null,AttackKind.Siege);
+            FireVisual(from,to,UnitKind.Archer,AttackKind.Piercing);
+            FireVisual(from,to,UnitKind.Mage,AttackKind.Magic);
+            FireVisual(from,to,UnitKind.Mortar,AttackKind.Siege);
             yield return null;
 
             var views=Object.FindObjectsOfType<ArrowFlight>();
@@ -148,10 +149,13 @@ namespace RiskAI.Tests
             yield return new WaitForSecondsRealtime(.85f);
             Assert.That(battle.Combat.ActiveProjectileCount,Is.Zero);
             Assert.That(VisualFactory.ActiveProjectileViewCount,Is.Zero);
-            battle.Combat.FireProjectile(from,to,null,0,0,null,AttackKind.Siege);
+            FireVisual(from,to,UnitKind.Mortar,AttackKind.Siege);
             yield return null;
             Assert.That(VisualFactory.ProjectilePoolCreatedCount,Is.EqualTo(created));
         }
+
+        void FireVisual(Vector3 from,Vector3 to,UnitKind kind,AttackKind attack)=>
+            battle.Combat.FireWeapon(from,to,null,0,0,null,SourceWeapons.For(kind,attack));
 
         [UnityTest]
         public IEnumerator CrossbowBoltDealsDamageOnlyWhenItsVisibleFlightArrives()

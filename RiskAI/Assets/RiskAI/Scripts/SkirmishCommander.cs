@@ -249,7 +249,7 @@ namespace RiskAI
                 }
             }
             bool navalOnly = navalPower > 0 && navalPower >= enemyPower - .01f;
-            // A galley outranges both the 13 m post tower and a crossbow garrison:
+            // A frigate outranges both the 13 m post tower and a crossbow garrison:
             // against a pure naval threat only ships and part of the ranged force count.
             if (navalOnly) friendlyPower = friendlyShips + friendlyRanged * .5f;
             else if (TowerActive(tower, guardian)) friendlyPower += AiUnitAnalysis.TowerValue(guardian.Health, null);
@@ -324,7 +324,7 @@ namespace RiskAI
             {
                 var unit = own[i];
                 if (!IsMobileDefender(unit) || defenseAssignments.ContainsKey(unit.EntityId)) continue;
-                // Melee soldiers cannot reach a galley bombarding from the water.
+                // Melee soldiers cannot reach a frigate bombarding from the water.
                 if (rangedOnly && !BattleRules.Ranged(unit.Kind)) continue;
                 float next=Vector3.SqrMagnitude(unit.transform.position-point);
                 if (next > radius * radius) continue;

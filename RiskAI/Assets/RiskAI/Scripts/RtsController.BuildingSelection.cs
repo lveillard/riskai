@@ -19,10 +19,13 @@ namespace RiskAI
     {
         public readonly int RequestedCount, AcceptedCount, SpentGold;
         public readonly string FirstFailure;
+        /// <summary>Nothing was queued because the player could not afford a single unit.</summary>
+        public readonly bool Unaffordable;
         public int RejectedCount => RequestedCount-AcceptedCount;
         public string Error => AcceptedCount>0?null:FirstFailure;
-        public ProductionBatchResult(int requested,int accepted,int spent,string failure)
-        { RequestedCount=requested;AcceptedCount=accepted;SpentGold=spent;FirstFailure=failure; }
+        public MessageKind Kind => AcceptedCount>0?MessageKind.Purchase:Unaffordable?MessageKind.NoGold:MessageKind.Info;
+        public ProductionBatchResult(int requested,int accepted,int spent,string failure,bool unaffordable)
+        { RequestedCount=requested;AcceptedCount=accepted;SpentGold=spent;FirstFailure=failure;Unaffordable=unaffordable; }
         public string Feedback(string product)
         {
             if(AcceptedCount<=0)return FirstFailure;
@@ -52,7 +55,7 @@ namespace RiskAI
             if (town.Port) { SelectHarbor(town.Port, append); return; }
             SelectBuildings(new[] { town }, null, append);
             SelectedTown = town;
-            // Preserve the clicked town as the legacy primary even when Shift kept ports in the group.
+            // The clicked town stays the primary selection even when Shift kept ports in the group.
             SelectedHarbor = null;
         }
 
@@ -221,7 +224,7 @@ namespace RiskAI
                 : PreviewSelectedBuildings(OwnSelectedTowns(),cost);
         }
 
-        public ProductionBatchPreview PreviewShipPurchase(ShipKind kind) =>
+        public ProductionBatchPreview PreviewShipPurchase(NavalUnitKind kind) =>
             PreviewSelectedBuildings(OwnSelectedHarbors(),Harbor.Cost(kind));
 
         IEnumerable<Settlement> OwnSelectedTowns() => selectedTowns.Where(t=>t&&t.State.Owner==0);
@@ -254,11 +257,11 @@ namespace RiskAI
         }
 
         /// <summary>Queues one ship at every selected allied harbor, shortest naval queues first.</summary>
-        public string TryBuySelected(ShipKind kind)
+        public string TryBuySelected(NavalUnitKind kind)
         {
             LastProductionResult=QueueAtSelectedBuildings(
                 OwnSelectedHarbors(), h => h.QueueCount, StableHarborIndex,
-                h => ExecuteBuilding(PlayerBuildingIntent.BuyShip(h.BuildingId,(NavalUnitKind)kind)),
+                h => ExecuteBuilding(PlayerBuildingIntent.BuyShip(h.BuildingId,kind)),
                 Harbor.Cost(kind),"Selecciona un puerto de tu bando para comprar barcos.");
             return LastProductionResult.Error;
         }
@@ -279,7 +282,8 @@ namespace RiskAI
                 if (firstError == null) firstError = error;
             }
             int spent=session?Mathf.Max(0,goldBefore-session.Economy.Gold[0]):queued*unitCost;
-            return new ProductionBatchResult(requested,queued,spent,firstError??emptyMessage);
+            bool unaffordable=queued==0&&requested>0&&unitCost>0&&goldBefore<unitCost;
+            return new ProductionBatchResult(requested,queued,spent,firstError??emptyMessage,unaffordable);
         }
 
         // NavalWorld builds this list in source order; the index gives deterministic ties without treating a display name as identity.

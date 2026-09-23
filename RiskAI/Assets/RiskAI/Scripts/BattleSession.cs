@@ -127,7 +127,7 @@ namespace RiskAI
             bool fallback=Layout == StartLayout.RandomCountries && PlayerCount>MapLayout.Countries.Length;
             var mode=Layout != StartLayout.RandomCountries || fallback
                 ? StartingAllocationMode.IndividualCities : StartingAllocationMode.WholeCountries;
-            if(fallback)Message("No hay países suficientes para todos: reparto por ciudades.");
+            if(fallback)Message("No hay países suficientes para todos: reparto por ciudades.", MessageKind.Info);
             return StartingAllocation.Generate(Seed,countries,PlayerCount,mode).CityOwners;
         }
         void OnDestroy() { if (Current == this) Current = null; }
@@ -166,7 +166,6 @@ namespace RiskAI
         {
             for(int i=0;i<Units.Count;i++) if(Units[i]) Units[i].SetSimulationPaused(suspended);
         }
-        public void Message(string message) => Message(message, MessageLog.Classify(message));
         public void Message(string message, MessageKind kind, int team = -1, Vector3? focus = null)
         {
             Messages.Insert(0, message); if (Messages.Count > 5) Messages.RemoveAt(5);
@@ -217,7 +216,7 @@ namespace RiskAI
             {
                 if (playerPresence[team] || eliminatedPlayers[team]) continue;
                 eliminatedPlayers[team] = true;
-                Message(VisualFactory.TeamName(team) + " ha sido eliminado.");
+                Message(VisualFactory.TeamName(team) + " ha sido eliminado.", MessageKind.Info);
                 PlayerEliminated?.Invoke(team);
             }
             if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro", MessageKind.Income, 0); Feedback.RaiseIncome(0, Economy.Income(0)); CountryReinforcements(); }

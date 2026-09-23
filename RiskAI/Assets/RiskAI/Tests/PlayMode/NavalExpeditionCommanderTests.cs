@@ -39,12 +39,12 @@ namespace RiskAI.Tests
             var home=naval.Harbors.First(harbor=>harbor.Owner==1&&harbor.CanLaunch);
             foreach(var unit in battle.Units.Where(unit=>unit&&unit.Team==1&&!unit.IsGarrison))unit.gameObject.SetActive(false);
             var troops=BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,Sample(home.Landing+Vector3.right*3f));
-            var sourceGalley=BattleTestScenario.Ship(naval,1,ShipKind.Galley,home.Berth);
-            Assert.That(sourceGalley,Is.Not.Null,"The occupied source berth is part of the transport integration fixture.");
+            var sourceFrigate=BattleTestScenario.Ship(naval,1,NavalUnitKind.Frigate,home.Berth);
+            Assert.That(sourceFrigate,Is.Not.Null,"The occupied source berth is part of the transport integration fixture.");
             // Advance only the clock to the first naval decision; no rules tick
             // means no income or recruitment enters this economic fixture.
             while(battle.BattleTime<battle.AiFirstNavalOffensiveTime+.1f)battle.Clock.Advance(.4f,false,_=>{});
-            int cost=Harbor.Cost(ShipKind.Transport);battle.Economy.Gold[1]=cost;
+            int cost=Harbor.Cost(NavalUnitKind.Transport);battle.Economy.Gold[1]=cost;
             battle.AiEnabled=true;
             // Reserve and queue before the land commander receives its first turn.
             naval.ExpeditionFor(1).Tick(0);
@@ -63,7 +63,7 @@ namespace RiskAI.Tests
                 battle.AiEnabled=true;
                 naval.ExpeditionFor(1).Tick(0);
                 battle.AiEnabled=false;
-                transport=naval.Ships.FirstOrDefault(ship=>ship&&ship.Team==1&&ship.Kind==ShipKind.Transport);
+                transport=naval.Ships.FirstOrDefault(ship=>ship&&ship.Team==1&&ship.Kind==NavalUnitKind.Transport);
                 if(naval.PendingShips(1)>0&&goldWhenQueued<0)goldWhenQueued=battle.Economy.Gold[1];
                 if(transport&&transport.CargoCount>=2){embarked=true;if(expedition==null)expedition=transport.Cargo.Take(2).ToArray();}
                 if(embarked&&expedition!=null&&expedition.All(unit=>unit&&unit.IsAlive&&unit.gameObject.activeInHierarchy))

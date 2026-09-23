@@ -107,7 +107,7 @@ namespace RiskAI
             if (sameType) SelectUnits(session.Units.Where(candidate => candidate.Team == 0 && candidate.Kind == unit.Kind && !candidate.IsGarrison && OnScreen(candidate)), append);
             else if (append && IsSelected(unit)) { RemoveSelected(unit); unit.Select(false); }
             else SelectUnits(new[] { unit }, append);
-            if (unit.IsGarrison && !sameType) session.Message("El defensor puede salir si un aliado ocupa su círculo como relevo.");
+            if (unit.IsGarrison && !sameType) session.Message("El defensor puede salir si un aliado ocupa su círculo como relevo.", MessageKind.Info);
             lastSelectTime = Time.unscaledTime; lastSelectKind = unit.Kind;
         }
 

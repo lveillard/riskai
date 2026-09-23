@@ -9,7 +9,8 @@ namespace RiskAI
     /// </summary>
     public static class AttackPresentationTiming
     {
-        const float LegacyPresentationSeconds = .45f;
+        // Swing length for profiles without a source backswing.
+        const float DefaultPresentationSeconds = .45f;
 
         public static string Clip(UnitKind kind)
         {
@@ -17,7 +18,7 @@ namespace RiskAI
             {
                 case UnitKind.Footman: return "1H_Melee_Attack_Slice_Horizontal";
                 case UnitKind.Mage: return "Spellcast_Shoot";
-                case UnitKind.Guard:
+                case UnitKind.Knight:
                 case UnitKind.MarineMajor:
                 case UnitKind.MarineGeneral:
                 case UnitKind.ArmyGeneral:
@@ -53,7 +54,7 @@ namespace RiskAI
             cooldown = Mathf.Max(attackPoint, cooldown);
             float recovery = backswing > 0
                 ? backswing
-                : Mathf.Max(0, LegacyPresentationSeconds - attackPoint);
+                : Mathf.Max(0, DefaultPresentationSeconds - attackPoint);
             return Mathf.Min(recovery, cooldown - attackPoint);
         }
 

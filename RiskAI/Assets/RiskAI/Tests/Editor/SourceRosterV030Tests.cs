@@ -7,13 +7,13 @@ namespace RiskAI.Tests
     public sealed class SourceRosterV030Tests
     {
         // gold, hp, base, dice, sides, range, cooldown, speed, armor (explicit W3U overrides or RoC inheritance).
-        [TestCase(UnitKind.EliteRifleman, "h00F", 6, 450f, 36f, 2, 4, 7f, 1f, 5.4f, 1f, AttackKind.Piercing, ArmorKind.Light, "T")]
-        [TestCase(UnitKind.Roarer, "h00I", 4, 400f, 29f, 1, 3, 10f, 2f, 5.4f, 1f, AttackKind.Piercing, ArmorKind.Light, "X")]
-        [TestCase(UnitKind.ArmyGeneral, "h00J", 10, 800f, 55f, 2, 5, 2f, 1.45f, 7f, 10f, AttackKind.Normal, ArmorKind.Heavy, "G")]
-        [TestCase(UnitKind.Artillery, "h00M", 15, 900f, 55f, 1, 13, 20f, 3f, 4f, 3f, AttackKind.Piercing, ArmorKind.Unarmored, "Z")]
-        [TestCase(UnitKind.Tank, "h01A", 25, 1500f, 80f, 1, 11, 10f, 1.8f, 5.2f, 9f, AttackKind.Siege, ArmorKind.Fortified, "Y")]
+        [TestCase(UnitKind.EliteRifleman, "h00F", 6, 450f, 36f, 2, 4, 7f, 1f, 5.4f, 1f, AttackKind.Piercing, ArmorKind.Light)]
+        [TestCase(UnitKind.Roarer, "h00I", 4, 400f, 29f, 1, 3, 10f, 2f, 5.4f, 1f, AttackKind.Piercing, ArmorKind.Light)]
+        [TestCase(UnitKind.ArmyGeneral, "h00J", 10, 800f, 55f, 2, 5, 2f, 1.45f, 7f, 10f, AttackKind.Normal, ArmorKind.Heavy)]
+        [TestCase(UnitKind.Artillery, "h00M", 15, 900f, 55f, 1, 13, 20f, 3f, 4f, 3f, AttackKind.Piercing, ArmorKind.Unarmored)]
+        [TestCase(UnitKind.Tank, "h01A", 25, 1500f, 80f, 1, 11, 10f, 1.8f, 5.2f, 9f, AttackKind.Siege, ArmorKind.Fortified)]
         public void NewCityUnitsResolveTheirSourceProfile(UnitKind kind, string rawId, int gold, float health, float baseDamage,
-            int dice, int sides, float range, float cooldown, float speed, float armor, AttackKind attack, ArmorKind defense, string hotkey)
+            int dice, int sides, float range, float cooldown, float speed, float armor, AttackKind attack, ArmorKind defense)
         {
             var profile = BattleRules.Profile(kind);
             Assert.That(BattleRules.SourceRawId(kind), Is.EqualTo(rawId));
@@ -29,8 +29,7 @@ namespace RiskAI.Tests
             Assert.That(profile.Armor, Is.EqualTo(armor));
             Assert.That(profile.Attack, Is.EqualTo(attack));
             Assert.That(profile.Defense, Is.EqualTo(defense));
-            Assert.That(BattleRules.SourceHotkey(kind), Is.EqualTo(hotkey), "Source letter is metadata; the effective key is the grid cell.");
-            Assert.That(ProductionHotkeys.GridKeys, Does.Contain(BattleRules.Hotkey(kind)));
+            Assert.That(ProductionHotkeys.GridKeys, Does.Contain(ProductionHotkeys.Hotkey(kind)));
             Assert.That(BattleRules.TrainTime(kind), Is.EqualTo(1f), "Every v0.30 unit overrides ubld=1.");
             Assert.That(BattleRules.RequiredLevel(kind), Is.EqualTo(1));
             Assert.That(ProductionCatalog.AllowsSettlementUnit(kind), Is.True);
@@ -38,7 +37,7 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void NewKindsAreAppendedWithoutMovingPersistedOrdinals()
+        public void NewKindsAreAppendedWithoutMovingCatalogOrdinals()
         {
             Assert.That((int)UnitKind.MarineGeneral, Is.EqualTo(8));
             Assert.That((int)UnitKind.EliteRifleman, Is.EqualTo(9));
@@ -46,7 +45,7 @@ namespace RiskAI.Tests
             Assert.That((int)UnitKind.ArmyGeneral, Is.EqualTo(11));
             Assert.That((int)UnitKind.Artillery, Is.EqualTo(12));
             Assert.That((int)UnitKind.Tank, Is.EqualTo(13));
-            Assert.That(ReforgedProfiles.Units.Length, Is.EqualTo(System.Enum.GetValues(typeof(UnitKind)).Length));
+            Assert.That(UnitCatalog.Land.Length, Is.EqualTo(System.Enum.GetValues(typeof(UnitKind)).Length));
         }
 
         [Test]
