@@ -1,9 +1,9 @@
 # Validación Riesgus v0.30.0
 
-Publicado en https://riesgus.com como `20260923T120008Z-v030-c73fd2f` (commit `c73fd2f`).
+Publicado en https://riesgus.com como `20260923T150510Z-v030-050e773` (commit `050e773`, merge de la PR #4).
 Recibo `activated=true`, 10 archivos verificados en el origen y verificación pública
-`success=true` (10/10 hashes) en `.deploy/20260923T120008Z-v030-c73fd2f/{receipt,public-verification}.json`.
-Se conserva `20260922T194407Z-tower-v0291` como rollback. Sin cambios en Cloudflare ni
+`success=true` (10/10 hashes) en `.deploy/20260923T150510Z-v030-050e773/{receipt,public-verification}.json`.
+Sustituye a `20260923T120008Z-v030-c73fd2f`; la release anterior sigue en el servidor. Sin cambios en Cloudflare ni
 en reglas de acceso.
 
 ## Pruebas
