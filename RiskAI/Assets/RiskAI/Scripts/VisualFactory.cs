@@ -223,7 +223,6 @@ namespace RiskAI
             Shape(root,PrimitiveType.Cube,"Fortress cornice",new Vector3(0,2.62f,0),new Vector3(2.9f,.18f,2.9f),gold);
             for(int side=-1;side<=1;side+=2)
                 Shape(root,PrimitiveType.Cube,"Fortress banner",new Vector3(side*.82f,1.65f,-1.34f),new Vector3(.4f,1.2f,.08f),gold);
-            StaticArchitectureBatching.Combine(root);
         }
         public static GameObject Cone(Transform parent,string name,Vector3 position,float radius,float height,Color color,int sides=8,float rotation=0)
         {

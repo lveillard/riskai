@@ -20,26 +20,26 @@ No hay migración a DOTS ni cambio de motor.
 
 ## Experimentos no activados
 
-El batching nativo y la combinación manual por material quedan **desactivados
+El batching nativo y la combinación manual por material quedaron **desactivados
 por defecto**. La caída de draw calls (~16–17%) no bastó para demostrar una
 mejora de CPU convincente. La variante manual además hizo crecer el heap WASM
-de una partida normal aproximadamente 96,5 MiB. Se conservan como controles
-diagnósticos explícitos, no como una optimización publicada por defecto:
+de una partida normal aproximadamente 96,5 MiB.
 
-- `--riskai-native-architecture-batching`.
-- `--riskai-manual-architecture-batching`.
-- `--riskai-disable-architecture-batching` prevalece sobre ambos.
-- `--riskai-disable-unit-presentation-culling` permite comparar la animación.
+Estos modos y sus flags (`--riskai-native-architecture-batching`,
+`--riskai-manual-architecture-batching` y `--riskai-disable-architecture-batching`)
+se eliminaron del código al concluir el experimento; la arquitectura siempre se
+dibuja por separado. `--riskai-disable-unit-presentation-culling` permite
+comparar la animación.
 
 En Web se utilizan las mismas claves de query sin `--`, con valor `1`.
 
 ## Validación
 
 La configuración final aprueba 173 casos EditMode y 27 PlayMode: 200 casos,
-sin fallos. Dos pruebas de torres de las variantes opt-in se omiten de forma
+sin fallos. Dos pruebas de torres de las variantes opt-in se omitían de forma
 intencionada al estar desactivada la agrupación; sus rutas se comprobaron en
-las candidatas nativa y manual anteriores. No es una ejecución de todas las
-clases PlayMode del repositorio.
+las candidatas nativa y manual anteriores, ya eliminadas. No es una ejecución
+de todas las clases PlayMode del repositorio.
 
 Incluye geometría/selección, variantes de mapa, apertura y navegación de los
 dos mapas importados, animación al reentrar en cámara, reutilización de

@@ -134,7 +134,6 @@ namespace RiskAI
                     Block(root,"Mooring iron cap",new(point.x,top,point.z),new(.39f,.1f,.39f),2,new Color(.32f,.34f,.31f));
                 }
             }
-            StaticArchitectureBatching.Combine(root);
         }
 
         public static HarborVisual CreateHarborBuilding(Transform parent,int owner,Vector3 worldPosition,Vector3 waterward,bool solid)
@@ -170,7 +169,6 @@ namespace RiskAI
             Beam(root,new(houseX+1.65f,0,houseZ+.3f),new(houseX+1.65f,4.25f,houseZ+.3f),.12f);
             var flag=Block(root,"Harbor standard",new(houseX+2.22f,3.63f,houseZ+.3f),new(1.08f,.82f,.07f),0).GetComponent<Renderer>();
             flag.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamMaterialColor(owner));
-            StaticArchitectureBatching.Combine(root,roof,flag);
             return new HarborVisual(root,entrance,roof,flag);
         }
 
@@ -225,7 +223,6 @@ namespace RiskAI
             for(int i=0;i<3;i++)Block(root,"Integrated dock cargo",new(1.75f+i*.58f,.35f,-1.05f),new(.48f,.62f,.5f),2,new Color(1.15f,.88f,.5f));
             var flag=Block(root,"Integrated harbor standard",new(2.15f,2.85f,-.12f),new(.98f,.72f,.06f),0).GetComponent<Renderer>();
             flag.sharedMaterial=VisualFactory.Mat(VisualFactory.TeamMaterialColor(owner));
-            StaticArchitectureBatching.Combine(root,roof,flag);
             return new HarborVisual(root,entrance,roof,flag);
         }
 

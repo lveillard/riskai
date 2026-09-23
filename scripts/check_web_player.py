@@ -56,12 +56,6 @@ def main():
                         help='Diagnostic only: replace frozen unit skins with static baked meshes while retaining materials and simulation.')
     parser.add_argument('--disable-unit-lod', action='store_true',
                         help='Diagnostic control: retain detailed unit models at strategic zoom.')
-    parser.add_argument('--disable-architecture-batching', action='store_true',
-                        help='A/B control: retain separate architecture draws in the same build.')
-    parser.add_argument('--manual-architecture-batching', action='store_true',
-                        help='A/B experiment: combine immutable architecture meshes by material.')
-    parser.add_argument('--native-architecture-batching', action='store_true',
-                        help='A/B experiment: use Unity native static architecture batching.')
     parser.add_argument('--disable-unit-presentation-culling', action='store_true',
                         help='A/B control: keep animation controllers running outside the camera.')
     args = parser.parse_args()
@@ -116,12 +110,6 @@ def main():
         query['riskai-probe-bake-unit-skins'] = 1
     if args.disable_unit_lod:
         query['riskai-disable-unit-lod'] = 1
-    if args.disable_architecture_batching:
-        query['riskai-disable-architecture-batching'] = 1
-    if args.manual_architecture_batching:
-        query['riskai-manual-architecture-batching'] = 1
-    if args.native_architecture_batching:
-        query['riskai-native-architecture-batching'] = 1
     if args.disable_unit_presentation_culling:
         query['riskai-disable-unit-presentation-culling'] = 1
     if args.restart:
@@ -136,9 +124,6 @@ def main():
               'unit_shadows_disabled': args.no_unit_shadows, 'unit_renderers_hidden': args.hide_unit_renderers,
               'unit_animation_disabled': args.disable_unit_animation, 'unit_skins_baked': args.bake_unit_skins,
               'unit_lod_disabled': args.disable_unit_lod,
-              'architecture_batching_disabled': args.disable_architecture_batching,
-              'manual_architecture_batching': args.manual_architecture_batching,
-              'native_architecture_batching': args.native_architecture_batching,
               'unit_presentation_culling_disabled': args.disable_unit_presentation_culling}
     started = time.monotonic()
     with (args.output / 'console.log').open('w', encoding='utf-8') as log, sync_playwright() as p:

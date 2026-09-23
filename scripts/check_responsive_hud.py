@@ -10,7 +10,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'.tools/web-python'))
 from playwright.sync_api import sync_playwright
-p=argparse.ArgumentParser();p.add_argument('output');p.add_argument('--width',type=int,default=390);p.add_argument('--height',type=int,default=844);p.add_argument('--dpr',type=float,default=2);p.add_argument('--url',default='http://127.0.0.1:8081');p.add_argument('--map',default='europe',choices=['classic','riverlands','europe','world']);p.add_argument('--posts',nargs='*',default=[],help='Additional closeups by stable source city ID');p.add_argument('--disable-architecture-batching',action='store_true');p.add_argument('--disable-unit-presentation-culling',action='store_true');p.add_argument('--manual-architecture-batching',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('output');p.add_argument('--width',type=int,default=390);p.add_argument('--height',type=int,default=844);p.add_argument('--dpr',type=float,default=2);p.add_argument('--url',default='http://127.0.0.1:8081');p.add_argument('--map',default='europe',choices=['classic','riverlands','europe','world']);p.add_argument('--posts',nargs='*',default=[],help='Additional closeups by stable source city ID');p.add_argument('--disable-unit-presentation-culling',action='store_true');a=p.parse_args()
 folder=root/'Captures'/a.output;folder.mkdir(exist_ok=False)
 report={'url':a.url,'map':a.map,'viewport':[a.width,a.height],'dpr':a.dpr,'physicalMobile':False,'errors':[],'layouts':{},'captures':[]}
 ready=[];start=time.monotonic()
@@ -47,7 +47,7 @@ with sync_playwright() as pw,(folder/'console.log').open('w',encoding='utf-8') a
         page.wait_for_timeout(400)
         page.mouse.move(a.width/2,a.height/2);page.wait_for_timeout(100)
     try:
-        controls=('&riskai-disable-architecture-batching=1' if a.disable_architecture_batching else '')+('&riskai-disable-unit-presentation-culling=1' if a.disable_unit_presentation_culling else '')+('&riskai-manual-architecture-batching=1' if a.manual_architecture_batching else '')
+        controls=('&riskai-disable-unit-presentation-culling=1' if a.disable_unit_presentation_culling else '')
         page.goto(a.url+'/?riskai-map='+a.map+'&riskai-seed=19031&riskai-players=16&riskai-ui-capture=review'+controls,wait_until='domcontentloaded')
         page.wait_for_function('window.riskaiInstance != null',timeout=180000);page.wait_for_timeout(6500);shot('menu')
         send('StartBattle','RiskAI · Front End')

@@ -118,7 +118,6 @@ namespace RiskAI
                 }
             }
             var banner=Banner(root,new Vector3(-1.08f,3.28f,-1.78f),team,.66f,1.22f);
-            StaticArchitectureBatching.Combine(root,banner);
             return banner;
         }
         static Renderer IntegratedTown(Transform root,int team,bool capital)
@@ -146,7 +145,6 @@ namespace RiskAI
                 Roof(root,new Vector3(-1.15f,4.3f,.5f),1.2f,1.15f,.7f,team);
             }
             var banner=Banner(root,new Vector3(1.18f,3.12f,-1.66f),team,.64f,1.16f);
-            StaticArchitectureBatching.Combine(root,banner);
             return banner;
         }
         public static void Tower(Transform root,int team,out GameObject upper,out GameObject scaffold,out Renderer banner) =>
@@ -155,10 +153,6 @@ namespace RiskAI
         {
             if(BuildingVariants.IsIntegrated(variant))IntegratedTower(root,team,out upper,out scaffold,out banner);
             else DetachedTower(root,team,out upper,out scaffold,out banner);
-            // Scaffolding is activated independently while a tower is rebuilt.
-            // Batch only the stable upper architecture and leave its mutable
-            // faction roof/banner as ordinary renderers.
-            StaticArchitectureBatching.Combine(upper.transform,banner);
         }
         static void DetachedTower(Transform root,int team,out GameObject upper,out GameObject scaffold,out Renderer banner)
         {
