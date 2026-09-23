@@ -1,4 +1,5 @@
 using UnityEngine;
+using RiskAI.Core;
 
 namespace RiskAI
 {
@@ -13,7 +14,7 @@ namespace RiskAI
         public const float MovingThreshold = .22f;
 
         public static float HeightRatio(Core.UnitKind kind) =>
-            Mathf.Clamp(VisualMetrics.HeightFor(kind) / Mathf.Max(.01f, VisualMetrics.HeightFor(Core.UnitKind.Footman)), .6f, 1.6f);
+            Mathf.Clamp(UnitCatalog.Get(kind).VisualHeight / Mathf.Max(.01f, UnitCatalog.Get(Core.UnitKind.Footman).VisualHeight), .6f, 1.6f);
 
         /// <summary>Whether the run clip should play, with hysteresis around the walk/run threshold.</summary>
         public static bool Runs(float speed, float heightRatio, bool running) =>
@@ -50,7 +51,7 @@ namespace RiskAI
         }
         public void Strike()
         {
-            if(!anim)return;string clip=AttackPresentationTiming.Clip(soldier.Kind);
+            if(!anim)return;string clip=UnitCatalog.Get(soldier.Kind).AttackClip;
             if(string.IsNullOrEmpty(clip)||!anim[clip])return;hitClip=null;hitUntil=0;
             current=attackClip=clip;anim[clip].time=0;anim[clip].speed=0;anim[clip].wrapMode=WrapMode.Once;
             anim.CrossFade(clip,.065f);
@@ -59,7 +60,7 @@ namespace RiskAI
         {
             if(!anim||string.IsNullOrEmpty(attackClip)||!anim[attackClip])return;
             var state=anim[attackClip];state.speed=0;
-            state.time=state.length*AttackPresentationTiming.ContactNormalizedTime(soldier.Kind);
+            state.time=state.length*UnitCatalog.Get(soldier.Kind).AttackContact;
             anim.Sample();
         }
         public void CancelStrike()

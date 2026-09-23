@@ -255,7 +255,7 @@ namespace RiskAI
                 MortarModel(model.transform,team,soldier);ModelMetrics.MatchStandingHeight(model,soldier.Kind);Ring(root,.70f,.025f,team);
                 return;
             }
-            var prefab=Resources.Load<GameObject>("Units/"+BattleRules.Model(soldier.Kind));
+            var prefab=Resources.Load<GameObject>("Units/"+UnitCatalog.Get(soldier.Kind).Model);
             if(prefab)
             {
                 var model=Object.Instantiate(prefab,root,false);
@@ -267,7 +267,7 @@ namespace RiskAI
                 if(soldier.Kind==UnitKind.MarinePrivate)MarinePrivateView.Apply(model,soldier.Team);
                 UnitVariantViews.Decorate(model,soldier.Kind,soldier.Team);
                 soldier.gameObject.AddComponent<SoldierAnimator>().Initialize(soldier,model);
-                Ring(root,Mathf.Max(.33f,SourceGeometry.AgentRadius(soldier.Kind)*1.1f),.022f,team);return;
+                Ring(root,Mathf.Max(.33f,UnitCatalog.Get(soldier.Kind).CollisionRadius*1.1f),.022f,team);return;
             }
             Color metal=new Color(.71f,.75f,.77f), leather=new Color(.25f,.18f,.13f), skin=new Color(.83f,.63f,.43f);
             Shape(root,PrimitiveType.Capsule,"Tunic",new Vector3(0,1.15f,0),new Vector3(.67f,.47f,.45f),team);

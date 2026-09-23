@@ -15,17 +15,18 @@ namespace RiskAI
         }
         public static void CreateShip(Ship ship)
         {
-            var root=CreateShipModel(ship.transform,ship.Team,ship.Kind);bool war=IsWarship(ship.Kind);float scale=HullScale(ship.Kind),length=(war?7.2f:5.15f)*scale,width=(war?1.65f:2.65f)*scale;
-            var collider=ship.gameObject.AddComponent<BoxCollider>();collider.center=new(0,1.3f,0);collider.size=new(width,3,length*.82f);collider.isTrigger=true;
+            var root=CreateShipModel(ship.transform,ship.Team,ship.Kind);var hull=ship.Type.Hull;
+            // The clickable/attackable hull volume is the units.json hull.
+            var collider=ship.gameObject.AddComponent<BoxCollider>();collider.center=new(0,hull.CenterHeight,0);collider.size=new(hull.Beam,hull.Height,hull.Length);collider.isTrigger=true;
             var visual=ship.gameObject.AddComponent<ShipAppearance>();visual.Initialize(ship,root,VisualFactory.Ring(ship.transform,ShipAppearance.SelectionRadius,.09f,new Color(.5f,1,.55f)));
         }
         // The editor portrait generator calls the same model builder as live ships, so UI art
         // cannot drift from the silhouettes and team treatment seen in the world.
         public static Transform CreateShipModel(Transform parent,int team,NavalUnitKind kind)
         {
-            var root=new GameObject("Ship model").transform;root.SetParent(parent,false);var resources=GeneratedResourceOwner.For(parent);bool war=IsWarship(kind);float length=war?7.2f:5.15f,width=war?1.65f:2.65f;
+            var root=new GameObject("Ship model").transform;root.SetParent(parent,false);var resources=GeneratedResourceOwner.For(parent);var hullShape=UnitCatalog.Get(kind).Hull;bool war=hullShape.Warship;float length=war?7.2f:5.15f,width=war?1.65f:2.65f;
             // v0.30 hulls reuse the frigate/transport silhouettes, scaled roughly by source collision (h001 ucol=56).
-            root.localScale=Vector3.one*HullScale(kind);
+            root.localScale=Vector3.one*hullShape.Scale;
             var v=new List<Vector3>();var t=new List<int>();const int sections=12;
             for(int level=0;level<3;level++)for(int s=0;s<=sections;s++)
             {
@@ -69,8 +70,6 @@ namespace RiskAI
             Beam(root,new(0,.65f,length*.35f),new(0,1.05f,length*.58f),.13f,new Color(1.6f,1.15f,.4f));
             return root;
         }
-        public static bool IsWarship(NavalUnitKind kind) => kind!=NavalUnitKind.Transport&&kind!=NavalUnitKind.ArmoredTransport;
-        public static float HullScale(NavalUnitKind kind) => kind==NavalUnitKind.Battleship?1.3f:kind==NavalUnitKind.Warship?1.15f:kind==NavalUnitKind.ArmoredTransport?1.05f:1f;
         static void Sail(Transform root,GeneratedResourceOwner resources,int team,bool war)
         {
             var v=new List<Vector3>();var t=new List<int>();const int nx=8,ny=6;

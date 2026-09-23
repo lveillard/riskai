@@ -2,6 +2,7 @@ using System.Collections;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Rendering;
+using RiskAI.Core;
 namespace RiskAI
 {
     // Optional developer capture: renders the real player and its IMGUI HUD.
@@ -234,8 +235,8 @@ namespace RiskAI
             yield return new WaitForSecondsRealtime(.6f);
             if(battle.Paused)battle.TogglePause();
             Vector3 impact=center+new Vector3(0,0,4f);
-            var magic=Core.SourceWeapons.For(Core.UnitKind.Mage,Core.AttackKind.Magic);
-            var siege=Core.SourceWeapons.For(Core.UnitKind.Mortar,Core.AttackKind.Siege);
+            var magic=UnitCatalog.Get(Core.UnitKind.Mage).Weapon;
+            var siege=UnitCatalog.Get(Core.UnitKind.Mortar).Weapon;
             Vector3 magicFrom=mage?mage.AimPoint:center+Vector3.up,siegeFrom=gunner?gunner.AimPoint:center+Vector3.up,siegeTo=impact+Vector3.right*1.2f;
             battle.Combat.FireWeapon(magicFrom,impact,null,0,0,mage,magic);
             battle.Combat.FireWeapon(siegeFrom,siegeTo,null,0,0,gunner,siege);

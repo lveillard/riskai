@@ -41,7 +41,7 @@ namespace RiskAI.Tests
                 Assert.That(Vector2.Distance(new Vector2(home.Defender.transform.position.x,home.Defender.transform.position.z),new Vector2(home.transform.position.x,home.transform.position.z)),Is.GreaterThan(3f));
                 Assert.That(Vector3.Distance(homePort.Berth,home.ClaimPoint),Is.LessThanOrEqualTo(ClaimRules.TakeoverRadius),
                     "The hull-safe berth must remain inside the shared source-circle capture radius.");
-                battle.Economy.Gold[0]=BattleRules.Cost(UnitKind.MarinePrivate);
+                battle.Economy.Gold[0]=UnitCatalog.Get(UnitKind.MarinePrivate).Cost;
                 Assert.That(homePort.RecruitLand(UnitKind.MarinePrivate,0),Is.Null);
                 Assert.That(home.QueueCount,Is.EqualTo(1));
                 Assert.That(home.QueuedKind(0),Is.EqualTo(UnitKind.MarinePrivate));

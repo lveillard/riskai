@@ -88,7 +88,7 @@ namespace RiskAI.Tests
             Assert.That(port.ClaimZone.Guardian,Is.SameAs(alliedFootman));
 
             var commands = new PlayerBuildingCommands(battle);
-            battle.Economy.Gold[0] = Harbor.Cost(NavalUnitKind.Frigate);
+            battle.Economy.Gold[0] = UnitCatalog.Get(NavalUnitKind.Frigate).Cost;
             Assert.That(commands.Execute(0, PlayerBuildingIntent.BuyShip(port.BuildingId, NavalUnitKind.Frigate)), Is.Null,
                 "A harbor captured by landed troops remains usable through the player command boundary.");
             Assert.That(port.QueueCount, Is.EqualTo(1));

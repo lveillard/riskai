@@ -168,8 +168,8 @@ namespace RiskAI
 
         static Vector3 ProxyScale(UnitKind kind)
         {
-            float height = Mathf.Max(.9f, VisualMetrics.HeightFor(kind));
-            float width = Mathf.Max(.52f, VisualMetrics.RadiusFor(kind) * 1.75f);
+            float height = Mathf.Max(.9f, UnitCatalog.Get(kind).VisualHeight);
+            float width = Mathf.Max(.52f, UnitCatalog.Get(kind).VisualRadius * 1.75f);
             float depth = Mounted(kind) ? width * 1.45f : Siege(kind) ? width * 1.25f : width * .82f;
             return new Vector3(width, height, depth);
         }

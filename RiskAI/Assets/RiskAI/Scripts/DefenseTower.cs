@@ -11,17 +11,21 @@ namespace RiskAI
         public BuildingVariant VisualVariant { get; private set; }
         public int HostOwner => Town ? Town.State.Owner : Harbor ? Harbor.Owner : -1;
         public string HostName => Town ? Town.DisplayName : Harbor ? Harbor.DisplayName : "torre";
-        public override float MaxHealth => BattleRules.TowerHealth;
-        public override bool CanBeAttacked => false;
+        public override ref readonly UnitType Type => ref UnitCatalog.Tower;
+        public override float MaxHealth => Type.MaxHealth;
+        /// <summary>units.json: a capturable post is never a target; attack its guardian.</summary>
+        public override bool CanBeAttacked => Type.CanBeAttacked && IsAlive;
         public Soldier Defender => Town ? Town.Defender : Harbor ? Harbor.Defender : null;
         public CombatTarget Guardian => Town ? Town.ClaimZone.Guardian : Harbor ? Harbor.ClaimZone.Guardian : null;
         public override Vector3 AimPoint => transform.position + Vector3.up *
             (BuildingVariants.IsIntegrated(VisualVariant)?VisualMetrics.IntegratedTowerGalleryHeight:2.8f);
         public Vector3 AttackOrigin => transform.position + Vector3.up *
             (BuildingVariants.IsIntegrated(VisualVariant)?VisualMetrics.IntegratedTowerAttackHeight:3.8f);
-        public override AttackKind AttackType => AttackKind.Piercing;
-        public override ArmorKind ArmorType => ArmorKind.Divine;
-        public override float Armor => 3;
+        public override AttackKind AttackType => HostWeapon.DamageType;
+        public override ArmorKind ArmorType => Type.ArmorType;
+        public override float Armor => Type.Armor;
+        /// <summary>The post weapon depends on its host building (h00N city / h00O shipyard).</summary>
+        ref readonly WeaponProfile HostWeapon => ref (Town ? ref Type.TownWeapon : ref Type.HarborWeapon);
         public bool UnderConstruction { get; private set; }
         public float BuildProgress { get; private set; }
         public int ShotsFired { get; private set; }
@@ -33,8 +37,8 @@ namespace RiskAI
         float nextShot, launchAt = -1;
         int launchTargetId;
         readonly System.Collections.Generic.List<CombatTarget> nearby = new System.Collections.Generic.List<CombatTarget>(48);
-        float AttackCooldown=>UnitCatalog.CapturableTower.Cooldown;
-        float AttackRange=>UnitCatalog.CapturableTower.Range;
+        float AttackCooldown=>HostWeapon.Cooldown;
+        float AttackRange=>Type.Acquisition.RadiusHostile;
 
         public void Initialize(BattleSession battle, Settlement town, bool built, BuildingVariant? visualVariant=null)
         {
@@ -73,7 +77,7 @@ namespace RiskAI
             Vector3 direction = from - transform.position; direction.y = 0;
             direction = direction.sqrMagnitude > .001f ? direction.normalized : Vector3.forward;
             // Approach the square foundation from outside the NavMesh obstacle, including diagonals.
-            var point=transform.position + direction * (1.75f / Mathf.Max(Mathf.Abs(direction.x), Mathf.Abs(direction.z)));
+            var point=transform.position + direction * (Type.FootprintSize * .5f / Mathf.Max(Mathf.Abs(direction.x), Mathf.Abs(direction.z)));
             // The NavMesh interpolates ground height beside the stepped foundation.
             return NavMesh.SamplePosition(point,out var hit,.8f,NavMesh.AllAreas)?hit.position:point;
         }
@@ -111,15 +115,15 @@ namespace RiskAI
                 {
                     CurrentTarget = launchTarget;
                     ShotsFired++;
-                    var weapon = Town ? SourceWeapons.MilitaryBase : SourceWeapons.Shipyard;
+                    ref readonly var weapon = ref HostWeapon;
                     session.Combat.FireWeapon(AttackOrigin, launchTarget.AimPoint, launchTarget,
-                        session.RollDamage(UnitCatalog.CapturableTower), Team, this, weapon);
+                        session.RollDamage(weapon), Team, this, weapon);
                 }
             }
             if (!IsValidTarget(CurrentTarget)) CurrentTarget=FindTarget();
             if (!CurrentTarget || launchAt >= 0 || session.BattleTime < nextShot) return;
             nextShot = session.BattleTime + AttackCooldown;
-            launchAt = session.BattleTime + UnitCatalog.CapturableTower.AttackPoint;
+            launchAt = session.BattleTime + HostWeapon.AttackPoint;
             launchTargetId = CurrentTarget.EntityId;
         }
 

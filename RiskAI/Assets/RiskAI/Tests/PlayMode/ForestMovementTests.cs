@@ -43,19 +43,19 @@ namespace RiskAI.Tests
             var crown=new Bounds(unit.transform.position+Vector3.up*3,new Vector3(6,4,6));
             battle.Canopies.Add(crown);battle.Canopies.Add(crown);
             unit.SimTick(.05f);
-            Assert.That(unit.Agent.speed,Is.EqualTo(BattleRules.Speed(UnitKind.Archer)*CanopyOcclusion.ForestSpeedMultiplier).Within(.001f));
+            Assert.That(unit.Agent.speed,Is.EqualTo(UnitCatalog.Get(UnitKind.Archer).Speed*CanopyOcclusion.ForestSpeedMultiplier).Within(.001f));
 
             Assert.That(NavMesh.SamplePosition(unit.transform.position+Vector3.right*16,out var open,8,NavMesh.AllAreas),Is.True);
             Assert.That(unit.Agent.Warp(open.position),Is.True);
             unit.SimTick(.05f);
-            Assert.That(unit.Agent.speed,Is.EqualTo(BattleRules.Speed(UnitKind.Archer)).Within(.001f),"Leaving a forest cell must restore the profile speed.");
+            Assert.That(unit.Agent.speed,Is.EqualTo(UnitCatalog.Get(UnitKind.Archer).Speed).Within(.001f),"Leaving a forest cell must restore the profile speed.");
 
             var original=unit.gameObject;
             unit.TakeDamage(10000,PlayerRules.NeutralTeam);
             yield return new WaitForSecondsRealtime(1.6f);
             var reused=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,open.position);
             Assert.That(reused.gameObject,Is.SameAs(original));
-            Assert.That(reused.Agent.speed,Is.EqualTo(BattleRules.Speed(UnitKind.Archer)).Within(.001f),"A pooled soldier must not retain its former forest speed.");
+            Assert.That(reused.Agent.speed,Is.EqualTo(UnitCatalog.Get(UnitKind.Archer).Speed).Within(.001f),"A pooled soldier must not retain its former forest speed.");
         }
 
         [UnityTearDown]

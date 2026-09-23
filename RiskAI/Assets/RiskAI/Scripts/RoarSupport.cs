@@ -19,6 +19,7 @@ namespace RiskAI
         Soldier self;
         BattleSession session;
         float nextEvaluation;
+        RoarProfile roar;
 
         public ManaPool Mana => mana;
         public int CastCount { get; private set; }
@@ -27,8 +28,9 @@ namespace RiskAI
         public void Initialize(Soldier owner, BattleSession battle)
         {
             self=owner;session=battle;CastCount=0;LastCastTick=-1;
-            mana.Reset(SupportAbilities.Mana(owner.Kind));
-            nextEvaluation=battle.BattleTime+SupportAbilities.RoarEvaluationInterval;
+            roar=owner.Type.Roar;
+            mana.Reset(owner.Type.Mana);
+            nextEvaluation=battle.BattleTime+roar.Evaluation;
         }
 
         /// <summary>Returns true when the roar was cast on this simulation tick.</summary>
@@ -36,9 +38,9 @@ namespace RiskAI
         {
             if(!self||!self.IsAlive||!self.isActiveAndEnabled||!session||session.Paused||session.Winner>=0)return false;
             mana.Tick(delta);
-            if(session.BattleTime<nextEvaluation||!mana.CanSpend(SupportAbilities.RoarManaCost))return false;
-            nextEvaluation=session.BattleTime+SupportAbilities.RoarEvaluationInterval;
-            Vector3 origin=self.transform.position;float area=SupportAbilities.RoarArea;
+            if(session.BattleTime<nextEvaluation||!mana.CanSpend(roar.ManaCost))return false;
+            nextEvaluation=session.BattleTime+roar.Evaluation;
+            Vector3 origin=self.transform.position;float area=roar.Area;
             session.Spatial.Query(origin,area,nearby);
             bool fighting=self.CurrentTarget,needed=!self.IsRoaring;
             foreach(var entity in nearby)
@@ -49,15 +51,15 @@ namespace RiskAI
                 if(!ally.IsRoaring)needed=true;
                 if(fighting&&needed)break;
             }
-            if(!fighting||!needed||!mana.TrySpend(SupportAbilities.RoarManaCost))return false;
-            float until=session.BattleTime+SupportAbilities.RoarDuration;
+            if(!fighting||!needed||!mana.TrySpend(roar.ManaCost))return false;
+            float until=session.BattleTime+roar.Duration;
             foreach(var entity in nearby)
             {
                 if(!(entity is Soldier ally)||ally.Team!=self.Team||!ally.IsAlive)continue;
                 Vector3 offset=ally.transform.position-origin;offset.y=0;
-                if(offset.sqrMagnitude<=area*area)ally.ApplyRoar(until);
+                if(offset.sqrMagnitude<=area*area)ally.ApplyRoar(until,roar.DamageBonus);
             }
-            self.ApplyRoar(until);
+            self.ApplyRoar(until,roar.DamageBonus);
             CastCount++;LastCastTick=session.Clock.TickCount;
             if(session.Combat.PresentationEnabled)VisualFactory.Impact(self.AimPoint+Vector3.up*.6f,new Color(1f,.46f,.16f),.9f);
             return true;

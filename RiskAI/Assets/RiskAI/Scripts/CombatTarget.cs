@@ -9,6 +9,8 @@ namespace RiskAI
         public int EntityId { get; internal set; }
         public int Team { get; protected set; }
         public float Health { get; protected set; }
+        /// <summary>The units.json type of this actor.</summary>
+        public abstract ref readonly UnitType Type { get; }
         public abstract float MaxHealth { get; }
         public bool IsAlive => Health > 0 && gameObject.activeInHierarchy;
         public virtual bool CanBeAttacked => IsAlive;

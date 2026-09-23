@@ -113,7 +113,7 @@ namespace RiskAI
         public Ship Spawn(int team,NavalUnitKind kind,Vector3 point)
         {
             if(Session.IsPlayerEliminated(team) || !SeaNavigation.HasClearance(point))return null;
-            var go=new GameObject(NavalProfiles.Profile(kind).Name);go.transform.SetParent(transform,false);go.transform.position=new Vector3(point.x,-.24f,point.z);
+            var go=new GameObject(UnitCatalog.Get(kind).Name);go.transform.SetParent(transform,false);go.transform.position=new Vector3(point.x,-.24f,point.z);
             var ship=go.AddComponent<Ship>();ship.Initialize(this,team,kind);Ships.Add(ship);Session.RegisterTarget(ship);return ship;
         }
         public Harbor NearestHarbor(Vector3 point,float radius=float.MaxValue)
@@ -140,7 +140,7 @@ namespace RiskAI
         public bool TryOrderEmbarkAt(Ship ship,Soldier soldier,Harbor harbor,out string error)
         {
             error=null;
-            if(!ship||!ship.IsAlive||!ship.Profile.CanTransport){error="Selecciona un transporte.";return false;}
+            if(!ship||!ship.IsAlive||!ship.Type.CanTransport){error="Selecciona un transporte.";return false;}
             if(!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=ship.Team){error="Selecciona una tropa móvil aliada.";return false;}
             if(!harbor||harbor.Owner!=ship.Team||!harbor.TryTransportLanding(out var landing,out var berth))
             {error="El puerto no tiene una playa o pasarela al alcance del transporte.";return false;}
@@ -153,7 +153,7 @@ namespace RiskAI
         public bool TryPlanEmbark(Ship ship,IReadOnlyList<Soldier> soldiers,out Vector3 landing,out Vector3 berth,out string error)
         {
             landing=default;berth=default;error=null;
-            if(!ship||!ship.IsAlive||!ship.Profile.CanTransport){error="Selecciona un transporte.";return false;}
+            if(!ship||!ship.IsAlive||!ship.Type.CanTransport){error="Selecciona un transporte.";return false;}
             if(soldiers==null||soldiers.Count==0){error="Selecciona soldados para embarcar.";return false;}
             Harbor best=null;float score=float.MaxValue;
             foreach(var harbor in Harbors)
@@ -173,7 +173,7 @@ namespace RiskAI
         }
         public string OrderDisembark(Ship ship,Harbor harbor)
         {
-            if(!ship||!ship.Profile.CanTransport)return "Selecciona un transporte.";
+            if(!ship||!ship.Type.CanTransport)return "Selecciona un transporte.";
             if(!harbor)return "Elige una playa o muelle de desembarco marcado.";
             ship.SailToHarbor(harbor);
             return string.IsNullOrEmpty(ship.LastActionError)?"El transporte navega al desembarco marcado.":ship.LastActionError;
@@ -189,7 +189,7 @@ namespace RiskAI
             if (!Session || !PlayerRules.IsPlayer(team) || team == 0 || team >= Session.PlayerCount ||
                 Session.BattleTime < Session.AiFirstNavalOffensiveTime || PendingShips(team) > 0) return 0;
             foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == team) return 0;
-            foreach (var harbor in Harbors) if (harbor.Owner == team && harbor.CanLaunch) return Harbor.Cost(NavalUnitKind.Frigate);
+            foreach (var harbor in Harbors) if (harbor.Owner == team && harbor.CanLaunch) return UnitCatalog.Get(NavalUnitKind.Frigate).Cost;
             return 0;
         }
         public void SimTick(float delta)
@@ -238,7 +238,7 @@ namespace RiskAI
             foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team)
             {
                 fleet++;
-                if(ship.Profile.CanAttack){warships++;fleetCenter+=ship.transform.position;}
+                if(ship.Type.CanAttack){warships++;fleetCenter+=ship.transform.position;}
             }
             if(warships>0)fleetCenter/=warships;
             // Harbors under naval attack are both a purchase and an order priority.
@@ -256,7 +256,7 @@ namespace RiskAI
                 foreach(var harbor in Harbors)
                     if(harbor.Owner==team&&harbor.QueueCount==0&&buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(harbor.BuildingId,kind))==null)break;
             Harbor target=null;
-            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Profile.CanAttack&&!ship.IsGarrison&&!ship.CurrentTarget)
+            foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Type.CanAttack&&!ship.IsGarrison&&!ship.CurrentTarget)
             {
                 if(besieged&&siege>0)
                 {
@@ -287,10 +287,10 @@ namespace RiskAI
         static bool TryChooseWarship(int gold,out NavalUnitKind kind)
         {
             kind=NavalUnitKind.Frigate;float best=float.NegativeInfinity;bool found=false;
-            var options=ProductionCatalog.HarborShips;
+            var options=UnitCatalog.HarborShips;
             for(int i=0;i<options.Count;i++)
             {
-                var profile=UnitCatalog.Profile(options[i]);
+                var profile=UnitCatalog.Get(options[i]);
                 if(!profile.CanAttack||profile.Cost>gold)continue;
                 float score=AiUnitAnalysis.ShipValue(profile)/Mathf.Pow(Mathf.Max(1,profile.Cost),.7f);
                 if(score>best){best=score;kind=options[i];found=true;}
@@ -301,8 +301,8 @@ namespace RiskAI
         {
             float power=0;
             foreach(var ship in Ships)
-                if(ship&&ship.IsAlive&&ship.Team!=team&&PlayerRules.IsPlayer(ship.Team)&&ship.Profile.CanAttack&&FlatDistance(ship.transform.position,point)<=radius*radius)
-                    power+=AiUnitAnalysis.ShipValue(ship.Profile)*ship.Health/Mathf.Max(1,ship.MaxHealth);
+                if(ship&&ship.IsAlive&&ship.Team!=team&&PlayerRules.IsPlayer(ship.Team)&&ship.Type.CanAttack&&FlatDistance(ship.transform.position,point)<=radius*radius)
+                    power+=AiUnitAnalysis.ShipValue(ship.Type)*ship.Health/Mathf.Max(1,ship.MaxHealth);
             return power;
         }
         Harbor NearestOwnHarbor(int team,Vector3 point)

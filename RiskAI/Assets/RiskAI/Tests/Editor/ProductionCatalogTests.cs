@@ -10,24 +10,24 @@ namespace RiskAI.Tests
         public void CatalogSeparatesRegularCityMarinePortAndShipProduction()
         {
             CollectionAssert.AreEqual(new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Knight,UnitKind.Mage,UnitKind.Mortar,UnitKind.Medic,
-                UnitKind.EliteRifleman,UnitKind.Roarer,UnitKind.ArmyGeneral,UnitKind.Artillery,UnitKind.Tank},ProductionCatalog.SettlementUnits);
-            CollectionAssert.AreEqual(new[]{UnitKind.MarinePrivate,UnitKind.MarineMajor,UnitKind.MarineGeneral},ProductionCatalog.HarborUnits);
-            CollectionAssert.AreEqual(new[]{NavalUnitKind.Frigate,NavalUnitKind.Transport,NavalUnitKind.Warship,NavalUnitKind.Battleship,NavalUnitKind.ArmoredTransport},ProductionCatalog.HarborShips);
-            Assert.That(ProductionCatalog.AllowsHarborUnit(UnitKind.Tank),Is.False);
-            Assert.That(ProductionCatalog.HarborShips.All(ProductionCatalog.AllowsHarborShip),Is.True);
-            Assert.That(ProductionCatalog.SettlementUnits.All(ProductionCatalog.AllowsSettlementUnit),Is.True);
-            Assert.That(ProductionCatalog.HarborUnits.All(ProductionCatalog.AllowsHarborUnit),Is.True);
-            Assert.That(ProductionCatalog.AllowsSettlementUnit(UnitKind.MarinePrivate),Is.False);
-            Assert.That(ProductionCatalog.AllowsHarborUnit(UnitKind.Footman),Is.False);
+                UnitKind.EliteRifleman,UnitKind.Roarer,UnitKind.ArmyGeneral,UnitKind.Artillery,UnitKind.Tank},UnitCatalog.CityUnits);
+            CollectionAssert.AreEqual(new[]{UnitKind.MarinePrivate,UnitKind.MarineMajor,UnitKind.MarineGeneral},UnitCatalog.HarborUnits);
+            CollectionAssert.AreEqual(new[]{NavalUnitKind.Frigate,NavalUnitKind.Transport,NavalUnitKind.Warship,NavalUnitKind.Battleship,NavalUnitKind.ArmoredTransport},UnitCatalog.HarborShips);
+            Assert.That((UnitCatalog.Get(UnitKind.Tank).Building==UnitBuilding.Harbor),Is.False);
+            Assert.That(UnitCatalog.HarborShips.All(kind=>UnitCatalog.Get(kind).Building==UnitBuilding.Harbor),Is.True);
+            Assert.That(UnitCatalog.CityUnits.All(kind=>UnitCatalog.Get(kind).Building==UnitBuilding.City),Is.True);
+            Assert.That(UnitCatalog.HarborUnits.All(kind=>UnitCatalog.Get(kind).Building==UnitBuilding.Harbor),Is.True);
+            Assert.That((UnitCatalog.Get(UnitKind.MarinePrivate).Building==UnitBuilding.City),Is.False);
+            Assert.That((UnitCatalog.Get(UnitKind.Footman).Building==UnitBuilding.Harbor),Is.False);
         }
 
         [Test]
         public void EveryProductionHotkeyIsUniqueWithinItsBuilding()
         {
-            var city=ProductionCatalog.SettlementUnits.Select(ProductionHotkeys.Hotkey).ToList();
+            var city=UnitCatalog.CityUnits.Select(ProductionHotkeys.Hotkey).ToList();
             CollectionAssert.AllItemsAreUnique(city);
-            var harbor=ProductionCatalog.HarborUnits.Select(ProductionHotkeys.Hotkey)
-                .Concat(ProductionCatalog.HarborShips.Select(ProductionHotkeys.Hotkey)).ToList();
+            var harbor=UnitCatalog.HarborUnits.Select(ProductionHotkeys.Hotkey)
+                .Concat(UnitCatalog.HarborShips.Select(ProductionHotkeys.Hotkey)).ToList();
             CollectionAssert.AllItemsAreUnique(harbor);
             Assert.That(city.Concat(harbor).All(key=>!string.IsNullOrEmpty(key)),Is.True);
             // WC3 grid hotkeys: every product key is a command-card cell. Unit order keys

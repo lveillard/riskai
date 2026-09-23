@@ -45,8 +45,7 @@ namespace RiskAI
             session.Feedback.RaiseFired(source, from, to, weapon.Delivery == WeaponDelivery.Artillery ? AttackKind.Siege : weapon.DamageType);
             if (!weapon.IsProjectile)
             {
-                if (PresentationEnabled && source is Soldier soldier &&
-                    (soldier.Kind == UnitKind.Archer || soldier.Kind == UnitKind.MarinePrivate || soldier.Kind == UnitKind.EliteRifleman))
+                if (PresentationEnabled && weapon.Tracer)
                     VisualFactory.InstantProjectileView(from, to, weapon.DamageType);
                 if (!miss && target && target.CanBeAttacked)
                 {

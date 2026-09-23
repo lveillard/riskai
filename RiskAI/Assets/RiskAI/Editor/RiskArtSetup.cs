@@ -17,7 +17,7 @@ namespace RiskAI.Editor
             foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
                 if(System.Array.IndexOf(UnitVariantViews.PortraitKinds,kind)>=0)continue; // rendered below from their variant views
-                string name = BattleRules.Model(kind);
+                string name = UnitCatalog.Get(kind).Model;
                 if(!prepared.Add(name))continue;
                 if(kind==UnitKind.Mortar)
                 {
@@ -104,13 +104,13 @@ namespace RiskAI.Editor
                 else if(kind==UnitKind.Tank)UnitVariantViews.TankModel(variantRoot.transform,VisualFactory.TeamColor(0));
                 else
                 {
-                    var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/RiskAI/Resources/Units/"+BattleRules.Model(kind)+".prefab");
+                    var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/RiskAI/Resources/Units/"+UnitCatalog.Get(kind).Model+".prefab");
                     if(!prefab)throw new System.InvalidOperationException("Missing base prefab for "+kind);
                     var visual=(GameObject)Object.Instantiate(prefab,variantRoot.transform,false);
                     UnitTeamColor.Apply(visual,kind,0);UnitVariantViews.Decorate(visual,kind,0);
                     variantAnimation=visual.GetComponentInChildren<Animation>();
                 }
-                RenderPortrait(variantRoot,variantAnimation,UnitVariantViews.PortraitName(kind));
+                RenderPortrait(variantRoot,variantAnimation,UnitCatalog.Get(kind).Portrait);
                 Object.DestroyImmediate(variantRoot);
             }
         }

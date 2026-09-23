@@ -3,8 +3,11 @@ using System.Collections.Generic;
 
 namespace RiskAI.Core
 {
-    // Ordinals index UnitCatalog.Land: append new identities at the end only.
+    /// <summary>Land unit identity; each member is a units.json id (UnitCatalog maps it to its type).</summary>
     public enum UnitKind { Footman, Archer, Knight, Mage, Mortar, Medic, MarinePrivate, MarineMajor, MarineGeneral, EliteRifleman, Roarer, ArmyGeneral, Artillery, Tank }
+
+    /// <summary>Naval unit identity; each member is a units.json id.</summary>
+    public enum NavalUnitKind { Frigate, Transport, Warship, Battleship, ArmoredTransport }
 
     public static class BattleRules
     {
@@ -32,32 +35,6 @@ namespace RiskAI.Core
         // is selected.
         public const int UpgradeIncome = 0;
         public const float ConstructionSeconds = 7;
-        public static float TowerHealth => UnitCatalog.Tower.Health;
-        public static float TowerRange => UnitCatalog.Tower.Range;
-        // Every represented source unit explicitly overrides ubld=1 in W3U.
-        // Footman and Mage remain prototype identities with local queue timings.
-        public static UnitProfile Profile(UnitKind kind)=>UnitCatalog.Definition(kind).Profile;
-        public static int Cost(UnitKind kind) => Profile(kind).Cost;
-        public static int PointValue(UnitKind kind) => Profile(kind).PointValue;
-        public static float TrainTime(UnitKind kind) => UnitCatalog.Definition(kind).TrainSeconds;
-        public static float Health(UnitKind kind) => Profile(kind).Health;
-        public static float Damage(UnitKind kind) => Profile(kind).AverageDamage;
-        public static string DamageRange(UnitKind kind) => Profile(kind).MinimumDamage+"–"+Profile(kind).MaximumDamage;
-        public static float Range(UnitKind kind) => Profile(kind).Range;
-        public static float MinimumRange(UnitKind kind)=>UnitCatalog.Definition(kind).MinimumRange;
-        public static float AttackInterval(UnitKind kind) => Profile(kind).Cooldown;
-        public static float AttackPoint(UnitKind kind) => Profile(kind).AttackPoint;
-        public static float Speed(UnitKind kind) => Profile(kind).Speed;
-        public static bool Ranged(UnitKind kind) => UnitCatalog.Definition(kind).Ranged;
-        // The extracted map does not define this prototype's upgrade unlocks;
-        // every source-aligned unit remains available at level I.
-        public static int RequiredLevel(UnitKind kind) => Profile(kind).Level;
-        public static string Name(UnitKind kind) => UnitCatalog.Definition(kind).Name;
-        public static string Role(UnitKind kind) => UnitCatalog.Definition(kind).Role;
-        public static string Model(UnitKind kind) => UnitCatalog.Definition(kind).Model;
-        // Ahea only targets organic units; W3U utyp=Mechanical marks h00M/h01A.
-        public static bool Mechanical(UnitKind kind) => UnitCatalog.Definition(kind).Mechanical;
-        public static string SourceRawId(UnitKind kind) => UnitCatalog.Definition(kind).SourceRawId;
     }
 
     [Serializable]

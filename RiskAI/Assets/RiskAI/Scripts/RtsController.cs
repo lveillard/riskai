@@ -240,7 +240,7 @@ namespace RiskAI
         static bool IsSelectableShip(Ship ship) => ship&&ship.Team==0&&ship.IsAlive&&ship.isActiveAndEnabled;
         Ship SelectedTransport
         {
-            get { foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Profile.CanTransport)return ship;return null; }
+            get { foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Type.CanTransport)return ship;return null; }
         }
         void CancelPendingBoarding()
         {
@@ -258,7 +258,7 @@ namespace RiskAI
         public void Recruit(UnitKind kind)
         {
             string error=TryRecruitSelected(kind);
-            session.Message(error??LastProductionResult.Feedback(BattleRules.Name(kind)),LastProductionResult.Kind);
+            session.Message(error??LastProductionResult.Feedback(UnitCatalog.Get(kind).Name),LastProductionResult.Kind);
         }
         public void UpgradeTown() { if(SelectedTown)Feedback(SelectedTown.Upgrade());else session.Message("Selecciona una ciudad tuya para mejorarla.",MessageKind.Info); }
         public void Feedback(string error) { if(error!=null)session.Message(error,MessageKind.Info); }
@@ -301,15 +301,15 @@ namespace RiskAI
         {
             string error=TryBuySelected(kind);
             if(!session)return;
-            session.Message(error??LastProductionResult.Feedback(NavalProfiles.Profile(kind).Name),LastProductionResult.Kind);
+            session.Message(error??LastProductionResult.Feedback(UnitCatalog.Get(kind).Name),LastProductionResult.Kind);
         }
         public void BoardNearby()
         {
             if(session.Paused||session.Winner>=0)return;
             PurgeStaleSelection();
             var transport=SelectedTransport;if(!transport){session.Message("Selecciona un transporte para embarcar.",MessageKind.Info);return;}
-            var boarders=session.Units.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison&&FlatDistance(u.transform.position,transport.transform.position)<=Ship.LoadRadius*Ship.LoadRadius)
-                .OrderBy(u=>FlatDistance(u.transform.position,transport.transform.position)).Take(Ship.LoadOrderLimit).ToList();
+            var boarders=session.Units.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison&&FlatDistance(u.transform.position,transport.transform.position)<=UnitCatalog.TransportLoadRadius*UnitCatalog.TransportLoadRadius)
+                .OrderBy(u=>FlatDistance(u.transform.position,transport.transform.position)).Take(UnitCatalog.TransportLoadLimit).ToList();
             if(boarders.Count==0){session.Message("Acerca tropas a la costa o selecciónalas y haz clic derecho en el transporte.",MessageKind.Info);return;}
             BeginBoarding(transport,boarders);
         }
@@ -323,10 +323,10 @@ namespace RiskAI
             Harbor harbor=null;float distance=12*12;
             foreach(var candidate in naval.Harbors)if(candidate)
             {float next=FlatDistance(candidate.Berth,anchor.transform.position);if(next<distance){distance=next;harbor=candidate;}}
-            if(!Fleet.Any(s=>IsSelectableShip(s)&&s.Profile.CanTransport&&s.CargoCount>0)){session.Message("Selecciona un transporte con tropas a bordo.",MessageKind.Info);return;}
+            if(!Fleet.Any(s=>IsSelectableShip(s)&&s.Type.CanTransport&&s.CargoCount>0)){session.Message("Selecciona un transporte con tropas a bordo.",MessageKind.Info);return;}
             CancelBoardingForSelection();
             if(!harbor){CancelCursor();UnloadCursor=true;session.Message("Desembarco: haz clic en una playa transitable. El transporte navegará hasta ella.",MessageKind.Info);return;}
-            foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Profile.CanTransport)
+            foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Type.CanTransport)
             {
                 ship.SailToHarbor(harbor);
                 if(ship.LastActionError!=null)session.Message(ship.LastActionError,MessageKind.Info);
@@ -335,7 +335,7 @@ namespace RiskAI
         public void UnloadCargo(Ship transport,Soldier soldier)
         {
             if(session.Paused||session.Winner>=0||!IsSelectableShip(transport))return;
-            if(transport.UnloadOneNearby(soldier))session.Message(BattleRules.Name(soldier.Kind)+" ha desembarcado.",MessageKind.Info);
+            if(transport.UnloadOneNearby(soldier))session.Message(UnitCatalog.Get(soldier.Kind).Name+" ha desembarcado.",MessageKind.Info);
             else Feedback(transport.LastActionError);
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
@@ -421,14 +421,14 @@ namespace RiskAI
         void BeginBoarding(Ship transport) => BeginBoarding(transport,Selection);
         void BeginBoarding(Ship transport,IReadOnlyList<Soldier> candidates)
         {
-            if(!transport||transport.Team!=0||!transport.Profile.CanTransport||candidates.Count==0)return;
+            if(!transport||transport.Team!=0||!transport.Type.CanTransport||candidates.Count==0)return;
             var naval=NavalWorld.Current;if(!naval)return;
-            var available=candidates.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison).Take(Mathf.Min(Ship.LoadOrderLimit,transport.Profile.Capacity-transport.CargoCount)).ToList();
+            var available=candidates.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison).Take(Mathf.Min(UnitCatalog.TransportLoadLimit,transport.Type.Transport.Capacity-transport.CargoCount)).ToList();
             if(available.Count==0){session.Message("Transporte lleno o sólo defensores retenidos seleccionados.",MessageKind.Info);return;}
             CancelPendingBoarding();
             // Already within source loading radius: no arbitrary dock detour.
             for(int i=available.Count-1;i>=0;i--)if(transport.TryEmbark(available[i]))available.RemoveAt(i);
-            if(available.Count==0){session.Message("Embarque completado: "+transport.CargoCount+" / "+transport.Profile.Capacity+".",MessageKind.Info);return;}
+            if(available.Count==0){session.Message("Embarque completado: "+transport.CargoCount+" / "+transport.Type.Transport.Capacity+".",MessageKind.Info);return;}
             if(!naval.TryPlanEmbark(transport,available,out var landing,out var berth,out var error)){session.Message(error,MessageKind.Info);return;}
             pendingBoardingTransport=transport;pendingBoardingLanding=landing;
             transport.MoveTo(berth);
@@ -453,7 +453,7 @@ namespace RiskAI
             for(int i=pendingBoarders.Count-1;i>=0;i--)
             {
                 var boarder=pendingBoarders[i];var soldier=boarder.Unit;
-                if(!boarder.Matches||!IsSelectableSoldier(soldier)||soldier.IsGarrison||pendingBoardingTransport.CargoCount>=pendingBoardingTransport.Profile.Capacity||pendingBoardingTransport.TryEmbark(soldier))
+                if(!boarder.Matches||!IsSelectableSoldier(soldier)||soldier.IsGarrison||pendingBoardingTransport.CargoCount>=pendingBoardingTransport.Type.Transport.Capacity||pendingBoardingTransport.TryEmbark(soldier))
                 {pendingBoarders.RemoveAt(i);continue;}
                 error=pendingBoardingTransport.LastActionError;
                 var agent=soldier.Agent;
@@ -462,11 +462,11 @@ namespace RiskAI
                 distance+=float.IsNaN(remaining)||float.IsInfinity(remaining)?offset.magnitude:remaining;
                 // Avoidance can stop a boarder just outside a narrow beach. Retry
                 // the already validated landing, without relaxing shore rules.
-                if(recover&&agent&&!agent.pathPending&&agent.velocity.sqrMagnitude<.04f&&offset.sqrMagnitude<=Ship.LoadRadius*Ship.LoadRadius)
+                if(recover&&agent&&!agent.pathPending&&agent.velocity.sqrMagnitude<.04f&&offset.sqrMagnitude<=UnitCatalog.TransportLoadRadius*UnitCatalog.TransportLoadRadius)
                     session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,pendingBoardingLanding.x,pendingBoardingLanding.y,pendingBoardingLanding.z));
             }
             if(pendingBoarders.Count==0)
-            {session.Message("Embarque terminado: "+pendingBoardingTransport.CargoCount+" / "+pendingBoardingTransport.Profile.Capacity+".",MessageKind.Info);CancelPendingBoarding();return;}
+            {session.Message("Embarque terminado: "+pendingBoardingTransport.CargoCount+" / "+pendingBoardingTransport.Type.Transport.Capacity+".",MessageKind.Info);CancelPendingBoarding();return;}
             if(pendingBoarders.Count!=previousBoarderCount||distance<previousBoardingDistance-.1f)lastBoardingProgress=now;
             previousBoarderCount=pendingBoarders.Count;previousBoardingDistance=distance;
             if(now-lastBoardingProgress>=BoardingStallSeconds)

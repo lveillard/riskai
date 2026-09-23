@@ -7,11 +7,11 @@ namespace RiskAI.Tests
  {
   [Test] public void DiceUseTheirActualDiscreteDistributionAndSeedRepeats()
   {
-   var first=new Random(391);var second=new Random(391);var profile=BattleRules.Profile(UnitKind.Archer);
+   var first=new Random(391);var second=new Random(391);var profile=UnitCatalog.Get(UnitKind.Archer);
    int[] frequencies=new int[7];
    for(int i=0;i<16000;i++)
    {
-    float value=profile.RollDamage(first);Assert.That(value,Is.EqualTo(profile.RollDamage(second)));
+    float value=profile.Weapon.RollDamage(first);Assert.That(value,Is.EqualTo(profile.Weapon.RollDamage(second)));
     Assert.That(value,Is.InRange(17,23));frequencies[(int)value-17]++;
    }
    Assert.That(frequencies[3],Is.GreaterThan(frequencies[0]*3),"2d4 must favour central results; a flat random min/max roll is not equivalent.");

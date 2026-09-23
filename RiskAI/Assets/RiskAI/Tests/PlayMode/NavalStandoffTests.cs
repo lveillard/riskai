@@ -43,7 +43,7 @@ namespace RiskAI.Tests
         public IEnumerator RangeIsMeasuredToTheTargetHullNotItsPivot()
         {
             var probe=BattleTestScenario.Ship(naval,0,NavalUnitKind.Warship,FirstClearBerth());
-            float range=probe.Profile.Range;probe.TakeDamage(1e6f,1);
+            float range=probe.Type.Weapon.Range;probe.TakeDamage(1e6f,1);
             Assert.That(FindOpenWater(range+1.5f,out var a,out var b),Is.True);
             var attacker=BattleTestScenario.Ship(naval,0,NavalUnitKind.Warship,a);
             var victim=BattleTestScenario.Ship(naval,1,NavalUnitKind.Battleship,b);
@@ -91,7 +91,7 @@ namespace RiskAI.Tests
             Assert.That(FindOpenWater(25f,out var a,out var b),Is.True,"The fixture needs two clear sea points 25 m apart.");
             var attacker=BattleTestScenario.Ship(naval,0,kind,a);
             var victim=BattleTestScenario.Ship(naval,1,kind,b);
-            Assert.That(attacker.Profile.Range,Is.GreaterThan(25f));
+            Assert.That(attacker.Type.Weapon.Range,Is.GreaterThan(25f));
             attacker.Stop();victim.Stop();
             var start=attacker.transform.position;float health=victim.Health;
             if(ordered)attacker.Attack(victim);

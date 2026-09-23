@@ -86,7 +86,7 @@ namespace RiskAI.Tests
         [UnityTest] public IEnumerator RecruitmentPaysOnceAndPauseStopsSimulation()
         {
             var town=battle.Towns[0];int before=battle.RecruitmentPopulation(0);int goldBefore=battle.Economy.Gold[0];
-            Assert.That(town.Recruit(UnitKind.Footman),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(goldBefore-BattleRules.Cost(UnitKind.Footman)));
+            Assert.That(town.Recruit(UnitKind.Footman),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(goldBefore-UnitCatalog.Get(UnitKind.Footman).Cost));
             battle.TogglePause();float time=battle.BattleTime;yield return new WaitForSecondsRealtime(.3f);
             Assert.That(battle.BattleTime,Is.EqualTo(time));Assert.That(town.QueueCount,Is.EqualTo(1));
             battle.TogglePause();yield return new WaitForSeconds(3.4f);
@@ -197,7 +197,7 @@ namespace RiskAI.Tests
             var profiles=new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Knight,UnitKind.Mage,UnitKind.Mortar,UnitKind.Medic};
             foreach(var kind in profiles)
             {
-                int cost=BattleRules.Cost(kind);battle.Economy.Gold[0]=cost;
+                int cost=UnitCatalog.Get(kind).Cost;battle.Economy.Gold[0]=cost;
                 Assert.That(town.Recruit(kind),Is.Null,$"{kind} should be available at its declared profile level.");
                 Assert.That(battle.Economy.Gold[0],Is.EqualTo(0));
                 Assert.That(town.CancelTraining(0),Is.Null);
@@ -234,8 +234,8 @@ namespace RiskAI.Tests
             recruits.Tick(.5f);
             Assert.That(battle.RecruitmentPopulation(0),Is.EqualTo(93),"Country spawning must respect paid reservations before those queues finish.");
             Assert.That(recruits.Pending(country),Is.EqualTo(pending));
-            for(int i=0;i<5;i++)town.SimTick(BattleRules.TrainTime(UnitKind.Footman));
-            for(int i=0;i<2;i++)harbor.SimTick(BattleRules.TrainTime(UnitKind.MarinePrivate));
+            for(int i=0;i<5;i++)town.SimTick(UnitCatalog.Get(UnitKind.Footman).TrainSeconds);
+            for(int i=0;i<2;i++)harbor.SimTick(UnitCatalog.Get(UnitKind.MarinePrivate).TrainSeconds);
             Assert.That(battle.RecruitmentPopulation(0),Is.EqualTo(BattleRules.PopulationLimit));
             recruits.Tick(.5f);
             Assert.That(battle.RecruitmentPopulation(0),Is.EqualTo(BattleRules.PopulationLimit));
@@ -280,7 +280,7 @@ namespace RiskAI.Tests
             for(int i=0;i<recruits.Length;i++)for(int j=i+1;j<recruits.Length;j++)
             {
                 Vector3 delta=recruits[i].transform.position-recruits[j].transform.position;delta.y=0;
-                float required=VisualMetrics.SpawnRadiusFor(recruits[i].Kind)+VisualMetrics.SpawnRadiusFor(recruits[j].Kind)+.1f;
+                float required=UnitCatalog.Get(recruits[i].Kind).SpawnRadius+UnitCatalog.Get(recruits[j].Kind).SpawnRadius+.1f;
                 Assert.That(delta.magnitude,Is.GreaterThanOrEqualTo(required),$"{recruits[i].Kind} and {recruits[j].Kind} spawned overlapped.");
             }
             yield return null;

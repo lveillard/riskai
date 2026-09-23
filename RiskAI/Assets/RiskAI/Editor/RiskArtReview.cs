@@ -106,7 +106,7 @@ namespace RiskAI.Editor
                 {
                     var archer=archers[0];var anim=archer.GetComponentInChildren<Animation>();
                     Vector3 chest=archer.position+Vector3.up*.9f;
-                    foreach(var pose in new[]{("idle","Idle",.2f),("aim","2H_Ranged_Aiming",.5f),("fire","2H_Ranged_Shoot",AttackPresentationTiming.ContactNormalizedTime(UnitKind.Archer))})
+                    foreach(var pose in new[]{("idle","Idle",.2f),("aim","2H_Ranged_Aiming",.5f),("fire","2H_Ranged_Shoot",UnitCatalog.Get(UnitKind.Archer).AttackContact)})
                     {
                         if(anim&&anim[pose.Item2]){var clip=anim[pose.Item2].clip;clip.SampleAnimation(anim.gameObject,clip.length*pose.Item3);}
                         Render(camera,readback,directory,prefix+"-crossbow-"+pose.Item1+"-rts",chest,1.7f,55,0);
@@ -244,7 +244,7 @@ namespace RiskAI.Editor
         static void Unit(Transform parent,UnitKind kind,int team,Vector3 position,string name)
         {
             var holder=new GameObject(name).transform;holder.SetParent(parent,false);holder.localPosition=position;holder.localRotation=Quaternion.Euler(0,180,0);
-            var prefab=Resources.Load<GameObject>("Units/"+BattleRules.Model(kind));if(!prefab)return;
+            var prefab=Resources.Load<GameObject>("Units/"+UnitCatalog.Get(kind).Model);if(!prefab)return;
             var model=UnityEngine.Object.Instantiate(prefab,holder,false);
             model.transform.localScale*=VisualMetrics.UnitScale;
             ModelMetrics.MatchStandingHeight(model,kind);
@@ -285,10 +285,10 @@ namespace RiskAI.Editor
             var rider=new GameObject("Reach knight").transform;rider.SetParent(reach,false);
             var riderView=Mounted(rider,UnitKind.Knight,0).GetComponent<MountedKnightView>();
             var engage=typeof(Soldier).GetMethod("MeleeEngageDistance",BindingFlags.Public|BindingFlags.Static);
-            float centre=engage!=null?(float)engage.Invoke(null,new object[]{UnitKind.Knight,SourceGeometry.AgentRadius(UnitKind.Footman)}):BattleRules.Range(UnitKind.Knight)*.76f;
+            float centre=engage!=null?(float)engage.Invoke(null,new object[]{UnitKind.Knight,UnitCatalog.Get(UnitKind.Footman).CollisionRadius}):UnitCatalog.Get(UnitKind.Knight).Weapon.Range*.76f;
             Unit(reach,UnitKind.Footman,5,new Vector3(0,0,centre),"Reach target");
             reach.Find("Reach target").localRotation=Quaternion.Euler(0,180,0);
-            Debug.Log($"RISKAI_ART_REACH: centre={centre:F2} gap={centre-SourceGeometry.AgentRadius(UnitKind.Knight)-SourceGeometry.AgentRadius(UnitKind.Footman):F2}");
+            Debug.Log($"RISKAI_ART_REACH: centre={centre:F2} gap={centre-UnitCatalog.Get(UnitKind.Knight).CollisionRadius-UnitCatalog.Get(UnitKind.Footman).CollisionRadius:F2}");
             if(poser!=null&&riderView)poser.Invoke(riderView,new object[]{0f,0f,1f});
             Render(camera,readback,directory,prefix+"-reach-contact-side",reach.position+new Vector3(0,1.3f,centre*.5f),2.6f,8,90);
             Render(camera,readback,directory,prefix+"-reach-contact-rts",reach.position+new Vector3(0,1f,centre*.5f),3.6f,55,0);

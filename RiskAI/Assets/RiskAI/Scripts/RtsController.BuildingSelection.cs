@@ -218,14 +218,14 @@ namespace RiskAI
 
         public ProductionBatchPreview PreviewRecruitSelected(UnitKind kind)
         {
-            int cost=BattleRules.Cost(kind);
-            return ProductionCatalog.AllowsHarborUnit(kind)
+            int cost=UnitCatalog.Get(kind).Cost;
+            return (UnitCatalog.Get(kind).Building==UnitBuilding.Harbor)
                 ? PreviewSelectedBuildings(OwnSelectedHarbors(),cost)
                 : PreviewSelectedBuildings(OwnSelectedTowns(),cost);
         }
 
         public ProductionBatchPreview PreviewShipPurchase(NavalUnitKind kind) =>
-            PreviewSelectedBuildings(OwnSelectedHarbors(),Harbor.Cost(kind));
+            PreviewSelectedBuildings(OwnSelectedHarbors(),UnitCatalog.Get(kind).Cost);
 
         IEnumerable<Settlement> OwnSelectedTowns() => selectedTowns.Where(t=>t&&t.State.Owner==0);
         IEnumerable<Harbor> OwnSelectedHarbors() => selectedHarbors.Where(h=>h&&h.Owner==0);
@@ -241,18 +241,18 @@ namespace RiskAI
         /// <summary>Queues one land unit at every selected, allied compatible building, shortest queues first.</summary>
         public string TryRecruitSelected(UnitKind kind)
         {
-            if (ProductionCatalog.AllowsHarborUnit(kind))
+            if ((UnitCatalog.Get(kind).Building==UnitBuilding.Harbor))
             {
                 LastProductionResult=QueueAtSelectedBuildings(
                     OwnSelectedHarbors(), h => h.LandQueueCount, StableHarborIndex,
                     h => ExecuteBuilding(PlayerBuildingIntent.Recruit(h.BuildingId,kind)),
-                    BattleRules.Cost(kind),"Selecciona un puerto de tu bando para reclutar Marines.");
+                    UnitCatalog.Get(kind).Cost,"Selecciona un puerto de tu bando para reclutar Marines.");
                 return LastProductionResult.Error;
             }
             LastProductionResult=QueueAtSelectedBuildings(
                 OwnSelectedTowns(), t => t.QueueCount, t => t.State.Id,
                 t => ExecuteBuilding(PlayerBuildingIntent.Recruit(t.BuildingId,kind)),
-                BattleRules.Cost(kind),"Selecciona una ciudad de tu bando para reclutar.");
+                UnitCatalog.Get(kind).Cost,"Selecciona una ciudad de tu bando para reclutar.");
             return LastProductionResult.Error;
         }
 
@@ -262,7 +262,7 @@ namespace RiskAI
             LastProductionResult=QueueAtSelectedBuildings(
                 OwnSelectedHarbors(), h => h.QueueCount, StableHarborIndex,
                 h => ExecuteBuilding(PlayerBuildingIntent.BuyShip(h.BuildingId,kind)),
-                Harbor.Cost(kind),"Selecciona un puerto de tu bando para comprar barcos.");
+                UnitCatalog.Get(kind).Cost,"Selecciona un puerto de tu bando para comprar barcos.");
             return LastProductionResult.Error;
         }
 

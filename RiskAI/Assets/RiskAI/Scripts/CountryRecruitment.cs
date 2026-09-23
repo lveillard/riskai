@@ -23,7 +23,7 @@ namespace RiskAI
             System.Array.Clear(alivePoints,0,alivePoints.Length);
             foreach(var unit in session.Units)
                 if(unit&&unit.IsAlive&&unit.OriginCountry>=0&&unit.OriginCountry<alivePoints.Length)
-                    alivePoints[unit.OriginCountry]+=BattleRules.PointValue(unit.Kind);
+                    alivePoints[unit.OriginCountry]+=UnitCatalog.Get(unit.Kind).Points;
         }
         public void CreditRound()
         {

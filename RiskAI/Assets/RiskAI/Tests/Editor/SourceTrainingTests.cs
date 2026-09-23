@@ -27,7 +27,7 @@ namespace RiskAI.Tests
                     Assert.That(reader.ReadInt32(),Is.Zero);
                     int seconds=reader.ReadInt32();
                     Assert.That(reader.ReadInt32(),Is.Zero,"Original modification terminator");
-                    Assert.That(BattleRules.TrainTime(entry.Item2),Is.EqualTo(seconds),entry.Item1);
+                    Assert.That(UnitCatalog.Get(entry.Item2).TrainSeconds,Is.EqualTo(seconds),entry.Item1);
                 }
             }
         }

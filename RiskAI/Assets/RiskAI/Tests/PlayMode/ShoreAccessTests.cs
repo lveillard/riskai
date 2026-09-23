@@ -207,7 +207,7 @@ namespace RiskAI.Tests
                 if(!data.IsLand(wx,wz)||ShoreAccess.SurfaceWeights(wx,wz).x<.65f||ShoreAccess.ShoreBandWeight(wx,wz)<.5f)continue;
                 if(!ShoreAccess.TryLanding(MapLayout.Point(wx,wz),out shore,out _)||IsLegitimateDock(shore))continue;
                 if(ShoreAccess.SurfaceWeights(shore.x,shore.z).x<.65f||ShoreAccess.ShoreBandWeight(shore.x,shore.z)<.5f)continue;
-                if(!SeaNavigation.TryNearestOcean(shore,Ship.LoadRadius,out water))continue;
+                if(!SeaNavigation.TryNearestOcean(shore,UnitCatalog.TransportLoadRadius,out water))continue;
                 return true;
             }
             shore=water=default;return false;
@@ -222,8 +222,8 @@ namespace RiskAI.Tests
                 if(!data.IsLand(wx,wz)||!IsSourceNonBeach(data,wx,wz))continue;
                 if(!NavMesh.SamplePosition(new Vector3(wx,data.HeightAt(wx,wz),wz),out var hit,1.25f,NavMesh.AllAreas))continue;
                 if(!MapLayout.IsLand(hit.position.x,hit.position.z)||!IsSourceNonBeach(data,hit.position.x,hit.position.z)||IsLegitimateDock(hit.position)||ShoreAccess.IsSandySurface(hit.position.x,hit.position.z))continue;
-                if(!SeaNavigation.TryNearestOcean(hit.position,Ship.LoadRadius,out water))continue;
-                if(Vector3.Distance(new Vector3(water.x,0,water.z),new Vector3(hit.position.x,0,hit.position.z))>Ship.LoadRadius)continue;
+                if(!SeaNavigation.TryNearestOcean(hit.position,UnitCatalog.TransportLoadRadius,out water))continue;
+                if(Vector3.Distance(new Vector3(water.x,0,water.z),new Vector3(hit.position.x,0,hit.position.z))>UnitCatalog.TransportLoadRadius)continue;
                 shore=hit.position; return true;
             }
             shore=water=default; return false;

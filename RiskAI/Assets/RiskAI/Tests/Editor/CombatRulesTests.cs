@@ -53,44 +53,44 @@ namespace RiskAI.Tests
         [Test]
         public void ExtractedReforgedProfilesUseMapAttackAndDefenseTypes()
         {
-            var rifleman = BattleRules.Profile(UnitKind.Archer);
-            var knight = BattleRules.Profile(UnitKind.Knight);
-            var mortar = BattleRules.Profile(UnitKind.Mortar);
-            var medic = BattleRules.Profile(UnitKind.Medic);
-            Assert.That(rifleman.Cooldown, Is.EqualTo(1.6f)); Assert.That(rifleman.Defense, Is.EqualTo(ArmorKind.Light));
-            Assert.That(rifleman.AttackPoint, Is.EqualTo(.17f)); Assert.That(rifleman.Backswing, Is.EqualTo(.7f));
-            Assert.That(knight.Range, Is.EqualTo(2f)); Assert.That(knight.Cooldown, Is.EqualTo(1.36f));
-            Assert.That(knight.AttackPoint, Is.EqualTo(.66f)); Assert.That(knight.Backswing, Is.EqualTo(.44f));
-            Assert.That(mortar.Defense, Is.EqualTo(ArmorKind.Medium)); Assert.That(mortar.AttackPoint, Is.EqualTo(1f)); Assert.That(mortar.Backswing, Is.EqualTo(1.1f));
-            Assert.That(medic.Attack, Is.EqualTo(AttackKind.Piercing)); Assert.That(medic.Defense, Is.EqualTo(ArmorKind.Light)); Assert.That(medic.AttackPoint, Is.EqualTo(.59f)); Assert.That(medic.Backswing, Is.EqualTo(.58f));
-            Assert.That(BattleRules.Name(UnitKind.Knight), Is.EqualTo("Caballero"));
-            Assert.That(BattleRules.Role(UnitKind.Knight), Is.EqualTo("Caballer\u00eda pesada"));
-            var privateMarine = BattleRules.Profile(UnitKind.MarinePrivate);
-            var major = BattleRules.Profile(UnitKind.MarineMajor);
-            var general = BattleRules.Profile(UnitKind.MarineGeneral);
-            Assert.That(privateMarine.MinimumDamage, Is.EqualTo(18)); Assert.That(privateMarine.MaximumDamage, Is.EqualTo(24)); Assert.That(privateMarine.AttackPoint, Is.EqualTo(.17f));
-            Assert.That(major.Health, Is.EqualTo(650)); Assert.That(major.Armor, Is.EqualTo(6));
-            Assert.That(major.AttackPoint, Is.EqualTo(.66f));
-            Assert.That(general.Health, Is.EqualTo(800)); Assert.That(general.Cost, Is.EqualTo(10)); Assert.That(general.PointValue, Is.EqualTo(10)); Assert.That(general.AttackPoint, Is.EqualTo(.66f));
+            var rifleman = UnitCatalog.Get(UnitKind.Archer);
+            var knight = UnitCatalog.Get(UnitKind.Knight);
+            var mortar = UnitCatalog.Get(UnitKind.Mortar);
+            var medic = UnitCatalog.Get(UnitKind.Medic);
+            Assert.That(rifleman.Weapon.Cooldown, Is.EqualTo(1.6f)); Assert.That(rifleman.ArmorType, Is.EqualTo(ArmorKind.Light));
+            Assert.That(rifleman.Weapon.AttackPoint, Is.EqualTo(.17f)); Assert.That(rifleman.Weapon.Backswing, Is.EqualTo(.7f));
+            Assert.That(knight.Weapon.Range, Is.EqualTo(2f)); Assert.That(knight.Weapon.Cooldown, Is.EqualTo(1.36f));
+            Assert.That(knight.Weapon.AttackPoint, Is.EqualTo(.66f)); Assert.That(knight.Weapon.Backswing, Is.EqualTo(.44f));
+            Assert.That(mortar.ArmorType, Is.EqualTo(ArmorKind.Medium)); Assert.That(mortar.Weapon.AttackPoint, Is.EqualTo(1f)); Assert.That(mortar.Weapon.Backswing, Is.EqualTo(1.1f));
+            Assert.That(medic.AttackType, Is.EqualTo(AttackKind.Piercing)); Assert.That(medic.ArmorType, Is.EqualTo(ArmorKind.Light)); Assert.That(medic.Weapon.AttackPoint, Is.EqualTo(.59f)); Assert.That(medic.Weapon.Backswing, Is.EqualTo(.58f));
+            Assert.That(UnitCatalog.Get(UnitKind.Knight).Name, Is.EqualTo("Caballero"));
+            Assert.That(UnitCatalog.Get(UnitKind.Knight).Role, Is.EqualTo("Caballer\u00eda pesada"));
+            var privateMarine = UnitCatalog.Get(UnitKind.MarinePrivate);
+            var major = UnitCatalog.Get(UnitKind.MarineMajor);
+            var general = UnitCatalog.Get(UnitKind.MarineGeneral);
+            Assert.That(privateMarine.Weapon.MinimumDamage, Is.EqualTo(18)); Assert.That(privateMarine.Weapon.MaximumDamage, Is.EqualTo(24)); Assert.That(privateMarine.Weapon.AttackPoint, Is.EqualTo(.17f));
+            Assert.That(major.MaxHealth, Is.EqualTo(650)); Assert.That(major.Armor, Is.EqualTo(6));
+            Assert.That(major.Weapon.AttackPoint, Is.EqualTo(.66f));
+            Assert.That(general.MaxHealth, Is.EqualTo(800)); Assert.That(general.Cost, Is.EqualTo(10)); Assert.That(general.Points, Is.EqualTo(10)); Assert.That(general.Weapon.AttackPoint, Is.EqualTo(.66f));
             Assert.That(ProductionHotkeys.Hotkey(UnitKind.MarinePrivate), Is.EqualTo("Q"), "Cheapest harbor product takes the first grid cell.");
-            Assert.That(BattleRules.Ranged(UnitKind.MarinePrivate), Is.True); Assert.That(BattleRules.Ranged(UnitKind.MarineMajor), Is.False);
+            Assert.That(UnitCatalog.Get(UnitKind.MarinePrivate).Weapon.Ranged, Is.True); Assert.That(UnitCatalog.Get(UnitKind.MarineMajor).Weapon.Ranged, Is.False);
         }
 
         [Test]
         public void MortarUsesSiegeProfileAndCanRecruitWithoutUpgrade()
         {
-            Assert.That(BattleRules.Cost(UnitKind.Mortar),Is.EqualTo(3));
-            Assert.That(BattleRules.TrainTime(UnitKind.Mortar),Is.EqualTo(1f));
-            Assert.That(BattleRules.Health(UnitKind.Mortar),Is.EqualTo(350f));
-            Assert.That(BattleRules.Speed(UnitKind.Mortar),Is.EqualTo(4.6f));
-            Assert.That(BattleRules.Damage(UnitKind.Mortar),Is.EqualTo(25f));
-            Assert.That(BattleRules.AttackInterval(UnitKind.Mortar),Is.EqualTo(3.5f));
-            Assert.That(BattleRules.AttackPoint(UnitKind.Mortar),Is.EqualTo(1f));
-            Assert.That(BattleRules.Range(UnitKind.Mortar),Is.EqualTo(18f));
-            Assert.That(BattleRules.Ranged(UnitKind.Mortar),Is.True);
-            Assert.That(BattleRules.RequiredLevel(UnitKind.Mortar),Is.EqualTo(1));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Cost,Is.EqualTo(3));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).TrainSeconds,Is.EqualTo(1f));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).MaxHealth,Is.EqualTo(350f));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Speed,Is.EqualTo(4.6f));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Weapon.AverageDamage,Is.EqualTo(25f));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Weapon.Cooldown,Is.EqualTo(3.5f));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Weapon.AttackPoint,Is.EqualTo(1f));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Weapon.Range,Is.EqualTo(18f));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Weapon.Ranged,Is.True);
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Level,Is.EqualTo(1));
             Assert.That(ProductionHotkeys.Hotkey(UnitKind.Mortar),Is.EqualTo("R"));
-            Assert.That(BattleRules.Model(UnitKind.Mortar),Is.EqualTo("Mortar"));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Model,Is.EqualTo("Mortar"));
         }
     }
 }

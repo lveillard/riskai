@@ -141,44 +141,44 @@ namespace RiskAI.Tests
         [Test]
         public void BountyUsesPointValueIndependentlyOfPurchasePrice()
         {
-            var profile = new UnitProfile(200, 17, 1, 4, 1, 1, 5, 2,
-                AttackKind.Normal, ArmorKind.Heavy, 12, 1, "Independent price fixture", 2);
+            // An independent price fixture: point value 2, purchase price 12.
+            const int pointValue = 2, price = 12;
             var economy = new Economy();
-            economy.GrantBounty(0, profile.PointValue);
-            economy.GrantBounty(0, profile.PointValue);
+            economy.GrantBounty(0, pointValue);
+            economy.GrantBounty(0, pointValue);
             Assert.That(economy.Gold[0], Is.EqualTo(BattleRules.StartingGold + 1));
-            Assert.That(profile.Cost, Is.EqualTo(12));
+            Assert.That(price, Is.EqualTo(12));
         }
 
         [Test]
         public void SourceGoldCostsAndNavalProfilesAreNotScaledByPrototypeMultiplier()
         {
-            Assert.That(BattleRules.Cost(UnitKind.Footman), Is.EqualTo(1));
-            Assert.That(BattleRules.Cost(UnitKind.Archer), Is.EqualTo(1));
-            Assert.That(BattleRules.Cost(UnitKind.Knight), Is.EqualTo(5));
-            Assert.That(BattleRules.Cost(UnitKind.Mage), Is.EqualTo(4));
-            Assert.That(BattleRules.Cost(UnitKind.Mortar), Is.EqualTo(3));
-            Assert.That(BattleRules.Cost(UnitKind.Medic), Is.EqualTo(2));
-            Assert.That(UnitCatalog.Tower.Health, Is.EqualTo(550));
-            Assert.That(UnitCatalog.CapturableTower.BaseDamage, Is.EqualTo(45));
-            Assert.That(UnitCatalog.CapturableTower.Dice, Is.EqualTo(1));
-            Assert.That(UnitCatalog.CapturableTower.Sides, Is.EqualTo(5));
-            Assert.That(UnitCatalog.CapturableTower.Range, Is.EqualTo(13f));
-            Assert.That(UnitCatalog.CapturableTower.Cooldown, Is.EqualTo(.9f));
-            Assert.That(NavalProfiles.Frigate.Health, Is.EqualTo(400));
-            Assert.That(NavalProfiles.Frigate.MinimumDamage, Is.EqualTo(31));
-            Assert.That(NavalProfiles.Frigate.MaximumDamage, Is.EqualTo(45));
-            Assert.That(NavalProfiles.Frigate.Cooldown, Is.EqualTo(1.5f));
+            Assert.That(UnitCatalog.Get(UnitKind.Footman).Cost, Is.EqualTo(1));
+            Assert.That(UnitCatalog.Get(UnitKind.Archer).Cost, Is.EqualTo(1));
+            Assert.That(UnitCatalog.Get(UnitKind.Knight).Cost, Is.EqualTo(5));
+            Assert.That(UnitCatalog.Get(UnitKind.Mage).Cost, Is.EqualTo(4));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).Cost, Is.EqualTo(3));
+            Assert.That(UnitCatalog.Get(UnitKind.Medic).Cost, Is.EqualTo(2));
+            Assert.That(UnitCatalog.Tower.MaxHealth, Is.EqualTo(550));
+            Assert.That(UnitCatalog.Tower.TownWeapon.Base, Is.EqualTo(45));
+            Assert.That(UnitCatalog.Tower.TownWeapon.Dice, Is.EqualTo(1));
+            Assert.That(UnitCatalog.Tower.TownWeapon.Sides, Is.EqualTo(5));
+            Assert.That(UnitCatalog.Tower.TownWeapon.Range, Is.EqualTo(13f));
+            Assert.That(UnitCatalog.Tower.TownWeapon.Cooldown, Is.EqualTo(.9f));
+            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).MaxHealth, Is.EqualTo(400));
+            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).Weapon.MinimumDamage, Is.EqualTo(31));
+            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).Weapon.MaximumDamage, Is.EqualTo(45));
+            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).Weapon.Cooldown, Is.EqualTo(1.5f));
             var first=new System.Random(16016);var replay=new System.Random(16016);
             for(int i=0;i<64;i++)
             {
-                float damage=NavalProfiles.Frigate.RollDamage(first);
+                float damage=UnitCatalog.Get(NavalUnitKind.Frigate).Weapon.RollDamage(first);
                 Assert.That(damage,Is.InRange(31f,45f));
-                Assert.That(damage,Is.EqualTo(NavalProfiles.Frigate.RollDamage(replay)));
+                Assert.That(damage,Is.EqualTo(UnitCatalog.Get(NavalUnitKind.Frigate).Weapon.RollDamage(replay)));
             }
-            Assert.That(NavalProfiles.Transport.Cost, Is.EqualTo(2));
-            Assert.That(NavalProfiles.Transport.Speed, Is.EqualTo(6.8f));
-            Assert.That(NavalProfiles.Transport.Armor, Is.Zero);
+            Assert.That(UnitCatalog.Get(NavalUnitKind.Transport).Cost, Is.EqualTo(2));
+            Assert.That(UnitCatalog.Get(NavalUnitKind.Transport).Speed, Is.EqualTo(6.8f));
+            Assert.That(UnitCatalog.Get(NavalUnitKind.Transport).Armor, Is.Zero);
         }
     }
 }

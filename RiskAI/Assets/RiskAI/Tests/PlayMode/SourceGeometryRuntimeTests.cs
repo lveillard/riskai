@@ -53,13 +53,13 @@ namespace RiskAI.Tests
             foreach(var unit in new[]{archer,medic,guard,mortar})unit.transform.localScale=Vector3.one;
             foreach(var unit in new[]{archer,medic,guard,mortar})
             {
-                Transform model=unit.transform.Find(BattleRules.Model(unit.Kind)+"(Clone)");
+                Transform model=unit.transform.Find(UnitCatalog.Get(unit.Kind).Model+"(Clone)");
                 if(!model)model=unit.transform.Find("Mortar model");
                 Assert.That(model,Is.Not.Null);
                 var animation=model.GetComponentInChildren<Animation>();
                 if(animation&&animation["Idle"]){animation.Stop();animation["Idle"].clip.SampleAnimation(animation.gameObject,0); }
                 float renderedHeight=ModelMetrics.Measure(model).size.y*model.lossyScale.y;
-                Assert.That(renderedHeight,Is.EqualTo(SourceGeometry.StandingHeight(unit.Kind)).Within(.01f),unit.Kind+" must use source standing height, independent of physical radius.");
+                Assert.That(renderedHeight,Is.EqualTo(UnitCatalog.Get(unit.Kind).MdxHeight).Within(.01f),unit.Kind+" must use source standing height, independent of physical radius.");
                 var hitbox=RtsPicking.Bounds(Camera.main,unit);
                 var head=Camera.main.WorldToScreenPoint(unit.transform.position+Vector3.up*renderedHeight);
                 Assert.That(hitbox.Contains(head),Is.True,unit.Kind+" head must remain clickable after visual calibration.");
@@ -79,7 +79,7 @@ namespace RiskAI.Tests
             Assert.That(model.Find("Oak carriage"),Is.Not.Null);
             Assert.That(model.Find("Hand cannon pivot"),Is.Null);
             float renderedHeight=ModelMetrics.Measure(model).size.y*model.lossyScale.y;
-            Assert.That(renderedHeight,Is.EqualTo(SourceGeometry.StandingHeight(UnitKind.Mortar)).Within(.01f));
+            Assert.That(renderedHeight,Is.EqualTo(UnitCatalog.Get(UnitKind.Mortar).MdxHeight).Within(.01f));
             yield return null;
         }
 
@@ -106,7 +106,7 @@ namespace RiskAI.Tests
                     renderer.name+" must retain finite mounted geometry.");
             }
             float renderedHeight=ModelMetrics.Measure(model).size.y*model.lossyScale.y;
-            Assert.That(renderedHeight,Is.EqualTo(SourceGeometry.StandingHeight(UnitKind.Knight)).Within(.01f));
+            Assert.That(renderedHeight,Is.EqualTo(UnitCatalog.Get(UnitKind.Knight).MdxHeight).Within(.01f));
             Assert.That(renderers.Min(renderer=>renderer.bounds.min.y),Is.EqualTo(guard.transform.position.y).Within(.06f),
                 "Horse hooves must remain grounded after source-height calibration.");
             yield return null;

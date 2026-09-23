@@ -1,4 +1,5 @@
 using UnityEngine;
+using RiskAI.Core;
 
 namespace RiskAI
 {
@@ -8,14 +9,8 @@ namespace RiskAI
     /// </summary>
     public sealed class MedicSupport : MonoBehaviour, IManaUser
     {
-        // Ahea: 250 native range, 25 points, 5 mana and a one-second cooldown.
-        public const float HealRadius = Core.SupportAbilities.HealRange;
-        public const float MaxVerticalDelta = 3f;
-        public const float HealAmount = Core.SupportAbilities.HealAmount;
-        public const float CastInterval = Core.SupportAbilities.HealCooldown;
-        public const float ManaCost = Core.SupportAbilities.HealManaCost;
-        // Cheap rescan throttle while nobody needs healing: at most ~4 sweeps per second.
-        const float RescanInterval = CastInterval / 4f;
+        // Range, amount, mana, cooldown and rescan throttle come from the owner's units.json heal.
+        HealProfile heal;
 
         readonly Core.ManaPool mana = new Core.ManaPool();
         public Core.ManaPool Mana => mana;
@@ -34,27 +29,28 @@ namespace RiskAI
         {
             self = owner;
             session = battle;
-            nextCastTime = session.BattleTime + CastInterval;
+            heal = owner.Type.Heal;
+            nextCastTime = session.BattleTime + heal.Cooldown;
             nextScanTime = session.BattleTime;
             CastCount=0;TotalHealing=0;LastCastTick=-1;
-            mana.Reset(Core.SupportAbilities.Mana(owner.Kind));
+            mana.Reset(owner.Type.Mana);
         }
 
         public bool SimTick(float delta)
         {
-            if (!self || self.Kind != Core.UnitKind.Medic || !self.IsAlive || !self.isActiveAndEnabled ||
+            if (!self || !heal.Enabled || !self.IsAlive || !self.isActiveAndEnabled ||
                 !session || session.Paused || session.Winner >= 0)
                 return false;
             mana.Tick(delta);
-            if (session.BattleTime < nextCastTime || session.BattleTime < nextScanTime || !mana.CanSpend(ManaCost)) return false;
+            if (session.BattleTime < nextCastTime || session.BattleTime < nextScanTime || !mana.CanSpend(heal.ManaCost)) return false;
 
             var target = FindMostInjuredAlly();
-            if (!target) { nextScanTime = session.BattleTime + RescanInterval; return false; }
+            if (!target) { nextScanTime = session.BattleTime + heal.Rescan; return false; }
 
-            float healed = target.Heal(HealAmount);
-            if (healed <= 0) { nextScanTime = session.BattleTime + RescanInterval; return false; }
-            nextCastTime = session.BattleTime + CastInterval;
-            mana.TrySpend(ManaCost);
+            float healed = target.Heal(heal.Amount);
+            if (healed <= 0) { nextScanTime = session.BattleTime + heal.Rescan; return false; }
+            nextCastTime = session.BattleTime + heal.Cooldown;
+            mana.TrySpend(heal.ManaCost);
 
             CastCount++;
             TotalHealing += healed;
@@ -69,14 +65,14 @@ namespace RiskAI
             float greatestDeficit = 0;
             Vector3 origin = self.transform.position;
 
-            session.Spatial.Query(origin,HealRadius,nearby);
+            session.Spatial.Query(origin,heal.Range,nearby);
             foreach (var entity in nearby)
             {
                 var candidate=entity as Soldier;
                 if (!candidate || candidate.Team != self.Team || !candidate.IsAlive || !candidate.isActiveAndEnabled)
                     continue;
                 // Ahea targets organic units only; h00M/h01A are mechanical.
-                if (Core.BattleRules.Mechanical(candidate.Kind)) continue;
+                if (heal.OrganicOnly && candidate.Type.Mechanical) continue;
                 if (!candidate.Agent || !candidate.Agent.enabled || !candidate.Agent.isOnNavMesh)
                     continue;
 
@@ -84,8 +80,8 @@ namespace RiskAI
                 if (deficit <= 0) continue;
 
                 Vector3 delta = candidate.transform.position - origin;
-                if (Mathf.Abs(delta.y) >= MaxVerticalDelta ||
-                    new Vector2(delta.x, delta.z).sqrMagnitude > HealRadius * HealRadius)
+                if (Mathf.Abs(delta.y) >= heal.MaxVerticalDelta ||
+                    new Vector2(delta.x, delta.z).sqrMagnitude > heal.Range * heal.Range)
                     continue;
                 if (!HasLineOfSight(candidate)) continue;
 

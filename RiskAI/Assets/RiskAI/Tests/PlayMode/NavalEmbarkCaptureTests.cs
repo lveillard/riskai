@@ -38,13 +38,13 @@ namespace RiskAI.Tests
             const BindingFlags privateInstance=BindingFlags.Instance|BindingFlags.NonPublic;
             var shoreBerth=(Vector3)typeof(Ship).GetField("routeGoal",privateInstance).GetValue(transport);
             Assert.That(Vector3.Distance(new Vector3(shoreBerth.x,0,shoreBerth.z),new Vector3(home.Landing.x,0,home.Landing.z)),
-                Is.LessThanOrEqualTo(Ship.LoadRadius-.45f), "The completed .4 m arrival margin must remain inside unload range.");
+                Is.LessThanOrEqualTo(UnitCatalog.TransportLoadRadius-.45f), "The completed .4 m arrival margin must remain inside unload range.");
             transport.Select(false); // Pending shore work belongs to the ship, not UI selection.
             for(int tick=0;tick<240&&transport.CargoCount>0;tick++)transport.SimTick(.1f);
             Assert.That(transport.CargoCount, Is.Zero, "A valid queued beach unload completes after selection changes.");
             Assert.That(soldier.gameObject.activeInHierarchy, Is.True);
 
-            int marineCost=BattleRules.Cost(UnitKind.MarinePrivate);battle.Economy.Gold[0]=marineCost;
+            int marineCost=UnitCatalog.Get(UnitKind.MarinePrivate).Cost;battle.Economy.Gold[0]=marineCost;
             Assert.That(home.RecruitLand(UnitKind.MarinePrivate,0),Is.Null);
             Assert.That(home.LandQueueCount,Is.EqualTo(1));
             home.State.Owner=1;home.SimTick(.1f);
@@ -139,7 +139,7 @@ namespace RiskAI.Tests
                 var point=port.Landing+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*18f;
                 if(!UnityEngine.AI.NavMesh.SamplePosition(point,out var hit,2f,UnityEngine.AI.NavMesh.AllAreas))continue;
                 var distance=hit.position-port.Berth;distance.y=0;
-                if(distance.magnitude<=Ship.LoadRadius+2f)continue;
+                if(distance.magnitude<=UnitCatalog.TransportLoadRadius+2f)continue;
                 start=hit.position;found=true;
             }
             Assert.That(found,Is.True,"The boarder must begin outside instant embark range.");

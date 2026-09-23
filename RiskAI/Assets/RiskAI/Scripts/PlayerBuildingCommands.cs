@@ -61,7 +61,7 @@ namespace RiskAI
             switch(intent.Kind)
             {
                 case PlayerBuildingIntentKind.RecruitUnit:
-                    return ProductionCatalog.AllowsSettlementUnit(intent.Unit) ? town.Recruit(intent.Unit,team) : "Esta ciudad sólo recluta tropas regulares.";
+                    return (UnitCatalog.Get(intent.Unit).Building==UnitBuilding.City) ? town.Recruit(intent.Unit,team) : "Esta ciudad sólo recluta tropas regulares.";
                 case PlayerBuildingIntentKind.CancelTraining:
                     return intent.QueueChannel!=ProductionQueueChannel.Land?InvalidKind():InvalidCancelIndex(intent.CancelIndex)??town.CancelTraining(intent.CancelIndex,team);
                 case PlayerBuildingIntentKind.SetRally:
@@ -75,9 +75,9 @@ namespace RiskAI
             switch(intent.Kind)
             {
                 case PlayerBuildingIntentKind.RecruitUnit:
-                    return ProductionCatalog.AllowsHarborUnit(intent.Unit) ? harbor.RecruitLand(intent.Unit,team) : "Este puerto sólo recluta Marines.";
+                    return (UnitCatalog.Get(intent.Unit).Building==UnitBuilding.Harbor) ? harbor.RecruitLand(intent.Unit,team) : "Este puerto sólo recluta Marines.";
                 case PlayerBuildingIntentKind.BuyShip:
-                    return ProductionCatalog.AllowsHarborShip(intent.Ship) ? harbor.Buy(intent.Ship,team) : "Tipo de barco inválido.";
+                    return (UnitCatalog.Get(intent.Ship).Building==UnitBuilding.Harbor) ? harbor.Buy(intent.Ship,team) : "Tipo de barco inválido.";
                 case PlayerBuildingIntentKind.CancelTraining:
                     if(InvalidCancelIndex(intent.CancelIndex)!=null)return InvalidCancelIndex(intent.CancelIndex);
                     return intent.QueueChannel==ProductionQueueChannel.Land?harbor.CancelLandTraining(intent.CancelIndex,team):intent.QueueChannel==ProductionQueueChannel.Naval?harbor.CancelTraining(intent.CancelIndex,team):InvalidKind();

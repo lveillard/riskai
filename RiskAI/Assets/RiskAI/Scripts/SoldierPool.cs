@@ -35,7 +35,7 @@ namespace RiskAI
             if (!unit) unit = TakeOldCorpse(team, kind);
             if (!unit)
             {
-                var go = new GameObject(BattleRules.Name(kind)); go.transform.SetParent(root, false);
+                var go = new GameObject(UnitCatalog.Get(kind).Name); go.transform.SetParent(root, false);
                 go.transform.position = point; unit = go.AddComponent<Soldier>(); CreatedCount++;
             }
             else ReusedCount++;

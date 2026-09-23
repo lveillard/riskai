@@ -30,8 +30,8 @@ namespace RiskAI
         public int CargoCount=>cargo.Count;
         public int CargoCapacity=>Capacity;
         public CombatTarget CurrentTarget=>target;
-        public ShipProfile Profile=>NavalProfiles.Profile(Kind);
-        public string DisplayName=>Profile.Name;
+        public override ref readonly UnitType Type=>ref UnitCatalog.Get(Kind);
+        public string DisplayName=>Type.Name;
         public string OrderLabel=>IsGarrison?"Guarnición · mantiene el puerto":target?"En combate":route.Count>routeIndex?"Navegando":"En puerto";
         public string LastActionError { get; private set; }
         public long RouteRevision { get; private set; }
@@ -50,26 +50,24 @@ namespace RiskAI
         }
         const float RouteArrivalDistance=.4f;
         const float RouteStallSeconds=3f;
-        const float ShoreBerthSearchRadius=LoadRadius-RouteArrivalDistance-.05f;
+        float ShoreBerthSearchRadius=>Type.Transport.LoadRadius-RouteArrivalDistance-.05f;
         public bool IsAtOrRoutingTo(Vector3 point,float tolerance=1.5f)
         {
             var here=transform.position-point;here.y=0;if(here.sqrMagnitude<=tolerance*tolerance)return true;
             if(!hasRouteGoal||routeIndex>=route.Count||RouteHasStalled())return false;
             var goal=routeGoal-point;goal.y=0;return goal.sqrMagnitude<=tolerance*tolerance;
         }
-        // A00V selects up to ten nearby units inside 512 native range (10.24 m).
-        public const float LoadRadius = 10.24f;
-        public const int LoadOrderLimit = 10;
-        public override float MaxHealth=>Profile.Health;
+        // A00V selects up to ten nearby units inside 512 native range (10.24 m): units.json transport.
+        float LoadRadius=>Type.Transport.LoadRadius;
+        public override float MaxHealth=>Type.MaxHealth;
         public override Vector3 AimPoint=>transform.position+Vector3.up*.55f;
-        public override AttackKind AttackType=>Profile.Attack;
-        public override ArmorKind ArmorType=>Profile.Defense;
-        public override float Armor=>Profile.Armor;
-        public float Speed=>Profile.Speed;
-        int Capacity=>Profile.Capacity;
-        float AttackDamage=>Profile.Damage;
-        float AttackRange=>Profile.Range;
-        float AttackInterval=>Profile.Cooldown;
+        public override AttackKind AttackType=>Type.AttackType;
+        public override ArmorKind ArmorType=>Type.ArmorType;
+        public override float Armor=>Type.Armor;
+        public float Speed=>Type.Speed;
+        int Capacity=>Type.Transport.Capacity;
+        float AttackRange=>Type.Weapon.Range;
+        float AttackInterval=>Type.Weapon.Cooldown;
         BoxCollider targetVolume;
 
         public override Vector3 ApproachPoint(Vector3 from)
@@ -92,7 +90,7 @@ namespace RiskAI
             if(harborGuard&&harborGuard.IsInBerthCircle(point)){MaintainHarborGuard();return;}
             if(!IsAlive)return;
             Vector3 destination=point;
-            if(!SeaNavigation.HasClearance(destination)&&!SeaNavigation.TryNearestOcean(point,LoadRadius,out destination))
+            if(!SeaNavigation.HasClearance(destination)&&!SeaNavigation.TryNearestOcean(point,UnitCatalog.TransportLoadRadius,out destination))
             {LastActionError="Elige mar o tierra cercana a la costa.";return;}
             if(!SeaNavigation.TryBuildPath(transform.position,destination,out var next)){LastActionError="No hay una ruta marítima hasta ese destino.";return;}
             if(!TryLeaveHarborGuard(destination))return;
@@ -103,7 +101,7 @@ namespace RiskAI
         {
             LastActionError=null;
             if(!harbor){LastActionError="Elige un puerto de desembarco.";return;}
-            if(Profile.CanTransport)
+            if(Type.CanTransport)
             {
                 if(!harbor.TryTransportLanding(out var landing,out _))
                 {LastActionError="El puerto no tiene una playa o pasarela al alcance del transporte.";return;}
@@ -124,7 +122,7 @@ namespace RiskAI
         }
         public void Attack(CombatTarget enemy)
         {
-            if(!IsAlive||!Profile.CanAttack||!enemy||enemy.Team==Team||!enemy.CanBeAttacked)return;
+            if(!IsAlive||!Type.CanAttack||!enemy||enemy.Team==Team||!enemy.CanBeAttacked)return;
             var next=new List<Vector3>();
             float distance=RangeTo(enemy);
             if(distance>AttackRange)
@@ -140,7 +138,7 @@ namespace RiskAI
         public string SailToShore(Vector3 shore)
         {
             LastActionError=null;
-            if(!IsAlive||!Profile.CanTransport)return LastActionError="Selecciona un transporte.";
+            if(!IsAlive||!Type.CanTransport)return LastActionError="Selecciona un transporte.";
             if(!TryValidateShore(shore,out var landing,out var error))return LastActionError=error;
             if(!SeaNavigation.TryNearestOcean(landing,ShoreBerthSearchRadius,out var berth)||!SeaNavigation.TryBuildPath(transform.position,berth,out var path))return LastActionError="No hay una ruta marítima segura hasta esa playa.";
             if(!TryLeaveHarborGuard(berth))return LastActionError;
@@ -152,7 +150,7 @@ namespace RiskAI
         {
             LastActionError=null;
             if(world.Session.Paused||world.Session.Winner>=0){LastActionError="No se puede embarcar con la partida detenida.";return false;}
-            if(!IsAlive||!Profile.CanTransport||cargo.Count>=Capacity||!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=Team||cargo.Contains(soldier)){LastActionError="El transporte no puede embarcar a ese soldado.";return false;}
+            if(!IsAlive||!Type.CanTransport||cargo.Count>=Capacity||!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=Team||cargo.Contains(soldier)){LastActionError="El transporte no puede embarcar a ese soldado.";return false;}
             if(DistanceXZ(transform.position,soldier.transform.position)>LoadRadius){LastActionError="Acerca el transporte a menos de 10 m del soldado.";return false;}
             if(!ShoreAccess.TryLanding(soldier.transform.position,out _,out var shoreError)){LastActionError=shoreError;return false;}
             soldier.Stop();soldier.Select(false);if(soldier.Agent)soldier.Agent.enabled=false;
@@ -167,7 +165,7 @@ namespace RiskAI
         {
             LastActionError=null;
             if(world.Session.Paused||world.Session.Winner>=0)return false;
-            if(!IsAlive||!Profile.CanTransport){LastActionError="Selecciona un transporte.";return false;}
+            if(!IsAlive||!Type.CanTransport){LastActionError="Selecciona un transporte.";return false;}
             if(!TryFindDisembarkPoint(shore,out shore,out var error)){LastActionError=error;return false;}
             bool unloaded=false;int slot=0;
             foreach(var soldier in cargo.ToArray())
@@ -189,7 +187,7 @@ namespace RiskAI
         {
             LastActionError=null;
             if(world.Session.Paused||world.Session.Winner>=0)return false;
-            if(!IsAlive||!Profile.CanTransport||!soldier||!cargo.Contains(soldier))
+            if(!IsAlive||!Type.CanTransport||!soldier||!cargo.Contains(soldier))
             {LastActionError="Esa unidad ya no está dentro del transporte.";return false;}
             if(!ShoreAccess.TryNearestLanding(transform.position,LoadRadius,out var landing,out var error))
             {LastActionError=error;return false;}
@@ -201,7 +199,7 @@ namespace RiskAI
         }
         bool TryUnloadSoldier(Soldier soldier,Vector3 landing,int slot)
         {
-            float spacing=VisualMetrics.SpawnRadiusFor(soldier.Kind)*2+.14f;
+            float spacing=UnitCatalog.Get(soldier.Kind).SpawnRadius*2+.14f;
             for(int attempt=0;attempt<24;attempt++)
             {
                 int index=slot+attempt;
@@ -235,11 +233,11 @@ namespace RiskAI
             // A garrison can fire and turn in place, but autonomous targeting may
             // not move it off the same fixed anchor used by the capture circle.
             if(IsGarrison&&target&&RangeTo(target)>AttackRange)target=null;
-            if(!target&&Profile.CanAttack&&world.Session.BattleTime>=nextSense&&(attackMoveOrder||routeIndex>=route.Count)){nextSense=world.Session.BattleTime+.2f;target=FindNearbyEnemy();}
+            if(!target&&Type.CanAttack&&world.Session.BattleTime>=nextSense&&(attackMoveOrder||routeIndex>=route.Count)){nextSense=world.Session.BattleTime+.2f;target=FindNearbyEnemy();}
             if(target&&RangeTo(target)<=AttackRange&&Visible(target))
             {
                 Face(target.transform.position);
-                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Profile),Team,this,SourceWeapons.For(Kind,AttackType));}
+                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Type.Weapon),Team,this,Type.Weapon);}
             }
             else if(!IsGarrison&&target&&world.Session.BattleTime>=nextTargetPath)
             {
@@ -256,11 +254,11 @@ namespace RiskAI
         {
             CombatTarget best=null;float score=float.MaxValue;
             // Query a little wider: a long hull can be in range while its pivot is not.
-            world.Session.Spatial.Query(transform.position,AttackRange+6f,nearby);
+            world.Session.Spatial.Query(transform.position,Type.Acquisition.RadiusHostile+Type.Acquisition.QueryPadding,nearby);
             foreach(var ship in nearby)
             {
                 if(!ship||ship==this||!ship.CanBeAttacked||ship.Team==Team)continue;
-                float distance=RangeTo(ship);if(distance<=AttackRange&&distance<score&&Visible(ship)){best=ship;score=distance;}
+                float distance=RangeTo(ship);if(distance<=Type.Acquisition.RadiusHostile&&distance<score&&Visible(ship)){best=ship;score=distance;}
             }
             return best;
         }
@@ -274,11 +272,11 @@ namespace RiskAI
                 if(routeIndex>=route.Count&&hasAttackMoveGoal&&DistanceXZ(transform.position,attackMoveGoal)<1)hasAttackMoveGoal=false;
                 return;
             }
-            Vector3 separation=Vector3.zero;
+            Vector3 separation=Vector3.zero;float separationDistance=Type.Separation;
             foreach(var other in world.Ships)if(other&&other!=this)
             {
                 Vector3 away=transform.position-other.transform.position;away.y=0;float distance=away.magnitude;
-                if(distance<2.8f&&distance>.01f)separation+=away.normalized*(2.8f-distance);
+                if(distance<separationDistance&&distance>.01f)separation+=away.normalized*(separationDistance-distance);
             }
             Vector3 next=Vector3.MoveTowards(transform.position,destination,Speed*simDelta);
             if(separation.sqrMagnitude>.001f)next+=separation.normalized*Mathf.Min(.8f,separation.magnitude)*simDelta*Speed;
@@ -308,7 +306,7 @@ namespace RiskAI
         void ClearRoute(){route.Clear();routeIndex=0;hasRouteGoal=false;}
         internal void BindHarborGuard(Harbor harbor)
         {
-            if(!harbor||!Profile.CanCapture)return;
+            if(!harbor||!Type.HarborGuard)return;
             harborGuard=harbor;orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
             MaintainHarborGuard();
         }
@@ -341,12 +339,12 @@ namespace RiskAI
         public override void TakeDamage(float damage,int attacker,CombatTarget source=null)
         {
             if(!IsAlive||damage<=0||float.IsNaN(damage)||float.IsInfinity(damage)||attacker==Team)return;
-            if(Profile.CanAttack&&source&&source.IsAlive&&!target&&(attackMoveOrder||routeIndex>=route.Count)){target=source;nextTargetPath=0;}
+            if(Type.CanAttack&&source&&source.IsAlive&&!target&&(attackMoveOrder||routeIndex>=route.Count)){target=source;nextTargetPath=0;}
             Health=Mathf.Max(0,Health-damage);if(IsAlive)return;
             foreach(var soldier in cargo.ToArray())if(soldier)soldier.DestroyEmbarked(attacker);
             cargo.Clear();route.Clear();routeIndex=0;hasRouteGoal=false;hasAttackMoveGoal=false;target=null;orderedHarbor=null;ReleaseHarborGuard(harborGuard);
             world.Ships.Remove(this);world.Session.UnregisterTarget(this);
-            if(PlayerRules.IsPlayer(attacker)&&attacker<world.Session.PlayerCount){world.Session.Kills[attacker]++;world.Session.Economy.GrantBounty(attacker,Profile.PointValue);}
+            if(PlayerRules.IsPlayer(attacker)&&attacker<world.Session.PlayerCount){world.Session.Kills[attacker]++;world.Session.Economy.GrantBounty(attacker,Type.Points);}
             VisualFactory.Impact(AimPoint,new Color(.72f,.78f,.86f),.75f);Destroy(gameObject);
         }
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}

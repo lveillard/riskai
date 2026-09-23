@@ -176,7 +176,7 @@ namespace RiskAI.Tests
             var towns=battle.Towns.Where(t=>!t.IsPort).Take(2).ToArray();
             Assert.That(towns.Length,Is.EqualTo(2));
             foreach(var town in towns)town.State.Owner=0;
-            battle.Economy.Gold[0]=BattleRules.Cost(UnitKind.Footman)*4;
+            battle.Economy.Gold[0]=UnitCatalog.Get(UnitKind.Footman).Cost*4;
             controller.SelectBuildings(towns,null);
 
             Assert.That(controller.TryRecruitSelected(UnitKind.Footman),Is.Null);
@@ -238,7 +238,7 @@ namespace RiskAI.Tests
             var harbors=NavalWorld.Current.Harbors.Where(h=>h&&h.CanLaunch).Take(2).ToArray();
             Assert.That(harbors.Length,Is.EqualTo(2));
             foreach(var harbor in harbors)harbor.State.Owner=0;
-            battle.Economy.Gold[0]=Harbor.Cost(NavalUnitKind.Frigate)*4;
+            battle.Economy.Gold[0]=UnitCatalog.Get(NavalUnitKind.Frigate).Cost*4;
             controller.SelectBuildings(null,harbors);
 
             Assert.That(controller.TryBuySelected(NavalUnitKind.Frigate),Is.Null);

@@ -63,7 +63,7 @@ namespace RiskAI.Tests
             yield return null;
             var root=Object.FindFirstObjectByType<BattleHud>().GetComponent<UIDocument>().rootVisualElement;
             Assert.That(root.Q<Button>("Recruit Footman"),Is.Null,"A port's linked SelectedTown must not display regular-city production.");
-            foreach(var kind in ProductionCatalog.HarborUnits)Assert.That(root.Q<Button>("Recruit "+kind),Is.Not.Null);
+            foreach(var kind in UnitCatalog.HarborUnits)Assert.That(root.Q<Button>("Recruit "+kind),Is.Not.Null);
             Assert.That(root.Q<Button>("Build ship Frigate"),Is.Not.Null);
             Assert.That(root.Q<Button>("Build ship Transport"),Is.Not.Null);
             Assert.That(root.Q<VisualElement>("HUD building queue "+port.GetInstanceID()),Is.Not.Null,
@@ -84,13 +84,13 @@ namespace RiskAI.Tests
         public IEnumerator CompletedRecruitThatCannotSpawnDequeuesAndRefundsWhilePopulationWaitsRemainSeparate()
         {
             var town=battle.Towns.First(item=>!item.IsPort&&item.Defender);town.State.Owner=0;
-            int cost=BattleRules.Cost(UnitKind.Footman);battle.Economy.Gold[0]=cost;
+            int cost=UnitCatalog.Get(UnitKind.Footman).Cost;battle.Economy.Gold[0]=cost;
             Assert.That(town.Recruit(UnitKind.Footman,0),Is.Null);
             Assert.That(town.QueueCount,Is.EqualTo(1));
 
             // Its defender prevents unrelated capture logic from altering this isolated queue case.
             town.transform.position=new Vector3(10000,0,10000);
-            town.SimTick(BattleRules.TrainTime(UnitKind.Footman)+.1f);
+            town.SimTick(UnitCatalog.Get(UnitKind.Footman).TrainSeconds+.1f);
 
             Assert.That(town.QueueCount,Is.Zero,"A completed order with no valid spawn must not remain paid forever.");
             Assert.That(battle.Economy.Gold[0],Is.EqualTo(cost),"A true spawn failure refunds exactly once; population-cap waits keep their order instead.");

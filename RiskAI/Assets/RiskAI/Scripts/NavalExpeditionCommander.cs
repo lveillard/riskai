@@ -132,7 +132,7 @@ namespace RiskAI
                 // paid harbor command.
                 if(!CanFundTransportPurchase()||!CanQueueTransportAt(source)){Defer();return;}
                 if(buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(source.BuildingId,NavalUnitKind.Transport))!=null){Fail();return;}
-                phase=Phase.WaitingForTransport;phaseDeadline=session.BattleTime+Harbor.TrainTime(NavalUnitKind.Transport)+PhaseTimeout;return;
+                phase=Phase.WaitingForTransport;phaseDeadline=session.BattleTime+UnitCatalog.Get(NavalUnitKind.Transport).TrainSeconds+PhaseTimeout;return;
             }
             BeginGathering();
         }
@@ -155,7 +155,7 @@ namespace RiskAI
         void BeginGathering()
         {
             if(!transport||!source||source.Owner!=team||!source.TryTransportLanding(out sourceLanding,out sourceTransportBerth)){Fail();return;}
-            if(DistanceXZ(transport.transform.position,sourceLanding)>Ship.LoadRadius&&!transport.IsAtOrRoutingTo(sourceTransportBerth))
+            if(DistanceXZ(transport.transform.position,sourceLanding)>UnitCatalog.TransportLoadRadius&&!transport.IsAtOrRoutingTo(sourceTransportBerth))
             {
                 transport.MoveTo(sourceTransportBerth);
                 if(!string.IsNullOrEmpty(transport.LastActionError)){Fail();return;}
@@ -166,7 +166,7 @@ namespace RiskAI
         void Gather()
         {
             if(!transport||!transport.IsAlive||!source||source.Owner!=team||!source.TryTransportLanding(out sourceLanding,out sourceTransportBerth)){Fail();return;}
-            if(DistanceXZ(transport.transform.position,sourceLanding)>Ship.LoadRadius)
+            if(DistanceXZ(transport.transform.position,sourceLanding)>UnitCatalog.TransportLoadRadius)
             {
                 if(!transport.IsAtOrRoutingTo(sourceTransportBerth))
                 {
@@ -189,15 +189,15 @@ namespace RiskAI
             for(int i=0;i<troops.Count;i++)
             {
                 var soldier=troops[i];
-                if(!Eligible(soldier)||transport.CargoCount>=transport.Profile.Capacity)continue;
+                if(!Eligible(soldier)||transport.CargoCount>=transport.Type.Transport.Capacity)continue;
                 viable++;
-                if(DistanceXZ(transport.transform.position,soldier.transform.position)<=Ship.LoadRadius)transport.TryEmbark(soldier);
+                if(DistanceXZ(transport.transform.position,soldier.transform.position)<=UnitCatalog.TransportLoadRadius)transport.TryEmbark(soldier);
             }
             // Claim simulation may legitimately bind a unit that is waiting on a
             // harbor circle. Do not hold the only mission slot until timeout when
             // fewer than a legal wave remain able to board.
             if(viable<MinimumTroops){Fail();return;}
-            if(transport.CargoCount>=MinimumTroops&&(transport.CargoCount>=viable||transport.CargoCount>=transport.Profile.Capacity||session.BattleTime>=boardingDeadline))
+            if(transport.CargoCount>=MinimumTroops&&(transport.CargoCount>=viable||transport.CargoCount>=transport.Type.Transport.Capacity||session.BattleTime>=boardingDeadline))
             {
                 // Only people actually aboard can be part of an overseas order.
                 // A full four-unit candidate list may legally leave with two cargo.
@@ -426,8 +426,8 @@ namespace RiskAI
                 if(nearbyTargets[i] is Soldier soldier&&soldier.IsAlive&&!soldier.IsGarrison&&soldier.Team!=team&&PlayerRules.IsPlayer(soldier.Team)&&
                    DistanceXZ(soldier.transform.position,landing)<=LandingThreatRadius)threat+=AiUnitAnalysis.For(soldier.Kind).Value;
             foreach(var ship in world.Ships)
-                if(ship&&ship.IsAlive&&ship.Team!=team&&PlayerRules.IsPlayer(ship.Team)&&ship.Profile.CanAttack&&DistanceXZ(ship.transform.position,berth)<=BerthThreatRadius)
-                    threat+=AiUnitAnalysis.ShipValue(ship.Profile)*1.5f;
+                if(ship&&ship.IsAlive&&ship.Team!=team&&PlayerRules.IsPlayer(ship.Team)&&ship.Type.CanAttack&&DistanceXZ(ship.transform.position,berth)<=BerthThreatRadius)
+                    threat+=AiUnitAnalysis.ShipValue(ship.Type)*1.5f;
             return threat;
         }
 
@@ -436,7 +436,7 @@ namespace RiskAI
             Ship best=null;float distance=float.MaxValue;
             foreach(var ship in world.Ships)
             {
-                if(!ship||!ship.IsAlive||ship.Team!=team||!ship.Profile.CanAttack||ship.IsGarrison||ship.CurrentTarget)continue;
+                if(!ship||!ship.IsAlive||ship.Team!=team||!ship.Type.CanAttack||ship.IsGarrison||ship.CurrentTarget)continue;
                 float next=DistanceXZ(ship.transform.position,transport.transform.position);
                 if(next<distance&&SeaNavigation.AreConnected(ship.transform.position,destinationTransportBerth)){distance=next;best=ship;}
             }
@@ -457,7 +457,7 @@ namespace RiskAI
         {
             foreach(var ship in world.Ships)
             {
-                if(!ship||!ship.IsAlive||ship.Team!=team||!ship.Profile.CanTransport||ship.CargoCount==0)continue;
+                if(!ship||!ship.IsAlive||ship.Team!=team||!ship.Type.CanTransport||ship.CargoCount==0)continue;
                 transport=ship;
                 returnHarbor=NearestRecoveryHarbor(ship.transform.position);
                 if(!returnHarbor){retryAt=session.BattleTime+RetrySeconds;return true;}
@@ -471,7 +471,7 @@ namespace RiskAI
 
         bool CanFundTransportPurchase()
         {
-            int transportCost=Harbor.Cost(NavalUnitKind.Transport);
+            int transportCost=UnitCatalog.Get(NavalUnitKind.Transport).Cost;
             return session.Economy.Gold[team]>=transportCost+world.FirstFleetSavingsTargetFor(team)&&TeamNavalCount()<Harbor.FleetCapacity;
         }
         bool CanQueueTransportAt(Harbor harbor) => harbor&&harbor.Owner==team&&harbor.QueueCount==0;
@@ -484,7 +484,7 @@ namespace RiskAI
         bool HasEligibleEmptyTransport()
         {
             foreach(var ship in world.Ships)
-                if(ship&&ship.IsAlive&&ship.Team==team&&ship.Profile.CanTransport&&!ship.IsGarrison&&ship.CargoCount==0)return true;
+                if(ship&&ship.IsAlive&&ship.Team==team&&ship.Type.CanTransport&&!ship.IsGarrison&&ship.CargoCount==0)return true;
             return false;
         }
         Ship FindCompatibleTransport(Vector3 berth)
@@ -492,7 +492,7 @@ namespace RiskAI
             Ship best=null;float distance=float.MaxValue;
             foreach(var ship in world.Ships)
             {
-                if(!ship||!ship.IsAlive||ship.Team!=team||!ship.Profile.CanTransport||ship.IsGarrison||ship.CargoCount!=0||!SeaNavigation.AreConnected(ship.transform.position,berth))continue;
+                if(!ship||!ship.IsAlive||ship.Team!=team||!ship.Type.CanTransport||ship.IsGarrison||ship.CargoCount!=0||!SeaNavigation.AreConnected(ship.transform.position,berth))continue;
                 float next=DistanceXZ(ship.transform.position,berth);
                 if(next<distance){distance=next;best=ship;}
             }

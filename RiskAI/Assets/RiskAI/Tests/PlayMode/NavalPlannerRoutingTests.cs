@@ -268,12 +268,12 @@ namespace RiskAI.Tests
             EnableCandidateDock(destination,islandLanding.position);naval.Harbors.Add(home);naval.Harbors.Add(destination);
             var isolated=BattleTestScenario.Ship(naval,1,NavalUnitKind.Transport,new Vector3(-20,-.24f,0));
             Assert.That(SeaNavigation.AreConnected(isolated.transform.position,homeBerth),Is.False);
-            int gold=Harbor.Cost(NavalUnitKind.Transport)+naval.FirstFleetSavingsTargetFor(1);battle.Economy.Gold[1]=gold;
+            int gold=UnitCatalog.Get(NavalUnitKind.Transport).Cost+naval.FirstFleetSavingsTargetFor(1);battle.Economy.Gold[1]=gold;
             while(battle.BattleTime<=battle.AiFirstNavalOffensiveTime)battle.Clock.Advance(1,false,_=>{});
 
             var planner=new NavalExpeditionCommander(naval,1);Plan.Invoke(planner,null);
             Assert.That(home.QueueCount,Is.EqualTo(1),"An unusable empty boat must not veto a paid mission in the other ocean.");
-            Assert.That(battle.Economy.Gold[1],Is.EqualTo(gold-Harbor.Cost(NavalUnitKind.Transport)));
+            Assert.That(battle.Economy.Gold[1],Is.EqualTo(gold-UnitCatalog.Get(NavalUnitKind.Transport).Cost));
             var wait=typeof(NavalExpeditionCommander).GetMethod("WaitForTransport",PrivateInstance);
             wait.Invoke(planner,null);
             Assert.That(PlannerTransport.GetValue(planner),Is.Null,"Waiting must ignore the old boat in the wrong sea component.");
@@ -281,7 +281,7 @@ namespace RiskAI.Tests
 
             // Complete the actual paid harbor queue. These synthetic sea adapters
             // isolate source/boat selection; the full crossing has its own test.
-            home.SimTick(Harbor.TrainTime(NavalUnitKind.Transport)+.1f);
+            home.SimTick(UnitCatalog.Get(NavalUnitKind.Transport).TrainSeconds+.1f);
             var local=naval.Ships.FirstOrDefault(s=>s&&s.Team==1&&s.Kind==NavalUnitKind.Transport&&s!=isolated);
             Assert.That(local,Is.Not.Null);Assert.That(home.QueueCount,Is.Zero);
             Assert.That(SeaNavigation.AreConnected(local.transform.position,homeBerth),Is.True);

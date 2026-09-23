@@ -247,7 +247,7 @@ namespace RiskAI
         {
             var feel = Current;
             if (!feel || !target || !feel.Active) return;
-            float radius = target is Ship ? 2.6f : target is DefenseTower ? 1.4f : target is Soldier soldier ? Mathf.Max(.55f, SourceGeometry.AgentRadius(soldier.Kind) * 1.35f) : 1f;
+            float radius = target is Ship ? 2.6f : target is DefenseTower ? 1.4f : target is Soldier soldier ? Mathf.Max(.55f, UnitCatalog.Get(soldier.Kind).CollisionRadius * 1.35f) : 1f;
             feel.RentRing(target.transform.position, new Color(1f, .22f, .16f), radius, radius, .55f, target, true, .09f);
         }
 

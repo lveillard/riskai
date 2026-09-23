@@ -103,7 +103,7 @@ namespace RiskAI
             float speed=soldier.Agent.velocity.magnitude;
             // Normalise by the unit's base speed, not the forest-scaled agent speed: a knight
             // slowed by trees must take shorter, slower strides instead of galloping in place.
-            float normalizedSpeed=Mathf.Clamp01(speed/Mathf.Max(.01f,BattleRules.Speed(soldier.Kind)));
+            float normalizedSpeed=Mathf.Clamp01(speed/Mathf.Max(.01f,UnitCatalog.Get(soldier.Kind).Speed));
             float targetGait=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.02f,.075f,normalizedSpeed));
             gaitBlend=Mathf.MoveTowards(gaitBlend,targetGait,Time.deltaTime*(targetGait>gaitBlend?6f:4f));
             float elapsed=lastGaitTime<0?0:Mathf.Max(0,battle.BattleTime-lastGaitTime);
@@ -114,7 +114,7 @@ namespace RiskAI
             float strideFrequency=Mathf.Max(1.4f,speed/strideLength*Mathf.PI*2)*gaitBlend;
             gaitPhase=Mathf.Repeat(gaitPhase+elapsed*strideFrequency,Mathf.PI*2);
             lanceThrust=AttackPresentationTiming.ContactPose(soldier.AttackPresentationProgress,
-                AttackPresentationTiming.ContactNormalizedTime(soldier.Kind));
+                UnitCatalog.Get(soldier.Kind).AttackContact);
             ApplyPose(gaitBlend,gaitPhase+soldier.EntityId*.41f,lanceThrust);
         }
 

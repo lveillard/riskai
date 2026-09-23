@@ -116,12 +116,12 @@ namespace RiskAI
                     string resource,name;float progress;
                     if(slot.Naval)
                     {
-                        var kind=harbor.QueuedKind(slot.Index);resource=UnitVariantViews.PortraitResource(kind);name=NavalProfiles.Profile(kind).Name;progress=harbor.TrainingProgress;
+                        var kind=harbor.QueuedKind(slot.Index);resource=UnitVariantViews.PortraitResource(kind);name=UnitCatalog.Get(kind).Name;progress=harbor.TrainingProgress;
                     }
                     else
                     {
                         var kind=town?town.QueuedKind(slot.Index):harbor.QueuedLandKind(slot.Index);
-                        resource=PortraitResource(kind);name=BattleRules.Name(kind);progress=town?town.TrainingProgress:harbor.LandTrainingProgress;
+                        resource=PortraitResource(kind);name=UnitCatalog.Get(kind).Name;progress=town?town.TrainingProgress:harbor.LandTrainingProgress;
                     }
                     var texture=CachedPortrait(resource);if(slot.Portrait.image!=texture)slot.Portrait.image=texture;
                     slot.Progress.style.width=Length.Percent(slot.Index==0?Mathf.Clamp01(progress)*100:0);

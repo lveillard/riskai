@@ -74,18 +74,18 @@ namespace RiskAI
             ["ÓRDENES DE HOGUERA"]="CAMP ORDERS", ["BORRAR SALIDA"]="CLEAR RALLY",
             ["Mover"]="Move", ["Atacar"]="Attack", ["Patrullar"]="Patrol", ["Detener"]="Stop",
             ["Mantener"]="Hold", ["Centrar"]="Focus", ["Embarcar"]="Board", ["Desembarcar"]="Unload",
-            ["Puerto"]="Harbor", ["Espadachín"]="Swordsman", ["Ballestero"]="Crossbowman",
-            ["Caballero"]="Knight", ["Mago"]="Mage", ["Mortero"]="Mortar", ["Sanador"]="Healer",
-            ["Primera línea"]="Front line", ["Ataque a distancia"]="Ranged attack", ["Caballería pesada"]="Heavy cavalry",
-            ["Daño de área"]="Area damage", ["Área a larga distancia"]="Long-range area damage",
-            ["Sana aliados · 25 vida"]="Heals allies · 25 health", ["Pistolero de puerto"]="Harbor pistolier",
-            ["Caballería de puerto"]="Harbor cavalry", ["Caballería veterana de puerto"]="Veteran harbor cavalry",
-            ["Sana aliados · 25 vida · 5 maná"]="Heals allies · 25 health · 5 mana", ["maná"]="mana", ["rugido +25%"]="roar +25%",
-            ["Fusilero de élite"]="Elite rifleman", ["Fusilería de élite"]="Elite marksmanship", ["Rugidor"]="Roarer",
-            ["Rugido · +25% daño aliado"]="Roar · +25% allied damage", ["Caballería de mando · Rugido"]="Command cavalry · Roar",
-            ["Artillería"]="Artillery", ["Asedio de área a gran distancia"]="Long-range area siege", ["Tanque"]="Tank",
-            ["Blindado de asedio"]="Armoured siege vehicle", ["Buque de guerra"]="Warship", ["Acorazado"]="Battleship",
-            ["Transporte blindado"]="Armoured transport", ["Fragata"]="Frigate", ["· carga "]="· cargo ", [" daño · "]=" damage · ",
+            ["Puerto"]="Harbor", 
+            
+            
+            
+            
+            
+            ["maná"]="mana", ["rugido +25%"]="roar +25%",
+            
+            
+            
+            
+            ["· carga "]="· cargo ", [" daño · "]=" damage · ",
             ["Preparado"]="Ready", ["Moviendo"]="Moving", ["En combate"]="In combat", ["Patrullando"]="Patrolling",
             ["Siguiendo"]="Following", ["Manteniendo posición"]="Holding position", ["En puerto"]="In harbor",
             ["Navegando"]="Sailing", ["Neutral"]="Neutral", ["Tú"]="You",
@@ -286,16 +286,37 @@ namespace RiskAI
             Pair("Vigía","Watch"), Pair("Cresta","Ridge"), Pair("Loma","Hill"), Pair("Altos","Highlands"), Pair("Campos","Fields")
         };
 
-        static readonly KeyValuePair<string,string>[] ExactPhrases=BuildExactPhrases();
+        // Unit names and roles come only from units.json (UnitCatalog); they join the exact
+        // table when the catalog is bound, with the same longest-first substring order.
+        static KeyValuePair<string,string>[] exactPhrases;
+        static Dictionary<string,string> unitText;
+        static int unitTextRevision=-1;
+        static KeyValuePair<string,string>[] ExactPhrases{get{RefreshUnitText();return exactPhrases;}}
 
         static KeyValuePair<string,string> Pair(string source,string english) => new KeyValuePair<string,string>(source,english);
 
-        static KeyValuePair<string,string>[] BuildExactPhrases()
+        static void RefreshUnitText()
         {
-            var entries=new KeyValuePair<string,string>[Exact.Count];int index=0;
-            foreach(var entry in Exact)entries[index++]=entry;
-            Array.Sort(entries,(a,b)=>b.Key.Length.CompareTo(a.Key.Length));
-            return entries;
+            int revision=RiskAI.Core.UnitCatalog.IsBound?RiskAI.Core.UnitCatalog.Revision:-1;
+            if(exactPhrases!=null&&unitTextRevision==revision)return;
+            unitText=new Dictionary<string,string>();
+            if(revision>=0)
+                for(int i=0;i<RiskAI.Core.UnitCatalog.Count;i++)
+                {
+                    ref readonly var type=ref RiskAI.Core.UnitCatalog.At(i);
+                    if(type.Domain==RiskAI.Core.UnitDomain.Static)continue;
+                    AddUnitText(type.Name,type.NameEn);AddUnitText(type.Role,type.RoleEn);
+                }
+            var entries=new List<KeyValuePair<string,string>>(Exact.Count+unitText.Count);
+            foreach(var entry in Exact)entries.Add(entry);
+            foreach(var entry in unitText)entries.Add(entry);
+            entries.Sort((a,b)=>b.Key.Length.CompareTo(a.Key.Length));
+            exactPhrases=entries.ToArray();unitTextRevision=revision;
+        }
+        static void AddUnitText(string spanish,string english)
+        {
+            if(string.IsNullOrEmpty(spanish)||string.IsNullOrEmpty(english)||spanish==english||Exact.ContainsKey(spanish))return;
+            unitText[spanish]=english;
         }
 
         public static string Localize(string source) => IsSpanish ? source : EnglishOf(source);
@@ -305,6 +326,8 @@ namespace RiskAI
         {
             if(string.IsNullOrEmpty(source))return source;
             if(Exact.TryGetValue(source,out string exact))return exact;
+            RefreshUnitText();
+            if(unitText.TryGetValue(source,out exact))return exact;
             string result=source;
             for(int i=0;i<Phrases.Length;i++)if(result.IndexOf(Phrases[i].Key,StringComparison.Ordinal)>=0)result=result.Replace(Phrases[i].Key,Phrases[i].Value);
             for(int i=0;i<ExactPhrases.Length;i++)if(result.IndexOf(ExactPhrases[i].Key,StringComparison.Ordinal)>=0)result=result.Replace(ExactPhrases[i].Key,ExactPhrases[i].Value);

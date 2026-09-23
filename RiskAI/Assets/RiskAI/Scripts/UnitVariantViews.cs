@@ -17,39 +17,9 @@ namespace RiskAI
         /// <summary>Kinds whose portrait is rendered from a variant rather than a shared model prefab.</summary>
         public static readonly UnitKind[] PortraitKinds = { UnitKind.EliteRifleman, UnitKind.Roarer, UnitKind.ArmyGeneral, UnitKind.MarineMajor, UnitKind.MarineGeneral, UnitKind.Artillery, UnitKind.Tank };
 
-        public static string PortraitName(UnitKind kind)
-        {
-            switch(kind)
-            {
-                case UnitKind.Knight: return "MountedKnight";
-                case UnitKind.EliteRifleman: return "EliteRifleman";
-                case UnitKind.Roarer: return "Roarer";
-                case UnitKind.ArmyGeneral: return "ArmyGeneral";
-                case UnitKind.MarineMajor: return "MarineMajor";
-                case UnitKind.MarineGeneral: return "MarineGeneral";
-                case UnitKind.Artillery: return "Artillery";
-                case UnitKind.Tank: return "Tank";
-                default: return BattleRules.Model(kind);
-            }
-        }
-
-        static string FallbackPortrait(UnitKind kind)
-        {
-            switch(kind)
-            {
-                case UnitKind.ArmyGeneral:
-                case UnitKind.MarineMajor:
-                case UnitKind.MarineGeneral: return "MountedKnight";
-                case UnitKind.Tank: return "Mortar";
-                default: return BattleRules.Model(kind);
-            }
-        }
-
-        /// <summary>Resources path of the unit portrait; falls back to the base model until the art setup renders it.</summary>
-        public static string PortraitResource(UnitKind kind) => Resolve(PortraitName(kind),FallbackPortrait(kind));
-        // v0.30 hulls fall back to the Frigate/Transport portrait until the art setup renders theirs.
-        public static string PortraitResource(NavalUnitKind kind) =>
-            Resolve(kind.ToString(),kind==NavalUnitKind.ArmoredTransport?NavalUnitKind.Transport.ToString():kind==NavalUnitKind.Transport?kind.ToString():NavalUnitKind.Frigate.ToString());
+        /// <summary>Resources path of the unit portrait (units.json portrait, then portraitFallback until the art setup renders it).</summary>
+        public static string PortraitResource(UnitKind kind) => Resolve(UnitCatalog.Get(kind).Portrait,UnitCatalog.Get(kind).PortraitFallback);
+        public static string PortraitResource(NavalUnitKind kind) => Resolve(UnitCatalog.Get(kind).Portrait,UnitCatalog.Get(kind).PortraitFallback);
 
         static string Resolve(string preferred,string fallback)
         {
@@ -285,7 +255,7 @@ namespace RiskAI
         {
             if(!soldier||!barrel)return;
             float progress=soldier.AttackPresentationProgress;
-            float kick=progress<0?0:AttackPresentationTiming.ContactPose(progress,AttackPresentationTiming.ContactNormalizedTime(soldier.Kind));
+            float kick=progress<0?0:AttackPresentationTiming.ContactPose(progress,UnitCatalog.Get(soldier.Kind).AttackContact);
             barrel.localPosition=rest-(barrel.localRotation*Vector3.up)*kick*.22f;
         }
     }

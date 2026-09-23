@@ -91,7 +91,7 @@ namespace RiskAI
             int entityId = actor.EntityId;
             var soldier = actor as Soldier;
             var ship = actor as Ship;
-            string name = soldier ? BattleRules.Name(soldier.Kind) : ship.DisplayName;
+            string name = soldier ? UnitCatalog.Get(soldier.Kind).Name : ship.DisplayName;
             bool SameLiveActor() => actor && actor.EntityId == entityId && actor.IsAlive &&
                 actor.isActiveAndEnabled && actor.Team == 0;
 
@@ -143,7 +143,7 @@ namespace RiskAI
                 var soldier=passenger;
                 if(!soldier)continue;
                 var button=RtsUiStyle.Button("",()=>controller.UnloadCargo(transport,soldier),"Unload cargo "+soldier.EntityId);
-                button.tooltip=GameText.Localize(BattleRules.Name(soldier.Kind)+" · desembarcar esta unidad");
+                button.tooltip=GameText.Localize(UnitCatalog.Get(soldier.Kind).Name+" · desembarcar esta unidad");
                 button.style.width=button.style.minWidth=UiViewport.IsCompact?44:52;
                 button.style.height=button.style.minHeight=UiViewport.IsCompact?48:56;
                 button.style.paddingLeft=button.style.paddingRight=4;button.style.paddingTop=button.style.paddingBottom=4;

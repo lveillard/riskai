@@ -40,7 +40,7 @@ namespace RiskAI.Tests
         public IEnumerator NavalQueueHasFiveSlotsRefundsOnCaptureAndDrivesOnePausableView()
         {
             var harbor=naval.Harbors.First(item=>item.Owner==0&&!item.IsImportedPort);
-            int cost=Harbor.Cost(NavalUnitKind.Frigate);battle.Economy.Gold[0]=cost*(Harbor.QueueCapacity+1);
+            int cost=UnitCatalog.Get(NavalUnitKind.Frigate).Cost;battle.Economy.Gold[0]=cost*(Harbor.QueueCapacity+1);
             var view=harbor.GetComponentInChildren<BuildingTrainingView>(true);
             Assert.That(view,Is.Not.Null);Assert.That(view.Active,Is.False);
 

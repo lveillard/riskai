@@ -72,7 +72,7 @@ namespace RiskAI.Tests
   }
   [UnityTest] public IEnumerator NavalPurchasesCancelRefundAndCompleteExactlyOnce()
   {
-   var port=naval.Harbors.First(h=>h.State.Owner==0);const int budget=300;int frigateCost=Harbor.Cost(NavalUnitKind.Frigate),transportCost=Harbor.Cost(NavalUnitKind.Transport);battle.Economy.Gold[0]=budget;
+   var port=naval.Harbors.First(h=>h.State.Owner==0);const int budget=300;int frigateCost=UnitCatalog.Get(NavalUnitKind.Frigate).Cost,transportCost=UnitCatalog.Get(NavalUnitKind.Transport).Cost;battle.Economy.Gold[0]=budget;
    Assert.That(port.Buy(NavalUnitKind.Frigate),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-frigateCost));
    Assert.That(port.CancelTraining(0),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget));
    Assert.That(port.Buy(NavalUnitKind.Transport),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-transportCost));
@@ -84,7 +84,7 @@ namespace RiskAI.Tests
    port.State.Owner=0;while(battle.Clock.TickCount==tick&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(battle.Clock.TickCount,Is.GreaterThan(tick));int count=naval.Ships.Count;
    Assert.That(port.Buy(NavalUnitKind.Frigate),Is.Null);
-   float finishAt=battle.BattleTime+Harbor.TrainTime(NavalUnitKind.Frigate)+.2f;
+   float finishAt=battle.BattleTime+UnitCatalog.Get(NavalUnitKind.Frigate).TrainSeconds+.2f;
    deadline=Time.realtimeSinceStartup+10;
    while(naval.Ships.Count==count&&battle.BattleTime<finishAt&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(naval.Ships.Count,Is.EqualTo(count+1));Assert.That(port.QueueCount,Is.Zero);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-frigateCost));
@@ -93,17 +93,17 @@ namespace RiskAI.Tests
   {
    var city=battle.Towns.First(t=>t.State.Owner==1);
    BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,city.Rally);
-   battle.Economy.Gold[1]=Harbor.Cost(NavalUnitKind.Frigate);
+   battle.Economy.Gold[1]=UnitCatalog.Get(NavalUnitKind.Frigate).Cost;
    battle.AiEnabled=true;
    while(battle.BattleTime<.2f)battle.Clock.Advance(.05f,false,_=>{});
    battle.Commander.Tick(.05f);
-   Assert.That(battle.Economy.Gold[1],Is.EqualTo(Harbor.Cost(NavalUnitKind.Frigate)),"The army must leave savings for the first purchased ship.");
+   Assert.That(battle.Economy.Gold[1],Is.EqualTo(UnitCatalog.Get(NavalUnitKind.Frigate).Cost),"The army must leave savings for the first purchased ship.");
    naval.SimTick(.05f);
    Assert.That(naval.PendingShips(1),Is.EqualTo(1),"The first naval decision buys immediately when savings are ready.");
    Assert.That(naval.Ships,Is.Empty,"Buying a ship must not bypass its training queue.");
    Assert.That(battle.Economy.Gold[1],Is.Zero);
    battle.AiEnabled=false;
-   float deadline=Time.realtimeSinceStartup+Harbor.TrainTime(NavalUnitKind.Frigate)+3;
+   float deadline=Time.realtimeSinceStartup+UnitCatalog.Get(NavalUnitKind.Frigate).TrainSeconds+3;
    while(naval.Ships.Count==0&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(naval.Ships.Count,Is.EqualTo(1));
    Assert.That(naval.Ships[0].Team,Is.EqualTo(1));
@@ -188,9 +188,9 @@ namespace RiskAI.Tests
    var archer=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,port.Landing);
    var transport=BattleTestScenario.Ship(naval,1,NavalUnitKind.Transport,port.Berth);
    archer.HoldPosition();var anchor=archer.transform.position;float before=transport.Health;
-   Assert.That(Vector3.Distance(archer.transform.position,transport.transform.position),Is.GreaterThan(BattleRules.Range(UnitKind.Archer)),
+   Assert.That(Vector3.Distance(archer.transform.position,transport.transform.position),Is.GreaterThan(UnitCatalog.Get(UnitKind.Archer).Weapon.Range),
     "The berth fixture must reproduce the old center-to-center range failure.");
-   Assert.That(Vector3.Distance(archer.transform.position,transport.ApproachPoint(archer.transform.position)),Is.LessThanOrEqualTo(BattleRules.Range(UnitKind.Archer)),
+   Assert.That(Vector3.Distance(archer.transform.position,transport.ApproachPoint(archer.transform.position)),Is.LessThanOrEqualTo(UnitCatalog.Get(UnitKind.Archer).Weapon.Range),
     "The oriented hull surface should be in range from the port landing.");
    float deadline=Time.realtimeSinceStartup+2.5f;
    while(archer.CurrentTarget!=transport&&Time.realtimeSinceStartup<deadline)yield return null;
@@ -225,7 +225,7 @@ namespace RiskAI.Tests
      if(!mortar)mortar=BattleTestScenario.Mobile(battle,0,UnitKind.Mortar,origin);
      var candidate=naval.Spawn(1,NavalUnitKind.Frigate,pivot);if(!candidate)continue;
      candidate.transform.rotation=Quaternion.LookRotation(-seaward);
-     if(Vector3.Distance(mortar.transform.position,candidate.ApproachPoint(mortar.transform.position))<=BattleRules.Range(UnitKind.Mortar))frigate=candidate;
+     if(Vector3.Distance(mortar.transform.position,candidate.ApproachPoint(mortar.transform.position))<=UnitCatalog.Get(UnitKind.Mortar).Weapon.Range)frigate=candidate;
      else candidate.gameObject.SetActive(false);
     }
     if(frigate)break;
@@ -234,7 +234,7 @@ namespace RiskAI.Tests
    Assert.That(frigate,Is.Not.Null,"A mainland harbor needs an inland firing point and clear water outside every berth circle.");
    // Only the mortar is under test: a ticking frigate would turn toward it or chase it and move its hull.
    frigate.enabled=false;
-   float leash=SourceWeapons.AcquisitionRange(UnitKind.Mortar);
+   float leash=UnitCatalog.Get(UnitKind.Mortar).Acquisition.RadiusHostile;
    Assert.That(Vector3.Distance(mortar.transform.position,frigate.transform.position),Is.EqualTo(pivotDistance).Within(.3f),"The fixture must keep the ship pivot inside spatial-query reach but outside the autonomous leash.");
    Assert.That(pivotDistance,Is.GreaterThan(leash));
    mortar.HoldPosition();battle.Spatial.Rebuild(battle.Targets,battle.Units);var anchor=mortar.transform.position;var hullPosition=frigate.transform.position;float before=frigate.Health;
@@ -243,8 +243,8 @@ namespace RiskAI.Tests
    Assert.That(mortar.CurrentTarget,Is.SameAs(frigate),"Hold must retain a ship whose hull is in leash range.");
    Assert.That(frigate.IsGarrison,Is.False,"The fixture frigate must not be bound and snapped as a harbor guardian.");
    // One full mortar cycle: cooldown, attack point and the shell's flight.
-   var shell=SourceWeapons.For(UnitKind.Mortar,AttackKind.Siege);
-   deadline=Time.realtimeSinceStartup+BattleRules.AttackInterval(UnitKind.Mortar)+BattleRules.AttackPoint(UnitKind.Mortar)+shell.FlightTime(pivotDistance)+1f;
+   var shell=UnitCatalog.Get(UnitKind.Mortar).Weapon;
+   deadline=Time.realtimeSinceStartup+UnitCatalog.Get(UnitKind.Mortar).Weapon.Cooldown+UnitCatalog.Get(UnitKind.Mortar).Weapon.AttackPoint+shell.FlightTime(pivotDistance)+1f;
    while(frigate.Health>=before&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(frigate.Health,Is.LessThan(before),"The scheduled artillery strike must not be cancelled by the ship pivot.");
    Assert.That(Vector3.Distance(mortar.transform.position,anchor),Is.LessThan(.05f));

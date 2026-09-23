@@ -236,14 +236,14 @@ namespace RiskAI
                     {
                         // Assigned defenders are counted by AssignedPower, not twice once they arrive.
                         if (defenseAssignments.TryGetValue(unit.EntityId, out int assigned) && assigned == key) continue;
-                        float value = Power(unit); friendlyPower += value; if (BattleRules.Ranged(unit.Kind)) friendlyRanged += value;
+                        float value = Power(unit); friendlyPower += value; if (UnitCatalog.Get(unit.Kind).Weapon.Ranged) friendlyRanged += value;
                     }
                     else if (PlayerRules.IsPlayer(unit.Team)) { enemyPower += Power(unit); enemies++; }
                 }
                 else if (target is Ship ship)
                 {
-                    if (distance > NavalThreatRadius * NavalThreatRadius || !ship.Profile.CanAttack) continue;
-                    float value = AiUnitAnalysis.ShipValue(ship.Profile) * ship.Health / Mathf.Max(1, ship.MaxHealth);
+                    if (distance > NavalThreatRadius * NavalThreatRadius || !ship.Type.CanAttack) continue;
+                    float value = AiUnitAnalysis.ShipValue(ship.Type) * ship.Health / Mathf.Max(1, ship.MaxHealth);
                     if (ship.Team == team) { friendlyPower += value; friendlyShips += value; }
                     else if (PlayerRules.IsPlayer(ship.Team)) { enemyPower += value; navalPower += value; enemies++; }
                 }
@@ -311,7 +311,7 @@ namespace RiskAI
             for (int i = 0; i < own.Count; i++)
             {
                 var unit = own[i];
-                if (!IsMobileDefender(unit) || defenseAssignments.ContainsKey(unit.EntityId) || rangedOnly && !BattleRules.Ranged(unit.Kind)) continue;
+                if (!IsMobileDefender(unit) || defenseAssignments.ContainsKey(unit.EntityId) || rangedOnly && !UnitCatalog.Get(unit.Kind).Weapon.Ranged) continue;
                 if (FlatDistanceSquared(unit.transform.position, point) <= radius * radius) power += Power(unit);
             }
             return power;
@@ -325,7 +325,7 @@ namespace RiskAI
                 var unit = own[i];
                 if (!IsMobileDefender(unit) || defenseAssignments.ContainsKey(unit.EntityId)) continue;
                 // Melee soldiers cannot reach a frigate bombarding from the water.
-                if (rangedOnly && !BattleRules.Ranged(unit.Kind)) continue;
+                if (rangedOnly && !UnitCatalog.Get(unit.Kind).Weapon.Ranged) continue;
                 float next=Vector3.SqrMagnitude(unit.transform.position-point);
                 if (next > radius * radius) continue;
                 if (next<distance || next==distance && (!best || unit.EntityId<best.EntityId)) { best=unit;distance=next; }
@@ -471,7 +471,7 @@ namespace RiskAI
                 int site = RecruitmentSite();
                 if (site < 0) break;
                 var candidate = recruitmentSites[site];
-                var options = candidate.Harbor ? ProductionCatalog.HarborUnits : ProductionCatalog.SettlementUnits;
+                var options = candidate.Harbor ? UnitCatalog.HarborUnits : UnitCatalog.CityUnits;
                 int level = candidate.Harbor ? candidate.Harbor.State.Level : candidate.Town.State.Level;
                 var decision = AiCompositionPlanner.Choose(options, census, enemyMix, session.Economy.Gold[team] - navalBudget, income, level,
                     urgent, profile.CounterWeight, true);
@@ -700,7 +700,7 @@ namespace RiskAI
             for (int u = 0; u < army.Units.Count; u++)
             {
                 var unit = army.Units[u];
-                if (BattleRules.Ranged(unit.Kind)) { ranged.Add(unit); range += BattleRules.Range(unit.Kind); }
+                if (UnitCatalog.Get(unit.Kind).Weapon.Ranged) { ranged.Add(unit); range += UnitCatalog.Get(unit.Kind).Weapon.Range; }
                 else melee.Add(unit);
             }
             if (profile.RangedStandoff && melee.Count > 0 && ranged.Count > 0)
@@ -910,8 +910,8 @@ namespace RiskAI
                 {
                     if (distance <= TargetDefenseRadius * TargetDefenseRadius) power += Power(unit);
                 }
-                else if (target is Ship ship && ship.Profile.CanAttack && distance <= NavalThreatRadius * NavalThreatRadius)
-                    power += AiUnitAnalysis.ShipValue(ship.Profile) * ship.Health / Mathf.Max(1, ship.MaxHealth);
+                else if (target is Ship ship && ship.Type.CanAttack && distance <= NavalThreatRadius * NavalThreatRadius)
+                    power += AiUnitAnalysis.ShipValue(ship.Type) * ship.Health / Mathf.Max(1, ship.MaxHealth);
             }
             var guardian = town.ClaimZone != null ? town.ClaimZone.Guardian : null;
             if (TowerActive(town.Defense, guardian)) power += AiUnitAnalysis.TowerValue(guardian.Health, ownMix);
@@ -964,7 +964,7 @@ namespace RiskAI
                 {
                     var unit = army.Units[u];
                     if (unit.CurrentTarget == keeper || AiUnitAnalysis.For(unit.Kind).Healer) continue;
-                    bool rangedUnit = BattleRules.Ranged(unit.Kind);
+                    bool rangedUnit = UnitCatalog.Get(unit.Kind).Weapon.Ranged;
                     if (!rangedUnit && (profile.Level < 2 || unit.CurrentTarget)) continue;
                     if (FlatDistanceSquared(unit.transform.position, claim) > 18f * 18f) continue;
                     session.Commands.Submit(new UnitCommand(team, unit.EntityId, UnitCommandKind.Attack, targetId: keeper.EntityId));

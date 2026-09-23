@@ -15,7 +15,7 @@ namespace RiskAI.Core
         ProductionOption(bool ship,UnitKind unit,NavalUnitKind hull){IsShip=ship;Unit=unit;Ship=hull;}
         public static ProductionOption Land(UnitKind kind) => new ProductionOption(false,kind,default);
         public static ProductionOption Naval(NavalUnitKind kind) => new ProductionOption(true,default,kind);
-        public int Cost => IsShip?UnitCatalog.Profile(Ship).Cost:BattleRules.Cost(Unit);
+        public int Cost => IsShip?UnitCatalog.Get(Ship).Cost:UnitCatalog.Get(Unit).Cost;
         public bool Equals(ProductionOption other) => IsShip==other.IsShip&&(IsShip?Ship==other.Ship:Unit==other.Unit);
         public override bool Equals(object obj) => obj is ProductionOption other&&Equals(other);
         public override int GetHashCode() => IsShip?1000+(int)Ship:(int)Unit;
@@ -36,7 +36,7 @@ namespace RiskAI.Core
     /// <summary>
     /// WC3-style positional "grid hotkeys" for the production command card.
     /// Rows are Q W E R / A S D F / Z X C V. Land units come first, then hulls, each
-    /// ordered cheap to expensive with ProductionCatalog order breaking ties, so a new
+    /// ordered cheap to expensive with units.json order breaking ties, so a new
     /// catalog entry automatically receives the next free cell. A card with more than
     /// twelve products pages: the last cell (V) then switches pages.
     /// </summary>
@@ -67,11 +67,11 @@ namespace RiskAI.Core
         {
             var land=new List<ProductionOption>();var naval=new List<ProductionOption>();
             if(building==ProductionBuilding.City)
-                foreach(var kind in ProductionCatalog.SettlementUnits)land.Add(ProductionOption.Land(kind));
+                foreach(var kind in UnitCatalog.CityUnits)land.Add(ProductionOption.Land(kind));
             else
             {
-                foreach(var kind in ProductionCatalog.HarborUnits)land.Add(ProductionOption.Land(kind));
-                foreach(var kind in ProductionCatalog.HarborShips)naval.Add(ProductionOption.Naval(kind));
+                foreach(var kind in UnitCatalog.HarborUnits)land.Add(ProductionOption.Land(kind));
+                foreach(var kind in UnitCatalog.HarborShips)naval.Add(ProductionOption.Naval(kind));
             }
             SortByCost(land);SortByCost(naval);
             land.AddRange(naval);return land;
@@ -79,9 +79,11 @@ namespace RiskAI.Core
 
         public static IReadOnlyList<ProductionSlot> Layout(ProductionBuilding building)
         {
+            if(layoutRevision!=UnitCatalog.Revision){city=harbor=null;layoutRevision=UnitCatalog.Revision;}
             if(building==ProductionBuilding.City)return city??=Arrange(Options(building));
             return harbor??=Arrange(Options(building));
         }
+        static int layoutRevision=-1;
 
         /// <summary>Places an ordered product list on pages of the 4×3 grid.</summary>
         public static ProductionSlot[] Arrange(IReadOnlyList<ProductionOption> options)
@@ -109,7 +111,7 @@ namespace RiskAI.Core
         }
 
         public static ProductionBuilding BuildingFor(UnitKind kind) =>
-            ProductionCatalog.AllowsHarborUnit(kind)?ProductionBuilding.Harbor:ProductionBuilding.City;
+            (UnitCatalog.Get(kind).Building==UnitBuilding.Harbor)?ProductionBuilding.Harbor:ProductionBuilding.City;
 
         /// <summary>Effective hotkey shown on the card and used by the keyboard; null when not produced.</summary>
         public static string Hotkey(UnitKind kind) =>

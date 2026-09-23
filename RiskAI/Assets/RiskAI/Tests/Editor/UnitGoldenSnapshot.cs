@@ -41,99 +41,98 @@ namespace RiskAI.Tests
 
         static Obj Land(UnitKind kind)
         {
-            var profile = BattleRules.Profile(kind);
+            var profile = UnitCatalog.Get(kind);
             var unit = new Obj();
             unit.Add("id", kind.ToString());
-            unit.Add("names", Names(BattleRules.Name(kind)));
-            unit.Add("role", Names(BattleRules.Role(kind)));
-            unit.Add("source", profile.Source);
-            unit.Add("sourceRawId", BattleRules.SourceRawId(kind));
-            unit.Add("model", BattleRules.Model(kind));
-            unit.Add("cost", BattleRules.Cost(kind));
-            unit.Add("points", BattleRules.PointValue(kind));
-            unit.Add("level", BattleRules.RequiredLevel(kind));
-            unit.Add("trainSeconds", BattleRules.TrainTime(kind));
-            unit.Add("maxHealth", BattleRules.Health(kind));
+            unit.Add("names", Names(UnitCatalog.Get(kind).Name));
+            unit.Add("role", Names(UnitCatalog.Get(kind).Role));
+            unit.Add("source", profile.SourceBase);
+            unit.Add("sourceRawId", UnitCatalog.Get(kind).SourceRawcode);
+            unit.Add("model", UnitCatalog.Get(kind).Model);
+            unit.Add("cost", UnitCatalog.Get(kind).Cost);
+            unit.Add("points", UnitCatalog.Get(kind).Points);
+            unit.Add("level", UnitCatalog.Get(kind).Level);
+            unit.Add("trainSeconds", UnitCatalog.Get(kind).TrainSeconds);
+            unit.Add("maxHealth", UnitCatalog.Get(kind).MaxHealth);
             unit.Add("armor", profile.Armor);
-            unit.Add("armorType", profile.Defense.ToString());
-            unit.Add("mechanical", BattleRules.Mechanical(kind));
-            unit.Add("speed", BattleRules.Speed(kind));
+            unit.Add("armorType", profile.ArmorType.ToString());
+            unit.Add("mechanical", UnitCatalog.Get(kind).Mechanical);
+            unit.Add("speed", UnitCatalog.Get(kind).Speed);
 
-            var weapon = SourceWeapons.For(kind, profile.Attack);
+            var weapon = UnitCatalog.Get(kind).Weapon;
             var attack = Weapon(weapon);
-            attack.Add("attackType", profile.Attack.ToString());
-            attack.Add("base", profile.BaseDamage);
-            attack.Add("dice", profile.Dice);
-            attack.Add("sides", profile.Sides);
-            attack.Add("minimumDamage", profile.MinimumDamage);
-            attack.Add("maximumDamage", profile.MaximumDamage);
-            attack.Add("averageDamage", BattleRules.Damage(kind));
-            attack.Add("damageRange", BattleRules.DamageRange(kind));
-            attack.Add("cooldown", BattleRules.AttackInterval(kind));
-            attack.Add("attackPoint", BattleRules.AttackPoint(kind));
-            attack.Add("backswing", profile.Backswing);
-            attack.Add("range", BattleRules.Range(kind));
-            attack.Add("minRange", BattleRules.MinimumRange(kind));
-            attack.Add("ranged", BattleRules.Ranged(kind));
-            // CombatWorld draws an instant tracer only for these firearm/crossbow kinds.
-            attack.Add("instantTracer", kind == UnitKind.Archer || kind == UnitKind.MarinePrivate || kind == UnitKind.EliteRifleman);
+            attack.Add("attackType", profile.AttackType.ToString());
+            attack.Add("base", profile.Weapon.Base);
+            attack.Add("dice", profile.Weapon.Dice);
+            attack.Add("sides", profile.Weapon.Sides);
+            attack.Add("minimumDamage", profile.Weapon.MinimumDamage);
+            attack.Add("maximumDamage", profile.Weapon.MaximumDamage);
+            attack.Add("averageDamage", UnitCatalog.Get(kind).Weapon.AverageDamage);
+            attack.Add("damageRange", UnitCatalog.Get(kind).Weapon.DamageText);
+            attack.Add("cooldown", UnitCatalog.Get(kind).Weapon.Cooldown);
+            attack.Add("attackPoint", UnitCatalog.Get(kind).Weapon.AttackPoint);
+            attack.Add("backswing", profile.Weapon.Backswing);
+            attack.Add("range", UnitCatalog.Get(kind).Weapon.Range);
+            attack.Add("minRange", UnitCatalog.Get(kind).Weapon.MinRange);
+            attack.Add("ranged", UnitCatalog.Get(kind).Weapon.Ranged);
+            attack.Add("instantTracer", weapon.Tracer);
             unit.Add("weapon", attack);
 
             // Soldier.Acquire / AutonomousLeash / AttackDistance, resolved per team relation.
-            float source = SourceWeapons.AcquisitionRange(kind);
-            float range = BattleRules.Range(kind);
-            bool ranged = BattleRules.Ranged(kind);
+            var a = profile.Acquisition;
+            bool ranged = weapon.Ranged;
             var acquisition = new Obj();
-            acquisition.Add("sourceRange", source);
+            // A source uacq applies to every order; the local default differs by owner/order.
+            acquisition.Add("sourceRange", a.RadiusHostile == a.RadiusNeutral && a.RadiusHostile == a.RadiusHold ? a.RadiusHostile : 0);
             var radius = new Obj();
-            radius.Add("hostile", source > 0 ? source : 7.5f);
-            radius.Add("neutral", source > 0 ? source : 5f);
-            radius.Add("hold", source > 0 ? source : range);
+            radius.Add("hostile", a.RadiusHostile);
+            radius.Add("neutral", a.RadiusNeutral);
+            radius.Add("hold", a.RadiusHold);
             acquisition.Add("radius", radius);
             var leash = new Obj();
-            leash.Add("hostile", Mathf.Max(ranged ? range + 2 : 11, source));
-            leash.Add("neutral", Mathf.Max(ranged ? range + 2 : 7, source));
+            leash.Add("hostile", a.LeashHostile);
+            leash.Add("neutral", a.LeashNeutral);
             acquisition.Add("leash", leash);
-            acquisition.Add("pressureBias", kind == UnitKind.Footman ? .48f : .1f);
-            acquisition.Add("measure", ranged ? "centerToApproach" : "bodyEdges");
-            acquisition.Add("visibility", ranged ? "terrainRay" : "navMeshRay");
-            acquisition.Add("meleeEngageDistanceVsFootman", ranged ? 0 : Soldier.MeleeEngageDistance(kind, SourceGeometry.AgentRadius(UnitKind.Footman)));
+            acquisition.Add("pressureBias", a.PressureBias);
+            acquisition.Add("measure", Measure(weapon.Measure));
+            acquisition.Add("visibility", a.Visibility == UnitVisibility.TerrainRay ? "terrainRay" : "navMeshRay");
+            acquisition.Add("meleeEngageDistanceVsFootman", ranged ? 0 : Soldier.MeleeEngageDistance(kind, UnitCatalog.Get(UnitKind.Footman).BodyRadius));
             unit.Add("acquisition", acquisition);
 
             var geometry = new Obj();
-            geometry.Add("collisionRadius", SourceGeometry.AgentRadius(kind));
-            geometry.Add("bodyRadius", SourceGeometry.AgentRadius(kind));
-            geometry.Add("sourceStandingHeight", SourceGeometry.StandingHeight(kind));
-            geometry.Add("sourceStandingWidth", SourceGeometry.StandingWidth(kind));
-            geometry.Add("standingHeight", VisualMetrics.StandingHeightTarget(kind));
-            geometry.Add("standingWidth", VisualMetrics.StandingWidthTarget(kind));
-            geometry.Add("visualHeight", VisualMetrics.HeightFor(kind));
-            geometry.Add("visualRadius", VisualMetrics.RadiusFor(kind));
-            geometry.Add("spawnRadius", VisualMetrics.SpawnRadiusFor(kind));
+            geometry.Add("collisionRadius", UnitCatalog.Get(kind).CollisionRadius);
+            geometry.Add("bodyRadius", UnitCatalog.Get(kind).BodyRadius);
+            geometry.Add("sourceStandingHeight", UnitCatalog.Get(kind).MdxHeight);
+            geometry.Add("sourceStandingWidth", UnitCatalog.Get(kind).MdxWidth);
+            geometry.Add("standingHeight", UnitCatalog.Get(kind).StandingHeight);
+            geometry.Add("standingWidth", UnitCatalog.Get(kind).StandingWidth);
+            geometry.Add("visualHeight", UnitCatalog.Get(kind).VisualHeight);
+            geometry.Add("visualRadius", UnitCatalog.Get(kind).VisualRadius);
+            geometry.Add("spawnRadius", UnitCatalog.Get(kind).SpawnRadius);
             unit.Add("geometry", geometry);
 
             var abilities = new Obj();
-            abilities.Add("heal", SupportAbilities.CanHeal(kind));
-            abilities.Add("roar", SupportAbilities.CanRoar(kind));
-            var mana = SupportAbilities.Mana(kind);
+            abilities.Add("heal", UnitCatalog.Get(kind).Heal.Enabled);
+            abilities.Add("roar", UnitCatalog.Get(kind).Roar.Enabled);
+            var mana = UnitCatalog.Get(kind).Mana;
             var manaObj = new Obj();
             manaObj.Add("max", mana.Maximum);
             manaObj.Add("initial", mana.Initial);
             manaObj.Add("regen", mana.Regeneration);
             abilities.Add("mana", manaObj);
-            abilities.Add("canCapture", true);
-            abilities.Add("canEmbark", true);
+            abilities.Add("canCapture", profile.CanCapture);
+            abilities.Add("canEmbark", profile.CanEmbark);
             unit.Add("abilities", abilities);
 
             var production = new Obj();
-            production.Add("building", ProductionCatalog.AllowsSettlementUnit(kind) ? "city" : ProductionCatalog.AllowsHarborUnit(kind) ? "harbor" : "none");
+            production.Add("building", (UnitCatalog.Get(kind).Building==UnitBuilding.City) ? "city" : (UnitCatalog.Get(kind).Building==UnitBuilding.Harbor) ? "harbor" : "none");
             production.Add("hotkey", ProductionHotkeys.Hotkey(kind));
             unit.Add("production", production);
 
             var presentation = new Obj();
-            presentation.Add("attackClip", AttackPresentationTiming.Clip(kind));
-            presentation.Add("contact", AttackPresentationTiming.ContactNormalizedTime(kind));
-            presentation.Add("portrait", UnitVariantViews.PortraitName(kind));
+            presentation.Add("attackClip", UnitCatalog.Get(kind).AttackClip);
+            presentation.Add("contact", UnitCatalog.Get(kind).AttackContact);
+            presentation.Add("portrait", profile.Portrait);
             presentation.Add("portraitResource", UnitVariantViews.PortraitResource(kind));
             unit.Add("presentation", presentation);
 
@@ -155,57 +154,57 @@ namespace RiskAI.Tests
 
         static Obj Naval(NavalUnitKind kind)
         {
-            var profile = NavalProfiles.Profile(kind);
+            var profile = UnitCatalog.Get(kind);
             var unit = new Obj();
             unit.Add("id", kind.ToString());
             unit.Add("names", Names(profile.Name));
-            unit.Add("sourceRawId", profile.SourceRawId);
+            unit.Add("sourceRawId", profile.SourceRawcode);
             unit.Add("cost", profile.Cost);
-            unit.Add("points", profile.PointValue);
+            unit.Add("points", profile.Points);
             unit.Add("trainSeconds", profile.TrainSeconds);
-            unit.Add("maxHealth", profile.Health);
+            unit.Add("maxHealth", profile.MaxHealth);
             unit.Add("armor", profile.Armor);
-            unit.Add("armorType", profile.Defense.ToString());
+            unit.Add("armorType", profile.ArmorType.ToString());
             unit.Add("speed", profile.Speed);
             unit.Add("canAttack", profile.CanAttack);
             unit.Add("canCapture", profile.CanCapture);
             unit.Add("canTransport", profile.CanTransport);
-            unit.Add("capacity", profile.Capacity);
+            unit.Add("capacity", profile.Transport.Capacity);
 
-            var weapon = Weapon(SourceWeapons.For(kind, profile.Attack));
-            weapon.Add("attackType", profile.Attack.ToString());
-            weapon.Add("base", profile.BaseDamage);
-            weapon.Add("dice", profile.Dice);
-            weapon.Add("sides", profile.Sides);
-            weapon.Add("minimumDamage", profile.MinimumDamage);
-            weapon.Add("maximumDamage", profile.MaximumDamage);
-            weapon.Add("averageDamage", profile.Damage);
-            weapon.Add("damageText", profile.DamageText);
-            weapon.Add("cooldown", profile.Cooldown);
-            weapon.Add("range", profile.Range);
+            var weapon = Weapon(UnitCatalog.Get(kind).Weapon);
+            weapon.Add("attackType", profile.AttackType.ToString());
+            weapon.Add("base", profile.Weapon.Base);
+            weapon.Add("dice", profile.Weapon.Dice);
+            weapon.Add("sides", profile.Weapon.Sides);
+            weapon.Add("minimumDamage", profile.Weapon.MinimumDamage);
+            weapon.Add("maximumDamage", profile.Weapon.MaximumDamage);
+            weapon.Add("averageDamage", profile.Weapon.AverageDamage);
+            weapon.Add("damageText", profile.Weapon.DamageText);
+            weapon.Add("cooldown", profile.Weapon.Cooldown);
+            weapon.Add("range", profile.Weapon.Range);
             unit.Add("weapon", weapon);
 
             // Ship.FindNearbyEnemy / RangeTo: only enemies already inside weapon range, XZ to their hull.
             var acquisition = new Obj();
-            acquisition.Add("radius", profile.Range);
-            acquisition.Add("queryPadding", 6f);
-            acquisition.Add("measure", "toHull");
+            acquisition.Add("radius", profile.CanAttack ? profile.Acquisition.RadiusHostile : 0);
+            // Unarmed hulls never search; step 1 recorded the shared 6 m hull padding for them too.
+            acquisition.Add("queryPadding", profile.CanAttack ? profile.Acquisition.QueryPadding : 6f);
+            acquisition.Add("measure", profile.CanAttack ? Measure(profile.Weapon.Measure) : "toHull");
             acquisition.Add("visibility", "terrainRay");
             unit.Add("acquisition", acquisition);
 
-            bool war = NavalArt.IsWarship(kind);
-            float scale = NavalArt.HullScale(kind);
+            var shape = profile.Hull;
             var hull = new Obj();
-            hull.Add("warship", war);
-            hull.Add("scale", scale);
-            hull.Add("length", (war ? 7.2f : 5.15f) * scale * .82f);
-            hull.Add("beam", (war ? 1.65f : 2.65f) * scale);
-            hull.Add("height", 3f);
-            hull.Add("centerHeight", 1.3f);
+            hull.Add("warship", shape.Warship);
+            hull.Add("scale", shape.Scale);
+            hull.Add("length", shape.Length);
+            hull.Add("beam", shape.Beam);
+            hull.Add("height", shape.Height);
+            hull.Add("centerHeight", shape.CenterHeight);
             unit.Add("hull", hull);
 
             var production = new Obj();
-            production.Add("building", ProductionCatalog.AllowsHarborShip(kind) ? "harbor" : "none");
+            production.Add("building", (UnitCatalog.Get(kind).Building==UnitBuilding.Harbor) ? "harbor" : "none");
             production.Add("hotkey", ProductionHotkeys.Hotkey(kind));
             unit.Add("production", production);
             var presentation = new Obj();
@@ -221,13 +220,13 @@ namespace RiskAI.Tests
         {
             var tower = new Obj();
             // Only consumed fields: health from the o000 bunker, the weapon from the h00N/h00O post.
-            var post = UnitCatalog.CapturableTower;
-            tower.Add("healthSource", UnitCatalog.Tower.Source);
-            tower.Add("maxHealth", BattleRules.TowerHealth);
+            var post = UnitCatalog.Tower.TownWeapon;
+            tower.Add("healthSource", UnitCatalog.Tower.SourceBase);
+            tower.Add("maxHealth", UnitCatalog.Tower.MaxHealth);
             var attack = new Obj();
-            attack.Add("source", post.Source);
-            attack.Add("attackType", post.Attack.ToString());
-            attack.Add("base", post.BaseDamage);
+            attack.Add("source", UnitCatalog.Tower.SourceNotes);
+            attack.Add("attackType", post.DamageType.ToString());
+            attack.Add("base", post.Base);
             attack.Add("dice", post.Dice);
             attack.Add("sides", post.Sides);
             attack.Add("averageDamage", post.AverageDamage);
@@ -247,12 +246,12 @@ namespace RiskAI.Tests
             }
             finally { UnityEngine.Object.DestroyImmediate(probe); }
             var weapons = new Obj();
-            weapons.Add("town", Weapon(SourceWeapons.MilitaryBase));
-            weapons.Add("harbor", Weapon(SourceWeapons.Shipyard));
+            weapons.Add("town", Weapon(UnitCatalog.Tower.TownWeapon));
+            weapons.Add("harbor", Weapon(UnitCatalog.Tower.HarborWeapon));
             tower.Add("hostWeapons", weapons);
             var acquisition = new Obj();
-            acquisition.Add("radius", UnitCatalog.CapturableTower.Range);
-            acquisition.Add("measure", "centerToCenter");
+            acquisition.Add("radius", UnitCatalog.Tower.Acquisition.RadiusHostile);
+            acquisition.Add("measure", Measure(UnitCatalog.Tower.TownWeapon.Measure));
             acquisition.Add("visibility", "terrainRay");
             tower.Add("acquisition", acquisition);
             var ai = new Obj();
@@ -302,30 +301,31 @@ namespace RiskAI.Tests
         static Obj Rules()
         {
             var rules = new Obj();
-            rules.Add("meleeReachMargin", Soldier.MeleeReachMargin);
-            rules.Add("meleeApproachMargin", Soldier.MeleeApproachMargin);
-            rules.Add("meleeStrikeTolerance", .55f);
-            rules.Add("allyAlertRadius", 5f);
+            ref readonly var footman = ref UnitCatalog.Get(UnitKind.Footman);
+            rules.Add("meleeReachMargin", footman.Weapon.HoldMargin);
+            rules.Add("meleeApproachMargin", footman.Weapon.ApproachMargin);
+            rules.Add("meleeStrikeTolerance", footman.Weapon.StrikeTolerance);
+            rules.Add("allyAlertRadius", footman.Acquisition.AllyAlertRadius);
             rules.Add("unitOrderQueueLimit", 35);
             rules.Add("commandInboxLimit", 1024);
-            rules.Add("transportLoadRadius", Ship.LoadRadius);
-            rules.Add("transportLoadOrderLimit", Ship.LoadOrderLimit);
-            rules.Add("shipSeparation", 2.8f);
+            rules.Add("transportLoadRadius", UnitCatalog.TransportLoadRadius);
+            rules.Add("transportLoadOrderLimit", UnitCatalog.TransportLoadLimit);
+            rules.Add("shipSeparation", UnitCatalog.Get(NavalUnitKind.Frigate).Separation);
             rules.Add("hullClearance", SeaNavigation.HullClearance);
             var heal = new Obj();
-            heal.Add("range", SupportAbilities.HealRange);
-            heal.Add("amount", SupportAbilities.HealAmount);
-            heal.Add("cooldown", SupportAbilities.HealCooldown);
-            heal.Add("manaCost", SupportAbilities.HealManaCost);
-            heal.Add("maxVerticalDelta", MedicSupport.MaxVerticalDelta);
+            heal.Add("range", UnitCatalog.Get(UnitKind.Medic).Heal.Range);
+            heal.Add("amount", UnitCatalog.Get(UnitKind.Medic).Heal.Amount);
+            heal.Add("cooldown", UnitCatalog.Get(UnitKind.Medic).Heal.Cooldown);
+            heal.Add("manaCost", UnitCatalog.Get(UnitKind.Medic).Heal.ManaCost);
+            heal.Add("maxVerticalDelta", UnitCatalog.Get(UnitKind.Medic).Heal.MaxVerticalDelta);
             rules.Add("heal", heal);
             var roar = new Obj();
-            roar.Add("area", SupportAbilities.RoarArea);
-            roar.Add("duration", SupportAbilities.RoarDuration);
-            roar.Add("manaCost", SupportAbilities.RoarManaCost);
-            roar.Add("damageBonus", SupportAbilities.RoarDamageBonus);
-            roar.Add("evaluation", SupportAbilities.RoarEvaluationInterval);
-            roar.Add("multiplierRoaring", SupportAbilities.DamageMultiplier(true));
+            roar.Add("area", UnitCatalog.Get(UnitKind.Roarer).Roar.Area);
+            roar.Add("duration", UnitCatalog.Get(UnitKind.Roarer).Roar.Duration);
+            roar.Add("manaCost", UnitCatalog.Get(UnitKind.Roarer).Roar.ManaCost);
+            roar.Add("damageBonus", UnitCatalog.Get(UnitKind.Roarer).Roar.DamageBonus);
+            roar.Add("evaluation", UnitCatalog.Get(UnitKind.Roarer).Roar.Evaluation);
+            roar.Add("multiplierRoaring", 1 + UnitCatalog.Get(UnitKind.Roarer).Roar.DamageBonus);
             rules.Add("roar", roar);
             return rules;
         }
@@ -362,6 +362,10 @@ namespace RiskAI.Tests
             behaviour.Add("click", click);
             return behaviour;
         }
+
+        static string Measure(RangeMeasure measure) =>
+            measure == RangeMeasure.BodyEdges ? "bodyEdges" : measure == RangeMeasure.CenterToApproach ? "centerToApproach" :
+            measure == RangeMeasure.ToHull ? "toHull" : "centerToCenter";
 
         static Obj Names(string spanish)
         {

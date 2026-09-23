@@ -57,7 +57,7 @@ namespace RiskAI
             {
                 var defender = town ? town.Defender : harbor ? harbor.Defender : null;
                 return defender && defender.IsAlive
-                    ? "Guarnición · " + BattleRules.Name(defender.Kind) + " · " + Mathf.CeilToInt(defender.Health) + " / " + Mathf.CeilToInt(defender.MaxHealth) + " vida"
+                    ? "Guarnición · " + UnitCatalog.Get(defender.Kind).Name + " · " + Mathf.CeilToInt(defender.Health) + " / " + Mathf.CeilToInt(defender.MaxHealth) + " vida"
                     : "Sin guarnición · un enemigo en el círculo la conquista";
             });
             var defense = town ? town.Defense : harbor ? harbor.Defense : null;
@@ -72,11 +72,11 @@ namespace RiskAI
             }
             if (state.Owner == 0)
             {
-                if (town && town.QueueCount > 0) QueueStrip(details, "Cola", town.QueueCount, i => PortraitResource(town.QueuedKind(i)), i => BattleRules.Name(town.QueuedKind(i)),
+                if (town && town.QueueCount > 0) QueueStrip(details, "Cola", town.QueueCount, i => PortraitResource(town.QueuedKind(i)), i => UnitCatalog.Get(town.QueuedKind(i)).Name,
                     () => town.TrainingProgress, i => controller.CancelTraining(town, i));
-                else if (harbor && !town && harbor.LandQueueCount > 0) QueueStrip(details, "Cola", harbor.LandQueueCount, i => PortraitResource(harbor.QueuedLandKind(i)), i => BattleRules.Name(harbor.QueuedLandKind(i)),
+                else if (harbor && !town && harbor.LandQueueCount > 0) QueueStrip(details, "Cola", harbor.LandQueueCount, i => PortraitResource(harbor.QueuedLandKind(i)), i => UnitCatalog.Get(harbor.QueuedLandKind(i)).Name,
                     () => harbor.LandTrainingProgress, i => controller.CancelTraining(harbor, i, false));
-                if (harbor && harbor.QueueCount > 0) QueueStrip(details, "Astillero", harbor.QueueCount, i => UnitVariantViews.PortraitResource(harbor.QueuedKind(i)), i => NavalProfiles.Profile(harbor.QueuedKind(i)).Name,
+                if (harbor && harbor.QueueCount > 0) QueueStrip(details, "Astillero", harbor.QueueCount, i => UnitVariantViews.PortraitResource(harbor.QueuedKind(i)), i => UnitCatalog.Get(harbor.QueuedKind(i)).Name,
                     () => harbor.TrainingProgress, i => controller.CancelTraining(harbor, i, true));
                 if (!UiViewport.IsTouchLayout) DetailLine(details, () => "Clic derecho en el mapa fija la salida de las nuevas unidades.", true);
             }
@@ -175,14 +175,14 @@ namespace RiskAI
             string key = showKey ? slot.Key : null;
             if (option.IsShip)
             {
-                var kind = option.Ship; var preview = controller.PreviewShipPurchase(kind); var profile = NavalProfiles.Profile(kind);
-                string detail = profile.Health + " vida · armadura " + profile.Armor + (profile.CanAttack ? " · " + profile.DamageText + " daño · alcance " + profile.Range : "") + (profile.CanTransport ? " · carga " + profile.Capacity : "");
+                var kind = option.Ship; var preview = controller.PreviewShipPurchase(kind); var profile = UnitCatalog.Get(kind);
+                string detail = profile.MaxHealth + " vida · armadura " + profile.Armor + (profile.CanAttack ? " · " + profile.Weapon.DamageText + " daño · alcance " + profile.Weapon.Range : "") + (profile.CanTransport ? " · carga " + profile.Transport.Capacity : "");
                 return CommandCell("Build ship " + kind, UnitVariantViews.PortraitResource(kind), PurchaseTitle(profile.Name, preview) + " · " + PurchaseCost(preview, profile.Cost, key) + " · " + detail,
                     () => controller.Produce(option), preview, profile.Cost, key, QueuedCount(option), size);
             }
             var unit = option.Unit; var unitPreview = controller.PreviewRecruitSelected(unit);
-            return CommandCell("Recruit " + unit, PortraitResource(unit), PurchaseTitle(BattleRules.Name(unit), unitPreview) + " · " + PurchaseCost(unitPreview, BattleRules.Cost(unit), key) + " · " + UnitTooltip(unit),
-                () => controller.Produce(option), unitPreview, BattleRules.Cost(unit), key, QueuedCount(option), size);
+            return CommandCell("Recruit " + unit, PortraitResource(unit), PurchaseTitle(UnitCatalog.Get(unit).Name, unitPreview) + " · " + PurchaseCost(unitPreview, UnitCatalog.Get(unit).Cost, key) + " · " + UnitTooltip(unit),
+                () => controller.Produce(option), unitPreview, UnitCatalog.Get(unit).Cost, key, QueuedCount(option), size);
         }
 
         static Button CommandCell(string name, string resource, string tooltip, System.Action action, ProductionBatchPreview preview, int unitCost, string key, int queued, float size)
@@ -259,7 +259,7 @@ namespace RiskAI
                 foreach (var harbor in controller.SelectedHarbors)
                     if (harbor && harbor.Owner == 0) for (int i = 0; i < harbor.QueueCount; i++) if (harbor.QueuedKind(i) == kind) count++;
             }
-            else if (ProductionCatalog.AllowsHarborUnit(option.Unit))
+            else if ((UnitCatalog.Get(option.Unit).Building==UnitBuilding.Harbor))
             {
                 foreach (var harbor in controller.SelectedHarbors)
                     if (harbor && harbor.Owner == 0) for (int i = 0; i < harbor.LandQueueCount; i++) if (harbor.QueuedLandKind(i) == option.Unit) count++;
@@ -356,7 +356,7 @@ namespace RiskAI
             if (controller.SelectedCamp) return controller.SelectedCamp.DisplayName;
             if (controller.SelectedHarbor) return controller.SelectedHarbor.DisplayName;
             if (controller.SelectedTown) return controller.SelectedTown.DisplayName;
-            if (controller.InspectedTarget is Soldier soldier) return BattleRules.Name(soldier.Kind);
+            if (controller.InspectedTarget is Soldier soldier) return UnitCatalog.Get(soldier.Kind).Name;
             return "";
         }
     }

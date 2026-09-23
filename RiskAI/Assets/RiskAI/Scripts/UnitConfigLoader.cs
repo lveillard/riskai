@@ -47,6 +47,13 @@ namespace RiskAI
             finally { Resources.UnloadAsset(asset); }
         }
 
+        /// <summary>Player/PlayMode entry: a fresh domain starts unbound, then binds before the first scene.</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetCatalog() => UnitCatalog.Unbind();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void BindCatalog() => UnitCatalog.Bind(LoadResource());
+
         public static string Serialize(UnitsFile file) => JsonConvert.SerializeObject(file, Formatting.Indented, Settings);
 
         /// <summary>Maps the generated [UnitConfigField] facts onto Newtonsoft's Required.</summary>

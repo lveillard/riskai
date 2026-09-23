@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using RiskAI.Core;
 
 namespace RiskAI
 {
@@ -108,7 +109,7 @@ namespace RiskAI
         {
             if(TryLandingCandidate(requested,out landing,out error))return true;
             string exactError=error;
-            searchRadius=Mathf.Clamp(searchRadius,0,Ship.LoadRadius);
+            searchRadius=Mathf.Clamp(searchRadius,0,UnitCatalog.TransportLoadRadius);
             const int directions=24;
             for(float radius=.5f;radius<=searchRadius+.001f;radius+=.5f)
                 for(int i=0;i<directions;i++)
@@ -132,7 +133,7 @@ namespace RiskAI
             {error="Sólo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.";return false;}
             if(!Gentle(hit.position))
             {error="Ese borde es demasiado escarpado para desembarcar.";return false;}
-            if(!SeaNavigation.TryNearestOcean(hit.position,Ship.LoadRadius,out _))
+            if(!SeaNavigation.TryNearestOcean(hit.position,UnitCatalog.TransportLoadRadius,out _))
             {error="La playa queda demasiado lejos del agua navegable.";return false;}
             landing=hit.position;return true;
         }

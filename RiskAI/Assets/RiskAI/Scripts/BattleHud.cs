@@ -158,7 +158,7 @@ namespace RiskAI
                 bool selected = target is Soldier soldier && soldier.Selected || target is Ship ship && ship.Selected;
                 bool persistentShipHealth=target is Ship;
                 if (!target.IsAlive || !target.isActiveAndEnabled || (!persistentShipHealth && !controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth && !canopyOccludedUnits.Contains(target.EntityId))) continue;
-                float healthHeight=target is Soldier person?VisualMetrics.HeightFor(person.Kind)+.15f:4.8f;
+                float healthHeight=target is Soldier person?UnitCatalog.Get(person.Kind).VisualHeight+.15f:4.8f;
                 var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * healthHeight) / Scale;
                 float y = height - p.y; if(p.z<=0||y<TopPixels/Scale+16||y>bottom-8||UnderHudPanel(p.x,y))continue;
                 float size = target is Ship ? 56 : 28;

@@ -44,7 +44,7 @@ namespace RiskAI.Tests
             // Advance only the clock to the first naval decision; no rules tick
             // means no income or recruitment enters this economic fixture.
             while(battle.BattleTime<battle.AiFirstNavalOffensiveTime+.1f)battle.Clock.Advance(.4f,false,_=>{});
-            int cost=Harbor.Cost(NavalUnitKind.Transport);battle.Economy.Gold[1]=cost;
+            int cost=UnitCatalog.Get(NavalUnitKind.Transport).Cost;battle.Economy.Gold[1]=cost;
             battle.AiEnabled=true;
             // Reserve and queue before the land commander receives its first turn.
             naval.ExpeditionFor(1).Tick(0);
