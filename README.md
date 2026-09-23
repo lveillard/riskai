@@ -1,4 +1,4 @@
-# Riesgus · v0.30.0
+# Riesgus · v0.31.0
 
 Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.30.0
 (`20260923T150510Z-v030-050e773`). La verificación pública coincide en 10/10 hashes
@@ -24,6 +24,8 @@ La v0.29.1 eleva 0,45 m las torres integradas (aproximadamente un 10 %), conserv
 
 La v0.30 incorpora ocho unidades nuevas del mapa original —Fusilero de élite, Rugidor, General, Artillería, Tanque, Buque de guerra, Acorazado y Transporte blindado— con las estadísticas de la fuente, y un Sanador con maná (200, 5 por curación) y 220 de vida. La IA se reescribe: plan de composición, defensa proporcional, oleadas agrupadas fuera del alcance de la torre y desembarcos con escolta; la nueva dificultad Difícil no usa trampas. Añade registro de mensajes, chat con teclado en móvil, alertas de ataque en el minimapa y efectos de impacto, muerte y conquista. El sonido se genera con ElevenLabs y la música de fondo se activa con F8. Las órdenes de producción usan una rejilla 4×3 con atajos QWER/ASDF/ZXCV. Los colores de jugador se corrigen —el color se linealizaba dos veces—, la torre de ciudad pasa a torreón y la ballesta es nueva. El arranque ya no muestra la pantalla de Unity.
 
+La v0.31 sustituye las zonas de suelo geométricas por un campo continuo guiado por el relieve (sin rectángulos, círculos ni diagonales forzadas; una prueba lo vigila), da a la vista estratégica rellenos por dueño y bordes de país claros al estilo WC3, y reagrupa Las Marcas y Cuatro Riberas en países compactos con hogueras centradas. [Detalle](docs/audits/MAPS-POLISH-v0.31.md).
+
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
 ## Historial de la base v0.22
@@ -44,7 +46,7 @@ El catálogo original completo está auditado; faltan unidades, modos y datos he
 
 [Animación del caballero: trote, pausa y ataque](docs/audits/v0.22/knight-animation.webp).
 
-## Estado actual v0.30.0
+## Estado actual v0.31.0
 
 ### Escenarios y reglas comunes
 
