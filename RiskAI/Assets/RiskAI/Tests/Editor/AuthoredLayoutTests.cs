@@ -49,8 +49,9 @@ namespace RiskAI.Tests
             var groupSizes = MapLayout.Towns.GroupBy(t => t.Country).Select(group => group.Count()).ToArray();
             Assert.That(groupSizes.Length, Is.EqualTo(countries));
             Assert.That(groupSizes.Min(), Is.GreaterThanOrEqualTo(2));
-            Assert.That(groupSizes.Max(), Is.LessThanOrEqualTo(6));
-            Assert.That(groupSizes.Distinct().Count(), Is.GreaterThan(2), "Geography determines country size; it is not a repeated town grid.");
+            // v0.31 balance: 2-4 cities per country. Cuatro Riberas' 44 cities over 11 countries are
+            // therefore four each; geography decides which four (AuthoredCountriesAreCompactBalancedGroups).
+            Assert.That(groupSizes.Max(), Is.LessThanOrEqualTo(4));
             foreach (var country in MapLayout.Countries)
             {
                 int cityCount = MapLayout.Towns.Count(t => t.Country == country.Region);
@@ -94,6 +95,53 @@ namespace RiskAI.Tests
         }
 
         // Territory contiguity moved to TerritoryFieldTests, which checks the shared land partition on every map.
+
+        [TestCase(ScenarioMap.Classic)]
+        [TestCase(ScenarioMap.Riverlands)]
+        public void AuthoredCountriesAreCompactBalancedGroups(ScenarioMap map)
+        {
+            MapLayout.Configure(map);
+            int countries = MapLayout.Countries.Length;
+            var centroids = new Vector2[countries]; var counts = new int[countries];
+            foreach (var town in MapLayout.Towns) { centroids[town.Country] += new Vector2(town.Position.x, town.Position.z); counts[town.Country]++; }
+            for (int c = 0; c < countries; c++)
+            {
+                Assert.That(counts[c], Is.InRange(2, 4), MapLayout.Countries[c].Name + " holds 2-4 cities.");
+                centroids[c] /= counts[c];
+            }
+            // No city sits nearer another country's centre than its own: groups do not interleave.
+            foreach (var town in MapLayout.Towns)
+            {
+                var p = new Vector2(town.Position.x, town.Position.z);
+                float own = Vector2.Distance(p, centroids[town.Country]);
+                for (int c = 0; c < countries; c++)
+                    if (c != town.Country) Assert.That(own, Is.LessThanOrEqualTo(Vector2.Distance(p, centroids[c]) * 1.05f),
+                        $"{town.Id} lies nearer {MapLayout.Countries[c].Name} than its own {MapLayout.Countries[town.Country].Name}.");
+            }
+        }
+
+        // Two claim circles (radius 6) plus a building footprint, so neighbouring posts never touch.
+        const float AuthoredSettlementSpacing = 16f;
+        // The closest source pair (Croatia/Bosnia, Greece, Montenegro) stands 19.2 units apart.
+        const float ImportedSettlementSpacing = 19f;
+
+        [TestCase(ScenarioMap.Classic)]
+        [TestCase(ScenarioMap.Riverlands)]
+        [TestCase(ScenarioMap.Europe)]
+        [TestCase(ScenarioMap.NewWorld)]
+        public void SettlementsAndHarboursKeepAMinimumSpacing(ScenarioMap map)
+        {
+            MapLayout.Configure(map);
+            var sites = MapLayout.Towns.Select(t => (t.Id, Point: new Vector2(t.Position.x, t.Position.z))).ToList();
+            if (!MapLayout.IsImported)
+            {
+                for (int i = 0; i < MapLayout.MainlandHarborX.Length; i++) { var h = MapLayout.MainlandHarborLanding(i); sites.Add(("harbor-" + i, new Vector2(h.x, h.z))); }
+                for (int i = 0; i < MapLayout.Islands.Length; i++) { var h = MapLayout.IslandHarborLanding(i); sites.Add(("island-harbor-" + i, new Vector2(h.x, h.z))); }
+            }
+            float minimum = MapLayout.IsImported ? ImportedSettlementSpacing : AuthoredSettlementSpacing;
+            for (int i = 0; i < sites.Count; i++) for (int j = i + 1; j < sites.Count; j++)
+                Assert.That(Vector2.Distance(sites[i].Point, sites[j].Point), Is.GreaterThanOrEqualTo(minimum), sites[i].Id + " / " + sites[j].Id);
+        }
 
         static float SampleLandArea()
         {

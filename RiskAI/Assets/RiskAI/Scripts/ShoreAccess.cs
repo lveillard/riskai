@@ -181,8 +181,23 @@ namespace RiskAI
         }
         static float NearPort(float x,float z,Vector3 port)
         {
-            float dx=x-port.x,dz=z-port.z;
-            return 1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(7,12,Mathf.Sqrt(dx*dx+dz*dz)));
+            // An irregular beach that hugs the shoreline, never a perfect disc: a noise-
+            // warped radius, limited to the coastal strip except in the landing core.
+            float dx=x-port.x,dz=z-port.z,distance=Mathf.Sqrt(dx*dx+dz*dz);
+            if(distance>20)return 0;
+            float angle=Mathf.Atan2(dz,dx);
+            float wobble=(Mathf.PerlinNoise(x*.11f+port.x*.37f+7.1f,z*.11f+port.z*.29f+3.3f)-.5f)*6.5f+1.3f*Mathf.Sin(angle*3+port.x*.7f);
+            float radial=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(6,14,distance+wobble));
+            float core=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(3.5f,6.5f,distance));
+            float shore=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(2.5f,8.5f,ShoreDistance(x,z)+(Mathf.PerlinNoise(x*.21f+11,z*.21f+5)-.5f)*3));
+            return radial*Mathf.Max(core,shore);
+        }
+        // Authored maps: metres to the mainland coast or the nearest island shore.
+        static float ShoreDistance(float x,float z)
+        {
+            float d=Mathf.Abs(z-MapLayout.Coast(x));
+            for(int i=0;i<MapLayout.Islands.Length;i++)d=Mathf.Min(d,Mathf.Abs(MapLayout.IslandDistance(x,z,i)));
+            return d;
         }
         static bool Gentle(Vector3 point)
         {

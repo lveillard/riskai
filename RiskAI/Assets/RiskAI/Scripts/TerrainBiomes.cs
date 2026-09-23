@@ -148,7 +148,7 @@ namespace RiskAI
                 {Debug.LogWarning($"RISKAI_GROUND_COLOR size {decoded.width}x{decoded.height} does not match {expectedWidth}x{expectedHeight}; rebake.");return;}
                 ground=decoded.GetPixels32();groundWidth=decoded.width;groundHeight=decoded.height;
             }
-            finally{UnityEngine.Object.Destroy(decoded);}
+            finally{if(Application.isPlaying)UnityEngine.Object.Destroy(decoded);else UnityEngine.Object.DestroyImmediate(decoded);}
         }
         static Color SampleGround(float x,float z)
         {
@@ -176,6 +176,14 @@ namespace RiskAI
             int ix=Mathf.Min(Mathf.FloorToInt(gx),fieldWidth-2),iz=Mathf.Min(Mathf.FloorToInt(gz),fieldHeight-2),k=iz*fieldWidth+ix;
             Color c=Color.Lerp(Color.Lerp(field[k],field[k+1],gx-ix),Color.Lerp(field[k+fieldWidth],field[k+fieldWidth+1],gx-ix),gz-iz);
             return new Biome(c.r,c.g,c.b,c.a);
+        }
+
+        /// <summary>The biome field for the configured imported map (row-major from the playable minimum).</summary>
+        public static Color32[] Field(out int width,out int height)
+        {
+            var data=MapLayout.IsImported?MapLayout.Imported:null;
+            if(data==null){width=height=0;return null;}
+            EnsureField(data);width=fieldWidth;height=fieldHeight;return field;
         }
 
         /// <summary>Minimap land colour: the legacy relief ramp, recoloured by the same biome texels.</summary>
@@ -220,11 +228,21 @@ namespace RiskAI
                 // imported North African coast and the far north is always tundra or ice.
                 float ex=wx-europeOffset;
                 // Satellite aridity (same bake as the ground colour) is authoritative where present.
-                if(ground!=null)arid=Mathf.Lerp(arid,SampleGround(wx,wz).a,.85f);
-                else if(ex>-335)arid=Mathf.Lerp(arid,1,.9f*Mathf.SmoothStep(0,1,Mathf.InverseLerp(-266,-312,wz)));
-                cold=Mathf.Max(cold,.86f*Mathf.SmoothStep(0,1,Mathf.InverseLerp(262,322,wz)));
+                // Sampled at the warped point too, so aridity isolines meander instead of
+                // following the smooth, nearly straight latitude lines of the georeference.
+                if(ground!=null)
+                {
+                    var satellite=SampleGround(Mathf.Clamp(px,data.PlayableMinX,data.PlayableMaxX),Mathf.Clamp(pz,data.PlayableMinZ,data.PlayableMaxZ));
+                    arid=Mathf.Lerp(arid,satellite.a,.85f);
+                    // Imaged ice and snow (bright, unsaturated) is always cold ground.
+                    float lowest=Mathf.Min(satellite.r,Mathf.Min(satellite.g,satellite.b));
+                    cold=Mathf.Max(cold,Mathf.SmoothStep(0,1,Mathf.InverseLerp(.58f,.78f,lowest)));
+                }
+                else if(ex>-335)arid=Mathf.Lerp(arid,1,.9f*Mathf.SmoothStep(0,1,Mathf.InverseLerp(-266,-312,pz)));
+                cold=Mathf.Max(cold,.86f*Mathf.SmoothStep(0,1,Mathf.InverseLerp(262,322,pz)));
                 float grain=Mathf.PerlinNoise(wx*.05f+11,wz*.05f+5)-.5f;
                 arid=Mathf.Clamp01(arid+grain*.10f*(1-arid));lush=Mathf.Clamp01(lush-grain*.12f);
+                cold=Mathf.Clamp01(cold+(Mathf.PerlinNoise(wx*.031f+27,wz*.031f+3)-.5f)*.18f*cold*(1-cold)*4);
                 field[z*fieldWidth+x]=new Color32(Byte(arid),Byte(cold),Byte(lush),Byte(rock));
             }
             Debug.Log($"RISKAI_BIOME_FIELD map={data.mapId} size={fieldWidth}x{fieldHeight} anchors={anchors.Count} satellite={(ground!=null?groundWidth+"x"+groundHeight:"none")} ms={started.Elapsed.TotalMilliseconds:F1}");
@@ -255,14 +273,15 @@ namespace RiskAI
         }
         static Vector4 Blend(List<Anchor> anchors,float x,float z)
         {
-            // Shepard weights with a softened core: each anchor dominates its own
-            // country while neighbours still meet in a gradual, noisy transition.
-            const float core=26f*26f;
+            // Softened inverse-square weights: each anchor leads its own country while
+            // neighbours meet in a wide gradient. Steeper powers approach a Voronoi
+            // diagram whose straight bisectors showed up as straight zone borders.
+            const float core=34f*34f;
             Vector4 sum=Vector4.zero;float total=0;
             for(int i=0;i<anchors.Count;i++)
             {
                 float dx=x-anchors[i].x,dz=z-anchors[i].z,d=dx*dx+dz*dz+core;
-                float w=anchors[i].strength/(d*d);
+                float w=anchors[i].strength/(d*Mathf.Sqrt(d));
                 sum+=anchors[i].value*w;total+=w;
             }
             return total>0?sum/total:new Vector4(.1f,.1f,.45f,0);

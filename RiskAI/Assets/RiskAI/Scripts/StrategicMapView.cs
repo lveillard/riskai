@@ -57,7 +57,7 @@ namespace RiskAI
         Material MakeMaterial(bool overview)
         {
             var mat=new Material(Resources.Load<Material>("StrategicTerritory"));
-            mat.SetTexture("_Regions",Atlas.Regions);mat.SetTexture("_Palette",Atlas.Palette);mat.SetVector("_MapBounds",Atlas.Bounds);
+            mat.SetTexture("_Regions",Atlas.Regions);mat.SetTexture("_Palette",Atlas.Palette);mat.SetTexture("_Borders",Atlas.Borders);mat.SetFloat("_BorderRange",TerritoryAtlas.BorderRange);mat.SetVector("_MapBounds",Atlas.Bounds);
             mat.SetFloat("_PaletteWidth",Atlas.Palette.width);mat.SetFloat("_Overview",overview?1:0);
             mat.SetFloat("_ZWrite",overview?1:0);mat.SetFloat("_SelectedCountry",-1);return mat;
         }

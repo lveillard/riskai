@@ -120,6 +120,22 @@ namespace RiskAI.Tests
             Assert.That(agree / (float)total, Is.GreaterThan(.97f), $"{map}: {agree}/{total} painted land cells follow the source country paint.");
         }
 
+        [TestCase(ScenarioMap.Europe)]
+        [TestCase(ScenarioMap.NewWorld)]
+        public void SourceCampsStandInsideTheirTerritoryAwayFromCities(ScenarioMap map)
+        {
+            // Source camp positions are kept; none is glued to a city (closest: Wales, 5.4 units).
+            MapLayout.Configure(map);
+            var field = TerritoryField.Current;
+            for (int c = 0; c < MapLayout.Countries.Length; c++)
+            {
+                var camp = MapLayout.Countries[c].CampPoint;
+                Assert.That(field.CountryAt(camp.x, camp.z), Is.EqualTo(c), MapLayout.Countries[c].Name + " camp lies inside its territory.");
+                foreach (var town in MapLayout.Towns)
+                    Assert.That(Vector2.Distance(new Vector2(camp.x, camp.z), new Vector2(town.Position.x, town.Position.z)), Is.GreaterThan(5f), MapLayout.Countries[c].Name + " camp / " + town.Id);
+            }
+        }
+
         [Test]
         public void ReconfiguringAMapRebuildsAnIdenticalField()
         {

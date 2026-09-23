@@ -61,7 +61,7 @@ namespace RiskAI
                 float z = Mathf.Lerp(min.y, max.y, Next(random));
                 if (!AcceptPatch(x, z) || !SuitableGround(x, z) || !ClearOfPosts(session, x, z)) continue;
 
-                bool dry=MapLayout.Scenario==ScenarioMap.Classic&&z<-43*MapLayout.Spacing;
+                bool dry=!MapLayout.IsImported&&FictionalGround.Sample(x,z).Dry>.2f+Next(random)*.6f;
                 if(MapLayout.IsImported)
                 {
                     // Geographic biome: sparse dry tufts in deserts, none on ice.
@@ -113,7 +113,7 @@ namespace RiskAI
             float noise = Mathf.PerlinNoise(x * .075f + 17.3f * ((int)MapLayout.Scenario + 1), z * .075f + 9.7f);
             // Narrow absences make irregular meadows while keeping the cover sparse
             // and leaving enough possible placements for the source-scale maps.
-            if(MapLayout.Scenario==ScenarioMap.Classic&&z<-43*MapLayout.Spacing)return noise>=.44f&&noise<=.86f;
+            if(!MapLayout.IsImported&&FictionalGround.Sample(x,z).Dry>.5f)return noise>=.44f&&noise<=.86f;
             return noise >= .32f && noise <= .94f;
         }
 

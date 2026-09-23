@@ -92,7 +92,7 @@ namespace RiskAI.Editor
             if(!session||!view)throw new InvalidOperationException("Territory review bootstrap did not create a session and strategic view.");
             float fieldMs=TerritoryField.LastBuildMilliseconds;
             var atlasWatch=System.Diagnostics.Stopwatch.StartNew();
-            var probe=new TerritoryAtlas(session);float atlasMs=(float)atlasWatch.Elapsed.TotalMilliseconds;UnityEngine.Object.DestroyImmediate(probe.Regions);UnityEngine.Object.DestroyImmediate(probe.Palette);
+            var probe=new TerritoryAtlas(session);float atlasMs=(float)atlasWatch.Elapsed.TotalMilliseconds;UnityEngine.Object.DestroyImmediate(probe.Regions);UnityEngine.Object.DestroyImmediate(probe.Palette);UnityEngine.Object.DestroyImmediate(probe.Borders);
             string prefix=tag+"-"+map.ToString().ToLowerInvariant();
             var atlas=view.Atlas;
             int size=atlas.Regions.width;
@@ -102,8 +102,15 @@ namespace RiskAI.Editor
             Debug.Log("RISKAI_TERRITORY_REVIEW_MAP: map="+map+" countries="+metrics.Length+" atlasMs="+atlasMs.ToString("F1",CultureInfo.InvariantCulture)+" boot="+watch.ElapsedMilliseconds);
             WriteJson(Path.Combine(directory,prefix+".json"),map,metrics,pixelArea,atlasMs,fieldMs,mapAgreement);
             WriteAtlasImage(Path.Combine(directory,prefix+"-atlas.png"),pixels,size,bounds,session,reference,false);
+            if(atlas.Borders)
+            {
+                var border=ReadTexture(atlas.Borders);var debug=new Texture2D(size,size,TextureFormat.RGB24,false);
+                for(int i=0;i<border.Length;i++){byte r=(byte)Mathf.Min(255,border[i].r*8),g=(byte)Mathf.Min(255,border[i].g*8);border[i]=new Color32(r,g,(byte)(pixels[i].a>127?60:0),255);}
+                debug.SetPixels32(border);debug.Apply();File.WriteAllBytes(Path.Combine(directory,prefix+"-borders.png"),debug.EncodeToPNG());UnityEngine.Object.DestroyImmediate(debug);
+            }
             if(reference!=null)WriteAtlasImage(Path.Combine(directory,"source-"+map.ToString().ToLowerInvariant()+"-atlas.png"),pixels,size,bounds,session,reference,true);
 
+            if(!MapLayout.IsImported)WriteLayout(Path.Combine(directory,prefix+"-layout.json"),session);
             // The same camps are inspected for every tag, chosen by the first run.
             string focusPath=Path.Combine(directory,"focus-"+map.ToString().ToLowerInvariant()+".txt");
             List<string> focus;
@@ -134,6 +141,17 @@ namespace RiskAI.Editor
                     Render(camera,readback,Path.Combine(directory,prefix+"-camp-"+safe+".png"),center,Mathf.Clamp(extent*.7f,14,110),72);
                     camp.Select(false);
                 }
+                // Strategic readability at an early-game ownership: every country neutral except
+                // the first two focus camps (player 0 and 1), full map and a closer strategic zoom.
+                var owned=focus.Select(n=>Array.FindIndex(MapLayout.Countries,c=>c.Name==n)).Where(c=>c>=0).Take(2).ToArray();
+                foreach(var town in session.Towns)town.State.Owner=owned.Length>0&&town.State.Country==owned[0]?0:owned.Length>1&&town.State.Country==owned[1]?1:-1;
+                if(session.Naval)foreach(var port in session.Naval.Harbors)if(!port.IsImportedPort)port.State.Owner=-1;
+                atlas.RefreshOwners();view.SetStrategic(true);
+                Render(camera,readback,Path.Combine(directory,prefix+"-strategic-neutral.png"),new Vector3((min.x+max.x)*.5f,0,(min.y+max.y)*.5f),
+                    Mathf.Max((max.y-min.y)*.5f,(max.x-min.x)*.5f*Height/Width)*1.02f,80);
+                if(owned.Length>0&&CountryBounds(pixels,size,bounds,owned[0],session,out var near,out _))
+                    Render(camera,readback,Path.Combine(directory,prefix+"-strategic-near.png"),near,view.EnterZoom*1.05f,80);
+                view.SetStrategic(false);
             }
             finally{if(RenderTexture.active==readback)RenderTexture.active=null;readback.Release();UnityEngine.Object.DestroyImmediate(readback);}
         }
@@ -429,6 +447,43 @@ namespace RiskAI.Editor
                  .Append(i<metrics.Length-1?",\n":"\n");
             }
             s.Append("]}\n");File.WriteAllText(path,s.ToString());
+        }
+
+        /// <summary>Authored-map geography (height, land, territory) with cities, harbours and camps, for layout review.</summary>
+        static void WriteLayout(string path,BattleSession session)
+        {
+            var inv=CultureInfo.InvariantCulture;var s=new StringBuilder();var field=TerritoryField.Current;
+            Vector2 min=MapLayout.PlayableMin,max=MapLayout.PlayableMax;const float step=1f;
+            int w=Mathf.CeilToInt((max.x-min.x)/step),h=Mathf.CeilToInt((max.y-min.y)/step);
+            s.Append("{\"minX\":").Append(min.x.ToString(inv)).Append(",\"minZ\":").Append(min.y.ToString(inv)).Append(",\"step\":").Append(step.ToString(inv))
+             .Append(",\"width\":").Append(w).Append(",\"height\":").Append(h).Append(",\"spacing\":").Append(MapLayout.Spacing.ToString(inv)).Append(",\"grid\":[");
+            for(int z=0;z<h;z++)for(int x=0;x<w;x++)
+            {
+                float wx=min.x+(x+.5f)*step,wz=min.y+(z+.5f)*step;
+                bool land=MapLayout.IsLand(wx,wz);
+                if(z+x>0)s.Append(',');
+                s.Append(land?MapLayout.Height(wx,wz).ToString("F2",inv):"-9").Append(',').Append(land?field.CountryAt(wx,wz):-1);
+            }
+            s.Append("],\"towns\":[");
+            for(int i=0;i<MapLayout.Towns.Length;i++)
+            {
+                var t=MapLayout.Towns[i];if(i>0)s.Append(',');
+                s.Append("{\"id\":\"").Append(t.Id).Append("\",\"name\":\"").Append(t.Name).Append("\",\"x\":").Append(t.Position.x.ToString("F2",inv)).Append(",\"z\":").Append(t.Position.z.ToString("F2",inv)).Append(",\"country\":").Append(t.Country).Append('}');
+            }
+            s.Append("],\"harbors\":[");
+            bool first=true;
+            if(session.Naval)foreach(var port in session.Naval.Harbors)
+            {
+                if(!first)s.Append(',');first=false;
+                int linked=port.LinkedTown?session.Towns.IndexOf(port.LinkedTown):-1;
+                s.Append("{\"name\":\"").Append(port.DisplayName).Append("\",\"x\":").Append(port.Landing.x.ToString("F2",inv)).Append(",\"z\":").Append(port.Landing.z.ToString("F2",inv)).Append(",\"linked\":").Append(linked).Append('}');
+            }
+            s.Append("],\"camps\":[");
+            first=true;
+            foreach(var camp in session.Camps){if(!camp)continue;if(!first)s.Append(',');first=false;s.Append("{\"country\":").Append(camp.Country).Append(",\"x\":").Append(camp.SpawnPoint.x.ToString("F2",inv)).Append(",\"z\":").Append(camp.SpawnPoint.z.ToString("F2",inv)).Append('}');}
+            s.Append("],\"countries\":[");
+            for(int c=0;c<MapLayout.Countries.Length;c++){if(c>0)s.Append(',');s.Append('"').Append(MapLayout.Countries[c].Name).Append('"');}
+            s.Append("]}").Append('\n');File.WriteAllText(path,s.ToString());
         }
 
         static void Render(Camera camera,RenderTexture readback,string path,Vector3 focus,float zoom,float pitch)
