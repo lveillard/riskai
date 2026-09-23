@@ -29,8 +29,8 @@ namespace RiskAI.Tests
         {
             var file = UnitConfigLoader.LoadResource();
             var ids = file.Units.Select(unit => unit.Id).ToList();
-            foreach (UnitKind kind in Enum.GetValues(typeof(UnitKind))) Assert.That(ids, Does.Contain(kind.ToString()));
-            foreach (NavalUnitKind kind in Enum.GetValues(typeof(NavalUnitKind))) Assert.That(ids, Does.Contain(kind.ToString()));
+            // UnitKind is generated from units.json: same ids, same order (build.mjs --check keeps it current).
+            CollectionAssert.AreEqual(ids, Enum.GetNames(typeof(UnitKind)));
             Assert.That(ids, Does.Contain("Tower"));
             Assert.That(ids.Distinct().Count(), Is.EqualTo(ids.Count));
         }

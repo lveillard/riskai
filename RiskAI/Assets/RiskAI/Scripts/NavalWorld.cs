@@ -110,8 +110,9 @@ namespace RiskAI
             EmbarkZones.Add(zone);
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
-        public Ship Spawn(int team,NavalUnitKind kind,Vector3 point)
+        public Ship Spawn(int team,UnitKind kind,Vector3 point)
         {
+            if(UnitCatalog.Get(kind).Domain!=UnitDomain.Sea)throw new System.ArgumentException(kind+" is not a sea unit.",nameof(kind));
             if(Session.IsPlayerEliminated(team) || !SeaNavigation.HasClearance(point))return null;
             var go=new GameObject(UnitCatalog.Get(kind).Name);go.transform.SetParent(transform,false);go.transform.position=new Vector3(point.x,-.24f,point.z);
             var ship=go.AddComponent<Ship>();ship.Initialize(this,team,kind);Ships.Add(ship);Session.RegisterTarget(ship);return ship;
@@ -189,7 +190,7 @@ namespace RiskAI
             if (!Session || !PlayerRules.IsPlayer(team) || team == 0 || team >= Session.PlayerCount ||
                 Session.BattleTime < Session.AiFirstNavalOffensiveTime || PendingShips(team) > 0) return 0;
             foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == team) return 0;
-            foreach (var harbor in Harbors) if (harbor.Owner == team && harbor.CanLaunch) return UnitCatalog.Get(NavalUnitKind.Frigate).Cost;
+            foreach (var harbor in Harbors) if (harbor.Owner == team && harbor.CanLaunch) return UnitCatalog.Get(UnitKind.Frigate).Cost;
             return 0;
         }
         public void SimTick(float delta)
@@ -254,7 +255,7 @@ namespace RiskAI
             // their phase is staggered to avoid rebuilding every fleet route together.
             if(fleet<wanted&&TryChooseWarship(Session.Economy.Gold[team],out var kind))
                 foreach(var harbor in Harbors)
-                    if(harbor.Owner==team&&harbor.QueueCount==0&&buildingCommands.Execute(team,PlayerBuildingIntent.BuyShip(harbor.BuildingId,kind))==null)break;
+                    if(harbor.Owner==team&&harbor.QueueCount==0&&buildingCommands.Execute(team,PlayerBuildingIntent.Recruit(harbor.BuildingId,kind))==null)break;
             Harbor target=null;
             foreach(var ship in Ships)if(ship&&ship.IsAlive&&ship.Team==team&&ship.Type.CanAttack&&!ship.IsGarrison&&!ship.CurrentTarget)
             {
@@ -284,9 +285,9 @@ namespace RiskAI
                    FlatDistance(ship.transform.position,harbor.Berth)>2.25f)return true;
             return false;
         }
-        static bool TryChooseWarship(int gold,out NavalUnitKind kind)
+        static bool TryChooseWarship(int gold,out UnitKind kind)
         {
-            kind=NavalUnitKind.Frigate;float best=float.NegativeInfinity;bool found=false;
+            kind=UnitKind.Frigate;float best=float.NegativeInfinity;bool found=false;
             var options=UnitCatalog.HarborShips;
             for(int i=0;i<options.Count;i++)
             {

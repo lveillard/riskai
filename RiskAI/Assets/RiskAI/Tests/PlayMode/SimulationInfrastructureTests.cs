@@ -307,7 +307,7 @@ namespace RiskAI.Tests
             }
 
             float enemyBefore = enemy.Health, neutralBefore = neutral.Health, allyBefore = ally.Health;
-            var weapon = UnitCatalog.Get(NavalUnitKind.Frigate).Weapon;
+            var weapon = UnitCatalog.Get(UnitKind.Frigate).Weapon;
             battle.Combat.FireWeapon(source.AimPoint, enemy.AimPoint, enemy, 40, source.Team, source, weapon);
             // Keep the identity registered while excluding the primary from the area-query fixture.
             // A missile-splash weapon must still apply its full primary hit.

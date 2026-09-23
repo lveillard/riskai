@@ -101,7 +101,7 @@ namespace RiskAI.Tests
             var harbor=naval.Harbors.FirstOrDefault(h=>h.Owner==1&&h.CanLaunch&&!h.IsIsland)??naval.Harbors.First(h=>h.CanLaunch&&!h.IsIsland);
             harbor.State.Owner=1;
             foreach(var ship in naval.Ships.ToArray())if(ship)ship.gameObject.SetActive(false);
-            var frigate=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,harbor.Berth);
+            var frigate=BattleTestScenario.Ship(naval,0,UnitKind.Frigate,harbor.Berth);
             frigate.Stop();
             var archer=BattleTestScenario.Mobile(battle,1,UnitKind.Archer,Sample(harbor.Landing+Vector3.right*6,6));
             var footman=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,Sample(harbor.Landing+Vector3.left*6,6));

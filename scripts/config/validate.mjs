@@ -4,10 +4,10 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { schemaDocument } from './build.mjs';
+import { schemaDocument, unitsPath } from './build.mjs';
+export { unitsPath };
 
 const here = dirname(fileURLToPath(import.meta.url));
-export const unitsPath = join(here, '..', '..', 'RiskAI', 'Assets', 'RiskAI', 'Resources', 'Config', 'units.json');
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const validateSchema = ajv.compile(schemaDocument());

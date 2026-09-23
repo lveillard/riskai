@@ -21,10 +21,10 @@ namespace RiskAI.Tests
             var root = new Obj();
             root.Add("version", 1);
             var land = new Arr();
-            foreach (UnitKind kind in Enum.GetValues(typeof(UnitKind))) land.Add(Land(kind));
+            foreach (UnitKind kind in Enum.GetValues(typeof(UnitKind))) if (UnitCatalog.Get(kind).Domain == UnitDomain.Land) land.Add(Land(kind));
             root.Add("land", land);
             var naval = new Arr();
-            foreach (NavalUnitKind kind in Enum.GetValues(typeof(NavalUnitKind))) naval.Add(Naval(kind));
+            foreach (UnitKind kind in Enum.GetValues(typeof(UnitKind))) if (UnitCatalog.Get(kind).Domain == UnitDomain.Sea) naval.Add(Naval(kind));
             root.Add("naval", naval);
             root.Add("tower", Tower());
             var production = new Obj();
@@ -152,7 +152,7 @@ namespace RiskAI.Tests
             return unit;
         }
 
-        static Obj Naval(NavalUnitKind kind)
+        static Obj Naval(UnitKind kind)
         {
             var profile = UnitCatalog.Get(kind);
             var unit = new Obj();
@@ -220,11 +220,11 @@ namespace RiskAI.Tests
         {
             var tower = new Obj();
             // Only consumed fields: health from the o000 bunker, the weapon from the h00N/h00O post.
-            var post = UnitCatalog.Tower.TownWeapon;
-            tower.Add("healthSource", UnitCatalog.Tower.SourceBase);
-            tower.Add("maxHealth", UnitCatalog.Tower.MaxHealth);
+            var post = UnitCatalog.Get(UnitKind.Tower).TownWeapon;
+            tower.Add("healthSource", UnitCatalog.Get(UnitKind.Tower).SourceBase);
+            tower.Add("maxHealth", UnitCatalog.Get(UnitKind.Tower).MaxHealth);
             var attack = new Obj();
-            attack.Add("source", UnitCatalog.Tower.SourceNotes);
+            attack.Add("source", UnitCatalog.Get(UnitKind.Tower).SourceNotes);
             attack.Add("attackType", post.DamageType.ToString());
             attack.Add("base", post.Base);
             attack.Add("dice", post.Dice);
@@ -246,12 +246,12 @@ namespace RiskAI.Tests
             }
             finally { UnityEngine.Object.DestroyImmediate(probe); }
             var weapons = new Obj();
-            weapons.Add("town", Weapon(UnitCatalog.Tower.TownWeapon));
-            weapons.Add("harbor", Weapon(UnitCatalog.Tower.HarborWeapon));
+            weapons.Add("town", Weapon(UnitCatalog.Get(UnitKind.Tower).TownWeapon));
+            weapons.Add("harbor", Weapon(UnitCatalog.Get(UnitKind.Tower).HarborWeapon));
             tower.Add("hostWeapons", weapons);
             var acquisition = new Obj();
-            acquisition.Add("radius", UnitCatalog.Tower.Acquisition.RadiusHostile);
-            acquisition.Add("measure", Measure(UnitCatalog.Tower.TownWeapon.Measure));
+            acquisition.Add("radius", UnitCatalog.Get(UnitKind.Tower).Acquisition.RadiusHostile);
+            acquisition.Add("measure", Measure(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Measure));
             acquisition.Add("visibility", "terrainRay");
             tower.Add("acquisition", acquisition);
             var ai = new Obj();
@@ -287,7 +287,7 @@ namespace RiskAI.Tests
             foreach (var slot in ProductionHotkeys.Layout(building))
             {
                 var item = new Obj();
-                item.Add("product", slot.Option.IsShip ? slot.Option.Ship.ToString() : slot.Option.Unit.ToString());
+                item.Add("product", slot.Option.IsShip ? slot.Option.Kind.ToString() : slot.Option.Kind.ToString());
                 item.Add("index", slot.Index);
                 item.Add("page", slot.Page);
                 item.Add("cell", slot.Cell);
@@ -310,7 +310,7 @@ namespace RiskAI.Tests
             rules.Add("commandInboxLimit", 1024);
             rules.Add("transportLoadRadius", UnitCatalog.TransportLoadRadius);
             rules.Add("transportLoadOrderLimit", UnitCatalog.TransportLoadLimit);
-            rules.Add("shipSeparation", UnitCatalog.Get(NavalUnitKind.Frigate).Separation);
+            rules.Add("shipSeparation", UnitCatalog.Get(UnitKind.Frigate).Separation);
             rules.Add("hullClearance", SeaNavigation.HullClearance);
             var heal = new Obj();
             heal.Add("range", UnitCatalog.Get(UnitKind.Medic).Heal.Range);

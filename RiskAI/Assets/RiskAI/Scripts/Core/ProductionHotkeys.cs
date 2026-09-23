@@ -6,20 +6,19 @@ namespace RiskAI.Core
     /// <summary>The two production command cards. A selected building shows exactly one of them.</summary>
     public enum ProductionBuilding { City, Harbor }
 
-    /// <summary>One purchasable product: a land unit or a hull.</summary>
+    /// <summary>One purchasable product: any unit type (land units and hulls alike).</summary>
     public readonly struct ProductionOption : IEquatable<ProductionOption>
     {
-        public readonly bool IsShip;
-        public readonly UnitKind Unit;
-        public readonly NavalUnitKind Ship;
-        ProductionOption(bool ship,UnitKind unit,NavalUnitKind hull){IsShip=ship;Unit=unit;Ship=hull;}
-        public static ProductionOption Land(UnitKind kind) => new ProductionOption(false,kind,default);
-        public static ProductionOption Naval(NavalUnitKind kind) => new ProductionOption(true,default,kind);
-        public int Cost => IsShip?UnitCatalog.Get(Ship).Cost:UnitCatalog.Get(Unit).Cost;
-        public bool Equals(ProductionOption other) => IsShip==other.IsShip&&(IsShip?Ship==other.Ship:Unit==other.Unit);
+        public readonly UnitKind Kind;
+        ProductionOption(UnitKind kind){Kind=kind;}
+        public static ProductionOption For(UnitKind kind) => new ProductionOption(kind);
+        /// <summary>Hulls queue on the harbor's naval channel; the grid places them after the land block.</summary>
+        public bool IsShip => UnitCatalog.Get(Kind).Domain==UnitDomain.Sea;
+        public int Cost => UnitCatalog.Get(Kind).Cost;
+        public bool Equals(ProductionOption other) => Kind==other.Kind;
         public override bool Equals(object obj) => obj is ProductionOption other&&Equals(other);
-        public override int GetHashCode() => IsShip?1000+(int)Ship:(int)Unit;
-        public override string ToString() => IsShip?"Ship "+Ship:"Unit "+Unit;
+        public override int GetHashCode() => Kind.GetHashCode();
+        public override string ToString() => (IsShip?"Ship ":"Unit ")+Kind;
     }
 
     /// <summary>A product's cell on the command card: page, row/column and its grid hotkey.</summary>
@@ -67,11 +66,11 @@ namespace RiskAI.Core
         {
             var land=new List<ProductionOption>();var naval=new List<ProductionOption>();
             if(building==ProductionBuilding.City)
-                foreach(var kind in UnitCatalog.CityUnits)land.Add(ProductionOption.Land(kind));
+                foreach(var kind in UnitCatalog.CityUnits)land.Add(ProductionOption.For(kind));
             else
             {
-                foreach(var kind in UnitCatalog.HarborUnits)land.Add(ProductionOption.Land(kind));
-                foreach(var kind in UnitCatalog.HarborShips)naval.Add(ProductionOption.Naval(kind));
+                foreach(var kind in UnitCatalog.HarborUnits)land.Add(ProductionOption.For(kind));
+                foreach(var kind in UnitCatalog.HarborShips)naval.Add(ProductionOption.For(kind));
             }
             SortByCost(land);SortByCost(naval);
             land.AddRange(naval);return land;
@@ -115,9 +114,7 @@ namespace RiskAI.Core
 
         /// <summary>Effective hotkey shown on the card and used by the keyboard; null when not produced.</summary>
         public static string Hotkey(UnitKind kind) =>
-            TryFind(BuildingFor(kind),ProductionOption.Land(kind),out var slot)?slot.Key:null;
-        public static string Hotkey(NavalUnitKind kind) =>
-            TryFind(ProductionBuilding.Harbor,ProductionOption.Naval(kind),out var slot)?slot.Key:null;
+            TryFind(BuildingFor(kind),ProductionOption.For(kind),out var slot)?slot.Key:null;
 
         // Stable insertion sort: equal costs keep catalog order.
         static void SortByCost(List<ProductionOption> options)

@@ -12,7 +12,7 @@ namespace RiskAI.Tests
             CollectionAssert.AreEqual(new[]{UnitKind.Footman,UnitKind.Archer,UnitKind.Knight,UnitKind.Mage,UnitKind.Mortar,UnitKind.Medic,
                 UnitKind.EliteRifleman,UnitKind.Roarer,UnitKind.ArmyGeneral,UnitKind.Artillery,UnitKind.Tank},UnitCatalog.CityUnits);
             CollectionAssert.AreEqual(new[]{UnitKind.MarinePrivate,UnitKind.MarineMajor,UnitKind.MarineGeneral},UnitCatalog.HarborUnits);
-            CollectionAssert.AreEqual(new[]{NavalUnitKind.Frigate,NavalUnitKind.Transport,NavalUnitKind.Warship,NavalUnitKind.Battleship,NavalUnitKind.ArmoredTransport},UnitCatalog.HarborShips);
+            CollectionAssert.AreEqual(new[]{UnitKind.Frigate,UnitKind.Transport,UnitKind.Warship,UnitKind.Battleship,UnitKind.ArmoredTransport},UnitCatalog.HarborShips);
             Assert.That((UnitCatalog.Get(UnitKind.Tank).Building==UnitBuilding.Harbor),Is.False);
             Assert.That(UnitCatalog.HarborShips.All(kind=>UnitCatalog.Get(kind).Building==UnitBuilding.Harbor),Is.True);
             Assert.That(UnitCatalog.CityUnits.All(kind=>UnitCatalog.Get(kind).Building==UnitBuilding.City),Is.True);

@@ -16,7 +16,8 @@ namespace RiskAI.Editor
             var prepared=new System.Collections.Generic.HashSet<string>();
             foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
-                if(System.Array.IndexOf(UnitVariantViews.PortraitKinds,kind)>=0)continue; // rendered below from their variant views
+                if(UnitCatalog.Get(kind).Domain!=UnitDomain.Land)continue;
+                if(UnitVariantViews.HasVariantPortrait(kind))continue; // rendered below from their variant views
                 string name = UnitCatalog.Get(kind).Model;
                 if(!prepared.Add(name))continue;
                 if(kind==UnitKind.Mortar)
@@ -72,8 +73,9 @@ namespace RiskAI.Editor
                 Object.DestroyImmediate(root);
             }
             RenderVariantPortraitsOnly();
-            foreach(NavalUnitKind kind in System.Enum.GetValues(typeof(NavalUnitKind)))
+            foreach(UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
+                if(UnitCatalog.Get(kind).Domain!=UnitDomain.Sea)continue;
                 var shipRoot=new GameObject(kind+" portrait");
                 NavalArt.CreateShipModel(shipRoot.transform,0,kind);
                 RenderPortrait(shipRoot,null,kind.ToString());
@@ -96,8 +98,9 @@ namespace RiskAI.Editor
             MountedKnightView.Create(mountedRoot.transform,0);
             RenderPortrait(mountedRoot,null,"MountedKnight");
             Object.DestroyImmediate(mountedRoot);
-            foreach(var kind in UnitVariantViews.PortraitKinds)
+            foreach(UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
+                if(!UnitVariantViews.HasVariantPortrait(kind))continue;
                 var variantRoot=new GameObject(kind+" portrait model");Animation variantAnimation=null;
                 if(MountedKnightView.IsMounted(kind))MountedKnightView.CreateVariant(variantRoot.transform,0,kind);
                 else if(kind==UnitKind.Artillery)UnitVariantViews.ArtilleryModel(variantRoot.transform,VisualFactory.TeamColor(0));
@@ -148,9 +151,9 @@ namespace RiskAI.Editor
             var cameraObject = new GameObject("Portrait camera");
             var camera = cameraObject.AddComponent<Camera>(); camera.cullingMask = 1 << 31;
             camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.075f,.085f,.09f);
-            bool ship=System.Enum.IsDefined(typeof(NavalUnitKind),name);
+            bool ship=System.Enum.IsDefined(typeof(UnitKind),name);
             bool siege=name=="Mortar"||name=="Artillery"||name=="Tank";
-            camera.orthographic = true; camera.orthographicSize = ship?(name==NavalUnitKind.Battleship.ToString()?4.2f:name==NavalUnitKind.Warship.ToString()?3.8f:3.35f):siege?(name=="Mortar"?1.35f:1.7f):name=="MountedKnight"?1.85f:name=="ArmyGeneral"?2.1f:1.4f;
+            camera.orthographic = true; camera.orthographicSize = ship?(name==UnitKind.Battleship.ToString()?4.2f:name==UnitKind.Warship.ToString()?3.8f:3.35f):siege?(name=="Mortar"?1.35f:1.7f):name=="MountedKnight"?1.85f:name=="ArmyGeneral"?2.1f:1.4f;
             Vector3 focus = root.transform.position + Vector3.up * (ship?2.15f:siege?1.15f:name=="ArmyGeneral"?1.95f:1.75f);
             camera.transform.position = focus + (ship?new Vector3(4.8f,3.1f,6.8f):new Vector3(2,1,5)); camera.transform.LookAt(focus);
             if (name == "MountedKnight" || name == "ArmyGeneral" || name == "MarineMajor" || name == "MarineGeneral" || name == "Roarer")

@@ -197,7 +197,7 @@ namespace RiskAI.Tests
         {
             var controller=Object.FindFirstObjectByType<RtsController>();
             var port=battle.Naval.Harbors.First(item=>item.Owner==0);
-            var transport=BattleTestScenario.Ship(battle.Naval,0,NavalUnitKind.Transport,port.Berth);
+            var transport=BattleTestScenario.Ship(battle.Naval,0,UnitKind.Transport,port.Berth);
             var first=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.Landing);
             var second=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,port.Landing);
             Assert.That(transport.TryEmbark(first),Is.True);Assert.That(transport.TryEmbark(second),Is.True);
@@ -299,7 +299,7 @@ namespace RiskAI.Tests
             var home=battle.Towns.First(town=>town.State.Owner==0);
             BattleTestScenario.MobileArmy(battle,0,UnitKind.Archer,2,home.ClaimPoint);
             var naval=NavalWorld.Current;
-            var ship=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,naval.Harbors.First().Berth);
+            var ship=BattleTestScenario.Ship(naval,0,UnitKind.Transport,naval.Harbors.First().Berth);
             controller.SelectAll();controller.SelectShip(ship,true);battle.TogglePause();
             yield return null;yield return null;
             var root=hud.GetComponent<UIDocument>().rootVisualElement;

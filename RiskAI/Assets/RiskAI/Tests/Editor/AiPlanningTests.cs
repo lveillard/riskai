@@ -60,6 +60,7 @@ namespace RiskAI.Tests
             // Every catalog entry, including kinds appended later, has usable traits.
             foreach(UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
+                if(UnitCatalog.Get(kind).Domain!=UnitDomain.Land)continue;
                 var traits=AiUnitAnalysis.For(kind);
                 Assert.That(traits.Cost,Is.GreaterThanOrEqualTo(1),kind.ToString());
                 Assert.That(traits.Value,Is.GreaterThan(0),kind.ToString());

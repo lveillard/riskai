@@ -25,8 +25,8 @@ namespace RiskAI
             session = battle; root = new GameObject("Soldier pool").transform;
             root.SetParent(battle.transform, false);
         }
-        static readonly int UnitKindCount = System.Enum.GetValues(typeof(UnitKind)).Length;
-        static int Key(int team, UnitKind kind) => team * UnitKindCount + (int)kind;
+        // Keyed by the catalog's dense type index, never by the enum ordinal.
+        static int Key(int team, UnitKind kind) => team * UnitCatalog.Count + UnitCatalog.Get(kind).Index;
         public Soldier Rent(int team, UnitKind kind, Vector3 point)
         {
             Soldier unit = null;

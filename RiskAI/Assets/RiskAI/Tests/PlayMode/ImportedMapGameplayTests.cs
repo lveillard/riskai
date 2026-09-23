@@ -198,7 +198,7 @@ namespace RiskAI.Tests
                         float minCityDistance = MinimumPairDistance(battle.Towns.Select(town => town.transform.position));
                         float minClaimDistance = MinimumPairDistance(battle.Towns.Select(town => town.ClaimPoint));
                         float minForeignTowerGuardDistance = MinimumForeignTowerGuardDistance(battle.Towns);
-                        Assert.That(minForeignTowerGuardDistance, Is.GreaterThan(UnitCatalog.Tower.TownWeapon.Range),
+                        Assert.That(minForeignTowerGuardDistance, Is.GreaterThan(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range),
                             "Own tower footprints must leave neighbouring source circles safe under any ownership seed.");
                         Debug.Log($"RISKAI_IMPORTED_MAP_OPENING: {test.Map} minCity={minCityDistance:F3} minClaim={minClaimDistance:F3} minForeignTowerGuard={minForeignTowerGuardDistance:F3}");
 

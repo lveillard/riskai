@@ -280,6 +280,7 @@ namespace RiskAI
 
         public Soldier Spawn(int team, UnitKind kind, Vector3 position, int originCountry = -1)
         {
+            if (UnitCatalog.Get(kind).Domain != UnitDomain.Land) throw new System.ArgumentException(kind + " is not a land unit; ships spawn through NavalWorld.", nameof(kind));
             if (IsPlayerEliminated(team)) return null;
             if (!NavMesh.SamplePosition(position, out var hit, 10, NavMesh.AllAreas)) return null;
             var soldier=SoldierPool.Rent(team,kind,hit.position);

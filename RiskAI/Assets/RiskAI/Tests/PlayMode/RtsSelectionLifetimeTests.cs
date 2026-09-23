@@ -217,8 +217,8 @@ namespace RiskAI.Tests
             var naval=NavalWorld.Current;
             Assert.That(naval,Is.Not.Null,"This naval fixture needs the map's ocean world.");
             var harbor=naval.Harbors.First();
-            var frigate=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,harbor.Berth);
-            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,harbor.Berth);
+            var frigate=BattleTestScenario.Ship(naval,0,UnitKind.Frigate,harbor.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,UnitKind.Transport,harbor.Berth);
             controller.SelectShip(frigate);controller.SelectShip(transport,true);
             Assert.That(controller.Fleet,Is.EquivalentTo(new[]{frigate,transport}));
 
@@ -299,8 +299,8 @@ namespace RiskAI.Tests
             var naval=NavalWorld.Current;
             Assert.That(naval,Is.Not.Null,"This naval fixture needs the map's ocean world.");
             var harbor=naval.Harbors.First();
-            var frigate=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,harbor.Berth);
-            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,harbor.Berth);
+            var frigate=BattleTestScenario.Ship(naval,0,UnitKind.Frigate,harbor.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,UnitKind.Transport,harbor.Berth);
             controller.SelectShip(frigate);controller.SelectShip(transport,true);
             Pump(Key.LeftCtrl,Key.Digit1);Pump();
 
@@ -326,7 +326,7 @@ namespace RiskAI.Tests
             Assert.That(naval,Is.Not.Null,"This naval fixture needs the map's ocean world.");
             var harbor=naval.Harbors.First(candidate=>candidate&&candidate.TryTransportLanding(out _,out _));
             var home=battle.Towns.First(town=>town.State.Owner==0);
-            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,harbor.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,UnitKind.Transport,harbor.Berth);
             // The boarder starts inland, out of loading range, so the controller
             // plans a real shore rendezvous instead of embarking immediately.
             var boarder=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,home.ClaimPoint);
@@ -366,7 +366,7 @@ namespace RiskAI.Tests
             var naval=NavalWorld.Current;
             Assert.That(naval,Is.Not.Null,"This naval fixture needs the map's ocean world.");
             var harbor=naval.Harbors.First(candidate=>candidate);
-            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,harbor.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,UnitKind.Transport,harbor.Berth);
             var passenger=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,harbor.Landing);
             controller.SelectOnly(passenger);
             Assert.That(passenger.Selected,Is.True);

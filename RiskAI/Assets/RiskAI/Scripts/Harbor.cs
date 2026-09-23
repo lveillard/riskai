@@ -8,7 +8,7 @@ namespace RiskAI
 {
     public sealed class Harbor : MonoBehaviour
     {
-        sealed class Order { public NavalUnitKind Kind; public int Team; public float Remaining; }
+        sealed class Order { public UnitKind Kind; public int Team; public float Remaining; }
         sealed class LandOrder { public UnitKind Kind; public int Team; public float Remaining; }
         readonly List<Order> queue=new List<Order>();
         readonly List<LandOrder> landQueue=new List<LandOrder>();
@@ -59,7 +59,7 @@ namespace RiskAI
         public bool Selected { get; private set; }
         public const float BerthRadius = 7.5f;
         public float TrainingProgress=>queue.Count==0?0:1-queue[0].Remaining/UnitCatalog.Get(queue[0].Kind).TrainSeconds;
-        public NavalUnitKind QueuedKind(int index)=>queue[index].Kind;
+        public UnitKind QueuedKind(int index)=>queue[index].Kind;
         public bool BuildingTower=>Defense&&Defense.UnderConstruction;
         BuildingTrainingView trainingView;
         LineRenderer rallyRing;
@@ -217,7 +217,7 @@ namespace RiskAI
         {
             claimZone.SetNavalDefender(ship,this);
         }
-        public string Buy(NavalUnitKind kind,int team=0)
+        public string Buy(UnitKind kind,int team=0)
         {
             if(!(UnitCatalog.Get(kind).Building==UnitBuilding.Harbor))return "Tipo de barco inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";

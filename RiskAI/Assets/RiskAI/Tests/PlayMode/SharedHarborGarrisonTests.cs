@@ -65,7 +65,7 @@ namespace RiskAI.Tests
                 initial.gameObject.SetActive(false);
             }
             DisableOtherSoldiers(battle);
-            var frigate = BattleTestScenario.Ship(naval, 0, NavalUnitKind.Frigate, port.Berth);
+            var frigate = BattleTestScenario.Ship(naval, 0, UnitKind.Frigate, port.Berth);
             TickPort(battle, port);
             Assert.That(port.Owner, Is.EqualTo(0));
             Assert.That(port.ClaimZone.Guardian, Is.SameAs(frigate));
@@ -88,8 +88,8 @@ namespace RiskAI.Tests
             Assert.That(port.ClaimZone.Guardian,Is.SameAs(alliedFootman));
 
             var commands = new PlayerBuildingCommands(battle);
-            battle.Economy.Gold[0] = UnitCatalog.Get(NavalUnitKind.Frigate).Cost;
-            Assert.That(commands.Execute(0, PlayerBuildingIntent.BuyShip(port.BuildingId, NavalUnitKind.Frigate)), Is.Null,
+            battle.Economy.Gold[0] = UnitCatalog.Get(UnitKind.Frigate).Cost;
+            Assert.That(commands.Execute(0, PlayerBuildingIntent.Recruit(port.BuildingId, UnitKind.Frigate)), Is.Null,
                 "A harbor captured by landed troops remains usable through the player command boundary.");
             Assert.That(port.QueueCount, Is.EqualTo(1));
 
@@ -97,7 +97,7 @@ namespace RiskAI.Tests
             TickPort(battle, port);
             Assert.That(port.Owner, Is.EqualTo(PlayerRules.NeutralOwner));
             Assert.That(port.ClaimZone.Guardian, Is.Null);
-            var transport = BattleTestScenario.Ship(naval, 0, NavalUnitKind.Transport, port.Berth);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, port.Berth);
             TickPort(battle, port);
             Assert.That(port.Owner, Is.Not.EqualTo(0), "A transport must never capture or hold a harbor by itself.");
             Assert.That(port.ClaimZone.Guardian, Is.Null);

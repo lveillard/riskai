@@ -11,7 +11,7 @@ namespace RiskAI
         public BuildingVariant VisualVariant { get; private set; }
         public int HostOwner => Town ? Town.State.Owner : Harbor ? Harbor.Owner : -1;
         public string HostName => Town ? Town.DisplayName : Harbor ? Harbor.DisplayName : "torre";
-        public override ref readonly UnitType Type => ref UnitCatalog.Tower;
+        public override ref readonly UnitType Type => ref UnitCatalog.Get(UnitKind.Tower);
         public override float MaxHealth => Type.MaxHealth;
         /// <summary>units.json: a capturable post is never a target; attack its guardian.</summary>
         public override bool CanBeAttacked => Type.CanBeAttacked && IsAlive;

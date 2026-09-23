@@ -208,7 +208,7 @@ namespace RiskAI.Tests
             defender.Stop();
             defender.Follow(ally);
             var harbor = NavalWorld.Current.Harbors.First(port => port.Owner == defender.Team);
-            var transport = BattleTestScenario.Ship(NavalWorld.Current, defender.Team, NavalUnitKind.Transport, harbor.Berth);
+            var transport = BattleTestScenario.Ship(NavalWorld.Current, defender.Team, UnitKind.Transport, harbor.Berth);
             Assert.That(transport.TryEmbark(defender), Is.False);
             Assert.That(defender.IsGarrison, Is.True);
             Assert.That(defender.transform.position, Is.EqualTo(position));

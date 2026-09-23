@@ -81,7 +81,7 @@ namespace RiskAI
                 input.SelectHarbor(port);
                 Frame(input, port.Landing);
                 battle.TogglePause();
-                port.Buy(NavalUnitKind.Transport);
+                port.Buy(UnitKind.Transport);
                 port.RecruitLand(UnitKind.MarinePrivate);
                 port.SimTick(.05f);
                 battle.TogglePause();
@@ -90,7 +90,7 @@ namespace RiskAI
                 var previous = port.Defender;
                 port.ClaimZone.SetDefender(null);
                 if (previous) previous.gameObject.SetActive(false);
-                var guard = battle.Naval.Spawn(0, NavalUnitKind.Frigate, port.Berth);
+                var guard = battle.Naval.Spawn(0, UnitKind.Frigate, port.Berth);
                 if (!guard) { Debug.LogError("RISKAI_PRESENTATION_FAILED: guard spawn"); break; }
                 if (port.IsImportedPort) port.LinkedTown.SimTick(.05f);
                 port.SimTick(.05f);
@@ -150,8 +150,8 @@ namespace RiskAI
                 bool nearPort=false;
                 foreach(var port in battle.Naval.Harbors)if(Vector3.Distance(port.Berth,start)<40){nearPort=true;break;}
                 if(nearPort)continue;
-                var frigate=battle.Naval.Spawn(0,NavalUnitKind.Frigate,start);
-                var transport=battle.Naval.Spawn(0,NavalUnitKind.Transport,other);
+                var frigate=battle.Naval.Spawn(0,UnitKind.Frigate,start);
+                var transport=battle.Naval.Spawn(0,UnitKind.Transport,other);
                 if(!frigate||!transport)continue;
                 input.Clear();input.CameraRig.enabled=false;
                 var camera=Camera.main;var focus=start+new Vector3(5,0,9);

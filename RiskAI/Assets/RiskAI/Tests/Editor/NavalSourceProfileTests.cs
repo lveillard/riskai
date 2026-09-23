@@ -24,18 +24,18 @@ namespace RiskAI.Tests
                 int capacity = reader.ReadInt32();
                 Assert.That(Encoding.ASCII.GetString(reader.ReadBytes(4)), Is.EqualTo("Sch3"));
                 Assert.That(reader.BaseStream.Position, Is.EqualTo(reader.BaseStream.Length));
-                Assert.That(UnitCatalog.Get(NavalUnitKind.Transport).SourceRawcode, Is.EqualTo("n008"));
-                Assert.That(UnitCatalog.Get(NavalUnitKind.Transport).Transport.Capacity, Is.EqualTo(capacity));
-                Assert.That(UnitCatalog.Get(NavalUnitKind.Transport).CanCapture, Is.False);
-                Assert.That(UnitCatalog.Get(NavalUnitKind.Transport).Weapon.AverageDamage, Is.Zero);
+                Assert.That(UnitCatalog.Get(UnitKind.Transport).SourceRawcode, Is.EqualTo("n008"));
+                Assert.That(UnitCatalog.Get(UnitKind.Transport).Transport.Capacity, Is.EqualTo(capacity));
+                Assert.That(UnitCatalog.Get(UnitKind.Transport).CanCapture, Is.False);
+                Assert.That(UnitCatalog.Get(UnitKind.Transport).Weapon.AverageDamage, Is.Zero);
             }
         }
 
         // Explicit W3U values, not inherited Warcraft defaults.
-        [TestCase(NavalUnitKind.Frigate, "h00W", true, 400f, 5, 5)]
-        [TestCase(NavalUnitKind.Transport, "n008", false, 300f, 2, 2)]
+        [TestCase(UnitKind.Frigate, "h00W", true, 400f, 5, 5)]
+        [TestCase(UnitKind.Transport, "n008", false, 300f, 2, 2)]
         public void PublicKindsResolveToTheirSourceIdentityAndExplicitEconomy(
-            NavalUnitKind kind, string rawId, bool canCapture, float health, int gold, int points)
+            UnitKind kind, string rawId, bool canCapture, float health, int gold, int points)
         {
             var profile = UnitCatalog.Get(kind);
             Assert.That(profile.SourceRawcode, Is.EqualTo(rawId));
@@ -50,25 +50,25 @@ namespace RiskAI.Tests
         [Test]
         public void FrigateIsH00WAndDoesNotSilentlySelectClassicH00Q()
         {
-            Assert.That((int)NavalUnitKind.Frigate, Is.Zero);
-            Assert.That((int)NavalUnitKind.Transport, Is.EqualTo(1));
-            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).SourceRawcode, Is.EqualTo("h00W"));
-            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).Armor, Is.EqualTo(6f), "Classic h00Q overrides armor to four; it is a different unit.");
-            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).Weapon.Base, Is.EqualTo(30f));
-            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).Weapon.Range, Is.EqualTo(1000f / 50f));
-            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).CanAttack,Is.True);
-            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).CanCapture,Is.True);
-            Assert.That(UnitCatalog.Get(NavalUnitKind.Frigate).CanTransport,Is.False);
-            Assert.That(UnitCatalog.Get(NavalUnitKind.Transport).CanAttack,Is.False);
-            Assert.That(UnitCatalog.Get(NavalUnitKind.Transport).CanTransport,Is.True);
-            Assert.Throws<ArgumentOutOfRangeException>(() => UnitCatalog.Get((NavalUnitKind)999));
+            Assert.That(UnitCatalog.Get(UnitKind.Frigate).Id, Is.EqualTo("Frigate"));
+            Assert.That(UnitCatalog.Get(UnitKind.Transport).Id, Is.EqualTo("Transport"));
+            Assert.That(UnitCatalog.Get(UnitKind.Frigate).SourceRawcode, Is.EqualTo("h00W"));
+            Assert.That(UnitCatalog.Get(UnitKind.Frigate).Armor, Is.EqualTo(6f), "Classic h00Q overrides armor to four; it is a different unit.");
+            Assert.That(UnitCatalog.Get(UnitKind.Frigate).Weapon.Base, Is.EqualTo(30f));
+            Assert.That(UnitCatalog.Get(UnitKind.Frigate).Weapon.Range, Is.EqualTo(1000f / 50f));
+            Assert.That(UnitCatalog.Get(UnitKind.Frigate).CanAttack,Is.True);
+            Assert.That(UnitCatalog.Get(UnitKind.Frigate).CanCapture,Is.True);
+            Assert.That(UnitCatalog.Get(UnitKind.Frigate).CanTransport,Is.False);
+            Assert.That(UnitCatalog.Get(UnitKind.Transport).CanAttack,Is.False);
+            Assert.That(UnitCatalog.Get(UnitKind.Transport).CanTransport,Is.True);
+            Assert.Throws<ArgumentOutOfRangeException>(() => UnitCatalog.Get((UnitKind)999));
         }
 
         // h00U, h001 and n007 explicit W3U overrides (hp, gold, points, armor, speed, damage, cooldown).
-        [TestCase(NavalUnitKind.Warship, "h00U", 1250f, 20, 10f, 450f, 90f, 1.5f)]
-        [TestCase(NavalUnitKind.Battleship, "h001", 2350f, 45, 20f, 330f, 130f, 1.4f)]
-        [TestCase(NavalUnitKind.ArmoredTransport, "n007", 300f, 6, 30f, 370f, 0f, 0f)]
-        public void V030HullsUseTheirExplicitSourceOverrides(NavalUnitKind kind, string rawId, float health, int gold,
+        [TestCase(UnitKind.Warship, "h00U", 1250f, 20, 10f, 450f, 90f, 1.5f)]
+        [TestCase(UnitKind.Battleship, "h001", 2350f, 45, 20f, 330f, 130f, 1.4f)]
+        [TestCase(UnitKind.ArmoredTransport, "n007", 300f, 6, 30f, 370f, 0f, 0f)]
+        public void V030HullsUseTheirExplicitSourceOverrides(UnitKind kind, string rawId, float health, int gold,
             float armor, float nativeSpeed, float baseDamage, float cooldown)
         {
             var profile = UnitCatalog.Get(kind);
@@ -92,18 +92,19 @@ namespace RiskAI.Tests
             }
             else
             {
-                Assert.That(profile.Transport.Capacity, Is.EqualTo(UnitCatalog.Get(NavalUnitKind.Transport).Transport.Capacity), "n007 attaches the same Sch3 cargo ability as n008.");
+                Assert.That(profile.Transport.Capacity, Is.EqualTo(UnitCatalog.Get(UnitKind.Transport).Transport.Capacity), "n007 attaches the same Sch3 cargo ability as n008.");
                 Assert.That(profile.CanTransport, Is.True);
                 Assert.That(profile.CanCapture, Is.False);
             }
         }
 
         [Test]
-        public void V030HullOrdinalsAreAppended()
+        public void V030HullsFollowTheClassicHullsInUnitsJson()
         {
-            Assert.That((int)NavalUnitKind.Warship, Is.EqualTo(2));
-            Assert.That((int)NavalUnitKind.Battleship, Is.EqualTo(3));
-            Assert.That((int)NavalUnitKind.ArmoredTransport, Is.EqualTo(4));
+            // Order is units.json order (the production grid breaks cost ties by it); no ordinal is an index.
+            Assert.That(UnitCatalog.Get(UnitKind.Warship).Index, Is.GreaterThan(UnitCatalog.Get(UnitKind.Transport).Index));
+            Assert.That(UnitCatalog.Get(UnitKind.Battleship).Index, Is.GreaterThan(UnitCatalog.Get(UnitKind.Warship).Index));
+            Assert.That(UnitCatalog.Get(UnitKind.ArmoredTransport).Index, Is.GreaterThan(UnitCatalog.Get(UnitKind.Battleship).Index));
         }
     }
 }

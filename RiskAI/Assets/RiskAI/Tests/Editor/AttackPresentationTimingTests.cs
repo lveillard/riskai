@@ -10,6 +10,7 @@ namespace RiskAI.Tests
         {
             foreach(UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
+                if(UnitCatalog.Get(kind).Domain!=UnitDomain.Land)continue;
                 var profile=UnitCatalog.Get(kind);
                 float contact=UnitCatalog.Get(kind).AttackContact;
                 float recovery=AttackPresentationTiming.RecoverySeconds(

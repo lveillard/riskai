@@ -14,12 +14,15 @@ namespace RiskAI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset() => resolvedPortraits.Clear();
 
-        /// <summary>Kinds whose portrait is rendered from a variant rather than a shared model prefab.</summary>
-        public static readonly UnitKind[] PortraitKinds = { UnitKind.EliteRifleman, UnitKind.Roarer, UnitKind.ArmyGeneral, UnitKind.MarineMajor, UnitKind.MarineGeneral, UnitKind.Artillery, UnitKind.Tank };
+        /// <summary>A land type whose units.json portrait is its own id is rendered from its variant view.</summary>
+        public static bool HasVariantPortrait(UnitKind kind)
+        {
+            ref readonly var type = ref UnitCatalog.Get(kind);
+            return type.Domain == UnitDomain.Land && type.Portrait == type.Id;
+        }
 
         /// <summary>Resources path of the unit portrait (units.json portrait, then portraitFallback until the art setup renders it).</summary>
         public static string PortraitResource(UnitKind kind) => Resolve(UnitCatalog.Get(kind).Portrait,UnitCatalog.Get(kind).PortraitFallback);
-        public static string PortraitResource(NavalUnitKind kind) => Resolve(UnitCatalog.Get(kind).Portrait,UnitCatalog.Get(kind).PortraitFallback);
 
         static string Resolve(string preferred,string fallback)
         {

@@ -6,22 +6,23 @@ namespace RiskAI.Core
     /// <summary>
     /// The one unit registry. Holds the types resolved from units.json by <see cref="Bind"/>
     /// (the Runtime loader calls it before any consumer exists). Reading before Bind fails loudly.
+    /// Types are found by <see cref="UnitKind"/> (generated from the same ids) through a map built
+    /// at Bind; consumers index their own tables by <see cref="UnitType.Index"/>, never by ordinal.
     /// </summary>
     public static class UnitCatalog
     {
-        public const string TowerId = "Tower";
         static UnitType[] types;
-        static int[] landIndex, navalIndex;
-        static int towerIndex = -1;
+        static int[] indexOfKind;
+        static UnitKind[] kindOfIndex;
         static Dictionary<string, int> byId;
-        static UnitKind[] cityUnits, harborUnits;
-        static NavalUnitKind[] harborShips;
+        static UnitKind[] cityUnits, harborUnits, harborShips;
         static float transportLoadRadius;
         static int transportLoadLimit;
 
         public static bool IsBound => types != null;
         /// <summary>Incremented on every Bind so derived caches can refresh.</summary>
         public static int Revision { get; private set; }
+        /// <summary>Number of types; valid dense indices are 0..Count-1.</summary>
         public static int Count => Types.Length;
 
         static UnitType[] Types => types ?? throw new InvalidOperationException(
@@ -35,32 +36,37 @@ namespace RiskAI.Core
             var ids = new Dictionary<string, int>(resolved.Length, StringComparer.Ordinal);
             for (int i = 0; i < resolved.Length; i++) { resolved[i] = UnitType.From(file.Units[i], i); ids.Add(resolved[i].Id, i); }
 
-            var land = Map<UnitKind>(ids, UnitDomain.Land, resolved);
-            var naval = Map<NavalUnitKind>(ids, UnitDomain.Sea, resolved);
-            if (!ids.TryGetValue(TowerId, out int tower) || resolved[tower].Domain != UnitDomain.Static)
-                throw new ArgumentException("units.json needs the static '" + TowerId + "' post.", nameof(file));
-            for (int i = 0; i < resolved.Length; i++)
+            // The generated identity must match the file exactly (npm run build regenerates it).
+            var names = Enum.GetNames(typeof(UnitKind));
+            var values = (UnitKind[])Enum.GetValues(typeof(UnitKind));
+            if (names.Length != resolved.Length)
+                throw new ArgumentException("UnitKind.g.cs is out of date with units.json (" + names.Length + " vs " + resolved.Length + " types): run npm run build in scripts/config.", nameof(file));
+            int maxOrdinal = 0;
+            for (int i = 0; i < values.Length; i++) maxOrdinal = Math.Max(maxOrdinal, (int)values[i]);
+            var index = new int[maxOrdinal + 1];
+            for (int i = 0; i < index.Length; i++) index[i] = -1;
+            var kinds = new UnitKind[resolved.Length];
+            for (int i = 0; i < values.Length; i++)
             {
-                bool known = resolved[i].Domain == UnitDomain.Land ? Enum.IsDefined(typeof(UnitKind), resolved[i].Id)
-                    : resolved[i].Domain == UnitDomain.Sea ? Enum.IsDefined(typeof(NavalUnitKind), resolved[i].Id) : i == tower;
-                if (!known) throw new ArgumentException("units.json type '" + resolved[i].Id + "' has no runtime identity.", nameof(file));
+                if (!ids.TryGetValue(names[i], out int dense))
+                    throw new ArgumentException("UnitKind." + names[i] + " has no units.json type: run npm run build in scripts/config.", nameof(file));
+                index[(int)values[i]] = dense; kinds[dense] = values[i];
             }
 
-            var city = new List<UnitKind>(); var harbor = new List<UnitKind>(); var ships = new List<NavalUnitKind>();
+            var city = new List<UnitKind>(); var harbor = new List<UnitKind>(); var ships = new List<UnitKind>();
             float loadRadius = 0; int loadLimit = 0;
             for (int i = 0; i < resolved.Length; i++)
             {
                 ref readonly var type = ref resolved[i];
-                if (type.Domain == UnitDomain.Land && type.Building == UnitBuilding.City) city.Add((UnitKind)Enum.Parse(typeof(UnitKind), type.Id));
-                if (type.Domain == UnitDomain.Land && type.Building == UnitBuilding.Harbor) harbor.Add((UnitKind)Enum.Parse(typeof(UnitKind), type.Id));
-                if (type.Domain == UnitDomain.Sea && type.Building == UnitBuilding.Harbor) ships.Add((NavalUnitKind)Enum.Parse(typeof(NavalUnitKind), type.Id));
+                if (type.Building == UnitBuilding.City) city.Add(kinds[i]);
+                if (type.Building == UnitBuilding.Harbor) (type.Domain == UnitDomain.Sea ? ships : harbor).Add(kinds[i]);
                 if (!type.CanTransport) continue;
                 if (loadLimit != 0 && (type.Transport.LoadRadius != loadRadius || type.Transport.LoadLimit != loadLimit))
                     throw new ArgumentException("Every transport shares one load radius/limit (shore and harbor geometry use it).", nameof(file));
                 loadRadius = type.Transport.LoadRadius; loadLimit = type.Transport.LoadLimit;
             }
 
-            types = resolved; byId = ids; landIndex = land; navalIndex = naval; towerIndex = tower;
+            types = resolved; byId = ids; indexOfKind = index; kindOfIndex = kinds;
             cityUnits = city.ToArray(); harborUnits = harbor.ToArray(); harborShips = ships.ToArray();
             transportLoadRadius = loadRadius; transportLoadLimit = loadLimit;
             Revision++;
@@ -69,40 +75,23 @@ namespace RiskAI.Core
         /// <summary>Editor/test domain reset (SubsystemRegistration).</summary>
         public static void Unbind()
         {
-            types = null; byId = null; landIndex = navalIndex = null; towerIndex = -1;
-            cityUnits = harborUnits = null; harborShips = null;
+            types = null; byId = null; indexOfKind = null; kindOfIndex = null;
+            cityUnits = harborUnits = harborShips = null;
         }
 
-        static int[] Map<T>(Dictionary<string, int> ids, UnitDomain domain, UnitType[] resolved) where T : struct, Enum
-        {
-            var names = Enum.GetNames(typeof(T));
-            var index = new int[names.Length];
-            for (int i = 0; i < names.Length; i++)
-            {
-                if (!ids.TryGetValue(names[i], out index[i]) || resolved[index[i]].Domain != domain)
-                    throw new ArgumentException("units.json has no " + domain + " type '" + names[i] + "'.");
-            }
-            return index;
-        }
+        public static bool IsDefined(UnitKind kind) =>
+            (uint)kind < (uint)(indexOfKind ?? Array.Empty<int>()).Length && indexOfKind[(int)kind] >= 0;
 
         public static ref readonly UnitType Get(UnitKind kind)
         {
-            var all = Types; int ordinal = (int)kind;
-            if ((uint)ordinal >= (uint)landIndex.Length) throw new ArgumentOutOfRangeException(nameof(kind));
-            return ref all[landIndex[ordinal]];
+            var all = Types;
+            if (!IsDefined(kind)) throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown unit type");
+            return ref all[indexOfKind[(int)kind]];
         }
-
-        public static ref readonly UnitType Get(NavalUnitKind kind)
-        {
-            var all = Types; int ordinal = (int)kind;
-            if ((uint)ordinal >= (uint)navalIndex.Length) throw new ArgumentOutOfRangeException(nameof(kind));
-            return ref all[navalIndex[ordinal]];
-        }
-
-        /// <summary>The capturable city/harbor post.</summary>
-        public static ref readonly UnitType Tower => ref Types[towerIndex];
 
         public static ref readonly UnitType At(int index) => ref Types[index];
+
+        public static UnitKind KindAt(int index) { var _ = Types; return kindOfIndex[index]; }
 
         public static bool TryIndexOf(string id, out int index)
         {
@@ -115,7 +104,7 @@ namespace RiskAI.Core
         /// <summary>Land units trained in a harbor, in units.json order.</summary>
         public static IReadOnlyList<UnitKind> HarborUnits { get { var _ = Types; return harborUnits; } }
         /// <summary>Hulls built in a harbor, in units.json order.</summary>
-        public static IReadOnlyList<NavalUnitKind> HarborShips { get { var _ = Types; return harborShips; } }
+        public static IReadOnlyList<UnitKind> HarborShips { get { var _ = Types; return harborShips; } }
         /// <summary>Load radius shared by every transport (A00V 512 native); shore and harbor geometry use it.</summary>
         public static float TransportLoadRadius { get { var _ = Types; return transportLoadRadius; } }
         public static int TransportLoadLimit { get { var _ = Types; return transportLoadLimit; } }

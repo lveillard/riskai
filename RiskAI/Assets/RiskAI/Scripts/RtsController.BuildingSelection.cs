@@ -224,7 +224,7 @@ namespace RiskAI
                 : PreviewSelectedBuildings(OwnSelectedTowns(),cost);
         }
 
-        public ProductionBatchPreview PreviewShipPurchase(NavalUnitKind kind) =>
+        public ProductionBatchPreview PreviewShipPurchase(UnitKind kind) =>
             PreviewSelectedBuildings(OwnSelectedHarbors(),UnitCatalog.Get(kind).Cost);
 
         IEnumerable<Settlement> OwnSelectedTowns() => selectedTowns.Where(t=>t&&t.State.Owner==0);
@@ -257,11 +257,11 @@ namespace RiskAI
         }
 
         /// <summary>Queues one ship at every selected allied harbor, shortest naval queues first.</summary>
-        public string TryBuySelected(NavalUnitKind kind)
+        public string TryBuySelected(UnitKind kind)
         {
             LastProductionResult=QueueAtSelectedBuildings(
                 OwnSelectedHarbors(), h => h.QueueCount, StableHarborIndex,
-                h => ExecuteBuilding(PlayerBuildingIntent.BuyShip(h.BuildingId,kind)),
+                h => ExecuteBuilding(PlayerBuildingIntent.Recruit(h.BuildingId,kind)),
                 UnitCatalog.Get(kind).Cost,"Selecciona un puerto de tu bando para comprar barcos.");
             return LastProductionResult.Error;
         }

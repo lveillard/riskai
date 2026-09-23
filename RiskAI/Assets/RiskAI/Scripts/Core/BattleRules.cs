@@ -3,11 +3,7 @@ using System.Collections.Generic;
 
 namespace RiskAI.Core
 {
-    /// <summary>Land unit identity; each member is a units.json id (UnitCatalog maps it to its type).</summary>
-    public enum UnitKind { Footman, Archer, Knight, Mage, Mortar, Medic, MarinePrivate, MarineMajor, MarineGeneral, EliteRifleman, Roarer, ArmyGeneral, Artillery, Tank }
-
-    /// <summary>Naval unit identity; each member is a units.json id.</summary>
-    public enum NavalUnitKind { Frigate, Transport, Warship, Battleship, ArmoredTransport }
+    // UnitKind (every unit type, land, sea and posts) is generated from units.json: UnitKind.g.cs.
 
     public static class BattleRules
     {

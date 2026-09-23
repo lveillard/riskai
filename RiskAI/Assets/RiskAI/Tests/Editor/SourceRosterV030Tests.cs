@@ -37,14 +37,9 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void NewKindsAreAppendedWithoutMovingCatalogOrdinals()
+        public void EveryKindResolvesItsOwnCatalogTypeById()
         {
-            Assert.That((int)UnitKind.MarineGeneral, Is.EqualTo(8));
-            Assert.That((int)UnitKind.EliteRifleman, Is.EqualTo(9));
-            Assert.That((int)UnitKind.Roarer, Is.EqualTo(10));
-            Assert.That((int)UnitKind.ArmyGeneral, Is.EqualTo(11));
-            Assert.That((int)UnitKind.Artillery, Is.EqualTo(12));
-            Assert.That((int)UnitKind.Tank, Is.EqualTo(13));
+            // v0.34: nothing indexes by the enum ordinal; each kind maps to its units.json id.
             foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind))) Assert.That(UnitCatalog.Get(kind).Id, Is.EqualTo(kind.ToString()));
         }
 

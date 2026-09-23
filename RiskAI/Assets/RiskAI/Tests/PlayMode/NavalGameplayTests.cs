@@ -26,7 +26,7 @@ namespace RiskAI.Tests
   [UnityTest] public IEnumerator LastTransportAndCargoKeepPlayerAliveUntilSunk()
   {
    var home=naval.Harbors.First(h=>h.Owner==1);
-   var transport=BattleTestScenario.Ship(naval,1,NavalUnitKind.Transport,home.Berth);
+   var transport=BattleTestScenario.Ship(naval,1,UnitKind.Transport,home.Berth);
    var cargo=BattleTestScenario.MobileArmy(battle,1,UnitKind.Archer,1,home.Landing)[0];
    Assert.That(transport.TryEmbark(cargo),Is.True);
    foreach(var town in battle.Towns)if(town.State.Owner==1)town.State.Owner=-1;
@@ -43,7 +43,7 @@ namespace RiskAI.Tests
    tick.Invoke(battle,new object[]{.1f});tick.Invoke(battle,new object[]{.1f});
    Assert.That(battle.IsPlayerEliminated(1),Is.True);
    Assert.That(announcements,Is.EqualTo(1));
-   Assert.That(naval.Spawn(1,NavalUnitKind.Transport,home.Berth),Is.Null);
+   Assert.That(naval.Spawn(1,UnitKind.Transport,home.Berth),Is.Null);
    Assert.That(battle.Spawn(1,UnitKind.Archer,home.Landing),Is.Null);
    yield return null;
   }
@@ -52,7 +52,7 @@ namespace RiskAI.Tests
    var home=naval.Harbors.First(h=>h.State.Owner==0);var island=naval.Harbors.First(h=>h.IsIsland);
    var islandGuard=island.Defender;island.ClaimZone.SetDefender(null);islandGuard.gameObject.SetActive(false);island.State.Owner=-1;island.Defense.enabled=false;
    Assert.That(island.Defender,Is.Null,"This transport fixture deliberately uses an unguarded neutral island.");
-   var ship=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,home.Berth);
+   var ship=BattleTestScenario.Ship(naval,0,UnitKind.Transport,home.Berth);
    var soldiers=BattleTestScenario.MobileArmy(battle,0,UnitKind.Footman,3,home.Landing);
    int population=battle.RecruitmentPopulation(0);float health=soldiers[0].Health;
    foreach(var u in soldiers)Assert.That(ship.TryEmbark(u),Is.True,"The explicit transport fixture must embark without teleporting.");
@@ -72,10 +72,10 @@ namespace RiskAI.Tests
   }
   [UnityTest] public IEnumerator NavalPurchasesCancelRefundAndCompleteExactlyOnce()
   {
-   var port=naval.Harbors.First(h=>h.State.Owner==0);const int budget=300;int frigateCost=UnitCatalog.Get(NavalUnitKind.Frigate).Cost,transportCost=UnitCatalog.Get(NavalUnitKind.Transport).Cost;battle.Economy.Gold[0]=budget;
-   Assert.That(port.Buy(NavalUnitKind.Frigate),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-frigateCost));
+   var port=naval.Harbors.First(h=>h.State.Owner==0);const int budget=300;int frigateCost=UnitCatalog.Get(UnitKind.Frigate).Cost,transportCost=UnitCatalog.Get(UnitKind.Transport).Cost;battle.Economy.Gold[0]=budget;
+   Assert.That(port.Buy(UnitKind.Frigate),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-frigateCost));
    Assert.That(port.CancelTraining(0),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget));
-   Assert.That(port.Buy(NavalUnitKind.Transport),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-transportCost));
+   Assert.That(port.Buy(UnitKind.Transport),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-transportCost));
    Assert.That(port.LinkedTown,Is.Not.Null);int linkedOwner=port.LinkedTown.State.Owner;
    long tick=battle.Clock.TickCount;float deadline=Time.realtimeSinceStartup+2;
    port.State.Owner=1;while(battle.Clock.TickCount==tick&&Time.realtimeSinceStartup<deadline)yield return null;
@@ -83,8 +83,8 @@ namespace RiskAI.Tests
    tick=battle.Clock.TickCount;deadline=Time.realtimeSinceStartup+2;
    port.State.Owner=0;while(battle.Clock.TickCount==tick&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(battle.Clock.TickCount,Is.GreaterThan(tick));int count=naval.Ships.Count;
-   Assert.That(port.Buy(NavalUnitKind.Frigate),Is.Null);
-   float finishAt=battle.BattleTime+UnitCatalog.Get(NavalUnitKind.Frigate).TrainSeconds+.2f;
+   Assert.That(port.Buy(UnitKind.Frigate),Is.Null);
+   float finishAt=battle.BattleTime+UnitCatalog.Get(UnitKind.Frigate).TrainSeconds+.2f;
    deadline=Time.realtimeSinceStartup+10;
    while(naval.Ships.Count==count&&battle.BattleTime<finishAt&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(naval.Ships.Count,Is.EqualTo(count+1));Assert.That(port.QueueCount,Is.Zero);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-frigateCost));
@@ -93,26 +93,26 @@ namespace RiskAI.Tests
   {
    var city=battle.Towns.First(t=>t.State.Owner==1);
    BattleTestScenario.MobileArmy(battle,1,UnitKind.Footman,2,city.Rally);
-   battle.Economy.Gold[1]=UnitCatalog.Get(NavalUnitKind.Frigate).Cost;
+   battle.Economy.Gold[1]=UnitCatalog.Get(UnitKind.Frigate).Cost;
    battle.AiEnabled=true;
    while(battle.BattleTime<.2f)battle.Clock.Advance(.05f,false,_=>{});
    battle.Commander.Tick(.05f);
-   Assert.That(battle.Economy.Gold[1],Is.EqualTo(UnitCatalog.Get(NavalUnitKind.Frigate).Cost),"The army must leave savings for the first purchased ship.");
+   Assert.That(battle.Economy.Gold[1],Is.EqualTo(UnitCatalog.Get(UnitKind.Frigate).Cost),"The army must leave savings for the first purchased ship.");
    naval.SimTick(.05f);
    Assert.That(naval.PendingShips(1),Is.EqualTo(1),"The first naval decision buys immediately when savings are ready.");
    Assert.That(naval.Ships,Is.Empty,"Buying a ship must not bypass its training queue.");
    Assert.That(battle.Economy.Gold[1],Is.Zero);
    battle.AiEnabled=false;
-   float deadline=Time.realtimeSinceStartup+UnitCatalog.Get(NavalUnitKind.Frigate).TrainSeconds+3;
+   float deadline=Time.realtimeSinceStartup+UnitCatalog.Get(UnitKind.Frigate).TrainSeconds+3;
    while(naval.Ships.Count==0&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(naval.Ships.Count,Is.EqualTo(1));
    Assert.That(naval.Ships[0].Team,Is.EqualTo(1));
-   Assert.That(naval.Ships[0].Kind,Is.EqualTo(NavalUnitKind.Frigate));
+   Assert.That(naval.Ships[0].Kind,Is.EqualTo(UnitKind.Frigate));
    Assert.That(naval.PendingShips(1),Is.Zero);
   }
   [UnityTest] public IEnumerator AiFleetPassKeepsAnExistingRouteInsteadOfRebuildingIt()
   {
-   var home=naval.Harbors.First(h=>h.Owner==1);var ship=BattleTestScenario.Ship(naval,1,NavalUnitKind.Frigate,home.Berth);
+   var home=naval.Harbors.First(h=>h.Owner==1);var ship=BattleTestScenario.Ship(naval,1,UnitKind.Frigate,home.Berth);
    var target=naval.Harbors.Where(h=>PlayerRules.IsPlayer(h.Owner)&&h.Owner!=1&&h.CanLaunch).OrderBy(h=>(h.Berth-ship.transform.position).sqrMagnitude).First();
    while(battle.BattleTime<battle.AiFirstNavalOffensiveTime+.1f)battle.Clock.Advance(.4,false,_=>{});
    ship.MoveTo(target.Berth,true);Assert.That(ship.IsAtOrRoutingTo(target.Berth),Is.True);
@@ -123,7 +123,7 @@ namespace RiskAI.Tests
   }
   [UnityTest] public IEnumerator StalledActiveRouteBecomesEligibleForAiReissue()
   {
-   var home=naval.Harbors.First(h=>h.Owner==0&&!h.IsIsland);var ship=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,home.Berth);
+   var home=naval.Harbors.First(h=>h.Owner==0&&!h.IsIsland);var ship=BattleTestScenario.Ship(naval,0,UnitKind.Frigate,home.Berth);
    var target=naval.Harbors.First(h=>h!=home&&h.CanLaunch);
    const BindingFlags hidden=BindingFlags.Instance|BindingFlags.NonPublic;var type=typeof(Ship);
    var route=(List<Vector3>)type.GetField("route",hidden).GetValue(ship);
@@ -138,17 +138,17 @@ namespace RiskAI.Tests
   }
   [UnityTest] public IEnumerator FrigateFiresAndTransportDestructionRemovesCargo()
   {
-   var port=naval.Harbors.First(h=>h.State.Owner==0);var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,port.Berth);
+   var port=naval.Harbors.First(h=>h.State.Owner==0);var transport=BattleTestScenario.Ship(naval,0,UnitKind.Transport,port.Berth);
    var soldier=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,port.Landing);Assert.That(transport.TryEmbark(soldier),Is.True);
    int before=battle.Population(0);Assert.That(SeaNavigation.TryNearestOcean(transport.transform.position+Vector3.forward*9,8,out var spot),Is.True);
-   var enemy=naval.Spawn(1,NavalUnitKind.Frigate,spot);Assert.That(enemy,Is.Not.Null);float health=transport.Health;enemy.Attack(transport);
+   var enemy=naval.Spawn(1,UnitKind.Frigate,spot);Assert.That(enemy,Is.Not.Null);float health=transport.Health;enemy.Attack(transport);
    yield return new WaitForSeconds(1.3f);Assert.That(transport.Health,Is.LessThan(health),"A frigate must fire a projectile which resolves damage.");
    transport.TakeDamage(10000,1,enemy);yield return null;Assert.That(battle.Population(0),Is.EqualTo(before-1));Assert.That(battle.Units.Contains(soldier),Is.False);Assert.That(naval.Ships.Contains(transport),Is.False);
   }
   [UnityTest] public IEnumerator FleetLandClickProjectsToNearbySeaAndShowsTheSharedOrderMarker()
   {
    var port=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
-   var ship=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,port.Berth);
+   var ship=BattleTestScenario.Ship(naval,0,UnitKind.Transport,port.Berth);
    Vector3 inland=port.Landing-port.Berth;inland.y=0;inland.Normalize();
    Vector3 requested=port.Landing+inland*1.5f;
    Assert.That(NavMesh.SamplePosition(requested,out var land,2,NavMesh.AllAreas),Is.True);
@@ -165,7 +165,7 @@ namespace RiskAI.Tests
   [UnityTest] public IEnumerator FrigateAutoTargetsCoastalSoldierAtMainlandHarbor()
   {
    var port=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
-   var frigate=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,port.Berth);
+   var frigate=BattleTestScenario.Ship(naval,0,UnitKind.Frigate,port.Berth);
    frigate.Stop();frigate.transform.position=port.Berth;
    foreach(var tower in battle.Towers.ToArray())if(tower)tower.gameObject.SetActive(false);
    foreach(var ship in naval.Ships.ToArray())if(ship&&ship!=frigate)ship.gameObject.SetActive(false);
@@ -186,7 +186,7 @@ namespace RiskAI.Tests
    foreach(var ship in naval.Ships.ToArray())if(ship)ship.gameObject.SetActive(false);
    foreach(var unit in battle.Units.ToArray())if(unit)unit.gameObject.SetActive(false);
    var archer=BattleTestScenario.Mobile(battle,0,UnitKind.Archer,port.Landing);
-   var transport=BattleTestScenario.Ship(naval,1,NavalUnitKind.Transport,port.Berth);
+   var transport=BattleTestScenario.Ship(naval,1,UnitKind.Transport,port.Berth);
    archer.HoldPosition();var anchor=archer.transform.position;float before=transport.Health;
    Assert.That(Vector3.Distance(archer.transform.position,transport.transform.position),Is.GreaterThan(UnitCatalog.Get(UnitKind.Archer).Weapon.Range),
     "The berth fixture must reproduce the old center-to-center range failure.");
@@ -223,7 +223,7 @@ namespace RiskAI.Tests
      var pivot=origin+seaward*pivotDistance;pivot.y=0;
      if(!SeaNavigation.HasClearance(pivot)||naval.Harbors.Any(h=>Vector2.Distance(new Vector2(h.Berth.x,h.Berth.z),new Vector2(pivot.x,pivot.z))<berthClearance))continue;
      if(!mortar)mortar=BattleTestScenario.Mobile(battle,0,UnitKind.Mortar,origin);
-     var candidate=naval.Spawn(1,NavalUnitKind.Frigate,pivot);if(!candidate)continue;
+     var candidate=naval.Spawn(1,UnitKind.Frigate,pivot);if(!candidate)continue;
      candidate.transform.rotation=Quaternion.LookRotation(-seaward);
      if(Vector3.Distance(mortar.transform.position,candidate.ApproachPoint(mortar.transform.position))<=UnitCatalog.Get(UnitKind.Mortar).Weapon.Range)frigate=candidate;
      else candidate.gameObject.SetActive(false);
@@ -254,7 +254,7 @@ namespace RiskAI.Tests
   {
    var home=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
    var destination=naval.Harbors.Where(h=>h!=home&&h.CanLaunch).OrderBy(h=>(h.Berth-home.Berth).sqrMagnitude).First();
-   var frigate=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,home.Berth);
+   var frigate=BattleTestScenario.Ship(naval,0,UnitKind.Frigate,home.Berth);
    var enemy=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,home.Landing);
    foreach(var tower in battle.Towers.ToArray())if(tower)tower.gameObject.SetActive(false);
    foreach(var ship in naval.Ships.ToArray())if(ship&&ship!=frigate)ship.gameObject.SetActive(false);
@@ -273,7 +273,7 @@ namespace RiskAI.Tests
   [UnityTest] public IEnumerator FrigateDamageReactionKeepsAnExplicitAttackTarget()
   {
    var home=naval.Harbors.First(h=>h.State.Owner==0&&!h.IsIsland);
-   var frigate=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,home.Berth);
+   var frigate=BattleTestScenario.Ship(naval,0,UnitKind.Frigate,home.Berth);
    var orderedTarget=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,home.Landing);
    var attacker=BattleTestScenario.Mobile(battle,1,UnitKind.Footman,home.Landing+Vector3.right*1.5f);
    orderedTarget.HoldPosition();attacker.HoldPosition();frigate.Attack(orderedTarget);

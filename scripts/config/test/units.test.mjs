@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validate, unitsPath } from '../validate.mjs';
-import { csharp, schemaJson, csharpPath, schemaPath } from '../build.mjs';
+import { csharp, schemaJson, csharpPath, schemaPath, unitKindSource, unitKindPath } from '../build.mjs';
 
 const load = () => JSON.parse(readFileSync(unitsPath, 'utf8'));
 const find = (file, id) => file.units.find((unit) => unit.id === id);

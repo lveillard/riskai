@@ -97,7 +97,7 @@ namespace RiskAI.Tests
                         battle.Naval.Harbors.Any(h => h.Defense == tower && h.Defender == guard);
                     if (ownGuard) continue;
                     float distance=Vector3.Distance(tower.transform.position, guard.transform.position);
-                    Assert.That(distance, Is.GreaterThan(UnitCatalog.Tower.TownWeapon.Range),
+                    Assert.That(distance, Is.GreaterThan(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range),
                         tower.HostName + " at " + tower.transform.position + " can shoot " + guard.name + " at " + guard.transform.position +
                         " (" + distance.ToString("F3") + "); independent posts must start outside weapon range.");
                 }

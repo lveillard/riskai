@@ -120,7 +120,7 @@ namespace RiskAI
             Vector3 fallback=transform.position+away*3.8f;
             // Rotate our added tower, keeping both source city and circle XY intact.
             // Independent starting posts must not bombard each other's defenders.
-            float clearance=UnitCatalog.Tower.TownWeapon.Range+1;
+            float clearance=UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range+1;
             for(int attempt=0;attempt<25;attempt++)
             {
                 float angle=attempt==0?0:((attempt+1)/2)*15*(attempt%2==0?-1:1);

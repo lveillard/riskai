@@ -56,7 +56,7 @@ namespace RiskAI.Tests
             var port=battle.Naval.Harbors.First(item=>item.IsImportedPort);
             port.LinkedTown.State.Owner=0;battle.Economy.Gold[0]=100;
             Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(port.BuildingId,UnitKind.MarinePrivate)),Is.Null);
-            Assert.That(commands.Execute(0,PlayerBuildingIntent.BuyShip(port.BuildingId,NavalUnitKind.Frigate)),Is.Null);
+            Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(port.BuildingId,UnitKind.Frigate)),Is.Null);
             var controller=Object.FindFirstObjectByType<RtsController>();controller.enabled=false;
             controller.SelectTown(port.LinkedTown);
             battle.TogglePause();

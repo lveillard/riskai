@@ -195,7 +195,7 @@ namespace RiskAI
             }
             if(port)
             {
-                for(int i=0;i<Harbor.QueueCapacity;i++)port.Buy(i%2==0?Core.NavalUnitKind.Frigate:Core.NavalUnitKind.Transport);
+                for(int i=0;i<Harbor.QueueCapacity;i++)port.Buy(i%2==0?Core.UnitKind.Frigate:Core.UnitKind.Transport);
                 port.RecruitLand(Core.UnitKind.MarinePrivate);
             }
             yield return new WaitForSecondsRealtime(.4f);
@@ -296,8 +296,8 @@ namespace RiskAI
             var port=input.SelectedHarbor;
             if(port&&port.CanLaunch)
             {
-                battle.Naval.Spawn(0,Core.NavalUnitKind.Transport,port.Berth);
-                if(SeaNavigation.TryNearestOcean(port.Berth+new Vector3(9,0,6),18,out var other))battle.Naval.Spawn(0,Core.NavalUnitKind.Frigate,other);
+                battle.Naval.Spawn(0,Core.UnitKind.Transport,port.Berth);
+                if(SeaNavigation.TryNearestOcean(port.Berth+new Vector3(9,0,6),18,out var other))battle.Naval.Spawn(0,Core.UnitKind.Frigate,other);
                 input.CameraRig.Focus(port.Berth);
                 yield return new WaitForSecondsRealtime(2);
                 input.CameraRig.ZoomAt(1,new Vector2(Screen.width*.5f,Screen.height*.5f));

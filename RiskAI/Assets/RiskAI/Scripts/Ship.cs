@@ -6,7 +6,7 @@ using UnityEngine.AI;
 
 namespace RiskAI
 {
-    // Mirrors Core.NavalUnitKind ordinals (cast directly): append new kinds at the end only.
+    // Mirrors Core.UnitKind ordinals (cast directly): append new kinds at the end only.
     public sealed class Ship : CombatTarget
     {
         readonly List<Soldier> cargo=new List<Soldier>();
@@ -22,7 +22,7 @@ namespace RiskAI
         internal bool IsOrderedToHarbor(Harbor harbor) => orderedHarbor && orderedHarbor == harbor;
         bool pendingShoreUnload;
         Vector3 pendingShore;
-        public NavalUnitKind Kind { get; private set; }
+        public UnitKind Kind { get; private set; }
         public bool Selected { get; private set; }
         public Harbor Garrison=>harborGuard;
         public bool IsGarrison=>harborGuard;
@@ -77,7 +77,7 @@ namespace RiskAI
             return targetVolume ? targetVolume.ClosestPoint(from) : transform.position;
         }
 
-        internal void Initialize(NavalWorld naval,int team,NavalUnitKind kind)
+        internal void Initialize(NavalWorld naval,int team,UnitKind kind)
         {
             world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
             NavalArt.CreateShip(this);

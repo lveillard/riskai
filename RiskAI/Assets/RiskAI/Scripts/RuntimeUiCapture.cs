@@ -91,8 +91,8 @@ namespace RiskAI
                 session.TogglePause();
                 session.Economy.Grant(harbor.Owner,100);
                 var commands=new PlayerBuildingCommands(session);
-                commands.Execute(harbor.Owner,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Frigate));
-                commands.Execute(harbor.Owner,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Transport));
+                commands.Execute(harbor.Owner,PlayerBuildingIntent.Recruit(harbor.BuildingId,UnitKind.Frigate));
+                commands.Execute(harbor.Owner,PlayerBuildingIntent.Recruit(harbor.BuildingId,UnitKind.Transport));
                 session.TogglePause();
                 controller.SelectHarbor(harbor);controller.Focus(harbor.Landing);
                 yield return Settle();
@@ -140,8 +140,8 @@ namespace RiskAI
                 if(!harbor){Debug.LogError("RISKAI_UI_REVIEW: no owned harbor in fixture seed");yield break;}
                 if(session.Paused)session.TogglePause();session.Economy.Grant(0,30);
                 var commands=new PlayerBuildingCommands(session);
-                commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Frigate));
-                commands.Execute(0,PlayerBuildingIntent.BuyShip(harbor.BuildingId,NavalUnitKind.Transport));
+                commands.Execute(0,PlayerBuildingIntent.Recruit(harbor.BuildingId,UnitKind.Frigate));
+                commands.Execute(0,PlayerBuildingIntent.Recruit(harbor.BuildingId,UnitKind.Transport));
                 controller.SelectHarbor(harbor);controller.Focus(harbor.IsImportedPort?harbor.LinkedTown.transform.position:harbor.Landing);
             }
             else if(stage=="denmark")

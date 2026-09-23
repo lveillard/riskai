@@ -35,7 +35,9 @@ namespace RiskAI
     /// </summary>
     public sealed class UnitPresentationLodView : MonoBehaviour
     {
-        static readonly Mesh[] ProxyMeshes = new Mesh[System.Enum.GetValues(typeof(UnitKind)).Length];
+        // One shared proxy mesh per unit type, indexed by the catalog's dense type index.
+        static Mesh[] proxyMeshes;
+        static int proxyRevision = -1;
         readonly List<Renderer> detailRenderers = new List<Renderer>(8);
         readonly List<Animation> legacyAnimations = new List<Animation>(2);
         readonly List<Behaviour> animationControllers = new List<Behaviour>(2);
@@ -179,8 +181,9 @@ namespace RiskAI
 
         static Mesh ProxyMesh(UnitKind kind)
         {
-            int index = (int)kind;
-            if (ProxyMeshes[index]) return ProxyMeshes[index];
+            if (proxyMeshes == null || proxyRevision != UnitCatalog.Revision) { proxyMeshes = new Mesh[UnitCatalog.Count]; proxyRevision = UnitCatalog.Revision; }
+            int index = UnitCatalog.Get(kind).Index;
+            if (proxyMeshes[index]) return proxyMeshes[index];
             bool mounted = Mounted(kind);
             bool ranged = kind == UnitKind.Archer || kind == UnitKind.Mage || kind == UnitKind.Medic || kind == UnitKind.MarinePrivate ||
                 kind == UnitKind.EliteRifleman || kind == UnitKind.Roarer;
@@ -214,7 +217,7 @@ namespace RiskAI
                 }
             var mesh = new Mesh { name = "Shared strategic " + kind + " proxy" };
             mesh.SetVertices(vertices); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
-            return ProxyMeshes[index] = mesh;
+            return proxyMeshes[index] = mesh;
         }
     }
 

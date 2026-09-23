@@ -175,12 +175,12 @@ namespace RiskAI
             string key = showKey ? slot.Key : null;
             if (option.IsShip)
             {
-                var kind = option.Ship; var preview = controller.PreviewShipPurchase(kind); var profile = UnitCatalog.Get(kind);
+                var kind = option.Kind; var preview = controller.PreviewShipPurchase(kind); var profile = UnitCatalog.Get(kind);
                 string detail = profile.MaxHealth + " vida · armadura " + profile.Armor + (profile.CanAttack ? " · " + profile.Weapon.DamageText + " daño · alcance " + profile.Weapon.Range : "") + (profile.CanTransport ? " · carga " + profile.Transport.Capacity : "");
                 return CommandCell("Build ship " + kind, UnitVariantViews.PortraitResource(kind), PurchaseTitle(profile.Name, preview) + " · " + PurchaseCost(preview, profile.Cost, key) + " · " + detail,
                     () => controller.Produce(option), preview, profile.Cost, key, QueuedCount(option), size);
             }
-            var unit = option.Unit; var unitPreview = controller.PreviewRecruitSelected(unit);
+            var unit = option.Kind; var unitPreview = controller.PreviewRecruitSelected(unit);
             return CommandCell("Recruit " + unit, PortraitResource(unit), PurchaseTitle(UnitCatalog.Get(unit).Name, unitPreview) + " · " + PurchaseCost(unitPreview, UnitCatalog.Get(unit).Cost, key) + " · " + UnitTooltip(unit),
                 () => controller.Produce(option), unitPreview, UnitCatalog.Get(unit).Cost, key, QueuedCount(option), size);
         }
@@ -255,19 +255,19 @@ namespace RiskAI
             int count = 0;
             if (option.IsShip)
             {
-                var kind = option.Ship;
+                var kind = option.Kind;
                 foreach (var harbor in controller.SelectedHarbors)
                     if (harbor && harbor.Owner == 0) for (int i = 0; i < harbor.QueueCount; i++) if (harbor.QueuedKind(i) == kind) count++;
             }
-            else if ((UnitCatalog.Get(option.Unit).Building==UnitBuilding.Harbor))
+            else if ((UnitCatalog.Get(option.Kind).Building==UnitBuilding.Harbor))
             {
                 foreach (var harbor in controller.SelectedHarbors)
-                    if (harbor && harbor.Owner == 0) for (int i = 0; i < harbor.LandQueueCount; i++) if (harbor.QueuedLandKind(i) == option.Unit) count++;
+                    if (harbor && harbor.Owner == 0) for (int i = 0; i < harbor.LandQueueCount; i++) if (harbor.QueuedLandKind(i) == option.Kind) count++;
             }
             else
             {
                 foreach (var town in controller.SelectedTowns)
-                    if (town && town.State.Owner == 0) for (int i = 0; i < town.QueueCount; i++) if (town.QueuedKind(i) == option.Unit) count++;
+                    if (town && town.State.Owner == 0) for (int i = 0; i < town.QueueCount; i++) if (town.QueuedKind(i) == option.Kind) count++;
             }
             return count;
         }

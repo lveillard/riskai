@@ -297,7 +297,7 @@ namespace RiskAI
             Harbor best=naval.Harbors.FirstOrDefault(h=>h&&h.Owner==0);
             if(best){SelectHarbor(best);Focus(best.Landing);}
         }
-        public void BuyShip(NavalUnitKind kind)
+        public void BuyShip(UnitKind kind)
         {
             string error=TryBuySelected(kind);
             if(!session)return;

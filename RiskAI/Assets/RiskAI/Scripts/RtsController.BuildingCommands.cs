@@ -45,8 +45,8 @@ namespace RiskAI
 
         public void Produce(ProductionOption option)
         {
-            if(option.IsShip)BuyShip(option.Ship);
-            else Recruit(option.Unit);
+            if(option.IsShip)BuyShip(option.Kind);
+            else Recruit(option.Kind);
         }
 
         /// <summary>Common local command boundary for retained UI, hotkeys and device adapters.</summary>

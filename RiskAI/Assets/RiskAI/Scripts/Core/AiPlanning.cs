@@ -127,9 +127,9 @@ namespace RiskAI.Core
             get
             {
                 if(traits!=null&&traitsRevision==UnitCatalog.Revision)return traits;
-                var kinds=(UnitKind[])Enum.GetValues(typeof(UnitKind));
-                var table=new AiUnitTraits[kinds.Length];
-                for(int i=0;i<table.Length;i++)table[i]=Build(kinds[i],UnitCatalog.Get(kinds[i]));
+                // Indexed by the catalog's dense type index (every type; the AI only asks for land units).
+                var table=new AiUnitTraits[UnitCatalog.Count];
+                for(int i=0;i<table.Length;i++)table[i]=Build(UnitCatalog.KindAt(i),UnitCatalog.At(i));
                 traitsRevision=UnitCatalog.Revision;
                 return traits=table;
             }
@@ -151,8 +151,8 @@ namespace RiskAI.Core
         /// <summary>Traits for any catalog kind. Kinds the catalog does not know yet fall back to a basic frontline unit.</summary>
         public static AiUnitTraits For(UnitKind kind)
         {
-            var table=Table;int index=(int)kind;
-            if(index>=0&&index<table.Length)return table[index];
+            var table=Table;
+            if(UnitCatalog.IsDefined(kind))return table[UnitCatalog.Get(kind).Index];
             return new AiUnitTraits(kind,AiUnitRole.Frontline,1,1,12f,200f,1f,AttackKind.Normal,ArmorKind.Heavy,false,false,false);
         }
 
@@ -175,7 +175,7 @@ namespace RiskAI.Core
         /// <summary>Threat of a city post tower. It only fires while the guardian lives, so the guardian's health is its effective durability.</summary>
         public static float TowerValue(float guardianHealth,AiForceMix attackers)
         {
-            var tower=UnitCatalog.Tower.TownWeapon;
+            var tower=UnitCatalog.Get(UnitKind.Tower).TownWeapon;
             float dps=tower.AverageDamage/Math.Max(.1f,tower.Cooldown);
             float multiplier=0,weights=0;
             for(int a=0;a<AiForceMix.ArmorCount;a++)
