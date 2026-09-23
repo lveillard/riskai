@@ -96,6 +96,7 @@ namespace RiskAI
         static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
         public void Validate()
         {
+            outsideAnchors = null;
             int size = checked(width * height);
             if (width < 2 || height < 2 || cellSize <= 0 || !Finite(cellSize) ||
                 heightSamples == null || heightSamples.Length != size || landSamples == null || landSamples.Length != size ||
@@ -135,6 +136,38 @@ namespace RiskAI
                         treeSpecies == null || tree.species < 0 || tree.species >= treeSpecies.Length)
                         throw new InvalidOperationException("Invalid imported source tree.");
         }
+        // WC3 units never leave the playable rectangle: the source-walkable strip beyond
+        // the W3I camera bounds would otherwise form a land corridor around the map edge.
+        // A few source posts sit up to one W3E cell past the rectangle; a small disc
+        // around each keeps them usable without reopening the corridor.
+        public const float OutsideAnchorRadius = 12f;
+        [NonSerialized] Vector2[] outsideAnchors;
+        public bool InPlayable(float x, float z, float margin = 0)
+        {
+            if (x >= PlayableMinX - .001f - margin && x <= PlayableMaxX + .001f + margin && z >= PlayableMinZ - .001f - margin && z <= PlayableMaxZ + .001f + margin) return true;
+            return NearOutsideAnchor(x, z, margin);
+        }
+        /// <summary>Within the playable disc of a source post that lies just past the rectangle.</summary>
+        public bool NearOutsideAnchor(float x, float z, float margin = 0)
+        {
+            if (outsideAnchors == null) outsideAnchors = OutsideAnchors();
+            float radius = (OutsideAnchorRadius + margin) * (OutsideAnchorRadius + margin);
+            foreach (var anchor in outsideAnchors)
+                if ((anchor.x - x) * (anchor.x - x) + (anchor.y - z) * (anchor.y - z) <= radius) return true;
+            return false;
+        }
+        Vector2[] OutsideAnchors()
+        {
+            var list = new System.Collections.Generic.List<Vector2>();
+            bool Outside(float x, float z) => x < PlayableMinX || x > PlayableMaxX || z < PlayableMinZ || z > PlayableMaxZ;
+            if (cities != null) foreach (var city in cities)
+            {
+                if (Outside(city.x, city.z)) list.Add(new Vector2(city.x, city.z));
+                if (Outside(city.claimX, city.claimZ)) list.Add(new Vector2(city.claimX, city.claimZ));
+            }
+            if (countries != null) foreach (var country in countries) if (Outside(country.x, country.z)) list.Add(new Vector2(country.x, country.z));
+            return list.ToArray();
+        }
         public bool Contains(float x, float z) => x >= originX && z >= originZ && x <= originX + (width - 1) * cellSize && z <= originZ + (height - 1) * cellSize;
         public float HeightAt(float x, float z) => Sample(heightSamples, x, z);
         public float WaterAt(float x, float z) => Sample(waterSamples, x, z);
@@ -150,13 +183,13 @@ namespace RiskAI
         public float WalkHeightAt(float x,float z)=>HeightAt(x,z);
         public bool IsWalkable(float x,float z)
         {
-            if(!Contains(x,z))return false;
+            if(!Contains(x,z)||!InPlayable(x,z))return false;
             if(!HasSourcePathing)return IsLand(x,z);
             return TryPathingIndex(x,z,out int index)&&(decodedPathing[index]&0x02)==0;
         }
         public bool IsShipNavigable(float x,float z)
         {
-            if(!Contains(x,z)||IsLand(x,z)||Mathf.Abs(WaterAt(x,z)+.24f)>=.4f)return false;
+            if(!Contains(x,z)||!InPlayable(x,z)||IsLand(x,z)||Mathf.Abs(WaterAt(x,z)+.24f)>=.4f)return false;
             if(!HasSourcePathing)return Mathf.Abs(WaterAt(x,z)+.24f)<.4f;
             return TryPathingIndex(x,z,out int index)&&(decodedPathing[index]&0x40)==0;
         }
@@ -170,6 +203,7 @@ namespace RiskAI
         {
             if((PathingAt(x,z)&0x02)!=0)return false;
             float sourceX=pathingOriginX+(x+.5f)*pathingCellSize,sourceZ=pathingOriginZ+(z+.5f)*pathingCellSize;
+            if(!InPlayable(sourceX,sourceZ))return false;
             int terrainX=Mathf.Clamp(Mathf.FloorToInt((sourceX-originX)/cellSize),0,width-2);
             int terrainZ=Mathf.Clamp(Mathf.FloorToInt((sourceZ-originZ)/cellSize),0,height-2);
             return !TerrainCellUsesCoarseNavigation(terrainX,terrainZ);
@@ -216,7 +250,7 @@ namespace RiskAI
             {
                 float sourceX=originX+(x+.5f)*cellSize,sourceZ=originZ+(z+.5f)*cellSize;
                 Vector2 center=TerrainPointFromSource(sourceX,sourceZ);
-                if(!IsLand(center.x,center.y))continue;
+                if(!InPlayable(sourceX,sourceZ)||!IsLand(center.x,center.y))continue;
                 int minX=Mathf.Max(0,Mathf.FloorToInt((originX+x*cellSize-pathingOriginX)/pathingCellSize));
                 int minZ=Mathf.Max(0,Mathf.FloorToInt((originZ+z*cellSize-pathingOriginZ)/pathingCellSize));
                 int maxX=Mathf.Min(pathingWidth,Mathf.CeilToInt((originX+(x+1)*cellSize-pathingOriginX)/pathingCellSize));

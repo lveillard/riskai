@@ -165,10 +165,32 @@ namespace RiskAI
                 RtsSkin.WorldHealthBar(new Rect(p.x-size/2,y,size,target is Ship?9:7),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
             }
         }
+        // Relief plus the country borders of the shared territory field (the same source as
+        // the strategic atlas, camp inspection and border posts).
+        static Texture2D BuildMinimapTexture()
+        {
+            const int resolution=192;
+            var texture=new Texture2D(resolution,resolution,TextureFormat.RGBA32,false){filterMode=FilterMode.Point};
+            var field=TerritoryField.Current;var colors=new Color[resolution*resolution];var countries=new int[colors.Length];
+            for (int iz=0;iz<resolution;iz++) for (int ix=0;ix<resolution;ix++)
+            {
+                float x=Mathf.Lerp(MapLayout.PlayableMin.x,MapLayout.PlayableMax.x,(ix+.5f)/resolution),z=Mathf.Lerp(MapLayout.PlayableMin.y,MapLayout.PlayableMax.y,(iz+.5f)/resolution);
+                int i=iz*resolution+ix;bool land=MapLayout.IsLand(x,z);countries[i]=land?field.CountryAt(x,z):-2;
+                colors[i]=land?TerrainBiomes.MinimapLand(x,z,MapLayout.Height(x,z)):new Color(.10f,.25f,.34f);
+            }
+            for (int iz=1;iz<resolution;iz++) for (int ix=1;ix<resolution;ix++)
+            {
+                int i=iz*resolution+ix,c=countries[i];
+                if (c<0) continue;
+                int left=countries[i-1],below=countries[i-resolution];
+                if ((left>=0&&left!=c)||(below>=0&&below!=c)) colors[i]=Color.Lerp(colors[i],Color.black,.45f);
+            }
+            texture.SetPixels(colors);texture.Apply();return texture;
+        }
         void DrawMinimap(Rect r)
         {
             RtsSkin.Frame(new Rect(r.x-3,r.y-3,r.width+6,r.height+6));
-            if (!minimapTexture) { const int resolution=192; minimapTexture = new Texture2D(resolution,resolution,TextureFormat.RGBA32,false); for (int ix=0;ix<resolution;ix++) for(int iz=0;iz<resolution;iz++){float x=Mathf.Lerp(MapLayout.PlayableMin.x,MapLayout.PlayableMax.x,(ix+.5f)/resolution),z=Mathf.Lerp(MapLayout.PlayableMin.y,MapLayout.PlayableMax.y,(iz+.5f)/resolution);float h=MapLayout.Height(x,z); minimapTexture.SetPixel(ix,iz,MapLayout.IsLand(x,z)?Color.Lerp(new Color(.24f,.38f,.20f),new Color(.56f,.63f,.30f),Mathf.Clamp01(h/6.2f)):new Color(.10f,.25f,.34f));} minimapTexture.Apply(); minimapTexture.filterMode=FilterMode.Point; }
+            if (!minimapTexture) minimapTexture=BuildMinimapTexture();
             GUI.DrawTexture(r,minimapTexture,ScaleMode.StretchToFill,false);
             DrawMinimapMarkers(r);
             Vector2[] corners={new Vector2(0,BottomPixels),new Vector2(Screen.width,BottomPixels),new Vector2(Screen.width,Screen.height-TopPixels),new Vector2(0,Screen.height-TopPixels)};

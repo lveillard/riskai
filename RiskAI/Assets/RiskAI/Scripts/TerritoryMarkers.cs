@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace RiskAI
 {
-    /// <summary>Decorative, collider-free posts marking ownership borders between nearby towns.</summary>
+    /// <summary>Decorative, collider-free posts marking ownership borders between the territories of nearby towns.</summary>
     [DisallowMultipleComponent]
     public sealed class TerritoryMarkers : MonoBehaviour
     {
@@ -37,10 +37,12 @@ namespace RiskAI
 
         public int MarkerCount => posts.Count;
 
-        /// <summary>Returns the nearest map town's country for an XZ world position.</summary>
+        /// <summary>Returns the shared territory country for an XZ world position.</summary>
         public static int CountryAt(Vector3 position)
         {
-            return CityAt(position, out int city) && city >= 0 ? MapLayout.Towns[city].Country : -1;
+            if (float.IsNaN(position.x) || float.IsNaN(position.z) ||
+                float.IsInfinity(position.x) || float.IsInfinity(position.z)) return -1;
+            return TerritoryField.Current.CountryAt(position.x, position.z);
         }
 
         public static TerritoryMarkers Create(BattleSession battle, Transform root)
@@ -108,25 +110,13 @@ namespace RiskAI
             AddPost(candidate, cityA, cityB);
         }
 
+        // Posts follow the same land-constrained partition as the strategic atlas.
         static bool CityAt(Vector3 position, out int city)
         {
             city = -1;
             if (float.IsNaN(position.x) || float.IsNaN(position.z) ||
                 float.IsInfinity(position.x) || float.IsInfinity(position.z)) return false;
-
-            float nearest = float.PositiveInfinity;
-            for (int i = 0; i < MapLayout.Towns.Length; i++)
-            {
-                Vector3 town = MapLayout.Towns[i].Position;
-                float dx = position.x - town.x;
-                float dz = position.z - town.z;
-                float distance = dx * dx + dz * dz;
-                if (distance < nearest)
-                {
-                    nearest = distance;
-                    city = i;
-                }
-            }
+            city = TerritoryField.Current.CityAt(position.x, position.z);
             return city >= 0;
         }
 

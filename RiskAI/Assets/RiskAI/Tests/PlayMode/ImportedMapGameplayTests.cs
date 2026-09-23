@@ -100,7 +100,13 @@ namespace RiskAI.Tests
                             var footing=towerRenderers.Single(renderer=>renderer.name=="Integrated tower base");
                             Assert.That(footing.bounds.min.y,Is.EqualTo(town.transform.position.y).Within(.01f),town.State.Id+" tower base must reach the building floor");
                             var turret=towerRenderers.Single(renderer=>renderer.name=="Integrated stone turret");
-                            Assert.That(turret.bounds.size.x,Is.InRange(2.3f*VisualMetrics.TowerScale,2.5f*VisualMetrics.TowerScale),town.State.Id+" slender keep with a corbelled crown");
+                            // Renderer.bounds is a world AABB of the local box, so a port keep turned
+                            // seaward reads up to sqrt(2) wider. Check the shared mesh in its own frame,
+                            // and only a yaw-independent envelope for the placed renderer.
+                            float crownWidth=2*TowerArt.CrownRadius*VisualMetrics.TowerScale;
+                            Assert.That(TowerArt.Stone.bounds.size.x*VisualMetrics.TowerScale,Is.EqualTo(crownWidth).Within(.03f),town.State.Id+" slender keep with a corbelled crown");
+                            Assert.That(TowerArt.Stone.bounds.size.z*VisualMetrics.TowerScale,Is.EqualTo(crownWidth).Within(.03f),town.State.Id+" round crown depth");
+                            Assert.That(turret.bounds.size.x,Is.InRange(crownWidth-.03f,crownWidth*1.415f+.03f),town.State.Id+" placed keep footprint");
                             Assert.That(turret.bounds.max.y-town.Defense.transform.position.y,Is.EqualTo(TowerArt.CrownTop*VisualMetrics.TowerScale).Within(.01f),town.State.Id+" crenellated crown height");
                             Assert.That(VisualMetrics.IntegratedTowerAttackHeight,Is.InRange(VisualMetrics.IntegratedTowerGalleryHeight,turret.bounds.max.y-town.Defense.transform.position.y),
                                 town.State.Id+" bolts leave from the battlements");

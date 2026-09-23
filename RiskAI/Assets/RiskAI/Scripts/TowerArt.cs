@@ -11,6 +11,8 @@ namespace RiskAI
     /// </summary>
     public static class TowerArt
     {
+        /// <summary>Outer radius of the corbelled fighting platform and its parapet: the keep's widest point.</summary>
+        public const float CrownRadius=1.2f;
         public const float BaseTop=1.5f,ShaftRadius=.95f,ShaftTop=5.8f,WalkHeight=6.25f,ParapetTop=6.55f,CrownTop=6.95f;
         public const float RoofBase=6.3f,RoofRadius=1.0f,RoofHeight=1.9f,MastTop=9.15f;
         const int Sides=12;
@@ -94,10 +96,10 @@ namespace RiskAI
         {
             b.Frustum(ShaftRadius,BaseTop,ShaftRadius,ShaftTop);
             // Corbelled machicolation flare carrying the wider fighting platform.
-            b.Frustum(ShaftRadius,ShaftTop,1.2f,6.05f);
-            b.Annulus(0,1.2f,6.05f,false);
-            b.Frustum(1.2f,6.05f,1.2f,ParapetTop);
-            b.Annulus(1.02f,1.2f,ParapetTop,true);
+            b.Frustum(ShaftRadius,ShaftTop,CrownRadius,6.05f);
+            b.Annulus(0,CrownRadius,6.05f,false);
+            b.Frustum(CrownRadius,6.05f,CrownRadius,ParapetTop);
+            b.Annulus(1.02f,CrownRadius,ParapetTop,true);
             b.Frustum(1.02f,WalkHeight,1.02f,ParapetTop,true);
             b.Annulus(0,1.02f,WalkHeight,true);
             // Eight merlons with open crenels between them.

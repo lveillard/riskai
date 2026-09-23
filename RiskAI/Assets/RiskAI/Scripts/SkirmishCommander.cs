@@ -46,6 +46,8 @@ namespace RiskAI
         readonly PlayerBuildingCommands buildingCommands;
         readonly int team;
         readonly Dictionary<int, int> defenseAssignments = new Dictionary<int, int>(32);
+        // Threat key -> enemy power when defenders were last dispatched to it.
+        readonly Dictionary<int, float> dispatchedAgainst = new Dictionary<int, float>(8);
         readonly List<DefenseSite> threats = new List<DefenseSite>(32);
         readonly List<CombatTarget> nearby = new List<CombatTarget>(64);
         readonly List<Soldier> defenders = new List<Soldier>(8);
@@ -167,10 +169,15 @@ namespace RiskAI
                     AddThreat(harbor.Defense.EntityId, harbor.Landing, harbor.State.Capture, harbor.State.Contested, harbor.Defense,
                         harbor.ClaimZone != null ? harbor.ClaimZone.Guardian : null, -1, true, profile);
                 }
-            if (threats.Count == 0) { defenseAssignments.Clear(); return; }
+            if (threats.Count == 0) { defenseAssignments.Clear(); dispatchedAgainst.Clear(); return; }
             threats.Sort((a, b) => a.Priority == b.Priority ? a.Key.CompareTo(b.Key) : b.Priority.CompareTo(a.Priority));
             RemoveStaleAssignments();
             RefreshOwn();
+            // Keep a quarter of a sizeable mobile force out of local fights.
+            int mobile = MobileCount();
+            int reserve = mobile >= 4 ? Mathf.Max(1, Mathf.CeilToInt(mobile * .25f)) : 0;
+            int assignedTotal = 0;
+            foreach (var assignment in defenseAssignments) if (HasThreat(assignment.Value)) assignedTotal++;
 
             for (int i = 0; i < threats.Count; i++)
             {
@@ -186,7 +193,13 @@ namespace RiskAI
                 }
                 defenders.Clear();
                 int already = CountAssignments(threat.Key);
-                while (needed > 0 && already < profile.MaximumDefenders)
+                // Hysteresis: once answered, a post only gets more troops when its
+                // attackers grow noticeably, not on every tick of the same fight.
+                if (already > 0 && dispatchedAgainst.TryGetValue(threat.Key, out float answered) && threat.EnemyPower <= answered * 1.25f)
+                {
+                    threat.Covered = needed <= 0; threats[i] = threat; continue;
+                }
+                while (needed > 0 && already < profile.MaximumDefenders && assignedTotal < mobile - reserve)
                 {
                     var unit = NearestUnassigned(threat.Point, dispatch, threat.NavalOnly);
                     if (!unit) break;
@@ -194,9 +207,9 @@ namespace RiskAI
                     RemoveFromArmy(unit);
                     defenders.Add(unit);
                     needed -= Power(unit);
-                    already++;
+                    already++; assignedTotal++;
                 }
-                if (defenders.Count > 0) BattleSession.GiveFormation(defenders, threat.Point, true, false);
+                if (defenders.Count > 0) { BattleSession.GiveFormation(defenders, threat.Point, true, false); dispatchedAgainst[threat.Key] = threat.EnemyPower; }
                 threat.Covered = needed <= 0;
                 threats[i] = threat;
             }
@@ -283,7 +296,9 @@ namespace RiskAI
         {
             float power=0;
             foreach (var assignment in defenseAssignments)
-                if (assignment.Value == key && session.FindTarget(assignment.Key) is Soldier unit) power += Power(unit);
+                // Full value, not health-weighted: wounded defenders must not trigger
+                // a fresh dispatch every tick while the fight is under way.
+                if (assignment.Value == key && session.FindTarget(assignment.Key) is Soldier unit && unit.IsAlive) power += AiUnitAnalysis.For(unit.Kind).Value;
             return power;
         }
 
@@ -542,21 +557,29 @@ namespace RiskAI
                 if (!unit || !unit.IsAlive || session.BattleTime >= entry.Value || unit.Health >= unit.MaxHealth * .7f) scratchKeys.Add(entry.Key);
             }
             for (int i = 0; i < scratchKeys.Count; i++) recovering.Remove(scratchKeys[i]);
+            float reserveRadius = session.AiProfile.DefenseDispatchRadius;
             for (int i = 0; i < own.Count; i++)
             {
                 var unit = own[i];
                 if (!IsMobileDefender(unit) || (!unit.IsIdle && !unit.IsHolding)) continue;
                 if (defenseAssignments.ContainsKey(unit.EntityId) || armyOf.ContainsKey(unit.EntityId) || recovering.ContainsKey(unit.EntityId)) continue;
-                // Keep local troops beside a post whose defense is still short.
-                if (NearUncoveredThreat(unit.transform.position)) continue;
+                // Keep local troops beside a post whose defense is still short (or capped):
+                // they are its reserve, not a fresh offensive wave.
+                if (NearUncoveredThreat(unit.transform.position, reserveRadius)) continue;
                 pool.Add(unit);
             }
         }
 
-        bool NearUncoveredThreat(Vector3 point)
+        bool AnyUncoveredThreat()
+        {
+            for (int i = 0; i < threats.Count; i++) if (!threats[i].Covered) return true;
+            return false;
+        }
+
+        bool NearUncoveredThreat(Vector3 point, float radius)
         {
             for (int i = 0; i < threats.Count; i++)
-                if (!threats[i].Covered && FlatDistanceSquared(threats[i].Point, point) <= DefenseRadius * DefenseRadius * 4) return true;
+                if (!threats[i].Covered && FlatDistanceSquared(threats[i].Point, point) <= radius * radius) return true;
             return false;
         }
 
@@ -742,9 +765,11 @@ namespace RiskAI
         void FormArmies(AiDifficultyProfile profile, bool relaxed)
         {
             int guard = 0;
-            while (armies.Count < profile.MaximumArmies && pool.Count > 0 && pathBudget > 0 && guard++ < 8)
+            while (pool.Count > 0 && pathBudget > 0 && guard++ < 8)
             {
-                int minimumWave = openingOffensivePending ? 1 : relaxed ? Mathf.Min(2, profile.MinimumWave) : profile.MinimumWave;
+                // The single-unit opening departure is skipped while a post is being
+                // overrun: a lone recruit stays home instead of wandering off alone.
+                int minimumWave = openingOffensivePending && !AnyUncoveredThreat() ? 1 : relaxed ? Mathf.Min(2, profile.MinimumWave) : profile.MinimumWave;
                 if (pool.Count < minimumWave) return;
                 BuildCluster();
                 // The seed is the densest group: if it is too small, so is every other.
@@ -755,11 +780,16 @@ namespace RiskAI
                 for (int i = 0; i < pool.Count; i++) poolPower += Power(pool[i]);
                 RankTargets(center, clusterPower, clusterPower + poolPower * .5f, profile);
                 bool formed = false;
+                bool atCap = armies.Count >= profile.MaximumArmies;
+                // Pass 0 spreads a new army to a fresh objective. Pass 1 lets the group
+                // follow up an objective another army already holds (a second, grouped
+                // wave), which is also the only option once the army cap is reached.
+                for (int pass = atCap ? 1 : 0; pass < 2 && !formed; pass++)
                 for (int c = 0; c < candidates.Count && pathBudget > 0 && !formed; c++)
                 {
                     var candidate = candidates[c];
-                    // A second army spreads to another objective instead of queueing behind the first.
-                    if (IsUnreachable(candidate.Index, center) || IsTargeted(candidate.Town)) continue;
+                    var host = FindArmy(candidate.Town);
+                    if (IsUnreachable(candidate.Index, center) || (pass == 0) == (host != null)) continue;
                     var claim = candidate.Town.ClaimPoint;
                     bool direct = candidate.Defense <= 1 || FlatDistanceSquared(center, claim) <= DirectAttackDistance * DirectAttackDistance;
                     var destination = direct ? claim : StagePoint(candidate.Town, center);
@@ -767,7 +797,7 @@ namespace RiskAI
                     wave.Clear();
                     float required = candidate.Defense * profile.AttackMargin, wavePower = 0;
                     int failures = 0;
-                    bool sizeWave = armies.Count + 1 < profile.MaximumArmies;
+                    bool sizeWave = host == null && armies.Count + 1 < profile.MaximumArmies;
                     for (int i = 0; i < cluster.Count && wave.Count < profile.MaximumWave && pathBudget > 0; i++)
                     {
                         // Size the wave to the objective; the remainder stays free for another army.
@@ -779,6 +809,14 @@ namespace RiskAI
                     }
                     if (wave.Count == 0 && failures >= 2) MarkUnreachable(candidate.Index, center);
                     if (wave.Count < minimumWave) continue;
+                    if (host != null)
+                    {
+                        for (int i = 0; i < wave.Count; i++) { host.Units.Add(wave[i]); armyOf[wave[i].EntityId] = host; pool.Remove(wave[i]); }
+                        BattleSession.GiveFormation(wave, host.Attacking ? claim : host.Stage, true, false);
+                        openingOffensivePending = false;
+                        formed = true;
+                        continue;
+                    }
                     var army = RentArmy();
                     army.Target = candidate.Town;
                     army.RequiredPower = required;
@@ -792,10 +830,10 @@ namespace RiskAI
             }
         }
 
-        bool IsTargeted(Settlement town)
+        Army FindArmy(Settlement town)
         {
-            for (int a = 0; a < armies.Count; a++) if (armies[a].Target == town) return true;
-            return false;
+            for (int a = 0; a < armies.Count; a++) if (armies[a].Target == town) return armies[a];
+            return null;
         }
 
         void BuildCluster()

@@ -74,7 +74,6 @@ namespace RiskAI
             }
             if(!MapLayout.IsImported)WorldLife.Create(session,terrain.transform);
             for(int c=0;c<MapLayout.Countries.Length;c++)session.Camps.Add(CountryCamp.Create(session,c,terrain.transform));
-            TerritoryMarkers.Create(session,terrain.transform);
             NavalWorld.Create(session,terrain.transform);
             // Geometry is complete and the NavMesh is baked. Resolve static
             // cargo approaches once instead of during the first AI offensive.
@@ -96,6 +95,8 @@ namespace RiskAI
             RenderSettings.fog=!MapLayout.IsImported;RenderSettings.fogColor=camera.backgroundColor;RenderSettings.fogMode=FogMode.Linear;RenderSettings.fogStartDistance=MapLayout.IsImported?1500:260;RenderSettings.fogEndDistance=MapLayout.IsImported?2100:420;
             var controller=gameObject.AddComponent<RtsController>();controller.Initialize(session,camera);controller.FocusHome();
             gameObject.AddComponent<StrategicMapView>().Initialize(session,camera,terrain.transform);
+            // Border posts read the same territory field as the atlas, so both are paid in this phase.
+            TerritoryMarkers.Create(session,terrain.transform);
             startup.Mark("territory_atlas");
             gameObject.AddComponent<BattleHud>().Initialize(session,controller,camera);
             if(BattleSession.CountdownForNewMatch)session.BeginStartCountdown();

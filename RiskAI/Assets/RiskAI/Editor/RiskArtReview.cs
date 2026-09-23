@@ -38,7 +38,11 @@ namespace RiskAI.Editor
                 string tag=Argument("--riskai-art-tag")??"shot";
                 string mapArg=(Argument("--riskai-map")??"europe").ToLowerInvariant();
                 var map=mapArg=="world"||mapArg=="newworld"?ScenarioMap.NewWorld:mapArg=="classic"?ScenarioMap.Classic:mapArg=="riverlands"?ScenarioMap.Riverlands:ScenarioMap.Europe;
-                CaptureMap(map,directory,tag);
+                // --riskai-art-legacy reproduces the pre-biome, flat-border terrain for comparisons.
+                bool legacy=Environment.GetCommandLineArgs().Contains("--riskai-art-legacy");
+                TerrainBiomes.Enabled=!legacy;ImportedMapSkirt.Enabled=!legacy;
+                try{CaptureMap(map,directory,tag);}
+                finally{TerrainBiomes.Enabled=true;ImportedMapSkirt.Enabled=true;}
                 Debug.Log("RISKAI_ART_REVIEW_OK: "+directory);
             }
             catch(Exception error){Debug.LogException(error);throw;}
@@ -78,9 +82,12 @@ namespace RiskAI.Editor
             if(!session)throw new InvalidOperationException("Art review bootstrap did not create a battle session.");
             Debug.Log("RISKAI_ART_REVIEW_BEGIN: map="+map+" players="+session.PlayerCount+" colorSpace="+QualitySettings.activeColorSpace);
             string prefix=tag+"-"+map.ToString().ToLowerInvariant();
+            foreach(var town in session.Towns.Take(3))LogTowerBounds(town.State.Id,town.Defense);
+            if(Environment.GetCommandLineArgs().Contains("--riskai-art-probe-only"))return;
 
             var camera=Camera.main;if(!camera)throw new InvalidOperationException("Art review has no main camera.");
             camera.aspect=Width/(float)Height;
+            if(Environment.GetCommandLineArgs().Contains("--riskai-art-terrain")){CaptureTerrain(camera,directory,prefix);return;}
             var lineup=BuildLineup(session);
             SampleIdlePoses();
             var readback=new RenderTexture(Width,Height,24,RenderTextureFormat.ARGB32){antiAliasing=1,name="Risk art review readback"};readback.Create();
@@ -138,6 +145,49 @@ namespace RiskAI.Editor
                     Color c=VisualFactory.TeamColor(team),m=VisualFactory.TeamMaterialColor(team);
                     Debug.Log($"RISKAI_ART_TEAM: team={team} canonical={ColorUtility.ToHtmlStringRGB(c)} material={ColorUtility.ToHtmlStringRGB(m)} roofShaderLinear={(Vector4)WorldArt.RoofMaterial(team).GetVector("_Tint")}");
                 }
+            }
+            finally{if(RenderTexture.active==readback)RenderTexture.active=null;readback.Release();UnityEngine.Object.DestroyImmediate(readback);}
+        }
+
+        /// <summary>Terrain-only review (--riskai-art-terrain): overview, named regions and the four map edges.</summary>
+        static void CaptureTerrain(Camera camera,string directory,string prefix)
+        {
+            var readback=new RenderTexture(Width,Height,24,RenderTextureFormat.ARGB32){antiAliasing=1,name="Risk terrain review readback"};readback.Create();
+            try
+            {
+                Vector2 min=MapLayout.PlayableMin,max=MapLayout.PlayableMax;
+                var center=new Vector3((min.x+max.x)*.5f,0,(min.y+max.y)*.5f);
+                float full=Mathf.Max((max.y-min.y)*.5f,(max.x-min.x)*.5f*Height/Width)*1.02f;
+                Render(camera,readback,directory,prefix+"-terrain-full",center,full,55,0);
+                Render(camera,readback,directory,prefix+"-terrain-full-top",center,full,89,0);
+                var regions=new List<(string label,Vector3 point,float zoom)>();
+                if(MapLayout.IsImported)
+                {
+                    string[] names=MapLayout.Scenario==ScenarioMap.Europe
+                        ?new[]{"Sweden:60","Norway:30","Spain:60","Portugal:25","Algeria:60","Lybia:45","Egypt:40","Moscov (Russia):60","Northwestern District (Russia):45","Ukraine:50","Switzerland:40","Turkey:55","England:40","Sami:45","Italy:40"}
+                        :new[]{"Florida:55","Quebec:60","Ontario:40","Cuba:55","Yucatan:35","West Greenland:55","Virginia:45","Algeria:60","Sweden:60","Spain:60","Egypt:40","Moscov (Russia):60"};
+                    foreach(var entry in names)
+                    {
+                        int split=entry.LastIndexOf(':');string name=entry.Substring(0,split);float zoom=float.Parse(entry.Substring(split+1),System.Globalization.CultureInfo.InvariantCulture);
+                        var country=MapLayout.Imported.countries.FirstOrDefault(c=>c.name==name);if(country==null)continue;
+                        regions.Add((name.Split(' ')[0].ToLowerInvariant(),new Vector3(country.x,0,country.z),zoom));
+                    }
+                }
+                else
+                {
+                    regions.Add(("southwest",new Vector3(min.x*.55f,0,min.y*.6f),55));regions.Add(("northeast",new Vector3(max.x*.5f,0,max.y*.35f),55));
+                    regions.Add(("southeast",new Vector3(max.x*.55f,0,min.y*.6f),55));regions.Add(("northwest",new Vector3(min.x*.5f,0,max.y*.35f),55));
+                }
+                foreach(var region in regions)Render(camera,readback,directory,prefix+"-region-"+region.label,MapLayout.Point(region.point.x,region.point.z),region.zoom,55,0);
+                // Edges: the camera clamp keeps focus inside the playable rectangle, so view from inside looking out.
+                Render(camera,readback,directory,prefix+"-edge-north",new Vector3(center.x,0,max.y-30),70,50,0);
+                Render(camera,readback,directory,prefix+"-edge-south",new Vector3(center.x,0,min.y+30),70,50,180);
+                Render(camera,readback,directory,prefix+"-edge-east",new Vector3(max.x-30,0,center.z),70,50,90);
+                Render(camera,readback,directory,prefix+"-edge-west",new Vector3(min.x+30,0,center.z),70,50,270);
+                Render(camera,readback,directory,prefix+"-edge-southwest",new Vector3(min.x+40,0,min.y+40),110,55,0);
+                Render(camera,readback,directory,prefix+"-edge-northeast",new Vector3(max.x-40,0,max.y-60),110,55,0);
+                var strategic=StrategicMapView.Current;
+                if(strategic){strategic.SetStrategic(true);Render(camera,readback,directory,prefix+"-strategic-full",center,full,55,0);strategic.SetStrategic(false);}
             }
             finally{if(RenderTexture.active==readback)RenderTexture.active=null;readback.Release();UnityEngine.Object.DestroyImmediate(readback);}
         }
@@ -200,6 +250,17 @@ namespace RiskAI.Editor
                 Mesh mesh=filter?filter.sharedMesh:skinned?skinned.sharedMesh:null;
                 Debug.Log($"RISKAI_ART_WEAPON: name={t.name} active={t.gameObject.activeInHierarchy} parent={(t.parent?t.parent.name:"-")} localPos={t.localPosition:F4} localRot={t.localEulerAngles:F1} localScale={t.localScale:F4} lossy={t.lossyScale:F4} worldPos={t.position:F3} "+
                     $"fwd={t.forward:F2} up={t.up:F2} right={t.right:F2} mesh={(mesh?mesh.name+" bounds="+mesh.bounds.center.ToString("F4")+"/"+mesh.bounds.size.ToString("F4")+" verts="+mesh.vertexCount:"none")} renderer={(t.GetComponent<Renderer>()?t.GetComponent<Renderer>().sharedMaterial?.name:"none")}");
+            }
+        }
+
+        static void LogTowerBounds(string id,DefenseTower tower)
+        {
+            if(!tower)return;
+            foreach(var renderer in tower.GetComponentsInChildren<Renderer>(true))
+            {
+                var filter=renderer.GetComponent<MeshFilter>();
+                Debug.Log($"RISKAI_ART_TOWER_BOUNDS: {id} {renderer.name} enabled={renderer.enabled} static={renderer.isPartOfStaticBatch} bounds={renderer.bounds.center-tower.transform.position:F3}/{renderer.bounds.size:F3} "+
+                    $"mesh={(filter&&filter.sharedMesh?filter.sharedMesh.name+" "+filter.sharedMesh.bounds.size.ToString("F3"):"-")} lossy={renderer.transform.lossyScale:F3} rot={renderer.transform.eulerAngles:F1}");
             }
         }
 

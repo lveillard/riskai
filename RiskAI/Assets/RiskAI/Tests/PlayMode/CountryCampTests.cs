@@ -61,6 +61,9 @@ namespace RiskAI.Tests
             var atlas=StrategicMapView.Current.Atlas;
             Assert.That(atlas.Sites.Any(site=>site.Port==memberPort&&site.Country==camp.Country&&Vector2.Distance(site.Point,new Vector2(memberPort.Landing.x,memberPort.Landing.z))<.01f),Is.True,
                 "The shared surface must include every country's member port.");
+            Assert.That(atlas.Field,Is.SameAs(TerritoryField.Current),"Atlas, camp inspection, border posts and minimap read one territory field.");
+            foreach(var town in battle.Towns)
+                Assert.That(TerritoryMarkers.CountryAt(town.transform.position),Is.EqualTo(town.State.Country),town.DisplayName+" lies inside its own camp territory.");
             camp.Select(true);
             Assert.That(StrategicMapView.Current.SelectedCountry,Is.EqualTo(camp.Country));
             var guard=battle.Towns[0].Defender;

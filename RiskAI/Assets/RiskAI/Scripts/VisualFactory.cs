@@ -258,9 +258,10 @@ namespace RiskAI
             {
                 var model=Object.Instantiate(prefab,root,false);
                 model.transform.localScale*=VisualMetrics.UnitScale;
+                // Swap the weapon before calibrating so the standing height measures the rendered crossbow.
+                if(soldier.Kind==UnitKind.Archer)CrossbowView.Apply(model);
                 ModelMetrics.MatchStandingHeight(model,soldier.Kind);
                 UnitTeamColor.Apply(model,soldier.Kind,soldier.Team);
-                if(soldier.Kind==UnitKind.Archer)CrossbowView.Apply(model);
                 if(soldier.Kind==UnitKind.MarinePrivate)MarinePrivateView.Apply(model,soldier.Team);
                 UnitVariantViews.Decorate(model,soldier.Kind,soldier.Team);
                 soldier.gameObject.AddComponent<SoldierAnimator>().Initialize(soldier,model);

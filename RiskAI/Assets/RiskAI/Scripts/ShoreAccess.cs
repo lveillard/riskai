@@ -27,6 +27,8 @@ namespace RiskAI
             Shader.SetGlobalVector("_RiskCoastSize",new Vector4(surfaceWidth,surfaceHeight,1f/surfaceWidth,1f/surfaceHeight));
             Shader.SetGlobalFloat("_RiskSandThreshold",SandThreshold);
             Shader.SetGlobalFloat("_RiskCoastDepthRange",VisualDepthRange);
+            // Beyond the playable rectangle, art extrudes the edge coast (zero disables).
+            Shader.SetGlobalVector("_RiskPlayableBounds",MapLayout.IsImported?ImportedMapSkirt.Bounds(MapLayout.Imported):Vector4.zero);
         }
         static void EnsureSurface()
         {
@@ -67,11 +69,19 @@ namespace RiskAI
         static Color SampleSurface(float x,float z)
         {
             EnsureSurface();
+            // Same clamp as RiskClampPlayable: identity inside the playable rectangle.
+            if(surfaceMap!=null){var edge=ImportedMapSkirt.Clamp(surfaceMap,x,z);x=edge.x;z=edge.y;}
             float gx=Mathf.Clamp((x-surfaceX)/surfaceStep,0,surfaceWidth-1),gz=Mathf.Clamp((z-surfaceZ)/surfaceStep,0,surfaceHeight-1);
             int ix=Mathf.Min(Mathf.FloorToInt(gx),surfaceWidth-2),iz=Mathf.Min(Mathf.FloorToInt(gz),surfaceHeight-2),k=iz*surfaceWidth+ix;
             return Color.Lerp(Color.Lerp(surface[k],surface[k+1],gx-ix),Color.Lerp(surface[k+surfaceWidth],surface[k+surfaceWidth+1],gx-ix),gz-iz);
         }
         public static float ShoreBandWeight(float x,float z)=>SampleSurface(x,z).b;
+        /// <summary>Band, sand and rock of one imported W3E sample (the field shares the W3E lattice).</summary>
+        public static Vector3 ImportedSampleWeights(int index)
+        {
+            EnsureSurface();Color value=surface[index];
+            return new Vector3(value.b,value.r,value.g);
+        }
         public static bool IsSandySurface(float x,float z)=>SurfaceWeights(x,z).x>=SandThreshold;
 
         static ScenarioMap cachedScenario=(ScenarioMap)(-1);

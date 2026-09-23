@@ -4,7 +4,7 @@ namespace RiskAI
 {
     public static class BiomeVegetation
     {
-        public enum ImportedTreeForm { Fir, Oak, DryOak }
+        public enum ImportedTreeForm { Fir, Oak, DryOak, Palm }
         static readonly Dictionary<int,Mesh> crowns=new();
         public static void Tree(Transform root,Vector3 p,float height,int seed)
         {
@@ -22,7 +22,7 @@ namespace RiskAI
         public static void ImportedTree(Transform root,Vector3 p,float height,int seed,ImportedTreeForm form)
         {
             if(form==ImportedTreeForm.Fir){WorldArt.Tree(root,p,height,seed,false);return;}
-            CreateBroadleaf(root,p,height,seed,form==ImportedTreeForm.DryOak?3:(seed%5==0?1:0),false);
+            CreateBroadleaf(root,p,height,seed,form==ImportedTreeForm.Palm?2:form==ImportedTreeForm.DryOak?3:(seed%5==0?1:0),false);
         }
         static void CreateBroadleaf(Transform root,Vector3 p,float height,int seed,int biome,bool solid=false)
         {
