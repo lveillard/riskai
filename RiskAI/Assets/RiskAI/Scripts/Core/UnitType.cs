@@ -20,9 +20,13 @@ namespace RiskAI.Core
         public readonly float QueryPadding, PressureBias, AllyAlertRadius;
         public readonly bool Retaliate;
         public readonly UnitVisibility Visibility;
+        public readonly AcquisitionTieBreak TieBreak;
+        /// <summary>How the acquisition radius is measured (not necessarily the weapon measure: melee acquires to the approach point).</summary>
+        public readonly RangeMeasure Measure;
         public AcquisitionProfile(float hostile, float neutral, float hold, bool hasLeash, float leashHostile, float leashNeutral,
-            float queryPadding, float pressureBias, float allyAlertRadius, bool retaliate, UnitVisibility visibility)
+            float queryPadding, float pressureBias, float allyAlertRadius, bool retaliate, RangeMeasure measure, UnitVisibility visibility, AcquisitionTieBreak tieBreak)
         {
+            TieBreak = tieBreak; Measure = measure;
             RadiusHostile = hostile; RadiusNeutral = neutral; RadiusHold = hold; HasLeash = hasLeash;
             LeashHostile = leashHostile; LeashNeutral = leashNeutral; QueryPadding = queryPadding;
             PressureBias = pressureBias; AllyAlertRadius = allyAlertRadius; Retaliate = retaliate; Visibility = visibility;
@@ -116,7 +120,7 @@ namespace RiskAI.Core
             var a = c.Acquisition;
             Acquisition = a == null ? default : new AcquisitionProfile(a.Radius.Hostile, a.Radius.Neutral, a.Radius.Hold,
                 a.Leash != null, a.Leash?.Hostile ?? 0, a.Leash?.Neutral ?? 0, a.QueryPadding, a.PressureBias,
-                a.AllyAlertRadius, a.Retaliate, a.Visibility);
+                a.AllyAlertRadius, a.Retaliate, a.Measure, a.Visibility, a.TieBreak);
             var caps = c.Capabilities;
             CanCapture = caps.CanCapture; CanGarrison = caps.CanGarrison; CanEmbark = caps.CanEmbark; HarborGuard = caps.HarborGuard;
             Transport = caps.Transport == null ? default : new TransportProfile(caps.Transport.Capacity, caps.Transport.LoadRadius, caps.Transport.LoadLimit);

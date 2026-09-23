@@ -107,6 +107,13 @@ namespace RiskAI.Core
         NavMeshRay
     }
 
+    /// <summary>Equal scores: the lower entity id wins, or the first candidate found keeps it.</summary>
+    public enum AcquisitionTieBreak
+    {
+        LowerEntityId,
+        FirstFound
+    }
+
     /// <summary>units.json root.</summary>
     [Serializable]
     public sealed class UnitsFile
@@ -448,9 +455,15 @@ namespace RiskAI.Core
         /// <summary>Turns on the attacker when hit while free.</summary>
         [UnitConfigField(Required = true)]
         public bool Retaliate;
+        /// <summary>BodyEdges: 3D to the target approach point minus both body radii. CenterToApproach: 3D pivot to approach point. ToHull: XZ pivot to approach point (a ship hull). CenterToCenter: XZ pivot to pivot.</summary>
+        [UnitConfigField(Required = true)]
+        public RangeMeasure Measure;
         /// <summary>Line of sight: terrain ray between aim points, or a NavMesh ray to the approach point.</summary>
         [UnitConfigField(Required = true)]
         public UnitVisibility Visibility;
+        /// <summary>Equal scores: the lower entity id wins, or the first candidate found keeps it.</summary>
+        [UnitConfigField(Required = true)]
+        public AcquisitionTieBreak TieBreak;
     }
 
     /// <summary>Automatic acquisition radius by the unit owner/order.</summary>

@@ -122,7 +122,7 @@ namespace RiskAI
         }
         public void Attack(CombatTarget enemy)
         {
-            if(!IsAlive||!Type.CanAttack||!enemy||enemy.Team==Team||!enemy.CanBeAttacked)return;
+            if(!IsAlive||!UnitTargeting.CanTarget(this,Team,Type.Weapon,enemy))return;
             var next=new List<Vector3>();
             float distance=RangeTo(enemy);
             if(distance>AttackRange)
@@ -225,7 +225,7 @@ namespace RiskAI
                 if(UnloadAt(pendingShore)&&CargoCount==0)pendingShoreUnload=false;
                 else if(!string.IsNullOrEmpty(LastActionError)){if(Team==0)world.Session.Message(LastActionError,MessageKind.Info);pendingShoreUnload=false;}
             }
-            if(!object.ReferenceEquals(target,null)&&(!target||!target.CanBeAttacked||target.Team==Team))
+            if(!object.ReferenceEquals(target,null)&&!UnitTargeting.CanTarget(this,Team,Type.Weapon,target))
             {
                 target=null;
                 if(!ResumeAttackMove())ClearRoute();
@@ -250,18 +250,8 @@ namespace RiskAI
             }
             else if(!IsGarrison&&routeIndex<route.Count)Advance();
         }
-        CombatTarget FindNearbyEnemy()
-        {
-            CombatTarget best=null;float score=float.MaxValue;
-            // Query a little wider: a long hull can be in range while its pivot is not.
-            world.Session.Spatial.Query(transform.position,Type.Acquisition.RadiusHostile+Type.Acquisition.QueryPadding,nearby);
-            foreach(var ship in nearby)
-            {
-                if(!ship||ship==this||!ship.CanBeAttacked||ship.Team==Team)continue;
-                float distance=RangeTo(ship);if(distance<=Type.Acquisition.RadiusHostile&&distance<score&&Visible(ship)){best=ship;score=distance;}
-            }
-            return best;
-        }
+        // Only enemies already inside weapon range (units.json acquisition); the query padding covers long hulls.
+        CombatTarget FindNearbyEnemy()=>UnitTargeting.Acquire(world.Session,this,Team,Type,Type.Acquisition.RadiusHostile,false,default,0,nearby);
         void Advance()
         {
             Vector3 destination=route[routeIndex];Vector3 direction=destination-transform.position;direction.y=0;
@@ -331,15 +321,11 @@ namespace RiskAI
         {
             Vector3 direction=point-transform.position;direction.y=0;if(direction.sqrMagnitude>.001f)transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(direction),180*simDelta);
         }
-        bool Visible(CombatTarget enemy)
-        {
-            Vector3 from=AimPoint,to=enemy.AimPoint,delta=to-from;
-            return delta.sqrMagnitude<.001f||!Physics.Raycast(from,delta.normalized,delta.magnitude,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore);
-        }
+        bool Visible(CombatTarget enemy)=>UnitTargeting.Visible(Type.Acquisition.Visibility,this,enemy);
         public override void TakeDamage(float damage,int attacker,CombatTarget source=null)
         {
             if(!IsAlive||damage<=0||float.IsNaN(damage)||float.IsInfinity(damage)||attacker==Team)return;
-            if(Type.CanAttack&&source&&source.IsAlive&&!target&&(attackMoveOrder||routeIndex>=route.Count)){target=source;nextTargetPath=0;}
+            if(Type.CanAttack&&Type.Acquisition.Retaliate&&source&&source.IsAlive&&!target&&(attackMoveOrder||routeIndex>=route.Count)){target=source;nextTargetPath=0;}
             Health=Mathf.Max(0,Health-damage);if(IsAlive)return;
             foreach(var soldier in cargo.ToArray())if(soldier)soldier.DestroyEmbarked(attacker);
             cargo.Clear();route.Clear();routeIndex=0;hasRouteGoal=false;hasAttackMoveGoal=false;target=null;orderedHarbor=null;ReleaseHarborGuard(harborGuard);
@@ -348,9 +334,8 @@ namespace RiskAI
             VisualFactory.Impact(AimPoint,new Color(.72f,.78f,.86f),.75f);Destroy(gameObject);
         }
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}
-        // Weapon range is measured to the target's attackable surface (a ship's hull,
-        // a soldier's position), the same surface soldiers use against ships.
-        float RangeTo(CombatTarget enemy)=>enemy?DistanceXZ(transform.position,enemy.ApproachPoint(transform.position)):float.MaxValue;
+        // Weapon range by the units.json measure (ToHull: to the target's attackable surface).
+        float RangeTo(CombatTarget enemy)=>enemy?UnitTargeting.WeaponDistance(this,Type.Weapon,enemy):float.MaxValue;
         /// <summary>World bounds of the clickable hull volume, for pointer picking.</summary>
         public bool TryGetHullBounds(out Bounds bounds)
         {

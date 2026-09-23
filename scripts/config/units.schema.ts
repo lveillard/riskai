@@ -31,6 +31,8 @@ export const RangeMeasure = Enum('RangeMeasure',
   'BodyEdges: 3D to the target approach point minus both body radii. CenterToApproach: 3D pivot to approach point. ' +
   'ToHull: XZ pivot to approach point (a ship hull). CenterToCenter: XZ pivot to pivot.',
   ['BodyEdges', 'CenterToApproach', 'ToHull', 'CenterToCenter']);
+export const TieBreak = Enum('AcquisitionTieBreak', 'Equal scores: the lower entity id wins, or the first candidate found keeps it.',
+  ['LowerEntityId', 'FirstFound']);
 export const Visibility = Enum('UnitVisibility', 'Line of sight: terrain ray between aim points, or a NavMesh ray to the approach point.',
   ['TerrainRay', 'NavMeshRay']);
 
@@ -145,7 +147,9 @@ export const Acquisition = Named('UnitAcquisition', 'Automatic target acquisitio
   pressureBias: NonNegative('Score added per attacker already on a candidate (spreads melee).'),
   allyAlertRadius: NonNegative('Idle allies this close join against an attacker (0: none).'),
   retaliate: Type.Boolean({ description: 'Turns on the attacker when hit while free.' }),
+  measure: RangeMeasure,
   visibility: Visibility,
+  tieBreak: TieBreak,
 }, strict));
 
 export const Transport = Named('UnitTransport', 'Transport capability (A00V/Sch3).', Type.Object({

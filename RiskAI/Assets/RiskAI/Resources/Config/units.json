@@ -90,7 +90,9 @@
         "pressureBias": 0.48,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "NavMeshRay"
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -195,7 +197,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -302,7 +306,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "NavMeshRay"
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -428,7 +434,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -552,7 +560,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -658,7 +668,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -771,7 +783,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -874,7 +888,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "NavMeshRay"
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -977,7 +993,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "NavMeshRay"
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -1076,7 +1094,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -1177,7 +1197,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -1294,7 +1316,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "NavMeshRay"
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -1426,7 +1450,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -1525,7 +1551,9 @@
         "pressureBias": 0.1,
         "allyAlertRadius": 5,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
       },
       "capabilities": {
         "canCapture": true,
@@ -1653,7 +1681,9 @@
         "pressureBias": 0,
         "allyAlertRadius": 0,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "ToHull",
+        "visibility": "TerrainRay",
+        "tieBreak": "FirstFound"
       }
     },
     {
@@ -1828,7 +1858,9 @@
         "pressureBias": 0,
         "allyAlertRadius": 0,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "ToHull",
+        "visibility": "TerrainRay",
+        "tieBreak": "FirstFound"
       }
     },
     {
@@ -1943,7 +1975,9 @@
         "pressureBias": 0,
         "allyAlertRadius": 0,
         "retaliate": true,
-        "visibility": "TerrainRay"
+        "measure": "ToHull",
+        "visibility": "TerrainRay",
+        "tieBreak": "FirstFound"
       }
     },
     {
@@ -2103,7 +2137,9 @@
         "pressureBias": 0,
         "allyAlertRadius": 0,
         "retaliate": false,
-        "visibility": "TerrainRay"
+        "measure": "CenterToCenter",
+        "visibility": "TerrainRay",
+        "tieBreak": "FirstFound"
       },
       "capabilities": {
         "canCapture": false,

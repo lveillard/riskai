@@ -269,19 +269,10 @@ namespace RiskAI
             }
             strikeAt = -1; strikeTarget = null;
         }
-        bool Visible(CombatTarget enemy)
-        {
-            if (!enemy) return false;
-            if (Type.Weapon.Ranged)
-            {
-                Vector3 from = AimPoint, to = enemy.AimPoint, delta = to - from;
-                return delta.sqrMagnitude < .001f || !Physics.Raycast(from, delta.normalized, delta.magnitude, 1 << MapLayout.TerrainLayer, QueryTriggerInteraction.Ignore);
-            }
-            return !NavMesh.Raycast(transform.position, enemy.ApproachPoint(transform.position), out _, NavMesh.AllAreas);
-        }
+        bool Visible(CombatTarget enemy) => UnitTargeting.Visible(Type.Acquisition.Visibility, this, enemy);
         bool ValidTarget()
         {
-            if (!target || !target.CanBeAttacked || target.Team == Team) return false;
+            if (!UnitTargeting.CanTarget(this, Team, Type.Weapon, target)) return false;
             if (mode == OrderMode.Attack) return true;
             float leash = AutonomousLeash();
             var origin = mode == OrderMode.Idle || mode == OrderMode.Hold ? anchor : pursuitOrigin;
@@ -290,28 +281,16 @@ namespace RiskAI
             // while its pivot silently cancels the pending strike.
             return Vector3.Distance(target.ApproachPoint(origin), origin) <= leash;
         }
-        float AutonomousLeash()
-        {
-            ref readonly var acquisition = ref Type.Acquisition;
-            return Team == PlayerRules.NeutralTeam ? acquisition.LeashNeutral : acquisition.LeashHostile;
-        }
+        float AutonomousLeash() => UnitRules.Leash(Type.Acquisition, Team == PlayerRules.NeutralTeam);
         void Acquire()
         {
             if (mode == OrderMode.Move || mode == OrderMode.Follow || mode == OrderMode.Attack) return;
-            ref readonly var acquisition = ref Type.Acquisition;
-            float radius = mode == OrderMode.Hold ? acquisition.RadiusHold : Team == PlayerRules.NeutralTeam ? acquisition.RadiusNeutral : acquisition.RadiusHostile;
-            CombatTarget best = null; float score = float.MaxValue;
-            session.Spatial.Query(transform.position,radius+acquisition.QueryPadding,nearby);
-            foreach (var enemy in nearby)
-            {
-                if (!enemy || enemy.Team == Team || !enemy.CanBeAttacked) continue;
-                float distance = Vector3.Distance(transform.position, enemy.ApproachPoint(transform.position));
-                if (distance > radius || !Visible(enemy)) continue;
-                if ((mode == OrderMode.Idle || Team == PlayerRules.NeutralTeam) && Vector3.Distance(anchor, enemy.ApproachPoint(anchor)) > AutonomousLeash()) continue;
-                int pressure = session.Spatial.Pressure(Team, enemy);
-                float candidate = distance + pressure * acquisition.PressureBias;
-                if (candidate < score || candidate == score && (!best || enemy.EntityId < best.EntityId)) { best = enemy; score = candidate; }
-            }
+            ref readonly var type = ref Type;
+            bool neutral = Team == PlayerRules.NeutralTeam;
+            float radius = UnitRules.AcquireRadius(type.Acquisition, mode == OrderMode.Hold, neutral);
+            // An idle (or neutral) unit only takes targets inside its leash around the anchor.
+            bool leashed = type.Acquisition.HasLeash && (mode == OrderMode.Idle || neutral);
+            var best = UnitTargeting.Acquire(session, this, Team, type, radius, leashed, anchor, AutonomousLeash(), nearby);
             if (best) SetTarget(best);
         }
         public void SimTick(float delta)
@@ -333,7 +312,7 @@ namespace RiskAI
             {
                 attackPresentationContactTick=session.Clock.TickCount;
                 if(visualAnimator)visualAnimator.SampleStrikeContact();
-                if (strikeTarget && strikeTarget.Health > 0 && AttackDistance(strikeTarget) <= Type.Weapon.Range + Type.Weapon.StrikeTolerance && AttackDistance(strikeTarget)>=Type.Weapon.MinRange && Visible(strikeTarget))
+                if (strikeTarget && strikeTarget.Health > 0 && UnitRules.StrikeLands(Type.Weapon, AttackDistance(strikeTarget)) && Visible(strikeTarget))
                 {
                     float damage = session.RollDamage(Type.Weapon) * (IsRoaring ? 1 + roarBonus : 1);
                     if (Type.Weapon.Ranged) session.Combat.FireWeapon(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, Type.Weapon);
@@ -410,20 +389,13 @@ namespace RiskAI
                 Weapon.localRotation = Quaternion.Euler(-15-pose*95,0,0);
             }
         }
-        static float ReachRadius(CombatTarget other) => other is Soldier soldier ? soldier.Type.BodyRadius : 0;
         /// <summary>
         /// Distance the attack range is measured over. Melee reach is edge to edge, as in the
         /// source (gap between the two collision circles; building/ship approach points already
         /// lie on their surface). Ranged units keep the centre-to-approach-point distance.
         /// </summary>
-        float AttackDistance(CombatTarget other)
-        {
-            float distance = Vector3.Distance(transform.position, other.ApproachPoint(transform.position));
-            return Type.Weapon.Ranged ? distance : distance - Type.BodyRadius - ReachRadius(other);
-        }
+        float AttackDistance(CombatTarget other) => UnitTargeting.WeaponDistance(this, Type.Weapon, other);
         /// <summary>Centre distance at which a melee unit of <paramref name="kind"/> engages a target of the given radius.</summary>
-        public static float MeleeEngageDistance(UnitKind kind, float targetRadius) =>
-            UnitCatalog.Get(kind).BodyRadius + targetRadius + Mathf.Max(.05f, UnitCatalog.Get(kind).Weapon.Range - UnitCatalog.Get(kind).Weapon.ApproachMargin);
         CombatTarget meleeEngaged;
         void Fight()
         {
@@ -431,14 +403,10 @@ namespace RiskAI
             // Melee hysteresis: close to just inside the reach before the first blow, then
             // keep striking anywhere within it. Without this a charging lancer halts at the
             // very edge and every small drift restarts the approach.
-            float reach = Type.Weapon.Range;
-            if (!Type.Weapon.Ranged)
-            {
-                if (meleeEngaged != target) reach = Mathf.Max(.05f, reach - Type.Weapon.HoldMargin);
-                if (distance > Type.Weapon.Range) meleeEngaged = null;
-            }
+            float reach = UnitRules.Reach(Type.Weapon, meleeEngaged == target);
+            if (!Type.Weapon.Ranged && distance > Type.Weapon.Range) meleeEngaged = null;
             bool visible = Visible(target);
-            if(distance<Type.Weapon.MinRange)
+            if(UnitRules.TooClose(Type.Weapon, distance))
             {
                 if(mode==OrderMode.Hold){target=null;Agent.isStopped=IsGarrison;return;}
                 if(session.BattleTime>=nextPath)
@@ -497,7 +465,7 @@ namespace RiskAI
                     var from = transform.position - approach; from.y = 0;
                     if (from.sqrMagnitude > .0001f)
                     {
-                        var probe = approach + from.normalized * MeleeEngageDistance(Kind, ReachRadius(target));
+                        var probe = approach + from.normalized * UnitRules.EngageDistance(Type, target.Type.BodyRadius);
                         if (NavMesh.SamplePosition(probe, out var spot, .75f, NavMesh.AllAreas) &&
                             !NavMesh.Raycast(transform.position, spot.position, out _, NavMesh.AllAreas))
                         {
@@ -547,6 +515,8 @@ namespace RiskAI
                 else if (!Agent.hasPath && session.BattleTime >= nextPath) { Agent.stoppingDistance = .15f; Agent.SetDestination(destination); nextPath = session.BattleTime + .5f; }
             }
         }
+        /// <summary>An idle ally joins against the attacker of a nearby friend.</summary>
+        public override void JoinAlert(CombatTarget attacker) { if (IsIdle) SetTarget(attacker); }
         public float Heal(float amount)
         {
             if(!IsAlive||amount<=0||float.IsNaN(amount)||float.IsInfinity(amount))return 0;
@@ -574,14 +544,16 @@ namespace RiskAI
                 session.SoldierPool.Retire(this,SoldierPool.CorpseDelay(session,visualAnimator));
                 return;
             }
-            if (source && mode != OrderMode.Move && mode != OrderMode.Hold && mode != OrderMode.Follow && !target)
+            ref readonly var acquisition = ref Type.Acquisition;
+            if (source && acquisition.Retaliate && mode != OrderMode.Move && mode != OrderMode.Hold && mode != OrderMode.Follow && !target)
                 SetTarget(source);
-            if(source)
+            float alert = acquisition.AllyAlertRadius;
+            if(source && alert > 0)
             {
-                session.Spatial.Query(transform.position,5,alerted);
+                session.Spatial.Query(transform.position,alert,alerted);
                 foreach(var candidate in alerted)
-                    if(candidate is Soldier ally && ally.Team==Team && ally.IsIdle && (transform.position-ally.transform.position).sqrMagnitude<25)
-                        ally.SetTarget(source);
+                    if(candidate && candidate.Team==Team && (transform.position-candidate.transform.position).sqrMagnitude<alert*alert)
+                        candidate.JoinAlert(source);
             }
         }
     }

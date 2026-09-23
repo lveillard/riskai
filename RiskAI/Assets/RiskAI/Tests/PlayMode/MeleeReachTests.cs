@@ -120,7 +120,7 @@ namespace RiskAI.Tests
         {
             // At contact the lowered, thrust lance reaches the near surface of a footman
             // standing at the melee engagement distance (model space, calibrated below 1%).
-            float engage = Soldier.MeleeEngageDistance(UnitKind.Knight, UnitCatalog.Get(UnitKind.Footman).CollisionRadius);
+            float engage = UnitRules.EngageDistance(UnitCatalog.Get(UnitKind.Knight), UnitCatalog.Get(UnitKind.Footman).BodyRadius);
             float surface = engage - UnitCatalog.Get(UnitKind.Footman).CollisionRadius;
             var tip = MountedKnightView.LanceTip(1);
             Assert.That(tip.z, Is.InRange(surface - .15f, engage), "Contact lance tip reaches the target body.");

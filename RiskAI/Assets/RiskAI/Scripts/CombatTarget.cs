@@ -11,6 +11,10 @@ namespace RiskAI
         public float Health { get; protected set; }
         /// <summary>The units.json type of this actor.</summary>
         public abstract ref readonly UnitType Type { get; }
+        /// <summary>The weapon this actor fights with (a post's depends on its host building).</summary>
+        public virtual ref readonly WeaponProfile AttackWeapon => ref Type.Weapon;
+        /// <summary>Asked when an ally within its alert radius is hit; units that join the fight override it.</summary>
+        public virtual void JoinAlert(CombatTarget attacker) { }
         public abstract float MaxHealth { get; }
         public bool IsAlive => Health > 0 && gameObject.activeInHierarchy;
         public virtual bool CanBeAttacked => IsAlive;

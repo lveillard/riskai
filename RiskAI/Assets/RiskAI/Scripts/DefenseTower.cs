@@ -26,6 +26,7 @@ namespace RiskAI
         public override float Armor => Type.Armor;
         /// <summary>The post weapon depends on its host building (h00N city / h00O shipyard).</summary>
         ref readonly WeaponProfile HostWeapon => ref (Town ? ref Type.TownWeapon : ref Type.HarborWeapon);
+        public override ref readonly WeaponProfile AttackWeapon => ref HostWeapon;
         public bool UnderConstruction { get; private set; }
         public float BuildProgress { get; private set; }
         public int ShotsFired { get; private set; }
@@ -129,28 +130,12 @@ namespace RiskAI
 
         void CancelLaunch() { launchAt = -1; launchTargetId = 0; }
 
-        CombatTarget FindTarget()
-        {
-            CombatTarget best=null;float bestDistance=float.MaxValue;
-            session.Spatial.Query(transform.position,AttackRange,nearby);
-            foreach(var unit in nearby)
-            {
-                if(!IsValidTarget(unit))continue;
-                float distance=DistanceXZ(transform.position,unit.transform.position);
-                if(distance<bestDistance){best=unit;bestDistance=distance;}
-            }
-            return best;
-        }
+        CombatTarget FindTarget() => UnitTargeting.Acquire(session, this, Team, Type, AttackRange, false, default, 0, nearby);
         bool IsValidTarget(CombatTarget candidate)
         {
-            if(!candidate||!candidate.CanBeAttacked||candidate.Team==Team||candidate.Team<0)return false;
-            if(DistanceXZ(transform.position,candidate.transform.position)>AttackRange)return false;
-            Vector3 from=AimPoint,to=candidate.AimPoint,delta=to-from;
-            return delta.sqrMagnitude<.001f||!Physics.Raycast(from,delta.normalized,delta.magnitude,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore);
-        }
-        static float DistanceXZ(Vector3 a,Vector3 b)
-        {
-            a.y=b.y=0;return Vector3.Distance(a,b);
+            if(!UnitTargeting.CanTarget(this,Team,HostWeapon,candidate))return false;
+            if(UnitTargeting.WeaponDistance(this,HostWeapon,candidate)>AttackRange)return false;
+            return UnitTargeting.Visible(Type.Acquisition.Visibility,this,candidate);
         }
 
         public override void TakeDamage(float damage, int attacker, CombatTarget source = null)

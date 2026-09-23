@@ -96,7 +96,7 @@ namespace RiskAI.Tests
             acquisition.Add("pressureBias", a.PressureBias);
             acquisition.Add("measure", Measure(weapon.Measure));
             acquisition.Add("visibility", a.Visibility == UnitVisibility.TerrainRay ? "terrainRay" : "navMeshRay");
-            acquisition.Add("meleeEngageDistanceVsFootman", ranged ? 0 : Soldier.MeleeEngageDistance(kind, UnitCatalog.Get(UnitKind.Footman).BodyRadius));
+            acquisition.Add("meleeEngageDistanceVsFootman", ranged ? 0 : UnitRules.EngageDistance(UnitCatalog.Get(kind), UnitCatalog.Get(UnitKind.Footman).BodyRadius));
             unit.Add("acquisition", acquisition);
 
             var geometry = new Obj();

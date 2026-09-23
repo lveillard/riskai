@@ -721,6 +721,19 @@
       ],
       "description": "Line of sight: terrain ray between aim points, or a NavMesh ray to the approach point."
     },
+    "AcquisitionTieBreak": {
+      "anyOf": [
+        {
+          "const": "LowerEntityId",
+          "type": "string"
+        },
+        {
+          "const": "FirstFound",
+          "type": "string"
+        }
+      ],
+      "description": "Equal scores: the lower entity id wins, or the first candidate found keeps it."
+    },
     "UnitAcquisition": {
       "additionalProperties": false,
       "type": "object",
@@ -730,7 +743,9 @@
         "pressureBias",
         "allyAlertRadius",
         "retaliate",
-        "visibility"
+        "measure",
+        "visibility",
+        "tieBreak"
       ],
       "properties": {
         "radius": {
@@ -758,8 +773,14 @@
           "description": "Turns on the attacker when hit while free.",
           "type": "boolean"
         },
+        "measure": {
+          "$ref": "#/$defs/RangeMeasure"
+        },
         "visibility": {
           "$ref": "#/$defs/UnitVisibility"
+        },
+        "tieBreak": {
+          "$ref": "#/$defs/AcquisitionTieBreak"
         }
       },
       "description": "Automatic target acquisition."
