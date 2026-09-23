@@ -2,40 +2,7 @@ using System;
 
 namespace RiskAI.Core
 {
-    public enum WeaponDelivery
-    {
-        Instant,
-        Missile,
-        Artillery,
-        MissileSplash
-    }
-
-    public enum WeaponTargeting
-    {
-        Target,
-        LaunchPoint
-    }
-
-    [Flags]
-    public enum WeaponTargetMask
-    {
-        None = 0,
-        Air = 1 << 0,
-        Debris = 1 << 1,
-        Ground = 1 << 2,
-        Item = 1 << 3,
-        Structure = 1 << 4,
-        Ward = 1 << 5,
-        Self = 1 << 6,
-        Tree = 1 << 7,
-        Wall = 1 << 8,
-        Enemy = 1 << 9,
-        Neutral = 1 << 10,
-        Ally = 1 << 11,
-        // Runtime-only classification used to preserve the local Mage profile.
-        Soldier = 1 << 12
-    }
-
+    // WeaponDelivery, WeaponTargeting and WeaponTargetMask are generated from units.schema.ts.
     /// <summary>Source-facing weapon delivery data, independent from the damage bonus category.</summary>
     public readonly struct WeaponProfile
     {

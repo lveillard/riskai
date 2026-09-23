@@ -28,3 +28,4 @@ __pycache__/
 
 /Captures/
 /.playwright-mcp/
+/scripts/config/node_modules/
