@@ -18,7 +18,9 @@ namespace RiskAI.Tests
             Assert.That(MapLayout.Towns.Count(t => t.Owner == 1), Is.EqualTo(2));
             Assert.That(MapLayout.Towns.Single(t => t.Id == "dawn").Capital, Is.True);
             Assert.That(MapLayout.Towns.Single(t => t.Id == "red").Capital, Is.True);
-            Assert.That(MapLayout.Towns.Where(t => t.Country == 10).Select(t => t.Id), Is.EquivalentTo(new[] { "isla-bruma", "isla-viento" }));
+            // Each island joins the mainland shore across its channel (v0.31 regrouping).
+            Assert.That(MapLayout.Towns.Where(t => t.Country == 1).Select(t => t.Id), Is.EquivalentTo(new[] { "isla-bruma", "meadow" }));
+            Assert.That(MapLayout.Towns.Where(t => t.Country == 10).Select(t => t.Id), Is.EquivalentTo(new[] { "isla-viento", "gate", "torre-norte" }));
             foreach (var country in MapLayout.Countries)
             {
                 int cities = MapLayout.Towns.Count(t => t.Country == country.Region);

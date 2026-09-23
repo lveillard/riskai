@@ -8,16 +8,27 @@ namespace RiskAI
         static readonly Dictionary<int,Mesh> crowns=new();
         public static void Tree(Transform root,Vector3 p,float height,int seed)
         {
-            float x=p.x/MapLayout.Spacing,z=p.z/MapLayout.Spacing;
+            float z=p.z/MapLayout.Spacing;
             bool island=p.z>MapLayout.Coast(p.x);
-            // The new southern marches are a low, dry olive country.  It uses the
-            // fourth existing foliage-atlas tile, rather than adding another asset.
-            bool classicSouthwest=!MapLayout.IsExpanded&&x<4&&z<-45;
-            int biome=classicSouthwest?3:island&&z>60?2:x>28&&z<-25?2:x<-24&&z>15?1:(seed%7==0?0:-1);
+            // Zone weights are continuous fields (FictionalGround); a per-tree dither
+            // turns them into a mixed transition instead of a straight species border.
+            var zones=FictionalGround.Sample(p.x,p.z);
+            float roll=(((uint)seed*2654435761u)>>8&1023)/1023f,variety=(((uint)seed*40503u+17)>>6&1023)/1023f;
+            int biome=zones.Dry>.12f+roll*.76f?SecanoForm(variety,ref height):
+                island&&z>60?2:zones.Arid>.12f+roll*.76f?2:zones.Autumn>.12f+roll*.76f?1:(seed%7==0?0:-1);
             if(island&&z<60)biome=seed%3==0?1:0;
             if(biome<0){WorldArt.Tree(root,p,height,seed);return;}
             CreateBroadleaf(root,p,height,seed,biome);
         }
+        // Las Marcas secano: olive trees, dark holm oaks and low scrub.
+        static int SecanoForm(float variety,ref float height)
+        {
+            if(variety<.58f)return 3;
+            if(variety<.84f){height*=1.18f;return 4;}
+            height*=.42f+variety*.12f;return 3;
+        }
+        /// <summary>A cultivated olive tree (Las Marcas groves).</summary>
+        public static void SecanoOlive(Transform root,Vector3 p,float height,int seed)=>CreateBroadleaf(root,p,height,seed,3);
         /// <summary>Own mesh families selected from an imported destructible's verified base code.</summary>
         public static void ImportedTree(Transform root,Vector3 p,float height,int seed,ImportedTreeForm form)
         {
@@ -26,11 +37,11 @@ namespace RiskAI
         }
         static void CreateBroadleaf(Transform root,Vector3 p,float height,int seed,int biome,bool solid=false)
         {
-            var go=new GameObject(biome==2?"Coastal palm":biome==3?"Dry olive":biome==1?"Amber oak":"Green oak");go.transform.SetParent(root,false);go.transform.localPosition=p;
+            var go=new GameObject(biome==2?"Coastal palm":biome==3?"Dry olive":biome==4?"Holm oak":biome==1?"Amber oak":"Green oak");go.transform.SetParent(root,false);go.transform.localPosition=p;
             go.transform.localRotation=Quaternion.Euler(0,seed*137.5f,0);
             float trunkHeight=biome==2?height*.78f:height*.63f;
             var trunk=VisualFactory.Shape(go.transform,PrimitiveType.Cylinder,"Bark",Vector3.up*trunkHeight*.5f,new Vector3(biome==2?.3f:.46f,trunkHeight*.5f,biome==2?.3f:.46f),Color.white,solid);
-            trunk.GetComponent<Renderer>().sharedMaterial=WorldArt.Painted(2,biome==3?new Color(.69f,.62f,.43f):new Color(.85f,.78f,.58f),.6f);
+            trunk.GetComponent<Renderer>().sharedMaterial=WorldArt.Painted(2,biome==3||biome==4?new Color(.69f,.62f,.43f):new Color(.85f,.78f,.58f),.6f);
             if(biome!=2)for(int j=0;j<3;j++)
             {
                 float a=(j*120+seed*17)*Mathf.Deg2Rad;
@@ -46,8 +57,10 @@ namespace RiskAI
         {
             int key=biome*10+variation;if(crowns.TryGetValue(key,out var found)&&found)return found;
             var v=new List<Vector3>();var uv=new List<Vector2>();var t=new List<int>();var colors=new List<Color>();
-            Vector2 tile=new((biome%2)*.5f,biome<2?.5f:0);
-            Color foliageTint=biome==3?new Color(1.08f,.86f,.58f):Color.white;
+            // Holm oak (4) reuses the broadleaf tile with a dark evergreen tint.
+            int atlas=biome==4?0:biome;
+            Vector2 tile=new((atlas%2)*.5f,atlas<2?.5f:0);
+            Color foliageTint=biome==3?new Color(1.08f,.86f,.58f):biome==4?new Color(.58f,.70f,.48f):Color.white;
             void Quad(Vector3 a,Vector3 b,Vector3 c,Vector3 d,float shade)
             {
                 int k=v.Count;v.Add(a);v.Add(b);v.Add(c);v.Add(d);

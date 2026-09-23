@@ -58,14 +58,14 @@ Shader "RiskAI/ImportedGround"
     // land, while arid, cold and highland regions replace the green base.
     half4 biome=RiskBiomeData(i.w.xz);
     half biomeStrength=saturate(_RiskBiomeGrid.w);
-    half biomeNoise=NaturalNoise(warped*.07+11.3);
+    half biomeNoise=NaturalFbm(warped*.07+11.3);
     half arid=saturate(biome.r+(patch-.5)*.24*(1-biome.r*.6));
     half cold=saturate(biome.g+(biomeNoise-.5)*.14);
     half3 dryGrass=SAMPLE_TEXTURE2D_GRAD(_Biomes,sampler_Biomes,frac(uv*.9)*.46+float2(.02,.02),ddx(uv)*.414,ddy(uv)*.414).rgb;
     half3 pale=SAMPLE_TEXTURE2D_GRAD(_Cliffs,sampler_Cliffs,frac(rotated*.6)*.46+float2(.52,.52),ddx(rotated)*.276,ddy(rotated)*.276).rgb;
     half3 sandTile=SAMPLE_TEXTURE2D_GRAD(_Biomes,sampler_Biomes,frac(warped*.19)*.46+float2(.02,.52),ddx(warped*.19)*.46,ddy(warped*.19)*.46).rgb;
     half biomeGrain=NaturalNoise(warped*1.3);
-    half scrubNoise=NaturalNoise(warped*.09+3.7),rockNoise=NaturalNoise(warped*.11+7.1);
+    half scrubNoise=NaturalFbm(warped*.09+3.7),rockNoise=NaturalFbm(warped*.11+7.1);
     half3 green=grass*1.65;
     half3 land=BiomeLand(green,dryGrass,pale,sandTile,rock,arid,cold,biome,patch,biomeNoise,biomeGrain,scrubNoise,rockNoise);
     land=lerp(green,land,biomeStrength);

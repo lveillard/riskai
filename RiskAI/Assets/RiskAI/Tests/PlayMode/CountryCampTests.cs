@@ -64,6 +64,13 @@ namespace RiskAI.Tests
             Assert.That(atlas.Field,Is.SameAs(TerritoryField.Current),"Atlas, camp inspection, border posts and minimap read one territory field.");
             foreach(var town in battle.Towns)
                 Assert.That(TerritoryMarkers.CountryAt(town.transform.position),Is.EqualTo(town.State.Country),town.DisplayName+" lies inside its own camp territory.");
+            for(int c=0;c<MapLayout.Countries.Length;c++)
+            {
+                var anchor=atlas.LabelAnchors[c];
+                Assert.That(float.IsNaN(anchor.x),Is.False,MapLayout.Countries[c].Name+" has a label anchor.");
+                Assert.That(TerritoryField.Current.CountryAt(anchor.x,anchor.y),Is.EqualTo(c),MapLayout.Countries[c].Name+" label sits inside its country.");
+                Assert.That(atlas.LabelRadii[c],Is.GreaterThan(1f),MapLayout.Countries[c].Name+" label anchor keeps room from its borders.");
+            }
             camp.Select(true);
             Assert.That(StrategicMapView.Current.SelectedCountry,Is.EqualTo(camp.Country));
             var guard=battle.Towns[0].Defender;
@@ -74,6 +81,41 @@ namespace RiskAI.Tests
             StrategicMapView.Current.SetStrategic(false);
             Assert.That(Camera.main.cullingMask&(1<<MapLayout.TerrainLayer),Is.Not.Zero);
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CampsSitCentredAmongTheirCitiesInsideTheirTerritory()
+        {
+            AssertCampsCentred(battle);
+            yield return null;
+        }
+
+        /// <summary>
+        /// Authored camps stand inside their own territory, clear of city buildings and claim
+        /// circles, and near their members' centroid (unless the centroid is sea or foreign land,
+        /// as for a country split by a channel), with a NavMesh path to a member city.
+        /// </summary>
+        internal static void AssertCampsCentred(BattleSession battle)
+        {
+            Assert.That(battle.Camps.Count(c=>c),Is.EqualTo(MapLayout.Countries.Length),"Every country has a camp.");
+            var field=TerritoryField.Current;var path=new UnityEngine.AI.NavMeshPath();
+            foreach(var camp in battle.Camps)
+            {
+                var members=MapLayout.Towns.Where(t=>t.Country==camp.Country).ToArray();
+                var centroid=members.Aggregate(Vector3.zero,(sum,t)=>sum+t.Position)/members.Length;
+                float spread=members.Max(t=>Vector2.Distance(new Vector2(t.Position.x,t.Position.z),new Vector2(centroid.x,centroid.z)));
+                var at=camp.SpawnPoint;string name=camp.DisplayName;
+                Assert.That(field.CountryAt(at.x,at.z),Is.EqualTo(camp.Country),name+" camp lies inside its territory.");
+                foreach(var town in MapLayout.Towns)
+                {
+                    Assert.That(Vector2.Distance(new Vector2(at.x,at.z),new Vector2(town.Position.x,town.Position.z)),Is.GreaterThan(CountryCamp.CityClearance-.5f),name+" camp clears "+town.Id);
+                    Assert.That(Vector2.Distance(new Vector2(at.x,at.z),new Vector2(town.ClaimPoint.x,town.ClaimPoint.z)),Is.GreaterThan(CountryCamp.ClaimClearance-.5f),name+" camp clears the claim circle of "+town.Id);
+                }
+                bool centreUsable=MapLayout.IsWalkable(centroid.x,centroid.z)&&field.CountryAt(centroid.x,centroid.z)==camp.Country;
+                if(centreUsable)Assert.That(Vector2.Distance(new Vector2(at.x,at.z),new Vector2(centroid.x,centroid.z)),Is.LessThanOrEqualTo(Mathf.Max(10,spread*.6f)),name+" camp stays near the centre of its cities.");
+                Assert.That(members.Any(t=>UnityEngine.AI.NavMesh.SamplePosition(t.Position,out var target,6,UnityEngine.AI.NavMesh.AllAreas)&&
+                    UnityEngine.AI.NavMesh.CalculatePath(at,target.position,UnityEngine.AI.NavMesh.AllAreas,path)&&path.status==UnityEngine.AI.NavMeshPathStatus.PathComplete),Is.True,name+" camp has a rally path to a member city.");
+            }
         }
 
         [UnityTest]

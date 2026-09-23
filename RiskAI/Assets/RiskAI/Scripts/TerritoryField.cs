@@ -100,27 +100,78 @@ namespace RiskAI
         /// winning country and, inside it, the city with the largest weight. Land cells vote
         /// ahead of water cells so coasts keep the country of the adjacent shore.
         /// </summary>
-        public void Sample(float x, float z, out int sampledCountry, out int sampledCity)
+        public void Sample(float x, float z, out int sampledCountry, out int sampledCity) => Sample(x, z, out sampledCountry, out sampledCity, out _, out _);
+        /// <param name="margin">Winning vote minus the runner-up, over the total vote (0 on a border, 1 inside).
+        /// Near a border it grows by <see cref="MarginPerCell"/> per field cell, so it places the border inside a texel.</param>
+        /// <param name="cityMargin">The same margin between the cities of the winning country.</param>
+        public void Sample(float x, float z, out int sampledCountry, out int sampledCity, out float margin, out float cityMargin)
         {
+            // Cubic B-spline vote over the surrounding 4x4 cells: borders become smooth curves
+            // instead of following the cell staircase. Land cells vote ahead of water cells so
+            // coasts keep the country of the adjacent shore.
             FieldPoint(x, z, out float fx, out float fz);
-            int x0 = Mathf.Clamp(Mathf.FloorToInt(fx), 0, Width - 2), z0 = Mathf.Clamp(Mathf.FloorToInt(fz), 0, Height - 2);
-            float u = Mathf.Clamp01(fx - x0), v = Mathf.Clamp01(fz - z0);
-            int a = z0 * Width + x0, b = a + 1, c = a + Width, d = c + 1;
-            float wa = (1 - u) * (1 - v), wb = u * (1 - v), wc = (1 - u) * v, wd = u * v;
-            bool anyLand = land[a] || land[b] || land[c] || land[d];
-            if (anyLand) { if (!land[a]) wa = 0; if (!land[b]) wb = 0; if (!land[c]) wc = 0; if (!land[d]) wd = 0; }
-            int best = country[a]; float bestWeight = -1;
-            Vote(country[a], country, a, b, c, d, wa, wb, wc, wd, ref best, ref bestWeight);
-            Vote(country[b], country, a, b, c, d, wa, wb, wc, wd, ref best, ref bestWeight);
-            Vote(country[c], country, a, b, c, d, wa, wb, wc, wd, ref best, ref bestWeight);
-            Vote(country[d], country, a, b, c, d, wa, wb, wc, wd, ref best, ref bestWeight);
-            sampledCountry = best;
-            int bestCity = -1; float cityWeight = -1;
-            if (country[a] == best && wa > cityWeight) { cityWeight = wa; bestCity = city[a]; }
-            if (country[b] == best && wb > cityWeight) { cityWeight = wb; bestCity = city[b]; }
-            if (country[c] == best && wc > cityWeight) { cityWeight = wc; bestCity = city[c]; }
-            if (country[d] == best && wd > cityWeight) { bestCity = city[d]; }
-            sampledCity = bestCity;
+            int x1 = Mathf.Clamp(Mathf.FloorToInt(fx), 0, Width - 2), z1 = Mathf.Clamp(Mathf.FloorToInt(fz), 0, Height - 2);
+            float u = Mathf.Clamp01(fx - x1), v = Mathf.Clamp01(fz - z1);
+            // Interior fast path: one country and one city over the whole 4x4 footprint.
+            if (x1 >= 1 && z1 >= 1 && x1 + 2 < Width && z1 + 2 < Height)
+            {
+                int corner = (z1 - 1) * Width + x1 - 1; short c0 = country[corner], s0 = city[corner]; bool uniform = true;
+                for (int j = 0; j < 4 && uniform; j++) { int row = corner + j * Width; for (int i = 0; i < 4; i++) if (country[row + i] != c0 || city[row + i] != s0) { uniform = false; break; } }
+                if (uniform) { sampledCountry = c0; sampledCity = s0; margin = 1; cityMargin = 1; return; }
+            }
+            BSpline(u, wx); BSpline(v, wz);
+            int labels = 0; bool anyLand = false;
+            for (int j = 0; j < 4; j++) for (int i = 0; i < 4; i++)
+            {
+                int cx = Mathf.Clamp(x1 - 1 + i, 0, Width - 1), cz = Mathf.Clamp(z1 - 1 + j, 0, Height - 1);
+                anyLand |= land[cz * Width + cx];
+            }
+            float total = 0;
+            for (int j = 0; j < 4; j++) for (int i = 0; i < 4; i++)
+            {
+                int cx = Mathf.Clamp(x1 - 1 + i, 0, Width - 1), cz = Mathf.Clamp(z1 - 1 + j, 0, Height - 1), cell = cz * Width + cx;
+                if (anyLand && !land[cell]) continue;
+                float w = wx[i] * wz[j]; if (w <= 0) continue;
+                total += w;
+                int label = country[cell], k = 0;
+                while (k < labels && voteLabel[k] != label) k++;
+                if (k == labels) { voteLabel[k] = label; voteWeight[k] = 0; labels++; }
+                voteWeight[k] += w;
+            }
+            int best = -1; float bestWeight = -1, runnerUp = 0;
+            // Ties resolve to the lower country index so every platform draws the same border.
+            for (int k = 0; k < labels; k++)
+                if (voteWeight[k] > bestWeight || (voteWeight[k] == bestWeight && voteLabel[k] < voteLabel[best])) { best = k; bestWeight = voteWeight[k]; }
+            if (best < 0) { sampledCountry = -1; sampledCity = -1; margin = 1; cityMargin = 1; return; }
+            for (int k = 0; k < labels; k++) if (k != best && voteWeight[k] > runnerUp) runnerUp = voteWeight[k];
+            sampledCountry = voteLabel[best];
+            margin = total > 0 ? (bestWeight - runnerUp) / total : 1;
+            // Second vote, among the winning country's cells, for its city.
+            int cities = 0;
+            for (int j = 0; j < 4; j++) for (int i = 0; i < 4; i++)
+            {
+                int cx = Mathf.Clamp(x1 - 1 + i, 0, Width - 1), cz = Mathf.Clamp(z1 - 1 + j, 0, Height - 1), cell = cz * Width + cx;
+                if ((anyLand && !land[cell]) || country[cell] != sampledCountry) continue;
+                float w = wx[i] * wz[j]; int label = city[cell], k = 0;
+                while (k < cities && voteCity[k] != label) k++;
+                if (k == cities) { voteCity[k] = label; voteCityWeight[k] = 0; cities++; }
+                voteCityWeight[k] += w;
+            }
+            int bestCity = 0; float cityRunnerUp = 0;
+            for (int k = 1; k < cities; k++)
+                if (voteCityWeight[k] > voteCityWeight[bestCity] || (voteCityWeight[k] == voteCityWeight[bestCity] && voteCity[k] < voteCity[bestCity])) bestCity = k;
+            for (int k = 0; k < cities; k++) if (k != bestCity && voteCityWeight[k] > cityRunnerUp) cityRunnerUp = voteCityWeight[k];
+            sampledCity = cities > 0 ? voteCity[bestCity] : -1;
+            cityMargin = bestWeight > 0 && cities > 0 ? (voteCityWeight[bestCity] - cityRunnerUp) / bestWeight : 1;
+        }
+        /// <summary>Slope of the vote margin across a straight border, per field cell (cubic B-spline of a step: 2 x 2/3).</summary>
+        public const float MarginPerCell = 4f / 3f;
+        readonly float[] wx = new float[4], wz = new float[4], voteWeight = new float[16], voteCityWeight = new float[16];
+        readonly int[] voteLabel = new int[16], voteCity = new int[16];
+        static void BSpline(float t, float[] w)
+        {
+            float t2 = t * t, t3 = t2 * t, s = 1 - t;
+            w[0] = s * s * s / 6f; w[1] = (3 * t3 - 6 * t2 + 4) / 6f; w[2] = (-3 * t3 + 3 * t2 + 3 * t + 1) / 6f; w[3] = t3 / 6f;
         }
         /// <summary>
         /// On authored maps the exact land test (rivers, ponds, islands) is costly; away from any
@@ -138,12 +189,8 @@ namespace RiskAI
             for (int dz = 0; dz < 4; dz++) for (int dx = 0; dx < 4; dx++) if (land[(z0 + dz) * Width + x0 + dx] != first) return false;
             isLand = first; return true;
         }
-        static void Vote(int label, short[] labels, int a, int b, int c, int d, float wa, float wb, float wc, float wd, ref int best, ref float bestWeight)
-        {
-            float weight = (labels[a] == label ? wa : 0) + (labels[b] == label ? wb : 0) + (labels[c] == label ? wc : 0) + (labels[d] == label ? wd : 0);
-            // Ties resolve to the lower country index so every platform draws the same border.
-            if (weight > bestWeight || (weight == bestWeight && label < best)) { bestWeight = weight; best = label; }
-        }
+        /// <summary>World size of one field cell (the scale over which a border vote changes).</summary>
+        public float CellSize => cell;
 
         Vector2 CellWorld(int x, int z) => sourceGrid ? imported.TerrainVertex(x, z) : new Vector2(originX + x * cell, originZ + z * cell);
         void FieldPoint(float x, float z, out float fx, out float fz)

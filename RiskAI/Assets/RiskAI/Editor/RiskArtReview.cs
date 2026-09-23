@@ -181,6 +181,18 @@ namespace RiskAI.Editor
                     regions.Add(("southeast",new Vector3(max.x*.55f,0,min.y*.6f),55));regions.Add(("northwest",new Vector3(min.x*.5f,0,max.y*.35f),55));
                 }
                 foreach(var region in regions)Render(camera,readback,directory,prefix+"-region-"+region.label,MapLayout.Point(region.point.x,region.point.z),region.zoom,55,0);
+                // Close-ups of ground around posts: cities, harbors and camps (--riskai-art-posts).
+                if(Environment.GetCommandLineArgs().Contains("--riskai-art-posts"))
+                {
+                    var towns=UnityEngine.Object.FindObjectsByType<Settlement>(FindObjectsSortMode.InstanceID);
+                    int shot=0;
+                    foreach(var town in towns.Where(t=>!t.IsPort).Take(4))Render(camera,readback,directory,prefix+"-post-city"+(shot++),town.transform.position,13,55,0);
+                    shot=0;
+                    foreach(var harbor in NavalWorld.Current.Harbors.Where(h=>h).Take(4))Render(camera,readback,directory,prefix+"-post-harbor"+(shot++),harbor.Landing,14,55,0);
+                    shot=0;
+                    foreach(var camp in UnityEngine.Object.FindObjectsByType<CountryCamp>(FindObjectsSortMode.InstanceID).Take(3))Render(camera,readback,directory,prefix+"-post-camp"+(shot++),camp.SpawnPoint,13,55,0);
+                    return;
+                }
                 // Edges: the camera clamp keeps focus inside the playable rectangle, so view from inside looking out.
                 Render(camera,readback,directory,prefix+"-edge-north",new Vector3(center.x,0,max.y-30),70,50,0);
                 Render(camera,readback,directory,prefix+"-edge-south",new Vector3(center.x,0,min.y+30),70,50,180);

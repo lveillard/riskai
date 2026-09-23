@@ -36,6 +36,7 @@ namespace RiskAI.Tests
             Assert.That(MapLayout.MapName, Is.EqualTo("Cuatro Riberas"));
             Assert.That(MapLayout.Towns.Length, Is.EqualTo(44));
             Assert.That(MapLayout.Countries.Length, Is.EqualTo(11));
+            CountryCampTests.AssertCampsCentred(battle);
             Assert.That(MapLayout.Islands.Length, Is.EqualTo(3));
             Assert.That(NavalWorld.Current.Harbors.Count, Is.EqualTo(8));
             Assert.That(battle.Units.Count, Is.EqualTo(MapLayout.Towns.Length + NavalWorld.Current.Harbors.Count));

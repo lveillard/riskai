@@ -13,6 +13,7 @@ namespace RiskAI.Tests
             var material=new Material(Shader.Find("RiskAI/StrategicTerritory"));
             var regions=new Texture2D(32,32,TextureFormat.RGBA32,false,true){filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};
             var palette=new Texture2D(2,1,TextureFormat.RGBA32,false,true){filterMode=FilterMode.Point};
+            var borders=new Texture2D(32,32,TextureFormat.RGBA32,false,true){filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
             var readback=new Texture2D(128,128,TextureFormat.RGBA32,false,true);
             var target=RenderTexture.GetTemporary(128,128,24,RenderTextureFormat.ARGB32,RenderTextureReadWrite.Linear);
             var mesh=new Mesh();var previous=RenderTexture.active;
@@ -28,7 +29,7 @@ namespace RiskAI.Tests
                 mesh.vertices=new[]{new Vector3(-1,0,-1),new Vector3(-1,0,1),new Vector3(1,0,-1),new Vector3(1,0,1)};
                 mesh.normals=new[]{Vector3.up,Vector3.up,Vector3.up,Vector3.up};mesh.triangles=new[]{0,1,2,1,3,2};
                 surface.AddComponent<MeshFilter>().sharedMesh=mesh;surface.AddComponent<MeshRenderer>().sharedMaterial=material;
-                material.SetTexture("_Regions",regions);material.SetTexture("_Palette",palette);
+                material.SetTexture("_Regions",regions);material.SetTexture("_Palette",palette);material.SetTexture("_Borders",borders);material.SetFloat("_BorderRange",TerritoryAtlas.BorderRange);
                 material.SetVector("_MapBounds",new Vector4(-1,-1,2,2));material.SetFloat("_PaletteWidth",2);
                 material.SetFloat("_Overview",1);material.SetFloat("_SelectedCountry",-1);material.SetFloat("_ZWrite",1);
                 palette.SetPixels(new[]{Color.red,Color.red});palette.Apply();
@@ -37,6 +38,7 @@ namespace RiskAI.Tests
                 {
                     for(int z=0;z<32;z++)for(int x=0;x<32;x++)pixels[z*32+x]=new Color32((byte)(x<16?0:1),0,x<16?(byte)1:rightCountry,x<16?(byte)255:rightAlpha);
                     regions.SetPixels32(pixels);regions.Apply();
+                    borders.SetPixels32(TerritoryAtlas.EncodeBorders(pixels,null,null,32,32,1,out _));borders.Apply();
                 }
                 void Render()
                 {
@@ -45,13 +47,18 @@ namespace RiskAI.Tests
                     RenderPipeline.SubmitRenderRequest(camera,new RenderPipeline.StandardRequest { destination=target });
                     RenderTexture.active=target;readback.ReadPixels(new Rect(0,0,128,128),0,0);readback.Apply();
                 }
+                // 4 screen pixels per atlas texel; the border between texels 15 and 16 lies at x=64.
                 Fill(1,255);Render();float interior=readback.GetPixel(40,64).r;
                 Assert.That(interior,Is.GreaterThan(.2f),"The terrain must actually render.");
-                Assert.That(readback.GetPixel(63,64).r,Is.EqualTo(interior).Within(.02f),"Two cities in one camp have no group border.");
+                float seam=readback.GetPixel(63,64).r;
+                Assert.That(seam,Is.LessThan(interior-.05f).And.GreaterThan(interior*.45f),"Two cities of one camp keep only a subtle seam.");
+                Assert.That(readback.GetPixel(58,64).r,Is.EqualTo(interior).Within(.02f),"The seam stays thin.");
                 Fill(2,255);Render();
-                Assert.That(readback.GetPixel(63,64).r,Is.LessThan(interior-.1f),"Different camps remain separated even with identical owners.");
+                Assert.That(readback.GetPixel(62,64).r,Is.LessThan(Mathf.Min(seam-.1f,.15f)),"Different camps get a dark outline, stronger than a city seam, even with identical owners.");
+                Assert.That(readback.GetPixel(63,64).g,Is.GreaterThan(.5f),"The outline has a light core on the border itself.");
+                Assert.That(readback.GetPixel(58,64).r,Is.EqualTo(interior).Within(.02f),"The outline keeps a constant pixel width.");
                 palette.SetPixels(new[]{Color.red,Color.green});palette.Apply();Fill(1,255);Render();
-                Assert.That(readback.GetPixel(63,64).r,Is.EqualTo(interior).Within(.02f),"Changing ownership must not introduce a camp border.");
+                Assert.That(readback.GetPixel(63,64).r,Is.EqualTo(seam).Within(.02f),"Changing ownership must not introduce a camp border.");
                 Fill(2,0);Render();
                 Assert.That(readback.GetPixel(63,64).r,Is.EqualTo(interior).Within(.02f),"Water must not add a country outline along the coast.");
                 Assert.That(readback.GetPixel(85,64).r,Is.LessThan(.08f),"Water stays transparent to the background.");
@@ -60,7 +67,7 @@ namespace RiskAI.Tests
             {
                 RenderTexture.active=previous;RenderTexture.ReleaseTemporary(target);
                 Object.DestroyImmediate(surface);Object.DestroyImmediate(cameraObject);
-                Object.DestroyImmediate(mesh);Object.DestroyImmediate(material);Object.DestroyImmediate(regions);
+                Object.DestroyImmediate(mesh);Object.DestroyImmediate(material);Object.DestroyImmediate(regions);Object.DestroyImmediate(borders);
                 Object.DestroyImmediate(palette);Object.DestroyImmediate(readback);
             }
         }

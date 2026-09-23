@@ -10,6 +10,7 @@ namespace RiskAI
         {
             var resources=GeneratedResourceOwner.For(root);
             ShoreAccess.BakeSurface(root);
+            FictionalGround.Bake(root);
             // Ground and sea beyond the board recede into the camera background instead of ending at a hard edge.
             TerrainBiomes.Horizon(new Vector4(-MapLayout.HalfWidth,-MapLayout.HalfDepth,MapLayout.HalfWidth,MapLayout.HalfDepth),HorizonFadeStart,HorizonFadeEnd,TerrainBiomes.Enabled);
             // Sub-metre sampling keeps the bevel and river banks continuous with the walkable surface.
@@ -46,31 +47,9 @@ namespace RiskAI
             for(float x=-mapX+2;x<mapX-1;x+=1.9f)for(float z=-mapZ+2;z<mapZ-1;z+=1.9f)
             {
                 float px=(x+(float)random.NextDouble()*1.9f)*MapLayout.Spacing,pz=(z+(float)random.NextDouble()*1.9f)*MapLayout.Spacing;
-                if(!MapLayout.IsLand(px,pz)||TerrainHydrology.DistanceToRiver(px,pz)<4)continue;
+                if(random.NextDouble()>=TreeChance(px,pz))continue;
                 var point=new Vector3(px,MapLayout.Height(px,pz),pz);
-                float bx=px/MapLayout.Spacing,bz=pz/MapLayout.Spacing;
-                float west=Mathf.Abs(bx-(-10+5*Mathf.Sin(bz*.095f)));
-                float east=Mathf.Abs(bx-(29+6*Mathf.Sin(bz*.12f)));
-                float south=Mathf.Abs(bz-(-27+5*Mathf.Sin(bx*.09f)));
-                bool island=pz>MapLayout.Coast(px);
-                if(island){float d=-1;for(int islandIndex=0;islandIndex<MapLayout.Islands.Length;islandIndex++)d=Mathf.Max(d,MapLayout.IslandDistance(px,pz,islandIndex));if(d<3)continue;}
-                bool drySouth=!MapLayout.IsExpanded&&bz<-43;
-                bool ribbon=west<3.5f||east<3.1f||south<2.8f;
-                bool grove=Mathf.PerlinNoise(px*.046f+14,pz*.046f+8)>.64f;
-                // Broad warped noise creates recognisable woods, dry openings and scrub
-                // without a second scatter pass or a new asset. The small-scale noise
-                // only breaks each patch edge, so it reads as natural cover at RTS range.
-                float warpX=Mathf.PerlinNoise(px*.012f+31,pz*.012f+7)*18-9;
-                float warpZ=Mathf.PerlinNoise(px*.012f-11,pz*.012f+43)*18-9;
-                float patch=Mathf.PerlinNoise((px+warpX)*.021f+4,(pz+warpZ)*.021f+19);
-                bool southEdge=bz<-mapZ+6&&(!drySouth||patch>.57f);
-                bool edge=Mathf.Abs(bx)>mapX-5||southEdge||Mathf.Abs(pz-MapLayout.Coast(px))<5;
-                float fringe=Mathf.PerlinNoise(px*.079f+71,pz*.079f+13);
-                bool woodland=patch>.68f&&fringe>.35f;
-                if(!(edge||ribbon||grove||woodland||island)||random.NextDouble()<(island?.38:drySouth?.36:woodland?.055:.16))continue;
-                bool rampPass=MapLayout.IsExpanded ? TerrainHydrology.IsChannel(px,pz) : (Mathf.Abs(bx+32)<5.5f&&bz>-14&&bz<7)||(Mathf.Abs(bx-34)<5.5f&&bz>-16&&bz<8)
-                    ||(Mathf.Abs(bz-12)<5&&bx>-21&&bx<6)||(Mathf.Abs(bz-13)<5&&bx>44);
-                if(!edge&&(Mathf.Abs(bz-2)<3.2f||Mathf.Abs(bz-22)<3||rampPass))continue;
+                bool drySouth=FictionalGround.Sample(px,pz).Dry>.5f;
                 if(Mathf.Abs(MapLayout.Height(px+1,pz)-point.y)>1||Mathf.Abs(MapLayout.Height(px,pz+1)-point.y)>1)continue;
                 float treeHeight=drySouth?2.7f+(float)random.NextDouble()*1.45f:3.6f+(float)random.NextDouble()*2.1f;
                 int treeSeed=seed++;
@@ -85,14 +64,62 @@ namespace RiskAI
                 if(z>MapLayout.HalfDepth||ShoreAccess.SurfaceWeights(x,z).y<.55f)continue;WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z)-.04f,z),.65f+(float)random.NextDouble()*1.2f,i);
             }
             if(MapLayout.IsExpanded)CreateExpandedCordilleraDetails(root,clearings);
-            else for(int i=0;i<55;i++)
+            else for(int i=0,placed=0;i<400&&placed<48;i++)
             {
-                float mountainX=57,mountainZ=-40;
-                float x=(mountainX-13+(float)random.NextDouble()*26)*MapLayout.Spacing,z=(mountainZ-13+(float)random.NextDouble()*26)*MapLayout.Spacing;
-                if(Vector2.Distance(new Vector2(x,z)/MapLayout.Spacing,new Vector2(mountainX,mountainZ))>17)continue;
-                WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z),z),.6f+(float)random.NextDouble()*1.6f,i+80);
+                // Boulders scattered where the ground-zone field exposes stone, half sunk.
+                float x=(float)(random.NextDouble()*2-1)*MapLayout.HalfWidth,z=(float)(random.NextDouble()*2-1)*MapLayout.HalfDepth;
+                float stone=FictionalGround.Sample(x,z).Stone;
+                if(!MapLayout.IsLand(x,z)||stone<.3f||random.NextDouble()>stone*.8f||NearClearing(x,z,clearings,3f))continue;
+                float size=.35f+(float)random.NextDouble()*(random.NextDouble()<.15?1.4f:.7f);
+                WorldArt.Rock(root,new Vector3(x,MapLayout.Height(x,z)-size*.18f,z),size,i+80);placed++;
             }
             if(!MapLayout.IsExpanded)CreateClassicSouthwestDetails(root,clearings);
+        }
+        /// <summary>
+        /// Probability that the forest scatter keeps a candidate tree at a world point,
+        /// before slope and building-clearance checks. Every term is a continuous field
+        /// (ribbons, groves, woods, the board edge, oases), so no rule can plant a
+        /// straight line or leave a straight clearing; GroundZoneShapeTests checks it.
+        /// </summary>
+        public static float TreeChance(float px,float pz)
+        {
+            if(!MapLayout.IsLand(px,pz)||TerrainHydrology.DistanceToRiver(px,pz)<4)return 0;
+            float mapX=MapLayout.HalfWidth/MapLayout.Spacing,mapZ=MapLayout.HalfDepth/MapLayout.Spacing;
+            float bx=px/MapLayout.Spacing,bz=pz/MapLayout.Spacing;
+            bool island=pz>MapLayout.Coast(px);
+            if(island){float d=-1;for(int islandIndex=0;islandIndex<MapLayout.Islands.Length;islandIndex++)d=Mathf.Max(d,MapLayout.IslandDistance(px,pz,islandIndex));if(d<3)return 0;}
+            if(FictionalGround.Riverbed(px,pz)>.25f)return 0;
+            var zones=FictionalGround.Sample(px,pz);
+            bool drySouth=zones.Dry>.5f;
+            float jitter=(FictionalGround.Fbm(px*.035f+61,pz*.035f+23)-.5f)*4;
+            float warpX=Mathf.PerlinNoise(px*.012f+31,pz*.012f+7)*18-9;
+            float warpZ=Mathf.PerlinNoise(px*.012f-11,pz*.012f+43)*18-9;
+            float patch=Mathf.PerlinNoise((px+warpX)*.021f+4,(pz+warpZ)*.021f+19);
+            // The board edge is framed by a feathered, noise-broken fringe of woods.
+            float outside=Mathf.Max(Mathf.Abs(bx)-mapX,bz<0?-bz-mapZ:-1000)+(FictionalGround.Fbm(px*.06f+3,pz*.06f+47)-.5f)*11;
+            float edge=Mathf.SmoothStep(0,1,Mathf.InverseLerp(-9,-2,outside))*(drySouth?(patch>.57f?1:.25f):1);
+            float coastFringe=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(3.5f,6.5f,Mathf.Abs(pz-MapLayout.Coast(px))+jitter*.5f));
+            // Desert: palms gather in oases around low ground and hollows; elsewhere only a
+            // sparse, random scatter. The forest ribbons and groves stop at the desert.
+            float desert=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.18f,.62f,zones.Arid+(FictionalGround.Fbm(px*.05f+2,pz*.05f+33)-.5f)*.3f))*(island?0:1);
+            float oasis=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.6f,.74f,FictionalGround.Fbm(px*.028f+13,pz*.028f+71)+Mathf.Clamp01(1.4f-MapLayout.Height(px,pz))*.25f));
+            float desertChance=oasis*.72f+.035f;
+            float west=Mathf.Abs(bx-(-10+5*Mathf.Sin(bz*.095f)))+jitter*.4f;
+            float east=Mathf.Abs(bx-(29+6*Mathf.Sin(bz*.12f)))+jitter*.4f;
+            float south=Mathf.Abs(bz-(-27+5*Mathf.Sin(bx*.09f)))+jitter*.4f;
+            bool ribbon=west<3.5f||east<3.1f||south<2.8f;
+            bool grove=Mathf.PerlinNoise(px*.046f+14,pz*.046f+8)>.64f;
+            float fringe=Mathf.PerlinNoise(px*.079f+71,pz*.079f+13);
+            bool woodland=patch>.68f&&fringe>.35f;
+            float keep=1-(island?.38f:drySouth?.36f:woodland?.055f:.16f);
+            float chance=ribbon||grove||woodland||island?keep:0;
+            chance=Mathf.Max(chance,Mathf.Max(edge,coastFringe)*keep);
+            // Keep the ramp approaches readable; the clearings meander with the jitter.
+            float j=(FictionalGround.Fbm(px*.07f+19,pz*.07f+5)-.5f)*6,k=(FictionalGround.Fbm(px*.041f+7,pz*.041f+91)-.5f)*6;
+            bool rampPass=MapLayout.IsExpanded ? TerrainHydrology.IsChannel(px,pz) : (Mathf.Abs(bx+32+j)<5.5f&&bz>-14+k&&bz<7+k)||(Mathf.Abs(bx-34+j)<5.5f&&bz>-16+k&&bz<8+k)
+                ||(Mathf.Abs(bz-12+j)<5&&bx>-21+k&&bx<6+k)||(Mathf.Abs(bz-13+j)<5&&bx>44+k);
+            if(edge<.5f&&(Mathf.Abs(bz-2+j)<3.2f||Mathf.Abs(bz-22+j)<3||rampPass))chance=0;
+            return Mathf.Lerp(chance,desertChance*(rampPass?0:1),desert);
         }
         static void BakeCoastWeights(Mesh mesh,IReadOnlyList<Vector3> vertices)
         {
@@ -114,7 +141,35 @@ namespace RiskAI
                 if(!MapLayout.IsLand(x,z)||NearClearing(x,z,clearings,3.3f))continue;
                 WorldArt.Rock(root.transform,new Vector3(x,MapLayout.Height(x,z)-.03f,z),.42f+(float)random.NextDouble()*.72f,seed++);
             }
+            // Boulders strewn along the banks of the dry riverbed.
+            for(int i=0;i<90;i++)
+            {
+                float x=(-72+(float)random.NextDouble()*70)*MapLayout.Spacing,z=(-88+(float)random.NextDouble()*30)*MapLayout.Spacing;
+                float bed=FictionalGround.Riverbed(x,z);
+                if(bed<.08f||bed>.6f||!MapLayout.IsLand(x,z)||NearClearing(x,z,clearings,3f))continue;
+                WorldArt.Rock(root.transform,new Vector3(x,MapLayout.Height(x,z)-.05f,z),.3f+(float)random.NextDouble()*.75f,seed++);
+            }
             StaticBatchingUtility.Combine(root);
+            // Olive groves planted in loose rows, each at its own angle, in open secano.
+            var groves=new GameObject("Secano olive groves");groves.transform.SetParent(parent,false);
+            for(int attempt=0,planted=0;attempt<60&&planted<9;attempt++)
+            {
+                float cx=(-70+(float)random.NextDouble()*68)*MapLayout.Spacing,cz=(-88+(float)random.NextDouble()*40)*MapLayout.Spacing;
+                if(FictionalGround.Sample(cx,cz).Dry<.7f||NearClearing(cx,cz,clearings,9f)||FictionalGround.Riverbed(cx,cz)>.02f)continue;
+                planted++;float angle=(float)random.NextDouble()*Mathf.PI;
+                var along=new Vector2(Mathf.Cos(angle),Mathf.Sin(angle));var across=new Vector2(-along.y,along.x);
+                int rows=3+random.Next(3),columns=4+random.Next(4);
+                for(int r=0;r<rows;r++)for(int c=0;c<columns;c++)
+                {
+                    var offset=along*((c-(columns-1)*.5f)*2.4f)+across*((r-(rows-1)*.5f)*2.4f)+new Vector2((float)random.NextDouble()-.5f,(float)random.NextDouble()-.5f)*.5f;
+                    float x=cx+offset.x,z=cz+offset.y;
+                    if(!MapLayout.IsLand(x,z)||NearClearing(x,z,clearings,2.5f)||random.NextDouble()<.12)continue;
+                    var point=new Vector3(x,MapLayout.Height(x,z),z);float h=1.9f+(float)random.NextDouble()*.7f;
+                    if(ObscuresBuilding(point,h,clearings))continue;
+                    BiomeVegetation.SecanoOlive(groves.transform,point,h,seed++);
+                }
+            }
+            StaticBatchingUtility.Combine(groves);
         }
         static void CreateExpandedCordilleraDetails(Transform parent,List<Vector4> clearings)
         {
@@ -211,6 +266,8 @@ namespace RiskAI
                 float px=x+(float)random.NextDouble()*1.8f,pz=z+(float)random.NextDouble()*1.8f;
                 float outside=Mathf.Max(Mathf.Abs(px)-MapLayout.HalfWidth,Mathf.Abs(pz)-MapLayout.HalfDepth);
                 if(random.NextDouble()<outside/treeBand)continue;
+                // Beyond a desert edge only rare palms continue, never a wall of trees.
+                if(FictionalGround.Sample(px,pz).Arid>.5f&&random.NextDouble()>.12)continue;
                 var point=new Vector3(px,MapLayout.Height(px,pz),pz);
                 float treeHeight=3.1f+(float)random.NextDouble()*1.5f;
                 if(ObscuresBuilding(point,treeHeight,clearings))continue;
