@@ -12,8 +12,6 @@ namespace RiskAI
     /// </summary>
     public static class ImportedMapSkirt
     {
-        /// <summary>Review/setup code may disable the continuation to reproduce the legacy border.</summary>
-        public static bool Enabled { get; set; } = true;
         /// <summary>Outer visual ring beyond the playable rectangle, in metres.</summary>
         public const float Reach = 185f;
 
@@ -26,8 +24,8 @@ namespace RiskAI
         }
         static readonly ConditionalWeakTable<ImportedMapData,Samples> cache=new ConditionalWeakTable<ImportedMapData,Samples>();
 
-        /// <summary>Playable rectangle used for the extrusion, or zero when disabled.</summary>
-        public static Vector4 Bounds(ImportedMapData data)=>Enabled&&data!=null?data.PlayableBounds:Vector4.zero;
+        /// <summary>Playable rectangle used for the extrusion, or zero without an imported map.</summary>
+        public static Vector4 Bounds(ImportedMapData data)=>data!=null?data.PlayableBounds:Vector4.zero;
 
         /// <summary>Nearest point of the playable rectangle. Must match RiskClampPlayable in CoastSurface.hlsl.</summary>
         public static Vector2 Clamp(Vector4 bounds,float x,float z)

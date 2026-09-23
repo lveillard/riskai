@@ -21,7 +21,7 @@ namespace RiskAI
         {
             switch(kind)
             {
-                case UnitKind.Guard: return "MountedKnight";
+                case UnitKind.Knight: return "MountedKnight";
                 case UnitKind.EliteRifleman: return "EliteRifleman";
                 case UnitKind.Roarer: return "Roarer";
                 case UnitKind.ArmyGeneral: return "ArmyGeneral";
@@ -47,8 +47,9 @@ namespace RiskAI
 
         /// <summary>Resources path of the unit portrait; falls back to the base model until the art setup renders it.</summary>
         public static string PortraitResource(UnitKind kind) => Resolve(PortraitName(kind),FallbackPortrait(kind));
-        public static string PortraitResource(ShipKind kind) =>
-            Resolve(kind.ToString(),kind==ShipKind.ArmoredTransport?ShipKind.Transport.ToString():kind==ShipKind.Transport?kind.ToString():ShipKind.Galley.ToString());
+        // v0.30 hulls fall back to the Frigate/Transport portrait until the art setup renders theirs.
+        public static string PortraitResource(NavalUnitKind kind) =>
+            Resolve(kind.ToString(),kind==NavalUnitKind.ArmoredTransport?NavalUnitKind.Transport.ToString():kind==NavalUnitKind.Transport?kind.ToString():NavalUnitKind.Frigate.ToString());
 
         static string Resolve(string preferred,string fallback)
         {

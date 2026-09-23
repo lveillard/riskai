@@ -12,7 +12,7 @@ namespace RiskAI
             ShoreAccess.BakeSurface(root);
             FictionalGround.Bake(root);
             // Ground and sea beyond the board recede into the camera background instead of ending at a hard edge.
-            TerrainBiomes.Horizon(new Vector4(-MapLayout.HalfWidth,-MapLayout.HalfDepth,MapLayout.HalfWidth,MapLayout.HalfDepth),HorizonFadeStart,HorizonFadeEnd,TerrainBiomes.Enabled);
+            TerrainBiomes.Horizon(new Vector4(-MapLayout.HalfWidth,-MapLayout.HalfDepth,MapLayout.HalfWidth,MapLayout.HalfDepth),HorizonFadeStart,HorizonFadeEnd);
             // Sub-metre sampling keeps the bevel and river banks continuous with the walkable surface.
             const int nx=360,nz=400;
             var vertices=new Vector3[(nx+1)*(nz+1)];var triangles=new List<int>(nx*nz*6);
@@ -293,8 +293,7 @@ namespace RiskAI
                 float treeHeight=3.1f+(float)random.NextDouble()*1.5f;
                 if(ObscuresBuilding(point,treeHeight,clearings))continue;
                 int treeSeed=(int)(x*17+z*31)&32767;
-                if(TerrainBiomes.Enabled)BiomeVegetation.Tree(root.transform,point,treeHeight,treeSeed);
-                else WorldArt.Tree(root.transform,point,treeHeight,treeSeed,false);
+                BiomeVegetation.Tree(root.transform,point,treeHeight,treeSeed);
             }
             StaticBatchingUtility.Combine(root);
         }

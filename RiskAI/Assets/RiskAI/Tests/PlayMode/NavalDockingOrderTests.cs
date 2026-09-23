@@ -73,7 +73,7 @@ namespace RiskAI.Tests
                 yield return Build(map);
                 var port = EmptyPort();
                 var near = Approach(port, 6.75f);
-                var ship = BattleTestScenario.Ship(naval, 0, ShipKind.Galley, near);
+                var ship = BattleTestScenario.Ship(naval, 0, NavalUnitKind.Frigate, near);
                 Tick(port);
                 Assert.That(port.ClaimZone.Guardian, Is.Null, "Passive capture keeps its existing 6m radius.");
                 ship.SailToHarbor(port);
@@ -87,7 +87,7 @@ namespace RiskAI.Tests
                 ship.TakeDamage(ship.MaxHealth + 1, 1);
                 port.State.Owner = PlayerRules.NeutralOwner;
                 var far = Approach(port, 14);
-                var arriving = BattleTestScenario.Ship(naval, 0, ShipKind.Galley, far);
+                var arriving = BattleTestScenario.Ship(naval, 0, NavalUnitKind.Frigate, far);
                 arriving.SailToHarbor(port);
                 Assert.That(arriving.LastActionError, Is.Null);
                 Tick(port);
@@ -111,7 +111,7 @@ namespace RiskAI.Tests
         {
             yield return Build(ScenarioMap.Classic);
             var port = EmptyPort(); var near = Approach(port, 6.75f);
-            var ship = BattleTestScenario.Ship(naval, 0, ShipKind.Galley, near);
+            var ship = BattleTestScenario.Ship(naval, 0, NavalUnitKind.Frigate, near);
             ship.SailToHarbor(port); ship.Stop(); Tick(port);
             Assert.That(port.ClaimZone.Guardian, Is.Null);
             ship.SailToHarbor(port); ship.MoveTo(near); Tick(port);
@@ -121,7 +121,7 @@ namespace RiskAI.Tests
             port.State.Owner = 1;
             ship.SailToHarbor(port);
             var allyPoint = Vector3.Lerp(port.Berth, near, 3f / 6.75f);
-            var ally = BattleTestScenario.Ship(naval, 1, ShipKind.Galley, allyPoint);
+            var ally = BattleTestScenario.Ship(naval, 1, NavalUnitKind.Frigate, allyPoint);
             Tick(port);
             Assert.That(port.ClaimZone.Guardian, Is.SameAs(ally));
             Assert.That(Vector3.Distance(ship.transform.position, near), Is.LessThan(.001f), "Losing candidates must never snap.");
@@ -137,7 +137,7 @@ namespace RiskAI.Tests
         {
             yield return Build(ScenarioMap.Classic);
             var port = EmptyPort();
-            var ship = BattleTestScenario.Ship(naval, 0, ShipKind.Galley, port.Berth);
+            var ship = BattleTestScenario.Ship(naval, 0, NavalUnitKind.Frigate, port.Berth);
             const int size = 65;
             var map = new ImportedMapData { width = size, height = size, originX = -8, originZ = -8, cellSize = .25f,
                 heightSamples = new float[size * size], waterSamples = new float[size * size], landSamples = new int[size * size],

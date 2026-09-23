@@ -217,15 +217,15 @@ namespace RiskAI.Tests
             var naval=NavalWorld.Current;
             Assert.That(naval,Is.Not.Null,"This naval fixture needs the map's ocean world.");
             var harbor=naval.Harbors.First();
-            var galley=BattleTestScenario.Ship(naval,0,ShipKind.Galley,harbor.Berth);
-            var transport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,harbor.Berth);
-            controller.SelectShip(galley);controller.SelectShip(transport,true);
-            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{galley,transport}));
+            var frigate=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,harbor.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,harbor.Berth);
+            controller.SelectShip(frigate);controller.SelectShip(transport,true);
+            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{frigate,transport}));
 
             // Ships are destroyed rather than pooled today, so the identity check must
             // still drop them while no focused Update frame can run.
             SetFocus(false);
-            galley.TakeDamage(galley.MaxHealth+1,1);
+            frigate.TakeDamage(frigate.MaxHealth+1,1);
             yield return null;
 
             controller.Stop();
@@ -299,19 +299,19 @@ namespace RiskAI.Tests
             var naval=NavalWorld.Current;
             Assert.That(naval,Is.Not.Null,"This naval fixture needs the map's ocean world.");
             var harbor=naval.Harbors.First();
-            var galley=BattleTestScenario.Ship(naval,0,ShipKind.Galley,harbor.Berth);
-            var transport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,harbor.Berth);
-            controller.SelectShip(galley);controller.SelectShip(transport,true);
+            var frigate=BattleTestScenario.Ship(naval,0,NavalUnitKind.Frigate,harbor.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,harbor.Berth);
+            controller.SelectShip(frigate);controller.SelectShip(transport,true);
             Pump(Key.LeftCtrl,Key.Digit1);Pump();
 
             controller.SelectShip(transport,true);
-            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{galley}),"Appending an already selected ship toggles it off.");
+            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{frigate}),"Appending an already selected ship toggles it off.");
             Assert.That(transport.Selected,Is.False);
             controller.SelectShip(transport,true);
-            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{galley,transport}));
+            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{frigate,transport}));
 
             controller.Clear();
-            galley.TakeDamage(galley.MaxHealth+1,1);
+            frigate.TakeDamage(frigate.MaxHealth+1,1);
             yield return null;
 
             Pump(Key.Digit1);Pump();
@@ -326,7 +326,7 @@ namespace RiskAI.Tests
             Assert.That(naval,Is.Not.Null,"This naval fixture needs the map's ocean world.");
             var harbor=naval.Harbors.First(candidate=>candidate&&candidate.TryTransportLanding(out _,out _));
             var home=battle.Towns.First(town=>town.State.Owner==0);
-            var transport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,harbor.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,harbor.Berth);
             // The boarder starts inland, out of loading range, so the controller
             // plans a real shore rendezvous instead of embarking immediately.
             var boarder=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,home.ClaimPoint);
@@ -366,7 +366,7 @@ namespace RiskAI.Tests
             var naval=NavalWorld.Current;
             Assert.That(naval,Is.Not.Null,"This naval fixture needs the map's ocean world.");
             var harbor=naval.Harbors.First(candidate=>candidate);
-            var transport=BattleTestScenario.Ship(naval,0,ShipKind.Transport,harbor.Berth);
+            var transport=BattleTestScenario.Ship(naval,0,NavalUnitKind.Transport,harbor.Berth);
             var passenger=BattleTestScenario.Mobile(battle,0,UnitKind.Footman,harbor.Landing);
             controller.SelectOnly(passenger);
             Assert.That(passenger.Selected,Is.True);

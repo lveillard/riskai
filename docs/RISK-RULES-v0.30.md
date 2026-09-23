@@ -38,6 +38,12 @@ Teclas existentes sin cambios: ciudad Q W D F R C; puerto Q (Fragata) W (Transpo
 En puerto, R/F/X compran barcos en lugar de Mortero/Mago/Rugidor (mismo patrón contextual que C).
 La tecla T ya no construye torres (ver abajo) y pasa al Fusilero de élite.
 
+Desde v0.33 estas letras son solo procedencia: el código ya no las guarda. La tecla efectiva es la celda
+de la cuadrícula WC3 (`ProductionHotkeys`, ver [CONTROLS-v0.30.md](CONTROLS-v0.30.md)). Letras por unidad:
+Espadachín Q, Ballestero W, Caballero D, Mago F, Mortero R, Sanador C, Marine Private V, Marine Major B,
+Marine General C, Fusilero de élite T, Rugidor X, General G, Artillería Z, Tanque Y; Fragata Q,
+Transporte W, Buque de guerra R, Acorazado F, Transporte blindado X.
+
 ## Adaptaciones locales
 
 - **Sanador 220 HP** en lugar del `uhpm=250` explícito de `h00E`: decisión de producto v0.30.

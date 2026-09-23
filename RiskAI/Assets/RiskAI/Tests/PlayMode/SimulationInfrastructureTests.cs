@@ -42,11 +42,11 @@ namespace RiskAI.Tests
             var victim = BattleTestScenario.Mobile(battle, PlayerRules.NeutralTeam, UnitKind.Footman, new Vector3(-24, 0, -16));
             StopBackgroundUnits(mover, victim);
             victim.enabled = false;
-            mover.MoveTo(mover.transform.position + mover.transform.forward * 8, false, false);
+            mover.TryMoveTo(mover.transform.position + mover.transform.forward * 8, false, false);
 
             float timeScale = Time.timeScale;
             float healthBefore = victim.Health;
-            battle.Combat.FireProjectile(mover.AimPoint, victim.AimPoint, victim, 24, mover.Team, mover, AttackKind.Piercing);
+            battle.Combat.FireWeapon(mover.AimPoint, victim.AimPoint, victim, 24, mover.Team, mover, SourceWeapons.For(UnitKind.Archer, AttackKind.Piercing));
             int projectilesBeforePause = battle.Combat.ActiveProjectileCount;
             Vector3 positionBeforePause = mover.transform.position;
             long ticksBeforePause = battle.Clock.TickCount;
@@ -85,7 +85,7 @@ namespace RiskAI.Tests
             Vector3 spawnPoint = victim.transform.position;
             int opposingTeam = victim.Team == 0 ? 1 : 0;
 
-            battle.Combat.FireProjectile(spawnPoint + Vector3.forward * 30, victim.AimPoint, victim, 100, opposingTeam, null, AttackKind.Normal);
+            battle.Combat.FireWeapon(spawnPoint + Vector3.forward * 30, victim.AimPoint, victim, 100, opposingTeam, null, SourceWeapons.For(UnitKind.Archer, AttackKind.Normal));
             victim.TakeDamage(10000, opposingTeam);
             Assert.That(battle.FindTarget(oldEntityId), Is.Null);
 
@@ -102,7 +102,7 @@ namespace RiskAI.Tests
 
             replacement.Stop();
             Assert.That(replacement.CurrentTarget, Is.Null);
-            replacement.MoveTo(replacement.transform.position + Vector3.forward * 2, false, false);
+            replacement.TryMoveTo(replacement.transform.position + Vector3.forward * 2, false, false);
             Assert.That(replacement.CurrentTarget, Is.Null);
             yield return null;
         }
@@ -167,7 +167,7 @@ namespace RiskAI.Tests
             int missileId = battle.Combat.FireWeapon(from, target.AimPoint, target, 20,
                 source.Team, source, magicMissile);
             Assert.That(battle.Combat.TryGetProjectile(missileId, out var missile), Is.True);
-            Assert.That(missile.Duration, Is.EqualTo(2).Within(.001f), "Source flight time must be distance / speed without the legacy clamp.");
+            Assert.That(missile.Duration, Is.EqualTo(2).Within(.001f), "Source flight time must be distance / speed, unclamped.");
             Assert.That(target.Health, Is.EqualTo(targetBefore));
             battle.Combat.Tick(2.01f);
             Assert.That(target.Health, Is.LessThan(targetBefore));
@@ -305,7 +305,7 @@ namespace RiskAI.Tests
             }
 
             float enemyBefore = enemy.Health, neutralBefore = neutral.Health, allyBefore = ally.Health;
-            var weapon = SourceWeapons.For(NavalUnitKind.Galley, AttackKind.Normal);
+            var weapon = SourceWeapons.For(NavalUnitKind.Frigate, AttackKind.Normal);
             battle.Combat.FireWeapon(source.AimPoint, enemy.AimPoint, enemy, 40, source.Team, source, weapon);
             // Keep the identity registered while excluding the primary from the area-query fixture.
             // A missile-splash weapon must still apply its full primary hit.

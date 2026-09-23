@@ -9,7 +9,7 @@ namespace RiskAI.Core
     {
         // Full explicit Saran/world war3mapMisc overrides. Columns are source
         // Light, Medium, Large, Fortified, Normal, Hero, Divine, None;
-        // enum ordinals intentionally retain the original public/persisted values.
+        // AttackKind ordinals index the rows below.
         static readonly float[,] DamageBonuses =
         {
             { 1f, 1.5f, 1f, .7f, .7f, 1f, .05f, 1f },       // Normal
@@ -53,17 +53,10 @@ namespace RiskAI.Core
             return armor >= 0 ? 1f / (1f + ArmorCoefficient * armor) : 2f - (float)Math.Pow(1f-ArmorCoefficient, -armor);
         }
 
-        public static float ArmorReduction(float armor) => ArmorMultiplier(armor);
-        public static float Multiplier(AttackKind attack, ArmorKind armor) => DamageMultiplier(attack, armor);
-
         public static float ResolveDamage(float damage, AttackKind attack, ArmorKind armor, float armorValue)
         {
             if (damage <= 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return 0;
             return damage * DamageMultiplier(attack, armor) * ArmorMultiplier(armorValue);
         }
-
-        // Short aliases keep the rule useful to callers that describe this as a bonus table.
-        public static float Bonus(AttackKind attack, ArmorKind armor) => DamageMultiplier(attack, armor);
-        public static float Damage(float damage, AttackKind attack, ArmorKind armor, float armorValue) => ResolveDamage(damage, attack, armor, armorValue);
     }
 }

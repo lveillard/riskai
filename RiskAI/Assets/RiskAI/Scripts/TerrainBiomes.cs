@@ -13,10 +13,6 @@ namespace RiskAI
     /// </summary>
     public static class TerrainBiomes
     {
-        /// <summary>Review/setup code may disable the field to reproduce the legacy look.</summary>
-        public static bool Enabled { get; set; } = true;
-        /// <summary>Review code may disable the satellite colour grading (v0.30.0 look).</summary>
-        public static bool SatelliteEnabled { get; set; } = true;
         // Two source cells per texel: regions span tens of metres, the shader adds fine noise.
         const int CellsPerTexel = 2;
         // Horizon fade outside the playable rectangle, in metres.
@@ -100,13 +96,13 @@ namespace RiskAI
         public static void Bake(Transform root)
         {
             var data=MapLayout.IsImported?MapLayout.Imported:null;
-            if(!Enabled||data==null)
+            if(data==null)
             {
                 Shader.SetGlobalVector("_RiskBiomeGrid",Vector4.zero);
                 Shader.SetGlobalVector("_RiskHorizonFade",Vector4.zero);
                 return;
             }
-            Horizon(data.PlayableBounds,HorizonFadeStart,HorizonFadeEnd,ImportedMapSkirt.Enabled);
+            Horizon(data.PlayableBounds,HorizonFadeStart,HorizonFadeEnd);
             EnsureField(data);
             // Mips only serve the blurred skirt beyond the playable edge (level 0 inside).
             var texture=new Texture2D(fieldWidth,fieldHeight,TextureFormat.RGBA32,true,true)
@@ -135,7 +131,6 @@ namespace RiskAI
         static void LoadGround(ImportedMapData data)
         {
             ground=null;
-            if(!SatelliteEnabled)return;
             var asset=Resources.Load<TextAsset>("Maps/"+(string.Equals(data.mapId,"NewWorld",StringComparison.OrdinalIgnoreCase)?"NewWorld":"Europe")+"Ground");
             if(!asset)return;
             var decoded=new Texture2D(2,2,TextureFormat.RGBA32,false,false);
@@ -158,18 +153,18 @@ namespace RiskAI
         }
 
         /// <summary>Fades ground and water beyond a playable rectangle into the camera background.</summary>
-        public static void Horizon(Vector4 bounds,float start,float end,bool enabled=true)
+        public static void Horizon(Vector4 bounds,float start,float end)
         {
             Shader.SetGlobalColor("_RiskHorizonColor",HorizonColor);
             Shader.SetGlobalVector("_RiskHorizonBounds",bounds);
-            Shader.SetGlobalVector("_RiskHorizonFade",enabled?new Vector4(start,end,1,0):Vector4.zero);
+            Shader.SetGlobalVector("_RiskHorizonFade",new Vector4(start,end,1,0));
         }
 
         /// <summary>Aridity, cold, lushness and rock at a world point (zero for authored maps).</summary>
         public static Biome Sample(float x,float z)
         {
             var data=MapLayout.IsImported?MapLayout.Imported:null;
-            if(!Enabled||data==null)return default;
+            if(data==null)return default;
             EnsureField(data);
             var p=ImportedMapSkirt.Clamp(data,x,z);
             float gx=Mathf.Clamp((p.x-fieldX)/fieldStep,0,fieldWidth-1),gz=Mathf.Clamp((p.y-fieldZ)/fieldStep,0,fieldHeight-1);
@@ -186,11 +181,11 @@ namespace RiskAI
             EnsureField(data);width=fieldWidth;height=fieldHeight;return field;
         }
 
-        /// <summary>Minimap land colour: the legacy relief ramp, recoloured by the same biome texels.</summary>
+        /// <summary>Minimap land colour: satellite colour when baked, else the relief ramp recoloured by the same biome texels.</summary>
         public static Color MinimapLand(float x,float z,float height)
         {
             var biome=Sample(x,z);
-            if(Enabled&&ground!=null&&MapLayout.IsImported)
+            if(ground!=null&&MapLayout.IsImported)
             {
                 // The same satellite colour as the ground, brightened slightly by relief.
                 var p=ImportedMapSkirt.Clamp(MapLayout.Imported,x,z);var satellite=SampleGround(p.x,p.y);satellite.a=1;

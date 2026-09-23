@@ -41,7 +41,7 @@ namespace RiskAI.Tests
         {
             var archer = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, new Vector3(-30, 0, -16));
             var medic = BattleTestScenario.Mobile(battle, 0, UnitKind.Medic, new Vector3(-28, 0, -16));
-            var guard = BattleTestScenario.Mobile(battle, 0, UnitKind.Guard, new Vector3(-26, 0, -16));
+            var guard = BattleTestScenario.Mobile(battle, 0, UnitKind.Knight, new Vector3(-26, 0, -16));
             var mortar = BattleTestScenario.Mobile(battle, 0, UnitKind.Mortar, new Vector3(-24, 0, -16));
 
             Assert.That(archer.Agent.radius, Is.EqualTo(.32f));
@@ -86,7 +86,7 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator GuardUsesCalibratedOriginalMountedGeometry()
         {
-            var guard=BattleTestScenario.Mobile(battle,0,UnitKind.Guard,new Vector3(-26,0,-16));
+            var guard=BattleTestScenario.Mobile(battle,0,UnitKind.Knight,new Vector3(-26,0,-16));
             // Presentation spawns grow in from 0.6 scale; measure the settled size in the spawn pose.
             guard.transform.localScale=Vector3.one;
             var model=guard.transform.Find("RoyalGuard(Clone)");
@@ -106,7 +106,7 @@ namespace RiskAI.Tests
                     renderer.name+" must retain finite mounted geometry.");
             }
             float renderedHeight=ModelMetrics.Measure(model).size.y*model.lossyScale.y;
-            Assert.That(renderedHeight,Is.EqualTo(SourceGeometry.StandingHeight(UnitKind.Guard)).Within(.01f));
+            Assert.That(renderedHeight,Is.EqualTo(SourceGeometry.StandingHeight(UnitKind.Knight)).Within(.01f));
             Assert.That(renderers.Min(renderer=>renderer.bounds.min.y),Is.EqualTo(guard.transform.position.y).Within(.06f),
                 "Horse hooves must remain grounded after source-height calibration.");
             yield return null;

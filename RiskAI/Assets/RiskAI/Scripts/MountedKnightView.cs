@@ -33,16 +33,16 @@ namespace RiskAI
         float gaitBlend,gaitPhase,lastGaitTime=-1,lanceThrust;
         bool previewing;
 
-        public static GameObject Create(Soldier owner) => CreateVariant(owner.transform,owner.Team,UnitKind.Guard,owner);
-        public static GameObject Create(Transform parent,int teamId,Soldier owner=null) => CreateVariant(parent,teamId,UnitKind.Guard,owner);
+        public static GameObject Create(Soldier owner) => CreateVariant(owner.transform,owner.Team,UnitKind.Knight,owner);
+        public static GameObject Create(Transform parent,int teamId,Soldier owner=null) => CreateVariant(parent,teamId,UnitKind.Knight,owner);
 
         public static bool IsMounted(UnitKind kind) =>
-            kind==UnitKind.Guard||kind==UnitKind.MarineMajor||kind==UnitKind.MarineGeneral||kind==UnitKind.ArmyGeneral;
+            kind==UnitKind.Knight||kind==UnitKind.MarineMajor||kind==UnitKind.MarineGeneral||kind==UnitKind.ArmyGeneral;
 
         /// <summary>Builds the mounted model for <paramref name="kind"/>, calibrated to its standing height.</summary>
         public static GameObject CreateVariant(Transform parent,int teamId,UnitKind kind,Soldier owner=null)
         {
-            if(!IsMounted(kind))kind=UnitKind.Guard;
+            if(!IsMounted(kind))kind=UnitKind.Knight;
             var style=MountStyle.For(kind);
             var model=new GameObject(kind==UnitKind.ArmyGeneral?"ArmyGeneral(Clone)":"RoyalGuard(Clone)");model.transform.SetParent(parent,false);
             var view=model.AddComponent<MountedKnightView>();view.soldier=owner;
@@ -164,7 +164,7 @@ namespace RiskAI
                     case UnitKind.MarineMajor:return new MountStyle{Kind=kind,Coat=new Color(.52f,.50f,.47f),CoatDark=new Color(.2f,.19f,.18f),Armour=new Color(.55f,.6f,.64f),Plume=Color.white,Marine=true};
                     case UnitKind.MarineGeneral:return new MountStyle{Kind=kind,Coat=new Color(.86f,.84f,.8f),CoatDark=new Color(.42f,.4f,.38f),Armour=new Color(.55f,.6f,.64f),Plume=Color.white,Marine=true,Veteran=true};
                     case UnitKind.ArmyGeneral:return new MountStyle{Kind=kind,Coat=new Color(.12f,.1f,.09f),CoatDark=new Color(.05f,.045f,.04f),Armour=new Color(.72f,.62f,.38f),Plume=Color.white,General=true};
-                    default:return new MountStyle{Kind=UnitKind.Guard,Coat=new Color(.36f,.21f,.11f),CoatDark=new Color(.1f,.07f,.05f),Armour=new Color(.62f,.68f,.73f),Plume=Color.white};
+                    default:return new MountStyle{Kind=UnitKind.Knight,Coat=new Color(.36f,.21f,.11f),CoatDark=new Color(.1f,.07f,.05f),Armour=new Color(.62f,.68f,.73f),Plume=Color.white};
                 }
             }
         }

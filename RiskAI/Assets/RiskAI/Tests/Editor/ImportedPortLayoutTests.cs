@@ -8,7 +8,7 @@ namespace RiskAI.Tests
     {
         [TestCase(ScenarioMap.Europe)]
         [TestCase(ScenarioMap.NewWorld)]
-        public void LegacyShoulderAdapterPreservesSourceAnchorsWhenThatVariantIsRequested(ScenarioMap scenario)
+        public void ShoulderAnchorsPreserveSourceAnchorsForDetachedVariants(ScenarioMap scenario)
         {
             var previous=MapLayout.Scenario;
             try
@@ -60,11 +60,11 @@ namespace RiskAI.Tests
                 {
                     float own=FlatDistance(city.Position,city.ClaimPoint);
                     Assert.That(own,Is.GreaterThan(3f),city.Id+" guard stays outside the integrated building footprint");
-                    Assert.That(own,Is.LessThan(ReforgedProfiles.CapturableTower.Range),city.Id+" tower covers its own source guard");
+                    Assert.That(own,Is.LessThan(UnitCatalog.CapturableTower.Range),city.Id+" tower covers its own source guard");
                     foreach(var other in MapLayout.Towns)
                     {
                         if(other.Id==city.Id)continue;
-                        Assert.That(FlatDistance(city.Position,other.ClaimPoint),Is.GreaterThan(ReforgedProfiles.CapturableTower.Range),
+                        Assert.That(FlatDistance(city.Position,other.ClaimPoint),Is.GreaterThan(UnitCatalog.CapturableTower.Range),
                             city.Id+" centered tower must not acquire "+other.Id+" at match start");
                     }
                 }

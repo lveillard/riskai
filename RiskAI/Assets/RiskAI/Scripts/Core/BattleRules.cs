@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace RiskAI.Core
 {
-    // Ordinals are persisted/public: append new identities at the end only.
-    public enum UnitKind { Footman, Archer, Guard, Mage, Mortar, Medic, MarinePrivate, MarineMajor, MarineGeneral, EliteRifleman, Roarer, ArmyGeneral, Artillery, Tank }
+    // Ordinals index UnitCatalog.Land: append new identities at the end only.
+    public enum UnitKind { Footman, Archer, Knight, Mage, Mortar, Medic, MarinePrivate, MarineMajor, MarineGeneral, EliteRifleman, Roarer, ArmyGeneral, Artillery, Tank }
 
     public static class BattleRules
     {
@@ -54,10 +54,6 @@ namespace RiskAI.Core
         public static int RequiredLevel(UnitKind kind) => Profile(kind).Level;
         public static string Name(UnitKind kind) => UnitCatalog.Definition(kind).Name;
         public static string Role(UnitKind kind) => UnitCatalog.Definition(kind).Role;
-        // The effective key is the unit's command-card cell (WC3 grid hotkeys). The catalog's
-        // per-unit letter is kept only as documented source metadata.
-        public static string Hotkey(UnitKind kind) => ProductionHotkeys.Hotkey(kind);
-        public static string SourceHotkey(UnitKind kind) => UnitCatalog.Definition(kind).Hotkey;
         public static string Model(UnitKind kind) => UnitCatalog.Definition(kind).Model;
         // Ahea only targets organic units; W3U utyp=Mechanical marks h00M/h01A.
         public static bool Mechanical(UnitKind kind) => UnitCatalog.Definition(kind).Mechanical;
@@ -91,9 +87,6 @@ namespace RiskAI.Core
         readonly int[] bountyRemainders;
         public float ElapsedInRound { get; private set; }
         public int Round { get; private set; } = 1;
-        // Kept as a compatibility surface for existing HUD/tests. Saran's
-        // extracted source has no additional continent/region gold stack.
-        public readonly int[] RegionBonuses = { 0, 0, 0 };
 
         public Economy(int playerCount = 2)
         {

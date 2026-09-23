@@ -41,7 +41,7 @@ python scripts/observe_runtime.py --json
 ```
 
 The positional path is optional and defaults to
-`RiskAI/Logs/v21-opened.log`, written by `Play-RiskAI.cmd`. `--follow` polls once per second; `--duration`
+`RiskAI/Logs/player-v<VERSION>.log`, written by `Play-Riesgus.cmd`. `--follow` polls once per second; `--duration`
 bounds it for scripts or a short observation. With `--json --follow`, each
 new record is emitted as one JSON Lines object. Snapshot JSON includes the latest
 diagnostic windows and recent rejection/route events.

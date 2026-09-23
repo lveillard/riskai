@@ -110,10 +110,10 @@ namespace RiskAI
             EmbarkZones.Add(zone);
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
-        public Ship Spawn(int team,ShipKind kind,Vector3 point)
+        public Ship Spawn(int team,NavalUnitKind kind,Vector3 point)
         {
             if(Session.IsPlayerEliminated(team) || !SeaNavigation.HasClearance(point))return null;
-            var go=new GameObject(kind==ShipKind.Galley?"Galera":"Transporte");go.transform.SetParent(transform,false);go.transform.position=new Vector3(point.x,-.24f,point.z);
+            var go=new GameObject(NavalProfiles.Profile(kind).Name);go.transform.SetParent(transform,false);go.transform.position=new Vector3(point.x,-.24f,point.z);
             var ship=go.AddComponent<Ship>();ship.Initialize(this,team,kind);Ships.Add(ship);Session.RegisterTarget(ship);return ship;
         }
         public Harbor NearestHarbor(Vector3 point,float radius=float.MaxValue)
@@ -189,10 +189,9 @@ namespace RiskAI
             if (!Session || !PlayerRules.IsPlayer(team) || team == 0 || team >= Session.PlayerCount ||
                 Session.BattleTime < Session.AiFirstNavalOffensiveTime || PendingShips(team) > 0) return 0;
             foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == team) return 0;
-            foreach (var harbor in Harbors) if (harbor.Owner == team && harbor.CanLaunch) return Harbor.Cost(ShipKind.Galley);
+            foreach (var harbor in Harbors) if (harbor.Owner == team && harbor.CanLaunch) return Harbor.Cost(NavalUnitKind.Frigate);
             return 0;
         }
-        public void Message(string message){if(Session)Session.Message(message);}
         public void SimTick(float delta)
         {
             if(!Session||Session.Paused||Session.Winner>=0||!Session.AiEnabled)return;
@@ -266,14 +265,14 @@ namespace RiskAI
                 }
                 // Keep an accepted, progressing route to a still valid objective.
                 if(RoutingToValidTarget(ship,team))continue;
-                // Badly damaged galleys fall back to an own port instead of dying alone.
+                // Badly damaged frigates fall back to an own port instead of dying alone.
                 if(profile.Level>0&&ship.Health<ship.MaxHealth*.35f)
                 {
                     var home=NearestOwnHarbor(team,ship.transform.position);
                     if(home&&!ship.IsAtOrRoutingTo(home.Berth))ship.MoveTo(home.Berth,true);
                     continue;
                 }
-                // The whole squadron shares one objective so galleys arrive together.
+                // The whole squadron shares one objective so frigates arrive together.
                 if(!target)target=ChooseNavalTarget(team,warships>0?fleetCenter:ship.transform.position,profile);
                 if(target&&!ship.IsAtOrRoutingTo(target.Berth))ship.MoveTo(target.Berth,true);
             }
@@ -287,7 +286,7 @@ namespace RiskAI
         }
         static bool TryChooseWarship(int gold,out NavalUnitKind kind)
         {
-            kind=NavalUnitKind.Galley;float best=float.NegativeInfinity;bool found=false;
+            kind=NavalUnitKind.Frigate;float best=float.NegativeInfinity;bool found=false;
             var options=ProductionCatalog.HarborShips;
             for(int i=0;i<options.Count;i++)
             {

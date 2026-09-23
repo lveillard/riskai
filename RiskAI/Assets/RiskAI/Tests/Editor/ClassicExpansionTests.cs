@@ -39,7 +39,7 @@ namespace RiskAI.Tests
                 if (towerHost.Id == guardHost.Id) continue;
                 var tower = towerHost.Position + new Vector3(towerHost.Position.x < 0 ? 3.8f : -3.8f, 0, 0);
                 var guard = MapLayout.Point(guardHost.Position.x, guardHost.Position.z - 4.2f);
-                Assert.That(Vector3.Distance(tower, guard), Is.GreaterThan(ReforgedProfiles.CapturableTower.Range), towerHost.Id + " / " + guardHost.Id);
+                Assert.That(Vector3.Distance(tower, guard), Is.GreaterThan(UnitCatalog.CapturableTower.Range), towerHost.Id + " / " + guardHost.Id);
             }
         }
     }

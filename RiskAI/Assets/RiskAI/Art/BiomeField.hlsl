@@ -4,7 +4,7 @@
 // Linear RGBA32 geographic field (aridity, cold, lushness, rocky highland) over the
 // imported playable rectangle; TerrainBiomes.Sample reads the same texels on the CPU.
 TEXTURE2D(_RiskBiomeField); SAMPLER(sampler_RiskBiomeField);
-float4 _RiskBiomeGrid;   // origin.xy, 1/texel metres, strength (0 = legacy look)
+float4 _RiskBiomeGrid;   // origin.xy, 1/texel metres, strength (0 = no biome field, authored maps)
 float4 _RiskBiomeSize;
 float4 _RiskHorizonFade; // start, end metres beyond the playable edge, strength
 float4 _RiskHorizonBounds; // playable rectangle (min.xy, max.xy) the horizon fade measures from

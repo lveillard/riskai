@@ -8,7 +8,7 @@ namespace RiskAI.Core
     {
         static readonly IReadOnlyList<UnitKind> settlementUnits=Array.AsReadOnly(new[]
         {
-            UnitKind.Footman,UnitKind.Archer,UnitKind.Guard,UnitKind.Mage,UnitKind.Mortar,UnitKind.Medic,
+            UnitKind.Footman,UnitKind.Archer,UnitKind.Knight,UnitKind.Mage,UnitKind.Mortar,UnitKind.Medic,
             // roster.shops h00N: h00F, h00I, h00J, h00M, h01A.
             UnitKind.EliteRifleman,UnitKind.Roarer,UnitKind.ArmyGeneral,UnitKind.Artillery,UnitKind.Tank
         });
@@ -18,7 +18,7 @@ namespace RiskAI.Core
         });
         static readonly IReadOnlyList<NavalUnitKind> harborShips=Array.AsReadOnly(new[]
         {
-            NavalUnitKind.Galley,NavalUnitKind.Transport,
+            NavalUnitKind.Frigate,NavalUnitKind.Transport,
             // roster.shops h00O: h00U, h001, n007.
             NavalUnitKind.Warship,NavalUnitKind.Battleship,NavalUnitKind.ArmoredTransport
         });

@@ -77,8 +77,8 @@ namespace RiskAI.Tests
             battle.Spatial.Rebuild(battle.Targets,battle.Units);
             int shots=tower.ShotsFired;
 
-            Assert.That(ReforgedProfiles.CapturableTower.AttackPoint,Is.EqualTo(.3f));
-            Assert.That(ReforgedProfiles.CapturableTower.Backswing,Is.EqualTo(.3f));
+            Assert.That(UnitCatalog.CapturableTower.AttackPoint,Is.EqualTo(.3f));
+            Assert.That(UnitCatalog.CapturableTower.Backswing,Is.EqualTo(.3f));
             tower.SimTick(0);
             Assert.That(tower.IsWindingUp,Is.True);
             Assert.That(tower.ShotsFired,Is.EqualTo(shots),"Scheduling an attack must not launch before the .3 second attack point.");
@@ -134,7 +134,7 @@ namespace RiskAI.Tests
             Assert.That(archer.Health,Is.EqualTo(health));
             Assert.That(tower.ShotsFired,Is.EqualTo(shots));
             Time.timeScale=1;
-            archer.MoveTo(town.ClaimPoint,false,false);
+            archer.TryMoveTo(town.ClaimPoint,false,false);
             deadline=Time.realtimeSinceStartup+5;
             while(town.State.Owner!=0&&Time.realtimeSinceStartup<deadline)yield return null;
             Assert.That(town.State.Owner,Is.Zero);
@@ -155,7 +155,7 @@ namespace RiskAI.Tests
                 float angle=i*Mathf.PI/16;
                 var candidate=tower.transform.position+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*15f;
                 if(NavMesh.SamplePosition(candidate,out var hit,.8f,NavMesh.AllAreas) &&
-                   Vector2.Distance(new Vector2(hit.position.x,hit.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z))>ReforgedProfiles.CapturableTower.Range+.5f &&
+                   Vector2.Distance(new Vector2(hit.position.x,hit.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z))>UnitCatalog.CapturableTower.Range+.5f &&
                    Vector3.Distance(hit.position,defender.transform.position)>BattleRules.Range(defender.Kind)+.5f &&
                    Vector3.Distance(hit.position,defender.transform.position)<=BattleRules.Range(UnitKind.Mortar) &&
                    !Physics.Linecast(hit.position+Vector3.up,defender.AimPoint,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))
@@ -171,7 +171,7 @@ namespace RiskAI.Tests
             float mortarHealth=mortar.Health,defenderHealth=defender.Health,towerHealth=tower.Health;
             int towerShots=tower.ShotsFired;
             yield return new WaitForSecondsRealtime(6f);
-            Assert.That(Vector2.Distance(new Vector2(mortar.transform.position.x,mortar.transform.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z)),Is.GreaterThan(ReforgedProfiles.CapturableTower.Range));
+            Assert.That(Vector2.Distance(new Vector2(mortar.transform.position.x,mortar.transform.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z)),Is.GreaterThan(UnitCatalog.CapturableTower.Range));
             Assert.That(tower.ShotsFired,Is.EqualTo(towerShots),"This fixture isolates the tower from the rifleman defender and uses its planar range.");
             Assert.That(defender.Health,Is.LessThan(defenderHealth),"The mortar must attack the living tower defender from outside tower range.");
             Assert.That(tower.Health,Is.EqualTo(towerHealth),"Permanent towers are not damageable targets.");
@@ -187,9 +187,11 @@ namespace RiskAI.Tests
             source.enabled=false; if(source.Agent)source.Agent.enabled=false;
             target.enabled=false; if(target.Agent)target.Agent.enabled=false;
             float before=target.Health;
-            VisualFactory.Arrow(source.AimPoint,target.AimPoint,target,32,source.Team,source,AttackKind.Siege);
+            var shell=SourceWeapons.For(UnitKind.Mortar,AttackKind.Siege);
+            float flight=shell.FlightTime(Vector3.Distance(source.AimPoint,target.AimPoint));
+            battle.Combat.FireWeapon(source.AimPoint,target.AimPoint,target,32,source.Team,source,shell);
             Object.Destroy(source.gameObject);
-            yield return new WaitForSecondsRealtime(.8f);
+            yield return new WaitForSecondsRealtime(flight+.3f);
             float expected=CombatRules.ResolveDamage(32,AttackKind.Siege,target.ArmorType,target.Armor);
             Assert.That(target.Health,Is.EqualTo(before-expected).Within(.001f));
             yield return new WaitForSecondsRealtime(.8f);

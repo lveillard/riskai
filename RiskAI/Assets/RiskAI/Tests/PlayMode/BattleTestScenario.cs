@@ -23,7 +23,7 @@ namespace RiskAI.Tests
             return army;
         }
 
-        public static Ship Ship(NavalWorld naval, int team, ShipKind kind, Vector3 position)
+        public static Ship Ship(NavalWorld naval, int team, NavalUnitKind kind, Vector3 position)
         {
             var ship = naval.Spawn(team, kind, position);
             Assert.That(ship, Is.Not.Null, "The test fixture must spawn a ship in clear water.");

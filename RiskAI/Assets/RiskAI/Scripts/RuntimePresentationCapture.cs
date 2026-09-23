@@ -81,7 +81,7 @@ namespace RiskAI
                 input.SelectHarbor(port);
                 Frame(input, port.Landing);
                 battle.TogglePause();
-                port.Buy(ShipKind.Transport);
+                port.Buy(NavalUnitKind.Transport);
                 port.RecruitLand(UnitKind.MarinePrivate);
                 port.SimTick(.05f);
                 battle.TogglePause();
@@ -90,7 +90,7 @@ namespace RiskAI
                 var previous = port.Defender;
                 port.ClaimZone.SetDefender(null);
                 if (previous) previous.gameObject.SetActive(false);
-                var guard = battle.Naval.Spawn(0, ShipKind.Galley, port.Berth);
+                var guard = battle.Naval.Spawn(0, NavalUnitKind.Frigate, port.Berth);
                 if (!guard) { Debug.LogError("RISKAI_PRESENTATION_FAILED: guard spawn"); break; }
                 if (port.IsImportedPort) port.LinkedTown.SimTick(.05f);
                 port.SimTick(.05f);
@@ -150,25 +150,25 @@ namespace RiskAI
                 bool nearPort=false;
                 foreach(var port in battle.Naval.Harbors)if(Vector3.Distance(port.Berth,start)<40){nearPort=true;break;}
                 if(nearPort)continue;
-                var galley=battle.Naval.Spawn(0,ShipKind.Galley,start);
-                var transport=battle.Naval.Spawn(0,ShipKind.Transport,other);
-                if(!galley||!transport)continue;
+                var frigate=battle.Naval.Spawn(0,NavalUnitKind.Frigate,start);
+                var transport=battle.Naval.Spawn(0,NavalUnitKind.Transport,other);
+                if(!frigate||!transport)continue;
                 input.Clear();input.CameraRig.enabled=false;
                 var camera=Camera.main;var focus=start+new Vector3(5,0,9);
                 camera.orthographic=true;camera.orthographicSize=18;
                 camera.transform.position=focus+new Vector3(0,30,-24);
                 camera.transform.LookAt(focus);
-                galley.MoveTo(end);transport.MoveTo(otherEnd);
+                frigate.MoveTo(end);transport.MoveTo(otherEnd);
                 battle.TogglePause();
                 yield return Capture("ships-underway-0");
                 yield return Capture("ships-underway-1");
-                float distance=Vector3.Distance(galley.transform.position,start);
+                float distance=Vector3.Distance(frigate.transform.position,start);
                 float cargoDistance=Vector3.Distance(transport.transform.position,other);
-                var galleyView=camera.WorldToViewportPoint(galley.AimPoint);
+                var frigateView=camera.WorldToViewportPoint(frigate.AimPoint);
                 var transportView=camera.WorldToViewportPoint(transport.AimPoint);
-                bool visible=galleyView.z>0&&galleyView.x>.05f&&galleyView.x<.95f&&galleyView.y>.05f&&galleyView.y<.95f&&
+                bool visible=frigateView.z>0&&frigateView.x>.05f&&frigateView.x<.95f&&frigateView.y>.05f&&frigateView.y<.95f&&
                     transportView.z>0&&transportView.x>.05f&&transportView.x<.95f&&transportView.y>.05f&&transportView.y<.95f;
-                Debug.Log((visible&&distance>2&&cargoDistance>2?"RISKAI_PRESENTATION_OK: ":"RISKAI_PRESENTATION_FAILED: ")+"ships visible="+visible+" galleyMoved="+distance+" transportMoved="+cargoDistance);
+                Debug.Log((visible&&distance>2&&cargoDistance>2?"RISKAI_PRESENTATION_OK: ":"RISKAI_PRESENTATION_FAILED: ")+"ships visible="+visible+" frigateMoved="+distance+" transportMoved="+cargoDistance);
                 yield break;
             }
             Debug.LogError("RISKAI_PRESENTATION_FAILED: no open sea fixture");
@@ -185,7 +185,7 @@ namespace RiskAI
             Settlement home = null;
             foreach (var town in battle.Towns) if (town && town.State.Owner == 0 && !town.IsPort) { home = town; break; }
             if (!home) { Debug.LogError("RISKAI_PRESENTATION_FAILED: knight home"); yield break; }
-            var knight = battle.Spawn(0, UnitKind.Guard, home.DefaultLandEntry + Vector3.right * 5);
+            var knight = battle.Spawn(0, UnitKind.Knight, home.DefaultLandEntry + Vector3.right * 5);
             if (!knight) { Debug.LogError("RISKAI_PRESENTATION_FAILED: knight spawn"); yield break; }
             input.Clear(); input.CameraRig.enabled = false;
             // Close-up animation evidence must remain visible under decorative crowns.
@@ -201,7 +201,7 @@ namespace RiskAI
                     !NavMesh.Raycast(start, hit.position, out _, NavMesh.AllAreas)) { destination = hit.position; break; }
             }
             battle.TogglePause();
-            knight.MoveTo(destination, false, false);
+            knight.TryMoveTo(destination, false, false);
             int frames = 0, windups = 0, moving = 0;
             foreach (string stage in new[] { "trot", "pause", "attack" })
             {
@@ -209,7 +209,7 @@ namespace RiskAI
                 if (stage == "attack")
                 {
                     battle.TogglePause();
-                    var enemy = battle.Spawn(1, UnitKind.Guard, knight.transform.position + knight.transform.forward * 1.4f);
+                    var enemy = battle.Spawn(1, UnitKind.Knight, knight.transform.position + knight.transform.forward * 1.4f);
                     if (enemy) knight.Attack(enemy);
                 }
                 int count = stage == "pause" ? 8 : 32;

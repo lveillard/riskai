@@ -107,7 +107,7 @@ namespace RiskAI
             if (sameType) SelectUnits(session.Units.Where(candidate => candidate.Team == 0 && candidate.Kind == unit.Kind && !candidate.IsGarrison && OnScreen(candidate)), append);
             else if (append && IsSelected(unit)) { RemoveSelected(unit); unit.Select(false); }
             else SelectUnits(new[] { unit }, append);
-            if (unit.IsGarrison && !sameType) session.Message("El defensor puede salir si un aliado ocupa su círculo como relevo.");
+            if (unit.IsGarrison && !sameType) session.Message("El defensor puede salir si un aliado ocupa su círculo como relevo.", MessageKind.Info);
             lastSelectTime = Time.unscaledTime; lastSelectKind = unit.Kind;
         }
 
@@ -133,6 +133,12 @@ namespace RiskAI
             pressedWorld = false;
         }
 
+        bool HasAttackShip()
+        {
+            foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Profile.CanAttack) return true;
+            return false;
+        }
+
         internal void ContextAction(Vector2 point)
         {
             if (BlocksWorldInput(point) || OrderCursor || session.Paused || session.Winner >= 0) { if (OrderCursor) CancelCursor(); return; }
@@ -141,8 +147,10 @@ namespace RiskAI
             var clickedEnemy = RtsPicking.Target(session, cam, point, -1); var enemy = AttackRecipient(clickedEnemy);
             var ally = RtsPicking.Target(session, cam, point, 1) as Soldier; var town = RtsPicking.Town(session, cam, point); var harbor = RtsPicking.Harbor(session, cam, point);
             var ownShip = RtsPicking.Target(session, cam, point, 1) as Ship;
-            if (harbor && Fleet.Count > 0) MoveFleetToHarbor(harbor);
-            else if (town && town.Port && Fleet.Count > 0) MoveFleetToHarbor(town.Port);
+            // A clicked enemy ship beats the harbor building it is docked beside.
+            bool shipTarget = enemy is Ship && HasAttackShip();
+            if (!shipTarget && harbor && Fleet.Count > 0) MoveFleetToHarbor(harbor);
+            else if (!shipTarget && town && town.Port && Fleet.Count > 0) MoveFleetToHarbor(town.Port);
             else if (enemy && enemy.Team != 0 && HasSelection)
             {
                 CancelBoardingForSelection();

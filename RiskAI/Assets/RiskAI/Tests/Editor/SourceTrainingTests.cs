@@ -14,7 +14,7 @@ namespace RiskAI.Tests
             // Concatenated original 16-byte W3U modifications, offsets
             // 552, 6B6, 85F, A09, 5165, 5381, 54C1 (hex).
             var cases=new[]{
-                ("h00B",UnitKind.Archer),("h00E",UnitKind.Medic),("h00G",UnitKind.Guard),
+                ("h00B",UnitKind.Archer),("h00E",UnitKind.Medic),("h00G",UnitKind.Knight),
                 ("h00H",UnitKind.Mortar),("h012",UnitKind.MarinePrivate),
                 ("h014",UnitKind.MarineMajor),("h015",UnitKind.MarineGeneral)};
             string path=Path.Combine(Application.dataPath,"RiskAI/Tests/Editor/Fixtures/SaranTrainingModifications.bytes");

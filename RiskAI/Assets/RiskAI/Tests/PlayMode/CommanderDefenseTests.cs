@@ -53,7 +53,7 @@ namespace RiskAI.Tests
             foreach (var unit in marching)
             {
                 Assert.That(unit.Agent.Warp(Sample(defended.transform.position + Vector3.back * 15)), Is.True);
-                unit.MoveTo(neutral.ClaimPoint, true, false);
+                unit.TryMoveTo(neutral.ClaimPoint, true, false);
             }
 
             var raiders = BattleTestScenario.MobileArmy(battle, 0, UnitKind.Footman, 5,

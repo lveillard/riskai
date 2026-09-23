@@ -103,7 +103,7 @@ namespace RiskAI.Tests
             harbor.State.Owner = -1;
             Vector3 direction = tower.transform.position - harbor.Landing; direction.y = 0;
             direction = direction.sqrMagnitude > .01f ? direction.normalized : Vector3.forward;
-            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Guard, harbor.Landing + direction * 5.5f);
+            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Knight, harbor.Landing + direction * 5.5f);
             KeepOnlyTower(tower);
             enemy.HoldPosition();
             foreach (var target in battle.Targets.ToArray())

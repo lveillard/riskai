@@ -8,7 +8,7 @@ float RiskImportedOpticalDepth(float coastalWeight,float swell)
 half3 RiskWaterBodyColor(half3 bottom,float depth,float opticalDepth,float coastalWeight)
 {
  half3 tint=lerp(half3(.025,.13,.285),half3(.018,.072,.28),1-exp(-opticalDepth*.24));
- // Open sea retains the seam-proof historical contract. Source-authored shared
+ // Open sea keeps its seam-proof transmission. Source-authored shared
  // shallows may reveal their continuous submerged bed, then close before the
  // first deep-water band so coarse terrain tiles cannot print through offshore.
  float openSeaTransmission=exp(-depth*4.8)*(1-smoothstep(.10,.45,depth));

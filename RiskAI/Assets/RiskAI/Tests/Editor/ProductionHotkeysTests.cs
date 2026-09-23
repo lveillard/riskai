@@ -56,9 +56,9 @@ namespace RiskAI.Tests
         {
             var layout=ProductionHotkeys.Layout(ProductionBuilding.City);
             for(int i=1;i<layout.Count;i++)Assert.That(layout[i].Option.Cost,Is.GreaterThanOrEqualTo(layout[i-1].Option.Cost));
-            Assert.That(BattleRules.Hotkey(UnitKind.Footman),Is.EqualTo("Q"));
-            Assert.That(BattleRules.Hotkey(UnitKind.Archer),Is.EqualTo("W"),"Equal costs keep catalog order.");
-            Assert.That(BattleRules.Hotkey(UnitKind.Tank),Is.EqualTo(Grid[layout.Count-1]),"The most expensive unit takes the last used cell.");
+            Assert.That(ProductionHotkeys.Hotkey(UnitKind.Footman),Is.EqualTo("Q"));
+            Assert.That(ProductionHotkeys.Hotkey(UnitKind.Archer),Is.EqualTo("W"),"Equal costs keep catalog order.");
+            Assert.That(ProductionHotkeys.Hotkey(UnitKind.Tank),Is.EqualTo(Grid[layout.Count-1]),"The most expensive unit takes the last used cell.");
             Assert.That(layout.All(slot=>!slot.Option.IsShip),Is.True);
         }
 
@@ -71,10 +71,10 @@ namespace RiskAI.Tests
             Assert.That(layout.Skip(firstShip).All(slot=>slot.Option.IsShip),Is.True);
             for(int i=1;i<firstShip;i++)Assert.That(layout[i].Option.Cost,Is.GreaterThanOrEqualTo(layout[i-1].Option.Cost));
             for(int i=firstShip+1;i<layout.Count;i++)Assert.That(layout[i].Option.Cost,Is.GreaterThanOrEqualTo(layout[i-1].Option.Cost));
-            Assert.That(BattleRules.Hotkey(UnitKind.MarinePrivate),Is.EqualTo("Q"));
+            Assert.That(ProductionHotkeys.Hotkey(UnitKind.MarinePrivate),Is.EqualTo("Q"));
             Assert.That(ProductionHotkeys.Hotkey(NavalUnitKind.Transport),Is.EqualTo(Grid[firstShip]),"The cheapest hull opens the naval block.");
             foreach(var ship in ProductionCatalog.HarborShips)Assert.That(ProductionHotkeys.Hotkey(ship),Is.Not.Null);
-            Assert.That(BattleRules.Hotkey(UnitKind.Footman),Is.EqualTo("Q"),"Cards are independent: each building restarts at Q.");
+            Assert.That(ProductionHotkeys.Hotkey(UnitKind.Footman),Is.EqualTo("Q"),"Cards are independent: each building restarts at Q.");
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace RiskAI.Tests
             var options=ProductionCatalog.SettlementUnits.Select(ProductionOption.Land).ToList();
             var layout=ProductionHotkeys.Arrange(options);
             Assert.That(layout.All(slot=>slot.Page==0),Is.True);
-            options.Add(ProductionOption.Naval(NavalUnitKind.Galley));
+            options.Add(ProductionOption.Naval(NavalUnitKind.Frigate));
             layout=ProductionHotkeys.Arrange(options);
             Assert.That(layout[layout.Length-1].Key,Is.EqualTo(Grid[options.Count-1]),"An appended kind gets the next free cell.");
             Assert.That(ProductionHotkeys.PageCount(options.Count),Is.EqualTo(1));

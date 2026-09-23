@@ -125,13 +125,15 @@ namespace RiskAI
         }
         // Warcraft III patch 1.29 player palette, in the engine's canonical player order.
         // Reference: https://www.hiveworkshop.com/threads/warcraft-iii-color-tags-and-linebreaks.31386/
+        // One local deviation: WC3 maroon (155,0,0) is the same hue as red and read as "dark red"
+        // on roofs and cloth, so player 13 uses a wine/burgundy that keeps it dark but distinct.
         static readonly Color[] PlayerColors = {
             new Color32(255,3,3,255), new Color32(0,66,255,255), new Color32(28,230,185,255), new Color32(84,0,129,255),
             new Color32(255,252,1,255), new Color32(254,138,14,255), new Color32(32,192,0,255), new Color32(229,91,176,255),
             new Color32(149,150,151,255), new Color32(126,191,241,255), new Color32(16,98,70,255), new Color32(78,42,4,255),
-            new Color32(155,0,0,255), new Color32(0,0,195,255), new Color32(0,234,255,255), new Color32(190,0,254,255)
+            new Color32(128,0,72,255), new Color32(0,0,195,255), new Color32(0,234,255,255), new Color32(190,0,254,255)
         };
-        static readonly string[] PlayerColorNames = {"Rojo","Azul","Turquesa","Violeta","Amarillo","Naranja","Verde","Rosa","Gris","Azul claro","Verde oscuro","Marrón","Granate","Azul marino","Cian","Magenta"};
+        static readonly string[] PlayerColorNames = {"Rojo","Azul","Turquesa","Violeta","Amarillo","Naranja","Verde","Rosa","Gris","Azul claro","Verde oscuro","Marrón","Burdeos","Azul marino","Cian","Magenta"};
         public static Color TeamColor(int team) => PlayerRules.IsPlayer(team)?PlayerColors[team]:Color.white;
         // Colour for Material.SetColor/Material.color, LineRenderer and vertex tints.
         // Unity already converts those sRGB inputs to linear in a Linear project, so
@@ -316,17 +318,6 @@ namespace RiskAI
             Shape(pivot.transform,PrimitiveType.Cylinder,"Bore",new Vector3(0,.818f,0),new Vector3(.31f,.003f,.31f),new Color(.025f,.026f,.023f));
             if(soldier)soldier.Weapon=pivot.transform;
         }
-        public static void Arrow(Vector3 from, Vector3 to, CombatTarget target=null, float damage=0, int team=0, CombatTarget source=null, AttackKind attack=AttackKind.Piercing)
-        {
-            // CombatWorld owns projectile state and damage. This compatibility entry point
-            // only forwards the request so legacy callers keep using the simulation API.
-            var session = BattleSession.Current;
-            if (session) session.Combat.FireProjectile(from, to, target, damage, team, source, attack);
-        }
-        public static void Arrow(Vector3 from, Vector3 to, CombatTarget target, float damage, int team, CombatTarget source, bool magic)
-        {
-            Arrow(from,to,target,damage,team,source,magic?AttackKind.Magic:AttackKind.Piercing);
-        }
         public static void Impact(Vector3 point, Color color, float size) => Impact(point, color, size, AttackKind.Piercing);
         public static void Impact(Vector3 point, AttackKind attack, float size)
         {
@@ -469,7 +460,7 @@ namespace RiskAI
         Vector3 from, to;
         float elapsed, duration;
         AttackKind attack;
-        bool legacy;
+        bool visualOnly;
         bool pooled;
         bool poolOwned;
         AttackKind configuredAttack;
@@ -547,7 +538,7 @@ namespace RiskAI
             pooled = true;
             session = null;
             projectileId = -1;
-            legacy = false;
+            visualOnly = false;
             gameObject.SetActive(false);
         }
 
@@ -560,7 +551,7 @@ namespace RiskAI
             duration = Mathf.Max(.01f, travelDuration);
             elapsed = 0;
             attack = kind;
-            legacy = false;
+            visualOnly = false;
             pooled = false;
             VisualFactory.ConfigureProjectile(this, attack);
             gameObject.SetActive(true);
@@ -569,17 +560,9 @@ namespace RiskAI
             if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);
         }
 
-        internal void InitVisual(Vector3 a,Vector3 b,AttackKind kind)
+        /// <summary>Presentation-only flight (instant weapons, previews): no simulation projectile behind it.</summary>
+        public void InitVisual(Vector3 a,Vector3 b,AttackKind kind)
         {
-            Init(a,b,null,0,0,null,kind);
-        }
-
-        public void Init(Vector3 a,Vector3 b,CombatTarget victim,float hit,int attacker,CombatTarget shooter,bool arcane)
-        { Init(a,b,victim,hit,attacker,shooter,arcane?AttackKind.Magic:AttackKind.Piercing); }
-        public void Init(Vector3 a,Vector3 b,CombatTarget victim,float hit,int attacker,CombatTarget shooter,AttackKind kind)
-        {
-            // Kept for old callers and tests. Legacy initialization is presentation-only;
-            // damage and target references are deliberately ignored.
             session = null;
             projectileId = -1;
             from = a;
@@ -587,7 +570,7 @@ namespace RiskAI
             duration = Mathf.Clamp(Vector3.Distance(a, b) / 25f, .15f, .6f);
             elapsed = 0;
             attack = kind;
-            legacy = true;
+            visualOnly = true;
             pooled = false;
             VisualFactory.ConfigureProjectile(this, attack);
             gameObject.SetActive(true);
@@ -621,7 +604,7 @@ namespace RiskAI
                 return;
             }
 
-            if (!legacy) { VisualFactory.Release(this); return; }
+            if (!visualOnly) { VisualFactory.Release(this); return; }
             elapsed += Time.unscaledDeltaTime;
             SetPosition(elapsed / duration);
             if (elapsed >= duration) VisualFactory.Release(this);

@@ -4,10 +4,10 @@ using RiskAI.Core;
 namespace RiskAI.Tests
 {
     [SetUpFixture]
-    public sealed class LegacyPlayModeSetUp
+    public sealed class TwoPlayerPlayModeSetUp
     {
         [OneTimeSetUp]
-        public void UseTwoPlayersForLegacyFixtures()
+        public void UseTwoPlayersForPlayModeFixtures()
         {
             BattleSession.PlayerCountForNewMatch = 2;
         }

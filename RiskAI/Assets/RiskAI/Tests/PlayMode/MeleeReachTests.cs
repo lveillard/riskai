@@ -105,8 +105,8 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator LancerKeepsItsReachGapWhileHitting()
         {
-            float reach = BattleRules.Range(UnitKind.Guard);
-            yield return StrikeFromReach(UnitKind.Guard, 1f, reach + .56f);
+            float reach = BattleRules.Range(UnitKind.Knight);
+            yield return StrikeFromReach(UnitKind.Knight, 1f, reach + .56f);
         }
 
         [UnityTest]
@@ -120,7 +120,7 @@ namespace RiskAI.Tests
         {
             // At contact the lowered, thrust lance reaches the near surface of a footman
             // standing at the melee engagement distance (model space, calibrated below 1%).
-            float engage = Soldier.MeleeEngageDistance(UnitKind.Guard, SourceGeometry.AgentRadius(UnitKind.Footman));
+            float engage = Soldier.MeleeEngageDistance(UnitKind.Knight, SourceGeometry.AgentRadius(UnitKind.Footman));
             float surface = engage - SourceGeometry.AgentRadius(UnitKind.Footman);
             var tip = MountedKnightView.LanceTip(1);
             Assert.That(tip.z, Is.InRange(surface - .15f, engage), "Contact lance tip reaches the target body.");

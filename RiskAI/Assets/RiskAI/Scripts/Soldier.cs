@@ -196,7 +196,6 @@ namespace RiskAI
             humanMoveRouteResolved = false;
         }
         void OnDisable() { ClearHumanMoveTelemetry(true); }
-        public void MoveTo(Vector3 point, bool attackMove, bool append) => TryMoveTo(point,attackMove,append);
         public bool TryMoveTo(Vector3 point,bool attackMove,bool append) => Issue(point,attackMove?OrderMode.AttackMove:OrderMode.Move,append);
         public bool Patrol(Vector3 point, bool append) => Issue(point, OrderMode.Patrol, append);
         bool Issue(Vector3 point, OrderMode orderMode, bool append)
@@ -542,7 +541,7 @@ namespace RiskAI
                     if(LastMoveError==null)
                     {
                         LastMoveError="No hay un camino terrestre hasta ese punto. Elige otro destino o usa un transporte.";
-                        if(Team==0){session.Message(LastMoveError);Debug.Log("RISKAI_ROUTE_BLOCKED: id="+EntityId+" tick="+session.Clock.TickCount+" destination="+destination);}
+                        if(Team==0){session.Message(LastMoveError, MessageKind.Info);Debug.Log("RISKAI_ROUTE_BLOCKED: id="+EntityId+" tick="+session.Clock.TickCount+" destination="+destination);}
                     }
                     // Follow the reachable segment once. Re-requesting an exhausted partial
                     // path keeps pathPending cycling and never lets a stalled timer complete.

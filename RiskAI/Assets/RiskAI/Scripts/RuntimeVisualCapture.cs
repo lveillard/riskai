@@ -194,7 +194,7 @@ namespace RiskAI
             }
             if(port)
             {
-                for(int i=0;i<Harbor.QueueCapacity;i++)port.Buy(i%2==0?ShipKind.Galley:ShipKind.Transport);
+                for(int i=0;i<Harbor.QueueCapacity;i++)port.Buy(i%2==0?Core.NavalUnitKind.Frigate:Core.NavalUnitKind.Transport);
                 port.RecruitLand(Core.UnitKind.MarinePrivate);
             }
             yield return new WaitForSecondsRealtime(.4f);
@@ -224,7 +224,7 @@ namespace RiskAI
             input.Clear();input.FocusHome();var home=input.SelectedTown;if(!home)yield break;
             Vector3 center=home.ClaimPoint+new Vector3(4,0,-2);
             var gunner=battle.Spawn(0,Core.UnitKind.Mortar,center+new Vector3(-1.4f,0,0));
-            var knight=battle.Spawn(0,Core.UnitKind.Guard,center+new Vector3(1.3f,0,-.2f));
+            var knight=battle.Spawn(0,Core.UnitKind.Knight,center+new Vector3(1.3f,0,-.2f));
             var mage=battle.Spawn(0,Core.UnitKind.Mage,center+new Vector3(0,0,1.5f));
             input.CameraRig.ResetView();input.CameraRig.Focus(center);
             yield return new WaitForSecondsRealtime(1.5f);
@@ -234,9 +234,13 @@ namespace RiskAI
             yield return new WaitForSecondsRealtime(.6f);
             if(battle.Paused)battle.TogglePause();
             Vector3 impact=center+new Vector3(0,0,4f);
-            battle.Combat.FireProjectile(mage?mage.AimPoint:center+Vector3.up,impact,null,0,0,mage,Core.AttackKind.Magic);
-            battle.Combat.FireProjectile(gunner?gunner.AimPoint:center+Vector3.up,impact+Vector3.right*1.2f,null,0,0,gunner,Core.AttackKind.Siege);
-            yield return new WaitForSecondsRealtime(.19f);
+            var magic=Core.SourceWeapons.For(Core.UnitKind.Mage,Core.AttackKind.Magic);
+            var siege=Core.SourceWeapons.For(Core.UnitKind.Mortar,Core.AttackKind.Siege);
+            Vector3 magicFrom=mage?mage.AimPoint:center+Vector3.up,siegeFrom=gunner?gunner.AimPoint:center+Vector3.up,siegeTo=impact+Vector3.right*1.2f;
+            battle.Combat.FireWeapon(magicFrom,impact,null,0,0,mage,magic);
+            battle.Combat.FireWeapon(siegeFrom,siegeTo,null,0,0,gunner,siege);
+            // Capture just after both shells land so their impact profiles are on screen.
+            yield return new WaitForSecondsRealtime(Mathf.Max(magic.FlightTime(Vector3.Distance(magicFrom,impact)),siege.FlightTime(Vector3.Distance(siegeFrom,siegeTo)))+.04f);
             if(!battle.Paused)battle.TogglePause();
             ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v18-player-impact-profiles.png"));
             Debug.Log("RISKAI_FRONTLINE_CAPTURE: v18 gunner="+(gunner!=null)+" knight="+(knight!=null)+" mage="+(mage!=null)+" effects=magic,siege damage=0");
@@ -291,8 +295,8 @@ namespace RiskAI
             var port=input.SelectedHarbor;
             if(port&&port.CanLaunch)
             {
-                battle.Naval.Spawn(0,ShipKind.Transport,port.Berth);
-                if(SeaNavigation.TryNearestOcean(port.Berth+new Vector3(9,0,6),18,out var other))battle.Naval.Spawn(0,ShipKind.Galley,other);
+                battle.Naval.Spawn(0,Core.NavalUnitKind.Transport,port.Berth);
+                if(SeaNavigation.TryNearestOcean(port.Berth+new Vector3(9,0,6),18,out var other))battle.Naval.Spawn(0,Core.NavalUnitKind.Frigate,other);
                 input.CameraRig.Focus(port.Berth);
                 yield return new WaitForSecondsRealtime(2);
                 input.CameraRig.ZoomAt(1,new Vector2(Screen.width*.5f,Screen.height*.5f));

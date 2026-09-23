@@ -23,7 +23,7 @@ namespace RiskAI
             public float Elapsed, Duration, Damage;
             public AttackKind Attack;
             public WeaponProfile Weapon;
-            public bool Miss, LegacyRules;
+            public bool Miss;
         }
         readonly BattleSession session;
         readonly List<Projectile> projectiles = new List<Projectile>(256);
@@ -35,20 +35,6 @@ namespace RiskAI
         public int ResolvedProjectiles { get; private set; }
         public CombatWorld(BattleSession battle) { session = battle; }
         public void BeginSimulationTick() => firstProjectileCreatedThisTick=nextId+1;
-
-        public int FireProjectile(Vector3 from, Vector3 to, CombatTarget target, float damage, int team,
-            CombatTarget source = null, AttackKind attack = AttackKind.Piercing)
-        {
-            if (damage < 0 || float.IsNaN(damage) || float.IsInfinity(damage)) return 0;
-            // Public compatibility path for presentation fixtures and callers without
-            // source weapon data. Its historical clamp and explicit legacy splash stay local here.
-            float radius = attack == AttackKind.Magic ? 2.4f : attack == AttackKind.Siege ? 1.5f : 0;
-            var weapon = new WeaponProfile(attack, WeaponDelivery.Missile, 25, WeaponTargeting.Target,
-                0, radius, radius, radius > 0 ? attack == AttackKind.Magic ? .5f : .35f : 0,
-                radius > 0 ? attack == AttackKind.Magic ? .5f : .35f : 0, .15f, .6f);
-            session.Feedback.RaiseFired(source, from, to, attack);
-            return EnqueueProjectile(from, to, target, damage, team, source, weapon, legacyRules: true);
-        }
 
         public int FireWeapon(Vector3 from, Vector3 to, CombatTarget target, float damage, int team,
             CombatTarget source, WeaponProfile weapon)
@@ -73,7 +59,7 @@ namespace RiskAI
         }
 
         int EnqueueProjectile(Vector3 from, Vector3 to, CombatTarget target, float damage, int team,
-            CombatTarget source, WeaponProfile weapon, bool? knownMiss = null, bool legacyRules = false)
+            CombatTarget source, WeaponProfile weapon, bool? knownMiss = null)
         {
             var shot = new Projectile
             {
@@ -81,7 +67,7 @@ namespace RiskAI
                 Team = team, From = from, To = to, Position = from, Damage = damage, Attack = weapon.DamageType, Weapon = weapon,
                 Miss = knownMiss ?? source && target && session.RollMiss(CombatRules.UphillMissChance(
                     weapon.DamageType, target.transform.position.y-source.transform.position.y)),
-                Duration = weapon.FlightTime(Vector3.Distance(from, to)), LegacyRules = legacyRules
+                Duration = weapon.FlightTime(Vector3.Distance(from, to))
             };
             projectileIndices.Add(shot.Id, projectiles.Count);
             projectiles.Add(shot);
@@ -97,8 +83,8 @@ namespace RiskAI
             {
                 var shot = projectiles[index];
                 float progress=shot.Duration>0?Mathf.Clamp01(shot.Elapsed/shot.Duration):1;
-                Vector3 position=shot.LegacyRules||shot.Weapon.Delivery==WeaponDelivery.Artillery
-                    ? ArcPosition(shot.From,shot.To,progress,shot.Weapon.Delivery==WeaponDelivery.Artillery?AttackKind.Siege:shot.Attack)
+                Vector3 position=shot.Weapon.Delivery==WeaponDelivery.Artillery
+                    ? ArcPosition(shot.From,shot.To,progress)
                     : shot.Position;
                 state = new ProjectileVisualState(shot.From, shot.To, position, progress, shot.Duration, shot.Attack);
                 return true;
@@ -120,7 +106,7 @@ namespace RiskAI
                 if(shot.Id>=firstProjectileCreatedThisTick){projectiles[i++]=shot;continue;}
                 shot.Elapsed += delta;
                 bool arrived;
-                if(shot.LegacyRules||shot.Weapon.Delivery==WeaponDelivery.Artillery)
+                if(shot.Weapon.Delivery==WeaponDelivery.Artillery)
                     arrived=shot.Elapsed+.00001f>=shot.Duration;
                 else
                 {
@@ -135,24 +121,7 @@ namespace RiskAI
                 for (int j = i; j < projectiles.Count; j++) projectileIndices[projectiles[j].Id] = j;
                 var source = session.FindTarget(shot.SourceId);
                 float radius = shot.Weapon.SmallDamageRadius;
-                if (!shot.Miss && shot.LegacyRules)
-                {
-                    if (target && target.CanBeAttacked) target.ReceiveAttack(shot.Damage, shot.Attack, shot.Team, source);
-                    if (radius > 0)
-                    {
-                        session.Spatial.Query(shot.To, radius, splash);
-                        splash.Sort(EntityOrder.Instance);
-                        for (int j = 0; j < splash.Count; j++)
-                        {
-                            var other = splash[j];
-                            if (!other || !other.IsAlive || other.EntityId == shot.TargetId || other.Team == shot.Team) continue;
-                            if (shot.Attack == AttackKind.Magic && !(other is Soldier)) continue;
-                            if ((other.AimPoint - shot.To).sqrMagnitude < radius * radius)
-                                other.ReceiveAttack(shot.Damage * (shot.Attack == AttackKind.Magic ? .5f : .35f), shot.Attack, shot.Team, source);
-                        }
-                    }
-                }
-                else if (!shot.Miss && shot.Weapon.HasSplash)
+                if (!shot.Miss && shot.Weapon.HasSplash)
                 {
                     // Resolve the primary by identity so a homing msplash shot cannot lose its
                     // intended hit to spatial sampling around an elevated or freshly moved aim point.
@@ -189,9 +158,9 @@ namespace RiskAI
             firstProjectileCreatedThisTick=int.MaxValue;
         }
 
-        static Vector3 ArcPosition(Vector3 from,Vector3 to,float progress,AttackKind attack)
+        static Vector3 ArcPosition(Vector3 from,Vector3 to,float progress)
         {
-            float arc=attack==AttackKind.Siege?Mathf.Lerp(1.6f,3.4f,Mathf.Clamp01(Vector3.Distance(from,to)/18f)):.5f;
+            float arc=Mathf.Lerp(1.6f,3.4f,Mathf.Clamp01(Vector3.Distance(from,to)/18f));
             return Vector3.Lerp(from,to,progress)+Vector3.up*Mathf.Sin(progress*Mathf.PI)*arc;
         }
 
