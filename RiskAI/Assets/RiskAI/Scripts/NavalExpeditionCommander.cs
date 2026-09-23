@@ -157,8 +157,8 @@ namespace RiskAI
             if(!transport||!source||source.Owner!=team||!source.TryTransportLanding(out sourceLanding,out sourceTransportBerth)){Fail();return;}
             if(DistanceXZ(transport.transform.position,sourceLanding)>UnitCatalog.TransportLoadRadius&&!transport.IsAtOrRoutingTo(sourceTransportBerth))
             {
-                transport.MoveTo(sourceTransportBerth);
-                if(!string.IsNullOrEmpty(transport.LastActionError)){Fail();return;}
+                var sailed=session.Commands.SubmitResult(team,transport.EntityId,UnitCommandKind.Move,sourceTransportBerth.x,sourceTransportBerth.y,sourceTransportBerth.z);
+                if(!sailed.Accepted){Fail();return;}
             }
             embarkOrdersIssued=false;phase=Phase.Gathering;phaseDeadline=session.BattleTime+GatherDeadline();
         }
@@ -170,8 +170,8 @@ namespace RiskAI
             {
                 if(!transport.IsAtOrRoutingTo(sourceTransportBerth))
                 {
-                    transport.MoveTo(sourceTransportBerth);
-                    if(!string.IsNullOrEmpty(transport.LastActionError)){Fail();return;}
+                    var sailed=session.Commands.SubmitResult(team,transport.EntityId,UnitCommandKind.Move,sourceTransportBerth.x,sourceTransportBerth.y,sourceTransportBerth.z);
+                    if(!sailed.Accepted){Fail();return;}
                 }
                 return;
             }
@@ -440,7 +440,7 @@ namespace RiskAI
                 float next=DistanceXZ(ship.transform.position,transport.transform.position);
                 if(next<distance&&SeaNavigation.AreConnected(ship.transform.position,destinationTransportBerth)){distance=next;best=ship;}
             }
-            if(best&&!best.IsAtOrRoutingTo(destinationTransportBerth))best.MoveTo(destinationTransportBerth,true);
+            if(best&&!best.IsAtOrRoutingTo(destinationTransportBerth))session.Commands.Submit(new UnitCommand(team,best.EntityId,UnitCommandKind.AttackMove,destinationTransportBerth.x,destinationTransportBerth.y,destinationTransportBerth.z));
         }
 
         static void SortByDistance(List<CombatTarget> targets,Vector3 point)

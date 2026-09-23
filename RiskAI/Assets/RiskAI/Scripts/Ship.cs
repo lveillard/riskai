@@ -7,10 +7,14 @@ using UnityEngine.AI;
 namespace RiskAI
 {
     // Mirrors Core.UnitKind ordinals (cast directly): append new kinds at the end only.
-    public sealed class Ship : CombatTarget
+    public sealed class Ship : CombatTarget, IOrderable
     {
         readonly List<Soldier> cargo=new List<Soldier>();
         readonly List<Vector3> route=new List<Vector3>();
+        readonly Queue<UnitCommand> orderQueue=new Queue<UnitCommand>(8);
+        readonly Vector3[] orderPoints=new Vector3[36];
+        readonly byte[] orderKinds=new byte[36];
+        int orderPointCount, orderRevision;
         NavalWorld world;int routeIndex;float nextAttack,nextTargetPath,simDelta,nextSense,lastRouteProgressAt;
         Vector3 routeGoal, attackMoveGoal;
         bool hasRouteGoal, hasAttackMoveGoal;
@@ -133,7 +137,7 @@ namespace RiskAI
             orderedHarbor=null;
             route.Clear();route.AddRange(next);routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=next.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;pendingShoreUnload=false;
         }
-        public void Stop(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;pendingShoreUnload=false;}
+        public void Stop(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;pendingShoreUnload=false;orderQueue.Clear();NoteOrderRoute();}
         /// <summary>Queues a source-style unload at a validated shore after sailing there.</summary>
         public string SailToShore(Vector3 shore)
         {
@@ -153,7 +157,7 @@ namespace RiskAI
             if(!IsAlive||!Type.CanTransport||cargo.Count>=Capacity||!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=Team||cargo.Contains(soldier)){LastActionError="El transporte no puede embarcar a ese soldado.";return false;}
             if(DistanceXZ(transform.position,soldier.transform.position)>LoadRadius){LastActionError="Acerca el transporte a menos de 10 m del soldado.";return false;}
             if(!ShoreAccess.TryLanding(soldier.transform.position,out _,out var shoreError)){LastActionError=shoreError;return false;}
-            soldier.Stop();soldier.Select(false);if(soldier.Agent)soldier.Agent.enabled=false;
+            soldier.RetainOrdersForEmbark();soldier.Stop();soldier.Select(false);if(soldier.Agent)soldier.Agent.enabled=false;
             cargo.Add(soldier);soldier.transform.SetParent(transform,false);soldier.gameObject.SetActive(false);return true;
         }
         public bool Unload(Harbor harbor)
@@ -208,7 +212,7 @@ namespace RiskAI
                 var spread=landing+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*radius;
                 if(!NavMesh.SamplePosition(spread,out var hit,.9f,NavMesh.AllAreas)||!ShoreAccess.IsWalkableLanding(hit.position))continue;
                 soldier.transform.SetParent(null,true);soldier.transform.position=hit.position;soldier.transform.rotation=Quaternion.identity;soldier.gameObject.SetActive(true);
-                if(soldier.Agent){soldier.Agent.enabled=true;soldier.Agent.Warp(hit.position);soldier.Stop();}
+                if(soldier.Agent){soldier.Agent.enabled=true;soldier.Agent.Warp(hit.position);soldier.Stop();soldier.RestoreEmbarkOrders();}
                 cargo.Remove(soldier);return true;
             }
             return false;
@@ -249,6 +253,7 @@ namespace RiskAI
                 if(routeIndex<route.Count)Advance();
             }
             else if(!IsGarrison&&routeIndex<route.Count)Advance();
+            DrainOrders();
         }
         // Only enemies already inside weapon range (units.json acquisition); the query padding covers long hulls.
         CombatTarget FindNearbyEnemy()=>UnitTargeting.Acquire(world.Session,this,Team,Type,Type.Acquisition.RadiusHostile,false,default,0,nearby);
@@ -336,6 +341,166 @@ namespace RiskAI
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}
         // Weapon range by the units.json measure (ToHull: to the target's attackable surface).
         float RangeTo(CombatTarget enemy)=>enemy?UnitTargeting.WeaponDistance(this,Type.Weapon,enemy):float.MaxValue;
+        string IOrderable.OrderError => LastActionError;
+        bool IOrderable.Authorize(in UnitCommand command, bool commitRelease) => Authorize(command, commitRelease);
+        bool IOrderable.ApplyOrder(in UnitCommand command) => ApplyOrder(command);
+        bool IOrderable.HumanMoveEligible(in UnitCommand command) => false;
+        void IOrderable.BeginHumanMove(in UnitCommand command, double submittedAt, double pausedAtSubmit, bool eligible) { }
+
+        bool Authorize(in UnitCommand command, bool commitRelease)
+        {
+            LastActionError = null;
+            if (!IsAlive) return false;
+            if (world == null || world.Session.Paused || world.Session.Winner >= 0) return false;
+            var point = new Vector3(command.X, command.Y, command.Z);
+            switch (command.Kind)
+            {
+                case UnitCommandKind.Move:
+                case UnitCommandKind.AttackMove:
+                    return AuthorizeMove(point, commitRelease);
+                case UnitCommandKind.Attack:
+                    var enemy = world.Session.FindTarget(command.TargetId);
+                    return UnitTargeting.CanTarget(this, Team, Type.Weapon, enemy);
+                case UnitCommandKind.Stop:
+                case UnitCommandKind.Hold:
+                    return true;
+                case UnitCommandKind.Unload:
+                    return AuthorizeUnload(point, commitRelease);
+                case UnitCommandKind.Capture:
+                    var harbor = CaptureHarbor(command);
+                    if (!harbor) { LastActionError = "Elige un puerto de desembarco."; return false; }
+                    return true;
+                default:
+                    LastActionError = "La orden ya no es válida para esa unidad o su objetivo.";
+                    return false;
+            }
+        }
+
+        bool AuthorizeMove(Vector3 point, bool commitRelease)
+        {
+            if (harborGuard && harborGuard.IsInBerthCircle(point)) return true;
+            if (!PlanDestination(point, UnitCatalog.TransportLoadRadius, out var destination)) return false;
+            return AuthorizeDeparture(destination, commitRelease);
+        }
+
+        bool AuthorizeUnload(Vector3 point, bool commitRelease)
+        {
+            if (!Type.CanTransport) { LastActionError = "Selecciona un transporte."; return false; }
+            if (!TryValidateShore(point, out var landing, out var error)) { LastActionError = error; return false; }
+            if (!SeaNavigation.TryNearestOcean(landing, ShoreBerthSearchRadius, out var berth) || !SeaNavigation.TryBuildPath(transform.position, berth, out _))
+            { LastActionError = "No hay una ruta marítima segura hasta esa playa."; return false; }
+            return AuthorizeDeparture(berth, commitRelease);
+        }
+
+        bool PlanDestination(Vector3 point, float search, out Vector3 destination)
+        {
+            destination = point;
+            if (SeaNavigation.HasClearance(destination) || SeaNavigation.TryNearestOcean(point, search, out destination))
+            {
+                if (SeaNavigation.TryBuildPath(transform.position, destination, out _)) return true;
+                LastActionError = "No hay una ruta marítima hasta ese destino.";
+                return false;
+            }
+            LastActionError = "Elige mar o tierra cercana a la costa.";
+            return false;
+        }
+
+        bool AuthorizeDeparture(Vector3 point, bool commitRelease)
+        {
+            if (!harborGuard || harborGuard.IsInBerthCircle(point)) return true;
+            if (commitRelease) return TryLeaveHarborGuard(point);
+            if (harborGuard.CanReleaseNavalDefender(this)) return true;
+            LastActionError = "El barco guardia necesita un relevo aliado en el puerto.";
+            return false;
+        }
+
+        public int OrderLegCount => orderPointCount;
+        public int OrderRevision => orderRevision;
+        public Vector3 OrderPoint(int index) => orderPoints[index];
+        public byte OrderKind(int index) => orderKinds[index];
+        public int SeaRouteCount => routeIndex < route.Count ? route.Count - routeIndex : 0;
+        public Vector3 SeaRoutePoint(int index) => route[routeIndex + index];
+
+        void NoteOrderRoute()
+        {
+            orderRevision++;
+            orderPointCount = 0;
+            if (routeIndex < route.Count)
+            {
+                orderKinds[orderPointCount] = (byte)(attackMoveOrder ? UnitCommandKind.AttackMove : UnitCommandKind.Move);
+                orderPoints[orderPointCount++] = route[route.Count - 1];
+            }
+            else if (target)
+            {
+                orderKinds[orderPointCount] = (byte)UnitCommandKind.Attack;
+                orderPoints[orderPointCount++] = target.transform.position;
+            }
+            foreach (var order in orderQueue)
+            {
+                if (orderPointCount >= orderPoints.Length) break;
+                orderKinds[orderPointCount] = (byte)order.Kind;
+                orderPoints[orderPointCount++] = new Vector3(order.X, order.Y, order.Z);
+            }
+        }
+
+        bool BusyOrder() => target != null || routeIndex < route.Count || pendingShoreUnload;
+        void DrainOrders()
+        {
+            if (orderQueue.Count == 0 || BusyOrder()) return;
+            ApplyOrder(orderQueue.Dequeue(), false);
+        }
+
+        bool ApplyOrder(in UnitCommand command) => ApplyOrder(command, true);
+        bool ApplyOrder(in UnitCommand command, bool honorQueue)
+        {
+            if (honorQueue && command.Append && BusyOrder())
+            {
+                if (orderQueue.Count >= 35) { LastActionError = "La cola de órdenes está llena."; return false; }
+                orderQueue.Enqueue(command);
+                NoteOrderRoute();
+                return true;
+            }
+            if (honorQueue && !command.Append) orderQueue.Clear();
+            var point = new Vector3(command.X, command.Y, command.Z);
+            bool ok;
+            switch (command.Kind)
+            {
+                case UnitCommandKind.Move: MoveTo(point, false); ok = string.IsNullOrEmpty(LastActionError); break;
+                case UnitCommandKind.AttackMove: MoveTo(point, true); ok = string.IsNullOrEmpty(LastActionError); break;
+                case UnitCommandKind.Attack:
+                    Attack(world.Session.FindTarget(command.TargetId));
+                    ok = true;
+                    break;
+                case UnitCommandKind.Stop:
+                case UnitCommandKind.Hold:
+                    Stop();
+                    ok = true;
+                    break;
+                case UnitCommandKind.Unload:
+                    ok = string.IsNullOrEmpty(SailToShore(point));
+                    break;
+                case UnitCommandKind.Capture:
+                    var harbor = CaptureHarbor(command);
+                    if (!harbor) { LastActionError = "Elige un puerto de desembarco."; ok = false; break; }
+                    SailToHarbor(harbor);
+                    ok = string.IsNullOrEmpty(LastActionError);
+                    break;
+                default:
+                    LastActionError = "La orden ya no es válida para esa unidad o su objetivo.";
+                    ok = false;
+                    break;
+            }
+            NoteOrderRoute();
+            return ok;
+        }
+
+        Harbor CaptureHarbor(in UnitCommand command)
+        {
+            var found = StructureLookup.Find(world.Session, command);
+            if (found.Harbor) return found.Harbor;
+            return found.Town ? found.Town.Port : null;
+        }
+
         /// <summary>World bounds of the clickable hull volume, for pointer picking.</summary>
         public bool TryGetHullBounds(out Bounds bounds)
         {

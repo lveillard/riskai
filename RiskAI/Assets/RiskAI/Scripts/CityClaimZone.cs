@@ -136,6 +136,8 @@ namespace RiskAI
             if(previousShip)previousShip.ReleaseHarborGuard(harbor);
             guardian=ship;ship.BindHarborGuard(harbor);Contested=false;
         }
+        internal bool HasRelief(BattleSession session, CombatTarget departing) =>
+            guardian == departing && departing && FindCircleReplacement(session, departing.Team, departing);
         internal bool CanReleaseDefenderForOrder(BattleSession session, Soldier defender)
         {
             return Defender == defender && FindCircleReplacement(session, defender.Team, defender);

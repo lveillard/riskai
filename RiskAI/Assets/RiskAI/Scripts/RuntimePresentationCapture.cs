@@ -158,8 +158,9 @@ namespace RiskAI
                 camera.orthographic=true;camera.orthographicSize=18;
                 camera.transform.position=focus+new Vector3(0,30,-24);
                 camera.transform.LookAt(focus);
-                frigate.MoveTo(end);transport.MoveTo(otherEnd);
                 battle.TogglePause();
+                battle.Commands.Submit(new UnitCommand(0, frigate.EntityId, UnitCommandKind.Move, end.x, end.y, end.z));
+                battle.Commands.Submit(new UnitCommand(0, transport.EntityId, UnitCommandKind.Move, otherEnd.x, otherEnd.y, otherEnd.z));
                 yield return Capture("ships-underway-0");
                 yield return Capture("ships-underway-1");
                 float distance=Vector3.Distance(frigate.transform.position,start);
@@ -201,16 +202,16 @@ namespace RiskAI
                     !NavMesh.Raycast(start, hit.position, out _, NavMesh.AllAreas)) { destination = hit.position; break; }
             }
             battle.TogglePause();
-            knight.TryMoveTo(destination, false, false);
+            battle.Commands.Submit(new UnitCommand(0, knight.EntityId, UnitCommandKind.Move, destination.x, destination.y, destination.z));
             int frames = 0, windups = 0, moving = 0;
             foreach (string stage in new[] { "trot", "pause", "attack" })
             {
-                if (stage == "pause") { knight.HoldPosition(); battle.TogglePause(); }
+                if (stage == "pause") { battle.Commands.Submit(new UnitCommand(0, knight.EntityId, UnitCommandKind.Hold)); battle.TogglePause(); }
                 if (stage == "attack")
                 {
                     battle.TogglePause();
                     var enemy = battle.Spawn(1, UnitKind.Knight, knight.transform.position + knight.transform.forward * 1.4f);
-                    if (enemy) knight.Attack(enemy);
+                    if (enemy) battle.Commands.Submit(new UnitCommand(0, knight.EntityId, UnitCommandKind.Attack, targetId: enemy.EntityId));
                 }
                 int count = stage == "pause" ? 8 : 32;
                 for (int i = 0; i < count; i++)

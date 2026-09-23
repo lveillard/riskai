@@ -90,6 +90,21 @@ namespace RiskAI.Core
             weapon.IsValid && target.CanBeAttacked && relation != UnitRelation.Self && relation != UnitRelation.Ally &&
             Allows(weapon.TargetMask, TargetClass(target), relation);
 
+        /// <summary>How Shift and a busy unit treat one more order. Stop and Hold never queue.</summary>
+        public enum OrderQueueAction { Start, Append, Clear }
+
+        /// <summary>
+        /// Shift appends while the unit is already carrying out an order. The first Shift order on an
+        /// idle or holding unit starts immediately. Patrol and Follow are terminal once they start
+        /// (they do not finish on their own); that is the actor's completion rule, not a different enqueue.
+        /// </summary>
+        public static OrderQueueAction Queue(UnitCommandKind kind, bool append, bool busy)
+        {
+            if (kind == UnitCommandKind.Stop || kind == UnitCommandKind.Hold) return OrderQueueAction.Clear;
+            if (!append || !busy) return OrderQueueAction.Start;
+            return OrderQueueAction.Append;
+        }
+
         public static UnitRelation Relation(int ownTeam, int targetTeam, bool self, int neutralTeam)
         {
             if (self) return UnitRelation.Self;

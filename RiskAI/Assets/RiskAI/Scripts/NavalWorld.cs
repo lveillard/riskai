@@ -132,9 +132,10 @@ namespace RiskAI
         {
             var selected=new List<Soldier>{soldier};
             if(!TryPlanEmbark(ship,selected,out var landing,out var berth,out error))return false;
-            ship.MoveTo(berth);
-            if(!string.IsNullOrEmpty(ship.LastActionError)){error=ship.LastActionError;return false;}
-            if(!soldier.TryMoveTo(landing,false,false)){error=string.IsNullOrEmpty(soldier.LastMoveError)?"La tropa no puede llegar al embarque marcado.":soldier.LastMoveError;return false;}
+            var sailed=Session.Commands.SubmitResult(ship.Team,ship.EntityId,UnitCommandKind.Move,berth.x,berth.y,berth.z);
+            if(!sailed.Accepted){error=sailed.Error;return false;}
+            var walked=Session.Commands.SubmitResult(soldier.Team,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z);
+            if(!walked.Accepted){error=string.IsNullOrEmpty(walked.Error)?"La tropa no puede llegar al embarque marcado.":walked.Error;return false;}
             error=null;return true;
         }
         /// <summary>Uses a selected friendly embark post instead of retargeting the nearest harbor.</summary>
@@ -145,9 +146,10 @@ namespace RiskAI
             if(!soldier||!soldier.IsAlive||soldier.IsGarrison||soldier.Team!=ship.Team){error="Selecciona una tropa móvil aliada.";return false;}
             if(!harbor||harbor.Owner!=ship.Team||!harbor.TryTransportLanding(out var landing,out var berth))
             {error="El puerto no tiene una playa o pasarela al alcance del transporte.";return false;}
-            ship.MoveTo(berth);
-            if(!string.IsNullOrEmpty(ship.LastActionError)){error=ship.LastActionError;return false;}
-            if(!soldier.TryMoveTo(landing,false,false)){error=string.IsNullOrEmpty(soldier.LastMoveError)?"La tropa no puede llegar al embarque marcado.":soldier.LastMoveError;return false;}
+            var sailed=Session.Commands.SubmitResult(ship.Team,ship.EntityId,UnitCommandKind.Move,berth.x,berth.y,berth.z);
+            if(!sailed.Accepted){error=sailed.Error;return false;}
+            var walked=Session.Commands.SubmitResult(soldier.Team,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z);
+            if(!walked.Accepted){error=string.IsNullOrEmpty(walked.Error)?"La tropa no puede llegar al embarque marcado.":walked.Error;return false;}
             return true;
         }
         /// <summary>Plans one common visible shore for a controller-owned boarding queue.</summary>
@@ -176,8 +178,8 @@ namespace RiskAI
         {
             if(!ship||!ship.Type.CanTransport)return "Selecciona un transporte.";
             if(!harbor)return "Elige una playa o muelle de desembarco marcado.";
-            ship.SailToHarbor(harbor);
-            return string.IsNullOrEmpty(ship.LastActionError)?"El transporte navega al desembarco marcado.":ship.LastActionError;
+            var sailed=Session.Commands.SubmitResult(ship.Team,ship.EntityId,UnitCommandKind.Capture,harbor.Landing.x,harbor.Landing.y,harbor.Landing.z,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
+            return sailed.Accepted?"El transporte navega al desembarco marcado.":sailed.Error;
         }
         public int PendingShips(int team)
         {
@@ -261,7 +263,7 @@ namespace RiskAI
             {
                 if(besieged&&siege>0)
                 {
-                    if(!ship.IsAtOrRoutingTo(besieged.Berth))ship.MoveTo(besieged.Berth,true);
+                    if(!ship.IsAtOrRoutingTo(besieged.Berth))Session.Commands.Submit(new UnitCommand(ship.Team,ship.EntityId,UnitCommandKind.AttackMove,besieged.Berth.x,besieged.Berth.y,besieged.Berth.z));
                     continue;
                 }
                 // Keep an accepted, progressing route to a still valid objective.
@@ -270,12 +272,12 @@ namespace RiskAI
                 if(profile.Level>0&&ship.Health<ship.MaxHealth*.35f)
                 {
                     var home=NearestOwnHarbor(team,ship.transform.position);
-                    if(home&&!ship.IsAtOrRoutingTo(home.Berth))ship.MoveTo(home.Berth,true);
+                    if(home&&!ship.IsAtOrRoutingTo(home.Berth))Session.Commands.Submit(new UnitCommand(ship.Team,ship.EntityId,UnitCommandKind.AttackMove,home.Berth.x,home.Berth.y,home.Berth.z));
                     continue;
                 }
                 // The whole squadron shares one objective so frigates arrive together.
                 if(!target)target=ChooseNavalTarget(team,warships>0?fleetCenter:ship.transform.position,profile);
-                if(target&&!ship.IsAtOrRoutingTo(target.Berth))ship.MoveTo(target.Berth,true);
+                if(target&&!ship.IsAtOrRoutingTo(target.Berth))Session.Commands.Submit(new UnitCommand(ship.Team,ship.EntityId,UnitCommandKind.AttackMove,target.Berth.x,target.Berth.y,target.Berth.z));
             }
         }
         bool RoutingToValidTarget(Ship ship,int team)

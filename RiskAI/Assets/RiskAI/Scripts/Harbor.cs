@@ -185,6 +185,8 @@ namespace RiskAI
             }
             if(sharesTown&&LinkedTown)LinkedTown.SetNavalClaimVisual(navalGuard);
         }
+        internal bool CanReleaseNavalDefender(Ship departing) =>
+            navalDefender != departing || claimZone.HasRelief(world.Session, departing);
         internal bool TryReleaseNavalDefenderForOrder(Ship departing)
         {
             if(navalDefender!=departing)return true;

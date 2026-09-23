@@ -6,7 +6,7 @@ using UnityEngine.AI;
 namespace RiskAI
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public sealed class Soldier : CombatTarget
+    public sealed class Soldier : CombatTarget, IOrderable
     {
         enum OrderMode { Idle, Move, AttackMove, Attack, Hold, Patrol, Follow }
         struct Order { public Vector3 Point; public OrderMode Mode; public int TargetId; }
@@ -79,6 +79,10 @@ namespace RiskAI
         readonly List<CombatTarget> nearby = new List<CombatTarget>(64);
         readonly List<CombatTarget> alerted = new List<CombatTarget>(32);
         readonly Queue<Order> orders = new Queue<Order>();
+        readonly Vector3[] routePoints = new Vector3[36];
+        readonly byte[] routeKinds = new byte[36];
+        readonly Vector3[] pathCorners = new Vector3[48];
+        int routePointCount, pathCornerCount, routeRevision;
 
         public void Initialize(BattleSession battle, int team, UnitKind kind)
         {
@@ -207,8 +211,9 @@ namespace RiskAI
             if(!Agent||!Agent.enabled||!Agent.isOnNavMesh){LastMoveError="La unidad no está sobre terreno transitable.";return false;}
             if(!NavMesh.SamplePosition(point,out var hit,8,NavMesh.AllAreas)){LastMoveError="Ese destino no es transitable; usa un transporte para cruzar el agua.";return false;}
             var order = new Order { Point = hit.position, Mode = orderMode };
-            if (append && mode != OrderMode.Idle && mode != OrderMode.Hold) { if (orders.Count < 35){orders.Enqueue(order);return true;}LastMoveError="La cola de órdenes está llena.";return false; }
-            orders.Clear(); Apply(order);return LastMoveError==null;
+            if (UnitRules.Queue(CommandKind(orderMode), append, mode != OrderMode.Idle && mode != OrderMode.Hold) == UnitRules.OrderQueueAction.Append)
+            { if (orders.Count < 35){orders.Enqueue(order);NoteRoute();return true;}LastMoveError="La cola de órdenes está llena.";return false; }
+            orders.Clear(); Apply(order);NoteRoute();return LastMoveError==null;
         }
         void Apply(Order order)
         {
@@ -235,22 +240,27 @@ namespace RiskAI
             if (Agent.hasPath && delta.sqrMagnitude <= .1225f) return true;
             return Agent.SetDestination(point);
         }
-        public void Attack(CombatTarget enemy)
+        public void Attack(CombatTarget enemy, bool append = false)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !enemy || enemy.Team == Team || !Agent.enabled || !Agent.isOnNavMesh) return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); followTargetId=0; mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false;
+            if (UnitRules.Queue(UnitCommandKind.Attack, append, mode != OrderMode.Idle && mode != OrderMode.Hold) == UnitRules.OrderQueueAction.Append)
+            { if (orders.Count < 35) { orders.Enqueue(new Order { Mode = OrderMode.Attack, TargetId = enemy.EntityId, Point = enemy.transform.position }); NoteRoute(); } else LastMoveError = "La cola de órdenes está llena."; return; }
+            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); followTargetId=0; mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false; NoteRoute();
         }
-        public void Follow(Soldier ally)
+        public void Follow(Soldier ally, bool append = false)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !ally || ally == this || ally.Team != Team) return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); Apply(new Order { Mode = OrderMode.Follow, TargetId = ally.EntityId });
+            var order = new Order { Mode = OrderMode.Follow, TargetId = ally.EntityId, Point = ally.transform.position };
+            if (UnitRules.Queue(UnitCommandKind.Follow, append, mode != OrderMode.Idle && mode != OrderMode.Hold) == UnitRules.OrderQueueAction.Append)
+            { if (orders.Count < 35) { orders.Enqueue(order); NoteRoute(); } else LastMoveError = "La cola de órdenes está llena."; return; }
+            orders.Clear(); ClearHumanMoveTelemetry(true); Apply(order); NoteRoute();
         }
         public void Stop() => Stand(OrderMode.Idle);
         public void HoldPosition() => Stand(OrderMode.Hold);
         void Stand(OrderMode orderMode)
         {
             if(IsGarrison)return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false;
+            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false; NoteRoute();
             if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); Agent.isStopped = false; }
         }
         void Complete(bool failed=false)
@@ -258,6 +268,7 @@ namespace RiskAI
             if (orders.Count > 0) Apply(orders.Dequeue());
             else if (mode == OrderMode.Patrol && !failed) { var swap = destination; destination = patrolOrigin; patrolOrigin = swap; ResumePath(); }
             else Stop();
+            NoteRoute();
         }
         void SetTarget(CombatTarget enemy) { target = enemy; pursuitOrigin = transform.position; nextPath = 0; }
         void CancelStrike()
@@ -517,6 +528,166 @@ namespace RiskAI
         }
         /// <summary>An idle ally joins against the attacker of a nearby friend.</summary>
         public override void JoinAlert(CombatTarget attacker) { if (IsIdle) SetTarget(attacker); }
+        string IOrderable.OrderError => LastMoveError;
+        bool IOrderable.Authorize(in UnitCommand command, bool commitRelease) => Authorize(command, commitRelease);
+        bool IOrderable.ApplyOrder(in UnitCommand command) => ApplyOrder(command);
+        bool IOrderable.HumanMoveEligible(in UnitCommand command) =>
+            command.PlayerId == 0 && !command.Append &&
+            (command.Kind == UnitCommandKind.Move || command.Kind == UnitCommandKind.AttackMove) &&
+            CanBeginHumanMoveTelemetry;
+        void IOrderable.BeginHumanMove(in UnitCommand command, double submittedAt, double pausedAtSubmit, bool eligible)
+        {
+            if (command.PlayerId != 0 || command.Append) return;
+            if (command.Kind != UnitCommandKind.Move && command.Kind != UnitCommandKind.AttackMove) return;
+            BeginHumanMoveTelemetry(submittedAt, pausedAtSubmit, eligible, new Vector3(command.X, command.Y, command.Z));
+        }
+
+        bool Authorize(in UnitCommand command, bool commitRelease)
+        {
+            if (session.Paused || session.Winner >= 0) return false;
+            if (IsGarrison && command.Kind != UnitCommandKind.Stop && command.Kind != UnitCommandKind.Hold)
+            {
+                var zone = Garrison;
+                if (zone == null || !(commitRelease ? zone.TryReleaseDefenderForOrder(session, this) : zone.CanReleaseDefenderForOrder(session, this)))
+                    return false;
+            }
+            if (command.Kind == UnitCommandKind.Attack || command.Kind == UnitCommandKind.Follow || command.Kind == UnitCommandKind.Embark)
+            {
+                var aimed = session.FindTarget(command.TargetId);
+                if (!aimed || !aimed.IsAlive) return false;
+                if (command.Kind == UnitCommandKind.Attack && (!aimed.CanBeAttacked || aimed.Team == Team)) return false;
+                if (command.Kind == UnitCommandKind.Follow && (aimed.Type.Domain != UnitDomain.Land || aimed.Team != Team || aimed.EntityId == EntityId)) return false;
+                if (command.Kind == UnitCommandKind.Embark && (!aimed.Type.CanTransport || aimed.Team != Team)) return false;
+            }
+            if (command.Kind == UnitCommandKind.Capture) return StructureLookup.Find(session, command).Zone != null;
+            if (command.Kind == UnitCommandKind.Unload) return false;
+            return true;
+        }
+
+        bool ApplyOrder(in UnitCommand command)
+        {
+            var point = new Vector3(command.X, command.Y, command.Z);
+            switch (command.Kind)
+            {
+                case UnitCommandKind.Move: return TryMoveTo(point, false, command.Append);
+                case UnitCommandKind.AttackMove: return TryMoveTo(point, true, command.Append);
+                case UnitCommandKind.Patrol: return Patrol(point, command.Append);
+                case UnitCommandKind.Attack:
+                    LastMoveError = null;
+                    Attack(session.FindTarget(command.TargetId), command.Append);
+                    return string.IsNullOrEmpty(LastMoveError);
+                case UnitCommandKind.Follow:
+                    LastMoveError = null;
+                    Follow(session.FindTarget(command.TargetId) as Soldier, command.Append);
+                    return string.IsNullOrEmpty(LastMoveError);
+                case UnitCommandKind.Stop: Stop(); return true;
+                case UnitCommandKind.Hold: HoldPosition(); return true;
+                case UnitCommandKind.Capture: return ApplyCapture(command);
+                case UnitCommandKind.Embark: return ApplyEmbark(command);
+                default: LastMoveError = "La orden ya no es válida para esa unidad o su objetivo."; return false;
+            }
+        }
+
+        bool ApplyCapture(in UnitCommand command)
+        {
+            var structure = StructureLookup.Find(session, command);
+            if (structure.Zone == null) { LastMoveError = "Elige una ciudad o un puerto."; return false; }
+            var guardian = structure.Zone.Guardian;
+            if (guardian && guardian.IsAlive && guardian.CanBeAttacked && guardian.Team != Team)
+            {
+                Attack(guardian);
+                if (target == guardian && orders.Count < 35)
+                    orders.Enqueue(new Order { Point = structure.Point, Mode = OrderMode.AttackMove });
+                if (target == guardian) return true;
+            }
+            return TryMoveTo(structure.Point, true, false);
+        }
+
+        bool ApplyEmbark(in UnitCommand command)
+        {
+            var ship = session.FindTarget(command.TargetId) as Ship;
+            var naval = session.Naval;
+            if (!ship || !naval) { LastMoveError = "Selecciona un transporte."; return false; }
+            var harbor = StructureLookup.Harbor(session, command.StructureId);
+            if (harbor && naval.TryOrderEmbarkAt(ship, this, harbor, out var planned))
+            { LastMoveError = planned; return string.IsNullOrEmpty(planned); }
+            if (naval.TryOrderEmbark(ship, this, out var error)) { LastMoveError = null; return true; }
+            LastMoveError = error ?? "La tropa no puede llegar al embarque marcado.";
+            return false;
+        }
+
+        static UnitCommandKind CommandKind(OrderMode mode)
+        {
+            switch (mode)
+            {
+                case OrderMode.AttackMove: return UnitCommandKind.AttackMove;
+                case OrderMode.Attack: return UnitCommandKind.Attack;
+                case OrderMode.Patrol: return UnitCommandKind.Patrol;
+                case OrderMode.Follow: return UnitCommandKind.Follow;
+                case OrderMode.Hold: return UnitCommandKind.Hold;
+                default: return UnitCommandKind.Move;
+            }
+        }
+
+        int stowedCount;
+        Vector3[] stowedPoints;
+        byte[] stowedKinds;
+
+        /// <summary>Boarding clears the live order but the passenger keeps it for after the unload.</summary>
+        public void RetainOrdersForEmbark()
+        {
+            if (stowedPoints == null) { stowedPoints = new Vector3[routePoints.Length]; stowedKinds = new byte[routeKinds.Length]; }
+            stowedCount = routePointCount;
+            for (int i = 0; i < stowedCount; i++) { stowedPoints[i] = routePoints[i]; stowedKinds[i] = routeKinds[i]; }
+        }
+
+        public void RestoreEmbarkOrders()
+        {
+            if (stowedCount <= 0) return;
+            TryMoveTo(stowedPoints[0], stowedKinds[0] == (byte)UnitCommandKind.AttackMove, false);
+            for (int i = 1; i < stowedCount; i++)
+                TryMoveTo(stowedPoints[i], stowedKinds[i] == (byte)UnitCommandKind.AttackMove, true);
+            stowedCount = 0;
+        }
+
+        /// <summary>Waypoints still ahead, including the order being carried out. The first is the active one.</summary>
+        public int OrderLegCount => routePointCount;
+        public int RouteRevision => routeRevision;
+        public int PathCornerCount => pathCornerCount;
+        public Vector3 RoutePoint(int index) => routePoints[index];
+        public byte RouteKind(int index) => routeKinds[index];
+        public Vector3 PathCorner(int index) => pathCorners[index];
+        public void RememberPath()
+        {
+            if (!Agent || !Agent.isOnNavMesh || !Agent.hasPath) { pathCornerCount = 0; return; }
+            var corners = Agent.path.corners;
+            pathCornerCount = corners == null ? 0 : Mathf.Min(corners.Length, pathCorners.Length);
+            for (int i = 0; i < pathCornerCount; i++) pathCorners[i] = corners[i];
+        }
+
+        void NoteRoute()
+        {
+            routeRevision++;
+            routePointCount = 0;
+            pathCornerCount = 0;
+            if (Agent && Agent.isOnNavMesh && Agent.hasPath)
+            {
+                var corners = Agent.path.corners;
+                pathCornerCount = corners == null ? 0 : Mathf.Min(corners.Length, pathCorners.Length);
+                for (int i = 0; i < pathCornerCount; i++) pathCorners[i] = corners[i];
+            }
+            void Add(OrderMode orderMode, Vector3 point)
+            {
+                if (routePointCount >= routePoints.Length) return;
+                routeKinds[routePointCount] = (byte)CommandKind(orderMode);
+                routePoints[routePointCount++] = point;
+            }
+            if (mode == OrderMode.Move || mode == OrderMode.AttackMove || mode == OrderMode.Patrol) Add(mode, destination);
+            else if (mode == OrderMode.Attack && target) Add(OrderMode.Attack, target.transform.position);
+            else if (mode == OrderMode.Follow && followTargetId != 0) Add(OrderMode.Follow, destination);
+            foreach (var order in orders) Add(order.Mode, order.Point);
+        }
+
         public float Heal(float amount)
         {
             if(!IsAlive||amount<=0||float.IsNaN(amount)||float.IsInfinity(amount))return 0;

@@ -18,6 +18,8 @@ namespace RiskAI
 
         readonly BattleSession session;
         readonly Queue<QueuedCommand> queue = new Queue<QueuedCommand>(256);
+        readonly CommandResult[] results = new CommandResult[64];
+        int nextCommandId, resultCount;
         CommandTelemetry telemetry;
         // Live lifecycle count; unlike interval aggregates, ConsumeTelemetry does not reset it.
         long humanMoveOutstanding;
@@ -53,45 +55,95 @@ namespace RiskAI
             return snapshot;
         }
 
-        public bool Submit(UnitCommand command)
+        public bool Submit(UnitCommand command) => SubmitResult(command).Accepted;
+
+        /// <summary>Validates synchronously and enqueues. The actor applies the order at the start of the next tick.</summary>
+        public CommandResult SubmitResult(UnitCommand command)
         {
-            if(session.Paused){Reject(command,"La partida está detenida.");return false;}
-            if(session.Winner>=0){Reject(command,"La batalla ha terminado.");return false;}
-            if(queue.Count>=1024){Reject(command,"La cola de órdenes está llena.");return false;}
-            if(!Valid(command))
+            command = command.WithCommandId(++nextCommandId);
+            CommandResult result;
+            if(session.Paused) result = Fail(command, "La partida está detenida.");
+            else if(session.Winner>=0) result = Fail(command, "La batalla ha terminado.");
+            else if(queue.Count>=1024) result = Fail(command, "La cola de órdenes está llena.");
+            else if(!Valid(command, false)) result = Fail(command, RejectionReason(command));
+            else if(SeaOrder(command)) result = ApplyNow(command);
+            else
             {
-                var unit=session.FindTarget(command.UnitId) as Soldier;
-                Reject(command,unit&&unit.IsGarrison?"El defensor necesita un relevo aliado dentro del círculo.":"La orden ya no es válida para esa unidad o su objetivo.");return false;
+                double submittedAt = Time.realtimeSinceStartupAsDouble;
+                queue.Enqueue(new QueuedCommand(command, submittedAt, ObservedPausedSeconds()));
+                if (queue.Count > telemetry.MaxQueueDepth) telemetry.MaxQueueDepth = queue.Count;
+                if (command.PlayerId == 0) telemetry.HumanSubmitted++; else telemetry.AiSubmitted++;
+                result = CommandResult.Accept(command);
             }
-            double submittedAt = Time.realtimeSinceStartupAsDouble;
-            queue.Enqueue(new QueuedCommand(command, submittedAt, ObservedPausedSeconds()));
-            if (queue.Count > telemetry.MaxQueueDepth) telemetry.MaxQueueDepth = queue.Count;
-            if (command.PlayerId == 0) telemetry.HumanSubmitted++; else telemetry.AiSubmitted++;
-            return true;
+            Remember(result);
+            return result;
         }
-        bool Valid(UnitCommand command, bool releaseGarrison = false)
+
+        /// <summary>The latest result for a command id, if it is still in the ring.</summary>
+        public bool TryGetResult(int commandId, out CommandResult result)
+        {
+            int available = resultCount < results.Length ? resultCount : results.Length;
+            for (int i = 0; i < available; i++)
+            {
+                var candidate = results[(resultCount - 1 - i + results.Length) % results.Length];
+                if (candidate.CommandId == commandId) { result = candidate; return true; }
+            }
+            result = default;
+            return false;
+        }
+
+        public CommandResult SubmitResult(int playerId, int unitId, UnitCommandKind kind, float x = 0, float y = 0, float z = 0, int targetId = 0, bool append = false, string structureId = null, BuildingKind structureKind = BuildingKind.Settlement) =>
+            SubmitResult(new UnitCommand(playerId, unitId, kind, x, y, z, targetId, append, structureId: structureId, structureKind: structureKind));
+
+        bool SeaOrder(UnitCommand command)
+        {
+            var actor = session.FindTarget(command.UnitId) as IOrderable;
+            return actor != null && actor.Type.Domain == UnitDomain.Sea;
+        }
+        // A sea route is part of the result the caller reads in this call. The hull still
+        // moves on the next ship tick, which is the same boundary as a direct motor order.
+        CommandResult ApplyNow(UnitCommand command)
+        {
+            var actor = session.FindTarget(command.UnitId) as IOrderable;
+            if (actor == null || !Valid(command, true)) return Fail(command, "La unidad, el relevo o el objetivo cambió antes de aplicar la orden.");
+            if (!actor.ApplyOrder(command)) return Fail(command, string.IsNullOrEmpty(actor.OrderError) ? "No se ha podido aplicar la orden." : actor.OrderError);
+            AppliedCount++;
+            if (command.PlayerId == 0) telemetry.HumanSubmitted++; else telemetry.AiSubmitted++;
+            RecordApplied(command.PlayerId, 0, 0);
+            return CommandResult.Accept(command);
+        }
+        void Remember(CommandResult result)
+        {
+            results[resultCount % results.Length] = result;
+            resultCount++;
+        }
+        CommandResult Fail(UnitCommand command, string reason)
+        {
+            Reject(command, reason);
+            return CommandResult.Reject(command, reason);
+        }
+        string RejectionReason(UnitCommand command)
+        {
+            var actor = session.FindTarget(command.UnitId) as IOrderable;
+            // A land post guard keeps the historical relief message for every rejection.
+            if (actor != null && actor.IsGarrison && actor.Type.Domain == UnitDomain.Land)
+                return "El defensor necesita un relevo aliado dentro del círculo.";
+            if (actor != null && !string.IsNullOrEmpty(actor.OrderError)) return actor.OrderError;
+            return "La orden ya no es válida para esa unidad o su objetivo.";
+        }
+        bool Valid(UnitCommand command, bool releaseGarrison)
         {
             if(!PlayerRules.IsPlayer(command.PlayerId) || command.PlayerId>=session.PlayerCount || !Finite(command.X) || !Finite(command.Y) || !Finite(command.Z))return false;
-            if(command.Kind<UnitCommandKind.Move || command.Kind>UnitCommandKind.Follow)return false;
-            var unit=session.FindTarget(command.UnitId) as Soldier;
-            if(!unit || !unit.IsAlive || unit.Team!=command.PlayerId)return false;
-            if(command.Kind==UnitCommandKind.Attack || command.Kind==UnitCommandKind.Follow)
-            {
-                var target=session.FindTarget(command.TargetId);
-                if(!target || !target.IsAlive)return false;
-                if(command.Kind==UnitCommandKind.Attack && (!target.CanBeAttacked || target.Team==unit.Team))return false;
-                if(command.Kind==UnitCommandKind.Follow && (!(target is Soldier) || target.Team!=unit.Team || target==unit))return false;
-            }
-            if(command.Kind==UnitCommandKind.Move||command.Kind==UnitCommandKind.AttackMove||command.Kind==UnitCommandKind.Patrol)
+            if(command.Kind<UnitCommandKind.Move || command.Kind>UnitCommandKind.Unload)return false;
+            var actor=session.FindTarget(command.UnitId) as IOrderable;
+            if(actor==null || !actor.IsAlive || actor.Team!=command.PlayerId)return false;
+            if(command.HasPoint && actor.Type.Domain==UnitDomain.Land)
             {
                 var point=new Vector3(command.X,command.Y,command.Z);
                 if(!NavMesh.SamplePosition(point,out _,8,NavMesh.AllAreas))return false;
             }
-            if(!unit.IsGarrison)return true;
-            // Stop and Hold do not displace an anchored guard, so they never need relief.
-            if(command.Kind==UnitCommandKind.Stop || command.Kind==UnitCommandKind.Hold)return true;
-            var zone=unit.Garrison;
-            return zone != null && (releaseGarrison ? zone.TryReleaseDefenderForOrder(session,unit) : zone.CanReleaseDefenderForOrder(session,unit));
+            if(command.HasPoint && actor.Type.Domain==UnitDomain.Static)return false;
+            return actor.Authorize(command, releaseGarrison);
         }
         static bool Finite(float value)=>!float.IsNaN(value)&&!float.IsInfinity(value);
         void Reject(UnitCommand command,string reason)
@@ -111,30 +163,17 @@ namespace RiskAI
                 var queued=queue.Dequeue();
                 var command=queued.Command;
                 if(!Valid(command,true)){Reject(command,"La unidad, el relevo o el objetivo cambió antes de aplicar la orden.");continue;}
-                var unit=(Soldier)session.FindTarget(command.UnitId);
-                bool directHumanMove = command.PlayerId == 0 && !command.Append &&
-                    (command.Kind == UnitCommandKind.Move || command.Kind == UnitCommandKind.AttackMove);
-                bool firstMoveEligible = directHumanMove && unit.CanBeginHumanMoveTelemetry;
-                var point=new Vector3(command.X,command.Y,command.Z);
-                bool applied=true;
-                switch(command.Kind)
-                {
-                    case UnitCommandKind.Move: applied=unit.TryMoveTo(point,false,command.Append); break;
-                    case UnitCommandKind.AttackMove: applied=unit.TryMoveTo(point,true,command.Append); break;
-                    case UnitCommandKind.Patrol: applied=unit.Patrol(point,command.Append); break;
-                    case UnitCommandKind.Attack: unit.Attack(session.FindTarget(command.TargetId)); break;
-                    case UnitCommandKind.Follow: unit.Follow(session.FindTarget(command.TargetId) as Soldier); break;
-                    case UnitCommandKind.Stop: unit.Stop(); break;
-                    case UnitCommandKind.Hold: unit.HoldPosition(); break;
-                }
+                var actor=(IOrderable)session.FindTarget(command.UnitId);
+                bool firstMoveEligible = actor.HumanMoveEligible(command);
+                bool applied=actor.ApplyOrder(command);
                 if(applied)
                 {
                     AppliedCount++;
                     RecordApplied(command.PlayerId, Time.realtimeSinceStartupAsDouble - queued.SubmittedAt,
                         ObservedPausedSeconds() - queued.PausedSecondsAtSubmit);
-                    if (directHumanMove) unit.BeginHumanMoveTelemetry(queued.SubmittedAt, queued.PausedSecondsAtSubmit, firstMoveEligible, point);
+                    actor.BeginHumanMove(command, queued.SubmittedAt, queued.PausedSecondsAtSubmit, firstMoveEligible);
                 }
-                else Reject(command,unit.LastMoveError??"No se ha podido aplicar la orden.");
+                else Reject(command,actor.OrderError??"No se ha podido aplicar la orden.");
             }
         }
 
