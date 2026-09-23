@@ -205,57 +205,12 @@
     },
     {
       "id": "death",
-      "variants": 11,
+      "variants": 0,
       "duration_seconds": 0.8,
       "spatial": "3D",
       "volume": 0.55,
-      "trigger": "A soldier dies",
-      "files": [
-        {
-          "file": "death_1.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_2.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_3.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_4.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_5.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_6.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_7.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_8.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_9.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_10.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        },
-        {
-          "file": "death_11.wav",
-          "prompt": "ElevenLabs SFX pick (review rounds v0.30), see docs/AUDIO-PROMPTS.md"
-        }
-      ]
+      "trigger": "A soldier dies (silenced in v0.33: no files until better deaths are made)",
+      "files": []
     },
     {
       "id": "order_move",
