@@ -238,7 +238,7 @@ namespace RiskAI
             // Screen-overlay retained UI is outside this scene-presentation fixture.
             var target = RenderTexture.GetTemporary(1600, 900, 24, RenderTextureFormat.ARGB32);
             var previous = RenderTexture.active;
-            var readback = new Texture2D(1600, 900, TextureFormat.RGB24, false);
+            var readback = GeneratedResourceOwner.For(transform).Track(new Texture2D(1600, 900, TextureFormat.RGB24, false));
             try
             {
                 RenderPipeline.SubmitRenderRequest(Camera.main, new RenderPipeline.StandardRequest { destination = target });
@@ -251,7 +251,8 @@ namespace RiskAI
             {
                 RenderTexture.active = previous;
                 RenderTexture.ReleaseTemporary(target);
-                Destroy(readback);
+                // Scratch readback: released early through its owner, never by an ad-hoc Destroy.
+                GeneratedResourceOwner.For(transform).Release(readback);
             }
             Debug.Log("RISKAI_PRESENTATION_IMAGE: " + name);
         }

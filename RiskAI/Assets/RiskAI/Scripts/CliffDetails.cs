@@ -13,7 +13,7 @@ namespace RiskAI
             stone.SetTexture("_Atlas",Resources.Load<Texture2D>("Painted/CliffAtlas-v07"));
             stone.SetVector("_Tile",new Vector4(0,.5f,0,0));stone.SetFloat("_Scale",.17f);
             stone.SetColor("_Tint",new Color(.94f,.99f,1.04f));
-            var random=new System.Random(704);var mesh=resources.Track(Shard());
+            var random=new System.Random(704);var mesh=Shard(resources);
             for(int cliff=0;cliff<MapLayout.Cliffs.Length;cliff++)
             {
                 var points=MapLayout.Cliffs[cliff];
@@ -39,9 +39,9 @@ namespace RiskAI
                     }
                 }
             }
-            StaticBatchingUtility.Combine(root);
+            GeneratedResourceOwner.CombineStaticBatches(root.transform);
         }
-        static Mesh Shard()
+        static Mesh Shard(GeneratedResourceOwner resources)
         {
             var ring=new Vector2[]{new Vector2(-.62f,-.30f),new Vector2(-.25f,-.60f),new Vector2(.43f,-.36f),new Vector2(.6f,.16f),new Vector2(.12f,.55f),new Vector2(-.55f,.37f)};
             var v=new List<Vector3>();var t=new List<int>();
@@ -53,7 +53,7 @@ namespace RiskAI
                 t.Add(k);t.Add(k+1);t.Add(k+2);t.Add(k);t.Add(k+2);t.Add(k+3);
                 k=v.Count;v.Add(new Vector3(a.x*.56f+.15f,1-(i%3)*.11f,a.y*.56f));v.Add(new Vector3(.12f,1.08f,0));v.Add(new Vector3(b.x*.56f+.15f,1-((i+1)%3)*.11f,b.y*.56f));t.Add(k);t.Add(k+1);t.Add(k+2);
             }
-            var mesh=new Mesh{name="Fractured slate shard"};mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();return mesh;
+            var mesh=resources.Track(new Mesh{name="Fractured slate shard"});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();return mesh;
         }
     }
 }

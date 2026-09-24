@@ -16,7 +16,7 @@ namespace RiskAI
             var data=MapLayout.Imported;
             ShoreAccess.BakeSurface(root);
             TerrainBiomes.Bake(root);
-            var resources=root.gameObject.AddComponent<ImportedTerrainResources>();
+            var resources=GeneratedResourceOwner.For(root);
             Material ground=Resources.Load<Material>("ImportedGround"),water=Resources.Load<Material>("ImportedWater");
             const int chunk=32;
             for(int z=0;z<data.height-1;z+=chunk)for(int x=0;x<data.width-1;x+=chunk)
@@ -29,7 +29,7 @@ namespace RiskAI
             if(!data.HasSourcePathing)CreatePortPlatforms(root,data);
             CreateVegetation(root,data);
         }
-        static void CreateChunk(Transform root,ImportedTerrainResources resources,ImportedMapData data,int sx,int sz,int nx,int nz,Material ground)
+        static void CreateChunk(Transform root,GeneratedResourceOwner resources,ImportedMapData data,int sx,int sz,int nx,int nz,Material ground)
         {
             var vertices=new Vector3[(nx+1)*(nz+1)];var normals=new Vector3[vertices.Length];var colors=new Color[vertices.Length];
             // All three meshes share the bounded coastal vertex deformation;
@@ -59,17 +59,17 @@ namespace RiskAI
                 if(data.HasSourcePathing?data.TerrainCellUsesCoarseNavigation(ix,iz):data.IsLand(center.x,center.y)&&data.InPlayable(center.x,center.y))
                     AddQuad(walkable,index,b,index+1,b+1);
             }
-            var mesh=new Mesh{name="Imported land chunk",vertices=vertices,normals=normals,colors=colors};mesh.SetUVs(1,shoreBand);mesh.SetTriangles(triangles,0);mesh.RecalculateBounds();resources.Meshes.Add(mesh);
+            var mesh=resources.Track(new Mesh{name="Imported land chunk",vertices=vertices,normals=normals,colors=colors});mesh.SetUVs(1,shoreBand);mesh.SetTriangles(triangles,0);mesh.RecalculateBounds();
             var go=new GameObject("Terrain "+sx+","+sz);go.layer=MapLayout.TerrainLayer;go.transform.SetParent(root,false);
             go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=ground;
-            if(walkable.Count>0){var collision=new Mesh{name="Imported navigation chunk"};collision.vertices=vertices;collision.SetTriangles(walkable,0);collision.RecalculateBounds();resources.Meshes.Add(collision);go.AddComponent<MeshCollider>().sharedMesh=collision;}
+            if(walkable.Count>0){var collision=resources.Track(new Mesh{name="Imported navigation chunk"});collision.vertices=vertices;collision.SetTriangles(walkable,0);collision.RecalculateBounds();go.AddComponent<MeshCollider>().sharedMesh=collision;}
         }
 
         /// <summary>
         /// Visual-only ring beyond the W3E grid. Each vertex extrudes the nearest
         /// playable edge sample; the shaders fade it into the horizon colour. No colliders.
         /// </summary>
-        static void CreateHorizonSkirt(Transform root,ImportedTerrainResources resources,ImportedMapData data,Material ground,Material water)
+        static void CreateHorizonSkirt(Transform root,GeneratedResourceOwner resources,ImportedMapData data,Material ground,Material water)
         {
             float step=data.cellSize;
             float gridMaxX=data.originX+(data.width-1)*step,gridMaxZ=data.originZ+(data.height-1)*step;
@@ -93,7 +93,7 @@ namespace RiskAI
             skirt.name+=" · "+chunks+" chunks";
             Debug.Log($"RISKAI_TERRAIN_SKIRT map={data.mapId} chunks={chunks} ms={started.Elapsed.TotalMilliseconds:F1}");
         }
-        static bool CreateSkirtChunk(Transform root,ImportedTerrainResources resources,ImportedMapData data,int x0,int z0,int x1,int z1,Material ground,Material water)
+        static bool CreateSkirtChunk(Transform root,GeneratedResourceOwner resources,ImportedMapData data,int x0,int z0,int x1,int z1,Material ground,Material water)
         {
             int nx=x1-x0,nz=z1-z0;float step=data.cellSize;
             var vertices=new Vector3[(nx+1)*(nz+1)];var normals=new Vector3[vertices.Length];var colors=new Color[vertices.Length];
@@ -125,15 +125,15 @@ namespace RiskAI
             var go=new GameObject("Horizon "+x0+","+z0);go.transform.SetParent(root,false);
             if(groundTriangles.Count>0)
             {
-                var mesh=new Mesh{name="Imported horizon ground",vertices=vertices,normals=normals,colors=colors};
-                mesh.SetUVs(1,shoreBand);mesh.SetTriangles(groundTriangles,0);mesh.RecalculateBounds();resources.Meshes.Add(mesh);
+                var mesh=resources.Track(new Mesh{name="Imported horizon ground",vertices=vertices,normals=normals,colors=colors});
+                mesh.SetUVs(1,shoreBand);mesh.SetTriangles(groundTriangles,0);mesh.RecalculateBounds();
                 go.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=go.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial=ground;renderer.shadowCastingMode=ShadowCastingMode.Off;
             }
             if(waterTriangles.Count>0)
             {
-                var sea=new Mesh{name="Imported horizon water",vertices=surface,colors=depth};
-                sea.SetTriangles(waterTriangles,0);sea.RecalculateNormals();sea.RecalculateBounds();resources.Meshes.Add(sea);
+                var sea=resources.Track(new Mesh{name="Imported horizon water",vertices=surface,colors=depth});
+                sea.SetTriangles(waterTriangles,0);sea.RecalculateNormals();sea.RecalculateBounds();
                 var surfaceObject=new GameObject("Horizon water");surfaceObject.transform.SetParent(go.transform,false);
                 surfaceObject.AddComponent<MeshFilter>().sharedMesh=sea;var renderer=surfaceObject.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial=water;renderer.shadowCastingMode=ShadowCastingMode.Off;
@@ -141,7 +141,7 @@ namespace RiskAI
             return true;
         }
 
-        static void CreateWaterSurface(Transform root,ImportedTerrainResources resources,ImportedMapData data,Material water)
+        static void CreateWaterSurface(Transform root,GeneratedResourceOwner resources,ImportedMapData data,Material water)
         {
             int width=data.width,height=data.height;
             var vertices=new Vector3[width*height];var colors=new Color[vertices.Length];
@@ -156,14 +156,14 @@ namespace RiskAI
                 if(visual.land[index]+visual.land[index+1]+visual.land[index+width]+visual.land[index+width+1]<4)
                     AddQuad(triangles,index,index+width,index+1,index+width+1);
             }
-            var sea=new Mesh{name="Imported water surface",indexFormat=IndexFormat.UInt32,vertices=vertices,colors=colors};
-            sea.SetTriangles(triangles,0);sea.RecalculateNormals();sea.RecalculateBounds();resources.Meshes.Add(sea);
+            var sea=resources.Track(new Mesh{name="Imported water surface",indexFormat=IndexFormat.UInt32,vertices=vertices,colors=colors});
+            sea.SetTriangles(triangles,0);sea.RecalculateNormals();sea.RecalculateBounds();
             var surface=new GameObject("Continuous imported water");surface.transform.SetParent(root,false);
             surface.AddComponent<MeshFilter>().sharedMesh=sea;
             var renderer=surface.AddComponent<MeshRenderer>();renderer.sharedMaterial=water;renderer.shadowCastingMode=ShadowCastingMode.Off;
         }
 
-        static void CreateFineGroundNavigation(Transform root,ImportedTerrainResources resources,ImportedMapData data,Material ground)
+        static void CreateFineGroundNavigation(Transform root,GeneratedResourceOwner resources,ImportedMapData data,Material ground)
         {
             var vertices=new List<Vector3>();var normals=new List<Vector3>();var colors=new List<Color>();var shoreBand=new List<Vector3>();
             var collisionTriangles=new List<int>();var visualTriangles=new List<int>();int cells=0;
@@ -183,13 +183,13 @@ namespace RiskAI
             }
             if(cells==0)return;
             var values=vertices.ToArray();
-            var collision=new Mesh{name="Imported source fine navigation",indexFormat=IndexFormat.UInt32,vertices=values};
-            collision.SetTriangles(collisionTriangles,0);collision.RecalculateBounds();resources.Meshes.Add(collision);
+            var collision=resources.Track(new Mesh{name="Imported source fine navigation",indexFormat=IndexFormat.UInt32,vertices=values});
+            collision.SetTriangles(collisionTriangles,0);collision.RecalculateBounds();
             var shallow=new GameObject("Imported fine navigation · "+cells);shallow.layer=MapLayout.TerrainLayer;shallow.transform.SetParent(root,false);
             shallow.AddComponent<MeshCollider>().sharedMesh=collision;
             if(visualTriangles.Count==0)return;
-            var visible=new Mesh{name="Imported shared shallow ground",indexFormat=IndexFormat.UInt32,vertices=values,normals=normals.ToArray(),colors=colors.ToArray()};
-            visible.SetUVs(1,shoreBand);visible.SetTriangles(visualTriangles,0);visible.RecalculateBounds();resources.Meshes.Add(visible);
+            var visible=resources.Track(new Mesh{name="Imported shared shallow ground",indexFormat=IndexFormat.UInt32,vertices=values,normals=normals.ToArray(),colors=colors.ToArray()});
+            visible.SetUVs(1,shoreBand);visible.SetTriangles(visualTriangles,0);visible.RecalculateBounds();
             shallow.AddComponent<MeshFilter>().sharedMesh=visible;
             var renderer=shallow.AddComponent<MeshRenderer>();renderer.sharedMaterial=ground;renderer.shadowCastingMode=ShadowCastingMode.Off;
         }
@@ -285,7 +285,7 @@ namespace RiskAI
                 }
             }
             trees.name="Source tree destructibles · "+placed+" visible · "+dead+" destroyed · "+thinned+" biome-thinned · "+horizon+" horizon";
-            if(placed+horizon>0)StaticBatchingUtility.Combine(trees);
+            if(placed+horizon>0)GeneratedResourceOwner.CombineStaticBatches(trees.transform);
         }
         static bool PlaceTree(Transform trees,Vector3 point,float height,int seed,BiomeVegetation.ImportedTreeForm form,float yaw,float horizontalX,float horizontalZ,string label)
         {
@@ -384,10 +384,5 @@ namespace RiskAI
         {
             NavalArt.CreatePierDeck(root,from,to,width,label,true,true);
         }
-    }
-    public sealed class ImportedTerrainResources:MonoBehaviour
-    {
-        public readonly List<Mesh> Meshes=new List<Mesh>();
-        void OnDestroy(){foreach(var mesh in Meshes)if(mesh)Destroy(mesh);}
     }
 }

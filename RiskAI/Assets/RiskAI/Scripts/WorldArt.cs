@@ -21,6 +21,7 @@ namespace RiskAI
             Color color=tint??Color.white;string key=tile+"/"+color+"/"+scale+"/"+recolor+"/"+natural+"/"+colorLift;
             if(materials.TryGetValue(key,out var found)&&found)return found;
             var template=Resources.Load<Material>("PaintedSurface");
+            // RISKAI_SHARED_ASSET: painted material cache keyed by tile/tint/scale/flags (fixed art palette).
             var mat=template?new Material(template):new Material(Shader.Find("RiskAI/PaintedSurface"));
             mat.SetTexture("_Atlas",Resources.Load<Texture2D>(natural?"Painted/StrategicAtlas":"Painted/ArchitectureAtlas"));
             mat.SetVector("_Tile",new Vector4(tile%2*.5f,tile<2?.5f:0,0,0));mat.SetColor("_Tint",color);
@@ -259,6 +260,7 @@ namespace RiskAI
                     for(int j=0;j<4;j++)colors.Add(tint);
                 }
             }
+            // RISKAI_SHARED_ASSET: fir bough meshes, one per seed (firMeshes[16]).
             var mesh=new Mesh{name="Layered cutout fir boughs "+seed};mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.SetUVs(0,uv);mesh.SetColors(colors);mesh.RecalculateNormals();mesh.RecalculateBounds();firMeshes[seed]=mesh;return mesh;
         }
         public static void Rock(Transform root,Vector3 position,float size,int seed)

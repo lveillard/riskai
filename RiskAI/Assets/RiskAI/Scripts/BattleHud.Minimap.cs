@@ -29,9 +29,8 @@ namespace RiskAI
             if (!minimapMarkers || minimapMarkers.width != pixelWidth || minimapMarkers.height != pixelHeight || minimapMarkerLogicalSize != rect.size)
             {
                 DisposeMinimapMarkers();
-                minimapMarkers = new Texture2D(pixelWidth, pixelHeight, TextureFormat.RGBA32, false) {
-                    name = "Minimap marker overlay", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp
-                };
+                minimapMarkers = GeneratedResourceOwner.For(transform).Track(new Texture2D(pixelWidth, pixelHeight, TextureFormat.RGBA32, false) {
+                    name = "Minimap marker overlay", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp });
                 minimapRaster = new MinimapMarkerRaster(pixelWidth, pixelHeight, rect.size);
                 minimapMarkerLogicalSize = rect.size;
                 nextMinimapMarkerRefresh = float.NegativeInfinity;
@@ -74,7 +73,9 @@ namespace RiskAI
 
         void DisposeMinimapMarkers()
         {
-            if (minimapMarkers) Destroy(minimapMarkers);
+            // The overlay is rebuilt whenever its pixel size changes; the replaced texture goes
+            // back to its owner for release instead of an ad-hoc Destroy.
+            if (minimapMarkers) GeneratedResourceOwner.For(transform).Release(minimapMarkers);
             minimapMarkers = null;
             minimapRaster = null;
         }

@@ -151,6 +151,7 @@ namespace RiskAI
             b.Bar(new Vector3(sx0,sy,sz),new Vector3(sx1,sy-.035f,sz),.035f,.035f,Iron);
             b.Bar(new Vector3(sx1,sy-.035f,-sz-.017f),new Vector3(sx1,sy-.035f,sz+.017f),.038f,.038f,Iron);
 
+            // RISKAI_SHARED_ASSET: one shared procedural crossbow mesh (static Build, built once).
             var result=new Mesh{name="Shared procedural crossbow"};
             result.SetVertices(b.V);result.SetNormals(b.N);result.SetUVs(0,b.U);result.SetTriangles(b.T,0);result.RecalculateBounds();
             return result;

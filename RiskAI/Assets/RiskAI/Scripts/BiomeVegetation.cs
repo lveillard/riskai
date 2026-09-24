@@ -98,6 +98,7 @@ namespace RiskAI
                     }
                 }
             }
+            // RISKAI_SHARED_ASSET: bounded crown cache keyed by biome*10+variation (20 meshes).
             var mesh=new Mesh{name="Original biome crown "+key};mesh.SetVertices(v);mesh.SetUVs(0,uv);mesh.SetColors(colors);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();crowns[key]=mesh;return mesh;
         }
     }

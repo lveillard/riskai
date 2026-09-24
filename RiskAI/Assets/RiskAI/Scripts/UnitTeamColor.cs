@@ -44,6 +44,7 @@ namespace RiskAI
                 var key=new MaterialKey(source.GetInstanceID(),kind,team,forceTeam);
                 if (!Materials.TryGetValue(key,out var material)||!material)
                 {
+                    // RISKAI_SHARED_ASSET: team materials keyed by source material instance id x kind x team x flag.
                     material=new Material(source) { name=source.name+" · team "+team };
                     material.shader=shader;
                     material.SetColor("_TeamColor",teamColor);

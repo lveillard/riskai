@@ -311,14 +311,15 @@ namespace RiskAI
                 {
                     if (!skinned.enabled) continue;
                     result.SkinnedSources++;
-                    var baked = new Mesh { name = "Probe baked unit skin" };
+                    var source = skinned.gameObject;
+                    var owner = GeneratedResourceOwner.For(source.transform.parent ? source.transform.parent : source.transform);
+                    var baked = owner.Track(new Mesh { name = "Probe baked unit skin" });
                     skinned.BakeMesh(baked);
                     if (baked.vertexCount == 0)
                     {
-                        Destroy(baked);
+                        owner.Release(baked);
                         continue;
                     }
-                    var source = skinned.gameObject;
                     var replacement = new GameObject("Probe static unit skin");
                     replacement.layer = source.layer;
                     replacement.transform.SetParent(source.transform.parent, false);
@@ -326,6 +327,8 @@ namespace RiskAI
                     replacement.transform.localRotation = source.transform.localRotation;
                     replacement.transform.localScale = source.transform.localScale;
                     replacement.AddComponent<MeshFilter>().sharedMesh = baked;
+                    // The probe owns this baked copy: it is tracked on the unit's root and
+                    // must die with the unit it replaces.
                     var renderer = replacement.AddComponent<MeshRenderer>();
                     renderer.sharedMaterials = skinned.sharedMaterials;
                     renderer.shadowCastingMode = skinned.shadowCastingMode;

@@ -147,6 +147,7 @@ namespace RiskAI
         {
             if (Materials.TryGetValue(color, out var found) && found) return found;
             var template = Resources.Load<Material>("RiskAILit");
+            // RISKAI_SHARED_ASSET: one material per palette colour (Materials cache, ResetRuntimeState).
             var mat = template ? new Material(template) : new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
             mat.color = color; mat.SetFloat("_Smoothness", .12f); Materials[color] = mat; return mat;
         }
@@ -154,6 +155,7 @@ namespace RiskAI
         {
             Color key = color * (1f + intensity);
             if (EmissiveMaterials.TryGetValue(key, out var found) && found) return found;
+            // RISKAI_SHARED_ASSET: one emissive material per colour+intensity (EmissiveMaterials cache).
             var mat = new Material(Mat(color));
             if (mat.HasProperty("_EmissionColor"))
             {
@@ -175,6 +177,7 @@ namespace RiskAI
         }
         static Mesh CreateTrapezoidMesh(float bottomWidth, float topWidth, float height, float thickness)
         {
+            // RISKAI_SHARED_ASSET: one shared training doorway mesh (trainingDoorMesh, built once).
             var mesh = new Mesh { name = "Training doorway trapezoid" };
             float z = thickness * .5f;
             mesh.SetVertices(new[]
@@ -204,6 +207,7 @@ namespace RiskAI
             line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; line.receiveShadows = false;
             var template = Resources.Load<Material>("RiskAIRing");
             if (!ringMaterial)
+                // RISKAI_SHARED_ASSET: shared ring material fallback (ringMaterial, built once).
                 ringMaterial = template ? template : new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Sprites/Default"));
             line.sharedMaterial = ringMaterial;
             line.startColor = line.endColor = color; line.widthMultiplier = width;

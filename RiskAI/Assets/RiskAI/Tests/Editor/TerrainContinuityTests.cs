@@ -10,7 +10,7 @@ namespace RiskAI.Tests
         public void AdjacentImportedChunksShareLightingNormalsAcrossACurvedSlope()
         {
             var previous=MapLayout.Scenario;var root=new GameObject("Terrain continuity fixture");
-            var resources=root.AddComponent<ImportedTerrainResources>();
+            var resources=GeneratedResourceOwner.For(root.transform);
             try
             {
                 MapLayout.Configure(ScenarioMap.Classic);
@@ -38,8 +38,8 @@ namespace RiskAI.Tests
             }
             finally
             {
-                foreach(var mesh in resources.Meshes)if(mesh)Object.DestroyImmediate(mesh);
-                resources.Meshes.Clear();Object.DestroyImmediate(root);MapLayout.Configure(previous);
+                // GeneratedResourceOwner releases the tracked chunk meshes with the root.
+                Object.DestroyImmediate(root);MapLayout.Configure(previous);
             }
         }
     }

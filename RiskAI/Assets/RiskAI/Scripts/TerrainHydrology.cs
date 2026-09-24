@@ -94,7 +94,7 @@ namespace RiskAI
                     if (i >= samples.Length - 1 || j == across) continue; int k = i * (across + 1) + j, n = k + across + 1; triangles.Add(k); triangles.Add(n); triangles.Add(k + 1); triangles.Add(k + 1); triangles.Add(n); triangles.Add(n + 1);
                 }
             }
-            var mesh = new Mesh { name = "Continuous spring, rapids and estuary" }; mesh.SetVertices(v); mesh.SetUVs(0, uv); mesh.SetUVs(1, flow); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            var mesh = GeneratedResourceOwner.For(root).Track(new Mesh { name = "Continuous spring, rapids and estuary" }); mesh.SetVertices(v); mesh.SetUVs(0, uv); mesh.SetUVs(1, flow); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
             var go = new GameObject("Río de la Sierra · cauce erosionado"); go.transform.SetParent(root, false); go.AddComponent<MeshFilter>().sharedMesh = mesh; go.AddComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Cascade");
             for (int i = 0; i < 18; i++) { int s = 2 + i * 2; var p = samples[s]; var dir = samples[Mathf.Min(s + 1, samples.Length - 1)] - samples[s]; dir.y = 0; p += Vector3.Cross(Vector3.up, dir.normalized) * (i % 2 == 0 ? 1 : -1) * (Width(s / (float)(samples.Length - 1)) + 1.1f + (i % 3) * .4f); if (!MapLayout.IsLand(p.x, p.z)) continue; p.y = MapLayout.Height(p.x, p.z) - .13f; WorldArt.Rock(root, p, .42f + (i % 4) * .13f, 210 + i); }
         }
@@ -138,7 +138,7 @@ namespace RiskAI
                 var rail=VisualFactory.Shape(decor.transform,PrimitiveType.Cube,"Barandilla",railPoint,new Vector3(across,.12f,.12f),new Color(.28f,.16f,.07f));rail.transform.rotation=Quaternion.LookRotation(tangent);
                 for(int post=0;post<5;post++)VisualFactory.Shape(decor.transform,PrimitiveType.Cube,"Poste",railPoint+side*((post/4f-.5f)*across)-Vector3.up*.4f,new Vector3(.16f,.9f,.16f),new Color(.28f,.16f,.07f));
             }
-            StaticBatchingUtility.Combine(decor);
+            GeneratedResourceOwner.CombineStaticBatches(decor.transform);
             CreateRamp(root, point, side, 1, bankOffset, deckTop, bankA, length, name + " · margen este");
             CreateRamp(root, point, side, -1, bankOffset, deckTop, bankB, length, name + " · margen oeste");
         }

@@ -98,8 +98,9 @@ namespace RiskAI
         {
             Unsubscribe();
             if (Current == this) Current = null;
+            // Pooled decals and rings live under fxRoot; destroying the pool root is their
+            // lifecycle (they are scene objects), the disc mesh dies with its owner.
             if (fxRoot) Destroy(fxRoot.gameObject);
-            if (disc) Destroy(disc);
         }
 
         public static void SetShakeEnabled(bool value)
@@ -333,7 +334,7 @@ namespace RiskAI
                 colors[i + 1] = new Color(1, 1, 1, 0);
                 triangles[i * 3] = 0; triangles[i * 3 + 1] = 1 + (i + 1) % segments; triangles[i * 3 + 2] = 1 + i;
             }
-            disc = new Mesh { name = "Soft FX disc" };
+            disc = GeneratedResourceOwner.For(transform).Track(new Mesh { name = "Soft FX disc" });
             disc.vertices = vertices; disc.colors = colors; disc.triangles = triangles; disc.RecalculateBounds();
             return disc;
         }

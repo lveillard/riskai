@@ -20,6 +20,7 @@ namespace RiskAI
         readonly Stamp[] stamps = new Stamp[SegmentCap];
         RtsController controller;
         int legCount, markCount;
+        Material fallbackMaterial;
         public int LegCount { get; private set; }
 
         void OnEnable()
@@ -145,7 +146,12 @@ namespace RiskAI
                 line.receiveShadows = false;
                 line.numCapVertices = 2;
                 line.sharedMaterial = Resources.Load<Material>("RiskAIRing");
-                if (!line.sharedMaterial) line.material = new Material(Shader.Find("Sprites/Default"));
+                if (!line.sharedMaterial)
+                {
+                    // Only the shared asset path is free; an instance must die with the routes.
+                    fallbackMaterial = GeneratedResourceOwner.For(transform).Track(new Material(Shader.Find("Sprites/Default")));
+                    line.sharedMaterial = fallbackMaterial;
+                }
             }
             line.enabled = true;
             line.loop = loop;
@@ -185,5 +191,6 @@ namespace RiskAI
             for (int i = 0; i < markCount; i++) if (marks[i]) marks[i].enabled = false;
             legCount = markCount = 0;
         }
+
     }
 }

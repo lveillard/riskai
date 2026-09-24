@@ -43,6 +43,7 @@ namespace RiskAI
                 case 7: Arrow(53,32,12,32); Line(44,13,54,13); Line(54,13,54,51); Line(54,51,44,51); break;
                 default: Box(14,12,36,34); Box(25,12,14,18); Line(12,47,52,47); Line(15,47,15,55,6); Line(32,47,32,55,6); Line(49,47,49,55,6); break;
             }
+            // RISKAI_SHARED_ASSET: one icon texture per command kind (icons cache).
             var texture = new Texture2D(64,64,TextureFormat.RGBA32,false) { name = "RTS command " + kind, filterMode = FilterMode.Bilinear };
             texture.SetPixels(pixels); texture.Apply(false,true); icons[kind] = texture; return texture;
         }

@@ -164,8 +164,7 @@ namespace RiskAI
                 session.PlayerEliminated -= OnFeedbackEliminated;
             }
             chat.MessageReceived -= OnChatReceived;
-            if (pingTexture) Destroy(pingTexture);
-            if (feedbackHost) Destroy(feedbackHost);
+            if (feedbackHost) Destroy(feedbackHost); // UI host GameObject, not a generated asset.
         }
 
         // ---------------------------------------------------------------- layout
@@ -717,7 +716,7 @@ namespace RiskAI
             bool any = false;
             for (int i = 0; i < AttackAlerts.PingCapacity; i++) if (alerts.PingProgress(i, now, out _) >= 0) { any = true; break; }
             if (!any) return;
-            if (!pingTexture) pingTexture = BuildPingTexture();
+            if (!pingTexture) pingTexture = BuildPingTexture(transform);
             Color previous = GUI.color;
             for (int i = 0; i < AttackAlerts.PingCapacity; i++)
             {
@@ -738,10 +737,10 @@ namespace RiskAI
             GUI.color = previous;
         }
 
-        static Texture2D BuildPingTexture()
+        static Texture2D BuildPingTexture(Transform root)
         {
             const int size = 64;
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { name = "Minimap alert ping", wrapMode = TextureWrapMode.Clamp };
+            var texture = GeneratedResourceOwner.For(root).Track(new Texture2D(size, size, TextureFormat.RGBA32, false) { name = "Minimap alert ping", wrapMode = TextureWrapMode.Clamp });
             var pixels = new Color32[size * size];
             for (int y = 0; y < size; y++)
                 for (int x = 0; x < size; x++)

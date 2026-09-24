@@ -189,10 +189,11 @@ namespace RiskAI
             pixels[(int)Cell.Cream]=new Color(.9f,.86f,.76f);pixels[(int)Cell.Navy]=new Color(.08f,.12f,.24f);
             pixels[(int)Cell.Hoof]=new Color(.16f,.14f,.12f);pixels[(int)Cell.Plume]=style.Plume;
             for(int i=(int)Cell.Count;i<16;i++)pixels[i]=Color.magenta;
+            // RISKAI_SHARED_ASSET: bounded mount palette cache keyed by kind x 16 teams (ResetCaches).
             var texture=new Texture2D(16,1,TextureFormat.RGBA32,false,false){name="Mounted palette "+style.Kind+" "+team,filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};
             texture.SetPixels(pixels);texture.Apply(false,true);
             var template=Resources.Load<Material>("RiskAILit");
-            var material=template?new Material(template):new Material(Shader.Find("Universal Render Pipeline/Lit")??Shader.Find("Standard"));
+            var material=template?new Material(template):new Material(Shader.Find("Universal Render Pipeline/Lit")??Shader.Find("Standard")); // RISKAI_SHARED_ASSET: bounded mount material cache keyed by kind x 16 teams.
             material.name="Mounted knight · "+style.Kind+" · team "+team;
             material.color=Color.white;material.mainTexture=texture;
             if(material.HasProperty("_BaseMap"))material.SetTexture("_BaseMap",texture);
@@ -425,6 +426,7 @@ namespace RiskAI
 
             public Mesh ToMesh(string name)
             {
+                // RISKAI_SHARED_ASSET: bounded per-kind mount meshes (meshCache, ResetCaches).
                 var mesh=new Mesh{name=name};mesh.SetVertices(v);mesh.SetNormals(n);mesh.SetUVs(0,uv);mesh.SetTriangles(t,0);mesh.RecalculateBounds();return mesh;
             }
             void Tri(int a,int b,int c,Vector3 outward)

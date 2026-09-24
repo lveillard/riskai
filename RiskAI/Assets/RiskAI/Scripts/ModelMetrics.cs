@@ -46,9 +46,9 @@ namespace RiskAI
                 if(renderer is SkinnedMeshRenderer skinned)
                 {
                     // Unity 6.3: true compensates transform scale; apply the renderer transform once below.
-                    var baked=new Mesh();skinned.BakeMesh(baked,true);
+                    // The scratch bake is tracked at creation and released with the model's owner.
+                    var baked=GeneratedResourceOwner.For(root).Track(new Mesh());skinned.BakeMesh(baked,true);
                     foreach(var point in baked.vertices)Include(root.InverseTransformPoint(skinned.transform.TransformPoint(point)));
-                    if(Application.isPlaying)Object.Destroy(baked);else Object.DestroyImmediate(baked);
                 }
                 else
                 {

@@ -111,8 +111,8 @@ namespace RiskAI
             // Joining platforms overlap for continuous pathing. Separate their
             // visible boards by centimetres so coplanar quays cannot flicker.
             if(surfaceLift!=0)for(int i=0;i<vertices.Count;i++)vertices[i]+=Vector3.up*surfaceLift;
-            var mesh=new Mesh { name="Common pier planking" };mesh.SetVertices(vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
-            GeneratedResourceOwner.For(parent).Track(mesh);go.AddComponent<MeshFilter>().sharedMesh=mesh;
+            var mesh=GeneratedResourceOwner.For(parent).Track(new Mesh { name="Common pier planking" });mesh.SetVertices(vertices);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
+            go.AddComponent<MeshFilter>().sharedMesh=mesh;
             go.AddComponent<MeshRenderer>().sharedMaterial=WorldArt.Painted(2,new Color(.82f,.61f,.34f),.46f);
             if(walkable){var collider=go.AddComponent<BoxCollider>();collider.center=Vector3.down*.16f;collider.size=new Vector3(width,.32f,length);}
             if(trim)

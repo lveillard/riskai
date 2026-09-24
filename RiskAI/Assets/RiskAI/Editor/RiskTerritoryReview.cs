@@ -92,7 +92,8 @@ namespace RiskAI.Editor
             if(!session||!view)throw new InvalidOperationException("Territory review bootstrap did not create a session and strategic view.");
             float fieldMs=TerritoryField.LastBuildMilliseconds;
             var atlasWatch=System.Diagnostics.Stopwatch.StartNew();
-            var probe=new TerritoryAtlas(session);float atlasMs=(float)atlasWatch.Elapsed.TotalMilliseconds;UnityEngine.Object.DestroyImmediate(probe.Regions);UnityEngine.Object.DestroyImmediate(probe.Palette);UnityEngine.Object.DestroyImmediate(probe.Borders);
+            // The probe atlas is tracked on the review scene owner; no ad-hoc DestroyImmediate.
+            var probe=new TerritoryAtlas(session,GeneratedResourceOwner.For(bootstrapObject.transform));float atlasMs=(float)atlasWatch.Elapsed.TotalMilliseconds;
             string prefix=tag+"-"+map.ToString().ToLowerInvariant();
             var atlas=view.Atlas;
             int size=atlas.Regions.width;

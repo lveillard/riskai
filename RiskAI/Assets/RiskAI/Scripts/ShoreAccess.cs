@@ -19,10 +19,9 @@ namespace RiskAI
         public static void BakeSurface(Transform root)
         {
             EnsureSurface();
-            var texture=new Texture2D(surfaceWidth,surfaceHeight,TextureFormat.RGBA32,false,true)
-            {name="Shared coast classification",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
+            var texture=GeneratedResourceOwner.For(root).Track(new Texture2D(surfaceWidth,surfaceHeight,TextureFormat.RGBA32,false,true)
+            {name="Shared coast classification",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp});
             texture.SetPixels32(surface);texture.Apply(false,true);
-            GeneratedResourceOwner.For(root).Track(texture);
             Shader.SetGlobalTexture("_RiskCoastField",texture);
             Shader.SetGlobalVector("_RiskCoastGrid",new Vector4(surfaceX,surfaceZ,1/surfaceStep,0));
             Shader.SetGlobalVector("_RiskCoastSize",new Vector4(surfaceWidth,surfaceHeight,1f/surfaceWidth,1f/surfaceHeight));

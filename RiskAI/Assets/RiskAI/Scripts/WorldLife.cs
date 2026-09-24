@@ -119,13 +119,13 @@ namespace RiskAI
         static void AddWing(Transform bird, GeneratedResourceOwner resources, string name, bool left, int seed)
         {
             var wing = new GameObject(name); wing.transform.SetParent(bird, false); wing.transform.localPosition = new Vector3(left ? -.12f : .12f, 0, 0);
-            wing.AddComponent<MeshFilter>().sharedMesh = resources.Track(WingMesh(left));
+            wing.AddComponent<MeshFilter>().sharedMesh = WingMesh(resources, left);
             wing.AddComponent<MeshRenderer>().sharedMaterial = VisualFactory.Mat(seed % 2 == 0 ? new Color(.68f, .7f, .68f) : new Color(.35f, .37f, .36f));
         }
 
-        static Mesh WingMesh(bool left)
+        static Mesh WingMesh(GeneratedResourceOwner resources, bool left)
         {
-            var mesh = new Mesh(); float side = left ? -1 : 1;
+            var mesh = resources.Track(new Mesh()); float side = left ? -1 : 1;
             mesh.vertices = new[] { Vector3.zero, new Vector3(side * .65f, .08f, .08f), new Vector3(side * .25f, .02f, -.24f) };
             mesh.triangles = new[] { 0, 1, 2, 2, 1, 0 }; mesh.RecalculateNormals(); return mesh;
         }

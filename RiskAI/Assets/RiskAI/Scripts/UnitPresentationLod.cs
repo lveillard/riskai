@@ -211,6 +211,7 @@ namespace RiskAI
                     triangles.Add(lower); triangles.Add(upper); triangles.Add(upperNext);
                     triangles.Add(lower); triangles.Add(upperNext); triangles.Add(lowerNext);
                 }
+            // RISKAI_SHARED_ASSET: one proxy mesh per unit kind, keyed to UnitCatalog.Revision.
             var mesh = new Mesh { name = "Shared strategic " + kind + " proxy" };
             mesh.SetVertices(vertices); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
             return proxyMeshes[index] = mesh;

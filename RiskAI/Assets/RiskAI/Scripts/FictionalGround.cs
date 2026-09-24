@@ -30,10 +30,9 @@ namespace RiskAI
         public static void Bake(Transform root)
         {
             Ensure();
-            var texture=new Texture2D(width,height,TextureFormat.RGBA32,false,true)
-            {name="Authored ground zones",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
+            var texture=GeneratedResourceOwner.For(root).Track(new Texture2D(width,height,TextureFormat.RGBA32,false,true)
+            {name="Authored ground zones",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp});
             texture.SetPixels32(field);texture.Apply(false,true);
-            GeneratedResourceOwner.For(root).Track(texture);
             Shader.SetGlobalTexture("_RiskGroundZones",texture);
             Shader.SetGlobalVector("_RiskGroundZonesGrid",new Vector4(originX,originZ,1/Texel,1));
             Shader.SetGlobalVector("_RiskGroundZonesSize",new Vector4(width,height,1f/width,1f/height));
