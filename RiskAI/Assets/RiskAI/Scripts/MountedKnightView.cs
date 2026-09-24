@@ -36,8 +36,7 @@ namespace RiskAI
         public static GameObject Create(Soldier owner) => CreateVariant(owner.transform,owner.Team,UnitKind.Knight,owner);
         public static GameObject Create(Transform parent,int teamId,Soldier owner=null) => CreateVariant(parent,teamId,UnitKind.Knight,owner);
 
-        public static bool IsMounted(UnitKind kind) =>
-            kind==UnitKind.Knight||kind==UnitKind.MarineMajor||kind==UnitKind.MarineGeneral||kind==UnitKind.ArmyGeneral;
+        public static bool IsMounted(UnitKind kind) => UnitCatalog.Get(kind).Silhouette == UnitSilhouette.Mounted;
 
         /// <summary>Builds the mounted model for <paramref name="kind"/>, calibrated to its standing height.</summary>
         public static GameObject CreateVariant(Transform parent,int teamId,UnitKind kind,Soldier owner=null)

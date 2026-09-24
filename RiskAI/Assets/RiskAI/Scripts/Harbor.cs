@@ -221,7 +221,7 @@ namespace RiskAI
         }
         public string Buy(UnitKind kind,int team=0)
         {
-            if(!(UnitCatalog.Get(kind).Building==UnitBuilding.Harbor))return "Tipo de barco inválido.";
+            if(UnitCatalog.Get(kind).Domain!=UnitDomain.Sea||UnitCatalog.Get(kind).Building!=UnitBuilding.Harbor)return "Tipo de barco inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";
             if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
             if(!CanLaunch)return LaunchBlockReason;
@@ -235,7 +235,7 @@ namespace RiskAI
         }
         public string RecruitLand(UnitKind kind,int team=0)
         {
-            if(!(UnitCatalog.Get(kind).Building==UnitBuilding.Harbor))return "Este muelle sólo entrena Marines.";
+            if(UnitCatalog.Get(kind).Domain!=UnitDomain.Land||UnitCatalog.Get(kind).Building!=UnitBuilding.Harbor)return "Este muelle sólo entrena Marines.";
             if(sharesTown&&LinkedTown)return LinkedTown.RecruitPortMarine(kind,team);
             if(!world||!world.Session)return "No hay una batalla activa.";
             if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";

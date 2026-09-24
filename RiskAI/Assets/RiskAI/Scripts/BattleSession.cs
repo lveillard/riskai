@@ -349,8 +349,8 @@ namespace RiskAI
                 for(int j=1;j<remaining.Count;j++)
                 {
                     var a=remaining[j];var b=remaining[best];
-                    int rank=(UnitCatalog.Get(a.Kind).Weapon.Ranged?100:0)+(int)a.Kind;
-                    int currentRank=(UnitCatalog.Get(b.Kind).Weapon.Ranged?100:0)+(int)b.Kind;
+                    int rank=(UnitCatalog.Get(a.Kind).Weapon.Ranged?100:0)+UnitCatalog.Get(a.Kind).Index;
+                    int currentRank=(UnitCatalog.Get(b.Kind).Weapon.Ranged?100:0)+UnitCatalog.Get(b.Kind).Index;
                     if(rank<currentRank || rank==currentRank && (a.transform.position-slot).sqrMagnitude<(b.transform.position-slot).sqrMagnitude)best=j;
                 }
                 var unit=remaining[best];remaining.RemoveAt(best);

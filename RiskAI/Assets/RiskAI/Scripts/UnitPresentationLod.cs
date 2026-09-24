@@ -172,29 +172,25 @@ namespace RiskAI
         {
             float height = Mathf.Max(.9f, UnitCatalog.Get(kind).VisualHeight);
             float width = Mathf.Max(.52f, UnitCatalog.Get(kind).VisualRadius * 1.75f);
-            float depth = Mounted(kind) ? width * 1.45f : Siege(kind) ? width * 1.25f : width * .82f;
+            var silhouette = UnitCatalog.Get(kind).Silhouette;
+            float depth = silhouette == UnitSilhouette.Mounted ? width * 1.45f : silhouette == UnitSilhouette.Siege ? width * 1.25f : width * .82f;
             return new Vector3(width, height, depth);
         }
-
-        static bool Mounted(UnitKind kind) => kind == UnitKind.Knight || kind == UnitKind.MarineMajor || kind == UnitKind.MarineGeneral || kind == UnitKind.ArmyGeneral;
-        static bool Siege(UnitKind kind) => kind == UnitKind.Mortar || kind == UnitKind.Artillery || kind == UnitKind.Tank;
 
         static Mesh ProxyMesh(UnitKind kind)
         {
             if (proxyMeshes == null || proxyRevision != UnitCatalog.Revision) { proxyMeshes = new Mesh[UnitCatalog.Count]; proxyRevision = UnitCatalog.Revision; }
             int index = UnitCatalog.Get(kind).Index;
             if (proxyMeshes[index]) return proxyMeshes[index];
-            bool mounted = Mounted(kind);
-            bool ranged = kind == UnitKind.Archer || kind == UnitKind.Mage || kind == UnitKind.Medic || kind == UnitKind.MarinePrivate ||
-                kind == UnitKind.EliteRifleman || kind == UnitKind.Roarer;
+            var silhouette = UnitCatalog.Get(kind).Silhouette;
             float[] heights = { 0f, .18f, .68f, .96f, 1.18f };
-            float[] radii = mounted
+            float[] radii = silhouette == UnitSilhouette.Mounted
                 ? new[] { .30f, .50f, .46f, .27f, .10f }
-                : kind == UnitKind.MarinePrivate
+                : silhouette == UnitSilhouette.Marine
                     ? new[] { .25f, .40f, .42f, .34f, .20f }
-                : Siege(kind)
+                : silhouette == UnitSilhouette.Siege
                     ? new[] { .34f, .52f, .48f, .25f, .12f }
-                    : ranged
+                    : silhouette == UnitSilhouette.Ranged
                         ? new[] { .24f, .38f, .42f, .28f, .04f }
                         : new[] { .27f, .43f, .47f, .25f, .10f };
             const int sides = 6;
