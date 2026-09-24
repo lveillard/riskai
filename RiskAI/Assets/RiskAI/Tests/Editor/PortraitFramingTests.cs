@@ -31,6 +31,13 @@ namespace RiskAI.Tests
             Assert.That(PortraitFraming.For("Battleship").OrthographicSize, Is.EqualTo(4.2f));
             Assert.That(PortraitFraming.For("Transport").Ship, Is.True);
             Assert.That(PortraitFraming.For("ArmoredTransport").Ship, Is.True);
+            Assert.That(PortraitFraming.For("MountedKnight").OrthographicSize, Is.EqualTo(1.85f));
+            Assert.That(PortraitFraming.For("MountedKnight").Refit, Is.True);
+            Assert.That(PortraitFraming.For("ArmyGeneral").OrthographicSize, Is.EqualTo(2.1f));
+            Assert.That(PortraitFraming.For("Roarer").UpperFraction, Is.EqualTo(.78f));
+            Assert.That(PortraitFraming.For("MarineMajor").Refit, Is.True);
+            Assert.That(PortraitFraming.For("MarineMajor").OrthographicSize, Is.EqualTo(1.4f));
+            Assert.Throws<System.InvalidOperationException>(() => PortraitFraming.For("NotAUnit"));
         }
 
         [Test]

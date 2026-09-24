@@ -327,6 +327,75 @@ namespace RiskAI.Tests
             InputSystem.Update();
         }
 
+        [UnityTest]
+        public IEnumerator ShiftDuringEmbarkRestoresTheEarlierPlanAndTheAddedOrder()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var inland = (home.Landing - home.Berth);
+            inland.y = 0;
+            if (inland.sqrMagnitude < .01f) inland = Vector3.forward;
+            Assert.That(NavMesh.SamplePosition(home.Landing + inland.normalized * 14f, out var spawn, 8f, NavMesh.AllAreas), Is.True);
+            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, spawn.position);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            var pointA = Walkable(spawn.position, 5f);
+            Submit(soldier, UnitCommandKind.Move, pointA, false);
+            Step();
+            Assert.That(naval.TryOrderEmbark(transport, soldier, out var error), Is.True, error);
+            Step();
+            Assert.That(soldier.gameObject.activeInHierarchy, Is.True, "the soldier is still walking to the transport");
+            var pointC = Walkable(pointA, 6f);
+            Submit(soldier, UnitCommandKind.Move, pointC, true);
+            Step();
+            Assert.That(soldier.Orders.StashCount, Is.GreaterThanOrEqualTo(2), "Shift keeps the pre-embark plan and adds the new order");
+            Assert.That(soldier.Agent.Warp(home.Landing), Is.True);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            Assert.That(transport.UnloadAt(home.Landing), Is.True, transport.LastActionError);
+            Step();
+            Assert.That(soldier.OrderLegCount, Is.GreaterThanOrEqualTo(2));
+            Assert.That(Vector3.Distance(soldier.OrderLegPoint(0), pointA), Is.LessThan(1.5f), "A is restored first");
+            Assert.That(Vector3.Distance(soldier.OrderLegPoint(1), pointC), Is.LessThan(1.5f), "C follows A");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ReplacingMoveDuringEmbarkClearsTheStash()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var inland = (home.Landing - home.Berth);
+            inland.y = 0;
+            if (inland.sqrMagnitude < .01f) inland = Vector3.forward;
+            Assert.That(NavMesh.SamplePosition(home.Landing + inland.normalized * 14f, out var spawn, 8f, NavMesh.AllAreas), Is.True);
+            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, spawn.position);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            var pointA = Walkable(spawn.position, 5f);
+            Submit(soldier, UnitCommandKind.Move, pointA, false);
+            Step();
+            Assert.That(naval.TryOrderEmbark(transport, soldier, out var error), Is.True, error);
+            Step();
+            var pointB = Walkable(pointA, 6f);
+            Submit(soldier, UnitCommandKind.Move, pointB, false);
+            Step();
+            Assert.That(soldier.Orders.StashCount, Is.EqualTo(0), "a replacing order cancels the voyage plan");
+            Assert.That(soldier.OrderLegKind(0), Is.EqualTo(UnitCommandKind.Move));
+            Assert.That(Vector3.Distance(soldier.OrderLegPoint(0), pointB), Is.LessThan(1.5f));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CommandResultRingKeepsAResultPastTheOld64()
+        {
+            var home = battle.Towns.First(town => town.State.Owner == 0);
+            var unit = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Rally);
+            var point = Walkable(home.Rally, 6f);
+            var first = battle.Commands.SubmitResult(new UnitCommand(0, unit.EntityId, UnitCommandKind.Move, point.x, point.y, point.z));
+            Assert.That(first.Accepted, Is.True, battle.Commands.LastRejection);
+            for (int i = 0; i < 80; i++)
+                Assert.That(battle.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Move, point.x, point.y, point.z, append: true)), Is.True, battle.Commands.LastRejection);
+            Assert.That(battle.Commands.TryGetResult(first.CommandId, out var stored), Is.True);
+            Assert.That(stored.Accepted, Is.True, "a result older than 64 submits is still the accept, not an eviction");
+            yield return null;
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {

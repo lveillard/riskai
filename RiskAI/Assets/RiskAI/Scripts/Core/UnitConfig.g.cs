@@ -133,6 +133,21 @@ namespace RiskAI.Core
         Variant
     }
 
+    /// <summary>v0.33 portrait camera. Hull values are ships. An unknown name is rejected by the schema.</summary>
+    public enum PortraitFraming
+    {
+        Standard,
+        Mortar,
+        Siege,
+        Mounted,
+        General,
+        Command,
+        Roarer,
+        Frigate,
+        Warship,
+        Battleship
+    }
+
     /// <summary>Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal.</summary>
     public enum UnitSilhouette
     {
@@ -650,6 +665,9 @@ namespace RiskAI.Core
         /// <summary>Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab.</summary>
         [UnitConfigField(Required = true)]
         public PortraitSource PortraitSource;
+        /// <summary>v0.33 portrait camera. Hull values are ships. An unknown name is rejected by the schema.</summary>
+        [UnitConfigField(Required = true)]
+        public PortraitFraming PortraitFraming;
         /// <summary>Attack clip; null for procedural attacks.</summary>
         [UnitConfigField(Required = true, Nullable = true)]
         public string AttackClip;

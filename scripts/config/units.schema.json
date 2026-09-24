@@ -1025,6 +1025,51 @@
       ],
       "description": "Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab."
     },
+    "PortraitFraming": {
+      "anyOf": [
+        {
+          "const": "Standard",
+          "type": "string"
+        },
+        {
+          "const": "Mortar",
+          "type": "string"
+        },
+        {
+          "const": "Siege",
+          "type": "string"
+        },
+        {
+          "const": "Mounted",
+          "type": "string"
+        },
+        {
+          "const": "General",
+          "type": "string"
+        },
+        {
+          "const": "Command",
+          "type": "string"
+        },
+        {
+          "const": "Roarer",
+          "type": "string"
+        },
+        {
+          "const": "Frigate",
+          "type": "string"
+        },
+        {
+          "const": "Warship",
+          "type": "string"
+        },
+        {
+          "const": "Battleship",
+          "type": "string"
+        }
+      ],
+      "description": "v0.33 portrait camera. Hull values are ships. An unknown name is rejected by the schema."
+    },
     "UnitSilhouette": {
       "anyOf": [
         {
@@ -1066,6 +1111,7 @@
         "portrait",
         "portraitFallback",
         "portraitSource",
+        "portraitFraming",
         "attackClip",
         "contact",
         "silhouette"
@@ -1092,6 +1138,9 @@
         },
         "portraitSource": {
           "$ref": "#/$defs/PortraitSource"
+        },
+        "portraitFraming": {
+          "$ref": "#/$defs/PortraitFraming"
         },
         "attackClip": {
           "description": "Attack clip; null for procedural attacks.",

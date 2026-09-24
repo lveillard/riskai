@@ -15,5 +15,15 @@ namespace RiskAI.Core
                 if (runner.TryStartQueued(next)) return true;
             return false;
         }
+
+        /// <summary>
+        /// Attack and AttackMove stay busy while a live target exists, for a soldier and a ship.
+        /// Capture does not: a combat target is not part of the approach.
+        /// </summary>
+        public static bool MotorIdle(UnitCommandKind kind, bool hasLiveTarget)
+        {
+            if (!hasLiveTarget) return true;
+            return kind != UnitCommandKind.Attack && kind != UnitCommandKind.AttackMove;
+        }
     }
 }

@@ -19,7 +19,7 @@ namespace RiskAI
         readonly BattleSession session;
         public const int InboxLimit = 1024;
         readonly Queue<QueuedCommand> queue = new Queue<QueuedCommand>(256);
-        readonly CommandResult[] results = new CommandResult[64];
+        readonly CommandResult[] results = new CommandResult[InboxLimit];
         int nextCommandId, resultCount;
         CommandTelemetry telemetry;
         // Live lifecycle count; unlike interval aggregates, ConsumeTelemetry does not reset it.

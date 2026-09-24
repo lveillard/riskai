@@ -557,6 +557,8 @@ namespace RiskAI
                 }
                 if (distance < .65f || (Agent.pathStatus==NavMeshPathStatus.PathComplete && ((Agent.hasPath && Agent.remainingDistance < .4f) || (stalled > 1.2f && distance < 3))))
                 {
+                    // Same rule as the ship: Attack and AttackMove stay out while a target lives. Capture does not.
+                    if (hasActiveCommand && !OrderAdvance.MotorIdle(activeCommand.Kind, target != null)) return;
                     if (mode == OrderMode.Capture) { if (!StepCapture()) Complete(); }
                     else Complete();
                 }
@@ -659,7 +661,11 @@ namespace RiskAI
                 LastMoveError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
                 valid = false;
             }
-            if (valid && command.Kind != UnitCommandKind.Embark && !keepEmbarkStash) orders.ClearStash();
+            // A replacing order cancels the voyage plan. An appended order keeps it,
+            // and a full queue must not wipe the stash before Commit refuses the order.
+            bool replacing = willRun && command.Kind != UnitCommandKind.Stop && command.Kind != UnitCommandKind.Hold
+                && command.Kind != UnitCommandKind.Embark;
+            if (valid && replacing && !keepEmbarkStash) orders.ClearStash();
             else if (valid && command.Kind == UnitCommandKind.Embark && !command.Append && orders.StashCount == 0)
                 orders.Stash(hasActiveCommand && activeCommand.Kind != UnitCommandKind.Embark, activeCommand);
             switch (orders.Commit(command, OrderBusy, valid))
@@ -671,6 +677,8 @@ namespace RiskAI
                     LastMoveError = OrderQueue.FullError;
                     return false;
                 case OrderQueue.AdmitResult.Queued:
+                    if (hasActiveCommand && activeCommand.Kind == UnitCommandKind.Embark)
+                        orders.AppendStash(command);
                     PublishRoute();
                     return true;
                 default:
@@ -750,7 +758,7 @@ namespace RiskAI
             if (!view.Found) { LastMoveError = "Elige una ciudad o un puerto."; return false; }
             Remember(command);
             captureView = view;
-            capture.Begin(view.Found, view.Owner, view.Zone != null ? 1 : 0);
+            capture.Begin(view.Found, view.Owner);
             capturePoint = view.Point;
             if (capture.Done(view.Found, view.Owner, Team, true, Type.CanCapture))
             {
@@ -794,7 +802,7 @@ namespace RiskAI
             if (!ship) { LastMoveError = "Selecciona un transporte."; return false; }
             Remember(command);
             // Orders still behind this embark survive the voyage. A replacing embark already stashed them.
-            if (orders.StashCount == 0) orders.Stash(false, default);
+            orders.MergeQueue();
             mode = OrderMode.Embark;
             target = null;
             followTargetId = 0;
@@ -853,8 +861,11 @@ namespace RiskAI
         /// <summary>Boarding keeps every queued command, including its target, for after the unload.</summary>
         public void RetainOrdersForEmbark()
         {
-            if (orders.StashCount > 0) return;
-            orders.Stash(hasActiveCommand && activeCommand.Kind != UnitCommandKind.Embark, activeCommand);
+            // A direct board (no Embark order) still has the live move as the active command.
+            // An Embark order already stashed that plan; the active command is then the embark itself.
+            if (hasActiveCommand && activeCommand.Kind != UnitCommandKind.Embark)
+                orders.AppendStash(activeCommand);
+            orders.MergeQueue();
         }
 
         /// <summary>Stop the motor but keep the passenger plan that <see cref="RetainOrdersForEmbark"/> just stored.</summary>

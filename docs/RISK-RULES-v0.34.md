@@ -6,6 +6,8 @@ Versión del catálogo: 1. Tipos: 20.
 
 La casilla de producción no está en el JSON: `ProductionHotkeys` la calcula (coste, orden estable, tierra antes que mar).
 
+Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y atacar-mover siguen ocupados mientras el blanco vive. Una captura de transporte termina solo cuando la vela y la descarga acaban, aunque el puerto siga hostil o cambie de dueño. Un barco de guerra con captura sobre un puerto hostil que aún tiene guardián vivo sigue combatiendo hasta que el puesto cambia de dueño, igual que v0.33; la cola no avanza mientras tanto.
+
 ## Espadachín (Footman)
 
 - Nombre en inglés: Swordsman.

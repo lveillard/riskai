@@ -254,6 +254,163 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator EmptyAndLoadedTransportsBothAdvanceToTheQueuedMove()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var loaded = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            var empty = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth + new Vector3(5f, 0f, 0f));
+            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Landing);
+            Assert.That(loaded.TryEmbark(soldier), Is.True, loaded.LastActionError);
+            var away = SeaAway(home.Berth, 36f);
+            CaptureThenMove(loaded, home, away);
+            CaptureThenMove(empty, home, away);
+            for (int tick = 0; tick < 360 && (loaded.Orders.Count > 0 || empty.Orders.Count > 0 || loaded.CargoCount > 0); tick++)
+            {
+                battle.Commands.Tick();
+                loaded.SimTick(.2f);
+                empty.SimTick(.2f);
+            }
+            Assert.That(empty.Orders.Count, Is.EqualTo(0), "an empty transport must finish Capture and run the queued move");
+            Assert.That(loaded.CargoCount, Is.EqualTo(0), loaded.LastActionError);
+            Assert.That(loaded.Orders.Count, Is.EqualTo(0), "the loaded transport runs the queued move after unloading");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator TransportCaptureKeepsUnloadingWhenAnotherPlayerTakesThePort()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var target = naval.Harbors.First(harbor => harbor != home && harbor.Owner != 0 && !harbor.IsImportedPort);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Landing);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            var away = SeaAway(home.Berth, 30f);
+            CaptureThenMove(transport, target, away);
+            for (int tick = 0; tick < 6; tick++) { battle.Commands.Tick(); transport.SimTick(.2f); }
+            int other = target.Owner == 1 ? 2 : 1;
+            target.State.Owner = other;
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            bool unloading = (bool)typeof(Ship).GetField("pendingShoreUnload", hidden).GetValue(transport);
+            int routeCount = ((System.Collections.Generic.List<Vector3>)typeof(Ship).GetField("route", hidden).GetValue(transport)).Count;
+            Assert.That(unloading || routeCount > 0, Is.True, "taking the port must not halt a transport that still has to land");
+            Assert.That(transport.CargoCount, Is.EqualTo(1));
+            for (int tick = 0; tick < 400 && transport.CargoCount > 0; tick++)
+            {
+                Assert.That(transport.Orders.Count, Is.GreaterThan(0), "the queued move waits until the troops are ashore");
+                battle.Commands.Tick();
+                transport.SimTick(.2f);
+            }
+            Assert.That(transport.CargoCount, Is.EqualTo(0), transport.LastActionError);
+            for (int tick = 0; tick < 40 && transport.Orders.Count > 0; tick++) { battle.Commands.Tick(); transport.SimTick(.2f); }
+            Assert.That(transport.Orders.Count, Is.EqualTo(0));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator BlockedBeachHoldsTheQueueWhileTroopsRemainAboard()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Landing);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            var away = SeaAway(home.Berth, 24f);
+            CaptureThenMove(transport, home, away);
+            battle.Commands.Tick();
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(Ship).GetField("pendingShore", hidden).SetValue(transport, transport.transform.position);
+            typeof(Ship).GetField("pendingShoreUnload", hidden).SetValue(transport, true);
+            transport.SimTick(.2f);
+            Assert.That(transport.CargoCount, Is.EqualTo(1));
+            Assert.That((bool)typeof(Ship).GetField("pendingShoreUnload", hidden).GetValue(transport), Is.True,
+                "a beach that admits nobody keeps the unload; the next move must not sail the army away");
+            Assert.That(transport.Orders.Count, Is.GreaterThan(0));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AttackMoveStaysBusyWhileTheTargetLives()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var frigate = BattleTestScenario.Ship(naval, 0, UnitKind.Frigate, home.Berth);
+            int enemyTeam = home.Owner == 1 ? 2 : 1;
+            var enemy = BattleTestScenario.Ship(naval, enemyTeam, UnitKind.Frigate, home.Berth + new Vector3(6f, 0f, 0f));
+            var away = SeaAway(home.Berth, 40f);
+            var here = frigate.transform.position;
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, frigate.EntityId, UnitCommandKind.AttackMove, here.x, here.y, here.z)), Is.True, battle.Commands.LastRejection);
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, frigate.EntityId, UnitCommandKind.Move, away.x, away.y, away.z, append: true)), Is.True, battle.Commands.LastRejection);
+            for (int tick = 0; tick < 12 && enemy.IsAlive; tick++)
+            {
+                battle.Commands.Tick();
+                frigate.SimTick(.2f);
+                enemy.SimTick(.2f);
+            }
+            Assert.That(enemy.IsAlive, Is.True);
+            Assert.That(frigate.Orders.Count, Is.GreaterThan(0), "a live target keeps the attack-move from releasing the queued move");
+            enemy.TakeDamage(enemy.MaxHealth + 1, 0);
+            for (int tick = 0; tick < 20 && frigate.Orders.Count > 0; tick++) { battle.Commands.Tick(); frigate.SimTick(.2f); }
+            Assert.That(frigate.Orders.Count, Is.EqualTo(0));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AChaseRepathDoesNotReplaceTheValidatedMove()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            var away = SeaAway(home.Berth, 28f);
+            var submitted = battle.Commands.SubmitResult(new UnitCommand(0, transport.EntityId, UnitCommandKind.Move, away.x, away.y, away.z));
+            Assert.That(submitted.Accepted, Is.True, battle.Commands.LastRejection);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            var scratch = (System.Collections.Generic.List<Vector3>)typeof(Ship).GetField("pathScratch", hidden).GetValue(transport);
+            var bogus = transport.transform.position + new Vector3(70f, 0f, 70f);
+            scratch.Clear();
+            scratch.Add(bogus);
+            battle.Commands.Tick();
+            transport.SimTick(.2f);
+            var goal = (Vector3)typeof(Ship).GetField("routeGoal", hidden).GetValue(transport);
+            Assert.That(Vector3.Distance(goal, bogus), Is.GreaterThan(20f), "the chase scratch must not become the admitted route");
+            Assert.That(Vector3.Distance(new Vector3(goal.x, 0f, goal.z), new Vector3(away.x, 0f, away.z)), Is.LessThan(12f));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ARetriedUnloadDoesNotReuseTheFirstSlot()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth + (home.Landing - home.Berth).normalized * 2f);
+            var first = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Landing);
+            var second = BattleTestScenario.Mobile(battle, 0, UnitKind.Archer, home.Landing + Vector3.right);
+            Assert.That(transport.TryEmbark(first), Is.True, transport.LastActionError);
+            Assert.That(transport.TryEmbark(second), Is.True, transport.LastActionError);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(Ship).GetField("unloadSlot", hidden).SetValue(transport, 4);
+            Assert.That(transport.UnloadAt(home.Landing), Is.True, transport.LastActionError);
+            float spacing = UnitCatalog.Get(UnitKind.Footman).SpawnRadius * 2f + .14f;
+            Assert.That(Vector3.Distance(first.transform.position, home.Landing), Is.GreaterThan(spacing * .5f),
+                "a retry must not drop the next soldier on the slot already used");
+            yield return null;
+        }
+
+        void CaptureThenMove(Ship ship, Harbor harbor, Vector3 away)
+        {
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, ship.EntityId, UnitCommandKind.Capture, harbor.Landing.x, harbor.Landing.y, harbor.Landing.z, structureId: harbor.BuildingId.LocalId, structureKind: BuildingKind.Harbor)), Is.True, battle.Commands.LastRejection);
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, ship.EntityId, UnitCommandKind.Move, away.x, away.y, away.z, append: true)), Is.True, battle.Commands.LastRejection);
+        }
+
+        Vector3 SeaAway(Vector3 origin, float distance)
+        {
+            var directions = new[] { Vector3.forward, Vector3.right, Vector3.back, Vector3.left, new Vector3(1f, 0f, 1f) };
+            for (int i = 0; i < directions.Length; i++)
+            {
+                var point = origin + directions[i].normalized * distance;
+                point.y = -.24f;
+                if (SeaNavigation.HasClearance(point)) return point;
+            }
+            Assert.Fail("Need open water near " + origin);
+            return origin;
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {

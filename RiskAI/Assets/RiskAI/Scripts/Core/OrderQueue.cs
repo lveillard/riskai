@@ -147,5 +147,30 @@ namespace RiskAI.Core
         public UnitCommand StashedCommand(int index) => stash[index];
 
         public void ClearStash() => stashCount = 0;
+
+        /// <summary>Keeps an order for after the voyage. A second copy of the same order is ignored.</summary>
+        public void AppendStash(in UnitCommand command)
+        {
+            if (stashCount >= LegCap || ContainsStash(command)) return;
+            stash[stashCount++] = command;
+        }
+
+        /// <summary>Orders queued while walking to the ship join the plan. Existing stash entries stay.</summary>
+        public void MergeQueue()
+        {
+            for (int i = 0; i < count && stashCount < LegCap; i++)
+                AppendStash(items[(head + i) % Limit]);
+        }
+
+        public bool ContainsStash(in UnitCommand command)
+        {
+            for (int i = 0; i < stashCount; i++)
+                if (SameOrder(stash[i], command)) return true;
+            return false;
+        }
+
+        static bool SameOrder(in UnitCommand a, in UnitCommand b) =>
+            a.Kind == b.Kind && a.TargetId == b.TargetId && a.CommandId == b.CommandId
+            && a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.StructureId == b.StructureId;
     }
 }

@@ -91,6 +91,7 @@ namespace RiskAI.Core
         public readonly ManaProfile Mana;
         public readonly string Model, Portrait, PortraitFallback, AttackClip;
         public readonly PortraitSource PortraitSource;
+        public readonly PortraitFraming PortraitFraming;
         public readonly float AttackContact;
         public readonly UnitSilhouette Silhouette;
 
@@ -132,7 +133,7 @@ namespace RiskAI.Core
             Mana = caps.Mana == null ? default : new ManaProfile(caps.Mana.Max, caps.Mana.Initial, caps.Mana.Regen);
             var p = c.Presentation;
             Model = p.Model; Portrait = p.Portrait; PortraitFallback = p.PortraitFallback; AttackClip = p.AttackClip; AttackContact = p.Contact;
-            PortraitSource = p.PortraitSource; Silhouette = p.Silhouette;
+            PortraitSource = p.PortraitSource; PortraitFraming = p.PortraitFraming; Silhouette = p.Silhouette;
         }
 
         internal static UnitType From(UnitConfig config, int index) => new UnitType(config, index);

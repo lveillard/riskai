@@ -140,9 +140,9 @@ por datos y capacidades. Las diferencias de motor viven en `IUnitMotor`.
 
 | Orden | Con Shift | Sin Shift | Al completarse |
 |---|---|---|---|
-| Move / AttackMove | se añade | reemplaza la cola | siguiente orden |
-| Attack(target) | se añade | reemplaza | objetivo muerto → siguiente |
-| Capture(building) | se añade | reemplaza | capturado o dueño cambia → siguiente |
+| Move / AttackMove | se añade | reemplaza la cola | siguiente orden cuando el punto se alcanza y no queda un blanco vivo. Atacar-mover con un blanco vivo sigue ocupado (soldado y barco); el combate no forma parte de una aproximación de captura |
+| Attack(target) | se añade | reemplaza | objetivo muerto → siguiente. Un blanco vivo mantiene la orden |
+| Capture(building) | se añade | reemplaza | tierra: capturado o el dueño pasa a otro jugador → siguiente. Un transporte (no puede reclamar) termina solo cuando la vela y la descarga acaban, aunque el puerto siga hostil o lo tome otro jugador. Un barco de guerra sobre un puerto hostil con guardián vivo sigue combatiendo hasta que el puesto cambia de dueño, igual que v0.33; la cola no avanza mientras tanto |
 | Follow(target) | se añade como terminal | reemplaza | no termina; objetivo muerto → siguiente |
 | Patrol | se añade como terminal | reemplaza | no termina |
 | Embark / Unload | se añaden | reemplazan | al embarcar se conserva la cola del pasajero para después de desembarcar |

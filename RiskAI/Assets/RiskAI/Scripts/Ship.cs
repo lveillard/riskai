@@ -12,6 +12,7 @@ namespace RiskAI
         readonly List<Soldier> cargoScratch=new List<Soldier>(10);
         readonly List<Vector3> route=new List<Vector3>();
         readonly List<Vector3> pathScratch=new List<Vector3>(64);
+        readonly List<Vector3> plannedPath=new List<Vector3>(64);
         readonly OrderQueue orders=new OrderQueue();
         UnitCommand activeCommand;
         bool hasActiveCommand;
@@ -32,6 +33,8 @@ namespace RiskAI
         internal bool IsOrderedToHarbor(Harbor harbor) => orderedHarbor && orderedHarbor == harbor;
         bool pendingShoreUnload;
         Vector3 pendingShore;
+        int unloadSlot;
+        bool shoreFailureReported;
         public UnitKind Kind { get; private set; }
         public bool Selected { get; private set; }
         public Harbor Garrison=>harborGuard;
@@ -89,22 +92,33 @@ namespace RiskAI
 
         internal void Initialize(NavalWorld naval,int team,UnitKind kind)
         {
-            world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;hasActiveCommand=false;capture.Clear();captureView=default;captureSailing=false;plannedCommandId=0;plannedReady=false;orders.Reset();transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
+            world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;hasActiveCommand=false;capture.Clear();captureView=default;captureSailing=false;plannedCommandId=0;plannedReady=false;plannedPath.Clear();unloadSlot=0;shoreFailureReported=false;orders.Reset();transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
             NavalArt.CreateShip(this);
             targetVolume=GetComponent<BoxCollider>();
         }
         public void Select(bool value){Selected=value;}
         bool HasPlan() => plannedReady && activeCommand.CommandId != 0 && activeCommand.CommandId == plannedCommandId
             && (transform.position - plannedFrom).sqrMagnitude < 1f;
+        public bool RunsCommand(int commandId) => hasActiveCommand && activeCommand.CommandId == commandId;
+        void RememberPlan()
+        {
+            plannedPath.Clear();
+            for (int i = 0; i < pathScratch.Count; i++) plannedPath.Add(pathScratch[i]);
+        }
+        void CopyPlanToRoute()
+        {
+            route.Clear();
+            for (int i = 0; i < plannedPath.Count; i++) route.Add(plannedPath[i]);
+        }
         public void MoveTo(Vector3 point,bool attackMove=false)
         {
             LastActionError=null;
             if(HasPlan())
             {
-                if(pathScratch.Count==0){ if(harborGuard&&harborGuard.IsInBerthCircle(point)) MaintainHarborGuard(); return; }
+                if(plannedPath.Count==0){ if(harborGuard&&harborGuard.IsInBerthCircle(point)) MaintainHarborGuard(); return; }
                 if(!TryLeaveHarborGuard(plannedPoint))return;
                 orderedHarbor=null;
-                CopyScratchToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=plannedPoint;pendingShoreUnload=false;
+                CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=plannedPoint;pendingShoreUnload=false;
                 plannedReady=false;
                 return;
             }
@@ -148,7 +162,7 @@ namespace RiskAI
             if(HasPlan())
             {
                 orderedHarbor=null;
-                CopyScratchToRoute();routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=pathScratch.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;pendingShoreUnload=false;
+                CopyPlanToRoute();routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=plannedPath.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;pendingShoreUnload=false;
                 plannedReady=false;
                 return true;
             }
@@ -176,15 +190,15 @@ namespace RiskAI
             {
                 if(!TryLeaveHarborGuard(plannedPoint))return LastActionError;
                 orderedHarbor=null;
-                CopyScratchToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
-                pendingShore=shore;pendingShoreUnload=true;plannedReady=false;return null;
+                CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
+                pendingShore=shore;pendingShoreUnload=true;unloadSlot=0;shoreFailureReported=false;plannedReady=false;return null;
             }
             if(!TryValidateShore(shore,out var landing,out var error))return LastActionError=error;
             if(!SeaNavigation.TryNearestOcean(landing,ShoreBerthSearchRadius,out var berth)||!SeaNavigation.TryBuildPath(transform.position,berth,pathScratch))return LastActionError="No hay una ruta marítima segura hasta esa playa.";
             if(!TryLeaveHarborGuard(berth))return LastActionError;
             orderedHarbor=null;
             CopyScratchToRoute();routeIndex=0;routeGoal=berth;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
-            pendingShore=landing;pendingShoreUnload=true;return null;
+            pendingShore=landing;pendingShoreUnload=true;unloadSlot=0;shoreFailureReported=false;return null;
         }
         public bool TryEmbark(Soldier soldier)
         {
@@ -207,12 +221,12 @@ namespace RiskAI
             if(world.Session.Paused||world.Session.Winner>=0)return false;
             if(!IsAlive||!Type.CanTransport){LastActionError="Selecciona un transporte.";return false;}
             if(!TryFindDisembarkPoint(shore,out shore,out var error)){LastActionError=error;return false;}
-            bool unloaded=false;int slot=0;
+            bool unloaded=false;
             cargoScratch.Clear();for(int i=0;i<cargo.Count;i++)cargoScratch.Add(cargo[i]);
             foreach(var soldier in cargoScratch)
             {
                 if(!soldier){cargo.Remove(soldier);continue;}
-                if(TryUnloadSoldier(soldier,shore,slot++))unloaded=true;
+                if(TryUnloadSoldier(soldier,shore,unloadSlot)){unloaded=true;unloadSlot++;}
             }
             if(!unloaded&&cargo.Count>0)LastActionError="No hay sitio transitable para desembarcar en esa playa.";
             return unloaded;
@@ -263,8 +277,14 @@ namespace RiskAI
             MaintainHarborGuard();
             if(pendingShoreUnload&&DistanceXZ(transform.position,pendingShore)<=LoadRadius)
             {
-                if(UnloadAt(pendingShore)&&CargoCount==0)pendingShoreUnload=false;
-                else if(!string.IsNullOrEmpty(LastActionError)){if(Team==0)world.Session.Message(LastActionError,MessageKind.Info);pendingShoreUnload=false;}
+                // An empty hold has nothing to land. A blocked beach keeps the order
+                // and retries; v0.33 did not sail the next order away with the army aboard.
+                if(CargoCount==0){pendingShoreUnload=false;unloadSlot=0;shoreFailureReported=false;}
+                else if(UnloadAt(pendingShore)&&CargoCount==0){pendingShoreUnload=false;unloadSlot=0;shoreFailureReported=false;}
+                else if(CargoCount>0&&!string.IsNullOrEmpty(LastActionError))
+                {
+                    if(!shoreFailureReported&&Team==0){world.Session.Message(LastActionError,MessageKind.Info);shoreFailureReported=true;}
+                }
             }
             if(!object.ReferenceEquals(target,null)&&!UnitTargeting.CanTarget(this,Team,Type.Weapon,target))
             {
@@ -463,7 +483,12 @@ namespace RiskAI
                     ok = true;
                     break;
             }
-            if (plan) { plannedReady = ok; plannedCommandId = ok ? command.CommandId : 0; if (ok) plannedFrom = transform.position; }
+            if (plan)
+            {
+                plannedReady = ok;
+                plannedCommandId = ok ? command.CommandId : 0;
+                if (ok) { plannedFrom = transform.position; RememberPlan(); }
+            }
             error = ok ? null : (string.IsNullOrEmpty(LastActionError) ? OrderQueue.InvalidError : LastActionError);
             return ok;
         }
@@ -586,7 +611,7 @@ namespace RiskAI
         {
             if (CapturePending() || routeIndex < route.Count || pendingShoreUnload) return false;
             if (hasAttackMoveGoal) return false;
-            if (hasActiveCommand && activeCommand.Kind == UnitCommandKind.Attack && target != null) return false;
+            if (hasActiveCommand && !OrderAdvance.MotorIdle(activeCommand.Kind, target != null)) return false;
             return true;
         }
 
@@ -595,12 +620,13 @@ namespace RiskAI
         {
             if (hasActiveCommand && activeCommand.Kind == UnitCommandKind.Capture && !CapturePending())
             {
-                bool sailing = routeIndex < route.Count || pendingShoreUnload;
+                bool sailing = routeIndex < route.Count;
                 hasActiveCommand = false;
                 capture.Clear();
                 captureView = default;
                 captureSailing = false;
-                if (sailing) HaltMotor();
+                // A pending unload still has to land its troops. Stopping here would leave them aboard.
+                if (sailing && !pendingShoreUnload) HaltMotor();
             }
             if (!MotorIdle()) return;
             if (OrderAdvance.Drain(orders, this)) { PublishOrders(); return; }
@@ -614,10 +640,9 @@ namespace RiskAI
             return Run(command);
         }
 
-        bool ApplyOrder(in UnitCommand command) => ApplyOrder(command, true);
-        bool ApplyOrder(in UnitCommand command, bool honorQueue)
+        bool ApplyOrder(in UnitCommand command)
         {
-            bool willRun = !honorQueue || UnitRules.Queue(command.Kind, command.Append, BusyOrder()) != UnitRules.OrderQueueAction.Append;
+            bool willRun = UnitRules.Queue(command.Kind, command.Append, BusyOrder()) != UnitRules.OrderQueueAction.Append;
             bool valid = OrderValidation.Check(world != null ? world.Session : null, this, command, willRun, out var error);
             if (willRun && valid && command.Kind != UnitCommandKind.Stop && command.Kind != UnitCommandKind.Hold
                 && !ReleasePost(command, true, out error))
@@ -626,22 +651,18 @@ namespace RiskAI
             {
                 LastActionError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
                 if (!willRun) plannedReady = false;
-                if (!honorQueue) return false;
             }
-            if (honorQueue)
+            switch (orders.Commit(command, BusyOrder(), valid))
             {
-                switch (orders.Commit(command, BusyOrder(), valid))
-                {
-                    case OrderQueue.AdmitResult.Full:
-                        LastActionError = OrderQueue.FullError;
-                        return false;
-                    case OrderQueue.AdmitResult.Queued:
-                        PublishOrders();
-                        return true;
-                    case OrderQueue.AdmitResult.Rejected:
-                        if (string.IsNullOrEmpty(LastActionError)) LastActionError = OrderQueue.InvalidError;
-                        return false;
-                }
+                case OrderQueue.AdmitResult.Full:
+                    LastActionError = OrderQueue.FullError;
+                    return false;
+                case OrderQueue.AdmitResult.Queued:
+                    PublishOrders();
+                    return true;
+                case OrderQueue.AdmitResult.Rejected:
+                    if (string.IsNullOrEmpty(LastActionError)) LastActionError = OrderQueue.InvalidError;
+                    return false;
             }
             bool ok = Run(command);
             if (!ok) { hasActiveCommand = false; capture.Clear(); }
@@ -673,7 +694,7 @@ namespace RiskAI
                     var harbor = view.Harbor ? view.Harbor : view.Town ? view.Town.Port : null;
                     if (!harbor) { LastActionError = "Elige un puerto de desembarco."; return false; }
                     captureView = view;
-                    capture.Begin(view.Found, view.Owner, view.Zone != null ? 1 : 0);
+                    capture.Begin(view.Found, view.Owner);
                     captureSailing = true;
                     SailToHarbor(harbor);
                     if (!string.IsNullOrEmpty(LastActionError)) { capture.Clear(); captureView = default; captureSailing = false; return false; }

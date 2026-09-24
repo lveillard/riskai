@@ -16,7 +16,7 @@ namespace RiskAI
         readonly LineRenderer[] legs = new LineRenderer[SegmentCap];
         readonly LineRenderer[] marks = new LineRenderer[SegmentCap];
         readonly Vector3[] scratch = new Vector3[48];
-        struct Stamp { public int Id, Revision, PathCount; public Vector3 Pos, Path0; public byte Emphasis; }
+        struct Stamp { public int Id, Revision, PathCount, Ends; public Vector3 Pos, Path0; public byte Emphasis; }
         readonly Stamp[] stamps = new Stamp[SegmentCap];
         RtsController controller;
         int legCount, markCount;
@@ -54,6 +54,22 @@ namespace RiskAI
 
         bool Emphasis() => controller && controller.QueueOrders;
 
+        /// <summary>Quantised attack and follow endpoints. A still hull redraws when only the target moves.</summary>
+        static int LiveEnds(IOrderable unit)
+        {
+            int hash = 1;
+            int count = unit.OrderLegCount;
+            for (int i = 0; i < count; i++)
+            {
+                var kind = unit.OrderLegKind(i);
+                if (kind != UnitCommandKind.Attack && kind != UnitCommandKind.Follow) continue;
+                var point = unit.OrderLegPoint(i);
+                hash = unchecked(hash * 31 + Mathf.RoundToInt(point.x * 5f));
+                hash = unchecked(hash * 31 + Mathf.RoundToInt(point.z * 5f));
+            }
+            return hash;
+        }
+
         int Draw(IOrderable unit, int drawn, ref int marksDrawn, bool emphasis)
         {
             var body = unit as Component;
@@ -63,11 +79,12 @@ namespace RiskAI
             Vector3 from = body.transform.position;
             Vector3 path0 = pathCount > 0 ? unit.ActivePathPoint(0) : from;
             byte emphasisFlag = (byte)(emphasis ? 1 : 0);
+            int ends = LiveEnds(unit);
             var stamp = stamps[drawn];
             bool dirty = stamp.Id != unit.EntityId || stamp.Revision != unit.Orders.Revision || stamp.PathCount != pathCount
-                || stamp.Emphasis != emphasisFlag || (from - stamp.Pos).sqrMagnitude > .04f
+                || stamp.Ends != ends || stamp.Emphasis != emphasisFlag || (from - stamp.Pos).sqrMagnitude > .04f
                 || pathCount > 0 && (path0 - stamp.Path0).sqrMagnitude > .04f;
-            stamps[drawn] = new Stamp { Id = unit.EntityId, Revision = unit.Orders.Revision, PathCount = pathCount, Pos = from, Path0 = path0, Emphasis = emphasisFlag };
+            stamps[drawn] = new Stamp { Id = unit.EntityId, Revision = unit.Orders.Revision, PathCount = pathCount, Ends = ends, Pos = from, Path0 = path0, Emphasis = emphasisFlag };
             if (!dirty)
             {
                 int keep = Mathf.Min(unit.OrderLegCount, SegmentCap - drawn);

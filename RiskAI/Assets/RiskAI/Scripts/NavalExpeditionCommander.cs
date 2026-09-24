@@ -74,8 +74,8 @@ namespace RiskAI
         float nextDecision, phaseDeadline, retryAt;
         float plannedSeaDistance, plannedGatherDistance, boardingDeadline;
         int sourceHarborCursor, troopCursor, recoveryHarborCursor, recoveryPass;
-        bool embarkOrdersIssued, sailOrderIssued, sailConfirmed, attackOrderIssued;
-        int sailCommandId;
+        bool embarkOrdersIssued, sailConfirmed, attackOrderIssued;
+        DisembarkConfirmation.Slot sailDisembark, returnDisembark;
 
         public bool IsActive => phase != Phase.Planning && phase != Phase.Cooldown;
         int MaximumTroops => Mathf.Clamp(session.AiProfile.ExpeditionTroops, MinimumTroops, TroopCapacity);
@@ -212,18 +212,17 @@ namespace RiskAI
         void Sail()
         {
             if(!transport||!transport.IsAlive||!destination||!destination.TryTransportLanding(out _,out destinationTransportBerth)){Fail();return;}
-            if(!sailOrderIssued)
-            {
-                var submitted=world.SubmitDisembark(transport,destination);
-                if(submitted.CommandId==0||!submitted.Accepted){Fail();return;}
-                sailCommandId=submitted.CommandId;sailConfirmed=false;sailOrderIssued=true;
-                if(session.AiProfile.NavalEscort)OrderEscort();
-                return;
-            }
             if(!sailConfirmed)
             {
+                bool submitting=!sailDisembark.Waiting;
+                var check=ConfirmDisembark(ref sailDisembark,transport,destination);
+                if(check==DisembarkConfirmation.Status.Pending)
+                {
+                    if(submitting&&session.AiProfile.NavalEscort)OrderEscort();
+                    return;
+                }
+                if(check==DisembarkConfirmation.Status.Rejected){sailDisembark=default;Fail();return;}
                 sailConfirmed=true;
-                if(!session.Commands.TryGetResult(sailCommandId,out var stored)||!stored.Accepted){sailOrderIssued=false;Fail();return;}
             }
             if(transport.CargoCount==0)
             {
@@ -260,7 +259,9 @@ namespace RiskAI
             {
                 returnHarbor=NearestRecoveryHarbor(transport.transform.position);
                 if(!returnHarbor){phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
-                if(!DisembarkAccepted(world.SubmitDisembark(transport,returnHarbor))){phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
+                var check=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
+                if(check==DisembarkConfirmation.Status.Pending)return;
+                if(check==DisembarkConfirmation.Status.Rejected){returnDisembark=default;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
                 phaseDeadline=session.BattleTime+ReturnDeadline();
             }
         }
@@ -467,7 +468,9 @@ namespace RiskAI
                 transport=ship;
                 returnHarbor=NearestRecoveryHarbor(ship.transform.position);
                 if(!returnHarbor){retryAt=session.BattleTime+RetrySeconds;return true;}
-                if(!DisembarkAccepted(world.SubmitDisembark(ship,returnHarbor))){retryAt=session.BattleTime+RetrySeconds;return true;}
+                var check=ConfirmDisembark(ref returnDisembark,ship,returnHarbor);
+                if(check==DisembarkConfirmation.Status.Pending){phase=Phase.ReturningCargo;return true;}
+                if(check==DisembarkConfirmation.Status.Rejected){returnDisembark=default;retryAt=session.BattleTime+RetrySeconds;return true;}
                 phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
                 return true;
             }
@@ -537,9 +540,12 @@ namespace RiskAI
             if(retreat&&transport&&transport.IsAlive&&transport.CargoCount>0)
             {
                 returnHarbor=retreat;
-                if(DisembarkAccepted(world.SubmitDisembark(transport,returnHarbor)))
+                var check=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
+                if(check!=DisembarkConfirmation.Status.Rejected)
                 {
-                    phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();return;
+                    phase=Phase.ReturningCargo;
+                    if(check==DisembarkConfirmation.Status.Accepted)phaseDeadline=session.BattleTime+ReturnDeadline();
+                    return;
                 }
             }
             attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
@@ -549,11 +555,66 @@ namespace RiskAI
         void ClearPlan()
         {
             source=null;destination=null;target=null;returnHarbor=null;sourceLanding=sourceTransportBerth=destinationTransportBerth=default;troops.Clear();plannedSeaDistance=plannedGatherDistance=boardingDeadline=0;
-            embarkOrdersIssued=sailOrderIssued=sailConfirmed=attackOrderIssued=false;sailCommandId=0;
+            embarkOrdersIssued=sailConfirmed=attackOrderIssued=false;sailDisembark=default;returnDisembark=default;
         }
+        DisembarkConfirmation.Status ConfirmDisembark(ref DisembarkConfirmation.Slot slot, Ship ship, Harbor harbor)
+        {
+            int submittedId = 0;
+            bool submittedOk = false;
+            if (!slot.Waiting)
+            {
+                var submitted = world.SubmitDisembark(ship, harbor);
+                submittedId = submitted.CommandId;
+                submittedOk = submitted.CommandId != 0 && submitted.Accepted;
+            }
+            bool hasResult = false, resultAccepted = false;
+            if (slot.Waiting && session.Commands.TryGetResult(slot.CommandId, out var stored))
+            {
+                hasResult = true;
+                resultAccepted = stored.Accepted;
+            }
+            bool runs = ship && ship.IsAlive && ship.RunsCommand(slot.Waiting ? slot.CommandId : submittedId);
+            return DisembarkConfirmation.Advance(ref slot, submittedId, submittedOk, hasResult, resultAccepted, runs);
+        }
+
         static int PositiveModulo(int value,int divisor) => divisor<=0?0:(value%divisor+divisor)%divisor;
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}
-        bool DisembarkAccepted(CommandResult submitted) =>
-            submitted.CommandId != 0 && session.Commands.TryGetResult(submitted.CommandId, out var stored) && stored.Accepted;
+    }
+
+    /// <summary>
+    /// One submit, then the next tick's stored result. A missing result was evicted from the
+    /// ring: that is unknown, not a failure. The ship's active command confirms it when the ring cannot.
+    /// </summary>
+    public static class DisembarkConfirmation
+    {
+        public enum Status { Pending, Accepted, Rejected }
+
+        public struct Slot
+        {
+            public int CommandId;
+            public bool Waiting;
+        }
+
+        public static Status Advance(ref Slot slot, int submittedId, bool submittedOk, bool hasResult, bool resultAccepted, bool shipRunsCommand)
+        {
+            if (!slot.Waiting)
+            {
+                if (submittedId == 0 || !submittedOk) return Status.Rejected;
+                slot.CommandId = submittedId;
+                slot.Waiting = true;
+                return Status.Pending;
+            }
+            if (hasResult)
+            {
+                slot.Waiting = false;
+                return resultAccepted ? Status.Accepted : Status.Rejected;
+            }
+            if (shipRunsCommand)
+            {
+                slot.Waiting = false;
+                return Status.Accepted;
+            }
+            return Status.Pending;
+        }
     }
 }

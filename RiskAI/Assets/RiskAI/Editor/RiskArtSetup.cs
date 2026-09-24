@@ -69,7 +69,7 @@ namespace RiskAI.Editor
                 UnitTeamColor.Apply(root,kind,0);
                 if(kind==UnitKind.Archer)CrossbowView.Apply(visual);
                 if(kind==UnitKind.MarinePrivate)MarinePrivateView.Apply(visual,0);
-                RenderPortrait(root, animation, name);
+                RenderPortrait(root, animation, name, kind.ToString());
                 Object.DestroyImmediate(root);
             }
             RenderVariantPortraitsOnly();
@@ -144,7 +144,7 @@ namespace RiskAI.Editor
             }
             camera.orthographicSize = Mathf.Max(halfX, halfY) * 1.06f;
         }
-        static void RenderPortrait(GameObject root, Animation animation, string name)
+        static void RenderPortrait(GameObject root, Animation animation, string name, string framingName = null)
         {
             foreach (var child in root.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = 31;
             root.transform.position = Vector3.down * 1000;
@@ -152,7 +152,7 @@ namespace RiskAI.Editor
             var cameraObject = new GameObject("Portrait camera");
             var camera = cameraObject.AddComponent<Camera>(); camera.cullingMask = 1 << 31;
             camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.075f,.085f,.09f);
-            var frame = PortraitFraming.For(name);
+            var frame = PortraitFraming.For(framingName ?? name);
             camera.orthographic = true; camera.orthographicSize = frame.OrthographicSize;
             Vector3 focus = root.transform.position + Vector3.up * frame.FocusHeight;
             camera.transform.position = focus + frame.Offset; camera.transform.LookAt(focus);

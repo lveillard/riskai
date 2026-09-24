@@ -129,7 +129,9 @@ No hay una tabla C# que copiar.
 5. `RiskAI/Assets/RiskAI/link.xml` conserva `Newtonsoft.Json` entero y los tipos generados
    de `RiskAI.Core` (`UnitsFile`, `UnitConfig` y el resto del contrato). Sin eso, el
    stripping de IL2CPP/WebGL puede quitar los setters que Newtonsoft rellena por reflexión
-   y `UnitCatalog.Bind` no arranca.
+   y `UnitCatalog.Bind` no arranca. El player de WebGL fija `managedStrippingLevel` en
+   Minimal (el valor por defecto de IL2CPP en Unity 6.3, entero 4). No se sube de nivel:
+   `link.xml` sigue siendo la red de seguridad del contrato.
 
 ## Normas del repositorio
 

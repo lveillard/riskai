@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using RiskAI.Core;
+using RiskAI;
 
 namespace RiskAI.Tests
 {
@@ -179,7 +180,42 @@ namespace RiskAI.Tests
             Assert.That(order.Done(true, 0, 0, true, true), Is.True);
             order.Begin(true, 2);
             Assert.That(order.Done(true, 2, 0, false, false), Is.False, "a transport still sailing has not finished");
-            Assert.That(order.Done(true, 2, 0, true, false), Is.True, "a transport that cannot claim is done when the unload finishes");
+            Assert.That(order.Done(true, 1, 0, false, false), Is.False, "another player does not abort a transport before the unload");
+            Assert.That(order.Done(true, 1, 0, true, false), Is.True, "a transport that cannot claim is done when the unload finishes");
+            Assert.That(OrderAdvance.MotorIdle(UnitCommandKind.AttackMove, true), Is.False, "attack-move stays busy while a target lives");
+            Assert.That(OrderAdvance.MotorIdle(UnitCommandKind.Attack, true), Is.False);
+            Assert.That(OrderAdvance.MotorIdle(UnitCommandKind.Capture, true), Is.True, "a capture approach ignores a combat target");
+            Assert.That(OrderAdvance.MotorIdle(UnitCommandKind.AttackMove, false), Is.True);
+        }
+
+        [Test]
+        public void EmbarkStashMergesTheLiveQueueAndDoesNotDuplicate()
+        {
+            var queue = new OrderQueue();
+            var active = new UnitCommand(0, 1, UnitCommandKind.Move, 2, 0, 3);
+            queue.Stash(true, active);
+            var extra = new UnitCommand(0, 1, UnitCommandKind.Move, 8, 0, 1, append: true);
+            Assert.That(queue.Admit(extra, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
+            queue.AppendStash(extra);
+            queue.MergeQueue();
+            Assert.That(queue.StashCount, Is.EqualTo(2));
+            Assert.That(queue.StashedCommand(0).X, Is.EqualTo(2f));
+            Assert.That(queue.StashedCommand(1).X, Is.EqualTo(8f));
+            queue.MergeQueue();
+            Assert.That(queue.StashCount, Is.EqualTo(2), "merging the same live order twice does not duplicate it");
+        }
+
+        [Test]
+        public void AMissingDisembarkResultStaysPendingUntilTheShipConfirmsIt()
+        {
+            var slot = new DisembarkConfirmation.Slot();
+            Assert.That(DisembarkConfirmation.Advance(ref slot, 4, true, false, false, false), Is.EqualTo(DisembarkConfirmation.Status.Pending));
+            Assert.That(slot.Waiting, Is.True);
+            Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, false, false, false), Is.EqualTo(DisembarkConfirmation.Status.Pending),
+                "an evicted result is unknown, not a failure");
+            Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, false, false, true), Is.EqualTo(DisembarkConfirmation.Status.Accepted));
+            slot = new DisembarkConfirmation.Slot { CommandId = 4, Waiting = true };
+            Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, true, false, true), Is.EqualTo(DisembarkConfirmation.Status.Rejected));
         }
     }
 }
