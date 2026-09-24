@@ -111,7 +111,7 @@ La versión vive **solo** en el archivo `VERSION` de la raíz (una línea, p. ej
 ## Añadir una unidad
 
 Los números de una unidad viven solo en `RiskAI/Assets/RiskAI/Resources/Config/units.json`.
-No hay una tabla C# que copiar.
+No hay una tabla C# que copiar. Parity with v0.33 was verified by the golden fixture up to commit 5490e79, then removed.
 
 1. Añade un objeto en `units` con un `id` estable (`Footman`, `Frigate`, …). El esquema
    `scripts/config/units.schema.ts` dice qué campos son obligatorios: nombres, dominio
@@ -126,12 +126,12 @@ No hay una tabla C# que copiar.
    (`docs/RISK-RULES-v0.34.md`). Lo que no venga de la fuente va en `adaptation`.
    `python scripts/generate_unit_rules.py --check` falla si el markdown commiteado no coincide
    (lo mismo que `npm test` hace con el DTO). `npm test` en `scripts/config` ya lo lanza.
-5. `RiskAI/Assets/RiskAI/link.xml` conserva `Newtonsoft.Json` entero y los tipos generados
-   de `RiskAI.Core` (`UnitsFile`, `UnitConfig` y el resto del contrato). Sin eso, el
-   stripping de IL2CPP/WebGL puede quitar los setters que Newtonsoft rellena por reflexión
-   y `UnitCatalog.Bind` no arranca. El player de WebGL fija `managedStrippingLevel` en
-   Minimal (el valor por defecto de IL2CPP en Unity 6.3, entero 4). No se sube de nivel:
-   `link.xml` sigue siendo la red de seguridad del contrato.
+5. `RiskAI/Assets/RiskAI/link.xml` conserva `Newtonsoft.Json` entero y el ensamblado
+   `RiskAI.Core` (`preserve="all"`). Sin eso, el stripping de IL2CPP/WebGL puede quitar
+   los setters que Newtonsoft rellena por reflexión y `UnitCatalog.Bind` no arranca. El
+   player de WebGL fija `managedStrippingLevel` en Minimal (el valor por defecto de IL2CPP
+   en Unity 6.3, entero 4). No se sube de nivel: `link.xml` sigue siendo la red de seguridad
+   del contrato.
 
 ## Normas del repositorio
 
