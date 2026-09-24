@@ -38,7 +38,7 @@ namespace RiskAI
         // An independent harbour (authored maps) shows its own owner on a small patch of shore.
         const float PortPatchRadius = 4.5f;
 
-        public TerritoryAtlas(BattleSession session)
+        public TerritoryAtlas(BattleSession session,GeneratedResourceOwner owner)
         {
             Field = TerritoryField.Current;
             // Site indices of towns equal MapLayout.Towns indices: the field's city labels map directly.
@@ -70,19 +70,19 @@ namespace RiskAI
                 foreach (int port in patches) if ((Sites[port].Point - point).sqrMagnitude < patch) { site = port; break; }
                 pixels[i] = new Color32((byte)(site & 255), (byte)(site >> 8), (byte)(country + 1), 255);
             }
-            Regions = new Texture2D(Resolution, Resolution, TextureFormat.RGBA32, false, true)
-                { name = "Territory IDs and coast", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            Regions = owner.Track(new Texture2D(Resolution, Resolution, TextureFormat.RGBA32, false, true)
+                { name = "Territory IDs and coast", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp });
             Regions.SetPixels32(pixels); Regions.Apply(false, true);
             // Texels per unit of vote margin: the margin places a border inside its texel.
             float cellTexels = Field.CellSize / Bounds.z * Resolution / TerritoryField.MarginPerCell;
             var borders = EncodeBorders(pixels, margins, cityMargins, Resolution, Resolution, cellTexels, out var countryDistance);
-            Borders = new Texture2D(Resolution, Resolution, TextureFormat.RGBA32, false, true)
-                { name = "Territory border distances", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            Borders = owner.Track(new Texture2D(Resolution, Resolution, TextureFormat.RGBA32, false, true)
+                { name = "Territory border distances", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp });
             Borders.SetPixels32(borders); Borders.Apply(false, true);
             FindLabelAnchors(pixels, countryDistance, out LabelAnchors, out LabelRadii);
             palette = new Color32[Mathf.NextPowerOfTwo(Mathf.Max(2, Sites.Count))];
-            Palette = new Texture2D(palette.Length, 1, TextureFormat.RGBA32, false, false)
-                { name = "Live territory ownership", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            Palette = owner.Track(new Texture2D(palette.Length, 1, TextureFormat.RGBA32, false, false)
+                { name = "Live territory ownership", filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp });
             RefreshOwners();
         }
         public void RefreshOwners()
@@ -203,6 +203,5 @@ namespace RiskAI
                 radii[c] = best[c] * texel;
             }
         }
-        public void Dispose() { Object.Destroy(Regions); Object.Destroy(Palette); Object.Destroy(Borders); }
     }
 }

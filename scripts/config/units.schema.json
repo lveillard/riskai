@@ -1,0 +1,1320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "units.schema.json",
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "version",
+    "units"
+  ],
+  "properties": {
+    "version": {
+      "const": 1,
+      "type": "number"
+    },
+    "units": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/UnitConfig"
+      }
+    }
+  },
+  "description": "units.json root.",
+  "$defs": {
+    "UnitNames": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "es",
+        "en"
+      ],
+      "properties": {
+        "es": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "en": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "description": "Display text in both UI languages."
+    },
+    "UnitSource": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "rawcode"
+      ],
+      "properties": {
+        "rawcode": {
+          "anyOf": [
+            {
+              "pattern": "^[a-zA-Z][a-zA-Z0-9]{3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "base": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "description": "Provenance: raw Warcraft id, source profile and notes."
+    },
+    "UnitDomain": {
+      "anyOf": [
+        {
+          "const": "Land",
+          "type": "string"
+        },
+        {
+          "const": "Sea",
+          "type": "string"
+        },
+        {
+          "const": "Static",
+          "type": "string"
+        }
+      ],
+      "description": "Where the unit moves: NavMesh land, SeaNavigation water, or fixed."
+    },
+    "UnitBuilding": {
+      "anyOf": [
+        {
+          "const": "None",
+          "type": "string"
+        },
+        {
+          "const": "City",
+          "type": "string"
+        },
+        {
+          "const": "Harbor",
+          "type": "string"
+        }
+      ],
+      "description": "Building that produces the unit. The grid cell is computed by ProductionHotkeys."
+    },
+    "ArmorKind": {
+      "anyOf": [
+        {
+          "const": "Unarmored",
+          "type": "string"
+        },
+        {
+          "const": "Light",
+          "type": "string"
+        },
+        {
+          "const": "Medium",
+          "type": "string"
+        },
+        {
+          "const": "Heavy",
+          "type": "string"
+        },
+        {
+          "const": "Fortified",
+          "type": "string"
+        },
+        {
+          "const": "Normal",
+          "type": "string"
+        },
+        {
+          "const": "Hero",
+          "type": "string"
+        },
+        {
+          "const": "Divine",
+          "type": "string"
+        }
+      ],
+      "description": "Warcraft defense type."
+    },
+    "UnitMovement": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "speed",
+        "forestPenalty"
+      ],
+      "properties": {
+        "speed": {
+          "minimum": 0,
+          "description": "Base speed in Unity metres per second (native / 50).",
+          "type": "number"
+        },
+        "forestPenalty": {
+          "description": "Forest canopies slow this unit (land only).",
+          "type": "boolean"
+        },
+        "separation": {
+          "minimum": 0,
+          "description": "Minimum distance kept from other units of the same domain (ships).",
+          "type": "number"
+        }
+      },
+      "description": "Movement: base speed, forest drag on land, ship separation."
+    },
+    "UnitRadius": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "radius"
+      ],
+      "properties": {
+        "radius": {
+          "minimum": 0,
+          "description": "Radius in metres.",
+          "type": "number"
+        }
+      },
+      "description": "A circle radius in metres."
+    },
+    "UnitHull": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "length",
+        "beam",
+        "height",
+        "centerHeight",
+        "scale",
+        "warship",
+        "clearance"
+      ],
+      "properties": {
+        "length": {
+          "minimum": 0,
+          "description": "Collider length along the keel.",
+          "type": "number"
+        },
+        "beam": {
+          "minimum": 0,
+          "description": "Collider width.",
+          "type": "number"
+        },
+        "height": {
+          "minimum": 0,
+          "description": "Collider height.",
+          "type": "number"
+        },
+        "centerHeight": {
+          "description": "Collider centre height above the pivot.",
+          "type": "number"
+        },
+        "scale": {
+          "minimum": 0,
+          "description": "Model scale relative to the base silhouette.",
+          "type": "number"
+        },
+        "warship": {
+          "description": "Warship silhouette (false: transport silhouette).",
+          "type": "boolean"
+        },
+        "clearance": {
+          "minimum": 0,
+          "description": "Draft the sea grid keeps around this hull. Every hull shares one value.",
+          "type": "number"
+        }
+      },
+      "description": "Oriented ship hull: builds the NavalArt model scale and the target BoxCollider."
+    },
+    "UnitFootprint": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "size"
+      ],
+      "properties": {
+        "size": {
+          "minimum": 0,
+          "description": "Side length in metres.",
+          "type": "number"
+        }
+      },
+      "description": "Square building footprint (towers)."
+    },
+    "UnitStandingBounds": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "height",
+        "width"
+      ],
+      "properties": {
+        "height": {
+          "minimum": 0,
+          "description": "Height.",
+          "type": "number"
+        },
+        "width": {
+          "minimum": 0,
+          "description": "Width.",
+          "type": "number"
+        }
+      },
+      "description": "Source MDX Stand bounds (native / 50)."
+    },
+    "UnitVisual": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "height",
+        "radius",
+        "standingHeight",
+        "standingWidth"
+      ],
+      "properties": {
+        "height": {
+          "minimum": 0,
+          "description": "Picking/label height.",
+          "type": "number"
+        },
+        "radius": {
+          "minimum": 0,
+          "description": "Picking radius (half the standing width).",
+          "type": "number"
+        },
+        "standingHeight": {
+          "minimum": 0,
+          "description": "Rendered model height target; 0 keeps the model scale.",
+          "type": "number"
+        },
+        "standingWidth": {
+          "minimum": 0,
+          "description": "Rendered model width target; 0 keeps the model scale.",
+          "type": "number"
+        },
+        "mdx": {
+          "$ref": "#/$defs/UnitStandingBounds"
+        }
+      },
+      "description": "Picking and presentation sizes, independent from collision."
+    },
+    "WeaponSound": {
+      "anyOf": [
+        {
+          "const": "Blade",
+          "type": "string"
+        },
+        {
+          "const": "Lance",
+          "type": "string"
+        },
+        {
+          "const": "Bow",
+          "type": "string"
+        },
+        {
+          "const": "Firearm",
+          "type": "string"
+        },
+        {
+          "const": "Magic",
+          "type": "string"
+        },
+        {
+          "const": "Mortar",
+          "type": "string"
+        },
+        {
+          "const": "Cannon",
+          "type": "string"
+        }
+      ],
+      "description": "Which clip plays for this weapon. Presentation reads this field; it does not list unit kinds."
+    },
+    "AttackKind": {
+      "anyOf": [
+        {
+          "const": "Normal",
+          "type": "string"
+        },
+        {
+          "const": "Piercing",
+          "type": "string"
+        },
+        {
+          "const": "Siege",
+          "type": "string"
+        },
+        {
+          "const": "Magic",
+          "type": "string"
+        },
+        {
+          "const": "Chaos",
+          "type": "string"
+        },
+        {
+          "const": "Hero",
+          "type": "string"
+        },
+        {
+          "const": "Spells",
+          "type": "string"
+        }
+      ],
+      "description": "Warcraft attack type (damage table row)."
+    },
+    "RangeMeasure": {
+      "anyOf": [
+        {
+          "const": "BodyEdges",
+          "type": "string"
+        },
+        {
+          "const": "CenterToApproach",
+          "type": "string"
+        },
+        {
+          "const": "ToHull",
+          "type": "string"
+        },
+        {
+          "const": "CenterToCenter",
+          "type": "string"
+        }
+      ],
+      "description": "BodyEdges: 3D to the target approach point minus both body radii. CenterToApproach: 3D pivot to approach point. ToHull: XZ pivot to approach point (a ship hull). CenterToCenter: XZ pivot to pivot."
+    },
+    "WeaponReach": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "approachMargin",
+        "holdMargin"
+      ],
+      "properties": {
+        "approachMargin": {
+          "minimum": 0,
+          "description": "Path target inside the reach.",
+          "type": "number"
+        },
+        "holdMargin": {
+          "minimum": 0,
+          "description": "First blow inside the reach.",
+          "type": "number"
+        }
+      },
+      "description": "Melee hysteresis: first blow this far inside the reach; path this far inside it."
+    },
+    "WeaponDelivery": {
+      "anyOf": [
+        {
+          "const": "Instant",
+          "type": "string"
+        },
+        {
+          "const": "Missile",
+          "type": "string"
+        },
+        {
+          "const": "Artillery",
+          "type": "string"
+        },
+        {
+          "const": "MissileSplash",
+          "type": "string"
+        }
+      ],
+      "description": "How a hit travels: instant, homing missile, artillery arc, missile with splash."
+    },
+    "WeaponTargeting": {
+      "anyOf": [
+        {
+          "const": "Target",
+          "type": "string"
+        },
+        {
+          "const": "LaunchPoint",
+          "type": "string"
+        }
+      ],
+      "description": "Target follows the victim; LaunchPoint fixes the impact where it stood at release."
+    },
+    "WeaponFlightTime": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "min"
+      ],
+      "properties": {
+        "min": {
+          "minimum": 0,
+          "description": "Minimum flight time.",
+          "type": "number"
+        },
+        "max": {
+          "minimum": 0,
+          "description": "Maximum flight time.",
+          "type": "number"
+        }
+      },
+      "description": "Projectile flight time clamp in seconds; no max means unbounded."
+    },
+    "SplashRing": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "radius",
+        "factor"
+      ],
+      "properties": {
+        "radius": {
+          "minimum": 0,
+          "description": "Outer radius of this ring.",
+          "type": "number"
+        },
+        "factor": {
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Damage factor inside this ring.",
+          "type": "number"
+        }
+      },
+      "description": "Area-damage ring: full damage inside the first, then each factor."
+    },
+    "WeaponTargetMask": {
+      "anyOf": [
+        {
+          "const": "Air",
+          "type": "string"
+        },
+        {
+          "const": "Debris",
+          "type": "string"
+        },
+        {
+          "const": "Ground",
+          "type": "string"
+        },
+        {
+          "const": "Item",
+          "type": "string"
+        },
+        {
+          "const": "Structure",
+          "type": "string"
+        },
+        {
+          "const": "Ward",
+          "type": "string"
+        },
+        {
+          "const": "Self",
+          "type": "string"
+        },
+        {
+          "const": "Tree",
+          "type": "string"
+        },
+        {
+          "const": "Wall",
+          "type": "string"
+        },
+        {
+          "const": "Enemy",
+          "type": "string"
+        },
+        {
+          "const": "Neutral",
+          "type": "string"
+        },
+        {
+          "const": "Ally",
+          "type": "string"
+        },
+        {
+          "const": "Soldier",
+          "type": "string"
+        }
+      ],
+      "description": "Target classes and relations; \"Soldier\" is the local class used by the Mage."
+    },
+    "WeaponSplash": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "rings",
+        "mask"
+      ],
+      "properties": {
+        "rings": {
+          "minItems": 3,
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SplashRing"
+          }
+        },
+        "mask": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WeaponTargetMask"
+          }
+        }
+      },
+      "description": "Area damage by rings and the classes/relations it may hit."
+    },
+    "UnitWeapon": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "source",
+        "sound",
+        "attackType",
+        "base",
+        "dice",
+        "sides",
+        "cooldown",
+        "attackPoint",
+        "backswing",
+        "range",
+        "minRange",
+        "ranged",
+        "rangeMeasure",
+        "delivery",
+        "targeting",
+        "projectileSpeed",
+        "targetMask",
+        "tracer"
+      ],
+      "properties": {
+        "source": {
+          "description": "Weapon provenance id.",
+          "type": "string"
+        },
+        "sound": {
+          "$ref": "#/$defs/WeaponSound"
+        },
+        "attackType": {
+          "$ref": "#/$defs/AttackKind"
+        },
+        "base": {
+          "minimum": 0,
+          "description": "Base damage.",
+          "type": "number"
+        },
+        "dice": {
+          "minimum": 0,
+          "description": "Damage dice.",
+          "type": "integer"
+        },
+        "sides": {
+          "minimum": 0,
+          "description": "Sides per die.",
+          "type": "integer"
+        },
+        "cooldown": {
+          "minimum": 0,
+          "description": "Seconds between attacks.",
+          "type": "number"
+        },
+        "attackPoint": {
+          "minimum": 0,
+          "description": "Seconds from swing start to the hit/release.",
+          "type": "number"
+        },
+        "backswing": {
+          "minimum": 0,
+          "description": "Recovery seconds after the hit (presentation).",
+          "type": "number"
+        },
+        "range": {
+          "minimum": 0,
+          "description": "Weapon range in metres.",
+          "type": "number"
+        },
+        "minRange": {
+          "minimum": 0,
+          "description": "Minimum range; closer targets make the unit back off.",
+          "type": "number"
+        },
+        "ranged": {
+          "description": "Ranged: terrain line of sight, rear formation rows, projectile/tracer delivery.",
+          "type": "boolean"
+        },
+        "rangeMeasure": {
+          "$ref": "#/$defs/RangeMeasure"
+        },
+        "reach": {
+          "$ref": "#/$defs/WeaponReach"
+        },
+        "strikeTolerance": {
+          "minimum": 0,
+          "description": "Extra distance allowed when a scheduled strike resolves.",
+          "type": "number"
+        },
+        "delivery": {
+          "$ref": "#/$defs/WeaponDelivery"
+        },
+        "targeting": {
+          "$ref": "#/$defs/WeaponTargeting"
+        },
+        "projectileSpeed": {
+          "minimum": 0,
+          "description": "Projectile speed (0 for instant).",
+          "type": "number"
+        },
+        "flightTime": {
+          "$ref": "#/$defs/WeaponFlightTime"
+        },
+        "splash": {
+          "$ref": "#/$defs/WeaponSplash"
+        },
+        "targetMask": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WeaponTargetMask"
+          }
+        },
+        "tracer": {
+          "description": "Draw an instant tracer for an instant ranged hit.",
+          "type": "boolean"
+        }
+      },
+      "description": "One attack: damage roll, timing, reach and delivery."
+    },
+    "UnitHostWeapons": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "town",
+        "harbor"
+      ],
+      "properties": {
+        "town": {
+          "$ref": "#/$defs/UnitWeapon"
+        },
+        "harbor": {
+          "$ref": "#/$defs/UnitWeapon"
+        }
+      },
+      "description": "Tower weapon by host building."
+    },
+    "AcquisitionRadius": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "hostile",
+        "neutral",
+        "hold"
+      ],
+      "properties": {
+        "hostile": {
+          "minimum": 0,
+          "description": "Player-owned unit.",
+          "type": "number"
+        },
+        "neutral": {
+          "minimum": 0,
+          "description": "Neutral-owned unit.",
+          "type": "number"
+        },
+        "hold": {
+          "minimum": 0,
+          "description": "Unit holding position.",
+          "type": "number"
+        }
+      },
+      "description": "Automatic acquisition radius by the unit owner/order."
+    },
+    "AcquisitionLeash": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "hostile",
+        "neutral"
+      ],
+      "properties": {
+        "hostile": {
+          "minimum": 0,
+          "description": "Player-owned unit.",
+          "type": "number"
+        },
+        "neutral": {
+          "minimum": 0,
+          "description": "Neutral-owned unit.",
+          "type": "number"
+        }
+      },
+      "description": "Maximum pursuit distance from the anchor for an autonomous target."
+    },
+    "UnitVisibility": {
+      "anyOf": [
+        {
+          "const": "TerrainRay",
+          "type": "string"
+        },
+        {
+          "const": "NavMeshRay",
+          "type": "string"
+        }
+      ],
+      "description": "Line of sight: terrain ray between aim points, or a NavMesh ray to the approach point."
+    },
+    "AcquisitionTieBreak": {
+      "anyOf": [
+        {
+          "const": "LowerEntityId",
+          "type": "string"
+        },
+        {
+          "const": "FirstFound",
+          "type": "string"
+        }
+      ],
+      "description": "Equal scores: the lower entity id wins, or the first candidate found keeps it."
+    },
+    "UnitAcquisition": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "radius",
+        "queryPadding",
+        "pressureBias",
+        "allyAlertRadius",
+        "retaliate",
+        "measure",
+        "visibility",
+        "tieBreak"
+      ],
+      "properties": {
+        "radius": {
+          "$ref": "#/$defs/AcquisitionRadius"
+        },
+        "leash": {
+          "$ref": "#/$defs/AcquisitionLeash"
+        },
+        "queryPadding": {
+          "minimum": 0,
+          "description": "Extra spatial query radius (long hulls).",
+          "type": "number"
+        },
+        "pressureBias": {
+          "minimum": 0,
+          "description": "Score added per attacker already on a candidate (spreads melee).",
+          "type": "number"
+        },
+        "allyAlertRadius": {
+          "minimum": 0,
+          "description": "Idle allies this close join against an attacker (0: none).",
+          "type": "number"
+        },
+        "retaliate": {
+          "description": "Turns on the attacker when hit while free.",
+          "type": "boolean"
+        },
+        "measure": {
+          "$ref": "#/$defs/RangeMeasure"
+        },
+        "visibility": {
+          "$ref": "#/$defs/UnitVisibility"
+        },
+        "tieBreak": {
+          "$ref": "#/$defs/AcquisitionTieBreak"
+        }
+      },
+      "description": "Automatic target acquisition."
+    },
+    "UnitTransport": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "capacity",
+        "loadRadius",
+        "loadLimit"
+      ],
+      "properties": {
+        "capacity": {
+          "minimum": 0,
+          "description": "Cargo slots.",
+          "type": "integer"
+        },
+        "loadRadius": {
+          "minimum": 0,
+          "description": "Boarding and unloading radius.",
+          "type": "number"
+        },
+        "loadLimit": {
+          "minimum": 0,
+          "description": "Units selected per boarding order.",
+          "type": "integer"
+        }
+      },
+      "description": "Transport capability (A00V/Sch3)."
+    },
+    "UnitHeal": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "amount",
+        "range",
+        "cooldown",
+        "manaCost",
+        "rescan",
+        "maxVerticalDelta",
+        "organicOnly"
+      ],
+      "properties": {
+        "amount": {
+          "minimum": 0,
+          "description": "Health restored.",
+          "type": "number"
+        },
+        "range": {
+          "minimum": 0,
+          "description": "Heal range.",
+          "type": "number"
+        },
+        "cooldown": {
+          "minimum": 0,
+          "description": "Seconds between casts.",
+          "type": "number"
+        },
+        "manaCost": {
+          "minimum": 0,
+          "description": "Mana per cast.",
+          "type": "number"
+        },
+        "rescan": {
+          "minimum": 0,
+          "description": "Seconds between searches while nobody needs healing (local).",
+          "type": "number"
+        },
+        "maxVerticalDelta": {
+          "minimum": 0,
+          "description": "Maximum height difference to the target.",
+          "type": "number"
+        },
+        "organicOnly": {
+          "description": "Mechanical units are not healed.",
+          "type": "boolean"
+        }
+      },
+      "description": "Ahea autocast heal."
+    },
+    "UnitRoar": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "area",
+        "duration",
+        "manaCost",
+        "damageBonus",
+        "evaluation"
+      ],
+      "properties": {
+        "area": {
+          "minimum": 0,
+          "description": "Area radius.",
+          "type": "number"
+        },
+        "duration": {
+          "minimum": 0,
+          "description": "Buff duration.",
+          "type": "number"
+        },
+        "manaCost": {
+          "minimum": 0,
+          "description": "Mana per cast.",
+          "type": "number"
+        },
+        "damageBonus": {
+          "minimum": 0,
+          "description": "Rolled damage bonus fraction.",
+          "type": "number"
+        },
+        "evaluation": {
+          "minimum": 0,
+          "description": "Seconds between autocast evaluations (local).",
+          "type": "number"
+        }
+      },
+      "description": "Aroa roar autocast."
+    },
+    "UnitMana": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "max",
+        "initial",
+        "regen"
+      ],
+      "properties": {
+        "max": {
+          "minimum": 0,
+          "description": "Maximum mana.",
+          "type": "number"
+        },
+        "initial": {
+          "minimum": 0,
+          "description": "Mana on spawn.",
+          "type": "number"
+        },
+        "regen": {
+          "minimum": 0,
+          "description": "Mana per second.",
+          "type": "number"
+        }
+      },
+      "description": "Mana pool."
+    },
+    "UnitCapabilities": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "canCapture",
+        "canGarrison",
+        "canEmbark",
+        "harborGuard"
+      ],
+      "properties": {
+        "canCapture": {
+          "description": "Can claim a city/harbor circle.",
+          "type": "boolean"
+        },
+        "canGarrison": {
+          "description": "Can be bound as a city guardian.",
+          "type": "boolean"
+        },
+        "canEmbark": {
+          "description": "Can board a transport.",
+          "type": "boolean"
+        },
+        "harborGuard": {
+          "description": "Can be bound as a harbor guard ship.",
+          "type": "boolean"
+        },
+        "transport": {
+          "$ref": "#/$defs/UnitTransport"
+        },
+        "heal": {
+          "$ref": "#/$defs/UnitHeal"
+        },
+        "roar": {
+          "$ref": "#/$defs/UnitRoar"
+        },
+        "mana": {
+          "$ref": "#/$defs/UnitMana"
+        }
+      },
+      "description": "Typed capabilities; rules decide by these, never by type."
+    },
+    "PortraitSource": {
+      "anyOf": [
+        {
+          "const": "Model",
+          "type": "string"
+        },
+        {
+          "const": "Variant",
+          "type": "string"
+        }
+      ],
+      "description": "Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab."
+    },
+    "PortraitRefit": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "upperFraction",
+        "offsetX",
+        "offsetY",
+        "offsetZ"
+      ],
+      "properties": {
+        "upperFraction": {
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Fraction of the bounds kept when refitting.",
+          "type": "number"
+        },
+        "offsetX": {
+          "description": "Refit view offset X.",
+          "type": "number"
+        },
+        "offsetY": {
+          "description": "Refit view offset Y.",
+          "type": "number"
+        },
+        "offsetZ": {
+          "description": "Refit view offset Z.",
+          "type": "number"
+        }
+      },
+      "description": "Present only when the portrait camera is refit to the renderer bounds."
+    },
+    "PortraitCamera": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "orthographicSize",
+        "focusHeight"
+      ],
+      "properties": {
+        "orthographicSize": {
+          "exclusiveMinimum": 0,
+          "description": "Orthographic camera size.",
+          "type": "number"
+        },
+        "focusHeight": {
+          "description": "Focus height above the model root.",
+          "type": "number"
+        },
+        "landDefault": {
+          "description": "The one land camera used when a shared mesh has no portrait of its own. Exactly one unit sets this.",
+          "type": "boolean"
+        },
+        "refit": {
+          "$ref": "#/$defs/PortraitRefit"
+        }
+      },
+      "description": "v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name. The view offset is the land or sea constant in PortraitFraming. A hull camera is a sea unit."
+    },
+    "UnitSilhouette": {
+      "anyOf": [
+        {
+          "const": "Infantry",
+          "type": "string"
+        },
+        {
+          "const": "Ranged",
+          "type": "string"
+        },
+        {
+          "const": "Mounted",
+          "type": "string"
+        },
+        {
+          "const": "Siege",
+          "type": "string"
+        },
+        {
+          "const": "Marine",
+          "type": "string"
+        },
+        {
+          "const": "Hull",
+          "type": "string"
+        },
+        {
+          "const": "Structure",
+          "type": "string"
+        }
+      ],
+      "description": "Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal."
+    },
+    "UnitPresentation": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "model",
+        "portrait",
+        "portraitFallback",
+        "portraitSource",
+        "portraitCamera",
+        "attackClip",
+        "contact",
+        "silhouette"
+      ],
+      "properties": {
+        "model": {
+          "description": "Model prefab name.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "portrait": {
+          "description": "Preferred portrait resource name.",
+          "type": "string"
+        },
+        "portraitFallback": {
+          "description": "Portrait used until the preferred one is rendered.",
+          "type": "string"
+        },
+        "portraitSource": {
+          "$ref": "#/$defs/PortraitSource"
+        },
+        "portraitCamera": {
+          "$ref": "#/$defs/PortraitCamera"
+        },
+        "attackClip": {
+          "description": "Attack clip; null for procedural attacks.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contact": {
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalised clip time of the hit.",
+          "type": "number"
+        },
+        "silhouette": {
+          "$ref": "#/$defs/UnitSilhouette"
+        }
+      },
+      "description": "Model, portrait, attack clip and proxy shape."
+    },
+    "UnitConfig": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "names",
+        "source",
+        "adaptation",
+        "domain",
+        "cost",
+        "points",
+        "trainSeconds",
+        "level",
+        "building",
+        "maxHealth",
+        "armor",
+        "armorType",
+        "mechanical",
+        "canBeAttacked",
+        "movement",
+        "visual",
+        "weapons",
+        "capabilities",
+        "presentation"
+      ],
+      "properties": {
+        "id": {
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "description": "Stable id; never derived from array order.",
+          "type": "string"
+        },
+        "names": {
+          "$ref": "#/$defs/UnitNames"
+        },
+        "role": {
+          "$ref": "#/$defs/UnitNames"
+        },
+        "source": {
+          "$ref": "#/$defs/UnitSource"
+        },
+        "adaptation": {
+          "description": "Local deviations from the source.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "domain": {
+          "$ref": "#/$defs/UnitDomain"
+        },
+        "cost": {
+          "minimum": 0,
+          "description": "Gold cost.",
+          "type": "integer"
+        },
+        "points": {
+          "minimum": 0,
+          "description": "Point value (bounty, reinforcement).",
+          "type": "integer"
+        },
+        "trainSeconds": {
+          "minimum": 0,
+          "description": "Training time.",
+          "type": "number"
+        },
+        "level": {
+          "minimum": 1,
+          "description": "Required building level.",
+          "type": "integer"
+        },
+        "building": {
+          "$ref": "#/$defs/UnitBuilding"
+        },
+        "maxHealth": {
+          "exclusiveMinimum": 0,
+          "description": "Maximum health.",
+          "type": "number"
+        },
+        "armor": {
+          "description": "Armor value.",
+          "type": "number"
+        },
+        "armorType": {
+          "$ref": "#/$defs/ArmorKind"
+        },
+        "mechanical": {
+          "description": "Mechanical: not healed by organic-only heals.",
+          "type": "boolean"
+        },
+        "canBeAttacked": {
+          "description": "False for capturable posts: attack their guardian.",
+          "type": "boolean"
+        },
+        "movement": {
+          "$ref": "#/$defs/UnitMovement"
+        },
+        "collision": {
+          "$ref": "#/$defs/UnitRadius"
+        },
+        "body": {
+          "$ref": "#/$defs/UnitRadius"
+        },
+        "hull": {
+          "$ref": "#/$defs/UnitHull"
+        },
+        "footprint": {
+          "$ref": "#/$defs/UnitFootprint"
+        },
+        "visual": {
+          "$ref": "#/$defs/UnitVisual"
+        },
+        "spawnRadius": {
+          "minimum": 0,
+          "description": "Spawn/unload spacing radius.",
+          "type": "number"
+        },
+        "weapons": {
+          "maxItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnitWeapon"
+          }
+        },
+        "hostWeapons": {
+          "$ref": "#/$defs/UnitHostWeapons"
+        },
+        "acquisition": {
+          "$ref": "#/$defs/UnitAcquisition"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/UnitCapabilities"
+        },
+        "presentation": {
+          "$ref": "#/$defs/UnitPresentation"
+        }
+      },
+      "description": "One unit type."
+    }
+  }
+}

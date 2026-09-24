@@ -59,14 +59,14 @@ namespace RiskAI.Tests
             while(target.Health==healthBefore&&Time.realtimeSinceStartup<deadline)
             {
                 if(attacker.AttackPresentationProgress>=0&&
-                   attacker.AttackPresentationProgress<AttackPresentationTiming.ContactNormalizedTime(UnitKind.Footman))
+                   attacker.AttackPresentationProgress<UnitCatalog.Get(UnitKind.Footman).AttackContact)
                     Assert.That(target.Health,Is.EqualTo(healthBefore),"Health must remain unchanged during the visible windup.");
                 yield return null;
             }
 
             Assert.That(target.Health,Is.LessThan(healthBefore));
             Assert.That(attacker.AttackPresentationProgress,
-                Is.EqualTo(AttackPresentationTiming.ContactNormalizedTime(UnitKind.Footman)).Within(.001f),
+                Is.EqualTo(UnitCatalog.Get(UnitKind.Footman).AttackContact).Within(.001f),
                 "The damage tick must hold the presentation at the measured contact keyframe.");
             var animation=attacker.GetComponentInChildren<Animation>();
             Assert.That(animation,Is.Not.Null);
@@ -108,7 +108,7 @@ namespace RiskAI.Tests
             var state=animation["1H_Melee_Attack_Slice_Horizontal"];
             Assert.That(state.normalizedTime,Is.EqualTo(attacker.AttackPresentationProgress).Within(.001f),
                 "Re-entry samples the simulation-owned attack phase immediately.");
-            Assert.That(state.normalizedTime,Is.EqualTo(AttackPresentationTiming.ContactNormalizedTime(UnitKind.Footman)).Within(.001f));
+            Assert.That(state.normalizedTime,Is.EqualTo(UnitCatalog.Get(UnitKind.Footman).AttackContact).Within(.001f));
         }
 
         [UnityTest]

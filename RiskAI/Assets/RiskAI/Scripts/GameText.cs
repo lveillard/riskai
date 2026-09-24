@@ -74,18 +74,9 @@ namespace RiskAI
             ["ÓRDENES DE HOGUERA"]="CAMP ORDERS", ["BORRAR SALIDA"]="CLEAR RALLY",
             ["Mover"]="Move", ["Atacar"]="Attack", ["Patrullar"]="Patrol", ["Detener"]="Stop",
             ["Mantener"]="Hold", ["Centrar"]="Focus", ["Embarcar"]="Board", ["Desembarcar"]="Unload",
-            ["Puerto"]="Harbor", ["Espadachín"]="Swordsman", ["Ballestero"]="Crossbowman",
-            ["Caballero"]="Knight", ["Mago"]="Mage", ["Mortero"]="Mortar", ["Sanador"]="Healer",
-            ["Primera línea"]="Front line", ["Ataque a distancia"]="Ranged attack", ["Caballería pesada"]="Heavy cavalry",
-            ["Daño de área"]="Area damage", ["Área a larga distancia"]="Long-range area damage",
-            ["Sana aliados · 25 vida"]="Heals allies · 25 health", ["Pistolero de puerto"]="Harbor pistolier",
-            ["Caballería de puerto"]="Harbor cavalry", ["Caballería veterana de puerto"]="Veteran harbor cavalry",
-            ["Sana aliados · 25 vida · 5 maná"]="Heals allies · 25 health · 5 mana", ["maná"]="mana", ["rugido +25%"]="roar +25%",
-            ["Fusilero de élite"]="Elite rifleman", ["Fusilería de élite"]="Elite marksmanship", ["Rugidor"]="Roarer",
-            ["Rugido · +25% daño aliado"]="Roar · +25% allied damage", ["Caballería de mando · Rugido"]="Command cavalry · Roar",
-            ["Artillería"]="Artillery", ["Asedio de área a gran distancia"]="Long-range area siege", ["Tanque"]="Tank",
-            ["Blindado de asedio"]="Armoured siege vehicle", ["Buque de guerra"]="Warship", ["Acorazado"]="Battleship",
-            ["Transporte blindado"]="Armoured transport", ["Fragata"]="Frigate", ["· carga "]="· cargo ", [" daño · "]=" damage · ",
+            ["Puerto"]="Harbor",
+            ["maná"]="mana", ["rugido +25%"]="roar +25%",
+            ["· carga "]="· cargo ", [" daño · "]=" damage · ",
             ["Preparado"]="Ready", ["Moviendo"]="Moving", ["En combate"]="In combat", ["Patrullando"]="Patrolling",
             ["Siguiendo"]="Following", ["Manteniendo posición"]="Holding position", ["En puerto"]="In harbor",
             ["Navegando"]="Sailing", ["Neutral"]="Neutral", ["Tú"]="You",
@@ -142,6 +133,10 @@ namespace RiskAI
             Pair("Menú · ir a tu base · ir a tu puerto","Menu · go to your base · go to your harbor"),
             Pair("Mantener para ver la clasificación","Hold to show the ranking"), Pair("Escribir en el chat","Type in chat"),
             Pair("Cancelar la orden o deseleccionar","Cancel the order or deselect"), Pair("Mostrar vida y nombres","Show health and names"),
+            Pair("Con una tropa ocupada añade la orden: mover, atacar, capturar, seguir, embarcar y desembarcar. Sin Mayús, la orden sustituye la cola. El conmutador de la barra rápida hace lo mismo.",
+                "With a busy unit, add the order: move, attack, capture, follow, board and unload. Without Shift the order replaces the queue. The quick-bar switch does the same."),
+            Pair("Mantener junto a las flechas: la cámara se mueve más rápido","Hold with the arrows: the camera pans faster"),
+            Pair("Encolar","Queue"),
             Pair("Mover la cámara · restablecer la cámara","Pan the camera · reset the camera"),
             Pair("Flechas · Retroceso","Arrows · Backspace"), Pair("Espacio","Space"), Pair("Intro","Enter"),
             // Feedback overlay: log, toasts, alerts, chat and audio settings (BattleHud.Feedback).
@@ -175,6 +170,7 @@ namespace RiskAI
             Pair("Elige una playa o muelle de desembarco marcado.","Choose a marked beach or landing pier."),
             Pair("El transporte navega al desembarco marcado.","The transport is sailing to the marked landing."),
             Pair("No hay una ruta marítima hasta ese destino.","There is no sea route to that destination."),
+            Pair("El casco está bloqueado; se cancela el movimiento.","The hull is blocked; the move is cancelled."),
             Pair("Elige un puerto de desembarco.","Choose a landing harbor."), Pair("No hay una ruta marítima segura hasta esa playa.","There is no safe sea route to that beach."),
             Pair("No se puede embarcar con la partida detenida.","Units cannot board while the match is paused."),
             Pair("Esa unidad ya no está dentro del transporte.","That unit is no longer aboard the transport."),
@@ -230,7 +226,7 @@ namespace RiskAI
             Pair("Colinas Occidentales","Western Hills"), Pair("Ribera Alta","High Riverbank"), Pair("Altos Centrales","Central Highlands"),
             Pair("Frontera Oriental","Eastern Frontier"), Pair("Llanuras de Levante","Eastern Plains"), Pair("Puertas del Estuario","Estuary Gates"),
             Pair("Archipiélago Norte","Northern Archipelago"), Pair("Bahía de Poniente","Western Bay"), Pair("Estrecho del Norte","Northern Strait"),
-            Pair("Bahía del Noroeste","Northwest Bay"), Pair("Llano Central","Central Plain"),
+            Pair("Bahía del Noroeste","Northwest Bay"), Pair("Llano Central","Central Plain"), Pair("Meseta de los Pinos","Pine Plateau"),
             Pair("Bastión del Alba","Dawn Bastion"), Pair("Pinar Alto","High Pinewood"), Pair("Cordillera del Alba","Dawn Range"),
             Pair("Molino Viejo","Old Mill"), Pair("Valdeluz","Brightvale"), Pair("Encinar Central","Central Oakwood"),
             Pair("Cresta de Poniente","Western Ridge"), Pair("Dehesa Norte","Northern Pasture"), Pair("Puerta de Piedra","Stone Gate"),
@@ -286,16 +282,37 @@ namespace RiskAI
             Pair("Vigía","Watch"), Pair("Cresta","Ridge"), Pair("Loma","Hill"), Pair("Altos","Highlands"), Pair("Campos","Fields")
         };
 
-        static readonly KeyValuePair<string,string>[] ExactPhrases=BuildExactPhrases();
+        // Unit names and roles come only from units.json (UnitCatalog); they join the exact
+        // table when the catalog is bound, with the same longest-first substring order.
+        static KeyValuePair<string,string>[] exactPhrases;
+        static Dictionary<string,string> unitText;
+        static int unitTextRevision=-1;
+        static KeyValuePair<string,string>[] ExactPhrases{get{RefreshUnitText();return exactPhrases;}}
 
         static KeyValuePair<string,string> Pair(string source,string english) => new KeyValuePair<string,string>(source,english);
 
-        static KeyValuePair<string,string>[] BuildExactPhrases()
+        static void RefreshUnitText()
         {
-            var entries=new KeyValuePair<string,string>[Exact.Count];int index=0;
-            foreach(var entry in Exact)entries[index++]=entry;
-            Array.Sort(entries,(a,b)=>b.Key.Length.CompareTo(a.Key.Length));
-            return entries;
+            int revision=RiskAI.Core.UnitCatalog.IsBound?RiskAI.Core.UnitCatalog.Revision:-1;
+            if(exactPhrases!=null&&unitTextRevision==revision)return;
+            unitText=new Dictionary<string,string>();
+            if(revision>=0)
+                for(int i=0;i<RiskAI.Core.UnitCatalog.Count;i++)
+                {
+                    ref readonly var type=ref RiskAI.Core.UnitCatalog.At(i);
+                    if(type.Domain==RiskAI.Core.UnitDomain.Static)continue;
+                    AddUnitText(type.Name,type.NameEn);AddUnitText(type.Role,type.RoleEn);
+                }
+            var entries=new List<KeyValuePair<string,string>>(Exact.Count+unitText.Count);
+            foreach(var entry in Exact)entries.Add(entry);
+            foreach(var entry in unitText)entries.Add(entry);
+            entries.Sort((a,b)=>b.Key.Length.CompareTo(a.Key.Length));
+            exactPhrases=entries.ToArray();unitTextRevision=revision;
+        }
+        static void AddUnitText(string spanish,string english)
+        {
+            if(string.IsNullOrEmpty(spanish)||string.IsNullOrEmpty(english)||spanish==english||Exact.ContainsKey(spanish))return;
+            unitText[spanish]=english;
         }
 
         public static string Localize(string source) => IsSpanish ? source : EnglishOf(source);
@@ -305,6 +322,8 @@ namespace RiskAI
         {
             if(string.IsNullOrEmpty(source))return source;
             if(Exact.TryGetValue(source,out string exact))return exact;
+            RefreshUnitText();
+            if(unitText.TryGetValue(source,out exact))return exact;
             string result=source;
             for(int i=0;i<Phrases.Length;i++)if(result.IndexOf(Phrases[i].Key,StringComparison.Ordinal)>=0)result=result.Replace(Phrases[i].Key,Phrases[i].Value);
             for(int i=0;i<ExactPhrases.Length;i++)if(result.IndexOf(ExactPhrases[i].Key,StringComparison.Ordinal)>=0)result=result.Replace(ExactPhrases[i].Key,ExactPhrases[i].Value);

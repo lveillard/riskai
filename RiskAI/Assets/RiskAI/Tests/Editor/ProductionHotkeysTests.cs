@@ -32,8 +32,8 @@ namespace RiskAI.Tests
         {
             var layout=ProductionHotkeys.Layout(building);
             int expected=building==ProductionBuilding.City
-                ? ProductionCatalog.SettlementUnits.Count
-                : ProductionCatalog.HarborUnits.Count+ProductionCatalog.HarborShips.Count;
+                ? UnitCatalog.CityUnits.Count
+                : UnitCatalog.HarborUnits.Count+UnitCatalog.HarborShips.Count;
             Assert.That(layout.Count,Is.EqualTo(expected),"Every catalog product needs a cell.");
             CollectionAssert.AllItemsAreUnique(layout.Select(slot=>slot.Option));
             CollectionAssert.AllItemsAreUnique(layout.Select(slot=>(slot.Page,slot.Key)));
@@ -67,29 +67,29 @@ namespace RiskAI.Tests
         {
             var layout=ProductionHotkeys.Layout(ProductionBuilding.Harbor);
             int firstShip=layout.ToList().FindIndex(slot=>slot.Option.IsShip);
-            Assert.That(firstShip,Is.EqualTo(ProductionCatalog.HarborUnits.Count));
+            Assert.That(firstShip,Is.EqualTo(UnitCatalog.HarborUnits.Count));
             Assert.That(layout.Skip(firstShip).All(slot=>slot.Option.IsShip),Is.True);
             for(int i=1;i<firstShip;i++)Assert.That(layout[i].Option.Cost,Is.GreaterThanOrEqualTo(layout[i-1].Option.Cost));
             for(int i=firstShip+1;i<layout.Count;i++)Assert.That(layout[i].Option.Cost,Is.GreaterThanOrEqualTo(layout[i-1].Option.Cost));
             Assert.That(ProductionHotkeys.Hotkey(UnitKind.MarinePrivate),Is.EqualTo("Q"));
-            Assert.That(ProductionHotkeys.Hotkey(NavalUnitKind.Transport),Is.EqualTo(Grid[firstShip]),"The cheapest hull opens the naval block.");
-            foreach(var ship in ProductionCatalog.HarborShips)Assert.That(ProductionHotkeys.Hotkey(ship),Is.Not.Null);
+            Assert.That(ProductionHotkeys.Hotkey(UnitKind.Transport),Is.EqualTo(Grid[firstShip]),"The cheapest hull opens the naval block.");
+            foreach(var ship in UnitCatalog.HarborShips)Assert.That(ProductionHotkeys.Hotkey(ship),Is.Not.Null);
             Assert.That(ProductionHotkeys.Hotkey(UnitKind.Footman),Is.EqualTo("Q"),"Cards are independent: each building restarts at Q.");
         }
 
         [Test]
         public void NewProductsReceiveTheNextCellAndOverflowPages()
         {
-            var options=ProductionCatalog.SettlementUnits.Select(ProductionOption.Land).ToList();
+            var options=UnitCatalog.CityUnits.Select(ProductionOption.For).ToList();
             var layout=ProductionHotkeys.Arrange(options);
             Assert.That(layout.All(slot=>slot.Page==0),Is.True);
-            options.Add(ProductionOption.Naval(NavalUnitKind.Frigate));
+            options.Add(ProductionOption.For(UnitKind.Frigate));
             layout=ProductionHotkeys.Arrange(options);
             Assert.That(layout[layout.Length-1].Key,Is.EqualTo(Grid[options.Count-1]),"An appended kind gets the next free cell.");
             Assert.That(ProductionHotkeys.PageCount(options.Count),Is.EqualTo(1));
 
-            options.Add(ProductionOption.Naval(NavalUnitKind.Transport));
-            options.Add(ProductionOption.Naval(NavalUnitKind.Warship));
+            options.Add(ProductionOption.For(UnitKind.Transport));
+            options.Add(ProductionOption.For(UnitKind.Warship));
             layout=ProductionHotkeys.Arrange(options);
             Assert.That(ProductionHotkeys.PageCount(options.Count),Is.EqualTo(2));
             Assert.That(layout.Count(slot=>slot.Page==0),Is.EqualTo(ProductionHotkeys.CellsPerPage-1),"V is kept for the page switch.");

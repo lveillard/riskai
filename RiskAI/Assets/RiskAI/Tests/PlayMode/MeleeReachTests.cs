@@ -42,7 +42,7 @@ namespace RiskAI.Tests
         static float Gap(Soldier a, Soldier b)
         {
             var d = a.transform.position - b.transform.position; d.y = 0;
-            return d.magnitude - a.BodyRadius - b.BodyRadius;
+            return d.magnitude - a.Type.BodyRadius - b.Type.BodyRadius;
         }
 
         IEnumerator StrikeFromReach(UnitKind attackerKind, float minimumGap, float maximumGap)
@@ -105,14 +105,14 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator LancerKeepsItsReachGapWhileHitting()
         {
-            float reach = BattleRules.Range(UnitKind.Knight);
+            float reach = UnitCatalog.Get(UnitKind.Knight).Weapon.Range;
             yield return StrikeFromReach(UnitKind.Knight, 1f, reach + .56f);
         }
 
         [UnityTest]
         public IEnumerator FootmanStillClosesToSwordReach()
         {
-            yield return StrikeFromReach(UnitKind.Footman, -.05f, BattleRules.Range(UnitKind.Footman) + .56f);
+            yield return StrikeFromReach(UnitKind.Footman, -.05f, UnitCatalog.Get(UnitKind.Footman).Weapon.Range + .56f);
         }
 
         [Test]
@@ -120,8 +120,8 @@ namespace RiskAI.Tests
         {
             // At contact the lowered, thrust lance reaches the near surface of a footman
             // standing at the melee engagement distance (model space, calibrated below 1%).
-            float engage = Soldier.MeleeEngageDistance(UnitKind.Knight, SourceGeometry.AgentRadius(UnitKind.Footman));
-            float surface = engage - SourceGeometry.AgentRadius(UnitKind.Footman);
+            float engage = UnitRules.EngageDistance(UnitCatalog.Get(UnitKind.Knight), UnitCatalog.Get(UnitKind.Footman).BodyRadius);
+            float surface = engage - UnitCatalog.Get(UnitKind.Footman).CollisionRadius;
             var tip = MountedKnightView.LanceTip(1);
             Assert.That(tip.z, Is.InRange(surface - .15f, engage), "Contact lance tip reaches the target body.");
             Assert.That(MountedKnightView.LanceTip(0).z, Is.LessThan(surface), "At rest the lance stays short of the target.");

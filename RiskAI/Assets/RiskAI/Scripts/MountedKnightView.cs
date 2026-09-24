@@ -36,8 +36,7 @@ namespace RiskAI
         public static GameObject Create(Soldier owner) => CreateVariant(owner.transform,owner.Team,UnitKind.Knight,owner);
         public static GameObject Create(Transform parent,int teamId,Soldier owner=null) => CreateVariant(parent,teamId,UnitKind.Knight,owner);
 
-        public static bool IsMounted(UnitKind kind) =>
-            kind==UnitKind.Knight||kind==UnitKind.MarineMajor||kind==UnitKind.MarineGeneral||kind==UnitKind.ArmyGeneral;
+        public static bool IsMounted(UnitKind kind) => UnitCatalog.Get(kind).Silhouette == UnitSilhouette.Mounted;
 
         /// <summary>Builds the mounted model for <paramref name="kind"/>, calibrated to its standing height.</summary>
         public static GameObject CreateVariant(Transform parent,int teamId,UnitKind kind,Soldier owner=null)
@@ -103,7 +102,7 @@ namespace RiskAI
             float speed=soldier.Agent.velocity.magnitude;
             // Normalise by the unit's base speed, not the forest-scaled agent speed: a knight
             // slowed by trees must take shorter, slower strides instead of galloping in place.
-            float normalizedSpeed=Mathf.Clamp01(speed/Mathf.Max(.01f,BattleRules.Speed(soldier.Kind)));
+            float normalizedSpeed=Mathf.Clamp01(speed/Mathf.Max(.01f,UnitCatalog.Get(soldier.Kind).Speed));
             float targetGait=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.02f,.075f,normalizedSpeed));
             gaitBlend=Mathf.MoveTowards(gaitBlend,targetGait,Time.deltaTime*(targetGait>gaitBlend?6f:4f));
             float elapsed=lastGaitTime<0?0:Mathf.Max(0,battle.BattleTime-lastGaitTime);
@@ -114,7 +113,7 @@ namespace RiskAI
             float strideFrequency=Mathf.Max(1.4f,speed/strideLength*Mathf.PI*2)*gaitBlend;
             gaitPhase=Mathf.Repeat(gaitPhase+elapsed*strideFrequency,Mathf.PI*2);
             lanceThrust=AttackPresentationTiming.ContactPose(soldier.AttackPresentationProgress,
-                AttackPresentationTiming.ContactNormalizedTime(soldier.Kind));
+                UnitCatalog.Get(soldier.Kind).AttackContact);
             ApplyPose(gaitBlend,gaitPhase+soldier.EntityId*.41f,lanceThrust);
         }
 
@@ -190,10 +189,11 @@ namespace RiskAI
             pixels[(int)Cell.Cream]=new Color(.9f,.86f,.76f);pixels[(int)Cell.Navy]=new Color(.08f,.12f,.24f);
             pixels[(int)Cell.Hoof]=new Color(.16f,.14f,.12f);pixels[(int)Cell.Plume]=style.Plume;
             for(int i=(int)Cell.Count;i<16;i++)pixels[i]=Color.magenta;
+            // RISKAI_SHARED_ASSET: bounded mount palette cache keyed by kind x 16 teams (ResetCaches).
             var texture=new Texture2D(16,1,TextureFormat.RGBA32,false,false){name="Mounted palette "+style.Kind+" "+team,filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};
             texture.SetPixels(pixels);texture.Apply(false,true);
             var template=Resources.Load<Material>("RiskAILit");
-            var material=template?new Material(template):new Material(Shader.Find("Universal Render Pipeline/Lit")??Shader.Find("Standard"));
+            var material=template?new Material(template):new Material(Shader.Find("Universal Render Pipeline/Lit")??Shader.Find("Standard")); // RISKAI_SHARED_ASSET: bounded mount material cache keyed by kind x 16 teams.
             material.name="Mounted knight · "+style.Kind+" · team "+team;
             material.color=Color.white;material.mainTexture=texture;
             if(material.HasProperty("_BaseMap"))material.SetTexture("_BaseMap",texture);
@@ -426,6 +426,7 @@ namespace RiskAI
 
             public Mesh ToMesh(string name)
             {
+                // RISKAI_SHARED_ASSET: bounded per-kind mount meshes (meshCache, ResetCaches).
                 var mesh=new Mesh{name=name};mesh.SetVertices(v);mesh.SetNormals(n);mesh.SetUVs(0,uv);mesh.SetTriangles(t,0);mesh.RecalculateBounds();return mesh;
             }
             void Tri(int a,int b,int c,Vector3 outward)

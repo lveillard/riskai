@@ -25,7 +25,8 @@ namespace RiskAI
         {
             Current=this;cam=camera;tacticalMask=cam.cullingMask&~(1<<StrategicLayer);tacticalBackground=cam.backgroundColor;
             cam.cullingMask=tacticalMask;
-            Atlas=new TerritoryAtlas(session);
+            // The atlas textures and the two overlay materials are tracked on this view's owner.
+            Atlas=new TerritoryAtlas(session,GeneratedResourceOwner.For(transform));
             strategic=MakeMaterial(true);inspection=MakeMaterial(false);
             var root=new GameObject("Strategic terrain Â· render only");root.transform.SetParent(transform,false);
             inspectionRoot=new GameObject("Country inspection Â· terrain surface");inspectionRoot.transform.SetParent(transform,false);
@@ -56,7 +57,7 @@ namespace RiskAI
         }
         Material MakeMaterial(bool overview)
         {
-            var mat=new Material(Resources.Load<Material>("StrategicTerritory"));
+            var mat=GeneratedResourceOwner.For(transform).Track(new Material(Resources.Load<Material>("StrategicTerritory")));
             mat.SetTexture("_Regions",Atlas.Regions);mat.SetTexture("_Palette",Atlas.Palette);mat.SetTexture("_Borders",Atlas.Borders);mat.SetFloat("_BorderRange",TerritoryAtlas.BorderRange);mat.SetVector("_MapBounds",Atlas.Bounds);
             mat.SetFloat("_PaletteWidth",Atlas.Palette.width);mat.SetFloat("_Overview",overview?1:0);
             mat.SetFloat("_ZWrite",overview?1:0);mat.SetFloat("_SelectedCountry",-1);return mat;
@@ -96,8 +97,8 @@ namespace RiskAI
         }
         void OnDestroy()
         {
+            // Generated assets die with their owner; this only drops the static handle.
             if(Current==this)Current=null;
-            Atlas?.Dispose();if(strategic)Destroy(strategic);if(inspection)Destroy(inspection);
         }
     }
 }

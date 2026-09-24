@@ -189,7 +189,7 @@ namespace RiskAI.Tests
                             "The fixed source ownership gives team zero over 100 opening guards on both imported maps.");
                         Assert.That(battle.RecruitmentPopulation(0), Is.Zero);
                         var recruitTown = battle.Towns.First(town => town.State.Owner == 0 && !town.IsPort);
-                        battle.Economy.Gold[0] = BattleRules.Cost(UnitKind.Footman);
+                        battle.Economy.Gold[0] = UnitCatalog.Get(UnitKind.Footman).Cost;
                         Assert.That(recruitTown.Recruit(UnitKind.Footman, 0), Is.Null,
                             "A source map with more than 100 garrison guards must still accept mobile recruitment.");
                         Assert.That(recruitTown.QueueCount, Is.EqualTo(1));
@@ -198,7 +198,7 @@ namespace RiskAI.Tests
                         float minCityDistance = MinimumPairDistance(battle.Towns.Select(town => town.transform.position));
                         float minClaimDistance = MinimumPairDistance(battle.Towns.Select(town => town.ClaimPoint));
                         float minForeignTowerGuardDistance = MinimumForeignTowerGuardDistance(battle.Towns);
-                        Assert.That(minForeignTowerGuardDistance, Is.GreaterThan(UnitCatalog.CapturableTower.Range),
+                        Assert.That(minForeignTowerGuardDistance, Is.GreaterThan(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range),
                             "Own tower footprints must leave neighbouring source circles safe under any ownership seed.");
                         Debug.Log($"RISKAI_IMPORTED_MAP_OPENING: {test.Map} minCity={minCityDistance:F3} minClaim={minClaimDistance:F3} minForeignTowerGuard={minForeignTowerGuardDistance:F3}");
 

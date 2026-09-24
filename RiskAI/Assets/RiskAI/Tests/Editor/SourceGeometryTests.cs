@@ -8,26 +8,25 @@ namespace RiskAI.Tests
         [Test]
         public void VerifiedW3uAndSlkCollisionSizesUseSharedNativeConversion()
         {
-            Assert.That(SourceGeometry.NativePerUnity, Is.EqualTo(50f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Archer), Is.EqualTo(.32f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Medic), Is.EqualTo(.32f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.MarinePrivate), Is.EqualTo(.32f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.MarineMajor), Is.EqualTo(.64f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.MarineGeneral), Is.EqualTo(.64f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Knight), Is.EqualTo(.64f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Mortar), Is.EqualTo(.64f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.EliteRifleman), Is.EqualTo(.32f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Roarer), Is.EqualTo(.32f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.ArmyGeneral), Is.EqualTo(.72f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Artillery), Is.EqualTo(.96f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Tank), Is.EqualTo(.8f));
+            Assert.That(UnitCatalog.Get(UnitKind.Archer).CollisionRadius, Is.EqualTo(.32f));
+            Assert.That(UnitCatalog.Get(UnitKind.Medic).CollisionRadius, Is.EqualTo(.32f));
+            Assert.That(UnitCatalog.Get(UnitKind.MarinePrivate).CollisionRadius, Is.EqualTo(.32f));
+            Assert.That(UnitCatalog.Get(UnitKind.MarineMajor).CollisionRadius, Is.EqualTo(.64f));
+            Assert.That(UnitCatalog.Get(UnitKind.MarineGeneral).CollisionRadius, Is.EqualTo(.64f));
+            Assert.That(UnitCatalog.Get(UnitKind.Knight).CollisionRadius, Is.EqualTo(.64f));
+            Assert.That(UnitCatalog.Get(UnitKind.Mortar).CollisionRadius, Is.EqualTo(.64f));
+            Assert.That(UnitCatalog.Get(UnitKind.EliteRifleman).CollisionRadius, Is.EqualTo(.32f));
+            Assert.That(UnitCatalog.Get(UnitKind.Roarer).CollisionRadius, Is.EqualTo(.32f));
+            Assert.That(UnitCatalog.Get(UnitKind.ArmyGeneral).CollisionRadius, Is.EqualTo(.72f));
+            Assert.That(UnitCatalog.Get(UnitKind.Artillery).CollisionRadius, Is.EqualTo(.96f));
+            Assert.That(UnitCatalog.Get(UnitKind.Tank).CollisionRadius, Is.EqualTo(.8f));
         }
 
         [Test]
         public void LocallyAdaptedKindsDoNotClaimUnverifiedSourceCollisionSizes()
         {
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Footman), Is.EqualTo(.24f));
-            Assert.That(SourceGeometry.AgentRadius(UnitKind.Mage), Is.EqualTo(.24f));
+            Assert.That(UnitCatalog.Get(UnitKind.Footman).CollisionRadius, Is.EqualTo(.24f));
+            Assert.That(UnitCatalog.Get(UnitKind.Mage).CollisionRadius, Is.EqualTo(.24f));
         }
     }
 }

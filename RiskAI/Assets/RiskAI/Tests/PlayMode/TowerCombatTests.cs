@@ -77,8 +77,8 @@ namespace RiskAI.Tests
             battle.Spatial.Rebuild(battle.Targets,battle.Units);
             int shots=tower.ShotsFired;
 
-            Assert.That(UnitCatalog.CapturableTower.AttackPoint,Is.EqualTo(.3f));
-            Assert.That(UnitCatalog.CapturableTower.Backswing,Is.EqualTo(.3f));
+            Assert.That(UnitCatalog.Get(UnitKind.Tower).TownWeapon.AttackPoint,Is.EqualTo(.3f));
+            Assert.That(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Backswing,Is.EqualTo(.3f));
             tower.SimTick(0);
             Assert.That(tower.IsWindingUp,Is.True);
             Assert.That(tower.ShotsFired,Is.EqualTo(shots),"Scheduling an attack must not launch before the .3 second attack point.");
@@ -95,13 +95,13 @@ namespace RiskAI.Tests
             foreach(var candidate in battle.Towns.Where(t=>t.State.Owner==1&&t.Defender))
             {
                 var away=candidate.ClaimPoint-candidate.Defense.transform.position;away.y=0;away.Normalize();
-                var probe=candidate.ClaimPoint+away*(BattleRules.Range(UnitKind.Archer)+2);
+                var probe=candidate.ClaimPoint+away*(UnitCatalog.Get(UnitKind.Archer).Weapon.Range+2);
                 probe=MapLayout.Point(probe.x,probe.z);
                 if(!NavMesh.SamplePosition(probe,out var hit,.8f,NavMesh.AllAreas))continue;
-                var firing=candidate.ClaimPoint+away*(BattleRules.Range(UnitKind.Archer)-.15f);
+                var firing=candidate.ClaimPoint+away*(UnitCatalog.Get(UnitKind.Archer).Weapon.Range-.15f);
                 firing=MapLayout.Point(firing.x,firing.z);
                 if(!NavMesh.SamplePosition(firing,out var fireHit,.4f,NavMesh.AllAreas))continue;
-                if(Vector3.Distance(fireHit.position,candidate.ClaimPoint)>BattleRules.Range(UnitKind.Archer))continue;
+                if(Vector3.Distance(fireHit.position,candidate.ClaimPoint)>UnitCatalog.Get(UnitKind.Archer).Weapon.Range)continue;
                 var path=new NavMeshPath();
                 if(!NavMesh.CalculatePath(hit.position,fireHit.position,NavMesh.AllAreas,path)||path.status!=NavMeshPathStatus.PathComplete)continue;
                 town=candidate;start=hit.position;break;
@@ -155,9 +155,9 @@ namespace RiskAI.Tests
                 float angle=i*Mathf.PI/16;
                 var candidate=tower.transform.position+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*15f;
                 if(NavMesh.SamplePosition(candidate,out var hit,.8f,NavMesh.AllAreas) &&
-                   Vector2.Distance(new Vector2(hit.position.x,hit.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z))>UnitCatalog.CapturableTower.Range+.5f &&
-                   Vector3.Distance(hit.position,defender.transform.position)>BattleRules.Range(defender.Kind)+.5f &&
-                   Vector3.Distance(hit.position,defender.transform.position)<=BattleRules.Range(UnitKind.Mortar) &&
+                   Vector2.Distance(new Vector2(hit.position.x,hit.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z))>UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range+.5f &&
+                   Vector3.Distance(hit.position,defender.transform.position)>UnitCatalog.Get(defender.Kind).Weapon.Range+.5f &&
+                   Vector3.Distance(hit.position,defender.transform.position)<=UnitCatalog.Get(UnitKind.Mortar).Weapon.Range &&
                    !Physics.Linecast(hit.position+Vector3.up,defender.AimPoint,1<<MapLayout.TerrainLayer,QueryTriggerInteraction.Ignore))
                     mortar=battle.Spawn(0,UnitKind.Mortar,hit.position);
             }
@@ -171,7 +171,7 @@ namespace RiskAI.Tests
             float mortarHealth=mortar.Health,defenderHealth=defender.Health,towerHealth=tower.Health;
             int towerShots=tower.ShotsFired;
             yield return new WaitForSecondsRealtime(6f);
-            Assert.That(Vector2.Distance(new Vector2(mortar.transform.position.x,mortar.transform.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z)),Is.GreaterThan(UnitCatalog.CapturableTower.Range));
+            Assert.That(Vector2.Distance(new Vector2(mortar.transform.position.x,mortar.transform.position.z),new Vector2(tower.transform.position.x,tower.transform.position.z)),Is.GreaterThan(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range));
             Assert.That(tower.ShotsFired,Is.EqualTo(towerShots),"This fixture isolates the tower from the rifleman defender and uses its planar range.");
             Assert.That(defender.Health,Is.LessThan(defenderHealth),"The mortar must attack the living tower defender from outside tower range.");
             Assert.That(tower.Health,Is.EqualTo(towerHealth),"Permanent towers are not damageable targets.");
@@ -187,7 +187,7 @@ namespace RiskAI.Tests
             source.enabled=false; if(source.Agent)source.Agent.enabled=false;
             target.enabled=false; if(target.Agent)target.Agent.enabled=false;
             float before=target.Health;
-            var shell=SourceWeapons.For(UnitKind.Mortar,AttackKind.Siege);
+            var shell=UnitCatalog.Get(UnitKind.Mortar).Weapon;
             float flight=shell.FlightTime(Vector3.Distance(source.AimPoint,target.AimPoint));
             battle.Combat.FireWeapon(source.AimPoint,target.AimPoint,target,32,source.Team,source,shell);
             Object.Destroy(source.gameObject);

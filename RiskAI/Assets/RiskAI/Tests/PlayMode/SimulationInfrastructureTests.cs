@@ -46,7 +46,7 @@ namespace RiskAI.Tests
 
             float timeScale = Time.timeScale;
             float healthBefore = victim.Health;
-            battle.Combat.FireWeapon(mover.AimPoint, victim.AimPoint, victim, 24, mover.Team, mover, SourceWeapons.For(UnitKind.Archer, AttackKind.Piercing));
+            battle.Combat.FireWeapon(mover.AimPoint, victim.AimPoint, victim, 24, mover.Team, mover, UnitCatalog.Get(UnitKind.Archer).Weapon);
             int projectilesBeforePause = battle.Combat.ActiveProjectileCount;
             Vector3 positionBeforePause = mover.transform.position;
             long ticksBeforePause = battle.Clock.TickCount;
@@ -85,7 +85,7 @@ namespace RiskAI.Tests
             Vector3 spawnPoint = victim.transform.position;
             int opposingTeam = victim.Team == 0 ? 1 : 0;
 
-            battle.Combat.FireWeapon(spawnPoint + Vector3.forward * 30, victim.AimPoint, victim, 100, opposingTeam, null, SourceWeapons.For(UnitKind.Archer, AttackKind.Normal));
+            battle.Combat.FireWeapon(spawnPoint + Vector3.forward * 30, victim.AimPoint, victim, 100, opposingTeam, null, UnitCatalog.Get(UnitKind.Archer).Weapon);
             victim.TakeDamage(10000, opposingTeam);
             Assert.That(battle.FindTarget(oldEntityId), Is.Null);
 
@@ -147,7 +147,7 @@ namespace RiskAI.Tests
 
             float targetBefore = target.Health, bystanderBefore = bystander.Health;
             int projectileCount = battle.Combat.ActiveProjectileCount;
-            var crossbow = SourceWeapons.For(UnitKind.Archer, AttackKind.Piercing);
+            var crossbow = UnitCatalog.Get(UnitKind.Archer).Weapon;
             battle.Combat.BeginSimulationTick();
             int crossbowId = battle.Combat.FireWeapon(source.AimPoint, target.AimPoint, target, 20,
                 source.Team, source, crossbow);
@@ -163,7 +163,9 @@ namespace RiskAI.Tests
 
             targetBefore = target.Health;
             Vector3 from = target.AimPoint + Vector3.left * 44;
-            var magicMissile = new WeaponProfile(AttackKind.Magic, WeaponDelivery.Missile, 22);
+            var magicMissile = new WeaponProfile("test-magic-missile", AttackKind.Magic, 0, 0, 0, 0, 0, 0, 0, 0, true,
+                RangeMeasure.CenterToApproach, 0, 0, 0, WeaponDelivery.Missile, WeaponTargeting.Target, 22,
+                0, 0, 0, 0, 0, 0, float.PositiveInfinity, WeaponTargetMask.None, WeaponTargetMask.None, false, WeaponSound.Magic);
             int missileId = battle.Combat.FireWeapon(from, target.AimPoint, target, 20,
                 source.Team, source, magicMissile);
             Assert.That(battle.Combat.TryGetProjectile(missileId, out var missile), Is.True);
@@ -190,8 +192,8 @@ namespace RiskAI.Tests
             battle.Spatial.Rebuild(battle.Targets, battle.Units);
 
             Assert.That(Vector3.Distance(rifleman.transform.position, enemy.transform.position), Is.EqualTo(11).Within(.01f));
-            Assert.That(Vector3.Distance(rifleman.transform.position, enemy.transform.position), Is.GreaterThan(BattleRules.Range(UnitKind.Archer) + 2));
-            Assert.That(SourceWeapons.AcquisitionRange(UnitKind.Archer), Is.EqualTo(12));
+            Assert.That(Vector3.Distance(rifleman.transform.position, enemy.transform.position), Is.GreaterThan(UnitCatalog.Get(UnitKind.Archer).Weapon.Range + 2));
+            Assert.That(UnitCatalog.Get(UnitKind.Archer).Acquisition.RadiusHostile, Is.EqualTo(12));
             yield return new WaitForSecondsRealtime(.3f);
             Assert.That(rifleman.CurrentTarget, Is.SameAs(enemy));
             yield return new WaitForSecondsRealtime(.12f);
@@ -230,7 +232,7 @@ namespace RiskAI.Tests
             mortar.HoldPosition();
             battle.Spatial.Rebuild(battle.Targets, battle.Units);
 
-            Assert.That(Vector3.Distance(mortar.transform.position, enemy.transform.position), Is.GreaterThan(SourceWeapons.AcquisitionRange(UnitKind.Mortar)));
+            Assert.That(Vector3.Distance(mortar.transform.position, enemy.transform.position), Is.GreaterThan(UnitCatalog.Get(UnitKind.Mortar).Acquisition.RadiusHostile));
             yield return new WaitForSecondsRealtime(.3f);
             Assert.That(mortar.CurrentTarget, Is.Null);
         }
@@ -260,7 +262,7 @@ namespace RiskAI.Tests
                 unit.Agent.enabled = false;
             }
 
-            var weapon = SourceWeapons.For(UnitKind.Mortar, AttackKind.Siege);
+            var weapon = UnitCatalog.Get(UnitKind.Mortar).Weapon;
             Assert.That(weapon.Delivery, Is.EqualTo(WeaponDelivery.Artillery));
             Assert.That(weapon.Targeting, Is.EqualTo(WeaponTargeting.LaunchPoint));
             float originalBefore = original.Health, fullBefore = full.Health, mediumBefore = medium.Health;
@@ -305,7 +307,7 @@ namespace RiskAI.Tests
             }
 
             float enemyBefore = enemy.Health, neutralBefore = neutral.Health, allyBefore = ally.Health;
-            var weapon = SourceWeapons.For(NavalUnitKind.Frigate, AttackKind.Normal);
+            var weapon = UnitCatalog.Get(UnitKind.Frigate).Weapon;
             battle.Combat.FireWeapon(source.AimPoint, enemy.AimPoint, enemy, 40, source.Team, source, weapon);
             // Keep the identity registered while excluding the primary from the area-query fixture.
             // A missile-splash weapon must still apply its full primary hit.

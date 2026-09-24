@@ -81,7 +81,7 @@ namespace RiskAI
                 input.SelectHarbor(port);
                 Frame(input, port.Landing);
                 battle.TogglePause();
-                port.Buy(NavalUnitKind.Transport);
+                port.Buy(UnitKind.Transport);
                 port.RecruitLand(UnitKind.MarinePrivate);
                 port.SimTick(.05f);
                 battle.TogglePause();
@@ -90,7 +90,7 @@ namespace RiskAI
                 var previous = port.Defender;
                 port.ClaimZone.SetDefender(null);
                 if (previous) previous.gameObject.SetActive(false);
-                var guard = battle.Naval.Spawn(0, NavalUnitKind.Frigate, port.Berth);
+                var guard = battle.Naval.Spawn(0, UnitKind.Frigate, port.Berth);
                 if (!guard) { Debug.LogError("RISKAI_PRESENTATION_FAILED: guard spawn"); break; }
                 if (port.IsImportedPort) port.LinkedTown.SimTick(.05f);
                 port.SimTick(.05f);
@@ -150,16 +150,17 @@ namespace RiskAI
                 bool nearPort=false;
                 foreach(var port in battle.Naval.Harbors)if(Vector3.Distance(port.Berth,start)<40){nearPort=true;break;}
                 if(nearPort)continue;
-                var frigate=battle.Naval.Spawn(0,NavalUnitKind.Frigate,start);
-                var transport=battle.Naval.Spawn(0,NavalUnitKind.Transport,other);
+                var frigate=battle.Naval.Spawn(0,UnitKind.Frigate,start);
+                var transport=battle.Naval.Spawn(0,UnitKind.Transport,other);
                 if(!frigate||!transport)continue;
                 input.Clear();input.CameraRig.enabled=false;
                 var camera=Camera.main;var focus=start+new Vector3(5,0,9);
                 camera.orthographic=true;camera.orthographicSize=18;
                 camera.transform.position=focus+new Vector3(0,30,-24);
                 camera.transform.LookAt(focus);
-                frigate.MoveTo(end);transport.MoveTo(otherEnd);
                 battle.TogglePause();
+                battle.Commands.Submit(new UnitCommand(0, frigate.EntityId, UnitCommandKind.Move, end.x, end.y, end.z));
+                battle.Commands.Submit(new UnitCommand(0, transport.EntityId, UnitCommandKind.Move, otherEnd.x, otherEnd.y, otherEnd.z));
                 yield return Capture("ships-underway-0");
                 yield return Capture("ships-underway-1");
                 float distance=Vector3.Distance(frigate.transform.position,start);
@@ -201,16 +202,16 @@ namespace RiskAI
                     !NavMesh.Raycast(start, hit.position, out _, NavMesh.AllAreas)) { destination = hit.position; break; }
             }
             battle.TogglePause();
-            knight.TryMoveTo(destination, false, false);
+            battle.Commands.Submit(new UnitCommand(0, knight.EntityId, UnitCommandKind.Move, destination.x, destination.y, destination.z));
             int frames = 0, windups = 0, moving = 0;
             foreach (string stage in new[] { "trot", "pause", "attack" })
             {
-                if (stage == "pause") { knight.HoldPosition(); battle.TogglePause(); }
+                if (stage == "pause") { battle.Commands.Submit(new UnitCommand(0, knight.EntityId, UnitCommandKind.Hold)); battle.TogglePause(); }
                 if (stage == "attack")
                 {
                     battle.TogglePause();
                     var enemy = battle.Spawn(1, UnitKind.Knight, knight.transform.position + knight.transform.forward * 1.4f);
-                    if (enemy) knight.Attack(enemy);
+                    if (enemy) battle.Commands.Submit(new UnitCommand(0, knight.EntityId, UnitCommandKind.Attack, targetId: enemy.EntityId));
                 }
                 int count = stage == "pause" ? 8 : 32;
                 for (int i = 0; i < count; i++)
@@ -237,7 +238,7 @@ namespace RiskAI
             // Screen-overlay retained UI is outside this scene-presentation fixture.
             var target = RenderTexture.GetTemporary(1600, 900, 24, RenderTextureFormat.ARGB32);
             var previous = RenderTexture.active;
-            var readback = new Texture2D(1600, 900, TextureFormat.RGB24, false);
+            var readback = GeneratedResourceOwner.For(transform).Track(new Texture2D(1600, 900, TextureFormat.RGB24, false));
             try
             {
                 RenderPipeline.SubmitRenderRequest(Camera.main, new RenderPipeline.StandardRequest { destination = target });
@@ -250,7 +251,8 @@ namespace RiskAI
             {
                 RenderTexture.active = previous;
                 RenderTexture.ReleaseTemporary(target);
-                Destroy(readback);
+                // Scratch readback: released early through its owner, never by an ad-hoc Destroy.
+                GeneratedResourceOwner.For(transform).Release(readback);
             }
             Debug.Log("RISKAI_PRESENTATION_IMAGE: " + name);
         }

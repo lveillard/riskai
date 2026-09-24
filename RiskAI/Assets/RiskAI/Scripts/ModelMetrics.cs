@@ -13,7 +13,7 @@ namespace RiskAI
 
         public static void MatchStandingHeight(GameObject model,UnitKind kind)
         {
-            float target=VisualMetrics.StandingHeightTarget(kind);
+            float target=UnitCatalog.Get(kind).StandingHeight;
             if(target<=0)return;
             // Put every fresh instance into the same pose, including cache hits;
             // imported animation curves can also set the rig-root transform.
@@ -46,9 +46,9 @@ namespace RiskAI
                 if(renderer is SkinnedMeshRenderer skinned)
                 {
                     // Unity 6.3: true compensates transform scale; apply the renderer transform once below.
-                    var baked=new Mesh();skinned.BakeMesh(baked,true);
+                    // The scratch bake is tracked at creation and released with the model's owner.
+                    var baked=GeneratedResourceOwner.For(root).Track(new Mesh());skinned.BakeMesh(baked,true);
                     foreach(var point in baked.vertices)Include(root.InverseTransformPoint(skinned.transform.TransformPoint(point)));
-                    if(Application.isPlaying)Object.Destroy(baked);else Object.DestroyImmediate(baked);
                 }
                 else
                 {

@@ -87,6 +87,7 @@ namespace RiskAI
         static Mesh Build(string name,System.Action<Builder> fill)
         {
             var builder=new Builder();fill(builder);
+            // RISKAI_SHARED_ASSET: five shared tower meshes, each built once (static lazy fields).
             var mesh=new Mesh{name=name};
             mesh.SetVertices(builder.V);mesh.SetNormals(builder.N);mesh.SetTriangles(builder.T,0);mesh.RecalculateBounds();
             return mesh;

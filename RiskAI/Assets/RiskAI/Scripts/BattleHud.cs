@@ -63,7 +63,6 @@ namespace RiskAI
         {
             if (session) session.PlayerEliminated -= OnPlayerEliminated;
             DisposeFeedback();
-            if(minimapTexture)Destroy(minimapTexture);
             DisposeMinimapMarkers();
             UiViewport.ResetHudHeights();
         }
@@ -158,7 +157,7 @@ namespace RiskAI
                 bool selected = target is Soldier soldier && soldier.Selected || target is Ship ship && ship.Selected;
                 bool persistentShipHealth=target is Ship;
                 if (!target.IsAlive || !target.isActiveAndEnabled || (!persistentShipHealth && !controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth && !canopyOccludedUnits.Contains(target.EntityId))) continue;
-                float healthHeight=target is Soldier person?VisualMetrics.HeightFor(person.Kind)+.15f:4.8f;
+                float healthHeight=target is Soldier person?UnitCatalog.Get(person.Kind).VisualHeight+.15f:4.8f;
                 var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * healthHeight) / Scale;
                 float y = height - p.y; if(p.z<=0||y<TopPixels/Scale+16||y>bottom-8||UnderHudPanel(p.x,y))continue;
                 float size = target is Ship ? 56 : 28;
@@ -167,10 +166,10 @@ namespace RiskAI
         }
         // Relief plus the country borders of the shared territory field (the same source as
         // the strategic atlas, camp inspection and border posts).
-        static Texture2D BuildMinimapTexture()
+        static Texture2D BuildMinimapTexture(Transform root)
         {
             const int resolution=192;
-            var texture=new Texture2D(resolution,resolution,TextureFormat.RGBA32,false){filterMode=FilterMode.Point};
+            var texture=GeneratedResourceOwner.For(root).Track(new Texture2D(resolution,resolution,TextureFormat.RGBA32,false){filterMode=FilterMode.Point});
             var field=TerritoryField.Current;var colors=new Color[resolution*resolution];var countries=new int[colors.Length];
             for (int iz=0;iz<resolution;iz++) for (int ix=0;ix<resolution;ix++)
             {
@@ -190,7 +189,7 @@ namespace RiskAI
         void DrawMinimap(Rect r)
         {
             RtsSkin.Frame(new Rect(r.x-3,r.y-3,r.width+6,r.height+6));
-            if (!minimapTexture) minimapTexture=BuildMinimapTexture();
+            if (!minimapTexture) minimapTexture=BuildMinimapTexture(transform);
             GUI.DrawTexture(r,minimapTexture,ScaleMode.StretchToFill,false);
             DrawMinimapMarkers(r);
             Vector2[] corners={new Vector2(0,BottomPixels),new Vector2(Screen.width,BottomPixels),new Vector2(Screen.width,Screen.height-TopPixels),new Vector2(0,Screen.height-TopPixels)};

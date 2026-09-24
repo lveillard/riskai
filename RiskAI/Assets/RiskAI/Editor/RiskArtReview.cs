@@ -106,7 +106,7 @@ namespace RiskAI.Editor
                 {
                     var archer=archers[0];var anim=archer.GetComponentInChildren<Animation>();
                     Vector3 chest=archer.position+Vector3.up*.9f;
-                    foreach(var pose in new[]{("idle","Idle",.2f),("aim","2H_Ranged_Aiming",.5f),("fire","2H_Ranged_Shoot",AttackPresentationTiming.ContactNormalizedTime(UnitKind.Archer))})
+                    foreach(var pose in new[]{("idle","Idle",.2f),("aim","2H_Ranged_Aiming",.5f),("fire","2H_Ranged_Shoot",UnitCatalog.Get(UnitKind.Archer).AttackContact)})
                     {
                         if(anim&&anim[pose.Item2]){var clip=anim[pose.Item2].clip;clip.SampleAnimation(anim.gameObject,clip.length*pose.Item3);}
                         Render(camera,readback,directory,prefix+"-crossbow-"+pose.Item1+"-rts",chest,1.7f,55,0);
@@ -186,6 +186,14 @@ namespace RiskAI.Editor
                     foreach(var harbor in NavalWorld.Current.Harbors.Where(h=>h).Take(4))Render(camera,readback,directory,prefix+"-post-harbor"+(shot++),harbor.Landing,14,55,0);
                     shot=0;
                     foreach(var camp in UnityEngine.Object.FindObjectsByType<CountryCamp>(FindObjectsSortMode.InstanceID).Take(3))Render(camera,readback,directory,prefix+"-post-camp"+(shot++),camp.SpawnPoint,13,55,0);
+                    if(!MapLayout.IsImported)foreach(var ramp in new[]{new Vector2(-32,-4),new Vector2(34,-4),new Vector2(-7,12),new Vector2(55,13),new Vector2(10,30),new Vector2(30,20)})
+                        Render(camera,readback,directory,prefix+$"-post-ramp{ramp.x}_{ramp.y}",MapLayout.Point(ramp.x*MapLayout.Spacing,ramp.y*MapLayout.Spacing),26,55,0);
+                    if(MapLayout.IsImported)
+                    {
+                        // Island and coastal harbours: the sand around long piers.
+                        shot=0;
+                        foreach(var harbor in NavalWorld.Current.Harbors.Where(h=>h).Skip(4).Where((h,i)=>i%9==0).Take(5))Render(camera,readback,directory,prefix+"-post-pier"+(shot++),harbor.Landing,18,55,0);
+                    }
                     if(!MapLayout.IsImported)for(int island=0;island<MapLayout.Islands.Length;island++)
                     {
                         var c=MapLayout.Islands[island];
@@ -244,7 +252,7 @@ namespace RiskAI.Editor
         static void Unit(Transform parent,UnitKind kind,int team,Vector3 position,string name)
         {
             var holder=new GameObject(name).transform;holder.SetParent(parent,false);holder.localPosition=position;holder.localRotation=Quaternion.Euler(0,180,0);
-            var prefab=Resources.Load<GameObject>("Units/"+BattleRules.Model(kind));if(!prefab)return;
+            var prefab=Resources.Load<GameObject>("Units/"+UnitCatalog.Get(kind).Model);if(!prefab)return;
             var model=UnityEngine.Object.Instantiate(prefab,holder,false);
             model.transform.localScale*=VisualMetrics.UnitScale;
             ModelMetrics.MatchStandingHeight(model,kind);
@@ -284,11 +292,10 @@ namespace RiskAI.Editor
             var reach=new GameObject("Reach review").transform;reach.SetParent(root,false);reach.localPosition=new Vector3(0,0,-9);
             var rider=new GameObject("Reach knight").transform;rider.SetParent(reach,false);
             var riderView=Mounted(rider,UnitKind.Knight,0).GetComponent<MountedKnightView>();
-            var engage=typeof(Soldier).GetMethod("MeleeEngageDistance",BindingFlags.Public|BindingFlags.Static);
-            float centre=engage!=null?(float)engage.Invoke(null,new object[]{UnitKind.Knight,SourceGeometry.AgentRadius(UnitKind.Footman)}):BattleRules.Range(UnitKind.Knight)*.76f;
+            float centre=UnitRules.EngageDistance(UnitCatalog.Get(UnitKind.Knight),UnitCatalog.Get(UnitKind.Footman).BodyRadius);
             Unit(reach,UnitKind.Footman,5,new Vector3(0,0,centre),"Reach target");
             reach.Find("Reach target").localRotation=Quaternion.Euler(0,180,0);
-            Debug.Log($"RISKAI_ART_REACH: centre={centre:F2} gap={centre-SourceGeometry.AgentRadius(UnitKind.Knight)-SourceGeometry.AgentRadius(UnitKind.Footman):F2}");
+            Debug.Log($"RISKAI_ART_REACH: centre={centre:F2} gap={centre-UnitCatalog.Get(UnitKind.Knight).CollisionRadius-UnitCatalog.Get(UnitKind.Footman).CollisionRadius:F2}");
             if(poser!=null&&riderView)poser.Invoke(riderView,new object[]{0f,0f,1f});
             Render(camera,readback,directory,prefix+"-reach-contact-side",reach.position+new Vector3(0,1.3f,centre*.5f),2.6f,8,90);
             Render(camera,readback,directory,prefix+"-reach-contact-rts",reach.position+new Vector3(0,1f,centre*.5f),3.6f,55,0);

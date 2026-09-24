@@ -185,7 +185,8 @@ namespace RiskAI
         public static void SetEffectsVolume(float value) { EffectsVolume = Mathf.Clamp01(value); SavePreferences(); }
         public static void SetMuted(bool value) { Muted = value; SavePreferences(); if (Current) Current.ApplyListenerVolume(); }
 
-        void ApplyListenerVolume() => AudioListener.volume = Muted || !focused ? 0 : MasterVolume;
+        // Batch runs (automated tests, builds) keep every audio decision but never make noise.
+        void ApplyListenerVolume() => AudioListener.volume = Muted || !focused || Application.isBatchMode ? 0 : MasterVolume;
 
         void OnApplicationFocus(bool hasFocus) { focused = hasFocus; ApplyListenerVolume(); }
         void OnApplicationPause(bool paused) { focused = !paused; ApplyListenerVolume(); }
@@ -268,24 +269,28 @@ namespace RiskAI
 
         // ---------------------------------------------------------------- world events
 
-        static bool Mounted(UnitKind kind) => kind == UnitKind.Knight || kind == UnitKind.MarineMajor || kind == UnitKind.MarineGeneral || kind == UnitKind.ArmyGeneral;
-        static bool Firearm(UnitKind kind) => kind == UnitKind.MarinePrivate || kind == UnitKind.EliteRifleman;
-
         void OnFired(CombatTarget source, Vector3 from, Vector3 to, AttackKind attack)
         {
-            if (source is Ship) At(SfxId.ShipCannon, from);
-            else if (attack == AttackKind.Siege) At(SfxId.MortarFire, from);
-            else if (attack == AttackKind.Magic) At(SfxId.MagicBolt, from);
-            else if (source is Soldier soldier && Firearm(soldier.Kind)) At(SfxId.ShotRifle, from);
-            else At(SfxId.ShotCrossbow, from);
+            switch (source ? source.AttackWeapon.Sound : WeaponSound.Bow)
+            {
+                case WeaponSound.Firearm: At(SfxId.ShotRifle, from); break;
+                case WeaponSound.Magic: At(SfxId.MagicBolt, from); break;
+                case WeaponSound.Mortar: At(SfxId.MortarFire, from); break;
+                case WeaponSound.Cannon: At(SfxId.ShipCannon, from); break;
+                case WeaponSound.Bow: At(SfxId.ShotCrossbow, from); break;
+            }
         }
 
         void OnImpact(Vector3 point, AttackKind attack, float radius, ImpactKind kind, CombatTarget source)
         {
-            if (kind == ImpactKind.Melee) At(source is Soldier soldier && Mounted(soldier.Kind) ? SfxId.HitLance : SfxId.HitSword, point);
-            else if (attack == AttackKind.Siege) At(SfxId.Explosion, point);
-            else if (attack == AttackKind.Magic) At(SfxId.MagicImpact, point);
-            else At(SfxId.HitArrow, point, .8f);
+            switch (source ? source.AttackWeapon.Sound : WeaponSound.Blade)
+            {
+                case WeaponSound.Lance: At(SfxId.HitLance, point); break;
+                case WeaponSound.Blade: At(SfxId.HitSword, point); break;
+                case WeaponSound.Mortar: At(SfxId.Explosion, point); break;
+                case WeaponSound.Magic: At(SfxId.MagicImpact, point); break;
+                default: At(SfxId.HitArrow, point, .8f); break;
+            }
         }
 
         void OnDied(Soldier unit) { if (unit) At(SfxId.Death, unit.transform.position); }

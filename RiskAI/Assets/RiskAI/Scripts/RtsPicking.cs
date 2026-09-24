@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using RiskAI.Core;
 
 namespace RiskAI
 {
@@ -43,9 +44,9 @@ namespace RiskAI
             // missed clicks on the bow or stern, which then became a plain move
             // order that sailed the fleet into its target.
             if (target is Ship ship && ship.TryGetHullBounds(out var hull)) return ScreenRect(camera, hull);
-            float height = target is Ship ? 4.8f : target is DefenseTower ? VisualMetrics.TowerHeight : target is Soldier soldier?VisualMetrics.HeightFor(soldier.Kind):VisualMetrics.UnitHeight;
+            float height = target.Type.VisualHeight;
             if(target is DefenseTower tower && BuildingVariants.IsIntegrated(tower.VisualVariant))height=VisualMetrics.IntegratedTowerTopHeight;
-            float radius = target is Ship ? 1.8f : target is DefenseTower ? VisualMetrics.TowerRadius : target is Soldier unit?VisualMetrics.RadiusFor(unit.Kind):VisualMetrics.UnitRadius;
+            float radius = target.Type.VisualRadius;
             Vector3 foot = camera.WorldToScreenPoint(target.transform.position);
             Vector3 head = camera.WorldToScreenPoint(target.transform.position + Vector3.up * height);
             if (head.z <= 0) return Rect.zero;
@@ -63,7 +64,7 @@ namespace RiskAI
             }
             foreach (var town in battle.Towns)
             {
-                if (!town.Selected && !(Keyboard.current != null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed))) continue;
+                if (!town.Selected && (ChatInput.IsTyping || Keyboard.current == null || (!Keyboard.current.leftAltKey.isPressed && !Keyboard.current.rightAltKey.isPressed))) continue;
                 Vector3 label = camera.WorldToScreenPoint(town.transform.position + Vector3.up * BuildingSelection.LabelHeight(town));
                 float s=BattleHud.Scale;
                 // The name plate sits just above its anchor (BattleHud.DrawWorld).

@@ -56,7 +56,7 @@ namespace RiskAI
                 if(ObscuresBuilding(point,treeHeight,clearings))continue;
                 BiomeVegetation.Tree(trees.transform,point,treeHeight,treeSeed);
             }
-            StaticBatchingUtility.Combine(trees);
+            GeneratedResourceOwner.CombineStaticBatches(trees.transform);
             CliffDetails.Create(root);
             for(int i=0;i<58;i++)
             {
@@ -149,7 +149,7 @@ namespace RiskAI
                 if(bed<.08f||bed>.6f||!MapLayout.IsLand(x,z)||NearClearing(x,z,clearings,3f))continue;
                 WorldArt.Rock(root.transform,new Vector3(x,MapLayout.Height(x,z)-.05f,z),.3f+(float)random.NextDouble()*.75f,seed++);
             }
-            StaticBatchingUtility.Combine(root);
+            GeneratedResourceOwner.CombineStaticBatches(root.transform);
             // Olive groves planted in loose rows, each at its own angle, in open secano.
             var groves=new GameObject("Secano olive groves");groves.transform.SetParent(parent,false);
             for(int attempt=0,planted=0;attempt<60&&planted<9;attempt++)
@@ -169,7 +169,7 @@ namespace RiskAI
                     BiomeVegetation.SecanoOlive(groves.transform,point,h,seed++);
                 }
             }
-            StaticBatchingUtility.Combine(groves);
+            GeneratedResourceOwner.CombineStaticBatches(groves.transform);
         }
         static void CreateExpandedCordilleraDetails(Transform parent,List<Vector4> clearings)
         {
@@ -190,7 +190,7 @@ namespace RiskAI
                     WorldArt.Rock(root.transform,new Vector3(x,y-.05f,z),.55f+(float)random.NextDouble()*1.45f,seed++);
                 }
             }
-            StaticBatchingUtility.Combine(root);
+            GeneratedResourceOwner.CombineStaticBatches(root.transform);
         }
         static bool NearClearing(float x,float z,List<Vector4> clearings,float margin)
         {
@@ -295,7 +295,7 @@ namespace RiskAI
                 int treeSeed=(int)(x*17+z*31)&32767;
                 BiomeVegetation.Tree(root.transform,point,treeHeight,treeSeed);
             }
-            StaticBatchingUtility.Combine(root);
+            GeneratedResourceOwner.CombineStaticBatches(root.transform);
         }
         static List<Vector4> BuildingClearings()
         {

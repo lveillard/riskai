@@ -98,8 +98,9 @@ namespace RiskAI
         {
             Unsubscribe();
             if (Current == this) Current = null;
+            // Pooled decals and rings live under fxRoot; destroying the pool root is their
+            // lifecycle (they are scene objects), the disc mesh dies with its owner.
             if (fxRoot) Destroy(fxRoot.gameObject);
-            if (disc) Destroy(disc);
         }
 
         public static void SetShakeEnabled(bool value)
@@ -247,7 +248,7 @@ namespace RiskAI
         {
             var feel = Current;
             if (!feel || !target || !feel.Active) return;
-            float radius = target is Ship ? 2.6f : target is DefenseTower ? 1.4f : target is Soldier soldier ? Mathf.Max(.55f, SourceGeometry.AgentRadius(soldier.Kind) * 1.35f) : 1f;
+            float radius = target is Ship ? 2.6f : target is DefenseTower ? 1.4f : target is Soldier soldier ? Mathf.Max(.55f, UnitCatalog.Get(soldier.Kind).CollisionRadius * 1.35f) : 1f;
             feel.RentRing(target.transform.position, new Color(1f, .22f, .16f), radius, radius, .55f, target, true, .09f);
         }
 
@@ -333,7 +334,7 @@ namespace RiskAI
                 colors[i + 1] = new Color(1, 1, 1, 0);
                 triangles[i * 3] = 0; triangles[i * 3 + 1] = 1 + (i + 1) % segments; triangles[i * 3 + 2] = 1 + i;
             }
-            disc = new Mesh { name = "Soft FX disc" };
+            disc = GeneratedResourceOwner.For(transform).Track(new Mesh { name = "Soft FX disc" });
             disc.vertices = vertices; disc.colors = colors; disc.triangles = triangles; disc.RecalculateBounds();
             return disc;
         }

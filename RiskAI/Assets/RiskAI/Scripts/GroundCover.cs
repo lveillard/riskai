@@ -26,8 +26,6 @@ namespace RiskAI
             new Color(.34f, .34f, .14f)
         };
 
-        readonly List<Mesh> meshes = new List<Mesh>();
-
         sealed class CellMesh
         {
             public readonly List<Vector3> Vertices = new List<Vector3>(256);
@@ -82,7 +80,7 @@ namespace RiskAI
                 var source = pair.Value;
                 if (source.Vertices.Count == 0) continue;
                 int material = (int)(pair.Key & 7L);
-                var mesh = new Mesh { name = "Original meadow cover mesh" };
+                var mesh = GeneratedResourceOwner.For(transform).Track(new Mesh { name = "Original meadow cover mesh" });
                 if (source.Vertices.Count > ushort.MaxValue) mesh.indexFormat = IndexFormat.UInt32;
                 mesh.SetVertices(source.Vertices);
                 mesh.SetTriangles(source.Triangles, 0);
@@ -90,7 +88,6 @@ namespace RiskAI
                 for(int i=0;i<normals.Length;i++)normals[i]=Vector3.up;
                 mesh.normals=normals;
                 mesh.RecalculateBounds();
-                meshes.Add(mesh);
 
                 var go = new GameObject("Meadow cover " + material);
                 go.transform.SetParent(transform, false);
@@ -193,10 +190,5 @@ namespace RiskAI
             mesh.Triangles.Add(index + 3); mesh.Triangles.Add(index + 2); mesh.Triangles.Add(index);
         }
 
-        void OnDestroy()
-        {
-            foreach (var mesh in meshes) if (mesh) Destroy(mesh);
-            meshes.Clear();
-        }
     }
 }

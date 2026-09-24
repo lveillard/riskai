@@ -58,12 +58,13 @@ namespace RiskAI.Tests
             Assert.That(AiUnitAnalysis.For(UnitKind.Medic).Role,Is.EqualTo(AiUnitRole.Healer));
             Assert.That(AiUnitAnalysis.For(UnitKind.Knight).Value,Is.GreaterThan(AiUnitAnalysis.For(UnitKind.Footman).Value));
             // Every catalog entry, including kinds appended later, has usable traits.
-            for(int i=0;i<UnitCatalog.Land.Length;i++)
+            foreach(UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
-                var traits=AiUnitAnalysis.For((UnitKind)i);
-                Assert.That(traits.Cost,Is.GreaterThanOrEqualTo(1),((UnitKind)i).ToString());
-                Assert.That(traits.Value,Is.GreaterThan(0),((UnitKind)i).ToString());
-                Assert.That(traits.Ranged,Is.EqualTo(UnitCatalog.Land[i].Ranged));
+                if(UnitCatalog.Get(kind).Domain!=UnitDomain.Land)continue;
+                var traits=AiUnitAnalysis.For(kind);
+                Assert.That(traits.Cost,Is.GreaterThanOrEqualTo(1),kind.ToString());
+                Assert.That(traits.Value,Is.GreaterThan(0),kind.ToString());
+                Assert.That(traits.Ranged,Is.EqualTo(UnitCatalog.Get(kind).Weapon.Ranged));
             }
             var unknown=AiUnitAnalysis.For((UnitKind)999);
             Assert.That(unknown.Role,Is.EqualTo(AiUnitRole.Frontline));
@@ -76,7 +77,7 @@ namespace RiskAI.Tests
             var census=new AiArmyCensus();
             for(int step=0;step<3;step++)
             {
-                var decision=AiCompositionPlanner.Choose(ProductionCatalog.SettlementUnits,census,null,4-step,4,1,false,1,true);
+                var decision=AiCompositionPlanner.Choose(UnitCatalog.CityUnits,census,null,4-step,4,1,false,1,true);
                 Assert.That(decision.Buy,Is.True);Assert.That(decision.Save,Is.False);
                 var traits=AiUnitAnalysis.For(decision.Kind);
                 Assert.That(traits.Cost,Is.EqualTo(1),"Four starting gold must turn into cheap mobile units, not one specialist.");
@@ -85,8 +86,8 @@ namespace RiskAI.Tests
             }
             Assert.That(census.Count(AiUnitRole.Frontline),Is.GreaterThan(0),"The opening mixes a frontline in.");
             Assert.That(census.Count(AiUnitRole.Ranged),Is.GreaterThan(0));
-            var marine=AiCompositionPlanner.Choose(ProductionCatalog.HarborUnits,new AiArmyCensus(),null,4,4,1,false,1,true);
-            Assert.That(marine.Buy,Is.True);Assert.That(ProductionCatalog.AllowsHarborUnit(marine.Kind),Is.True);
+            var marine=AiCompositionPlanner.Choose(UnitCatalog.HarborUnits,new AiArmyCensus(),null,4,4,1,false,1,true);
+            Assert.That(marine.Buy,Is.True);Assert.That((UnitCatalog.Get(marine.Kind).Building==UnitBuilding.Harbor),Is.True);
         }
 
         [Test]
@@ -94,15 +95,15 @@ namespace RiskAI.Tests
         {
             // Balanced frontline/ranged core, no area damage yet: the next desired role is Splash.
             var census=Census(9,11,0,2);
-            var saving=AiCompositionPlanner.Choose(ProductionCatalog.SettlementUnits,census,null,1,12,1,false,1,true);
+            var saving=AiCompositionPlanner.Choose(UnitCatalog.CityUnits,census,null,1,12,1,false,1,true);
             Assert.That(saving.Save,Is.True,"An affordable-next-round specialist is worth saving for.");
             Assert.That(saving.Buy,Is.False);
-            var urgent=AiCompositionPlanner.Choose(ProductionCatalog.SettlementUnits,census,null,1,12,1,true,1,true);
+            var urgent=AiCompositionPlanner.Choose(UnitCatalog.CityUnits,census,null,1,12,1,true,1,true);
             Assert.That(urgent.Buy,Is.True,"A threatened commander spends immediately.");
             Assert.That(AiUnitAnalysis.For(urgent.Kind).Cost,Is.LessThanOrEqualTo(1));
-            var rich=AiCompositionPlanner.Choose(ProductionCatalog.SettlementUnits,census,null,40,12,1,false,1,true);
+            var rich=AiCompositionPlanner.Choose(UnitCatalog.CityUnits,census,null,40,12,1,false,1,true);
             Assert.That(rich.Buy,Is.True);Assert.That(AiUnitAnalysis.For(rich.Kind).Role,Is.EqualTo(AiUnitRole.Splash));
-            var noSaving=AiCompositionPlanner.Choose(ProductionCatalog.SettlementUnits,census,null,1,0,1,false,1,true);
+            var noSaving=AiCompositionPlanner.Choose(UnitCatalog.CityUnits,census,null,1,0,1,false,1,true);
             Assert.That(noSaving.Save,Is.False,"Never save for a unit the next income round cannot pay for.");
         }
 
@@ -110,7 +111,7 @@ namespace RiskAI.Tests
         public void LargeArmyWithoutHealersRecruitsAHealer()
         {
             var census=Census(9,9,3,0);
-            var decision=AiCompositionPlanner.Choose(ProductionCatalog.SettlementUnits,census,null,50,20,1,false,1,true);
+            var decision=AiCompositionPlanner.Choose(UnitCatalog.CityUnits,census,null,50,20,1,false,1,true);
             Assert.That(decision.Buy,Is.True);
             Assert.That(AiUnitAnalysis.For(decision.Kind).Healer,Is.True);
             Assert.That(AiCompositionPlanner.TargetShare(AiUnitRole.Healer,3,null),Is.Zero,"No healers in a tiny opening army.");

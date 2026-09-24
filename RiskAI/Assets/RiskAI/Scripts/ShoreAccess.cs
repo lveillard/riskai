@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using RiskAI.Core;
 
 namespace RiskAI
 {
@@ -18,10 +19,9 @@ namespace RiskAI
         public static void BakeSurface(Transform root)
         {
             EnsureSurface();
-            var texture=new Texture2D(surfaceWidth,surfaceHeight,TextureFormat.RGBA32,false,true)
-            {name="Shared coast classification",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp};
+            var texture=GeneratedResourceOwner.For(root).Track(new Texture2D(surfaceWidth,surfaceHeight,TextureFormat.RGBA32,false,true)
+            {name="Shared coast classification",filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp});
             texture.SetPixels32(surface);texture.Apply(false,true);
-            GeneratedResourceOwner.For(root).Track(texture);
             Shader.SetGlobalTexture("_RiskCoastField",texture);
             Shader.SetGlobalVector("_RiskCoastGrid",new Vector4(surfaceX,surfaceZ,1/surfaceStep,0));
             Shader.SetGlobalVector("_RiskCoastSize",new Vector4(surfaceWidth,surfaceHeight,1f/surfaceWidth,1f/surfaceHeight));
@@ -65,6 +65,55 @@ namespace RiskAI
                     Mathf.Clamp01((data.WaterAt(wx,wz)-data.HeightAt(wx,wz))/VisualDepthRange):0;
                 surface[z*surfaceWidth+x]=(Color32)new Color(weights.x,weights.y,band,submerged);
             }
+            if(data!=null)RefineImportedSurface(data);
+        }
+        /// <summary>
+        /// Imported sand comes from per-vertex source tiles (Vcbp or not), so its 0.55 contour
+        /// followed the 2.56 m W3E cells as straight segments and chunky corners. The field is
+        /// resampled at twice the resolution: band, rock and depth bilinearly (the values the
+        /// GPU interpolated anyway), sand from a blurred tile indicator with warped noise at the
+        /// boundary. The shader and the landing rule keep reading the same texels.
+        /// </summary>
+        const int ImportedRefine=2;
+        static void RefineImportedSurface(ImportedMapData data)
+        {
+            int w=surfaceWidth,h=surfaceHeight;var coarse=surface;
+            var sand=new float[w*h];
+            for(int i=0;i<sand.Length;i++)sand[i]=coarse[i].r/255f;
+            sand=Blur(sand,w,h,.85f);
+            int fw=(w-1)*ImportedRefine+1,fh=(h-1)*ImportedRefine+1;float step=surfaceStep/ImportedRefine;
+            var fine=new Color32[fw*fh];
+            for(int z=0;z<fh;z++)for(int x=0;x<fw;x++)
+            {
+                float gx=x/(float)ImportedRefine,gz=z/(float)ImportedRefine;
+                int ix=Mathf.Min((int)gx,w-2),iz=Mathf.Min((int)gz,h-2),k=iz*w+ix;float u=gx-ix,v=gz-iz;
+                Color c=Color.Lerp(Color.Lerp(coarse[k],coarse[k+1],u),Color.Lerp(coarse[k+w],coarse[k+w+1],u),v);
+                float wx=surfaceX+x*step,wz=surfaceZ+z*step;
+                // Sand is read at a domain-warped point (about +-1.3 cells), so long straight
+                // source tile edges meander as well as the cell corners.
+                float sx=Mathf.Clamp(gx+(FictionalGround.Fbm(wx*.07f+1.7f,wz*.07f+9.2f)-.5f)*2.6f,0,w-1.001f);
+                float sz=Mathf.Clamp(gz+(FictionalGround.Fbm(wx*.07f+6.3f,wz*.07f+4.4f)-.5f)*2.6f,0,h-1.001f);
+                int jx=(int)sx,jz=(int)sz,j=jz*w+jx;float su=sx-jx,sv=sz-jz;
+                float blurred=Mathf.Lerp(Mathf.Lerp(sand[j],sand[j+1],su),Mathf.Lerp(sand[j+w],sand[j+w+1],su),sv);
+                // Boost so a one-cell source beach keeps its sand after the blur.
+                blurred=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.12f,.5f,blurred));
+                float edge=4*blurred*(1-blurred);
+                float value=Mathf.Clamp01(blurred+(FictionalGround.Fbm(wx*.19f+3.1f,wz*.19f+7.3f)-.5f)*.55f*edge);
+
+                c.r=value;c.g*=1-value;
+                fine[z*fw+x]=(Color32)c;
+            }
+            surface=fine;surfaceWidth=fw;surfaceHeight=fh;surfaceStep=step;
+        }
+        static float[] Blur(float[] source,int w,int h,float sigma)
+        {
+            int radius=Mathf.CeilToInt(sigma*2.5f);var kernel=new float[radius*2+1];float sum=0;
+            for(int i=-radius;i<=radius;i++){kernel[i+radius]=Mathf.Exp(-.5f*i*i/(sigma*sigma));sum+=kernel[i+radius];}
+            for(int i=0;i<kernel.Length;i++)kernel[i]/=sum;
+            var temp=new float[source.Length];var result=new float[source.Length];
+            for(int z=0;z<h;z++)for(int x=0;x<w;x++){float acc=0;for(int k=-radius;k<=radius;k++)acc+=kernel[k+radius]*source[z*w+Mathf.Clamp(x+k,0,w-1)];temp[z*w+x]=acc;}
+            for(int z=0;z<h;z++)for(int x=0;x<w;x++){float acc=0;for(int k=-radius;k<=radius;k++)acc+=kernel[k+radius]*temp[Mathf.Clamp(z+k,0,h-1)*w+x];result[z*w+x]=acc;}
+            return result;
         }
         static Color SampleSurface(float x,float z)
         {
@@ -79,7 +128,9 @@ namespace RiskAI
         /// <summary>Band, sand and rock of one imported W3E sample (the field shares the W3E lattice).</summary>
         public static Vector3 ImportedSampleWeights(int index)
         {
-            EnsureSurface();Color value=surface[index];
+            EnsureSurface();
+            var data=MapLayout.Imported;int x=index%data.width,z=index/data.width;
+            Color value=surface[z*ImportedRefine*surfaceWidth+x*ImportedRefine];
             return new Vector3(value.b,value.r,value.g);
         }
         public static bool IsSandySurface(float x,float z)=>SurfaceWeights(x,z).x>=SandThreshold;
@@ -108,7 +159,7 @@ namespace RiskAI
         {
             if(TryLandingCandidate(requested,out landing,out error))return true;
             string exactError=error;
-            searchRadius=Mathf.Clamp(searchRadius,0,Ship.LoadRadius);
+            searchRadius=Mathf.Clamp(searchRadius,0,UnitCatalog.TransportLoadRadius);
             const int directions=24;
             for(float radius=.5f;radius<=searchRadius+.001f;radius+=.5f)
                 for(int i=0;i<directions;i++)
@@ -132,7 +183,7 @@ namespace RiskAI
             {error="Sólo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.";return false;}
             if(!Gentle(hit.position))
             {error="Ese borde es demasiado escarpado para desembarcar.";return false;}
-            if(!SeaNavigation.TryNearestOcean(hit.position,Ship.LoadRadius,out _))
+            if(!SeaNavigation.TryNearestOcean(hit.position,UnitCatalog.TransportLoadRadius,out _))
             {error="La playa queda demasiado lejos del agua navegable.";return false;}
             landing=hit.position;return true;
         }

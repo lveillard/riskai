@@ -14,49 +14,67 @@ namespace RiskAI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset() => resolvedPortraits.Clear();
 
-        /// <summary>Kinds whose portrait is rendered from a variant rather than a shared model prefab.</summary>
-        public static readonly UnitKind[] PortraitKinds = { UnitKind.EliteRifleman, UnitKind.Roarer, UnitKind.ArmyGeneral, UnitKind.MarineMajor, UnitKind.MarineGeneral, UnitKind.Artillery, UnitKind.Tank };
+        /// <summary>units.json presentation.portraitSource is Variant: the art setup renders the unit view and does not claim a prefab.</summary>
+        public static bool HasVariantPortrait(UnitKind kind) =>
+            UnitCatalog.Get(kind).PortraitSource == PortraitSource.Variant;
 
-        public static string PortraitName(UnitKind kind)
+        /// <summary>Land unit whose portrait is the shared model (or the Mortar cart), so the art setup prepares that prefab.</summary>
+        public static bool PreparesBaseModel(UnitKind kind)
         {
-            switch(kind)
+            ref readonly var type = ref UnitCatalog.Get(kind);
+            return type.Domain == UnitDomain.Land && type.PortraitSource == PortraitSource.Model;
+        }
+
+        /// <summary>Variant portraits in catalog order. The art setup and the editor test both call this.</summary>
+        public static void CollectVariantPortraits(List<UnitKind> kinds)
+        {
+            kinds.Clear();
+            foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
+                if (HasVariantPortrait(kind)) kinds.Add(kind);
+        }
+
+        /// <summary>
+        /// First land claimant of each model name, catalog order. A repeated model is prepared once.
+        /// Mortar stays in this list: its portrait is the procedural cart, not a variant view.
+        /// </summary>
+        public static void CollectBasePreparations(List<UnitKind> kinds, List<string> models)
+        {
+            kinds.Clear();
+            models.Clear();
+            var seen = new HashSet<string>();
+            foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
-                case UnitKind.Knight: return "MountedKnight";
-                case UnitKind.EliteRifleman: return "EliteRifleman";
-                case UnitKind.Roarer: return "Roarer";
-                case UnitKind.ArmyGeneral: return "ArmyGeneral";
-                case UnitKind.MarineMajor: return "MarineMajor";
-                case UnitKind.MarineGeneral: return "MarineGeneral";
-                case UnitKind.Artillery: return "Artillery";
-                case UnitKind.Tank: return "Tank";
-                default: return BattleRules.Model(kind);
+                if (!PreparesBaseModel(kind)) continue;
+                string name = UnitCatalog.Get(kind).Model;
+                if (string.IsNullOrEmpty(name) || !seen.Add(name)) continue;
+                kinds.Add(kind);
+                models.Add(name);
             }
         }
 
-        static string FallbackPortrait(UnitKind kind)
+        /// <summary>Resources path of the unit portrait (units.json portrait, then portraitFallback until the art setup renders it).</summary>
+        public static string PortraitResource(UnitKind kind) => Resolve(UnitCatalog.Get(kind).PortraitName, UnitCatalog.Get(kind).PortraitFallback);
+
+        /// <summary>
+        /// The same path as <see cref="PortraitResource"/>. Throws when neither the portrait nor its
+        /// fallback is in Resources, so a missing PNG is reported in this one place.
+        /// </summary>
+        public static string RequirePortrait(UnitKind kind)
         {
-            switch(kind)
-            {
-                case UnitKind.ArmyGeneral:
-                case UnitKind.MarineMajor:
-                case UnitKind.MarineGeneral: return "MountedKnight";
-                case UnitKind.Tank: return "Mortar";
-                default: return BattleRules.Model(kind);
-            }
+            ref readonly var type = ref UnitCatalog.Get(kind);
+            string path = Resolve(type.PortraitName, type.PortraitFallback);
+            if (!Resources.Load<Texture2D>(path))
+                throw new System.InvalidOperationException("Portrait PNG is missing: Resources/" + path + ".png (unit " + type.Id + ").");
+            return path;
         }
 
-        /// <summary>Resources path of the unit portrait; falls back to the base model until the art setup renders it.</summary>
-        public static string PortraitResource(UnitKind kind) => Resolve(PortraitName(kind),FallbackPortrait(kind));
-        // v0.30 hulls fall back to the Frigate/Transport portrait until the art setup renders theirs.
-        public static string PortraitResource(NavalUnitKind kind) =>
-            Resolve(kind.ToString(),kind==NavalUnitKind.ArmoredTransport?NavalUnitKind.Transport.ToString():kind==NavalUnitKind.Transport?kind.ToString():NavalUnitKind.Frigate.ToString());
-
-        static string Resolve(string preferred,string fallback)
+        static string Resolve(string preferred, string fallback)
         {
-            if(resolvedPortraits.TryGetValue(preferred,out var path))return path;
-            path="Portraits/"+preferred;
-            if(preferred!=fallback&&!Resources.Load<Texture2D>(path))path="Portraits/"+fallback;
-            resolvedPortraits[preferred]=path;return path;
+            if (resolvedPortraits.TryGetValue(preferred, out var path)) return path;
+            path = "Portraits/" + preferred;
+            if (preferred != fallback && !Resources.Load<Texture2D>(path)) path = "Portraits/" + fallback;
+            resolvedPortraits[preferred] = path;
+            return path;
         }
 
         /// <summary>Builds fully procedural variants; returns false when the prefab path should be used.</summary>
@@ -285,7 +303,7 @@ namespace RiskAI
         {
             if(!soldier||!barrel)return;
             float progress=soldier.AttackPresentationProgress;
-            float kick=progress<0?0:AttackPresentationTiming.ContactPose(progress,AttackPresentationTiming.ContactNormalizedTime(soldier.Kind));
+            float kick=progress<0?0:AttackPresentationTiming.ContactPose(progress,UnitCatalog.Get(soldier.Kind).AttackContact);
             barrel.localPosition=rest-(barrel.localRotation*Vector3.up)*kick*.22f;
         }
     }

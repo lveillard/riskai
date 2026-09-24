@@ -463,22 +463,22 @@ namespace RiskAI
                 int count = controller.Selection.Count + controller.Fleet.Count;
                 AddTitle(root, count == 1 ? controller.Fleet[0].DisplayName : count + " UNIDADES SELECCIONADAS");
                 BuildSelectionRoster(root);
-                foreach(var ship in controller.Fleet)if(ship&&ship.Profile.CanTransport&&ship.CargoCount>0)BuildCargoRoster(root,ship);
+                foreach(var ship in controller.Fleet)if(ship&&ship.Type.CanTransport&&ship.CargoCount>0)BuildCargoRoster(root,ship);
                 return;
             }
             if (controller.InspectedTarget is Soldier inspected)
             {
-                var profile = BattleRules.Profile(inspected.Kind);
-                AddTitle(root, BattleRules.Name(inspected.Kind).ToUpperInvariant());
+                var profile = UnitCatalog.Get(inspected.Kind);
+                AddTitle(root, UnitCatalog.Get(inspected.Kind).Name.ToUpperInvariant());
                 LiveInfo(root,()=>SoldierStats(inspected));
                 return;
             }
             if (controller.Selection.Count > 0)
             {
-                AddTitle(root, controller.Selection.Count==1?BattleRules.Name(controller.Selection[0].Kind).ToUpperInvariant():controller.Selection.Count + " TROPAS SELECCIONADAS");
+                AddTitle(root, controller.Selection.Count==1?UnitCatalog.Get(controller.Selection[0].Kind).Name.ToUpperInvariant():controller.Selection.Count + " TROPAS SELECCIONADAS");
                 if (controller.Selection.Count == 1)
                 {
-                    var unit = controller.Selection[0]; var profile = BattleRules.Profile(unit.Kind);
+                    var unit = controller.Selection[0]; var profile = UnitCatalog.Get(unit.Kind);
                     LiveInfo(root,()=>SoldierStats(unit));
                 }
                 else BuildSelectionRoster(root);
@@ -524,8 +524,8 @@ namespace RiskAI
 
         static string UnitTooltip(UnitKind kind)
         {
-            var profile=BattleRules.Profile(kind);var mana=SupportAbilities.Mana(kind);
-            return BattleRules.Role(kind)+" · "+profile.Health+" vida · "+BattleRules.DamageRange(kind)+" "+profile.Attack+" · alcance "+profile.Range+" · armadura "+profile.Armor+" "+profile.Defense+
+            var profile=UnitCatalog.Get(kind);var mana=UnitCatalog.Get(kind).Mana;
+            return UnitCatalog.Get(kind).Role+" · "+profile.MaxHealth+" vida · "+UnitCatalog.Get(kind).Weapon.DamageText+" "+profile.AttackType+" · alcance "+profile.Weapon.Range+" · armadura "+profile.Armor+" "+profile.ArmorType+
                 (mana.Enabled?" · maná "+mana.Maximum:"");
         }
 
@@ -579,9 +579,9 @@ namespace RiskAI
         static string SoldierStats(Soldier unit)
         {
             if(!unit||!unit.IsAlive)return "Unidad eliminada";
-            var profile=BattleRules.Profile(unit.Kind);
+            var profile=UnitCatalog.Get(unit.Kind);
             var mana=unit.Mana;
-            return BattleRules.Name(unit.Kind)+" · "+Mathf.CeilToInt(unit.Health)+" / "+profile.Health+" vida"+(mana!=null&&mana.Enabled?" · "+Mathf.FloorToInt(mana.Current)+" / "+mana.Maximum+" maná":"")+" · "+BattleRules.DamageRange(unit.Kind)+" "+profile.Attack+" · alcance "+profile.Range+" · armadura "+profile.Armor+" "+profile.Defense+(unit.IsRoaring?" · rugido +25%":"");
+            return UnitCatalog.Get(unit.Kind).Name+" · "+Mathf.CeilToInt(unit.Health)+" / "+profile.MaxHealth+" vida"+(mana!=null&&mana.Enabled?" · "+Mathf.FloorToInt(mana.Current)+" / "+mana.Maximum+" maná":"")+" · "+UnitCatalog.Get(unit.Kind).Weapon.DamageText+" "+profile.AttackType+" · alcance "+profile.Weapon.Range+" · armadura "+profile.Armor+" "+profile.ArmorType+(unit.IsRoaring?" · rugido +25%":"");
         }
     }
 }

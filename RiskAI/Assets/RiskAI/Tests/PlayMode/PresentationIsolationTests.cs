@@ -41,7 +41,7 @@ namespace RiskAI.Tests
             target.enabled = false;
 
             float healthBefore = target.Health;
-            var bolt = SourceWeapons.For(UnitKind.Archer, AttackKind.Piercing);
+            var bolt = UnitCatalog.Get(UnitKind.Archer).Weapon;
             int projectileId = battle.Combat.FireWeapon(source.AimPoint, target.AimPoint, target, 24, source.Team, source, bolt);
             Assert.That(projectileId, Is.GreaterThan(0));
 
@@ -155,7 +155,7 @@ namespace RiskAI.Tests
         }
 
         void FireVisual(Vector3 from,Vector3 to,UnitKind kind,AttackKind attack)=>
-            battle.Combat.FireWeapon(from,to,null,0,0,null,SourceWeapons.For(kind,attack));
+            battle.Combat.FireWeapon(from,to,null,0,0,null,UnitCatalog.Get(kind).Weapon);
 
         [UnityTest]
         public IEnumerator CrossbowBoltDealsDamageOnlyWhenItsVisibleFlightArrives()
@@ -168,7 +168,7 @@ namespace RiskAI.Tests
             float health=target.Health;
             Vector3 launch=target.AimPoint+Vector3.left*8;
             int projectile=battle.Combat.FireWeapon(launch,target.AimPoint,target,12,source.Team,source,
-                SourceWeapons.For(UnitKind.Archer,AttackKind.Piercing));
+                UnitCatalog.Get(UnitKind.Archer).Weapon);
             Assert.That(projectile,Is.GreaterThan(0));
             Assert.That(target.Health,Is.EqualTo(health),"The bolt cannot deal damage before contact.");
             Assert.That(battle.Combat.ActiveProjectileCount,Is.EqualTo(1));

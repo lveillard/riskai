@@ -126,37 +126,33 @@ namespace RiskAI.Core
         {
             get
             {
-                if(traits!=null&&traits.Length==UnitCatalog.Land.Length)return traits;
-                var table=new AiUnitTraits[UnitCatalog.Land.Length];
-                for(int i=0;i<table.Length;i++)table[i]=Build((UnitKind)i,UnitCatalog.Land[i]);
+                if(traits!=null&&traitsRevision==UnitCatalog.Revision)return traits;
+                // Indexed by the catalog's dense type index (every type; the AI only asks for land units).
+                var table=new AiUnitTraits[UnitCatalog.Count];
+                for(int i=0;i<table.Length;i++)table[i]=Build(UnitCatalog.KindAt(i),UnitCatalog.At(i));
+                traitsRevision=UnitCatalog.Revision;
                 return traits=table;
             }
         }
+        static int traitsRevision=-1;
 
-        static AiUnitTraits Build(UnitKind kind,LandUnitDefinition definition)
+        static AiUnitTraits Build(UnitKind kind,in UnitType type)
         {
-            var profile=definition.Profile;
-            bool splash=SourceWeapons.For(kind,profile.Attack).HasSplash;
-            bool healer=IsHealer(kind,definition);
-            float dps=profile.Cooldown>0?profile.AverageDamage/profile.Cooldown:profile.AverageDamage;
-            float health=profile.Health/Math.Max(.05f,CombatRules.ArmorMultiplier(profile.Armor));
-            var role=healer?AiUnitRole.Healer:splash?AiUnitRole.Splash:definition.Ranged?AiUnitRole.Ranged:AiUnitRole.Frontline;
-            return new AiUnitTraits(kind,role,profile.Cost,profile.Level,dps,health,profile.Range,profile.Attack,profile.Defense,definition.Ranged,splash,healer);
-        }
-
-        static bool IsHealer(UnitKind kind,LandUnitDefinition definition)
-        {
-            if(kind==UnitKind.Medic)return true;
-            string role=definition.Role??"";
-            return role.IndexOf("Sana",StringComparison.OrdinalIgnoreCase)>=0||role.IndexOf("Cura",StringComparison.OrdinalIgnoreCase)>=0||
-                   role.IndexOf("Heal",StringComparison.OrdinalIgnoreCase)>=0;
+            var weapon=type.Weapon;
+            bool splash=weapon.HasSplash;
+            // A typed capability, not the role text.
+            bool healer=type.Heal.Enabled;
+            float dps=weapon.Cooldown>0?weapon.AverageDamage/weapon.Cooldown:weapon.AverageDamage;
+            float health=type.MaxHealth/Math.Max(.05f,CombatRules.ArmorMultiplier(type.Armor));
+            var role=healer?AiUnitRole.Healer:splash?AiUnitRole.Splash:weapon.Ranged?AiUnitRole.Ranged:AiUnitRole.Frontline;
+            return new AiUnitTraits(kind,role,type.Cost,type.Level,dps,health,weapon.Range,weapon.DamageType,type.ArmorType,weapon.Ranged,splash,healer);
         }
 
         /// <summary>Traits for any catalog kind. Kinds the catalog does not know yet fall back to a basic frontline unit.</summary>
         public static AiUnitTraits For(UnitKind kind)
         {
-            var table=Table;int index=(int)kind;
-            if(index>=0&&index<table.Length)return table[index];
+            var table=Table;
+            if(UnitCatalog.IsDefined(kind))return table[UnitCatalog.Get(kind).Index];
             return new AiUnitTraits(kind,AiUnitRole.Frontline,1,1,12f,200f,1f,AttackKind.Normal,ArmorKind.Heavy,false,false,false);
         }
 
@@ -179,23 +175,23 @@ namespace RiskAI.Core
         /// <summary>Threat of a city post tower. It only fires while the guardian lives, so the guardian's health is its effective durability.</summary>
         public static float TowerValue(float guardianHealth,AiForceMix attackers)
         {
-            var tower=UnitCatalog.CapturableTower;
+            var tower=UnitCatalog.Get(UnitKind.Tower).TownWeapon;
             float dps=tower.AverageDamage/Math.Max(.1f,tower.Cooldown);
             float multiplier=0,weights=0;
             for(int a=0;a<AiForceMix.ArmorCount;a++)
             {
                 float share=(attackers??neutralMix).ArmorShare((ArmorKind)a);if(share<=0)continue;
-                multiplier+=share*CombatRules.DamageMultiplier(tower.Attack,(ArmorKind)a);weights+=share;
+                multiplier+=share*CombatRules.DamageMultiplier(tower.DamageType,(ArmorKind)a);weights+=share;
             }
             if(weights>0)dps*=multiplier/weights;
             return (float)Math.Sqrt(dps*Math.Max(50f,guardianHealth));
         }
 
-        public static float ShipValue(in ShipProfile ship)
+        public static float ShipValue(in UnitType ship)
         {
             if(!ship.CanAttack)return 0;
-            float dps=ship.Damage/Math.Max(.1f,ship.Cooldown);
-            return (float)Math.Sqrt(dps*ship.Health/Math.Max(.05f,CombatRules.ArmorMultiplier(ship.Armor)));
+            float dps=ship.Weapon.AverageDamage/Math.Max(.1f,ship.Weapon.Cooldown);
+            return (float)Math.Sqrt(dps*ship.MaxHealth/Math.Max(.05f,CombatRules.ArmorMultiplier(ship.Armor)));
         }
     }
 

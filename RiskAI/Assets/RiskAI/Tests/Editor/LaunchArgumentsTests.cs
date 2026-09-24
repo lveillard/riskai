@@ -44,11 +44,11 @@ namespace RiskAI.Tests
             var args=LaunchArguments.FromUrl("https://localhost/?riskai-disable-unit-lod=true&disable-unit-lod=true");
             CollectionAssert.AreEqual(new[]{"--riskai-disable-unit-lod"},args);
         }
-        [Test] public void ParetoPresentationControlsAreIndependentAndExplicit()
+        [Test] public void PresentationControlsAreIndependentAndExplicit()
         {
-            var args=LaunchArguments.FromUrl("https://localhost/?riskai-disable-architecture-batching=true&riskai-disable-unit-presentation-culling=1&riskai-manual-architecture-batching=1&riskai-native-architecture-batching=true&disable-architecture-batching=1&riskai-disable-unit-lod=0");
-            CollectionAssert.AreEqual(new[]{"--riskai-disable-architecture-batching","--riskai-disable-unit-presentation-culling","--riskai-manual-architecture-batching","--riskai-native-architecture-batching"},args);
-            Assert.That(LaunchArguments.FromUrl("https://localhost/?riskai-disable-architecture-batching=0&riskai-disable-unit-presentation-culling=false&riskai-native-architecture-batching=0"),Is.Empty);
+            var args=LaunchArguments.FromUrl("https://localhost/?riskai-disable-unit-presentation-culling=1&disable-unit-presentation-culling=1&riskai-disable-unit-lod=0");
+            CollectionAssert.AreEqual(new[]{"--riskai-disable-unit-presentation-culling"},args);
+            Assert.That(LaunchArguments.FromUrl("https://localhost/?riskai-disable-unit-presentation-culling=false"),Is.Empty);
         }
     }
 }

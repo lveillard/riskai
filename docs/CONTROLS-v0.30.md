@@ -71,6 +71,8 @@ Grid hotkeys only work while one of your own buildings is selected. **While a bu
 | Tab / Shift+Tab (while typing) | Cycle the chat recipient (All, then each living player) | Chat open |
 | Esc | Cancel the armed order or deselect | Always |
 | Alt (hold) | Show health bars and names | Always |
+| Shift | With a busy unit, add the order (move, attack, capture, follow, board, unload). Without Shift the order replaces the queue. The quick-bar **Encolar** / Queue switch does the same on touch. | Units selected |
+| F4 (hold) | Pan the camera faster while using the arrows | Always |
 | Arrows · Backspace | Pan the camera · reset the camera | Always |
 
 The unit command row (Move, Attack, Patrol, Stop, Hold, Focus) uses the same square-cell style on desktop and shows its keys (M, A, P, S, H) in the corner.

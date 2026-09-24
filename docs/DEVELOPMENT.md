@@ -108,6 +108,31 @@ La versión vive **solo** en el archivo `VERSION` de la raíz (una línea, p. ej
    [DEPLOY-RIESGUS-CLOUDFLARE.md](DEPLOY-RIESGUS-CLOUDFLARE.md).
 6. Actualiza el texto de versión del README y añade `docs/VALIDATION-RIESGUS-v<VERSION>.md`.
 
+## Añadir una unidad
+
+Los números de una unidad viven solo en `RiskAI/Assets/RiskAI/Resources/Config/units.json`.
+No hay una tabla C# que copiar. Parity with v0.33 was verified by the golden fixture up to commit 5490e79, then removed.
+
+1. Añade un objeto en `units` con un `id` estable (`Footman`, `Frigate`, …). El esquema
+   `scripts/config/units.schema.ts` dice qué campos son obligatorios: nombres, dominio
+   (`Land`, `Sea` o `Static`), edificio de producción, vida, arma o `hostWeapons`,
+   adquisición y capacidades.
+2. Desde `scripts/config`: `npm test`. Si el id es nuevo, `npm run build` regenera
+   `UnitKind` y el contrato C#. Un id duplicado, un campo de más o un enum desconocido
+   fallan aquí.
+3. El modelo y el retrato se nombran en `presentation`. La casilla del edificio la sigue
+   calculando `ProductionHotkeys` (coste, orden del JSON, tierra antes que mar).
+4. Regenera el resumen: `python scripts/generate_unit_rules.py`
+   (`docs/RISK-RULES-v0.34.md`). Lo que no venga de la fuente va en `adaptation`.
+   `python scripts/generate_unit_rules.py --check` falla si el markdown commiteado no coincide
+   (lo mismo que `npm test` hace con el DTO). `npm test` en `scripts/config` ya lo lanza.
+5. `RiskAI/Assets/RiskAI/link.xml` conserva `Newtonsoft.Json` entero y el ensamblado
+   `RiskAI.Core` (`preserve="all"`). Sin eso, el stripping de IL2CPP/WebGL puede quitar
+   los setters que Newtonsoft rellena por reflexión y `UnitCatalog.Bind` no arranca. El
+   player de WebGL fija `managedStrippingLevel` en Minimal (el valor por defecto de IL2CPP
+   en Unity 6.3, entero 4). No se sube de nivel: `link.xml` sigue siendo la red de seguridad
+   del contrato.
+
 ## Normas del repositorio
 
 - `.gitattributes`: todo el texto en LF; imágenes, modelos y fuentes como binarios; YAML de Unity con `merge=unityyamlmerge`.

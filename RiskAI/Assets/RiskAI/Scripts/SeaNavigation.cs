@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
+using RiskAI.Core;
 using UnityEngine;
 
 namespace RiskAI
@@ -9,7 +10,7 @@ namespace RiskAI
     {
         const float ClassicCellSize=2.8f,ImportedCellSize=4f,SegmentStep=1.25f;
         const int MaxSearchStates=160000;
-        public const float HullClearance=1.3f;
+        public static float HullClearance => UnitCatalog.HullClearance;
         static readonly int[] Dx={-1,0,1,-1,1,-1,0,1};
         static readonly int[] Dz={-1,-1,-1,0,0,1,1,1};
         static readonly float[] StepCost={1.4142135f,1,1.4142135f,1,1,1.4142135f,1,1.4142135f};
@@ -145,7 +146,8 @@ namespace RiskAI
             ? MapLayout.Imported.IsShipNavigable(point.x,point.z)
             : MapLayout.IsOcean(point.x,point.z);
         static int Reverse(int direction)=>7-direction;
-        public static bool HasClearance(Vector3 point,float clearance=HullClearance)
+        public static bool HasClearance(Vector3 point) => HasClearance(point, HullClearance);
+        public static bool HasClearance(Vector3 point,float clearance)
         {
             if(!IsOcean(point))return false;
             for(int i=0;i<ClearanceDirections.Length;i++)if(!IsOcean(point+ClearanceDirections[i]*clearance))return false;
@@ -178,18 +180,25 @@ namespace RiskAI
         }
         public static bool TryBuildPath(Vector3 from,Vector3 to,out List<Vector3> path)
         {
+            var built=new List<Vector3>();
+            bool result=TryBuildPath(from,to,built);
+            path=result?built:null;
+            return result;
+        }
+        public static bool TryBuildPath(Vector3 from,Vector3 to,List<Vector3> path)
+        {
             long started=Stopwatch.GetTimestamp();LastSearchExpanded=0;LastSearchUsedDirectSegment=false;LastSearchRejectedDisconnected=false;
-            bool result=TryBuildPathCore(from,to,out path);LastSearchMilliseconds=(Stopwatch.GetTimestamp()-started)*1000.0/Stopwatch.Frequency;
+            bool result=TryBuildPathCore(from,to,path);LastSearchMilliseconds=(Stopwatch.GetTimestamp()-started)*1000.0/Stopwatch.Frequency;
             telemetry.SearchCount++;telemetry.TotalMilliseconds+=LastSearchMilliseconds;telemetry.MaxMilliseconds=System.Math.Max(telemetry.MaxMilliseconds,LastSearchMilliseconds);
             telemetry.ExpandedTotal+=LastSearchExpanded;telemetry.ExpandedMax=System.Math.Max(telemetry.ExpandedMax,LastSearchExpanded);
             if(LastSearchUsedDirectSegment)telemetry.DirectCount++;
             if(LastSearchRejectedDisconnected)telemetry.DisconnectedCount++;
             return result;
         }
-        static bool TryBuildPathCore(Vector3 from,Vector3 to,out List<Vector3> path)
+        static bool TryBuildPathCore(Vector3 from,Vector3 to,List<Vector3> path)
         {
-            path=null;if(!HasClearance(from)||!HasClearance(to))return false;
-            if(ClearSegment(from,to)){path=new List<Vector3>{to};LastSearchUsedDirectSegment=true;return true;}
+            path.Clear();if(!HasClearance(from)||!HasClearance(to))return false;
+            if(ClearSegment(from,to)){path.Add(to);LastSearchUsedDirectSegment=true;return true;}
             var grid=CurrentGrid();int start=NearestOcean(from,grid),goal=NearestOcean(to,grid);if(start<0||goal<0)return false;
             if(grid.Component(start)!=grid.Component(goal)){LastSearchRejectedDisconnected=true;return false;}
             // Equal snapped cells do not prove the two exact endpoints have line
@@ -216,7 +225,7 @@ namespace RiskAI
             Vector3 previous=from;for(int i=0;i<rawPath.Count;i++){if(!HasClearance(rawPath[i])||!ClearSegment(previous,rawPath[i]))return false;previous=rawPath[i];}
             // A bounded lookahead avoids quadratic rechecking on long routes. Every
             // selected segment remains validated against exact hull clearance.
-            path=new List<Vector3>(rawPath.Count);Vector3 anchor=from;int cursor=0;
+            Vector3 anchor=from;int cursor=0;
             while(cursor<rawPath.Count)
             {
                 int far=cursor,limit=Mathf.Min(rawPath.Count-1,cursor+SmoothingLookaheadCells);

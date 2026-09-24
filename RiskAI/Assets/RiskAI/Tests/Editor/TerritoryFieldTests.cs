@@ -179,6 +179,85 @@ namespace RiskAI.Tests
             Assert.That(cliffShare, Is.GreaterThan(flatShare * 3), $"{map}: {cliffShare:P2} of cliff steps are borders vs {flatShare:P2} of flat steps.");
         }
 
+        // Compactness floor for every authored country's main landmass: land share of its convex
+        // hull, the minor/major axis ratio of its cells and the bounding-box aspect (a strip or
+        // sliver scores low on these; each map keeps its own floor, no shared constants).
+        const float ClassicMinimumHullFill = .72f, ClassicMinimumAxisRatio = .42f, ClassicMinimumBoxRatio = .55f;
+        const float RiverlandsMinimumHullFill = .72f, RiverlandsMinimumAxisRatio = .42f, RiverlandsMinimumBoxRatio = .55f;
+
+        [TestCase(ScenarioMap.Classic)]
+        [TestCase(ScenarioMap.Riverlands)]
+        public void AuthoredCountriesAreCompactRegionsNotStrips(ScenarioMap map)
+        {
+            MapLayout.Configure(map);
+            float minimumFill = map == ScenarioMap.Classic ? ClassicMinimumHullFill : RiverlandsMinimumHullFill;
+            float minimumAxis = map == ScenarioMap.Classic ? ClassicMinimumAxisRatio : RiverlandsMinimumAxisRatio;
+            float minimumBox = map == ScenarioMap.Classic ? ClassicMinimumBoxRatio : RiverlandsMinimumBoxRatio;
+            var field = TerritoryField.Current; int w = field.Width, h = field.Height;
+            var report = new System.Text.StringBuilder(); var failures = new System.Text.StringBuilder();
+            for (int c = 0; c < MapLayout.Countries.Length; c++)
+            {
+                var piece = LargestPiece(field, c);
+                Assert.That(piece.Count, Is.GreaterThan(0), MapLayout.Countries[c].Name + " has land.");
+                float hull = HullArea(piece), fill = hull > 0 ? piece.Count / hull : 1;
+                double mx = piece.Average(p => (double)p.x), mz = piece.Average(p => (double)p.y), sxx = 0, szz = 0, sxz = 0;
+                foreach (var p in piece) { double dx = p.x - mx, dz = p.y - mz; sxx += dx * dx; szz += dz * dz; sxz += dx * dz; }
+                double tr = sxx + szz, det = sxx * szz - sxz * sxz, root = System.Math.Sqrt(System.Math.Max(0, tr * tr / 4 - det));
+                float axis = (float)System.Math.Sqrt(System.Math.Max(0, tr / 2 - root) / System.Math.Max(1e-9, tr / 2 + root));
+                int bw = piece.Max(p => p.x) - piece.Min(p => p.x) + 1, bh = piece.Max(p => p.y) - piece.Min(p => p.y) + 1;
+                float box = Mathf.Min(bw, bh) / (float)Mathf.Max(bw, bh);
+                report.Append($"{MapLayout.Countries[c].Name}: fill={fill:F2} axis={axis:F2} box={box:F2}; ");
+                if (fill < minimumFill || axis < minimumAxis || box < minimumBox) failures.Append($"{MapLayout.Countries[c].Name} (fill {fill:F2}, axis {axis:F2}, box {box:F2}); ");
+            }
+            Debug.Log($"RISKAI_TERRITORY_COMPACT map={map} {report}");
+            Assert.That(failures.Length, Is.Zero, $"{map}: countries below the compactness floor: {failures}");
+        }
+
+        static List<Vector2Int> LargestPiece(TerritoryField field, int country)
+        {
+            int w = field.Width, h = field.Height; var seen = new bool[w * h]; List<Vector2Int> best = new List<Vector2Int>();
+            var stack = new Stack<Vector2Int>();
+            for (int z = 0; z < h; z++) for (int x = 0; x < w; x++)
+            {
+                if (seen[z * w + x] || !field.IsLandCell(x, z) || field.CellCountry(x, z) != country) continue;
+                var piece = new List<Vector2Int>(); seen[z * w + x] = true; stack.Push(new Vector2Int(x, z));
+                while (stack.Count > 0)
+                {
+                    var p = stack.Pop(); piece.Add(p);
+                    foreach (var d in new[] { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down })
+                    {
+                        var n = p + d; if (n.x < 0 || n.y < 0 || n.x >= w || n.y >= h) continue; int j = n.y * w + n.x;
+                        if (seen[j] || !field.IsLandCell(n.x, n.y) || field.CellCountry(n.x, n.y) != country) continue;
+                        seen[j] = true; stack.Push(n);
+                    }
+                }
+                if (piece.Count > best.Count) best = piece;
+            }
+            return best;
+        }
+
+        static float HullArea(List<Vector2Int> cells)
+        {
+            var points = cells.Distinct().OrderBy(p => p.x).ThenBy(p => p.y).ToList();
+            if (points.Count < 3) return 0;
+            long Cross(Vector2Int o, Vector2Int a, Vector2Int b) => (long)(a.x - o.x) * (b.y - o.y) - (long)(a.y - o.y) * (b.x - o.x);
+            var hull = new List<Vector2Int>();
+            foreach (var pass in new[] { points, Enumerable.Reverse(points).ToList() })
+            {
+                int start = hull.Count;
+                foreach (var p in pass)
+                {
+                    while (hull.Count >= start + 2 && Cross(hull[hull.Count - 2], hull[hull.Count - 1], p) <= 0) hull.RemoveAt(hull.Count - 1);
+                    hull.Add(p);
+                }
+                hull.RemoveAt(hull.Count - 1);
+            }
+            double area = 0, perimeter = 0;
+            for (int i = 0; i < hull.Count; i++) { var a = hull[i]; var b = hull[(i + 1) % hull.Count]; area += (double)a.x * b.y - (double)b.x * a.y; perimeter += Vector2.Distance(a, b); }
+            // Cells are unit squares: the hull of their centres misses half a cell around the rim.
+            return (float)(System.Math.Abs(area) / 2 + perimeter / 2 + 1);
+        }
+
         [TestCase(ScenarioMap.Europe)]
         [TestCase(ScenarioMap.NewWorld)]
         public void SourceCampsStandInsideTheirTerritoryAwayFromCities(ScenarioMap map)

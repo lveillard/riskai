@@ -9,6 +9,12 @@ permanecieron abiertas; no se solaparon estas ventanas de rendimiento con
 Unity compilando ni con otros navegadores de QA. La variación entre controles
 impide convertir las diferencias pequeñas en una afirmación causal firme.
 
+> **Nota posterior (v0.33):** los modos experimentales de batching de
+> arquitectura (`--native-architecture-batching`, `--manual-architecture-batching`
+> y `--disable-architecture-batching`) y sus claves Web se eliminaron del código
+> al concluir el experimento. Los comandos históricos de este documento se
+> conservan como registro y ya no son reproducibles con la build actual.
+
 ## Contrato de la prueba
 
 El probe `sustained-navigation-v2` crea 900 unidades, las separa en una malla

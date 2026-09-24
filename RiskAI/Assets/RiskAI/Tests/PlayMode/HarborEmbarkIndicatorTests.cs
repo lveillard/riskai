@@ -1,4 +1,5 @@
 using System.Collections;
+using RiskAI.Core;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -49,7 +50,7 @@ namespace RiskAI.Tests
                 {
                     Assert.That(zone.GetComponentsInChildren<LineRenderer>(true),Is.Empty,map+" must not create an extra loading ring.");
                     Assert.That(zone.Contains(zone.Center),Is.True,"Removing a visual must preserve the boarding area.");
-                    Assert.That(zone.Contains(zone.Center+Vector3.right*(NavalEmbarkZone.Radius+.1f)),Is.False);
+                    Assert.That(zone.Contains(zone.Center+Vector3.right*(UnitCatalog.TransportLoadRadius+.1f)),Is.False);
                 }
 
                 var selected=naval.EmbarkZones[0];

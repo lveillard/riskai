@@ -55,9 +55,6 @@ def main():
     parser.add_argument('--width', type=int, default=1600)
     parser.add_argument('--height', type=int, default=900)
     parser.add_argument('--dpr', type=float, default=1)
-    parser.add_argument('--disable-architecture-batching', action='store_true')
-    parser.add_argument('--manual-architecture-batching', action='store_true')
-    parser.add_argument('--native-architecture-batching', action='store_true')
     parser.add_argument('--disable-unit-presentation-culling', action='store_true')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
@@ -65,12 +62,6 @@ def main():
               'physicalMobile': False, 'errors': [], 'gpuScope': 'whole machine',
               'frameScope': 'browser requestAnimationFrame cadence'}
     query = {'riskai-seed': 19031}
-    if args.disable_architecture_batching:
-        query['riskai-disable-architecture-batching'] = 1
-    if args.manual_architecture_batching:
-        query['riskai-manual-architecture-batching'] = 1
-    if args.native_architecture_batching:
-        query['riskai-native-architecture-batching'] = 1
     if args.disable_unit_presentation_culling:
         query['riskai-disable-unit-presentation-culling'] = 1
     if args.scenario != 'menu':

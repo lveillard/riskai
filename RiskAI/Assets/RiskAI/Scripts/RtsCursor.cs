@@ -12,6 +12,7 @@ namespace RiskAI
             if(!value){Cursor.SetCursor(null,Vector2.zero,CursorMode.Auto);return;}
             if(!attack)
             {
+                // RISKAI_SHARED_ASSET: one attack cursor texture, built once behind the lazy guard.
                 attack=new Texture2D(32,32,TextureFormat.RGBA32,false);var pixels=new Color[1024];
                 for(int y=0;y<32;y++)for(int x=0;x<32;x++)
                 {

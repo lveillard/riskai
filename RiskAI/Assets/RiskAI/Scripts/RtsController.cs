@@ -20,7 +20,7 @@ namespace RiskAI
         public bool PatrolCursor { get; private set; }
         public bool UnloadCursor { get; private set; }
         public bool OrderCursor => AttackCursor || MoveCursor || PatrolCursor || UnloadCursor;
-        public bool ShowHealthBars => Keyboard.current!=null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed);
+        public bool ShowHealthBars => !ChatInput.IsTyping && Keyboard.current!=null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed);
         public bool HelpVisible;
         public bool ScoreboardVisible => !HelpVisible && !ChatInput.IsTyping && Keyboard.current!=null && Keyboard.current.tabKey.isPressed;
         public bool EdgePan=true;
@@ -103,7 +103,14 @@ namespace RiskAI
             CameraDragging=false;previousMouse=Pointer;
         }
         public bool OverHud(Vector2 screen) => RtsUiInput.BlocksWorld(screen) || HelpVisible || ScoreboardVisible || session.Winner>=0;
-        bool Shift => Keyboard.current!=null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+        bool Shift => !ChatInput.IsTyping && Keyboard.current!=null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+        // F4 is free: Alt shows health, Shift queues orders, Ctrl stores groups.
+        bool FastPan => !ChatInput.IsTyping && Keyboard.current!=null && Keyboard.current.f4Key.isPressed;
+        /// <summary>Shift, or the touch "Encolar" switch, appends an order.</summary>
+        public bool QueueOrders => Shift || queueOrders;
+        bool queueOrders;
+        public bool QueueOrdersArmed => queueOrders;
+        public void ToggleQueueOrders() { queueOrders = !queueOrders; }
         // Selection/Fleet stay plain public lists; the identity maps record which
         // actor each listed object was taken with. A pooled reuse therefore drops
         // the entry instead of inheriting the previous owner's orders, and a
@@ -234,13 +241,13 @@ namespace RiskAI
         public void ArmAttack() { CancelCursor();PurgeStaleSelection();if(HasSelection)AttackCursor=true; }
         public void ArmMove() { CancelCursor();PurgeStaleSelection();if(HasSelection)MoveCursor=true; }
         public void ArmPatrol() { CancelCursor();PurgeStaleSelection();if(HasSelection)PatrolCursor=true; }
-        public void Stop() { if(session.Paused||session.Winner>=0)return;PurgeStaleSelection();CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Stop));foreach(var ship in Fleet)if(IsSelectableShip(ship))ship.Stop();CancelCursor(); }
-        public void Hold() { if(session.Paused||session.Winner>=0)return;PurgeStaleSelection();CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Hold));foreach(var ship in Fleet)if(IsSelectableShip(ship))ship.Stop();CancelCursor(); }
+        public void Stop() { if(session.Paused||session.Winner>=0)return;PurgeStaleSelection();CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Stop));foreach(var ship in Fleet)if(IsSelectableShip(ship))session.Commands.Submit(new UnitCommand(0,ship.EntityId,UnitCommandKind.Stop));CancelCursor(); }
+        public void Hold() { if(session.Paused||session.Winner>=0)return;PurgeStaleSelection();CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Hold));foreach(var ship in Fleet)if(IsSelectableShip(ship))session.Commands.Submit(new UnitCommand(0,ship.EntityId,UnitCommandKind.Hold));CancelCursor(); }
         static bool IsSelectableSoldier(Soldier unit) => unit&&unit.Team==0&&unit.IsAlive&&unit.isActiveAndEnabled&&unit.Agent&&unit.Agent.enabled;
         static bool IsSelectableShip(Ship ship) => ship&&ship.Team==0&&ship.IsAlive&&ship.isActiveAndEnabled;
         Ship SelectedTransport
         {
-            get { foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Profile.CanTransport)return ship;return null; }
+            get { foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Type.CanTransport)return ship;return null; }
         }
         void CancelPendingBoarding()
         {
@@ -258,10 +265,24 @@ namespace RiskAI
         public void Recruit(UnitKind kind)
         {
             string error=TryRecruitSelected(kind);
-            session.Message(error??LastProductionResult.Feedback(BattleRules.Name(kind)),LastProductionResult.Kind);
+            session.Message(error??LastProductionResult.Feedback(UnitCatalog.Get(kind).Name),LastProductionResult.Kind);
         }
         public void UpgradeTown() { if(SelectedTown)Feedback(SelectedTown.Upgrade());else session.Message("Selecciona una ciudad tuya para mejorarla.",MessageKind.Info); }
         public void Feedback(string error) { if(error!=null)session.Message(error,MessageKind.Info); }
+        CommandResult OrderShip(Ship ship, UnitCommandKind kind, Vector3 point, int targetId = 0, bool append = false, string structureId = null, BuildingKind structureKind = BuildingKind.Settlement)
+        {
+            var result = session.Commands.SubmitResult(new UnitCommand(0, ship.EntityId, kind, point.x, point.y, point.z, targetId, append, structureId: structureId, structureKind: structureKind));
+            if (!result.Accepted) Feedback(result.Error);
+            return result;
+        }
+        void OrderCapture(BuildingKind kind, string id, Vector3 point)
+        {
+            if (string.IsNullOrEmpty(id)) return;
+            foreach (var unit in Selection) if (IsSelectableSoldier(unit))
+                session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Capture, point.x, point.y, point.z, append: QueueOrders, structureId: id, structureKind: kind));
+            foreach (var ship in Fleet) if (IsSelectableShip(ship))
+                OrderShip(ship, UnitCommandKind.Capture, point, append: QueueOrders, structureId: id, structureKind: kind);
+        }
         void OnApplicationFocus(bool hasFocus)
         {
             gameplayFocus=hasFocus;
@@ -297,19 +318,19 @@ namespace RiskAI
             Harbor best=naval.Harbors.FirstOrDefault(h=>h&&h.Owner==0);
             if(best){SelectHarbor(best);Focus(best.Landing);}
         }
-        public void BuyShip(NavalUnitKind kind)
+        public void BuyShip(UnitKind kind)
         {
             string error=TryBuySelected(kind);
             if(!session)return;
-            session.Message(error??LastProductionResult.Feedback(NavalProfiles.Profile(kind).Name),LastProductionResult.Kind);
+            session.Message(error??LastProductionResult.Feedback(UnitCatalog.Get(kind).Name),LastProductionResult.Kind);
         }
         public void BoardNearby()
         {
             if(session.Paused||session.Winner>=0)return;
             PurgeStaleSelection();
             var transport=SelectedTransport;if(!transport){session.Message("Selecciona un transporte para embarcar.",MessageKind.Info);return;}
-            var boarders=session.Units.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison&&FlatDistance(u.transform.position,transport.transform.position)<=Ship.LoadRadius*Ship.LoadRadius)
-                .OrderBy(u=>FlatDistance(u.transform.position,transport.transform.position)).Take(Ship.LoadOrderLimit).ToList();
+            var boarders=session.Units.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison&&FlatDistance(u.transform.position,transport.transform.position)<=UnitCatalog.TransportLoadRadius*UnitCatalog.TransportLoadRadius)
+                .OrderBy(u=>FlatDistance(u.transform.position,transport.transform.position)).Take(UnitCatalog.TransportLoadLimit).ToList();
             if(boarders.Count==0){session.Message("Acerca tropas a la costa o selecciónalas y haz clic derecho en el transporte.",MessageKind.Info);return;}
             BeginBoarding(transport,boarders);
         }
@@ -323,19 +344,19 @@ namespace RiskAI
             Harbor harbor=null;float distance=12*12;
             foreach(var candidate in naval.Harbors)if(candidate)
             {float next=FlatDistance(candidate.Berth,anchor.transform.position);if(next<distance){distance=next;harbor=candidate;}}
-            if(!Fleet.Any(s=>IsSelectableShip(s)&&s.Profile.CanTransport&&s.CargoCount>0)){session.Message("Selecciona un transporte con tropas a bordo.",MessageKind.Info);return;}
+            if(!Fleet.Any(s=>IsSelectableShip(s)&&s.Type.CanTransport&&s.CargoCount>0)){session.Message("Selecciona un transporte con tropas a bordo.",MessageKind.Info);return;}
             CancelBoardingForSelection();
             if(!harbor){CancelCursor();UnloadCursor=true;session.Message("Desembarco: haz clic en una playa transitable. El transporte navegará hasta ella.",MessageKind.Info);return;}
-            foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Profile.CanTransport)
+            foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Type.CanTransport)
             {
-                ship.SailToHarbor(harbor);
-                if(ship.LastActionError!=null)session.Message(ship.LastActionError,MessageKind.Info);
+                var sailed=OrderShip(ship,UnitCommandKind.Capture,harbor.Landing,append:QueueOrders,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
+                if(!sailed.Accepted)session.Message(sailed.Error,MessageKind.Info);
             }
         }
         public void UnloadCargo(Ship transport,Soldier soldier)
         {
             if(session.Paused||session.Winner>=0||!IsSelectableShip(transport))return;
-            if(transport.UnloadOneNearby(soldier))session.Message(BattleRules.Name(soldier.Kind)+" ha desembarcado.",MessageKind.Info);
+            if(transport.UnloadOneNearby(soldier))session.Message(UnitCatalog.Get(soldier.Kind).Name+" ha desembarcado.",MessageKind.Info);
             else Feedback(transport.LastActionError);
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
@@ -356,12 +377,12 @@ namespace RiskAI
             foreach(var guard in Selection.Where(unit=>unit.IsGarrison))
             {
                 attemptedGuardOrder=true;
-                if(session.Commands.Submit(new UnitCommand(0,guard.EntityId,kind,point.x,point.y,point.z,append:Shift)))issued=true;
+                if(session.Commands.Submit(new UnitCommand(0,guard.EntityId,kind,point.x,point.y,point.z,append:QueueOrders)))issued=true;
             }
             var mobile=Selection.Where(unit=>!unit.IsGarrison).ToArray();
             if(mobile.Length>0)
             {
-                BattleSession.GiveFormation(mobile,point,attack,Shift,PatrolCursor);
+                BattleSession.GiveFormation(mobile,point,attack,QueueOrders,PatrolCursor);
                 issued=true;
             }
             bool fleetIssued=false;
@@ -369,8 +390,8 @@ namespace RiskAI
             {
                 foreach(var ship in Fleet)if(IsSelectableShip(ship))
                 {
-                    ship.MoveTo(point,attack);Feedback(ship.LastActionError);
-                    if(ship.LastActionError==null)fleetIssued=true;
+                    var sailed=OrderShip(ship,attack?UnitCommandKind.AttackMove:UnitCommandKind.Move,point,append:QueueOrders);
+                    if(sailed.Accepted)fleetIssued=true;
                 }
                 issued|=fleetIssued;
             }
@@ -416,25 +437,25 @@ namespace RiskAI
             PurgeStaleSelection();
             if(!harbor||Fleet.Count==0)return;
             CancelBoardingForSelection();
-            foreach(var ship in Fleet)if(IsSelectableShip(ship)){ship.SailToHarbor(harbor);Feedback(ship.LastActionError);}
+            foreach(var ship in Fleet)if(IsSelectableShip(ship))OrderShip(ship,UnitCommandKind.Capture,harbor.Landing,append:QueueOrders,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
         }
         void BeginBoarding(Ship transport) => BeginBoarding(transport,Selection);
         void BeginBoarding(Ship transport,IReadOnlyList<Soldier> candidates)
         {
-            if(!transport||transport.Team!=0||!transport.Profile.CanTransport||candidates.Count==0)return;
+            if(!transport||transport.Team!=0||!transport.Type.CanTransport||candidates.Count==0)return;
             var naval=NavalWorld.Current;if(!naval)return;
-            var available=candidates.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison).Take(Mathf.Min(Ship.LoadOrderLimit,transport.Profile.Capacity-transport.CargoCount)).ToList();
+            var available=candidates.Where(u=>IsSelectableSoldier(u)&&!u.IsGarrison).Take(Mathf.Min(UnitCatalog.TransportLoadLimit,transport.Type.Transport.Capacity-transport.CargoCount)).ToList();
             if(available.Count==0){session.Message("Transporte lleno o sólo defensores retenidos seleccionados.",MessageKind.Info);return;}
             CancelPendingBoarding();
             // Already within source loading radius: no arbitrary dock detour.
             for(int i=available.Count-1;i>=0;i--)if(transport.TryEmbark(available[i]))available.RemoveAt(i);
-            if(available.Count==0){session.Message("Embarque completado: "+transport.CargoCount+" / "+transport.Profile.Capacity+".",MessageKind.Info);return;}
+            if(available.Count==0){session.Message("Embarque completado: "+transport.CargoCount+" / "+transport.Type.Transport.Capacity+".",MessageKind.Info);return;}
             if(!naval.TryPlanEmbark(transport,available,out var landing,out var berth,out var error)){session.Message(error,MessageKind.Info);return;}
             pendingBoardingTransport=transport;pendingBoardingLanding=landing;
-            transport.MoveTo(berth);
-            if(transport.LastActionError!=null){session.Message(transport.LastActionError,MessageKind.Info);CancelPendingBoarding();return;}
+            var sailed=OrderShip(transport,UnitCommandKind.Move,berth,append:QueueOrders);
+            if(!sailed.Accepted){session.Message(sailed.Error,MessageKind.Info);CancelPendingBoarding();return;}
             foreach(var soldier in available)
-            {pendingBoarders.Add(new SoldierRef(soldier));session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z));}
+            {pendingBoarders.Add(new SoldierRef(soldier));session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Embark,landing.x,landing.y,landing.z,transport.EntityId,append:QueueOrders));}
             lastBoardingProgress=session.BattleTime;previousBoarderCount=pendingBoarders.Count;
             nextBoardingCheck=session.BattleTime;nextBoardingRecovery=session.BattleTime+1f;
             ShowOrder(landing,false);session.Message("Embarcando: tropas y transporte se reúnen en la costa marcada.",MessageKind.Info);
@@ -453,7 +474,7 @@ namespace RiskAI
             for(int i=pendingBoarders.Count-1;i>=0;i--)
             {
                 var boarder=pendingBoarders[i];var soldier=boarder.Unit;
-                if(!boarder.Matches||!IsSelectableSoldier(soldier)||soldier.IsGarrison||pendingBoardingTransport.CargoCount>=pendingBoardingTransport.Profile.Capacity||pendingBoardingTransport.TryEmbark(soldier))
+                if(!boarder.Matches||!IsSelectableSoldier(soldier)||soldier.IsGarrison||pendingBoardingTransport.CargoCount>=pendingBoardingTransport.Type.Transport.Capacity||pendingBoardingTransport.TryEmbark(soldier))
                 {pendingBoarders.RemoveAt(i);continue;}
                 error=pendingBoardingTransport.LastActionError;
                 var agent=soldier.Agent;
@@ -462,11 +483,11 @@ namespace RiskAI
                 distance+=float.IsNaN(remaining)||float.IsInfinity(remaining)?offset.magnitude:remaining;
                 // Avoidance can stop a boarder just outside a narrow beach. Retry
                 // the already validated landing, without relaxing shore rules.
-                if(recover&&agent&&!agent.pathPending&&agent.velocity.sqrMagnitude<.04f&&offset.sqrMagnitude<=Ship.LoadRadius*Ship.LoadRadius)
-                    session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,pendingBoardingLanding.x,pendingBoardingLanding.y,pendingBoardingLanding.z));
+                if(recover&&agent&&!agent.pathPending&&agent.velocity.sqrMagnitude<.04f&&offset.sqrMagnitude<=UnitCatalog.TransportLoadRadius*UnitCatalog.TransportLoadRadius)
+                    soldier.RetryEmbarkApproach();
             }
             if(pendingBoarders.Count==0)
-            {session.Message("Embarque terminado: "+pendingBoardingTransport.CargoCount+" / "+pendingBoardingTransport.Profile.Capacity+".",MessageKind.Info);CancelPendingBoarding();return;}
+            {session.Message("Embarque terminado: "+pendingBoardingTransport.CargoCount+" / "+pendingBoardingTransport.Type.Transport.Capacity+".",MessageKind.Info);CancelPendingBoarding();return;}
             if(pendingBoarders.Count!=previousBoarderCount||distance<previousBoardingDistance-.1f)lastBoardingProgress=now;
             previousBoarderCount=pendingBoarders.Count;previousBoardingDistance=distance;
             if(now-lastBoardingProgress>=BoardingStallSeconds)
@@ -624,7 +645,7 @@ namespace RiskAI
             float panMultiplier=1;
             if(pan.sqrMagnitude>.001f)
             {
-                pan=pan.normalized;panMultiplier=Shift?1.7f:1;
+                pan=pan.normalized;panMultiplier=FastPan?1.7f:1;
             }
             else if(TryEdgePan(point,out var edgeDirection)){pan=edgeDirection.normalized;panMultiplier=1;}
             bool secondaryClick=false;
@@ -679,7 +700,7 @@ namespace RiskAI
         }
         bool InSelection(Soldier unit,Rect rect) { var p=cam.WorldToScreenPoint(unit.transform.position+Vector3.up);return p.z>0&&rect.Contains(new Vector2(p.x,Screen.height-p.y)); }
         bool InSelection(Ship ship,Rect rect) { var p=cam.WorldToScreenPoint(ship.transform.position+Vector3.up*2.4f);return p.z>0&&rect.Contains(new Vector2(p.x,Screen.height-p.y)); }
-        void OnEnable() { gameplayFocus=true; }
+        void OnEnable() { gameplayFocus=true; if(!GetComponent<OrderRoutes>())gameObject.AddComponent<OrderRoutes>(); }
         void OnDisable() { ReleaseCursor(); }
         void OnDestroy() { ReleaseCursor();inputRouter?.Dispose();RtsCursor.SetAttack(false); }
         bool OnScreen(Soldier unit) { var p=cam.WorldToViewportPoint(unit.transform.position);return p.z>0&&p.x>=0&&p.x<=1&&p.y>=.2f&&p.y<=.92f; }

@@ -6,17 +6,17 @@ using UnityEngine.AI;
 namespace RiskAI
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public sealed class Soldier : CombatTarget
+    public sealed class Soldier : CombatTarget, IOrderable, IPostClaimant, IQueuedOrderRunner
     {
-        enum OrderMode { Idle, Move, AttackMove, Attack, Hold, Patrol, Follow }
-        struct Order { public Vector3 Point; public OrderMode Mode; public int TargetId; }
+        enum OrderMode { Idle, Move, AttackMove, Attack, Hold, Patrol, Follow, Capture, Embark }
         public UnitKind Kind { get; private set; }
+        public override ref readonly UnitType Type => ref UnitCatalog.Get(Kind);
         public int OriginCountry { get; set; } = -1;
-        public override float MaxHealth => BattleRules.Health(Kind);
+        public override float MaxHealth => Type.MaxHealth;
         public override Vector3 AimPoint => transform.position + Vector3.up * 1.05f;
-        public override AttackKind AttackType => BattleRules.Profile(Kind).Attack;
-        public override ArmorKind ArmorType => BattleRules.Profile(Kind).Defense;
-        public override float Armor => BattleRules.Profile(Kind).Armor;
+        public override AttackKind AttackType => Type.AttackType;
+        public override ArmorKind ArmorType => Type.ArmorType;
+        public override float Armor => Type.Armor;
         public bool Selected { get; private set; }
         public CityClaimZone Garrison { get; private set; }
         public bool IsGarrison => Garrison != null;
@@ -26,7 +26,7 @@ namespace RiskAI
         // Presentation-only projection of the strike already scheduled by SimTick.
         // It does not schedule, cancel, or resolve combat.
         public float StrikeWindupProgress => strikeAt < 0 || !strikeTarget || !session ? -1 :
-            Mathf.Clamp01(1-(strikeAt-session.BattleTime)/Mathf.Max(.001f,BattleRules.AttackPoint(Kind)));
+            Mathf.Clamp01(1-(strikeAt-session.BattleTime)/Mathf.Max(.001f,Type.Weapon.AttackPoint));
         // Observational animation phase only; damage remains owned by SimTick.
         public float AttackPresentationProgress
         {
@@ -34,18 +34,18 @@ namespace RiskAI
             {
                 if (!session || attackPresentationStartedAt < 0) return -1;
                 if (attackPresentationContactTick == session.Clock.TickCount)
-                    return AttackPresentationTiming.ContactNormalizedTime(Kind);
+                    return Type.AttackContact;
                 float elapsed = session.BattleTime - attackPresentationStartedAt;
                 float duration = attackPresentationAttackPoint + attackPresentationRecovery;
                 if (elapsed < 0 || elapsed > duration) return -1;
                 return AttackPresentationTiming.NormalizedTime(elapsed,
                     attackPresentationAttackPoint, attackPresentationRecovery,
-                    AttackPresentationTiming.ContactNormalizedTime(Kind));
+                    Type.AttackContact);
             }
         }
         public long LastAttackContactTick => attackPresentationContactTick;
         public bool IsHolding => !IsGarrison && isActiveAndEnabled && mode==OrderMode.Hold && !target && Agent && Agent.enabled;
-        public string OrderLabel => IsGarrison ? "Guarnición · mantiene el edificio" : target ? "En combate" : mode == OrderMode.Move ? "Moviendo" : mode == OrderMode.AttackMove ? "Avanzando y atacando" : mode == OrderMode.Hold ? "Manteniendo posición" : mode == OrderMode.Patrol ? "Patrullando" : mode == OrderMode.Follow ? "Siguiendo" : "Preparado";
+        public string OrderLabel => IsGarrison ? "Guarnición · mantiene el edificio" : target ? "En combate" : mode == OrderMode.Move || mode == OrderMode.Embark ? "Moviendo" : mode == OrderMode.AttackMove || mode == OrderMode.Capture ? "Avanzando y atacando" : mode == OrderMode.Hold ? "Manteniendo posición" : mode == OrderMode.Patrol ? "Patrullando" : mode == OrderMode.Follow ? "Siguiendo" : "Preparado";
         public Transform LeftLeg, RightLeg, Weapon;
         internal BattleSession session;
         CombatTarget target, strikeTarget;
@@ -70,29 +70,42 @@ namespace RiskAI
         float simDelta;
         MedicSupport medic;
         RoarSupport roar;
-        float roarUntil = -1;
-        /// <summary>Aroa buff: +25% rolled damage until the source duration ends.</summary>
+        float roarUntil = -1, roarBonus;
+        /// <summary>Aroa buff: the caster's rolled-damage bonus until the source duration ends.</summary>
         public bool IsRoaring => session && roarUntil > session.BattleTime;
-        public void ApplyRoar(float until) { if (IsAlive) roarUntil = Mathf.Max(roarUntil, until); }
+        public void ApplyRoar(float until, float damageBonus) { if (IsAlive) { roarUntil = Mathf.Max(roarUntil, until); roarBonus = damageBonus; } }
         public ManaPool Mana => medic ? medic.Mana : roar ? roar.Mana : null;
         readonly List<CombatTarget> nearby = new List<CombatTarget>(64);
         readonly List<CombatTarget> alerted = new List<CombatTarget>(32);
-        readonly Queue<Order> orders = new Queue<Order>();
+        readonly OrderQueue orders = new OrderQueue();
+        readonly Vector3[] pathCorners = new Vector3[48];
+        NavMeshPath pathQuery;
+        int pathCornerCount;
+        UnitCommand activeCommand;
+        bool hasActiveCommand;
+        CaptureOrderState capture;
+        CapturePlan.View captureView;
+
+        Vector3 capturePoint;
+        Vector3 pathDestination;
+        Vector3 attackRouteAnchor;
+        int pathRevision = int.MinValue;
 
         public void Initialize(BattleSession battle, int team, UnitKind kind)
         {
             ClearHumanMoveTelemetry(true);
             session=battle; Team=team; Kind=kind; Health=MaxHealth; OriginCountry=-1;
-            Garrison=null; simulationPaused=false; enabled=true; roarUntil=-1;
+            Garrison=null; simulationPaused=false; enabled=true; roarUntil=-1; roarBonus=0;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
-            mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; orders.Clear();
+            mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; hasActiveCommand=false; capture.Clear(); captureView=default; orders.Reset();
+            admissionSnapReady=false; admissionSnap=default;
             nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
             humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
             bool first=!Agent;
             Agent=GetComponent<NavMeshAgent>(); Agent.enabled=true;
             // SourceGeometry holds verified W3U/SLK collision sizes. Height is
             // separate from rendered standing bounds: navigation clearance stays unchanged.
-            Agent.radius=SourceGeometry.AgentRadius(kind); Agent.height=1.3f; Agent.speed=BattleRules.Speed(kind);
+            Agent.radius=UnitCatalog.Get(kind).CollisionRadius; Agent.height=1.3f; Agent.speed=UnitCatalog.Get(kind).Speed;
             Agent.acceleration=32; Agent.angularSpeed=540; Agent.stoppingDistance=.15f; Agent.autoBraking=true;
             Agent.updatePosition=true; Agent.updateRotation=true;
             Agent.obstacleAvoidanceType=ObstacleAvoidanceType.LowQualityObstacleAvoidance;
@@ -107,10 +120,10 @@ namespace RiskAI
                 var collider=gameObject.AddComponent<CapsuleCollider>();collider.radius=.4f;collider.height=1.5f;collider.center=Vector3.up*.7f;collider.isTrigger=true;
                 VisualFactory.Soldier(this);
                 presentationLod=gameObject.AddComponent<UnitPresentationLodView>();presentationLod.Initialize(kind,team);
-                if(kind==UnitKind.Medic)medic=gameObject.AddComponent<MedicSupport>();
-                if(SupportAbilities.CanRoar(kind))roar=gameObject.AddComponent<RoarSupport>();
+                if(UnitCatalog.Get(kind).Heal.Enabled)medic=gameObject.AddComponent<MedicSupport>();
+                if(UnitCatalog.Get(kind).Roar.Enabled)roar=gameObject.AddComponent<RoarSupport>();
                 visualAnimator=GetComponent<SoldierAnimator>();
-                ring=VisualFactory.Ring(transform,Mathf.Max(.43f,SourceGeometry.AgentRadius(kind)*1.15f),.045f,new Color(.5f,1f,.6f));
+                ring=VisualFactory.Ring(transform,Mathf.Max(.43f,UnitCatalog.Get(kind).CollisionRadius*1.15f),.045f,new Color(.5f,1f,.6f));
             }
             GetComponent<Collider>().enabled=true;
             if(medic)medic.Initialize(this,battle);
@@ -135,7 +148,7 @@ namespace RiskAI
             if(!zone.TryGetGarrisonAnchor(out var point))return false;
             Stand(OrderMode.Hold);
             Agent.updatePosition=true; Agent.updateRotation=true;
-            Agent.ResetPath(); Agent.isStopped=true;
+            Agent.ResetPath();  Agent.isStopped=true; 
             if(!Agent.Warp(point))return false;
             transform.position=point;
             anchor=garrisonAnchor=point;Garrison=zone;
@@ -149,8 +162,9 @@ namespace RiskAI
         internal void ReleaseGarrison(CityClaimZone zone)
         {
             if(Garrison!=zone)return;
-            Garrison=null; orders.Clear(); CancelStrike(); target=null; followTargetId=0; mode=OrderMode.Idle;
+            Garrison=null; CancelStrike(); target=null; followTargetId=0; mode=OrderMode.Idle;
             anchor=destination=transform.position; nextSense=0; wasFighting=false;
+            PublishRoute();
             if(!Agent || !Agent.enabled)return;
             Agent.updatePosition=true; Agent.updateRotation=true;
             Agent.obstacleAvoidanceType=ObstacleAvoidanceType.LowQualityObstacleAvoidance;
@@ -196,32 +210,27 @@ namespace RiskAI
             humanMoveRouteResolved = false;
         }
         void OnDisable() { ClearHumanMoveTelemetry(true); }
-        public bool TryMoveTo(Vector3 point,bool attackMove,bool append) => Issue(point,attackMove?OrderMode.AttackMove:OrderMode.Move,append);
-        public bool Patrol(Vector3 point, bool append) => Issue(point, OrderMode.Patrol, append);
-        bool Issue(Vector3 point, OrderMode orderMode, bool append)
-        {
-            LastMoveError=null;
-            if(IsGarrison){LastMoveError="El defensor está retenido en su círculo.";return false;}
-            if(session.Paused||session.Winner>=0){LastMoveError="La partida está detenida.";return false;}
-            if(!Agent||!Agent.enabled||!Agent.isOnNavMesh){LastMoveError="La unidad no está sobre terreno transitable.";return false;}
-            if(!NavMesh.SamplePosition(point,out var hit,8,NavMesh.AllAreas)){LastMoveError="Ese destino no es transitable; usa un transporte para cruzar el agua.";return false;}
-            var order = new Order { Point = hit.position, Mode = orderMode };
-            if (append && mode != OrderMode.Idle && mode != OrderMode.Hold) { if (orders.Count < 35){orders.Enqueue(order);return true;}LastMoveError="La cola de órdenes está llena.";return false; }
-            orders.Clear(); Apply(order);return LastMoveError==null;
-        }
-        void Apply(Order order)
+        public bool TryMoveTo(Vector3 point,bool attackMove,bool append) =>
+            ApplyOrder(new UnitCommand(Team, EntityId, attackMove ? UnitCommandKind.AttackMove : UnitCommandKind.Move, point.x, point.y, point.z, append: append));
+        public bool Patrol(Vector3 point, bool append) =>
+            ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Patrol, point.x, point.y, point.z, append: append));
+        bool OrderBusy => mode != OrderMode.Idle && mode != OrderMode.Hold;
+        void Apply(OrderMode orderMode, Vector3 point, int targetId)
         {
             ClearHumanMoveTelemetry(true);
-            CancelStrike(); mode = order.Mode; destination = order.Point; patrolOrigin = anchor = transform.position;
-            target = null; followTargetId = order.TargetId; stalled = 0; nextSense = 0; wasFighting = false;
+            CancelStrike(); mode = orderMode; destination = point; patrolOrigin = anchor = transform.position;
+            target = null; followTargetId = targetId; stalled = 0; nextSense = 0; wasFighting = false;
             ResumePath();
         }
         void ResumePath()
         {
             Agent.isStopped = false; Agent.stoppingDistance = .15f; nextPath = 0;
             if (mode == OrderMode.Move || mode == OrderMode.AttackMove || mode == OrderMode.Patrol)
-            {if(!Agent.SetDestination(destination))LastMoveError="No se ha podido calcular la ruta a ese destino.";}
-            else Agent.ResetPath();
+            {
+                
+                if(!Agent.SetDestination(destination))LastMoveError="No se ha podido calcular la ruta a ese destino.";
+            }
+            else { Agent.ResetPath();  }
         }
         // Autonomous behaviors run frequently.  Never discard an in-flight path for one of
         // their small destination adjustments, and retain a route that already reaches it.
@@ -232,32 +241,55 @@ namespace RiskAI
             var delta = Agent.destination - point;
             delta.y = 0;
             if (Agent.hasPath && delta.sqrMagnitude <= .1225f) return true;
+            
             return Agent.SetDestination(point);
         }
-        public void Attack(CombatTarget enemy)
+        public void Attack(CombatTarget enemy, bool append = false)
         {
-            if (IsGarrison || session.Paused || session.Winner>=0 || !enemy || enemy.Team == Team || !Agent.enabled || !Agent.isOnNavMesh) return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); followTargetId=0; mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false;
+            if (!enemy) return;
+            var point = enemy.transform.position;
+            ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Attack, point.x, point.y, point.z, enemy.EntityId, append));
         }
-        public void Follow(Soldier ally)
+        void BeginAttack(CombatTarget enemy)
         {
-            if (IsGarrison || session.Paused || session.Winner>=0 || !ally || ally == this || ally.Team != Team) return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); Apply(new Order { Mode = OrderMode.Follow, TargetId = ally.EntityId });
+            ClearHumanMoveTelemetry(true);
+            CancelStrike();
+            followTargetId = 0;
+            mode = OrderMode.Attack;
+            SetTarget(enemy);
+            Agent.isStopped = false;
         }
-        public void Stop() => Stand(OrderMode.Idle);
-        public void HoldPosition() => Stand(OrderMode.Hold);
-        void Stand(OrderMode orderMode)
+        public void Follow(Soldier ally, bool append = false)
+        {
+            if (!ally) return;
+            var point = ally.transform.position;
+            ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Follow, point.x, point.y, point.z, ally.EntityId, append));
+        }
+        public void Stop() => ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Stop), false);
+        public void HoldPosition() => ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Hold));
+        void Stand(OrderMode orderMode, bool keepPassengerPlan = false)
         {
             if(IsGarrison)return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false;
+            if (!keepPassengerPlan) orders.ClearStash();
+            orders.Clear(); hasActiveCommand = false; capture.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false; PublishRoute();
             if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); Agent.isStopped = false; }
         }
         void Complete(bool failed=false)
         {
-            if (orders.Count > 0) Apply(orders.Dequeue());
-            else if (mode == OrderMode.Patrol && !failed) { var swap = destination; destination = patrolOrigin; patrolOrigin = swap; ResumePath(); }
-            else Stop();
+            if (OrderAdvance.Drain(orders, this)) { PublishRoute(); return; }
+            if (mode == OrderMode.Patrol && !failed) { var swap = destination; destination = patrolOrigin; patrolOrigin = swap; ResumePath(); }
+            else Stand(OrderMode.Idle);
+            PublishRoute();
         }
+        /// <summary>A dequeued command runs on the motor. It is not admitted again (its append flag would re-queue it).</summary>
+        bool RunQueued(in UnitCommand command)
+        {
+            // The destination was sampled when the order was admitted. Starting it must not sample again.
+            if (!OrderValidation.Check(session, this, command, false, out _)) { LastMoveError = null; return false; }
+            if (!ReleasePost(command, true, out _)) { LastMoveError = null; return false; }
+            return Execute(command, false);
+        }
+        bool IQueuedOrderRunner.TryStartQueued(in UnitCommand command) => RunQueued(command);
         void SetTarget(CombatTarget enemy) { target = enemy; pursuitOrigin = transform.position; nextPath = 0; }
         void CancelStrike()
         {
@@ -268,19 +300,10 @@ namespace RiskAI
             }
             strikeAt = -1; strikeTarget = null;
         }
-        bool Visible(CombatTarget enemy)
-        {
-            if (!enemy) return false;
-            if (BattleRules.Ranged(Kind))
-            {
-                Vector3 from = AimPoint, to = enemy.AimPoint, delta = to - from;
-                return delta.sqrMagnitude < .001f || !Physics.Raycast(from, delta.normalized, delta.magnitude, 1 << MapLayout.TerrainLayer, QueryTriggerInteraction.Ignore);
-            }
-            return !NavMesh.Raycast(transform.position, enemy.ApproachPoint(transform.position), out _, NavMesh.AllAreas);
-        }
+        bool Visible(CombatTarget enemy) => UnitTargeting.Visible(Type.Acquisition.Visibility, this, enemy);
         bool ValidTarget()
         {
-            if (!target || !target.CanBeAttacked || target.Team == Team) return false;
+            if (!UnitTargeting.CanTarget(this, Team, Type.Weapon, target)) return false;
             if (mode == OrderMode.Attack) return true;
             float leash = AutonomousLeash();
             var origin = mode == OrderMode.Idle || mode == OrderMode.Hold ? anchor : pursuitOrigin;
@@ -289,34 +312,23 @@ namespace RiskAI
             // while its pivot silently cancels the pending strike.
             return Vector3.Distance(target.ApproachPoint(origin), origin) <= leash;
         }
-        float AutonomousLeash()
-        {
-            float existing = BattleRules.Ranged(Kind) ? BattleRules.Range(Kind) + 2 : Team == PlayerRules.NeutralTeam ? 7 : 11;
-            return Mathf.Max(existing, SourceWeapons.AcquisitionRange(Kind));
-        }
+        float AutonomousLeash() => UnitRules.Leash(Type.Acquisition, Team == PlayerRules.NeutralTeam);
         void Acquire()
         {
-            if (mode == OrderMode.Move || mode == OrderMode.Follow || mode == OrderMode.Attack) return;
-            float sourceRadius = SourceWeapons.AcquisitionRange(Kind);
-            float radius = sourceRadius > 0 ? sourceRadius : mode == OrderMode.Hold ? BattleRules.Range(Kind) : Team == PlayerRules.NeutralTeam ? 5 : 7.5f;
-            CombatTarget best = null; float score = float.MaxValue;
-            session.Spatial.Query(transform.position,radius+3,nearby);
-            foreach (var enemy in nearby)
-            {
-                if (!enemy || enemy.Team == Team || !enemy.CanBeAttacked) continue;
-                float distance = Vector3.Distance(transform.position, enemy.ApproachPoint(transform.position));
-                if (distance > radius || !Visible(enemy)) continue;
-                if ((mode == OrderMode.Idle || Team == PlayerRules.NeutralTeam) && Vector3.Distance(anchor, enemy.ApproachPoint(anchor)) > AutonomousLeash()) continue;
-                int pressure = session.Spatial.Pressure(Team, enemy);
-                float candidate = distance + (Kind == UnitKind.Footman ? pressure * .48f : pressure * .1f);
-                if (candidate < score || candidate == score && (!best || enemy.EntityId < best.EntityId)) { best = enemy; score = candidate; }
-            }
+            if (mode == OrderMode.Move || mode == OrderMode.Follow || mode == OrderMode.Attack || mode == OrderMode.Embark) return;
+            ref readonly var type = ref Type;
+            bool neutral = Team == PlayerRules.NeutralTeam;
+            float radius = UnitRules.AcquireRadius(type.Acquisition, mode == OrderMode.Hold, neutral);
+            // An idle (or neutral) unit only takes targets inside its leash around the anchor.
+            bool leashed = type.Acquisition.HasLeash && (mode == OrderMode.Idle || neutral);
+            var best = UnitTargeting.Acquire(session, this, Team, type, radius, leashed, anchor, AutonomousLeash(), nearby);
             if (best) SetTarget(best);
         }
         public void SimTick(float delta)
         {
             simDelta=delta;
             if (!session || session.Paused || session.Winner >= 0 || !IsAlive || !Agent || !Agent.enabled || !Agent.isOnNavMesh) return;
+            if (CaptureFinished()) { Complete(); return; }
             UpdateTerrainSpeed();
             if (Agent.pathPending)
             {
@@ -327,15 +339,15 @@ namespace RiskAI
             // afterwards, but cannot resolve a heal and an attack in the same tick.
             bool healed=medic&&medic.SimTick(delta);
             if(roar)roar.SimTick(delta);
-            if(healed){CancelStrike();nextAttack=Mathf.Max(nextAttack,session.BattleTime+MedicSupport.CastInterval);}
+            if(healed){CancelStrike();nextAttack=Mathf.Max(nextAttack,session.BattleTime+Type.Heal.Cooldown);}
             if (!healed && strikeAt >= 0 && session.BattleTime >= strikeAt)
             {
                 attackPresentationContactTick=session.Clock.TickCount;
                 if(visualAnimator)visualAnimator.SampleStrikeContact();
-                if (strikeTarget && strikeTarget.Health > 0 && AttackDistance(strikeTarget) <= BattleRules.Range(Kind) + .55f && AttackDistance(strikeTarget)>=BattleRules.MinimumRange(Kind) && Visible(strikeTarget))
+                if (strikeTarget && strikeTarget.Health > 0 && UnitRules.StrikeLands(Type.Weapon, AttackDistance(strikeTarget)) && Visible(strikeTarget))
                 {
-                    float damage = session.RollDamage(BattleRules.Profile(Kind)) * SupportAbilities.DamageMultiplier(IsRoaring);
-                    if (BattleRules.Ranged(Kind)) session.Combat.FireWeapon(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, SourceWeapons.For(Kind, AttackType));
+                    float damage = session.RollDamage(Type.Weapon) * (IsRoaring ? 1 + roarBonus : 1);
+                    if (Type.Weapon.Ranged) session.Combat.FireWeapon(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, Type.Weapon);
                     else { strikeTarget.ReceiveAttack(damage, AttackType, Team, this); session.Feedback.RaiseImpact(strikeTarget.AimPoint, AttackType, 0, ImpactKind.Melee, this); }
                 }
                 strikeAt = -1; strikeTarget = null;
@@ -343,10 +355,16 @@ namespace RiskAI
             if (!ValidTarget())
             {
                 target = null;
-                if (wasFighting || mode == OrderMode.Attack)
+                if (mode == OrderMode.Capture)
                 {
                     CancelStrike();
-                    if (mode == OrderMode.Attack) Complete(); else ResumePath();
+                    if (!StepCapture()) Complete();
+                }
+                else if (wasFighting || mode == OrderMode.Attack)
+                {
+                    CancelStrike();
+                    if (UnitRules.OnTargetLost(CommandKind(mode)) == UnitRules.TargetLost.Advance) Complete();
+                    else ResumePath();
                     if (mode == OrderMode.Idle && Vector3.Distance(transform.position, anchor) > 1.5f) RequestAutonomousPath(anchor);
                 }
             }
@@ -392,7 +410,7 @@ namespace RiskAI
             forestCellX=cell.x;forestCellZ=cell.y;forestRevision=canopies.MovementRevision;
             // Forest drag is an own terrain adaptation. BattleRules.Speed remains
             // the source-derived base speed and guards retain their anchored state.
-            Agent.speed=BattleRules.Speed(Kind)*canopies.MovementMultiplier(cell);
+            Agent.speed=Type.Speed*(Type.ForestPenalty?canopies.MovementMultiplier(cell):1f);
         }
         void LateUpdate()
         {
@@ -405,30 +423,17 @@ namespace RiskAI
             if (Weapon)
             {
                 float pose=AttackPresentationTiming.ContactPose(presentation,
-                    AttackPresentationTiming.ContactNormalizedTime(Kind));
+                    Type.AttackContact);
                 Weapon.localRotation = Quaternion.Euler(-15-pose*95,0,0);
             }
         }
-        /// <summary>Collision radius used for melee reach (source ucol).</summary>
-        public float BodyRadius => SourceGeometry.AgentRadius(Kind);
-        static float ReachRadius(CombatTarget other) => other is Soldier soldier ? soldier.BodyRadius : 0;
-        /// <summary>A melee unit opens its first blow once this far inside its reach...</summary>
-        public const float MeleeReachMargin = .2f;
-        /// <summary>...and paths to a point this far inside it, so braking short still engages.</summary>
-        public const float MeleeApproachMargin = .4f;
         /// <summary>
         /// Distance the attack range is measured over. Melee reach is edge to edge, as in the
         /// source (gap between the two collision circles; building/ship approach points already
         /// lie on their surface). Ranged units keep the centre-to-approach-point distance.
         /// </summary>
-        float AttackDistance(CombatTarget other)
-        {
-            float distance = Vector3.Distance(transform.position, other.ApproachPoint(transform.position));
-            return BattleRules.Ranged(Kind) ? distance : distance - BodyRadius - ReachRadius(other);
-        }
+        float AttackDistance(CombatTarget other) => UnitTargeting.WeaponDistance(this, Type.Weapon, other);
         /// <summary>Centre distance at which a melee unit of <paramref name="kind"/> engages a target of the given radius.</summary>
-        public static float MeleeEngageDistance(UnitKind kind, float targetRadius) =>
-            SourceGeometry.AgentRadius(kind) + targetRadius + Mathf.Max(.05f, BattleRules.Range(kind) - MeleeApproachMargin);
         CombatTarget meleeEngaged;
         void Fight()
         {
@@ -436,34 +441,30 @@ namespace RiskAI
             // Melee hysteresis: close to just inside the reach before the first blow, then
             // keep striking anywhere within it. Without this a charging lancer halts at the
             // very edge and every small drift restarts the approach.
-            float reach = BattleRules.Range(Kind);
-            if (!BattleRules.Ranged(Kind))
-            {
-                if (meleeEngaged != target) reach = Mathf.Max(.05f, reach - MeleeReachMargin);
-                if (distance > BattleRules.Range(Kind)) meleeEngaged = null;
-            }
+            float reach = UnitRules.Reach(Type.Weapon, meleeEngaged == target);
+            if (!Type.Weapon.Ranged && distance > Type.Weapon.Range) meleeEngaged = null;
             bool visible = Visible(target);
-            if(distance<BattleRules.MinimumRange(Kind))
+            if(UnitRules.TooClose(Type.Weapon, distance))
             {
                 if(mode==OrderMode.Hold){target=null;Agent.isStopped=IsGarrison;return;}
                 if(session.BattleTime>=nextPath)
                 {
                     nextPath=session.BattleTime+.4f;var away=transform.position-target.transform.position;away.y=0;
                     if(away.sqrMagnitude<.01f)away=transform.forward;
-                    var retreat=transform.position+away.normalized*(BattleRules.MinimumRange(Kind)+1.5f-distance);
+                    var retreat=transform.position+away.normalized*(Type.Weapon.MinRange+1.5f-distance);
                     if(NavMesh.SamplePosition(retreat,out var spot,3,NavMesh.AllAreas)){Agent.isStopped=false;Agent.stoppingDistance=.15f;RequestAutonomousPath(spot.position);}
                 }
                 return;
             }
             if (distance <= reach && visible)
             {
-                if (!BattleRules.Ranged(Kind)) meleeEngaged = target;
+                if (!Type.Weapon.Ranged) meleeEngaged = target;
                 Agent.isStopped = true;
                 Vector3 direction = target.transform.position - transform.position; direction.y = 0;
                 if (direction.sqrMagnitude > .001f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(direction), 650 * simDelta);
                 if (session.BattleTime >= nextAttack && strikeAt < 0)
                 {
-                    var profile=BattleRules.Profile(Kind);
+                    ref readonly var profile=ref Type.Weapon;
                     nextAttack = session.BattleTime + profile.Cooldown; strikeAt = session.BattleTime + profile.AttackPoint;
                     strikeTarget = target;
                     attackPresentationStartedAt=session.BattleTime;
@@ -480,13 +481,13 @@ namespace RiskAI
                 // A large stoppingDistance around the enemy is only a braking
                 // radius: long NavMesh frames can still carry us deep inside it.
                 var approach = target.ApproachPoint(transform.position);
-                if (BattleRules.Ranged(Kind) && visible)
+                if (Type.Weapon.Ranged && visible)
                 {
-                    float range = BattleRules.Range(Kind);
+                    float range = Type.Weapon.Range;
                     var probe = approach + (transform.position - approach).normalized * (range - .2f);
                     if (NavMesh.SamplePosition(probe, out var firing, .75f, NavMesh.AllAreas) &&
                         Vector3.Distance(firing.position, approach) <= range &&
-                        Vector3.Distance(firing.position, approach) >= BattleRules.MinimumRange(Kind) &&
+                        Vector3.Distance(firing.position, approach) >= Type.Weapon.MinRange &&
                         !NavMesh.Raycast(transform.position, firing.position, out _, NavMesh.AllAreas) &&
                         !Physics.Linecast(firing.position + Vector3.up * 1.05f, target.AimPoint,
                             1 << MapLayout.TerrainLayer, QueryTriggerInteraction.Ignore))
@@ -496,13 +497,13 @@ namespace RiskAI
                         return;
                     }
                 }
-                if (!BattleRules.Ranged(Kind))
+                if (!Type.Weapon.Ranged)
                 {
                     // Stop at the edge of the reach instead of pressing into the target.
                     var from = transform.position - approach; from.y = 0;
                     if (from.sqrMagnitude > .0001f)
                     {
-                        var probe = approach + from.normalized * MeleeEngageDistance(Kind, ReachRadius(target));
+                        var probe = approach + from.normalized * UnitRules.EngageDistance(Type, target.Type.BodyRadius);
                         if (NavMesh.SamplePosition(probe, out var spot, .75f, NavMesh.AllAreas) &&
                             !NavMesh.Raycast(transform.position, spot.position, out _, NavMesh.AllAreas))
                         {
@@ -514,8 +515,8 @@ namespace RiskAI
                 }
                 // An obstructed firing position still requires following the
                 // target's path to find a reachable point with line of sight.
-                Agent.stoppingDistance = Mathf.Max(.15f, BattleRules.Ranged(Kind) && visible
-                    ? BattleRules.Range(Kind) - .12f : BattleRules.Range(Kind) * .76f);
+                Agent.stoppingDistance = Mathf.Max(.15f, Type.Weapon.Ranged && visible
+                    ? Type.Weapon.Range - .12f : Type.Weapon.Range * .76f);
                 RequestAutonomousPath(approach);
             }
         }
@@ -523,6 +524,23 @@ namespace RiskAI
         {
             if(IsGarrison){Agent.isStopped=true;return;}
             Agent.isStopped = false;
+            if (mode == OrderMode.Embark)
+            {
+                var ship = session.FindTarget(activeCommand.TargetId) as Ship;
+                if (!ship || !ship.IsAlive || !ship.Type.CanTransport || ship.Team != Team)
+                {
+                    if (orders.StashCount > 0) RestoreEmbarkOrders();
+                    else Complete();
+                    return;
+                }
+                if (WithinLoad(ship) && ship.TryEmbark(this)) return;
+                if (session.BattleTime >= nextPath)
+                {
+                    nextPath = session.BattleTime + .2f;
+                    if (NavMesh.SamplePosition(ship.transform.position, out var berth, 8, NavMesh.AllAreas)) RequestAutonomousPath(berth.position);
+                }
+                return;
+            }
             if (mode == OrderMode.Follow)
             {
                 var followTarget = session.FindTarget(followTargetId) as Soldier;
@@ -531,7 +549,7 @@ namespace RiskAI
                 if (followTarget.CurrentTarget && Vector3.Distance(transform.position, followTarget.CurrentTarget.transform.position) < 9) SetTarget(followTarget.CurrentTarget);
                 return;
             }
-            if (mode == OrderMode.Move || mode == OrderMode.AttackMove || mode == OrderMode.Patrol)
+            if (mode == OrderMode.Move || mode == OrderMode.AttackMove || mode == OrderMode.Patrol || mode == OrderMode.Capture)
             {
                 if (Agent.pathPending) return;
                 float distance = Vector3.Distance(transform.position, destination);
@@ -548,10 +566,429 @@ namespace RiskAI
                     if(!Agent.hasPath || Agent.remainingDistance<.4f || stalled>1.2f)Complete(true);
                     return;
                 }
-                if (distance < .65f || (Agent.pathStatus==NavMeshPathStatus.PathComplete && ((Agent.hasPath && Agent.remainingDistance < .4f) || (stalled > 1.2f && distance < 3)))) Complete();
+                if (distance < .65f || (Agent.pathStatus==NavMeshPathStatus.PathComplete && ((Agent.hasPath && Agent.remainingDistance < .4f) || (stalled > 1.2f && distance < 3))))
+                {
+                    if (mode == OrderMode.Capture) { if (!StepCapture()) Complete(); }
+                    else Complete();
+                }
                 else if (!Agent.hasPath && session.BattleTime >= nextPath) { Agent.stoppingDistance = .15f; Agent.SetDestination(destination); nextPath = session.BattleTime + .5f; }
             }
         }
+        /// <summary>An idle ally joins against the attacker of a nearby friend.</summary>
+        public override void JoinAlert(CombatTarget attacker) { if (IsIdle) SetTarget(attacker); }
+        public OrderQueue Orders => orders;
+        public int OrderLegCount => OrderLegView.Count(orders);
+        public Vector3 OrderLegPoint(int index) => OrderLegView.Point(orders, index, session, hasActiveCommand, activeCommand);
+        public UnitCommandKind OrderLegKind(int index) => OrderLegView.Kind(orders, index);
+        public int ActivePathCount => pathCornerCount;
+        public Vector3 ActivePathPoint(int index) => pathCorners[index];
+        public void RefreshActivePath()
+        {
+            if (!Agent || !Agent.isOnNavMesh || Agent.pathPending || !Agent.hasPath) { if (Agent && !Agent.hasPath) pathCornerCount = 0; return; }
+            var destinationNow = Agent.destination;
+            bool attackMoved = hasActiveCommand && activeCommand.Kind == UnitCommandKind.Attack && target &&
+                (target.transform.position - attackRouteAnchor).sqrMagnitude > .25f;
+            if (!attackMoved && pathRevision == orders.Revision && destinationNow == pathDestination && pathCornerCount >= 2) return;
+            if (target) attackRouteAnchor = target.transform.position;
+            RememberPath();
+            pathDestination = destinationNow;
+            pathRevision = orders.Revision;
+        }
+        string IOrderable.OrderError => LastMoveError;
+        void IOrderable.ClearOrderError() => LastMoveError = null;
+        bool IOrderable.Authorize(ref UnitCommand command, bool plan)
+        {
+            admissionSnapReady = false;
+            bool ok = OrderValidation.Check(session, this, command, plan, out var error);
+            if (!ok) LastMoveError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
+            else if (admissionSnapReady)
+                command = command.WithSnap(admissionSnap.x, admissionSnap.y, admissionSnap.z);
+            admissionSnapReady = false;
+            return ok;
+        }
+        bool IOrderable.ApplyOrder(in UnitCommand command) => ApplyOrder(command);
+        bool IOrderable.HumanMoveEligible(in UnitCommand command) =>
+            command.PlayerId == 0 && !command.Append &&
+            (command.Kind == UnitCommandKind.Move || command.Kind == UnitCommandKind.AttackMove) &&
+            CanBeginHumanMoveTelemetry;
+        void IOrderable.BeginHumanMove(in UnitCommand command, double submittedAt, double pausedAtSubmit, bool eligible)
+        {
+            if (command.PlayerId != 0 || command.Append) return;
+            if (command.Kind != UnitCommandKind.Move && command.Kind != UnitCommandKind.AttackMove) return;
+            BeginHumanMoveTelemetry(submittedAt, pausedAtSubmit, eligible, new Vector3(command.X, command.Y, command.Z));
+        }
+
+        public bool ReleasePost(in UnitCommand command, bool commitRelease, out string error)
+        {
+            error = null;
+            if (!IsGarrison || command.Kind == UnitCommandKind.Stop || command.Kind == UnitCommandKind.Hold) return true;
+            var zone = Garrison;
+            if (zone != null && (commitRelease ? zone.TryReleaseGuardianForOrder(session, this) : zone.HasRelief(session, this)))
+                return true;
+            error = "El defensor necesita un relevo aliado dentro del círculo.";
+            return false;
+        }
+
+        public bool Reach(in UnitCommand command, bool plan, out string error)
+        {
+            error = null;
+            switch (command.Kind)
+            {
+                case UnitCommandKind.Move:
+                case UnitCommandKind.AttackMove:
+                case UnitCommandKind.Patrol:
+                    return plan ? SnapDestination(command, out error) : OnMesh(out error);
+                case UnitCommandKind.Attack:
+                case UnitCommandKind.Capture:
+                case UnitCommandKind.Embark:
+                    return OnMesh(out error);
+                default:
+                    return true;
+            }
+        }
+
+        bool admissionSnapReady;
+        Vector3 admissionSnap;
+        bool SnapDestination(in UnitCommand command, out string error)
+        {
+            error = null;
+            admissionSnapReady = false;
+            if (!OnMesh(out error)) return false;
+            if (!NavMesh.SamplePosition(new Vector3(command.X, command.Y, command.Z), out var hit, 8, NavMesh.AllAreas))
+            {
+                error = "Ese destino no es transitable; usa un transporte para cruzar el agua.";
+                return false;
+            }
+            admissionSnap = hit.position;
+            admissionSnapReady = true;
+            return true;
+        }
+
+        bool ResolveDestination(in UnitCommand command, out Vector3 point)
+        {
+            if (command.HasSnap)
+            {
+                point = new Vector3(command.SnapX, command.SnapY, command.SnapZ);
+                return true;
+            }
+            if (!NavMesh.SamplePosition(new Vector3(command.X, command.Y, command.Z), out var hit, 8, NavMesh.AllAreas))
+            {
+                point = default;
+                return false;
+            }
+            point = hit.position;
+            return true;
+        }
+
+        bool OnMesh(out string error)
+        {
+            error = null;
+            if (Agent && Agent.enabled && Agent.isOnNavMesh) return true;
+            error = "La unidad no está sobre terreno transitable.";
+            return false;
+        }
+
+        bool ApplyOrder(in UnitCommand command, bool keepPassengerPlan = false)
+        {
+            // plan=false: admission already snapped a command that came through the inbox.
+            bool valid = OrderValidation.Check(session, this, command, false, out var error);
+            if (!valid) LastMoveError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
+            bool willRun = valid && UnitRules.Queue(command.Kind, command.Append, OrderBusy) != UnitRules.OrderQueueAction.Append;
+            if (willRun && command.Kind != UnitCommandKind.Stop && command.Kind != UnitCommandKind.Hold
+                && !ReleasePost(command, true, out error))
+            {
+                LastMoveError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
+                valid = false;
+            }
+            // A replacing order cancels the voyage plan. An appended order keeps it,
+            // and a full queue must not wipe the stash before Admit refuses the order.
+            bool replacing = willRun && command.Kind != UnitCommandKind.Stop && command.Kind != UnitCommandKind.Hold
+                && command.Kind != UnitCommandKind.Embark;
+            if (valid && replacing && !keepPassengerPlan) orders.ClearStash();
+            else if (valid && command.Kind == UnitCommandKind.Embark && !command.Append)
+                RetainOrdersForEmbark();
+            else if (valid && hasActiveCommand && activeCommand.Kind == UnitCommandKind.Embark
+                && UnitRules.Queue(command.Kind, command.Append, OrderBusy) == UnitRules.OrderQueueAction.Append
+                && orders.StashCount >= OrderQueue.LegCap && !StashHolds(command))
+            {
+                LastMoveError = OrderQueue.FullError;
+                valid = false;
+            }
+            switch (orders.Admit(command, OrderBusy, valid))
+            {
+                case OrderQueue.AdmitResult.Rejected:
+                    if (string.IsNullOrEmpty(LastMoveError)) LastMoveError = OrderQueue.InvalidError;
+                    return false;
+                case OrderQueue.AdmitResult.Full:
+                    LastMoveError = OrderQueue.FullError;
+                    return false;
+                case OrderQueue.AdmitResult.Queued:
+                    if (hasActiveCommand && activeCommand.Kind == UnitCommandKind.Embark)
+                        orders.AppendStash(command);
+                    PublishRoute();
+                    return true;
+                default:
+                    bool ok = Execute(command, keepPassengerPlan);
+                    PublishRoute();
+                    return ok;
+            }
+        }
+
+        bool Execute(in UnitCommand command, bool keepPassengerPlan)
+        {
+            switch (command.Kind)
+            {
+                case UnitCommandKind.Move: return ExecuteMove(command, OrderMode.Move);
+                case UnitCommandKind.AttackMove: return ExecuteMove(command, OrderMode.AttackMove);
+                case UnitCommandKind.Patrol: return ExecuteMove(command, OrderMode.Patrol);
+                case UnitCommandKind.Attack: return ExecuteAttack(command);
+                case UnitCommandKind.Follow: return ExecuteFollow(command);
+                case UnitCommandKind.Capture: return ExecuteCapture(command);
+                case UnitCommandKind.Embark: return ExecuteEmbark(command);
+                case UnitCommandKind.Stop: Stand(OrderMode.Idle, keepPassengerPlan); return true;
+                case UnitCommandKind.Hold: Stand(OrderMode.Hold); return true;
+                default: LastMoveError = OrderQueue.InvalidError; return false;
+            }
+        }
+
+        bool ExecuteMove(in UnitCommand command, OrderMode orderMode)
+        {
+            LastMoveError = null;
+            if (!ResolveDestination(command, out var hit))
+            { LastMoveError = "Ese destino no es transitable; usa un transporte para cruzar el agua."; return false; }
+            Remember(command);
+            Apply(orderMode, hit, 0);
+            return string.IsNullOrEmpty(LastMoveError);
+        }
+
+        bool ExecuteAttack(in UnitCommand command)
+        {
+            LastMoveError = null;
+            var enemy = session.FindTarget(command.TargetId);
+            if (!enemy) { LastMoveError = OrderQueue.InvalidError; return false; }
+            Remember(command);
+            BeginAttack(enemy);
+            return true;
+        }
+
+        bool ExecuteFollow(in UnitCommand command)
+        {
+            var ally = session.FindTarget(command.TargetId) as Soldier;
+            if (!ally) { LastMoveError = OrderQueue.InvalidError; return false; }
+            Remember(command);
+            Apply(OrderMode.Follow, ally.transform.position, ally.EntityId);
+            return true;
+        }
+
+        CapturePlan.View CaptureView(in UnitCommand command)
+        {
+            captureView = CapturePlan.Fresh(session, command, captureView);
+            return captureView;
+        }
+
+        bool CaptureFinished()
+        {
+            if (mode != OrderMode.Capture || !capture.Active) return false;
+            var view = CaptureView(activeCommand);
+            capturePoint = view.Point;
+            // Land has no voyage after the post becomes ours, so the approach counts as finished.
+            if (!capture.Done(view.Found, view.Owner, Team, true, Type.CanCapture)) return false;
+            capture.Clear();
+            captureView = default;
+            return true;
+        }
+
+        bool ExecuteCapture(in UnitCommand command)
+        {
+            var view = CapturePlan.Look(session, command);
+            if (!view.Found) { LastMoveError = "Elige una ciudad o un puerto."; return false; }
+            Remember(command);
+            captureView = view;
+            capture.Begin(view.Found, view.Owner);
+            capturePoint = view.Point;
+            if (capture.Done(view.Found, view.Owner, Team, true, Type.CanCapture))
+            {
+                hasActiveCommand = false;
+                capture.Clear();
+                captureView = default;
+                Complete();
+                return true;
+            }
+            return StepCapture();
+        }
+
+        /// <summary>False when this capture is finished and the next queued order should run.</summary>
+        bool StepCapture()
+        {
+            var view = CaptureView(activeCommand);
+            capturePoint = view.Point;
+            if (capture.Done(view.Found, view.Owner, Team, true, Type.CanCapture)) { capture.Clear(); captureView = default; return false; }
+            if (CapturePlan.HostileGuardian(view, Team))
+            {
+                BeginAttack(view.Guardian);
+                mode = OrderMode.Capture;
+                return true;
+            }
+            if (!NavMesh.SamplePosition(view.Point, out var hit, 8, NavMesh.AllAreas))
+            { LastMoveError = "Ese destino no es transitable; usa un transporte para cruzar el agua."; return false; }
+            mode = OrderMode.Capture;
+            target = null;
+            followTargetId = 0;
+            destination = hit.position;
+            var flat = transform.position - hit.position;
+            flat.y = 0;
+            if (flat.sqrMagnitude <= .65f * .65f) { if (Agent) Agent.isStopped = true; return true; }
+            ResumePath();
+            return string.IsNullOrEmpty(LastMoveError);
+        }
+
+        bool ExecuteEmbark(in UnitCommand command)
+        {
+            var ship = session.FindTarget(command.TargetId) as Ship;
+            if (!ship) { LastMoveError = "Selecciona un transporte."; return false; }
+            Remember(command);
+            // Orders still behind this embark survive the voyage. A replacing embark already stashed them.
+            orders.MergeQueue();
+            mode = OrderMode.Embark;
+            target = null;
+            followTargetId = 0;
+            var landing = new Vector3(command.X, command.Y, command.Z);
+            destination = ship.transform.position;
+            if (landing.sqrMagnitude > .01f && NavMesh.SamplePosition(landing, out var shore, 8, NavMesh.AllAreas))
+                destination = shore.position;
+            else if (NavMesh.SamplePosition(ship.transform.position, out var hit, 8, NavMesh.AllAreas))
+                destination = hit.position;
+            if (WithinLoad(ship) && ship.TryEmbark(this)) return true;
+            ResumePath();
+            return true;
+        }
+
+        /// <summary>The boarding retry re-walks the embark already in progress. It does not submit a second order.</summary>
+        public void RetryEmbarkApproach()
+        {
+            if (mode != OrderMode.Embark || !hasActiveCommand || activeCommand.Kind != UnitCommandKind.Embark) return;
+            var ship = session.FindTarget(activeCommand.TargetId) as Ship;
+            if (!ship) return;
+            var landing = new Vector3(activeCommand.X, activeCommand.Y, activeCommand.Z);
+            if (landing.sqrMagnitude > .01f && NavMesh.SamplePosition(landing, out var shore, 8, NavMesh.AllAreas))
+                destination = shore.position;
+            else if (NavMesh.SamplePosition(ship.transform.position, out var hit, 8, NavMesh.AllAreas))
+                destination = hit.position;
+            ResumePath();
+        }
+
+        bool WithinLoad(Ship ship)
+        {
+            var flat = transform.position - ship.transform.position;
+            flat.y = 0;
+            float radius = UnitCatalog.TransportLoadRadius;
+            return flat.sqrMagnitude <= radius * radius;
+        }
+
+        void Remember(in UnitCommand command)
+        {
+            activeCommand = command;
+            hasActiveCommand = command.Kind != UnitCommandKind.Stop && command.Kind != UnitCommandKind.Hold;
+        }
+
+        static UnitCommandKind CommandKind(OrderMode mode)
+        {
+            switch (mode)
+            {
+                case OrderMode.AttackMove: return UnitCommandKind.AttackMove;
+                case OrderMode.Attack: return UnitCommandKind.Attack;
+                case OrderMode.Patrol: return UnitCommandKind.Patrol;
+                case OrderMode.Follow: return UnitCommandKind.Follow;
+                case OrderMode.Hold: return UnitCommandKind.Hold;
+                default: return UnitCommandKind.Move;
+            }
+        }
+
+        /// <summary>
+        /// Boarding keeps every queued command, including its target, for after the unload.
+        /// An empty plan copies the live order and the queue. A plan already started only appends.
+        /// </summary>
+        public void RetainOrdersForEmbark()
+        {
+            if (orders.StashCount == 0)
+            {
+                orders.Stash(hasActiveCommand && activeCommand.Kind != UnitCommandKind.Embark, activeCommand);
+                return;
+            }
+            if (hasActiveCommand && activeCommand.Kind != UnitCommandKind.Embark)
+                orders.AppendStash(activeCommand);
+            orders.MergeQueue();
+        }
+
+        bool StashHolds(in UnitCommand command)
+        {
+            for (int i = 0; i < orders.StashCount; i++)
+            {
+                var saved = orders.StashedCommand(i);
+                if (saved.Kind == command.Kind && saved.TargetId == command.TargetId && saved.CommandId == command.CommandId
+                    && saved.X == command.X && saved.Y == command.Y && saved.Z == command.Z && saved.StructureId == command.StructureId)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>Stop the motor but keep the passenger plan that <see cref="RetainOrdersForEmbark"/> just stored.</summary>
+        public void StopKeepingPassengerPlan()
+        {
+            RetainOrdersForEmbark();
+            ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Stop), true);
+        }
+
+        /// <summary>One buffer for every soldier. A second caller while the first is still copying fails instead of mixing the two plans.</summary>
+        static readonly UnitCommand[] embarkRestore = new UnitCommand[OrderQueue.LegCap];
+        static int embarkRestoreDepth;
+        public void RestoreEmbarkOrders()
+        {
+            if (embarkRestoreDepth != 0)
+                throw new System.InvalidOperationException("RestoreEmbarkOrders re-entered. The shared restore buffer can only serve one soldier at a time.");
+            int count = orders.StashCount;
+            if (count <= 0) return;
+            embarkRestoreDepth++;
+            try
+            {
+                for (int i = 0; i < count; i++) embarkRestore[i] = orders.StashedCommand(i);
+                orders.ClearStash();
+                for (int i = 0; i < count; i++) ApplyOrder(embarkRestore[i].WithAppend(i > 0));
+            }
+            finally
+            {
+                embarkRestoreDepth--;
+            }
+        }
+
+        public int PathCornerCount => pathCornerCount;
+        public Vector3 PathCorner(int index) => pathCorners[index];
+        public void RememberPath()
+        {
+            if (!Agent || !Agent.isOnNavMesh || !Agent.hasPath) { pathCornerCount = 0; return; }
+            if (pathQuery == null) pathQuery = new NavMeshPath();
+            if (!Agent.CalculatePath(Agent.destination, pathQuery)) { pathCornerCount = 0; return; }
+            pathCornerCount = pathQuery.GetCornersNonAlloc(pathCorners);
+        }
+
+        void PublishRoute()
+        {
+            if (Selected) RememberPath();
+            if (!hasActiveCommand) { OrderLegView.Publish(orders, false, UnitCommandKind.Move, Vector3.zero); return; }
+            Vector3 point = activeCommand.Kind == UnitCommandKind.Capture ? capturePoint
+                : activeCommand.Kind == UnitCommandKind.Attack && target ? target.transform.position
+                : destination;
+            OrderLegView.Publish(orders, true, activeCommand.Kind, point);
+        }
+
+        bool IPostClaimant.ContendsOnFoot => this && isActiveAndEnabled && IsAlive && Agent && Agent.enabled && Agent.isOnNavMesh &&
+            (PlayerRules.IsPlayer(Team) || Team == PlayerRules.NeutralTeam);
+        bool IPostClaimant.BlockedByOtherPost(CityClaimZone zone) => this && IsGarrison && Garrison != zone;
+        bool IPostClaimant.TryBindPost(CityClaimZone zone) =>
+            this && zone != null && ((IPostClaimant)this).ContendsOnFoot && !(IsGarrison && Garrison != zone) && BindGarrison(zone);
+        void IPostClaimant.ReleasePost(CityClaimZone zone) { if (this) ReleaseGarrison(zone); }
+        bool IPostClaimant.DropStale(CityClaimZone zone) => !this || !((IPostClaimant)this).ContendsOnFoot || Garrison != zone;
+
         public float Heal(float amount)
         {
             if(!IsAlive||amount<=0||float.IsNaN(amount)||float.IsInfinity(amount))return 0;
@@ -560,7 +997,7 @@ namespace RiskAI
         public void DestroyEmbarked(int attacker)
         {
             if(Health<=0)return;ClearHumanMoveTelemetry(true);Health=0;
-            if(PlayerRules.IsPlayer(attacker)&&attacker<session.PlayerCount){session.Kills[attacker]++;session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind));}
+            if(PlayerRules.IsPlayer(attacker)&&attacker<session.PlayerCount){session.Kills[attacker]++;session.Economy.GrantBounty(attacker,Type.Points);}
             Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);
             session.SoldierPool.Retire(this,0);
         }
@@ -572,21 +1009,23 @@ namespace RiskAI
             if (Health <= 0)
             {
                 ClearHumanMoveTelemetry(true);
-                if (PlayerRules.IsPlayer(attacker) && attacker < session.PlayerCount) { session.Kills[attacker]++; session.Economy.GrantBounty(attacker,BattleRules.PointValue(Kind)); }
+                if (PlayerRules.IsPlayer(attacker) && attacker < session.PlayerCount) { session.Kills[attacker]++; session.Economy.GrantBounty(attacker,Type.Points); }
                 Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);Select(false);Agent.enabled=false;GetComponent<Collider>().enabled=false;enabled=false;
                 if(visualAnimator)visualAnimator.Die();
                 session.Feedback.RaiseDied(this);
                 session.SoldierPool.Retire(this,SoldierPool.CorpseDelay(session,visualAnimator));
                 return;
             }
-            if (source && mode != OrderMode.Move && mode != OrderMode.Hold && mode != OrderMode.Follow && !target)
+            ref readonly var acquisition = ref Type.Acquisition;
+            if (source && acquisition.Retaliate && mode != OrderMode.Move && mode != OrderMode.Hold && mode != OrderMode.Follow && !target)
                 SetTarget(source);
-            if(source)
+            float alert = acquisition.AllyAlertRadius;
+            if(source && alert > 0)
             {
-                session.Spatial.Query(transform.position,5,alerted);
+                session.Spatial.Query(transform.position,alert,alerted);
                 foreach(var candidate in alerted)
-                    if(candidate is Soldier ally && ally.Team==Team && ally.IsIdle && (transform.position-ally.transform.position).sqrMagnitude<25)
-                        ally.SetTarget(source);
+                    if(candidate && candidate.Team==Team && (transform.position-candidate.transform.position).sqrMagnitude<alert*alert)
+                        candidate.JoinAlert(source);
             }
         }
     }

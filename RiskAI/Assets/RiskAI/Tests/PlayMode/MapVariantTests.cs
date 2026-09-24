@@ -11,6 +11,15 @@ namespace RiskAI.Tests
 {
     public sealed class MapVariantTests
     {
+        // Cuatro Riberas v0.34 rules, chosen per map (no shared constants with Las Marcas):
+        // 44 cities in 11 countries, 2-5 cities each, at most one five-city country
+        // (Bahía del Noroeste, the largest compact landmass with its bay island).
+        const int RiverlandsCities = 44, RiverlandsCountries = 11;
+        const int RiverlandsMinimumCitiesPerCountry = 2, RiverlandsMaximumCitiesPerCountry = 5, RiverlandsFiveCityCountries = 1;
+        // Posts (cities and harbours) stand 22 world units apart; an island city and the pier
+        // on its own island may be 18 (Cuatro Riberas keeps the plain 22-unit floor).
+        const float RiverlandsPostSpacing = 22f, RiverlandsIslandPierSpacing = 18f;
+
         Scene scene, previous;
         BattleSession battle;
 
@@ -34,8 +43,37 @@ namespace RiskAI.Tests
         {
             Assert.That(MapLayout.IsExpanded, Is.True);
             Assert.That(MapLayout.MapName, Is.EqualTo("Cuatro Riberas"));
-            Assert.That(MapLayout.Towns.Length, Is.EqualTo(44));
-            Assert.That(MapLayout.Countries.Length, Is.EqualTo(11));
+            Assert.That(MapLayout.Towns.Length, Is.EqualTo(RiverlandsCities));
+            Assert.That(MapLayout.Countries.Length, Is.EqualTo(RiverlandsCountries));
+            var groups = new[]
+            {
+                new[] { "west-05", "west-06", "river-05", "isle-03" },
+                new[] { "west-01", "west-07", "west-08", "river-01" },
+                new[] { "river-02", "river-06", "river-03", "river-07" },
+                new[] { "west-02", "west-09", "west-10", "west-03" },
+                new[] { "west-11", "west-04", "west-13", "west-12", "isle-01" },
+                new[] { "west-14", "river-04", "river-08", "isle-02" },
+                new[] { "high-01", "high-05", "east-01", "east-05" },
+                new[] { "high-02", "high-06", "east-02", "east-06" },
+                new[] { "east-08", "east-04", "isle-05" },
+                new[] { "high-08", "high-04", "high-09", "isle-04" },
+                new[] { "high-07", "east-07", "high-03", "east-03" },
+            };
+            for (int country = 0; country < groups.Length; country++)
+                Assert.That(MapLayout.Towns.Where(t => t.Country == country).Select(t => t.Id).OrderBy(id => id),
+                    Is.EquivalentTo(groups[country].OrderBy(id => id)), MapLayout.Countries[country].Name + " keeps its authored city group.");
+            Assert.That(groups.Count(g => g.Length == RiverlandsMaximumCitiesPerCountry), Is.LessThanOrEqualTo(RiverlandsFiveCityCountries),
+                "Cuatro Riberas allows at most one five-city country.");
+            // Own spacing rule: every pair of cities and harbours stands RiverlandsPostSpacing
+            // world units apart (the island pier exception is explicit).
+            var posts = MapLayout.Towns.Select(t => (Id: t.Id, Point: new Vector2(t.Position.x, t.Position.z), Island: IslandAt(t.Position))).ToList();
+            for (int i = 0; i < MapLayout.MainlandHarborX.Length; i++) { var landing = MapLayout.MainlandHarborLanding(i); posts.Add(("harbor-" + i, new Vector2(landing.x, landing.z), -1)); }
+            for (int i = 0; i < MapLayout.Islands.Length; i++) { var pier = MapLayout.IslandHarborLanding(i); posts.Add(("island-harbor-" + i, new Vector2(pier.x, pier.z), i)); }
+            for (int i = 0; i < posts.Count; i++) for (int j = i + 1; j < posts.Count; j++)
+            {
+                bool ownPier = posts[i].Island >= 0 && posts[i].Island == posts[j].Island && (posts[i].Id.StartsWith("island-harbor") != posts[j].Id.StartsWith("island-harbor"));
+                Assert.That(Vector2.Distance(posts[i].Point, posts[j].Point), Is.GreaterThanOrEqualTo(ownPier ? RiverlandsIslandPierSpacing : RiverlandsPostSpacing), posts[i].Id + " / " + posts[j].Id);
+            }
             CountryCampTests.AssertCampsCentred(battle);
             Assert.That(MapLayout.Islands.Length, Is.EqualTo(3));
             Assert.That(NavalWorld.Current.Harbors.Count, Is.EqualTo(8));
@@ -56,7 +94,7 @@ namespace RiskAI.Tests
             for (int country = 0; country < MapLayout.Countries.Length; country++)
             {
                 var cities = MapLayout.Towns.Where(t => t.Country == country).ToArray();
-                Assert.That(cities.Length, Is.InRange(2, 6), "Each geographic country must retain its authored city group.");
+                Assert.That(cities.Length, Is.InRange(RiverlandsMinimumCitiesPerCountry, RiverlandsMaximumCitiesPerCountry), "Each geographic country must retain its authored city group.");
                 Assert.That(cities.All(t => t.Region == country), Is.True, "Expanded country and region indices must match.");
                 for (int city = 1; city < cities.Length; city++)
                 {
@@ -84,7 +122,6 @@ namespace RiskAI.Tests
                 if (MapLayout.IslandDistance(position.x, position.z, island) >= 0) return island;
             return -1;
         }
-
         [UnityTest]
         public IEnumerator IndependentStartingPostsStayOutsideEachOthersWeapons()
         {
@@ -97,7 +134,7 @@ namespace RiskAI.Tests
                         battle.Naval.Harbors.Any(h => h.Defense == tower && h.Defender == guard);
                     if (ownGuard) continue;
                     float distance=Vector3.Distance(tower.transform.position, guard.transform.position);
-                    Assert.That(distance, Is.GreaterThan(UnitCatalog.CapturableTower.Range),
+                    Assert.That(distance, Is.GreaterThan(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range),
                         tower.HostName + " at " + tower.transform.position + " can shoot " + guard.name + " at " + guard.transform.position +
                         " (" + distance.ToString("F3") + "); independent posts must start outside weapon range.");
                 }

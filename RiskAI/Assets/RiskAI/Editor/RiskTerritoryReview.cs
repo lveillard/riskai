@@ -92,7 +92,8 @@ namespace RiskAI.Editor
             if(!session||!view)throw new InvalidOperationException("Territory review bootstrap did not create a session and strategic view.");
             float fieldMs=TerritoryField.LastBuildMilliseconds;
             var atlasWatch=System.Diagnostics.Stopwatch.StartNew();
-            var probe=new TerritoryAtlas(session);float atlasMs=(float)atlasWatch.Elapsed.TotalMilliseconds;UnityEngine.Object.DestroyImmediate(probe.Regions);UnityEngine.Object.DestroyImmediate(probe.Palette);UnityEngine.Object.DestroyImmediate(probe.Borders);
+            // The probe atlas is tracked on the review scene owner; no ad-hoc DestroyImmediate.
+            var probe=new TerritoryAtlas(session,GeneratedResourceOwner.For(bootstrapObject.transform));float atlasMs=(float)atlasWatch.Elapsed.TotalMilliseconds;
             string prefix=tag+"-"+map.ToString().ToLowerInvariant();
             var atlas=view.Atlas;
             int size=atlas.Regions.width;
@@ -149,6 +150,18 @@ namespace RiskAI.Editor
                         Render(camera,readback,Path.Combine(directory,prefix+"-tactical-"+safe+"-plain.png"),center,Mathf.Clamp(extent*.45f,14,60),55);
                     }
                     camp.Select(false);
+                }
+                // Free views: --riskai-territory-look "x,z,zoom;x,z,zoom" (world XZ, gameplay camera).
+                var looks=Argument("--riskai-territory-look");
+                if(looks!=null)
+                {
+                    int n=0;
+                    foreach(var look in looks.Split(';'))
+                    {
+                        var part=look.Split(',');if(part.Length<3)continue;
+                        float lx=float.Parse(part[0],CultureInfo.InvariantCulture),lz=float.Parse(part[1],CultureInfo.InvariantCulture),lzoom=float.Parse(part[2],CultureInfo.InvariantCulture);
+                        Render(camera,readback,Path.Combine(directory,prefix+"-look-"+(n++)+".png"),new Vector3(lx,0,lz),lzoom,55);
+                    }
                 }
                 // Strategic readability at an early-game ownership: every country neutral except
                 // the first two focus camps (player 0 and 1), full map and a closer strategic zoom.

@@ -91,8 +91,7 @@ namespace RiskAI
         public bool Paused => manuallyPaused || IsStarting;
         public bool AiEnabled = true;
         System.Random combatRandom;
-        public float RollDamage(UnitProfile profile)=>profile.RollDamage(combatRandom);
-        public float RollDamage(ShipProfile profile)=>profile.RollDamage(combatRandom);
+        public float RollDamage(in WeaponProfile weapon)=>weapon.RollDamage(combatRandom);
         public bool RollMiss(float probability)=>probability>0 && combatRandom.NextDouble()<probability;
 
         void Awake() => Initialize();
@@ -281,6 +280,7 @@ namespace RiskAI
 
         public Soldier Spawn(int team, UnitKind kind, Vector3 position, int originCountry = -1)
         {
+            if (UnitCatalog.Get(kind).Domain != UnitDomain.Land) throw new System.ArgumentException(kind + " is not a land unit; ships spawn through NavalWorld.", nameof(kind));
             if (IsPlayerEliminated(team)) return null;
             if (!NavMesh.SamplePosition(position, out var hit, 10, NavMesh.AllAreas)) return null;
             var soldier=SoldierPool.Rent(team,kind,hit.position);
@@ -293,7 +293,7 @@ namespace RiskAI
         public Soldier SpawnSeparated(int team, UnitKind kind, Vector3 position, int originCountry = -1)
         {
             if (IsPlayerEliminated(team)) return null;
-            float radius=VisualMetrics.SpawnRadiusFor(kind),step=radius*2+.16f;
+            float radius=UnitCatalog.Get(kind).SpawnRadius,step=radius*2+.16f;
             Vector3 fallback=position;float fallbackClearance=float.NegativeInfinity;
             // Test the requested point, then deterministic concentric rings. This
             // runs only when an actor is created, never in the simulation hot path.
@@ -312,7 +312,7 @@ namespace RiskAI
                 {
                     var other=Units[i];if(!other||!other.IsAlive)continue;
                     Vector3 delta=other.transform.position-candidate;delta.y=0;
-                    clearance=Mathf.Min(clearance,delta.magnitude-radius-VisualMetrics.SpawnRadiusFor(other.Kind));
+                    clearance=Mathf.Min(clearance,delta.magnitude-radius-UnitCatalog.Get(other.Kind).SpawnRadius);
                 }
                 if(clearance>=.12f)return Spawn(team,kind,candidate,originCountry);
                 if(clearance>fallbackClearance){fallbackClearance=clearance;fallback=candidate;}
@@ -332,7 +332,7 @@ namespace RiskAI
             Vector3 right=new Vector3(forward.z,0,-forward.x);
             int columns = Mathf.CeilToInt(Mathf.Sqrt(count));
             int meleeCount = 0;
-            foreach (var unit in remaining) if (!BattleRules.Ranged(unit.Kind)) meleeCount++;
+            foreach (var unit in remaining) if (!UnitCatalog.Get(unit.Kind).Weapon.Ranged) meleeCount++;
             int meleeRows = Mathf.CeilToInt((float)meleeCount / columns);
             int rows = meleeRows + Mathf.CeilToInt((float)(count - meleeCount) / columns);
             for (int i = 0; i < count; i++)
@@ -349,8 +349,8 @@ namespace RiskAI
                 for(int j=1;j<remaining.Count;j++)
                 {
                     var a=remaining[j];var b=remaining[best];
-                    int rank=(BattleRules.Ranged(a.Kind)?100:0)+(int)a.Kind;
-                    int currentRank=(BattleRules.Ranged(b.Kind)?100:0)+(int)b.Kind;
+                    int rank=(UnitCatalog.Get(a.Kind).Weapon.Ranged?100:0)+UnitCatalog.Get(a.Kind).Index;
+                    int currentRank=(UnitCatalog.Get(b.Kind).Weapon.Ranged?100:0)+UnitCatalog.Get(b.Kind).Index;
                     if(rank<currentRank || rank==currentRank && (a.transform.position-slot).sqrMagnitude<(b.transform.position-slot).sqrMagnitude)best=j;
                 }
                 var unit=remaining[best];remaining.RemoveAt(best);

@@ -60,11 +60,11 @@ namespace RiskAI.Tests
                 {
                     float own=FlatDistance(city.Position,city.ClaimPoint);
                     Assert.That(own,Is.GreaterThan(3f),city.Id+" guard stays outside the integrated building footprint");
-                    Assert.That(own,Is.LessThan(UnitCatalog.CapturableTower.Range),city.Id+" tower covers its own source guard");
+                    Assert.That(own,Is.LessThan(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range),city.Id+" tower covers its own source guard");
                     foreach(var other in MapLayout.Towns)
                     {
                         if(other.Id==city.Id)continue;
-                        Assert.That(FlatDistance(city.Position,other.ClaimPoint),Is.GreaterThan(UnitCatalog.CapturableTower.Range),
+                        Assert.That(FlatDistance(city.Position,other.ClaimPoint),Is.GreaterThan(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range),
                             city.Id+" centered tower must not acquire "+other.Id+" at match start");
                     }
                 }

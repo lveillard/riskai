@@ -2,9 +2,7 @@ using System;
 
 namespace RiskAI.Core
 {
-    public enum AttackKind { Normal=0, Piercing=1, Siege=2, Magic=3, Chaos=4, Hero=5, Spells=6 }
-    public enum ArmorKind { Unarmored=0, Light=1, Medium=2, Heavy=3, Fortified=4, Normal=5, Hero=6, Divine=7 }
-
+    // AttackKind/ArmorKind are generated from scripts/config/units.schema.ts (UnitConfig.g.cs).
     public static class CombatRules
     {
         // Full explicit Saran/world war3mapMisc overrides. Columns are source

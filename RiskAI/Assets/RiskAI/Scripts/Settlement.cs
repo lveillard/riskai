@@ -28,7 +28,7 @@ namespace RiskAI
         // outside the solid hall, independent of the owning team.
         public Vector3 DefaultLandEntry => transform.position + Vector3.back * 4f;
         public int QueueCount => queue.Count;
-        public float TrainingProgress => queue.Count == 0 ? 0 : 1 - queue[0].Remaining / BattleRules.TrainTime(queue[0].Kind);
+        public float TrainingProgress => queue.Count == 0 ? 0 : 1 - queue[0].Remaining / UnitCatalog.Get(queue[0].Kind).TrainSeconds;
         public UnitKind TrainingKind => queue.Count == 0 ? UnitKind.Footman : queue[0].Kind;
         public LineRenderer Ring { get; private set; }
         bool navalClaimVisual;
@@ -120,7 +120,7 @@ namespace RiskAI
             Vector3 fallback=transform.position+away*3.8f;
             // Rotate our added tower, keeping both source city and circle XY intact.
             // Independent starting posts must not bombard each other's defenders.
-            float clearance=UnitCatalog.CapturableTower.Range+1;
+            float clearance=UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range+1;
             for(int attempt=0;attempt<25;attempt++)
             {
                 float angle=attempt==0?0:((attempt+1)/2)*15*(attempt%2==0?-1:1);
@@ -142,24 +142,24 @@ namespace RiskAI
         public string Recruit(UnitKind kind, int team = 0)
         {
             if(IsPort)return "Este puerto sólo recluta Marines.";
-            if(!ProductionCatalog.AllowsSettlementUnit(kind))return "Esta ciudad sólo recluta tropas regulares.";
+            if(!(UnitCatalog.Get(kind).Building==UnitBuilding.City))return "Esta ciudad sólo recluta tropas regulares.";
             return QueueRecruit(kind,team);
         }
         // Imported port cities retain one shared land queue. Only their Harbor
         // may enter the Marine catalog through this narrow domain path.
         internal string RecruitPortMarine(UnitKind kind,int team)
         {
-            if(!IsPort||!ProductionCatalog.AllowsHarborUnit(kind))return "Este puerto sólo recluta Marines.";
+            if(!IsPort||!(UnitCatalog.Get(kind).Building==UnitBuilding.Harbor))return "Este puerto sólo recluta Marines.";
             return QueueRecruit(kind,team);
         }
         string QueueRecruit(UnitKind kind,int team)
         {
             string error=CanManage(team);if(error!=null)return error;
-            if(State.Level<BattleRules.RequiredLevel(kind))return "Mejora la ciudad a nivel II para reclutar esta unidad.";
+            if(State.Level<UnitCatalog.Get(kind).Level)return "Mejora la ciudad a nivel II para reclutar esta unidad.";
             if(queue.Count>=5)return "La cola está llena. Pulsa un encargo para cancelarlo.";
             if(session.RecruitmentReservations(team)>=BattleRules.PopulationLimit)return "Límite de 100 soldados móviles alcanzado.";
-            if(!session.Economy.Spend(team,BattleRules.Cost(kind)))return "Oro insuficiente. Recibirás ingresos al terminar la ronda.";
-            queue.Add(new Training{Team=team,Kind=kind,Remaining=BattleRules.TrainTime(kind)});return null;
+            if(!session.Economy.Spend(team,UnitCatalog.Get(kind).Cost))return "Oro insuficiente. Recibirás ingresos al terminar la ronda.";
+            queue.Add(new Training{Team=team,Kind=kind,Remaining=UnitCatalog.Get(kind).TrainSeconds});return null;
         }
         string CanManage(int team)
         {
@@ -175,7 +175,7 @@ namespace RiskAI
         {
             string error = CanManage(team); if (error != null) return error;
             if (index < 0 || index >= queue.Count) return "Este encargo ya no está en la cola.";
-            var item = queue[index]; session.Economy.Refund(item.Team, BattleRules.Cost(item.Kind)); queue.RemoveAt(index);
+            var item = queue[index]; session.Economy.Refund(item.Team, UnitCatalog.Get(item.Kind).Cost); queue.RemoveAt(index);
             return null;
         }
         public string Upgrade(int team = 0)
@@ -230,7 +230,7 @@ namespace RiskAI
 
         void Captured(int previousOwner)
         {
-            foreach (var item in queue) session.Economy.Refund(item.Team, BattleRules.Cost(item.Kind));
+            foreach (var item in queue) session.Economy.Refund(item.Team, UnitCatalog.Get(item.Kind).Cost);
             queue.Clear();
             if (Building)
             {
@@ -284,7 +284,7 @@ namespace RiskAI
                     Vector3 spawn = IsPort && Port ? Port.LandEntry : DefaultLandEntry;
                     var unit = session.SpawnSeparated(first.Team, first.Kind, spawn);
                     if (unit) { queue.RemoveAt(0); unit.TryMoveTo(Rally, true, false); }
-                    else { queue.RemoveAt(0); session.Economy.Refund(first.Team, BattleRules.Cost(first.Kind)); }
+                    else { queue.RemoveAt(0); session.Economy.Refund(first.Team, UnitCatalog.Get(first.Kind).Cost); }
                 }
             }
             RefreshTrainingView();

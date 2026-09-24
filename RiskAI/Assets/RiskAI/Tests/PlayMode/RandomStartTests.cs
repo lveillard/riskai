@@ -27,13 +27,13 @@ namespace RiskAI.Tests
                         battle.Naval.Harbors.Any(h => h.Defense == tower && h.Defender == guard);
                     if (ownGuard) continue;
                     Assert.That(Vector3.Distance(tower.transform.position, guard.transform.position),
-                        Is.GreaterThan(UnitCatalog.CapturableTower.Range), tower.HostName);
+                        Is.GreaterThan(UnitCatalog.Get(UnitKind.Tower).TownWeapon.Range), tower.HostName);
                 }
             foreach (var guard in guards)
                 foreach (var other in guards)
                     if (guard != other)
                         Assert.That(Vector3.Distance(guard.transform.position, other.transform.position),
-                            Is.GreaterThan(BattleRules.Range(UnitKind.Archer)));
+                            Is.GreaterThan(UnitCatalog.Get(UnitKind.Archer).Weapon.Range));
             yield return new WaitForSecondsRealtime(3);
             Assert.That(guards.All(g => g && g.IsAlive && g.Health == g.MaxHealth), Is.True);
             Assert.That(battle.Towers.All(t => t.ShotsFired == 0), Is.True);
@@ -132,7 +132,7 @@ namespace RiskAI.Tests
 
             yield return LoadLayout(BattleSession.StartLayout.RandomCities, 4040);
             var town = battle.Towns.First(t => t.State.Owner == 0);
-            int mortarCost = BattleRules.Cost(UnitKind.Mortar);
+            int mortarCost = UnitCatalog.Get(UnitKind.Mortar).Cost;
             battle.Economy.Gold[0] = mortarCost;
             controller.SelectTown(town);
             controller.Recruit(UnitKind.Mortar);

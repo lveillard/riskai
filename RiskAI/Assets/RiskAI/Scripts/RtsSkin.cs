@@ -38,6 +38,7 @@ namespace RiskAI
             owner>=0 && owner<PlayerRules.MaxPlayers ? owner : PlayerRules.MaxPlayers];
         static Texture2D Texture(Color color,bool grain)
         {
+            // RISKAI_SHARED_ASSET: four fixed UI textures, built once behind the ready guard.
             var texture=new Texture2D(64,64,TextureFormat.RGBA32,false);
             var random=new System.Random(84);var pixels=new Color[4096];
             for(int y=0;y<64;y++)for(int x=0;x<64;x++)

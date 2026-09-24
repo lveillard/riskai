@@ -45,8 +45,7 @@ namespace RiskAI
             session.Feedback.RaiseFired(source, from, to, weapon.Delivery == WeaponDelivery.Artillery ? AttackKind.Siege : weapon.DamageType);
             if (!weapon.IsProjectile)
             {
-                if (PresentationEnabled && source is Soldier soldier &&
-                    (soldier.Kind == UnitKind.Archer || soldier.Kind == UnitKind.MarinePrivate || soldier.Kind == UnitKind.EliteRifleman))
+                if (PresentationEnabled && weapon.Tracer)
                     VisualFactory.InstantProjectileView(from, to, weapon.DamageType);
                 if (!miss && target && target.CanBeAttacked)
                 {
@@ -167,26 +166,10 @@ namespace RiskAI
         static bool EligibleForSplash(Projectile shot, CombatTarget target)
         {
             if (!target || !target.IsAlive) return false;
-            var mask = shot.Weapon.SplashTargets;
-            const WeaponTargetMask classes = WeaponTargetMask.Air | WeaponTargetMask.Debris |
-                WeaponTargetMask.Ground | WeaponTargetMask.Item | WeaponTargetMask.Structure |
-                WeaponTargetMask.Ward | WeaponTargetMask.Tree | WeaponTargetMask.Wall | WeaponTargetMask.Soldier;
-            WeaponTargetMask targetClass = target is DefenseTower
-                ? WeaponTargetMask.Structure
-                : target is Soldier
-                    ? WeaponTargetMask.Ground | WeaponTargetMask.Soldier
-                    : target is Ship ? WeaponTargetMask.Ground : WeaponTargetMask.None;
-            if ((mask & classes) != 0 && (mask & targetClass) == 0) return false;
-
+            // The same target-flag rule as direct attacks, with the splash mask.
             bool self = shot.SourceId != 0 && target.EntityId == shot.SourceId;
-            if (self) return (mask & WeaponTargetMask.Self) != 0;
-
-            const WeaponTargetMask relations = WeaponTargetMask.Enemy | WeaponTargetMask.Neutral | WeaponTargetMask.Ally;
-            if ((mask & relations) == 0) return true;
-            if (target.Team == shot.Team) return (mask & WeaponTargetMask.Ally) != 0;
-            if (target.Team == PlayerRules.NeutralTeam || target.Team < 0)
-                return (mask & WeaponTargetMask.Neutral) != 0;
-            return (mask & WeaponTargetMask.Enemy) != 0;
+            var relation = UnitRules.Relation(shot.Team, target.Team, self, PlayerRules.NeutralTeam);
+            return UnitRules.Allows(shot.Weapon.SplashTargets, UnitRules.TargetClass(target.Type), relation);
         }
 
         static void ApplySplashAttack(CombatTarget target, float damage, Projectile shot, CombatTarget source)

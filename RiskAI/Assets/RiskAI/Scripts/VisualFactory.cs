@@ -147,6 +147,7 @@ namespace RiskAI
         {
             if (Materials.TryGetValue(color, out var found) && found) return found;
             var template = Resources.Load<Material>("RiskAILit");
+            // RISKAI_SHARED_ASSET: one material per palette colour (Materials cache, ResetRuntimeState).
             var mat = template ? new Material(template) : new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
             mat.color = color; mat.SetFloat("_Smoothness", .12f); Materials[color] = mat; return mat;
         }
@@ -154,6 +155,7 @@ namespace RiskAI
         {
             Color key = color * (1f + intensity);
             if (EmissiveMaterials.TryGetValue(key, out var found) && found) return found;
+            // RISKAI_SHARED_ASSET: one emissive material per colour+intensity (EmissiveMaterials cache).
             var mat = new Material(Mat(color));
             if (mat.HasProperty("_EmissionColor"))
             {
@@ -175,6 +177,7 @@ namespace RiskAI
         }
         static Mesh CreateTrapezoidMesh(float bottomWidth, float topWidth, float height, float thickness)
         {
+            // RISKAI_SHARED_ASSET: one shared training doorway mesh (trainingDoorMesh, built once).
             var mesh = new Mesh { name = "Training doorway trapezoid" };
             float z = thickness * .5f;
             mesh.SetVertices(new[]
@@ -204,6 +207,7 @@ namespace RiskAI
             line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; line.receiveShadows = false;
             var template = Resources.Load<Material>("RiskAIRing");
             if (!ringMaterial)
+                // RISKAI_SHARED_ASSET: shared ring material fallback (ringMaterial, built once).
                 ringMaterial = template ? template : new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Sprites/Default"));
             line.sharedMaterial = ringMaterial;
             line.startColor = line.endColor = color; line.widthMultiplier = width;
@@ -223,7 +227,6 @@ namespace RiskAI
             Shape(root,PrimitiveType.Cube,"Fortress cornice",new Vector3(0,2.62f,0),new Vector3(2.9f,.18f,2.9f),gold);
             for(int side=-1;side<=1;side+=2)
                 Shape(root,PrimitiveType.Cube,"Fortress banner",new Vector3(side*.82f,1.65f,-1.34f),new Vector3(.4f,1.2f,.08f),gold);
-            StaticArchitectureBatching.Combine(root);
         }
         public static GameObject Cone(Transform parent,string name,Vector3 position,float radius,float height,Color color,int sides=8,float rotation=0)
         {
@@ -255,7 +258,7 @@ namespace RiskAI
                 MortarModel(model.transform,team,soldier);ModelMetrics.MatchStandingHeight(model,soldier.Kind);Ring(root,.70f,.025f,team);
                 return;
             }
-            var prefab=Resources.Load<GameObject>("Units/"+BattleRules.Model(soldier.Kind));
+            var prefab=Resources.Load<GameObject>("Units/"+UnitCatalog.Get(soldier.Kind).Model);
             if(prefab)
             {
                 var model=Object.Instantiate(prefab,root,false);
@@ -267,7 +270,7 @@ namespace RiskAI
                 if(soldier.Kind==UnitKind.MarinePrivate)MarinePrivateView.Apply(model,soldier.Team);
                 UnitVariantViews.Decorate(model,soldier.Kind,soldier.Team);
                 soldier.gameObject.AddComponent<SoldierAnimator>().Initialize(soldier,model);
-                Ring(root,Mathf.Max(.33f,SourceGeometry.AgentRadius(soldier.Kind)*1.1f),.022f,team);return;
+                Ring(root,Mathf.Max(.33f,UnitCatalog.Get(soldier.Kind).CollisionRadius*1.1f),.022f,team);return;
             }
             Color metal=new Color(.71f,.75f,.77f), leather=new Color(.25f,.18f,.13f), skin=new Color(.83f,.63f,.43f);
             Shape(root,PrimitiveType.Capsule,"Tunic",new Vector3(0,1.15f,0),new Vector3(.67f,.47f,.45f),team);

@@ -1,4 +1,5 @@
 using UnityEngine;
+using RiskAI.Core;
 
 namespace RiskAI
 {
@@ -7,7 +8,6 @@ namespace RiskAI
     {
         public Harbor Harbor { get; private set; }
         public Vector3 Center => Harbor ? Harbor.Landing : transform.position;
-        public const float Radius = Ship.LoadRadius;
         public static NavalEmbarkZone Create(Transform parent, Harbor harbor)
         {
             if(!harbor)return null;
@@ -19,7 +19,7 @@ namespace RiskAI
         }
         public bool Contains(Vector3 point)
         {
-            var delta=point-Center;delta.y=0;return delta.sqrMagnitude<=Radius*Radius;
+            var delta=point-Center;delta.y=0;return delta.sqrMagnitude<=UnitCatalog.TransportLoadRadius*UnitCatalog.TransportLoadRadius;
         }
     }
 }

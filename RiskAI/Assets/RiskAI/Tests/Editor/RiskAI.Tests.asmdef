@@ -1,7 +1,9 @@
 {
   "name": "RiskAI.Tests",
-  "references": ["RiskAI.Core", "RiskAI.Runtime"],
+  "references": ["RiskAI.Core", "RiskAI.Runtime", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
   "includePlatforms": ["Editor"],
-  "optionalUnityReferences": ["TestAssemblies"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll", "Newtonsoft.Json.dll"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
   "autoReferenced": false
 }

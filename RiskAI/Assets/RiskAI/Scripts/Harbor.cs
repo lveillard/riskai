@@ -8,7 +8,7 @@ namespace RiskAI
 {
     public sealed class Harbor : MonoBehaviour
     {
-        sealed class Order { public NavalUnitKind Kind; public int Team; public float Remaining; }
+        sealed class Order { public UnitKind Kind; public int Team; public float Remaining; }
         sealed class LandOrder { public UnitKind Kind; public int Team; public float Remaining; }
         readonly List<Order> queue=new List<Order>();
         readonly List<LandOrder> landQueue=new List<LandOrder>();
@@ -55,12 +55,11 @@ namespace RiskAI
         public const int FleetCapacity = 12;
         public int LandQueueCount=>sharesTown&&LinkedTown?LinkedTown.QueueCount:landQueue.Count;
         public UnitKind QueuedLandKind(int index)=>sharesTown&&LinkedTown?LinkedTown.QueuedKind(index):landQueue[index].Kind;
-        public float LandTrainingProgress=>sharesTown&&LinkedTown?LinkedTown.TrainingProgress:landQueue.Count==0?0:1-landQueue[0].Remaining/BattleRules.TrainTime(landQueue[0].Kind);
+        public float LandTrainingProgress=>sharesTown&&LinkedTown?LinkedTown.TrainingProgress:landQueue.Count==0?0:1-landQueue[0].Remaining/UnitCatalog.Get(landQueue[0].Kind).TrainSeconds;
         public bool Selected { get; private set; }
-        public const float EmbarkRadius = Ship.LoadRadius;
         public const float BerthRadius = 7.5f;
-        public float TrainingProgress=>queue.Count==0?0:1-queue[0].Remaining/TrainTime(queue[0].Kind);
-        public NavalUnitKind QueuedKind(int index)=>queue[index].Kind;
+        public float TrainingProgress=>queue.Count==0?0:1-queue[0].Remaining/UnitCatalog.Get(queue[0].Kind).TrainSeconds;
+        public UnitKind QueuedKind(int index)=>queue[index].Kind;
         public bool BuildingTower=>Defense&&Defense.UnderConstruction;
         BuildingTrainingView trainingView;
         LineRenderer rallyRing;
@@ -127,7 +126,7 @@ namespace RiskAI
         }
         public bool IsEmbarkZone(Vector3 point)
         {
-            return FlatDistance(point,Landing)<=EmbarkRadius*EmbarkRadius&&ShoreAccess.TryLanding(point,out _,out _);
+            return FlatDistance(point,Landing)<=UnitCatalog.TransportLoadRadius*UnitCatalog.TransportLoadRadius&&ShoreAccess.TryLanding(point,out _,out _);
         }
         public bool TryTransportLanding(out Vector3 landing,out Vector3 berth)
         {
@@ -137,16 +136,16 @@ namespace RiskAI
             {landing=default;return false;}
             // The guard/spawn berth may be farther offshore. Cargo needs its
             // own approach inside the same loading range used by the player.
-            if(!SeaNavigation.TryNearestOcean(landing,Ship.LoadRadius-.45f,out berth))return false;
+            if(!SeaNavigation.TryNearestOcean(landing,UnitCatalog.TransportLoadRadius-.45f,out berth))return false;
             cachedTransportLanding=landing;cachedTransportBerth=berth;transportLandingCached=true;return true;
         }
         internal bool IsInBerthCircle(Vector3 point)=>FlatDistance(point,Berth)<=ClaimRules.CircleRadius*ClaimRules.CircleRadius;
         public bool IsShipDocked(Ship ship)=>ship&&FlatDistance(ship.transform.position,Berth)<=BerthRadius*BerthRadius;
-        internal bool CanSnapToBerth(Ship ship) => ship && ship.IsAlive && ship.Profile.CanCapture &&
+        internal bool CanSnapToBerth(Ship ship) => ship && ship.IsAlive && ship.Type.HarborGuard &&
             IsShipDocked(ship) && SeaNavigation.HasClearance(ship.transform.position) &&
             SeaNavigation.HasClearance(Berth) && SeaNavigation.ClearSegment(ship.transform.position,Berth);
         public bool HasLivingDefender=>Defender&&Defender.IsAlive;
-        public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Profile.CanCapture&&
+        public Ship NavalDefender=>navalDefender&&navalDefender.IsAlive&&navalDefender.Type.HarborGuard&&
             navalDefender.Team==Owner&&IsShipDocked(navalDefender)?navalDefender:null;
         public bool HasNavalDefender=>NavalDefender;
         public LineRenderer NavalClaimRing=>navalClaimRing;
@@ -186,18 +185,20 @@ namespace RiskAI
             }
             if(sharesTown&&LinkedTown)LinkedTown.SetNavalClaimVisual(navalGuard);
         }
+        internal bool CanReleaseNavalDefender(Ship departing) =>
+            navalDefender != departing || claimZone.HasRelief(world.Session, departing);
         internal bool TryReleaseNavalDefenderForOrder(Ship departing)
         {
             if(navalDefender!=departing)return true;
             return claimZone.TryReleaseGuardianForOrder(world.Session,departing);
         }
-        internal Ship FindDockedSuccessor(int owner,Ship excluded,bool alliesOnly)
+        internal CombatTarget FindDockedSuccessor(int owner,CombatTarget excluded,bool alliesOnly)
         {
             if(!world)return null;
             Ship best=null;float bestDistance=float.MaxValue;
             foreach(var ship in world.Ships)
             {
-                if(!ship||ship==excluded||!ship.IsAlive||!ship.Profile.CanCapture||ship.Garrison&&ship.Garrison!=this)continue;
+                if(!ship||ship==excluded||!ship.IsAlive||!ship.Type.HarborGuard||ship.Garrison&&ship.Garrison!=this)continue;
                 if(alliesOnly&&ship.Team!=owner)continue;
                 float distance=FlatDistance(ship.transform.position,Berth);
                 float radius=alliesOnly?ClaimRules.ReliefRadius:ship.Team==owner?ClaimRules.ProtectionRadius:ClaimRules.TakeoverRadius;
@@ -218,9 +219,9 @@ namespace RiskAI
         {
             claimZone.SetNavalDefender(ship,this);
         }
-        public string Buy(NavalUnitKind kind,int team=0)
+        public string Buy(UnitKind kind,int team=0)
         {
-            if(!ProductionCatalog.AllowsHarborShip(kind))return "Tipo de barco inválido.";
+            if(UnitCatalog.Get(kind).Domain!=UnitDomain.Sea||UnitCatalog.Get(kind).Building!=UnitBuilding.Harbor)return "Tipo de barco inválido.";
             if(!world||!world.Session)return "No hay una batalla activa.";
             if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
             if(!CanLaunch)return LaunchBlockReason;
@@ -229,12 +230,12 @@ namespace RiskAI
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
             if(queue.Count>=QueueCapacity)return "La cola naval está llena.";
             if(world.Ships.Count(s=>s&&s.IsAlive&&s.Team==team)+world.PendingShips(team)>=FleetCapacity)return "Límite naval de "+FleetCapacity+" barcos alcanzado.";
-            int cost=Cost(kind);if(!world.Session.Economy.Spend(team,cost))return "Oro insuficiente para comprar este barco.";
-            queue.Add(new Order{Kind=kind,Team=team,Remaining=TrainTime(kind)});return null;
+            int cost=UnitCatalog.Get(kind).Cost;if(!world.Session.Economy.Spend(team,cost))return "Oro insuficiente para comprar este barco.";
+            queue.Add(new Order{Kind=kind,Team=team,Remaining=UnitCatalog.Get(kind).TrainSeconds});return null;
         }
         public string RecruitLand(UnitKind kind,int team=0)
         {
-            if(!ProductionCatalog.AllowsHarborUnit(kind))return "Este muelle sólo entrena Marines.";
+            if(UnitCatalog.Get(kind).Domain!=UnitDomain.Land||UnitCatalog.Get(kind).Building!=UnitBuilding.Harbor)return "Este muelle sólo entrena Marines.";
             if(sharesTown&&LinkedTown)return LinkedTown.RecruitPortMarine(kind,team);
             if(!world||!world.Session)return "No hay una batalla activa.";
             if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
@@ -243,8 +244,8 @@ namespace RiskAI
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
             if(landQueue.Count>=5)return "La cola de Marines está llena.";
             if(world.Session.RecruitmentReservations(team)>=BattleRules.PopulationLimit)return "Límite de soldados alcanzado.";
-            if(!world.Session.Economy.Spend(team,BattleRules.Cost(kind)))return "Oro insuficiente para reclutar este Marine.";
-            landQueue.Add(new LandOrder{Kind=kind,Team=team,Remaining=BattleRules.TrainTime(kind)});return null;
+            if(!world.Session.Economy.Spend(team,UnitCatalog.Get(kind).Cost))return "Oro insuficiente para reclutar este Marine.";
+            landQueue.Add(new LandOrder{Kind=kind,Team=team,Remaining=UnitCatalog.Get(kind).TrainSeconds});return null;
         }
         public string CancelLandTraining(int index,int team=0)
         {
@@ -254,7 +255,7 @@ namespace RiskAI
             if(world.Session.Paused||world.Session.Winner>=0)return "La partida está detenida.";
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
             if(index<0||index>=landQueue.Count)return "Este encargo ya no está en la cola.";
-            var order=landQueue[index];landQueue.RemoveAt(index);world.Session.Economy.Refund(order.Team,BattleRules.Cost(order.Kind));return null;
+            var order=landQueue[index];landQueue.RemoveAt(index);world.Session.Economy.Refund(order.Team,UnitCatalog.Get(order.Kind).Cost);return null;
         }
         internal int PendingLandRecruits(int team){if(sharesTown)return 0;int count=0;foreach(var order in landQueue)if(order.Team==team)count++;return count;}
         internal int PendingCount(int team){int count=0;foreach(var item in queue)if(item.Team==team)count++;return count;}
@@ -266,10 +267,8 @@ namespace RiskAI
             if(world.Session.Paused)return "Reanuda la partida para cancelar encargos.";
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
             if(index<0||index>=queue.Count)return "Este encargo ya no está en la cola.";
-            var item=queue[index];queue.RemoveAt(index);world.Session.Economy.Refund(item.Team,Cost(item.Kind));return null;
+            var item=queue[index];queue.RemoveAt(index);world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);return null;
         }
-        public static int Cost(NavalUnitKind kind)=>NavalProfiles.Profile(kind).Cost;
-        public static float TrainTime(NavalUnitKind kind)=>NavalProfiles.Profile(kind).TrainSeconds;
         public void SimTick(float delta)
         {
             if(!world||world.Session.Paused||world.Session.Winner>=0)return;
@@ -289,7 +288,7 @@ namespace RiskAI
             if(queue.Count>0)
             {
                 queue[0].Remaining-=delta;
-                if(queue[0].Remaining<=0){var item=queue[0];queue.RemoveAt(0);var ship=CanLaunch?world.Spawn(item.Team,item.Kind,Berth):null;if(!ship)world.Session.Economy.Refund(item.Team,Cost(item.Kind));}
+                if(queue[0].Remaining<=0){var item=queue[0];queue.RemoveAt(0);var ship=CanLaunch?world.Spawn(item.Team,item.Kind,Berth):null;if(!ship)world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);}
             }
             TickLandQueue(delta);
             RefreshTrainingView();
@@ -298,8 +297,8 @@ namespace RiskAI
         {
             RefundQueue();RefundLandQueue();Defense.ChangeOwner();lastOwner=Owner;world.Session.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".",MessageKind.Info);
         }
-        void RefundQueue(){foreach(var item in queue)world.Session.Economy.Refund(item.Team,Cost(item.Kind));queue.Clear();}
-        void RefundLandQueue(){foreach(var item in landQueue)world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));landQueue.Clear();}
+        void RefundQueue(){foreach(var item in queue)world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);queue.Clear();}
+        void RefundLandQueue(){foreach(var item in landQueue)world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);landQueue.Clear();}
         void RefreshTrainingView()
         {
             if(sharesTown&&LinkedTown){LinkedTown.SetPortNavalTraining(queue.Count>0);return;}
@@ -311,7 +310,7 @@ namespace RiskAI
             landQueue[0].Remaining-=delta;if(landQueue[0].Remaining>0)return;
             var item=landQueue[0];if(world.Session.RecruitmentPopulation(item.Team)>=BattleRules.PopulationLimit)return;landQueue.RemoveAt(0);
             var unit=world.Session.Spawn(item.Team,item.Kind,LandEntry);
-            if(unit)unit.TryMoveTo(LandRally,true,false);else world.Session.Economy.Refund(item.Team,BattleRules.Cost(item.Kind));
+            if(unit)unit.TryMoveTo(LandRally,true,false);else world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
     }

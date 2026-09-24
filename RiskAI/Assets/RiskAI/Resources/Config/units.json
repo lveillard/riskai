@@ -1,0 +1,2334 @@
+{
+  "version": 1,
+  "units": [
+    {
+      "id": "Footman",
+      "names": {
+        "es": "Espadachín",
+        "en": "Swordsman"
+      },
+      "role": {
+        "es": "Primera línea",
+        "en": "Front line"
+      },
+      "source": {
+        "rawcode": null,
+        "base": "Adaptación de infantería"
+      },
+      "adaptation": [
+        "Local fantasy infantry: no source unit; acquisition uses the prototype defaults 7.5/5 (hold: weapon range)."
+      ],
+      "domain": "Land",
+      "cost": 1,
+      "points": 1,
+      "trainSeconds": 3,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 200,
+      "armor": 2,
+      "armorType": "Heavy",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.4,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.24
+      },
+      "body": {
+        "radius": 0.24
+      },
+      "visual": {
+        "height": 1.4,
+        "radius": 0.34,
+        "standingHeight": 0,
+        "standingWidth": 0
+      },
+      "spawnRadius": 0.58,
+      "weapons": [
+        {
+          "source": "local-melee",
+          "sound": "Blade",
+          "attackType": "Normal",
+          "base": 17,
+          "dice": 1,
+          "sides": 4,
+          "cooldown": 1.35,
+          "attackPoint": 0.17,
+          "backswing": 0,
+          "range": 0.9,
+          "minRange": 0,
+          "ranged": false,
+          "rangeMeasure": "BodyEdges",
+          "reach": {
+            "approachMargin": 0.4,
+            "holdMargin": 0.2
+          },
+          "strikeTolerance": 0.55,
+          "delivery": "Instant",
+          "targeting": "Target",
+          "projectileSpeed": 0,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 7.5,
+          "neutral": 5,
+          "hold": 0.9
+        },
+        "leash": {
+          "hostile": 11,
+          "neutral": 7
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.48,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "Knight",
+        "portrait": "Knight",
+        "portraitFallback": "Knight",
+        "portraitSource": "Model",
+        "attackClip": "1H_Melee_Attack_Slice_Horizontal",
+        "contact": 0.25,
+        "silhouette": "Infantry",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "landDefault": true
+        }
+      }
+    },
+    {
+      "id": "Archer",
+      "names": {
+        "es": "Ballestero",
+        "en": "Crossbowman"
+      },
+      "role": {
+        "es": "Ataque a distancia",
+        "en": "Ranged attack"
+      },
+      "source": {
+        "rawcode": "h00B",
+        "base": "h00B · Rifleman ← hrif"
+      },
+      "adaptation": [
+        "Presented as a crossbowman: the inherited instant Rifleman weapon becomes a 36 m/s bolt (ua1z=1800)."
+      ],
+      "domain": "Land",
+      "cost": 1,
+      "points": 1,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 200,
+      "armor": 0,
+      "armorType": "Light",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.4,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.32
+      },
+      "body": {
+        "radius": 0.32
+      },
+      "visual": {
+        "height": 1.63674,
+        "radius": 0.94895,
+        "standingHeight": 1.63674,
+        "standingWidth": 1.8979,
+        "mdx": {
+          "height": 1.63674,
+          "width": 1.8979
+        }
+      },
+      "spawnRadius": 0.68324405,
+      "weapons": [
+        {
+          "source": "h00B-crossbow-adaptation",
+          "sound": "Bow",
+          "attackType": "Piercing",
+          "base": 15,
+          "dice": 2,
+          "sides": 4,
+          "cooldown": 1.6,
+          "attackPoint": 0.17,
+          "backswing": 0.7,
+          "range": 8,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToApproach",
+          "strikeTolerance": 0.55,
+          "delivery": "Missile",
+          "targeting": "Target",
+          "projectileSpeed": 36,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": true
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 12,
+          "neutral": 12,
+          "hold": 12
+        },
+        "leash": {
+          "hostile": 12,
+          "neutral": 12
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "RogueHooded",
+        "portrait": "RogueHooded",
+        "portraitFallback": "RogueHooded",
+        "portraitSource": "Model",
+        "attackClip": "2H_Ranged_Shoot",
+        "contact": 0.25,
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75
+        }
+      }
+    },
+    {
+      "id": "Knight",
+      "names": {
+        "es": "Caballero",
+        "en": "Knight"
+      },
+      "role": {
+        "es": "Caballería pesada",
+        "en": "Heavy cavalry"
+      },
+      "source": {
+        "rawcode": "h00G",
+        "base": "h00G · Knight ← hkni"
+      },
+      "adaptation": [],
+      "domain": "Land",
+      "cost": 5,
+      "points": 5,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 650,
+      "armor": 7,
+      "armorType": "Heavy",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 7,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.64
+      },
+      "body": {
+        "radius": 0.64
+      },
+      "visual": {
+        "height": 3.0579002,
+        "radius": 1.48094,
+        "standingHeight": 3.0579002,
+        "standingWidth": 2.96188,
+        "mdx": {
+          "height": 3.0579002,
+          "width": 2.96188
+        }
+      },
+      "spawnRadius": 1.05,
+      "weapons": [
+        {
+          "source": "local-melee",
+          "sound": "Lance",
+          "attackType": "Normal",
+          "base": 37,
+          "dice": 2,
+          "sides": 5,
+          "cooldown": 1.36,
+          "attackPoint": 0.66,
+          "backswing": 0.44,
+          "range": 2,
+          "minRange": 0,
+          "ranged": false,
+          "rangeMeasure": "BodyEdges",
+          "reach": {
+            "approachMargin": 0.4,
+            "holdMargin": 0.2
+          },
+          "strikeTolerance": 0.55,
+          "delivery": "Instant",
+          "targeting": "Target",
+          "projectileSpeed": 0,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 10,
+          "neutral": 10,
+          "hold": 10
+        },
+        "leash": {
+          "hostile": 11,
+          "neutral": 10
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "RoyalGuard",
+        "portrait": "MountedKnight",
+        "portraitFallback": "RoyalGuard",
+        "portraitSource": "Model",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Mounted",
+        "portraitCamera": {
+          "orthographicSize": 1.85,
+          "focusHeight": 1.75,
+          "refit": {
+            "upperFraction": 0.8,
+            "offsetX": 4.5,
+            "offsetY": 1.6,
+            "offsetZ": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "Mage",
+      "names": {
+        "es": "Mago",
+        "en": "Mage"
+      },
+      "role": {
+        "es": "Daño de área",
+        "en": "Area damage"
+      },
+      "source": {
+        "rawcode": null,
+        "base": "Adaptación de mago"
+      },
+      "adaptation": [
+        "Local fantasy unit: missile 25 m/s, 2.4 m splash at 50% on enemy/neutral soldiers, flight 0.15–0.6 s, acquisition 11."
+      ],
+      "domain": "Land",
+      "cost": 4,
+      "points": 4,
+      "trainSeconds": 6,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 250,
+      "armor": 1,
+      "armorType": "Unarmored",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.4,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.24
+      },
+      "body": {
+        "radius": 0.24
+      },
+      "visual": {
+        "height": 1.4,
+        "radius": 0.34,
+        "standingHeight": 0,
+        "standingWidth": 0
+      },
+      "spawnRadius": 0.58,
+      "weapons": [
+        {
+          "source": "local-mage",
+          "sound": "Magic",
+          "attackType": "Magic",
+          "base": 29,
+          "dice": 1,
+          "sides": 3,
+          "cooldown": 1.6,
+          "attackPoint": 0.24,
+          "backswing": 0,
+          "range": 10,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToApproach",
+          "strikeTolerance": 0.55,
+          "delivery": "Missile",
+          "targeting": "Target",
+          "projectileSpeed": 25,
+          "flightTime": {
+            "min": 0.15,
+            "max": 0.6
+          },
+          "splash": {
+            "rings": [
+              {
+                "radius": 0,
+                "factor": 1
+              },
+              {
+                "radius": 2.4,
+                "factor": 0.5
+              },
+              {
+                "radius": 2.4,
+                "factor": 0.5
+              }
+            ],
+            "mask": [
+              "Enemy",
+              "Neutral",
+              "Soldier"
+            ]
+          },
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 11,
+          "neutral": 11,
+          "hold": 11
+        },
+        "leash": {
+          "hostile": 12,
+          "neutral": 12
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "Mage",
+        "portrait": "Mage",
+        "portraitFallback": "Mage",
+        "portraitSource": "Model",
+        "attackClip": "Spellcast_Shoot",
+        "contact": 0.32142857,
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75
+        }
+      }
+    },
+    {
+      "id": "Mortar",
+      "names": {
+        "es": "Mortero",
+        "en": "Mortar"
+      },
+      "role": {
+        "es": "Área a larga distancia",
+        "en": "Long-range area damage"
+      },
+      "source": {
+        "rawcode": "h00H",
+        "base": "h00H · Mortar ← hmtm"
+      },
+      "adaptation": [],
+      "domain": "Land",
+      "cost": 3,
+      "points": 3,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 350,
+      "armor": 0,
+      "armorType": "Medium",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 4.6,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.64
+      },
+      "body": {
+        "radius": 0.64
+      },
+      "visual": {
+        "height": 1.60506,
+        "radius": 1.1364399,
+        "standingHeight": 1.60506,
+        "standingWidth": 2.2728798,
+        "mdx": {
+          "height": 1.60506,
+          "width": 2.2728798
+        }
+      },
+      "spawnRadius": 0.81823677,
+      "weapons": [
+        {
+          "source": "h00H",
+          "sound": "Mortar",
+          "attackType": "Siege",
+          "base": 18,
+          "dice": 1,
+          "sides": 13,
+          "cooldown": 3.5,
+          "attackPoint": 1,
+          "backswing": 1.1,
+          "range": 18,
+          "minRange": 5,
+          "ranged": true,
+          "rangeMeasure": "CenterToApproach",
+          "strikeTolerance": 0.55,
+          "delivery": "Artillery",
+          "targeting": "LaunchPoint",
+          "projectileSpeed": 18,
+          "splash": {
+            "rings": [
+              {
+                "radius": 0.5,
+                "factor": 1
+              },
+              {
+                "radius": 3,
+                "factor": 0.35
+              },
+              {
+                "radius": 5,
+                "factor": 0.1
+              }
+            ],
+            "mask": [
+              "Ground",
+              "Structure",
+              "Tree"
+            ]
+          },
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 18,
+          "neutral": 18,
+          "hold": 18
+        },
+        "leash": {
+          "hostile": 20,
+          "neutral": 20
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "Mortar",
+        "portrait": "Mortar",
+        "portraitFallback": "Mortar",
+        "portraitSource": "Model",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Siege",
+        "portraitCamera": {
+          "orthographicSize": 1.35,
+          "focusHeight": 1.15
+        }
+      }
+    },
+    {
+      "id": "Medic",
+      "names": {
+        "es": "Sanador",
+        "en": "Healer"
+      },
+      "role": {
+        "es": "Sana aliados · 25 vida · 5 maná",
+        "en": "Heals allies · 25 health · 5 mana"
+      },
+      "source": {
+        "rawcode": "h00E",
+        "base": "h00E · Medic ← hmpr (220 HP local)"
+      },
+      "adaptation": [
+        "220 HP instead of the explicit h00E uhpm=250 (v0.30 product decision).",
+        "Heal rescan every 0.25 s while nobody needs healing."
+      ],
+      "domain": "Land",
+      "cost": 2,
+      "points": 2,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 220,
+      "armor": 1,
+      "armorType": "Light",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.4,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.32
+      },
+      "body": {
+        "radius": 0.32
+      },
+      "visual": {
+        "height": 2.44734,
+        "radius": 0.94414,
+        "standingHeight": 2.44734,
+        "standingWidth": 1.88828,
+        "mdx": {
+          "height": 2.44734,
+          "width": 1.88828
+        }
+      },
+      "spawnRadius": 0.67978084,
+      "weapons": [
+        {
+          "source": "h00E",
+          "sound": "Bow",
+          "attackType": "Piercing",
+          "base": 7,
+          "dice": 1,
+          "sides": 2,
+          "cooldown": 2,
+          "attackPoint": 0.59,
+          "backswing": 0.58,
+          "range": 8,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToApproach",
+          "strikeTolerance": 0.55,
+          "delivery": "Missile",
+          "targeting": "Target",
+          "projectileSpeed": 22,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 8,
+          "neutral": 8,
+          "hold": 8
+        },
+        "leash": {
+          "hostile": 10,
+          "neutral": 10
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false,
+        "heal": {
+          "amount": 25,
+          "range": 5,
+          "cooldown": 1,
+          "manaCost": 5,
+          "rescan": 0.25,
+          "maxVerticalDelta": 3,
+          "organicOnly": true
+        },
+        "mana": {
+          "max": 200,
+          "initial": 75,
+          "regen": 1.5
+        }
+      },
+      "presentation": {
+        "model": "Medic",
+        "portrait": "Medic",
+        "portraitFallback": "Medic",
+        "portraitSource": "Model",
+        "attackClip": "2H_Ranged_Shoot",
+        "contact": 0.25,
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75
+        }
+      }
+    },
+    {
+      "id": "MarinePrivate",
+      "names": {
+        "es": "Marine Private",
+        "en": "Marine Private"
+      },
+      "role": {
+        "es": "Pistolero de puerto",
+        "en": "Harbor pistolier"
+      },
+      "source": {
+        "rawcode": "h012",
+        "base": "h012 Marine Private ← hrif"
+      },
+      "adaptation": [],
+      "domain": "Land",
+      "cost": 1,
+      "points": 1,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "Harbor",
+      "maxHealth": 200,
+      "armor": 1,
+      "armorType": "Light",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.4,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.32
+      },
+      "body": {
+        "radius": 0.32
+      },
+      "visual": {
+        "height": 1.4,
+        "radius": 0.34,
+        "standingHeight": 0,
+        "standingWidth": 0
+      },
+      "spawnRadius": 0.58,
+      "weapons": [
+        {
+          "source": "h012/h00R",
+          "sound": "Firearm",
+          "attackType": "Piercing",
+          "base": 16,
+          "dice": 2,
+          "sides": 4,
+          "cooldown": 1.6,
+          "attackPoint": 0.17,
+          "backswing": 0.7,
+          "range": 6,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToApproach",
+          "strikeTolerance": 0.55,
+          "delivery": "Instant",
+          "targeting": "Target",
+          "projectileSpeed": 0,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": true
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 12,
+          "neutral": 12,
+          "hold": 12
+        },
+        "leash": {
+          "hostile": 12,
+          "neutral": 12
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "MarinePrivate",
+        "portrait": "MarinePrivate",
+        "portraitFallback": "MarinePrivate",
+        "portraitSource": "Model",
+        "attackClip": "1H_Ranged_Shoot",
+        "contact": 0.25,
+        "silhouette": "Marine",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75
+        }
+      }
+    },
+    {
+      "id": "MarineMajor",
+      "names": {
+        "es": "Marine Major",
+        "en": "Marine Major"
+      },
+      "role": {
+        "es": "Caballería de puerto",
+        "en": "Harbor cavalry"
+      },
+      "source": {
+        "rawcode": "h014",
+        "base": "h014 Marine Major ← hkni"
+      },
+      "adaptation": [],
+      "domain": "Land",
+      "cost": 5,
+      "points": 5,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "Harbor",
+      "maxHealth": 650,
+      "armor": 6,
+      "armorType": "Heavy",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.6,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.64
+      },
+      "body": {
+        "radius": 0.64
+      },
+      "visual": {
+        "height": 3.0579002,
+        "radius": 1.48094,
+        "standingHeight": 3.0579002,
+        "standingWidth": 2.96188
+      },
+      "spawnRadius": 1.05,
+      "weapons": [
+        {
+          "source": "local-melee",
+          "sound": "Lance",
+          "attackType": "Normal",
+          "base": 37,
+          "dice": 2,
+          "sides": 5,
+          "cooldown": 1.36,
+          "attackPoint": 0.66,
+          "backswing": 0.44,
+          "range": 2,
+          "minRange": 0,
+          "ranged": false,
+          "rangeMeasure": "BodyEdges",
+          "reach": {
+            "approachMargin": 0.4,
+            "holdMargin": 0.2
+          },
+          "strikeTolerance": 0.55,
+          "delivery": "Instant",
+          "targeting": "Target",
+          "projectileSpeed": 0,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 10,
+          "neutral": 10,
+          "hold": 10
+        },
+        "leash": {
+          "hostile": 11,
+          "neutral": 10
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "RoyalGuard",
+        "portrait": "MarineMajor",
+        "portraitFallback": "MountedKnight",
+        "portraitSource": "Variant",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Mounted",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "refit": {
+            "upperFraction": 0.8,
+            "offsetX": 4.5,
+            "offsetY": 1.6,
+            "offsetZ": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "MarineGeneral",
+      "names": {
+        "es": "Marine General",
+        "en": "Marine General"
+      },
+      "role": {
+        "es": "Caballería veterana de puerto",
+        "en": "Veteran harbor cavalry"
+      },
+      "source": {
+        "rawcode": "h015",
+        "base": "h015 Marine General ← hkni"
+      },
+      "adaptation": [],
+      "domain": "Land",
+      "cost": 10,
+      "points": 10,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "Harbor",
+      "maxHealth": 800,
+      "armor": 8,
+      "armorType": "Heavy",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.6,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.64
+      },
+      "body": {
+        "radius": 0.64
+      },
+      "visual": {
+        "height": 3.2107952,
+        "radius": 1.554987,
+        "standingHeight": 3.2107952,
+        "standingWidth": 3.109974
+      },
+      "spawnRadius": 1.05,
+      "weapons": [
+        {
+          "source": "local-melee",
+          "sound": "Lance",
+          "attackType": "Normal",
+          "base": 64,
+          "dice": 2,
+          "sides": 5,
+          "cooldown": 1.45,
+          "attackPoint": 0.66,
+          "backswing": 0.44,
+          "range": 2,
+          "minRange": 0,
+          "ranged": false,
+          "rangeMeasure": "BodyEdges",
+          "reach": {
+            "approachMargin": 0.4,
+            "holdMargin": 0.2
+          },
+          "strikeTolerance": 0.55,
+          "delivery": "Instant",
+          "targeting": "Target",
+          "projectileSpeed": 0,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 10,
+          "neutral": 10,
+          "hold": 10
+        },
+        "leash": {
+          "hostile": 11,
+          "neutral": 10
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "RoyalGuard",
+        "portrait": "MarineGeneral",
+        "portraitFallback": "MountedKnight",
+        "portraitSource": "Variant",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Mounted",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "refit": {
+            "upperFraction": 0.8,
+            "offsetX": 4.5,
+            "offsetY": 1.6,
+            "offsetZ": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "EliteRifleman",
+      "names": {
+        "es": "Fusilero de élite",
+        "en": "Elite rifleman"
+      },
+      "role": {
+        "es": "Fusilería de élite",
+        "en": "Elite marksmanship"
+      },
+      "source": {
+        "rawcode": "h00F",
+        "base": "h00F · Elite Rifleman ← hrif"
+      },
+      "adaptation": [],
+      "domain": "Land",
+      "cost": 6,
+      "points": 6,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 450,
+      "armor": 1,
+      "armorType": "Light",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.4,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.32
+      },
+      "body": {
+        "radius": 0.32
+      },
+      "visual": {
+        "height": 1.800414,
+        "radius": 1.043845,
+        "standingHeight": 1.800414,
+        "standingWidth": 2.08769
+      },
+      "spawnRadius": 0.7515685,
+      "weapons": [
+        {
+          "source": "h00F",
+          "sound": "Firearm",
+          "attackType": "Piercing",
+          "base": 36,
+          "dice": 2,
+          "sides": 4,
+          "cooldown": 1,
+          "attackPoint": 0.17,
+          "backswing": 0.7,
+          "range": 7,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToApproach",
+          "strikeTolerance": 0.55,
+          "delivery": "Instant",
+          "targeting": "Target",
+          "projectileSpeed": 0,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": true
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 12,
+          "neutral": 12,
+          "hold": 12
+        },
+        "leash": {
+          "hostile": 12,
+          "neutral": 12
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "RogueHooded",
+        "portrait": "EliteRifleman",
+        "portraitFallback": "RogueHooded",
+        "portraitSource": "Variant",
+        "attackClip": "2H_Ranged_Shoot",
+        "contact": 0.25,
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75
+        }
+      }
+    },
+    {
+      "id": "Roarer",
+      "names": {
+        "es": "Rugidor",
+        "en": "Roarer"
+      },
+      "role": {
+        "es": "Rugido · +25% daño aliado",
+        "en": "Roar · +25% allied damage"
+      },
+      "source": {
+        "rawcode": "h00I",
+        "base": "h00I · Roarer ← hmpr"
+      },
+      "adaptation": [
+        "Aroa autocasts (source: manual) when an ally in the area fights; re-evaluated every 0.5 s."
+      ],
+      "domain": "Land",
+      "cost": 4,
+      "points": 4,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 400,
+      "armor": 1,
+      "armorType": "Light",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.4,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.32
+      },
+      "body": {
+        "radius": 0.32
+      },
+      "visual": {
+        "height": 1.8331487,
+        "radius": 1.062824,
+        "standingHeight": 1.8331487,
+        "standingWidth": 2.125648
+      },
+      "spawnRadius": 0.76523334,
+      "weapons": [
+        {
+          "source": "h00I",
+          "sound": "Bow",
+          "attackType": "Piercing",
+          "base": 29,
+          "dice": 1,
+          "sides": 3,
+          "cooldown": 2,
+          "attackPoint": 0.59,
+          "backswing": 0.58,
+          "range": 10,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToApproach",
+          "strikeTolerance": 0.55,
+          "delivery": "Missile",
+          "targeting": "Target",
+          "projectileSpeed": 18,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 8,
+          "neutral": 8,
+          "hold": 8
+        },
+        "leash": {
+          "hostile": 12,
+          "neutral": 12
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false,
+        "roar": {
+          "area": 14,
+          "duration": 45,
+          "manaCost": 100,
+          "damageBonus": 0.25,
+          "evaluation": 0.5
+        },
+        "mana": {
+          "max": 300,
+          "initial": 75,
+          "regen": 2
+        }
+      },
+      "presentation": {
+        "model": "RogueHooded",
+        "portrait": "Roarer",
+        "portraitFallback": "RogueHooded",
+        "portraitSource": "Variant",
+        "attackClip": "2H_Ranged_Shoot",
+        "contact": 0.25,
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "refit": {
+            "upperFraction": 0.78,
+            "offsetX": 2,
+            "offsetY": 1,
+            "offsetZ": 5
+          }
+        }
+      }
+    },
+    {
+      "id": "ArmyGeneral",
+      "names": {
+        "es": "General",
+        "en": "General"
+      },
+      "role": {
+        "es": "Caballería de mando · Rugido",
+        "en": "Command cavalry · Roar"
+      },
+      "source": {
+        "rawcode": "h00J",
+        "base": "h00J · Army General ← hkni"
+      },
+      "adaptation": [
+        "Aroa autocasts (source: manual) when an ally in the area fights; re-evaluated every 0.5 s."
+      ],
+      "domain": "Land",
+      "cost": 10,
+      "points": 10,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 800,
+      "armor": 10,
+      "armorType": "Heavy",
+      "mechanical": false,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 7,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.72
+      },
+      "body": {
+        "radius": 0.72
+      },
+      "visual": {
+        "height": 3.4248483,
+        "radius": 1.6586528,
+        "standingHeight": 3.4248483,
+        "standingWidth": 3.3173056
+      },
+      "spawnRadius": 1.05,
+      "weapons": [
+        {
+          "source": "local-melee",
+          "sound": "Lance",
+          "attackType": "Normal",
+          "base": 55,
+          "dice": 2,
+          "sides": 5,
+          "cooldown": 1.45,
+          "attackPoint": 0.66,
+          "backswing": 0.44,
+          "range": 2,
+          "minRange": 0,
+          "ranged": false,
+          "rangeMeasure": "BodyEdges",
+          "reach": {
+            "approachMargin": 0.4,
+            "holdMargin": 0.2
+          },
+          "strikeTolerance": 0.55,
+          "delivery": "Instant",
+          "targeting": "Target",
+          "projectileSpeed": 0,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 10,
+          "neutral": 10,
+          "hold": 10
+        },
+        "leash": {
+          "hostile": 11,
+          "neutral": 10
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "NavMeshRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false,
+        "roar": {
+          "area": 14,
+          "duration": 45,
+          "manaCost": 100,
+          "damageBonus": 0.25,
+          "evaluation": 0.5
+        },
+        "mana": {
+          "max": 300,
+          "initial": 0,
+          "regen": 3
+        }
+      },
+      "presentation": {
+        "model": "RoyalGuard",
+        "portrait": "ArmyGeneral",
+        "portraitFallback": "MountedKnight",
+        "portraitSource": "Variant",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Mounted",
+        "portraitCamera": {
+          "orthographicSize": 2.1,
+          "focusHeight": 1.95,
+          "refit": {
+            "upperFraction": 0.8,
+            "offsetX": 4.5,
+            "offsetY": 1.6,
+            "offsetZ": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "Artillery",
+      "names": {
+        "es": "Artillería",
+        "en": "Artillery"
+      },
+      "role": {
+        "es": "Asedio de área a gran distancia",
+        "en": "Long-range area siege"
+      },
+      "source": {
+        "rawcode": "h00M",
+        "base": "h00M · Artillery ← hmtt"
+      },
+      "adaptation": [],
+      "domain": "Land",
+      "cost": 15,
+      "points": 15,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 900,
+      "armor": 3,
+      "armorType": "Unarmored",
+      "mechanical": true,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 4,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.96
+      },
+      "body": {
+        "radius": 0.96
+      },
+      "visual": {
+        "height": 1.95,
+        "radius": 1.35,
+        "standingHeight": 1.95,
+        "standingWidth": 2.7
+      },
+      "spawnRadius": 0.97200006,
+      "weapons": [
+        {
+          "source": "h00M",
+          "sound": "Bow",
+          "attackType": "Piercing",
+          "base": 55,
+          "dice": 1,
+          "sides": 13,
+          "cooldown": 3,
+          "attackPoint": 0.5,
+          "backswing": 0.5,
+          "range": 20,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToApproach",
+          "strikeTolerance": 0.55,
+          "delivery": "Artillery",
+          "targeting": "LaunchPoint",
+          "projectileSpeed": 18,
+          "splash": {
+            "rings": [
+              {
+                "radius": 0.5,
+                "factor": 1
+              },
+              {
+                "radius": 2,
+                "factor": 0.35
+              },
+              {
+                "radius": 3.4,
+                "factor": 0.1
+              }
+            ],
+            "mask": [
+              "Ground",
+              "Structure",
+              "Tree"
+            ]
+          },
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 20,
+          "neutral": 20,
+          "hold": 20
+        },
+        "leash": {
+          "hostile": 22,
+          "neutral": 22
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "Mortar",
+        "portrait": "Artillery",
+        "portraitFallback": "Mortar",
+        "portraitSource": "Variant",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Siege",
+        "portraitCamera": {
+          "orthographicSize": 1.7,
+          "focusHeight": 1.15
+        }
+      }
+    },
+    {
+      "id": "Tank",
+      "names": {
+        "es": "Tanque",
+        "en": "Tank"
+      },
+      "role": {
+        "es": "Blindado de asedio",
+        "en": "Armoured siege vehicle"
+      },
+      "source": {
+        "rawcode": "h01A",
+        "base": "h01A · Tank ← hfoo"
+      },
+      "adaptation": [],
+      "domain": "Land",
+      "cost": 25,
+      "points": 25,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "City",
+      "maxHealth": 1500,
+      "armor": 9,
+      "armorType": "Fortified",
+      "mechanical": true,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 5.2,
+        "forestPenalty": true
+      },
+      "collision": {
+        "radius": 0.8
+      },
+      "body": {
+        "radius": 0.8
+      },
+      "visual": {
+        "height": 2.3,
+        "radius": 1.45,
+        "standingHeight": 2.3,
+        "standingWidth": 2.9
+      },
+      "spawnRadius": 1.044,
+      "weapons": [
+        {
+          "source": "h01A",
+          "sound": "Mortar",
+          "attackType": "Siege",
+          "base": 80,
+          "dice": 1,
+          "sides": 11,
+          "cooldown": 1.8,
+          "attackPoint": 0.2,
+          "backswing": 0.5,
+          "range": 10,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToApproach",
+          "strikeTolerance": 0.55,
+          "delivery": "MissileSplash",
+          "targeting": "Target",
+          "projectileSpeed": 20,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "acquisition": {
+        "radius": {
+          "hostile": 10,
+          "neutral": 10,
+          "hold": 10
+        },
+        "leash": {
+          "hostile": 12,
+          "neutral": 12
+        },
+        "queryPadding": 3,
+        "pressureBias": 0.1,
+        "allyAlertRadius": 5,
+        "retaliate": true,
+        "measure": "CenterToApproach",
+        "visibility": "TerrainRay",
+        "tieBreak": "LowerEntityId"
+      },
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": true,
+        "canEmbark": true,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": "Tank",
+        "portrait": "Tank",
+        "portraitFallback": "Mortar",
+        "portraitSource": "Variant",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Siege",
+        "portraitCamera": {
+          "orthographicSize": 1.7,
+          "focusHeight": 1.15
+        }
+      }
+    },
+    {
+      "id": "Frigate",
+      "names": {
+        "es": "Fragata",
+        "en": "Frigate"
+      },
+      "source": {
+        "rawcode": "h00W"
+      },
+      "adaptation": [],
+      "domain": "Sea",
+      "cost": 5,
+      "points": 5,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "Harbor",
+      "maxHealth": 400,
+      "armor": 6,
+      "armorType": "Light",
+      "mechanical": true,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 6.8,
+        "forestPenalty": false,
+        "separation": 2.8
+      },
+      "hull": {
+        "length": 5.904,
+        "beam": 1.65,
+        "height": 3,
+        "centerHeight": 1.3,
+        "scale": 1,
+        "warship": true,
+        "clearance": 1.3
+      },
+      "visual": {
+        "height": 4.8,
+        "radius": 1.8,
+        "standingHeight": 0,
+        "standingWidth": 0
+      },
+      "weapons": [
+        {
+          "source": "h00W",
+          "sound": "Cannon",
+          "attackType": "Normal",
+          "base": 30,
+          "dice": 1,
+          "sides": 15,
+          "cooldown": 1.5,
+          "attackPoint": 0,
+          "backswing": 0,
+          "range": 20,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "ToHull",
+          "delivery": "MissileSplash",
+          "targeting": "Target",
+          "projectileSpeed": 22,
+          "splash": {
+            "rings": [
+              {
+                "radius": 0.5,
+                "factor": 1
+              },
+              {
+                "radius": 0.7,
+                "factor": 0.3
+              },
+              {
+                "radius": 1,
+                "factor": 0.1
+              }
+            ],
+            "mask": [
+              "Debris",
+              "Ground",
+              "Structure",
+              "Wall",
+              "Enemy",
+              "Neutral"
+            ]
+          },
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": false,
+        "canEmbark": false,
+        "harborGuard": true
+      },
+      "presentation": {
+        "model": null,
+        "portrait": "Frigate",
+        "portraitFallback": "Frigate",
+        "portraitSource": "Model",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 3.35,
+          "focusHeight": 2.15
+        }
+      },
+      "acquisition": {
+        "radius": {
+          "hostile": 20,
+          "neutral": 20,
+          "hold": 20
+        },
+        "queryPadding": 6,
+        "pressureBias": 0,
+        "allyAlertRadius": 0,
+        "retaliate": true,
+        "measure": "ToHull",
+        "visibility": "TerrainRay",
+        "tieBreak": "FirstFound"
+      }
+    },
+    {
+      "id": "Transport",
+      "names": {
+        "es": "Transporte",
+        "en": "Transporte"
+      },
+      "source": {
+        "rawcode": "n008"
+      },
+      "adaptation": [],
+      "domain": "Sea",
+      "cost": 2,
+      "points": 2,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "Harbor",
+      "maxHealth": 300,
+      "armor": 0,
+      "armorType": "Heavy",
+      "mechanical": true,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 6.8,
+        "forestPenalty": false,
+        "separation": 2.8
+      },
+      "hull": {
+        "length": 4.223,
+        "beam": 2.65,
+        "height": 3,
+        "centerHeight": 1.3,
+        "scale": 1,
+        "warship": false,
+        "clearance": 1.3
+      },
+      "visual": {
+        "height": 4.8,
+        "radius": 1.8,
+        "standingHeight": 0,
+        "standingWidth": 0
+      },
+      "weapons": [],
+      "capabilities": {
+        "canCapture": false,
+        "canGarrison": false,
+        "canEmbark": false,
+        "harborGuard": false,
+        "transport": {
+          "capacity": 10,
+          "loadRadius": 10.24,
+          "loadLimit": 10
+        }
+      },
+      "presentation": {
+        "model": null,
+        "portrait": "Transport",
+        "portraitFallback": "Transport",
+        "portraitSource": "Model",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 3.35,
+          "focusHeight": 2.15
+        }
+      }
+    },
+    {
+      "id": "Warship",
+      "names": {
+        "es": "Buque de guerra",
+        "en": "Warship"
+      },
+      "source": {
+        "rawcode": "h00U"
+      },
+      "adaptation": [],
+      "domain": "Sea",
+      "cost": 20,
+      "points": 20,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "Harbor",
+      "maxHealth": 1250,
+      "armor": 10,
+      "armorType": "Light",
+      "mechanical": true,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 9,
+        "forestPenalty": false,
+        "separation": 2.8
+      },
+      "hull": {
+        "length": 6.7895994,
+        "beam": 1.8974999,
+        "height": 3,
+        "centerHeight": 1.3,
+        "scale": 1.15,
+        "warship": true,
+        "clearance": 1.3
+      },
+      "visual": {
+        "height": 4.8,
+        "radius": 1.8,
+        "standingHeight": 0,
+        "standingWidth": 0
+      },
+      "weapons": [
+        {
+          "source": "h00U",
+          "sound": "Cannon",
+          "attackType": "Normal",
+          "base": 90,
+          "dice": 1,
+          "sides": 15,
+          "cooldown": 1.5,
+          "attackPoint": 0,
+          "backswing": 0,
+          "range": 30,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "ToHull",
+          "delivery": "MissileSplash",
+          "targeting": "Target",
+          "projectileSpeed": 20,
+          "splash": {
+            "rings": [
+              {
+                "radius": 0.5,
+                "factor": 1
+              },
+              {
+                "radius": 0.7,
+                "factor": 0.3
+              },
+              {
+                "radius": 1,
+                "factor": 0.1
+              }
+            ],
+            "mask": [
+              "Debris",
+              "Ground",
+              "Structure",
+              "Wall",
+              "Enemy",
+              "Neutral"
+            ]
+          },
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": false,
+        "canEmbark": false,
+        "harborGuard": true
+      },
+      "presentation": {
+        "model": null,
+        "portrait": "Warship",
+        "portraitFallback": "Frigate",
+        "portraitSource": "Model",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 3.8,
+          "focusHeight": 2.15
+        }
+      },
+      "acquisition": {
+        "radius": {
+          "hostile": 30,
+          "neutral": 30,
+          "hold": 30
+        },
+        "queryPadding": 6,
+        "pressureBias": 0,
+        "allyAlertRadius": 0,
+        "retaliate": true,
+        "measure": "ToHull",
+        "visibility": "TerrainRay",
+        "tieBreak": "FirstFound"
+      }
+    },
+    {
+      "id": "Battleship",
+      "names": {
+        "es": "Acorazado",
+        "en": "Battleship"
+      },
+      "source": {
+        "rawcode": "h001"
+      },
+      "adaptation": [],
+      "domain": "Sea",
+      "cost": 45,
+      "points": 45,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "Harbor",
+      "maxHealth": 2350,
+      "armor": 20,
+      "armorType": "Light",
+      "mechanical": true,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 6.6,
+        "forestPenalty": false,
+        "separation": 2.8
+      },
+      "hull": {
+        "length": 7.6751995,
+        "beam": 2.145,
+        "height": 3,
+        "centerHeight": 1.3,
+        "scale": 1.3,
+        "warship": true,
+        "clearance": 1.3
+      },
+      "visual": {
+        "height": 4.8,
+        "radius": 1.8,
+        "standingHeight": 0,
+        "standingWidth": 0
+      },
+      "weapons": [
+        {
+          "source": "h001",
+          "sound": "Cannon",
+          "attackType": "Normal",
+          "base": 130,
+          "dice": 1,
+          "sides": 15,
+          "cooldown": 1.4,
+          "attackPoint": 0,
+          "backswing": 0,
+          "range": 30,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "ToHull",
+          "delivery": "MissileSplash",
+          "targeting": "Target",
+          "projectileSpeed": 20,
+          "splash": {
+            "rings": [
+              {
+                "radius": 0.5,
+                "factor": 1
+              },
+              {
+                "radius": 0.7,
+                "factor": 0.3
+              },
+              {
+                "radius": 1,
+                "factor": 0.1
+              }
+            ],
+            "mask": [
+              "Debris",
+              "Ground",
+              "Structure",
+              "Wall",
+              "Enemy",
+              "Neutral"
+            ]
+          },
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      ],
+      "capabilities": {
+        "canCapture": true,
+        "canGarrison": false,
+        "canEmbark": false,
+        "harborGuard": true
+      },
+      "presentation": {
+        "model": null,
+        "portrait": "Battleship",
+        "portraitFallback": "Frigate",
+        "portraitSource": "Model",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 4.2,
+          "focusHeight": 2.15
+        }
+      },
+      "acquisition": {
+        "radius": {
+          "hostile": 30,
+          "neutral": 30,
+          "hold": 30
+        },
+        "queryPadding": 6,
+        "pressureBias": 0,
+        "allyAlertRadius": 0,
+        "retaliate": true,
+        "measure": "ToHull",
+        "visibility": "TerrainRay",
+        "tieBreak": "FirstFound"
+      }
+    },
+    {
+      "id": "ArmoredTransport",
+      "names": {
+        "es": "Transporte blindado",
+        "en": "Armoured transport"
+      },
+      "source": {
+        "rawcode": "n007"
+      },
+      "adaptation": [],
+      "domain": "Sea",
+      "cost": 6,
+      "points": 6,
+      "trainSeconds": 1,
+      "level": 1,
+      "building": "Harbor",
+      "maxHealth": 300,
+      "armor": 30,
+      "armorType": "Heavy",
+      "mechanical": true,
+      "canBeAttacked": true,
+      "movement": {
+        "speed": 7.4,
+        "forestPenalty": false,
+        "separation": 2.8
+      },
+      "hull": {
+        "length": 4.4341497,
+        "beam": 2.7825,
+        "height": 3,
+        "centerHeight": 1.3,
+        "scale": 1.05,
+        "warship": false,
+        "clearance": 1.3
+      },
+      "visual": {
+        "height": 4.8,
+        "radius": 1.8,
+        "standingHeight": 0,
+        "standingWidth": 0
+      },
+      "weapons": [],
+      "capabilities": {
+        "canCapture": false,
+        "canGarrison": false,
+        "canEmbark": false,
+        "harborGuard": false,
+        "transport": {
+          "capacity": 10,
+          "loadRadius": 10.24,
+          "loadLimit": 10
+        }
+      },
+      "presentation": {
+        "model": null,
+        "portrait": "ArmoredTransport",
+        "portraitFallback": "Transport",
+        "portraitSource": "Model",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 3.35,
+          "focusHeight": 2.15
+        }
+      }
+    },
+    {
+      "id": "Tower",
+      "names": {
+        "es": "Torre",
+        "en": "Tower"
+      },
+      "source": {
+        "rawcode": "o000",
+        "base": "o000 · Bunker",
+        "notes": "h00N/h00O City Post"
+      },
+      "adaptation": [
+        "Health from the o000 bunker; attack, Divine armor 3 and delivery from the h00N/h00O city post, weapon by host building."
+      ],
+      "domain": "Static",
+      "cost": 0,
+      "points": 0,
+      "trainSeconds": 0,
+      "level": 1,
+      "building": "None",
+      "maxHealth": 550,
+      "armor": 3,
+      "armorType": "Divine",
+      "mechanical": true,
+      "canBeAttacked": false,
+      "movement": {
+        "speed": 0,
+        "forestPenalty": false
+      },
+      "footprint": {
+        "size": 3.5
+      },
+      "visual": {
+        "height": 4.6,
+        "radius": 1.05,
+        "standingHeight": 0,
+        "standingWidth": 0
+      },
+      "weapons": [],
+      "hostWeapons": {
+        "town": {
+          "source": "h00N",
+          "sound": "Bow",
+          "attackType": "Piercing",
+          "base": 45,
+          "dice": 1,
+          "sides": 5,
+          "cooldown": 0.9,
+          "attackPoint": 0.3,
+          "backswing": 0.3,
+          "range": 13,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToCenter",
+          "delivery": "Missile",
+          "targeting": "Target",
+          "projectileSpeed": 32,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        },
+        "harbor": {
+          "source": "h00O",
+          "sound": "Bow",
+          "attackType": "Piercing",
+          "base": 45,
+          "dice": 1,
+          "sides": 5,
+          "cooldown": 0.9,
+          "attackPoint": 0.3,
+          "backswing": 0.3,
+          "range": 13,
+          "minRange": 0,
+          "ranged": true,
+          "rangeMeasure": "CenterToCenter",
+          "delivery": "Missile",
+          "targeting": "Target",
+          "projectileSpeed": 32,
+          "targetMask": [
+            "Ground",
+            "Enemy",
+            "Neutral"
+          ],
+          "tracer": false
+        }
+      },
+      "acquisition": {
+        "radius": {
+          "hostile": 13,
+          "neutral": 13,
+          "hold": 13
+        },
+        "queryPadding": 0,
+        "pressureBias": 0,
+        "allyAlertRadius": 0,
+        "retaliate": false,
+        "measure": "CenterToCenter",
+        "visibility": "TerrainRay",
+        "tieBreak": "FirstFound"
+      },
+      "capabilities": {
+        "canCapture": false,
+        "canGarrison": false,
+        "canEmbark": false,
+        "harborGuard": false
+      },
+      "presentation": {
+        "model": null,
+        "portrait": "Tower",
+        "portraitFallback": "Tower",
+        "portraitSource": "Model",
+        "attackClip": null,
+        "contact": 0.5,
+        "silhouette": "Structure",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75
+        }
+      }
+    }
+  ]
+}

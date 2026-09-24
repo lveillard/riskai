@@ -105,19 +105,17 @@ namespace RiskAI
             Horizon(data.PlayableBounds,HorizonFadeStart,HorizonFadeEnd);
             EnsureField(data);
             // Mips only serve the blurred skirt beyond the playable edge (level 0 inside).
-            var texture=new Texture2D(fieldWidth,fieldHeight,TextureFormat.RGBA32,true,true)
-            {name="Geographic biome field",filterMode=FilterMode.Trilinear,wrapMode=TextureWrapMode.Clamp};
+            var texture=GeneratedResourceOwner.For(root).Track(new Texture2D(fieldWidth,fieldHeight,TextureFormat.RGBA32,true,true)
+            {name="Geographic biome field",filterMode=FilterMode.Trilinear,wrapMode=TextureWrapMode.Clamp});
             texture.SetPixels32(field);texture.Apply(true,true);
-            GeneratedResourceOwner.For(root).Track(texture);
             Shader.SetGlobalTexture("_RiskBiomeField",texture);
             Shader.SetGlobalVector("_RiskBiomeGrid",new Vector4(fieldX,fieldZ,1/fieldStep,1));
             Shader.SetGlobalVector("_RiskBiomeSize",new Vector4(fieldWidth,fieldHeight,1f/fieldWidth,1f/fieldHeight));
             if(ground==null){Shader.SetGlobalVector("_RiskGroundGrid",Vector4.zero);return;}
             // sRGB colour so the shader receives linear albedo; alpha (aridity) stays linear.
-            var colour=new Texture2D(groundWidth,groundHeight,TextureFormat.RGBA32,true,false)
-            {name="Satellite ground colour",filterMode=FilterMode.Trilinear,wrapMode=TextureWrapMode.Clamp};
+            var colour=GeneratedResourceOwner.For(root).Track(new Texture2D(groundWidth,groundHeight,TextureFormat.RGBA32,true,false)
+            {name="Satellite ground colour",filterMode=FilterMode.Trilinear,wrapMode=TextureWrapMode.Clamp});
             colour.SetPixels32(ground);colour.Apply(true,true);
-            GeneratedResourceOwner.For(root).Track(colour);
             Shader.SetGlobalTexture("_RiskGroundColor",colour);
             Shader.SetGlobalVector("_RiskGroundGrid",new Vector4(data.PlayableMinX,data.PlayableMinZ,GroundGain,1));
             Shader.SetGlobalVector("_RiskGroundSize",new Vector4(1f/groundWidth,1f/groundHeight,GroundTexel,0));
@@ -133,6 +131,7 @@ namespace RiskAI
             ground=null;
             var asset=Resources.Load<TextAsset>("Maps/"+(string.Equals(data.mapId,"NewWorld",StringComparison.OrdinalIgnoreCase)?"NewWorld":"Europe")+"Ground");
             if(!asset)return;
+            // RISKAI_SHARED_ASSET: decode scratch, zero lifetime — released in the finally below.
             var decoded=new Texture2D(2,2,TextureFormat.RGBA32,false,false);
             try
             {
