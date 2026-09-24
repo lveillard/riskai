@@ -591,6 +591,41 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator ACornerUnderTheHullDoesNotGrantAnotherRepath()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var frigate = BattleTestScenario.Ship(naval, 0, UnitKind.Frigate, home.Berth);
+            var goal = SeaAway(home.Berth, 24f);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            var route = (System.Collections.Generic.List<Vector3>)typeof(Ship).GetField("route", hidden).GetValue(frigate);
+            route.Clear();
+            route.Add(frigate.transform.position + Vector3.right * 40f);
+            typeof(Ship).GetField("routeIndex", hidden).SetValue(frigate, 0);
+            typeof(Ship).GetField("hasRouteGoal", hidden).SetValue(frigate, true);
+            typeof(Ship).GetField("routeGoal", hidden).SetValue(frigate, goal);
+            typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(frigate, -100f);
+            typeof(Ship).GetField("triedMoveRepath", hidden).SetValue(frigate, false);
+            typeof(Ship).GetField("hasActiveCommand", hidden).SetValue(frigate, true);
+            typeof(Ship).GetField("activeCommand", hidden).SetValue(frigate, new UnitCommand(0, frigate.EntityId, UnitCommandKind.Move, goal.x, goal.y, goal.z));
+            frigate.SimTick(.001f);
+            Assert.That((bool)typeof(Ship).GetField("triedMoveRepath", hidden).GetValue(frigate), Is.True);
+            long rebuilt = frigate.RouteRevision;
+            route.Clear();
+            route.Add(frigate.transform.position + new Vector3(.1f, 0f, 0f));
+            route.Add(frigate.transform.position + Vector3.right * 40f);
+            typeof(Ship).GetField("routeIndex", hidden).SetValue(frigate, 0);
+            typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(frigate, -100f);
+            frigate.SimTick(.001f);
+            Assert.That((bool)typeof(Ship).GetField("triedMoveRepath", hidden).GetValue(frigate), Is.True, "passing a corner under the hull is not displacement");
+            Assert.That(frigate.RouteRevision, Is.EqualTo(rebuilt), "the phantom corner does not rebuild");
+            typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(frigate, -100f);
+            frigate.SimTick(.001f);
+            Assert.That(frigate.RouteRevision, Is.EqualTo(rebuilt), "a blocked hull rebuilds at most once");
+            Assert.That((bool)typeof(Ship).GetField("hasActiveCommand", hidden).GetValue(frigate), Is.False);
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator ARepathThatCannotBeBuiltEndsTheMove()
         {
             var home = naval.Harbors.First(harbor => harbor.Owner == 0);

@@ -381,7 +381,9 @@ namespace RiskAI
             float beforeDistance=direction.magnitude;
             if(beforeDistance<RouteArrivalDistance)
             {
-                routeIndex++;NoteRouteProgress();
+                // A corner inside arrival distance is not displacement. The stall clock moves;
+                // the one re-path does not reset.
+                routeIndex++;NoteRouteClock();
                 if(routeIndex>=route.Count&&hasAttackMoveGoal&&DistanceXZ(transform.position,attackMoveGoal)<1)hasAttackMoveGoal=false;
                 return;
             }
@@ -398,17 +400,18 @@ namespace RiskAI
             if(SeaNavigation.HasClearance(next)&&SeaNavigation.ClearSegment(transform.position,next))
             {
                 float afterDistance=DistanceXZ(next,destination);
-                if(beforeDistance-afterDistance>=.02f)NoteRouteProgress();
+                if(beforeDistance-afterDistance>=.02f){NoteRouteClock();triedMoveRepath=false;}
                 Face(next);transform.position=next;
             }
         }
         void NoteRouteAccepted(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;}
-        void NoteRouteProgress(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;triedMoveRepath=false;}
+        void NoteRouteClock(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;}
         bool RouteHasStalled()=>world&&world.Session!=null&&world.Session.BattleTime-lastRouteProgressAt>RouteStallSeconds;
         bool triedMoveRepath;
         /// <summary>
-        /// One rebuild per goal. Accepting that path does not clear the guard; only real progress
-        /// or a new goal does. If the rebuild cannot be made, or it stalls too, the order ends.
+        /// One rebuild per goal. Accepting that path does not clear the guard. Only real
+        /// displacement (not passing a corner already under the hull) or a new goal does.
+        /// If the rebuild cannot be made, or it stalls too, the order ends.
         /// A move that had a path says the hull is blocked. A failed build keeps the no-route sentence.
         /// An unload that has not reached load radius uses the same give-up as a blocked beach.
         /// </summary>

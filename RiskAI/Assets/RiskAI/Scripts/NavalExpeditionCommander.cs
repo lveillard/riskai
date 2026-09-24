@@ -228,11 +228,18 @@ namespace RiskAI
                 var check=ConfirmDisembark(ref sailDisembark,transport,destination);
                 if(check==DisembarkConfirmation.Status.Pending)
                 {
-                    if(submitting&&session.AiProfile.NavalEscort)OrderEscort();
-                    return;
+                    // The ring can evict the accept before the next decision. The hull running
+                    // this order is enough to sail on. Waiting stays set, including on the return slot.
+                    if(sailDisembark.CommandId!=0&&transport.RunsCommand(sailDisembark.CommandId))
+                        sailConfirmed=true;
+                    else
+                    {
+                        if(submitting&&session.AiProfile.NavalEscort)OrderEscort();
+                        return;
+                    }
                 }
-                if(check==DisembarkConfirmation.Status.Rejected){sailDisembark=default;Fail();return;}
-                sailConfirmed=true;
+                else if(check==DisembarkConfirmation.Status.Rejected){sailDisembark=default;Fail();return;}
+                else sailConfirmed=true;
             }
             if(transport.CargoCount==0)
             {
@@ -667,8 +674,11 @@ namespace RiskAI
 
     /// <summary>
     /// One submit, then the next tick's stored result. A result evicted from the ring stays
-    /// Pending: Waiting drops only when a stored result arrives. The phase watcher parks that
-    /// slot, and RecoverLoadedTransport sends the hull home again after the cooldown.
+    /// Pending, and Waiting drops only when a stored result arrives. Advance never treats a
+    /// running hull as that result. Sail() may still mark the voyage confirmed when the hull
+    /// is running the sail command; it does not clear Waiting on the sail slot or the return slot.
+    /// The return watcher parks an evicted slot, and RecoverLoadedTransport sends the hull home
+    /// again after the cooldown.
     /// </summary>
     public static class DisembarkConfirmation
     {

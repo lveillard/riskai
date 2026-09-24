@@ -214,7 +214,7 @@ namespace RiskAI.Tests
             Assert.That(DisembarkConfirmation.Advance(ref slot, 4, true, false, false), Is.EqualTo(DisembarkConfirmation.Status.Pending));
             Assert.That(slot.Waiting, Is.True);
             Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, false, false), Is.EqualTo(DisembarkConfirmation.Status.Pending),
-                "an evicted result is unknown, not a failure, and the hull still sailing does not close the slot");
+                "an evicted result stays Pending. Sail() may confirm the voyage outside Advance; it must not clear Waiting");
             Assert.That(slot.Waiting, Is.True);
             slot = new DisembarkConfirmation.Slot { CommandId = 4, Waiting = true };
             Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, true, false), Is.EqualTo(DisembarkConfirmation.Status.Rejected));

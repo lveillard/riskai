@@ -380,6 +380,59 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator AnEvictedSailResultStillConfirmsWhileTheHullRunsIt()
+        {
+            var naval = NavalWorld.Current;
+            var home = naval.Harbors.First(harbor => harbor.Owner == 1 && harbor.CanLaunch);
+            var destination = naval.Harbors.First(harbor => harbor != home && harbor.TryTransportLanding(out _, out _));
+            var transport = BattleTestScenario.Ship(naval, 1, UnitKind.Transport, home.Berth);
+            var soldier = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, home.Landing);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            var submitted = naval.SubmitDisembark(transport, destination);
+            Assert.That(submitted.Accepted, Is.True, submitted.Error);
+            battle.Commands.Tick();
+            Assert.That(transport.RunsCommand(submitted.CommandId), Is.True);
+            Assert.That(battle.Commands.TryGetResult(submitted.CommandId, out _), Is.True);
+            for (int i = 0; i < BattleCommands.InboxLimit + 1; i++)
+                battle.Commands.Submit(new UnitCommand(1, 0, UnitCommandKind.Stop));
+            Assert.That(battle.Commands.TryGetResult(submitted.CommandId, out _), Is.False, "the ring dropped the sail result");
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            var commander = naval.ExpeditionFor(1);
+            var phaseType = typeof(NavalExpeditionCommander).GetNestedType("Phase", BindingFlags.NonPublic);
+            var slotType = typeof(DisembarkConfirmation).GetNestedType("Slot");
+            object sail = System.Activator.CreateInstance(slotType);
+            slotType.GetField("CommandId").SetValue(sail, submitted.CommandId);
+            slotType.GetField("Waiting").SetValue(sail, true);
+            slotType.GetField("HarborId").SetValue(sail, destination.GetInstanceID());
+            object returning = System.Activator.CreateInstance(slotType);
+            slotType.GetField("CommandId").SetValue(returning, 7);
+            slotType.GetField("Waiting").SetValue(returning, true);
+            slotType.GetField("HarborId").SetValue(returning, home.GetInstanceID());
+            typeof(NavalExpeditionCommander).GetField("transport", hidden).SetValue(commander, transport);
+            typeof(NavalExpeditionCommander).GetField("destination", hidden).SetValue(commander, destination);
+            typeof(NavalExpeditionCommander).GetField("sailDisembark", hidden).SetValue(commander, sail);
+            typeof(NavalExpeditionCommander).GetField("returnDisembark", hidden).SetValue(commander, returning);
+            typeof(NavalExpeditionCommander).GetField("sailConfirmed", hidden).SetValue(commander, false);
+            typeof(NavalExpeditionCommander).GetField("phase", hidden).SetValue(commander, System.Enum.Parse(phaseType, "Sailing"));
+            typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).SetValue(commander, battle.BattleTime + 100f);
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            ((System.Collections.Generic.List<Soldier>)typeof(Ship).GetField("cargo", hidden).GetValue(transport)).Clear();
+            battle.AiEnabled = true;
+            long before = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount;
+            commander.Tick(0);
+            long after = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(after, Is.EqualTo(0), "an evicted sail is not submitted again");
+            Assert.That((bool)typeof(NavalExpeditionCommander).GetField("sailConfirmed", hidden).GetValue(commander), Is.True);
+            var sailSlot = (DisembarkConfirmation.Slot)typeof(NavalExpeditionCommander).GetField("sailDisembark", hidden).GetValue(commander);
+            var returnSlot = (DisembarkConfirmation.Slot)typeof(NavalExpeditionCommander).GetField("returnDisembark", hidden).GetValue(commander);
+            Assert.That(sailSlot.Waiting, Is.True, "confirming the sail does not clear Waiting");
+            Assert.That(returnSlot.Waiting, Is.True, "the return slot stays waiting");
+            Assert.That(returnSlot.CommandId, Is.EqualTo(7));
+            Assert.That(typeof(NavalExpeditionCommander).GetField("phase", hidden).GetValue(commander).ToString(), Is.EqualTo("Landing"));
+            yield return null;
+        }
+
         static Vector3 SubmittedBerth(Ship transport)
         {
             const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
