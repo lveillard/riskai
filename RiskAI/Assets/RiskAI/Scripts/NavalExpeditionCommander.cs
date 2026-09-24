@@ -666,8 +666,9 @@ namespace RiskAI
     }
 
     /// <summary>
-    /// One submit, then the next tick's stored result. A missing result was evicted from the
-    /// ring: that is unknown, not a failure. The ship's active command confirms it when the ring cannot.
+    /// One submit, then the next tick's stored result. A result evicted from the ring stays
+    /// Pending: Waiting drops only when a stored result arrives. The phase watcher parks that
+    /// slot, and RecoverLoadedTransport sends the hull home again after the cooldown.
     /// </summary>
     public static class DisembarkConfirmation
     {

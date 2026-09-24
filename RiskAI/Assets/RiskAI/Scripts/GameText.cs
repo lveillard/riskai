@@ -170,6 +170,7 @@ namespace RiskAI
             Pair("Elige una playa o muelle de desembarco marcado.","Choose a marked beach or landing pier."),
             Pair("El transporte navega al desembarco marcado.","The transport is sailing to the marked landing."),
             Pair("No hay una ruta marítima hasta ese destino.","There is no sea route to that destination."),
+            Pair("El casco está bloqueado; se cancela el movimiento.","The hull is blocked; the move is cancelled."),
             Pair("Elige un puerto de desembarco.","Choose a landing harbor."), Pair("No hay una ruta marítima segura hasta esa playa.","There is no safe sea route to that beach."),
             Pair("No se puede embarcar con la partida detenida.","Units cannot board while the match is paused."),
             Pair("Esa unidad ya no está dentro del transporte.","That unit is no longer aboard the transport."),

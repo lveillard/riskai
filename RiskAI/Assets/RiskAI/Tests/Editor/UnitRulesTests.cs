@@ -208,7 +208,7 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void AMissingDisembarkResultStaysPendingUntilTheShipConfirmsIt()
+        public void AMissingResultStaysPendingAndWaitingDropsOnlyWithAStoredResult()
         {
             var slot = new DisembarkConfirmation.Slot();
             Assert.That(DisembarkConfirmation.Advance(ref slot, 4, true, false, false), Is.EqualTo(DisembarkConfirmation.Status.Pending));
@@ -218,6 +218,7 @@ namespace RiskAI.Tests
             Assert.That(slot.Waiting, Is.True);
             slot = new DisembarkConfirmation.Slot { CommandId = 4, Waiting = true };
             Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, true, false), Is.EqualTo(DisembarkConfirmation.Status.Rejected));
+            Assert.That(slot.Waiting, Is.False, "Waiting drops only when a stored result arrives");
             var attributed = new DisembarkConfirmation.Slot { Waiting = true, HarborId = 3, CommandId = 4 };
             Assert.That(DisembarkConfirmation.ForHarbor(attributed, 3), Is.True);
             Assert.That(DisembarkConfirmation.ForHarbor(attributed, 9), Is.False, "an old result is not a confirmation for a different harbor");

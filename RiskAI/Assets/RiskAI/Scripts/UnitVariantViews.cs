@@ -53,14 +53,28 @@ namespace RiskAI
         }
 
         /// <summary>Resources path of the unit portrait (units.json portrait, then portraitFallback until the art setup renders it).</summary>
-        public static string PortraitResource(UnitKind kind) => Resolve(UnitCatalog.Get(kind).PortraitName,UnitCatalog.Get(kind).PortraitFallback);
+        public static string PortraitResource(UnitKind kind) => Resolve(UnitCatalog.Get(kind).PortraitName, UnitCatalog.Get(kind).PortraitFallback);
 
-        static string Resolve(string preferred,string fallback)
+        /// <summary>
+        /// The same path as <see cref="PortraitResource"/>. Throws when neither the portrait nor its
+        /// fallback is in Resources, so a missing PNG is reported in this one place.
+        /// </summary>
+        public static string RequirePortrait(UnitKind kind)
         {
-            if(resolvedPortraits.TryGetValue(preferred,out var path))return path;
-            path="Portraits/"+preferred;
-            if(preferred!=fallback&&!Resources.Load<Texture2D>(path))path="Portraits/"+fallback;
-            resolvedPortraits[preferred]=path;return path;
+            ref readonly var type = ref UnitCatalog.Get(kind);
+            string path = Resolve(type.PortraitName, type.PortraitFallback);
+            if (!Resources.Load<Texture2D>(path))
+                throw new System.InvalidOperationException("Portrait PNG is missing: Resources/" + path + ".png (unit " + type.Id + ").");
+            return path;
+        }
+
+        static string Resolve(string preferred, string fallback)
+        {
+            if (resolvedPortraits.TryGetValue(preferred, out var path)) return path;
+            path = "Portraits/" + preferred;
+            if (preferred != fallback && !Resources.Load<Texture2D>(path)) path = "Portraits/" + fallback;
+            resolvedPortraits[preferred] = path;
+            return path;
         }
 
         /// <summary>Builds fully procedural variants; returns false when the prefab path should be used.</summary>

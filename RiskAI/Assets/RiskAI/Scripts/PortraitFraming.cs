@@ -79,9 +79,7 @@ namespace RiskAI
                 if (!type.PortraitLandDefault) continue;
                 if (!type.Portrait.Exists)
                     throw new System.InvalidOperationException("units.json marks " + type.Id + " landDefault but that unit has no portrait camera.");
-                string resource = string.IsNullOrEmpty(type.PortraitName) ? type.Id : type.PortraitName;
-                if (!Resources.Load<Texture2D>("Portraits/" + resource))
-                    throw new System.InvalidOperationException("Portrait PNG is missing: Resources/Portraits/" + resource + ".png (landDefault unit " + type.Id + ").");
+                UnitVariantViews.RequirePortrait(kind);
                 return type.Portrait;
             }
             throw new System.InvalidOperationException("units.json has no landDefault portrait camera.");

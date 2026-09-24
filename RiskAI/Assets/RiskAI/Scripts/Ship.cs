@@ -211,6 +211,7 @@ namespace RiskAI
                 if(!TryValidateShore(shore,out var plannedLanding,out var plannedError))return LastActionError=plannedError;
                 if(!TryLeaveHarborGuard(plannedPoint))return LastActionError;
                 orderedHarbor=null;
+                triedMoveRepath=false;
                 CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
                 ArmShoreUnload(plannedLanding);plannedReady=false;return null;
             }
@@ -218,6 +219,7 @@ namespace RiskAI
             if(!SeaNavigation.TryNearestOcean(landing,ShoreBerthSearchRadius,out var berth)||!SeaNavigation.TryBuildPath(transform.position,berth,pathScratch))return LastActionError="No hay una ruta marítima segura hasta esa playa.";
             if(!TryLeaveHarborGuard(berth))return LastActionError;
             orderedHarbor=null;
+            triedMoveRepath=false;
             CopyScratchToRoute();routeIndex=0;routeGoal=berth;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
             ArmShoreUnload(landing);return null;
         }
@@ -406,38 +408,70 @@ namespace RiskAI
         bool triedMoveRepath;
         /// <summary>
         /// One rebuild per goal. Accepting that path does not clear the guard; only real progress
-        /// or a new goal does. If the rebuild cannot be made, or it stalls too, the move is unreachable.
+        /// or a new goal does. If the rebuild cannot be made, or it stalls too, the order ends.
+        /// A move that had a path says the hull is blocked. A failed build keeps the no-route sentence.
+        /// An unload that has not reached load radius uses the same give-up as a blocked beach.
         /// </summary>
         void ConsiderStalledMove()
         {
-            bool moving=hasActiveCommand&&activeCommand.Kind==UnitCommandKind.Move&&routeIndex<route.Count;
-            if(!moving||!RouteHasStalled())return;
-            if(!hasRouteGoal){EndUnreachableMove();return;}
-            if(!triedMoveRepath)
+            bool routeOpen = routeIndex < route.Count;
+            bool unloadApproach = pendingShoreUnload && routeOpen && DistanceXZ(transform.position, pendingShore) > LoadRadius;
+            bool plainMove = !unloadApproach && hasActiveCommand && activeCommand.Kind == UnitCommandKind.Move && routeOpen;
+            if ((!plainMove && !unloadApproach) || !RouteHasStalled()) return;
+            if (!hasRouteGoal) { EndStalledRoute(plainMove, blocked: false); return; }
+            if (!triedMoveRepath)
             {
-                triedMoveRepath=true;
-                if(!SeaNavigation.TryBuildPath(transform.position,routeGoal,pathScratch)){EndUnreachableMove();return;}
-                CopyScratchToRoute();routeIndex=0;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;
+                triedMoveRepath = true;
+                if (!SeaNavigation.TryBuildPath(transform.position, routeGoal, pathScratch))
+                {
+                    EndStalledRoute(plainMove, blocked: false);
+                    return;
+                }
+                CopyScratchToRoute(); routeIndex = 0; hasRouteGoal = true; NoteRouteAccepted(); RouteRevision++;
                 return;
             }
-            EndUnreachableMove();
+            EndStalledRoute(plainMove, blocked: true);
         }
-        void EndUnreachableMove()
+        void EndStalledRoute(bool plainMove, bool blocked)
         {
-            if(Team==0&&string.IsNullOrEmpty(LastActionError))
+            if (!plainMove)
             {
-                LastActionError="No hay una ruta marítima hasta ese destino.";
-                if(world&&world.Session!=null)world.Session.Message(LastActionError,MessageKind.Info);
+                AbandonShoreUnload();
+                return;
+            }
+            if (Team == 0 && string.IsNullOrEmpty(LastActionError))
+            {
+                LastActionError = blocked
+                    ? "El casco está bloqueado; se cancela el movimiento."
+                    : "No hay una ruta marítima hasta ese destino.";
+                if (world && world.Session != null) world.Session.Message(LastActionError, MessageKind.Info);
             }
             ClearRoute();
         }
+        /// <summary>The beach was never reached, or it admitted nobody. Troops stay aboard and the queue may advance.</summary>
+        void AbandonShoreUnload()
+        {
+            if (string.IsNullOrEmpty(LastActionError))
+                LastActionError = "No hay sitio transitable para desembarcar en esa playa.";
+            if (!shoreFailureReported && Team == 0 && world && world.Session != null)
+            {
+                world.Session.Message(LastActionError, MessageKind.Info);
+                shoreFailureReported = true;
+            }
+            ClearShoreUnload();
+            ClearRoute();
+        }
         /// <summary>A finished attack-move keeps a target only inside the catalog hold around its goal.</summary>
+        bool TargetHoldsAttackMove(CombatTarget candidate)
+        {
+            if (!candidate) return false;
+            return DistanceXZ(candidate.transform.position, attackMoveGoal) <= UnitRules.AttackMoveHold(Type.Acquisition, Team == PlayerRules.NeutralTeam);
+        }
         void ReleaseAttackMoveBeyondHold()
         {
-            if(!hasActiveCommand||activeCommand.Kind!=UnitCommandKind.AttackMove||hasAttackMoveGoal||!target)return;
-            float hold=UnitRules.AttackMoveHold(Type.Acquisition,Team==PlayerRules.NeutralTeam);
-            if(DistanceXZ(target.transform.position,attackMoveGoal)<=hold)return;
-            target=null;
+            if (!hasActiveCommand || activeCommand.Kind != UnitCommandKind.AttackMove || hasAttackMoveGoal || !target) return;
+            if (TargetHoldsAttackMove(target)) return;
+            target = null;
         }
         bool ResumeAttackMove()
         {
@@ -707,7 +741,8 @@ namespace RiskAI
         bool MotorIdle()
         {
             if (CapturePending() || pendingShoreUnload) return false;
-            // A stall ends an attack-move. A move, unload or capture keeps its order and may rebuild once.
+            // A stall ends an attack-move. A move may rebuild once. An unload still inside load
+            // radius stays busy until the beach window; outside that radius a stall ends it too.
             bool stalledArrival = hasActiveCommand && activeCommand.Kind == UnitCommandKind.AttackMove && RouteHasStalled();
             bool routeOpen = routeIndex < route.Count && !stalledArrival;
             if (routeOpen) return false;
@@ -716,8 +751,7 @@ namespace RiskAI
             // acquired after a failed re-plan already released the goal (attackMoveOrder is cleared there).
             bool releasedGoal = hasActiveCommand && activeCommand.Kind == UnitCommandKind.AttackMove && !hasAttackMoveGoal && !routeOpen;
             bool acquiredAfterRelease = releasedGoal && !attackMoveOrder;
-            bool inHold = !releasedGoal || target == null
-                || DistanceXZ(target.transform.position, attackMoveGoal) <= UnitRules.AttackMoveHold(Type.Acquisition, Team == PlayerRules.NeutralTeam);
+            bool inHold = !releasedGoal || TargetHoldsAttackMove(target);
             bool liveTarget = target != null && !acquiredAfterRelease && inHold;
             if (hasActiveCommand && !OrderAdvance.MotorIdle(activeCommand.Kind, liveTarget)) return false;
             return true;

@@ -116,6 +116,27 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator RestoreEmbarkOrdersRejectsReentry()
+        {
+            var home = battle.Towns.First(town => town.State.Owner == 0);
+            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Rally);
+            const BindingFlags hidden = BindingFlags.Static | BindingFlags.NonPublic;
+            var depth = typeof(Soldier).GetField("embarkRestoreDepth", hidden);
+            Assert.That(depth, Is.Not.Null);
+            depth.SetValue(null, 1);
+            try
+            {
+                var error = Assert.Throws<System.InvalidOperationException>(() => soldier.RestoreEmbarkOrders());
+                Assert.That(error.Message, Does.Contain("RestoreEmbarkOrders"));
+            }
+            finally
+            {
+                depth.SetValue(null, 0);
+            }
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator EmbarkRestoresThePassengerQueueIntact()
         {
             var home = naval.Harbors.First(harbor => harbor.Owner == 0);

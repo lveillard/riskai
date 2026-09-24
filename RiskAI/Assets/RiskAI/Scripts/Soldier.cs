@@ -957,16 +957,27 @@ namespace RiskAI
             keepEmbarkStash = false;
         }
 
-        /// <summary>One buffer for every soldier. Restore runs to completion before the next caller.</summary>
+        /// <summary>One buffer for every soldier. A second caller while the first is still copying fails instead of mixing the two plans.</summary>
         static readonly UnitCommand[] embarkRestore = new UnitCommand[OrderQueue.LegCap];
+        static int embarkRestoreDepth;
         public void RestoreEmbarkOrders()
         {
+            if (embarkRestoreDepth != 0)
+                throw new System.InvalidOperationException("RestoreEmbarkOrders re-entered. The shared restore buffer can only serve one soldier at a time.");
             int count = orders.StashCount;
             if (count <= 0) return;
-            if (count > embarkRestore.Length) count = embarkRestore.Length;
-            for (int i = 0; i < count; i++) embarkRestore[i] = orders.StashedCommand(i);
-            orders.ClearStash();
-            for (int i = 0; i < count; i++) ApplyOrder(embarkRestore[i].WithAppend(i > 0));
+            embarkRestoreDepth++;
+            try
+            {
+                if (count > embarkRestore.Length) count = embarkRestore.Length;
+                for (int i = 0; i < count; i++) embarkRestore[i] = orders.StashedCommand(i);
+                orders.ClearStash();
+                for (int i = 0; i < count; i++) ApplyOrder(embarkRestore[i].WithAppend(i > 0));
+            }
+            finally
+            {
+                embarkRestoreDepth--;
+            }
         }
 
         public int PathCornerCount => pathCornerCount;
