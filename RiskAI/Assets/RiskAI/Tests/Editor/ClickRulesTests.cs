@@ -54,5 +54,15 @@ namespace RiskAI.Tests
             Assert.That(ClickRules.Resolve(Click(land: true, enemy: true, post: true, armed: true)), Is.EqualTo(ClickDecision.Capture));
             Assert.That(ClickRules.Resolve(Click(land: true, armed: true)), Is.EqualTo(ClickDecision.OrderGround));
         }
+
+        [Test]
+        public void MoveCursorDoesNotAttackOrCaptureWhatTheAttackCursorDoes()
+        {
+            Assert.That(ClickRules.Resolve(Click(land: true, enemy: true, armed: true)), Is.EqualTo(ClickDecision.Attack));
+            Assert.That(ClickRules.Resolve(Click(land: true, enemy: true, post: true, armed: true)), Is.EqualTo(ClickDecision.Capture));
+            // The move cursor passes armed: false and does not hand the click an enemy or a post.
+            Assert.That(ClickRules.Resolve(Click(land: true)), Is.EqualTo(ClickDecision.OrderGround));
+            Assert.That(ClickRules.Resolve(Click(land: true, enemy: true, post: true)), Is.EqualTo(ClickDecision.Capture), "a right-click on a post still captures");
+        }
     }
 }

@@ -2220,14 +2220,6 @@
       "toHull": "XZ distance from pivot to target.ApproachPoint (a ship's oriented hull)",
       "centerToCenter": "XZ distance between pivots"
     },
-    "queue": {
-      "appendable": "Move, AttackMove, Patrol; only when the unit is not Idle/Hold",
-      "clearing": "Attack, Follow, Stop, Hold clear the queue",
-      "patrol": "completing a patrol swaps its ends and never drains the queue",
-      "shipAttackMove": "a ship attack-move resumes its destination when its target dies",
-      "soldierAttackMove": "a soldier attack-move resumes its path when its target dies",
-      "ships": "ships receive direct orders, no queue"
-    },
     "click": [
       "enemy ship with an attack-capable fleet beats the harbor",
       "harbor with a fleet: dock/land",

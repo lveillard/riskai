@@ -105,11 +105,20 @@ namespace RiskAI.Tests
             Assert.That(x, Is.EqualTo(8f));
             Assert.That(z, Is.EqualTo(9f));
             Assert.That(kind, Is.EqualTo((byte)UnitCommandKind.Move));
-            queue.StashLegs();
+            var attack = new UnitCommand(0, 1, UnitCommandKind.Attack, 4, 1, 5, targetId: 90, append: true);
+            Assert.That(queue.Admit(attack, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
+            queue.Publish(true, UnitCommandKind.Move, 8, 0, 9);
+            queue.Stash(true, new UnitCommand(0, 1, UnitCommandKind.Follow, 8, 0, 9, targetId: 40, structureId: "town-1", structureKind: BuildingKind.Settlement));
             queue.Clear();
             queue.Publish(false, UnitCommandKind.Move, 0, 0, 0);
             Assert.That(queue.LegCount, Is.EqualTo(0));
-            Assert.That(queue.StashCount, Is.EqualTo(2), "boarding keeps the route that was showing");
+            Assert.That(queue.StashCount, Is.EqualTo(3), "boarding keeps the active command and the queue");
+            var restored = queue.StashedCommand(0);
+            Assert.That(restored.Kind, Is.EqualTo(UnitCommandKind.Follow));
+            Assert.That(restored.TargetId, Is.EqualTo(40));
+            Assert.That(restored.StructureId, Is.EqualTo("town-1"));
+            Assert.That(queue.StashedCommand(2).Kind, Is.EqualTo(UnitCommandKind.Attack));
+            Assert.That(queue.StashedCommand(2).TargetId, Is.EqualTo(90));
             Assert.That(UnitRules.OnTargetLost(UnitCommandKind.AttackMove), Is.EqualTo(UnitRules.TargetLost.KeepDestination));
             Assert.That(UnitRules.OnTargetLost(UnitCommandKind.Attack), Is.EqualTo(UnitRules.TargetLost.Advance));
             Assert.That(UnitRules.OnTargetLost(UnitCommandKind.Move), Is.EqualTo(UnitRules.TargetLost.KeepDestination));
@@ -118,6 +127,31 @@ namespace RiskAI.Tests
             Assert.That(UnitRules.KindAllowed(UnitDomain.Land, UnitCommandKind.Patrol), Is.True);
             Assert.That(UnitRules.KindAllowed(UnitDomain.Sea, UnitCommandKind.Patrol), Is.False);
             Assert.That(UnitRules.KindAllowed(UnitDomain.Sea, UnitCommandKind.Capture), Is.True);
+        }
+
+        [Test]
+        public void ShiftQueueMatchesThePlanMatrix()
+        {
+            var kinds = new[]
+            {
+                UnitCommandKind.Move, UnitCommandKind.AttackMove, UnitCommandKind.Attack, UnitCommandKind.Capture,
+                UnitCommandKind.Follow, UnitCommandKind.Patrol, UnitCommandKind.Embark, UnitCommandKind.Unload
+            };
+            foreach (var kind in kinds)
+            {
+                Assert.That(UnitRules.Queue(kind, true, true), Is.EqualTo(UnitRules.OrderQueueAction.Append), kind + " appends while busy");
+                Assert.That(UnitRules.Queue(kind, false, true), Is.EqualTo(UnitRules.OrderQueueAction.Start), kind + " replaces without Shift");
+                Assert.That(UnitRules.Queue(kind, true, false), Is.EqualTo(UnitRules.OrderQueueAction.Start), kind + " starts now on an idle unit");
+            }
+            Assert.That(UnitRules.Queue(UnitCommandKind.Stop, true, true), Is.EqualTo(UnitRules.OrderQueueAction.Clear));
+            Assert.That(UnitRules.Queue(UnitCommandKind.Hold, false, true), Is.EqualTo(UnitRules.OrderQueueAction.Clear));
+            Assert.That(UnitRules.OnTargetLost(UnitCommandKind.Attack), Is.EqualTo(UnitRules.TargetLost.Advance));
+            Assert.That(UnitRules.OnTargetLost(UnitCommandKind.AttackMove), Is.EqualTo(UnitRules.TargetLost.KeepDestination));
+
+            var queue = new OrderQueue();
+            queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Move, 1, 0, 2, append: true), true);
+            Assert.That(queue.Commit(new UnitCommand(0, 1, UnitCommandKind.Attack, append: false), true, false), Is.EqualTo(OrderQueue.AdmitResult.Rejected));
+            Assert.That(queue.Count, Is.EqualTo(1), "a rejected order does not clear the queue");
         }
 
         [Test]

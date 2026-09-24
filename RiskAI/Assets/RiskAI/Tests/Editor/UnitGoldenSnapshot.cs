@@ -341,14 +341,8 @@ namespace RiskAI.Tests
             measure.Add("toHull", "XZ distance from pivot to target.ApproachPoint (a ship's oriented hull)");
             measure.Add("centerToCenter", "XZ distance between pivots");
             behaviour.Add("measure", measure);
-            var queue = new Obj();
-            queue.Add("appendable", "Move, AttackMove, Patrol; only when the unit is not Idle/Hold");
-            queue.Add("clearing", "Attack, Follow, Stop, Hold clear the queue");
-            queue.Add("patrol", "completing a patrol swaps its ends and never drains the queue");
-            queue.Add("shipAttackMove", "a ship attack-move resumes its destination when its target dies");
-            queue.Add("soldierAttackMove", "a soldier attack-move resumes its path when its target dies");
-            queue.Add("ships", "ships receive direct orders, no queue");
-            behaviour.Add("queue", queue);
+            // Queue semantics are plan §7. UnitRulesTests asserts that matrix; a frozen
+            // v0.33 sentence here would stay green if Shift+Attack regressed.
             var click = new Arr();
             click.Add("enemy ship with an attack-capable fleet beats the harbor");
             click.Add("harbor with a fleet: dock/land");
