@@ -14,10 +14,11 @@ namespace RiskAI
             public readonly CombatTarget Guardian;
             public readonly Harbor Harbor;
             public readonly Settlement Town;
+            public readonly CityClaimZone Zone;
 
-            public View(bool found, int owner, Vector3 point, CombatTarget guardian, Harbor harbor, Settlement town)
+            public View(bool found, int owner, Vector3 point, CombatTarget guardian, Harbor harbor, Settlement town, CityClaimZone zone)
             {
-                Found = found; Owner = owner; Point = point; Guardian = guardian; Harbor = harbor; Town = town;
+                Found = found; Owner = owner; Point = point; Guardian = guardian; Harbor = harbor; Town = town; Zone = zone;
             }
         }
 
@@ -25,10 +26,20 @@ namespace RiskAI
         {
             var found = StructureLookup.Find(session, command);
             if (found.Zone == null) return default;
-            int owner = command.StructureKind == BuildingKind.Harbor
-                ? (found.Harbor ? found.Harbor.Owner : PlayerRules.NeutralOwner)
-                : (found.Town ? found.Town.State.Owner : PlayerRules.NeutralOwner);
-            return new View(true, owner, found.Point, found.Zone.Guardian, found.Harbor, found.Town);
+            return From(found.Zone, found.Harbor, found.Town, found.Point);
+        }
+
+        /// <summary>Re-reads the owner of a zone resolved when the order started. A destroyed zone is looked up again.</summary>
+        public static View Fresh(BattleSession session, in UnitCommand command, View cached)
+        {
+            if (cached.Zone != null) return From(cached.Zone, cached.Harbor, cached.Town, cached.Point);
+            return Look(session, command);
+        }
+
+        static View From(CityClaimZone zone, Harbor harbor, Settlement town, Vector3 point)
+        {
+            int owner = harbor ? harbor.Owner : town ? town.State.Owner : PlayerRules.NeutralOwner;
+            return new View(true, owner, point, zone.Guardian, harbor, town, zone);
         }
 
         public static bool HostileGuardian(in View view, int team) =>

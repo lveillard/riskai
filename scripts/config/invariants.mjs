@@ -33,10 +33,10 @@ export const weaponRules = [
   { error: '{w}: projectileSpeed must be 0 exactly for Instant delivery', when: ['neq', ['eq', ['get', 'delivery'], ['lit', 'Instant']], ['eq', ['get', 'projectileSpeed'], ['lit', 0]]] },
   { error: '{w}: minRange above range', when: ['gt', ['get', 'minRange'], ['get', 'range']] },
   { error: '{w}: flightTime max below min', when: ['and', ['has', 'flightTime'], ['and', ['has', 'flightTime.max'], ['lt', ['get', 'flightTime.max'], ['get', 'flightTime.min']]]] },
-  { error: '{w}: splash needs three rings', when: ['and', ['has', 'splash'], ['neq', ['len', 'splash.rings'], ['lit', 3]]] },
-  { error: '{w}: the first splash ring deals full damage', when: ['and', ['has', 'splash'], ['neq', ['get', 'splash.rings.0.factor'], ['lit', 1]]] },
-  { error: '{w}: splash rings must not shrink', when: ['and', ['has', 'splash'], ['shrink', 'splash.rings']] },
-  { error: '{w}: splash needs a positive outer radius', when: ['and', ['has', 'splash'], ['lte', ['get', 'splash.rings.last.radius'], ['lit', 0]]] },
+  { error: '{w}: splash needs three rings', when: ['and', ['has', 'splash'], ['neq', ['len', 'splash.rings'], ['lit', 3]]], mark: 'skipSplash' },
+  { error: '{w}: the first splash ring deals full damage', when: ['and', ['has', 'splash'], ['neq', ['get', 'splash.rings.0.factor'], ['lit', 1]]], gate: 'skipSplash' },
+  { error: '{w}: splash rings must not shrink', when: ['and', ['has', 'splash'], ['shrink', 'splash.rings']], gate: 'skipSplash' },
+  { error: '{w}: splash needs a positive outer radius', when: ['and', ['has', 'splash'], ['lte', ['get', 'splash.rings.last.radius'], ['lit', 0]]], gate: 'skipSplash' },
 ];
 
 export const duplicateMessage = ': duplicate id';
@@ -127,15 +127,19 @@ function pascal(name) {
   return name.replace(/(^|\.)([a-z])/g, (_, dot, letter) => dot + letter.toUpperCase());
 }
 
-function csPath(path, receiver) {
+function chain(path, receiver) {
   const parts = path.split('.');
   let code = receiver;
-  for (const part of parts) {
-    if (part === 'last') code = `${code}[${code}.Length - 1]`;
-    else if (/^\d+$/.test(part)) code = `${code}[${part}]`;
-    else code = `${code}.${pascal(part)}`;
+  const guards = [];
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (part === 'last') { code = `${code}[${code}.Length - 1]`; continue; }
+    if (/^\d+$/.test(part)) { code = `${code}[${part}]`; continue; }
+    const next = `${code}.${pascal(part)}`;
+    if (i < parts.length - 1) guards.push(`${next} != null`);
+    code = next;
   }
-  return code;
+  return { code, guards };
 }
 
 function receiverOf(path, hint) {
@@ -151,11 +155,16 @@ function csExpr(expr, hint) {
   if (op === 'get' || op === 'has' || op === 'len') {
     const raw = expr[1];
     const shifted = receiverOf(raw, hint);
-    const code = csPath(shifted.path, shifted.recv);
-    const leaf = shifted.path.split('.').pop();
-    if (op === 'has') return `${code} != null`;
-    if (op === 'len') return `(${code} == null ? 0 : ${code}.Length)`;
-    return code;
+    const access = chain(shifted.path, shifted.recv);
+    if (op === 'has') {
+      const present = `${access.code} != null`;
+      return access.guards.length ? `(${access.guards.join(' && ')} && ${present})` : present;
+    }
+    if (op === 'len') {
+      const length = `(${access.code} == null ? 0 : ${access.code}.Length)`;
+      return access.guards.length ? `(${access.guards.join(' && ')} ? ${length} : 0)` : length;
+    }
+    return access.code;
   }
   if (op === 'not') return `!(${csExpr(expr[1], hint)})`;
   if (op === 'and') return `(${csExpr(expr[1], hint)} && ${csExpr(expr[2], hint)})`;
@@ -166,7 +175,12 @@ function csExpr(expr, hint) {
     if (op !== 'gt' && op !== 'lt' && op !== 'lte' && right[0] === 'lit' && typeof right[1] === 'string' && expr[1][0] === 'get') {
       const leaf = expr[1][1].split('.').pop();
       const type = enums[leaf];
-      if (type) return `${csExpr(expr[1], hint)} ${map[op]} ${type}.${right[1]}`;
+      if (type) {
+        const shifted = receiverOf(expr[1][1], hint);
+        const access = chain(shifted.path, shifted.recv);
+        const compare = `${access.code} ${map[op]} ${type}.${right[1]}`;
+        return access.guards.length ? `(${access.guards.join(' && ')} && ${compare})` : compare;
+      }
     }
     if ((op === 'eq' || op === 'neq') && expr[1][0] === 'eq') {
       // (delivery == Instant) != (projectileSpeed == 0)
@@ -194,10 +208,11 @@ export function csharpValidation() {
   const fileChecks = fileRules.map((rule) => '            ' + emitRule(rule, 'file')).join('\n');
   const unitChecks = unitRules.map((rule) => '                ' + emitRule(rule, 'unit')).join('\n');
   const weaponChecks = weaponRules.map((rule) => {
-    const line = emitRule(rule, 'weapon');
-    if (rule.error.includes('three rings')) return `                if (${csExpr(rule.when, 'weapon')}) { errors.Add("${csError(rule.error)}"); skipSplash = true; }`;
-    if (rule.error.includes('splash')) return `                if (!skipSplash && ${csExpr(rule.when, 'weapon')}) errors.Add("${csError(rule.error)}");`;
-    return '                ' + line;
+    const message = csError(rule.error);
+    const test = csExpr(rule.when, 'weapon');
+    if (rule.mark === 'skipSplash') return `                if (${test}) { errors.Add("${message}"); skipSplash = true; }`;
+    if (rule.gate === 'skipSplash') return `                if (!skipSplash && ${test}) errors.Add("${message}");`;
+    return `                if (${test}) errors.Add("${message}");`;
   }).join('\n');
   return `// <auto-generated>
 // Generated by scripts/config/invariants.mjs. Do not edit.

@@ -16,28 +16,37 @@ namespace RiskAI
         readonly LineRenderer[] legs = new LineRenderer[SegmentCap];
         readonly LineRenderer[] marks = new LineRenderer[SegmentCap];
         readonly Vector3[] scratch = new Vector3[48];
+        struct Stamp { public int Id, Revision, PathCount; public Vector3 Pos, Path0; public byte Emphasis; }
+        readonly Stamp[] stamps = new Stamp[SegmentCap];
         RtsController controller;
         int legCount, markCount;
         public int LegCount { get; private set; }
 
-        void OnEnable() { controller = GetComponent<RtsController>(); }
+        void OnEnable()
+        {
+            controller = GetComponent<RtsController>();
+            for (int i = 0; i < stamps.Length; i++) stamps[i].Id = -1;
+        }
 
         public void Refresh() => LateUpdate();
         void LateUpdate()
         {
             var session = BattleSession.Current;
-            if (!session) { Hide(); return; }
+            if (!session || controller == null) { Hide(); return; }
             bool emphasis = Emphasis();
             int legsDrawn = 0, marksDrawn = 0;
-            if (session.Units != null)
-                for (int i = 0; i < session.Units.Count; i++)
-                    legsDrawn = Draw(session.Units[i], legsDrawn, ref marksDrawn, emphasis);
-            var naval = session.Naval;
-            if (naval)
-                for (int i = 0; i < naval.Ships.Count; i++)
-                    legsDrawn = Draw(naval.Ships[i], legsDrawn, ref marksDrawn, emphasis);
+            var soldiers = controller.Selection;
+            for (int i = 0; i < soldiers.Count; i++)
+                if (soldiers[i]) legsDrawn = Draw(soldiers[i], legsDrawn, ref marksDrawn, emphasis);
+            var fleet = controller.Fleet;
+            for (int i = 0; i < fleet.Count; i++)
+                if (fleet[i]) legsDrawn = Draw(fleet[i], legsDrawn, ref marksDrawn, emphasis);
             LegCount = legsDrawn;
-            for (int i = legsDrawn; i < legCount; i++) if (legs[i]) legs[i].enabled = false;
+            for (int i = legsDrawn; i < legCount; i++)
+            {
+                if (legs[i]) legs[i].enabled = false;
+                if (i < stamps.Length) stamps[i].Id = -1;
+            }
             for (int i = marksDrawn; i < markCount; i++) if (marks[i]) marks[i].enabled = false;
             legCount = legsDrawn;
             markCount = marksDrawn;
@@ -50,7 +59,22 @@ namespace RiskAI
             var body = unit as Component;
             if (!body || !unit.Selected || unit.OrderLegCount <= 0 || drawn >= SegmentCap) return drawn;
             unit.RefreshActivePath();
+            int pathCount = unit.ActivePathCount;
             Vector3 from = body.transform.position;
+            Vector3 path0 = pathCount > 0 ? unit.ActivePathPoint(0) : from;
+            byte emphasisFlag = (byte)(emphasis ? 1 : 0);
+            var stamp = stamps[drawn];
+            bool dirty = stamp.Id != unit.EntityId || stamp.Revision != unit.Orders.Revision || stamp.PathCount != pathCount
+                || stamp.Emphasis != emphasisFlag || (from - stamp.Pos).sqrMagnitude > .04f
+                || pathCount > 0 && (path0 - stamp.Path0).sqrMagnitude > .04f;
+            stamps[drawn] = new Stamp { Id = unit.EntityId, Revision = unit.Orders.Revision, PathCount = pathCount, Pos = from, Path0 = path0, Emphasis = emphasisFlag };
+            if (!dirty)
+            {
+                int keep = Mathf.Min(unit.OrderLegCount, SegmentCap - drawn);
+                drawn += keep;
+                marksDrawn = Mathf.Min(SegmentCap, marksDrawn + keep);
+                return drawn;
+            }
             var to = unit.OrderLegPoint(0);
             var color = ColorOf(unit.OrderLegKind(0), emphasis);
             if (unit.ActivePathCount >= 2)

@@ -202,7 +202,7 @@ namespace RiskAI.Tests
         {
             var town = battle.Towns.First(t => t.State.Owner == 0);
             var defender = town.Defender;
-            var ally = BattleTestScenario.Mobile(battle, defender.Team, UnitKind.Footman, town.Rally);
+            var ally = BattleTestScenario.Mobile(battle, defender.Team, UnitKind.Footman, town.ClaimPoint + Vector3.forward * 40f);
             var position = defender.transform.position;
             defender.TryMoveTo(position + Vector3.right * 5f, false, false);
             defender.Stop();

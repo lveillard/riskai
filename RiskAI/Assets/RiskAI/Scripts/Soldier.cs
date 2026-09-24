@@ -6,7 +6,7 @@ using UnityEngine.AI;
 namespace RiskAI
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public sealed class Soldier : CombatTarget, IOrderable, IPostClaimant
+    public sealed class Soldier : CombatTarget, IOrderable, IPostClaimant, IQueuedOrderRunner
     {
         enum OrderMode { Idle, Move, AttackMove, Attack, Hold, Patrol, Follow, Capture, Embark }
         public UnitKind Kind { get; private set; }
@@ -84,6 +84,7 @@ namespace RiskAI
         UnitCommand activeCommand;
         bool hasActiveCommand;
         CaptureOrderState capture;
+        CapturePlan.View captureView;
         bool keepEmbarkStash;
         Vector3 capturePoint;
         Vector3 pathDestination;
@@ -96,7 +97,7 @@ namespace RiskAI
             session=battle; Team=team; Kind=kind; Health=MaxHealth; OriginCountry=-1;
             Garrison=null; simulationPaused=false; enabled=true; roarUntil=-1; roarBonus=0;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
-            mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; hasActiveCommand=false; capture.Clear(); orders.Reset();
+            mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; hasActiveCommand=false; capture.Clear(); captureView=default; orders.Reset();
             nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
             humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
             bool first=!Agent;
@@ -160,7 +161,7 @@ namespace RiskAI
         internal void ReleaseGarrison(CityClaimZone zone)
         {
             if(Garrison!=zone)return;
-            Garrison=null; orders.Clear(); CancelStrike(); target=null; followTargetId=0; mode=OrderMode.Idle;
+            Garrison=null; CancelStrike(); target=null; followTargetId=0; mode=OrderMode.Idle;
             anchor=destination=transform.position; nextSense=0; wasFighting=false;
             PublishRoute();
             if(!Agent || !Agent.enabled)return;
@@ -270,20 +271,19 @@ namespace RiskAI
         }
         void Complete(bool failed=false)
         {
-            while (orders.TryDequeue(out var next))
-            {
-                if (RunQueued(next)) { PublishRoute(); return; }
-            }
+            if (OrderAdvance.Drain(orders, this)) { PublishRoute(); return; }
             if (mode == OrderMode.Patrol && !failed) { var swap = destination; destination = patrolOrigin; patrolOrigin = swap; ResumePath(); }
-            else Stop();
+            else Stand(OrderMode.Idle);
             PublishRoute();
         }
         /// <summary>A dequeued command runs on the motor. It is not admitted again (its append flag would re-queue it).</summary>
         bool RunQueued(in UnitCommand command)
         {
-            if (!OrderValidation.Check(session, this, command, false, out _)) { LastMoveError = null; return false; }
+            if (!OrderValidation.Check(session, this, command, true, out _)) { LastMoveError = null; return false; }
+            if (!ReleasePost(command, true, out _)) { LastMoveError = null; return false; }
             return Execute(command);
         }
+        bool IQueuedOrderRunner.TryStartQueued(in UnitCommand command) => RunQueued(command);
         void SetTarget(CombatTarget enemy) { target = enemy; pursuitOrigin = transform.position; nextPath = 0; }
         void CancelStrike()
         {
@@ -567,12 +567,7 @@ namespace RiskAI
         public override void JoinAlert(CombatTarget attacker) { if (IsIdle) SetTarget(attacker); }
         public OrderQueue Orders => orders;
         public int OrderLegCount => OrderLegView.Count(orders);
-        public Vector3 OrderLegPoint(int index)
-        {
-            if (index == 0 && hasActiveCommand && activeCommand.Kind == UnitCommandKind.Attack && target)
-                return target.transform.position;
-            return OrderLegView.Point(orders, index);
-        }
+        public Vector3 OrderLegPoint(int index) => OrderLegView.Point(orders, index, session, hasActiveCommand, activeCommand);
         public UnitCommandKind OrderLegKind(int index) => OrderLegView.Kind(orders, index);
         public int ActivePathCount => pathCornerCount;
         public Vector3 ActivePathPoint(int index) => pathCorners[index];
@@ -589,9 +584,10 @@ namespace RiskAI
             pathRevision = orders.Revision;
         }
         string IOrderable.OrderError => LastMoveError;
-        bool IOrderable.Authorize(in UnitCommand command, bool commitRelease)
+        void IOrderable.ClearOrderError() => LastMoveError = null;
+        bool IOrderable.Authorize(in UnitCommand command, bool plan)
         {
-            bool ok = OrderValidation.Check(session, this, command, commitRelease, out var error);
+            bool ok = OrderValidation.Check(session, this, command, plan, out var error);
             if (!ok) LastMoveError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
             return ok;
         }
@@ -618,7 +614,7 @@ namespace RiskAI
             return false;
         }
 
-        public bool Reach(in UnitCommand command, bool commitRelease, out string error)
+        public bool Reach(in UnitCommand command, bool plan, out string error)
         {
             error = null;
             switch (command.Kind)
@@ -654,9 +650,17 @@ namespace RiskAI
 
         bool ApplyOrder(in UnitCommand command)
         {
-            bool valid = OrderValidation.Check(session, this, command, false, out var error);
+            bool valid = OrderValidation.Check(session, this, command, true, out var error);
             if (!valid) LastMoveError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
-            if (valid && command.Kind == UnitCommandKind.Embark && !command.Append && orders.StashCount == 0)
+            bool willRun = valid && UnitRules.Queue(command.Kind, command.Append, OrderBusy) != UnitRules.OrderQueueAction.Append;
+            if (willRun && command.Kind != UnitCommandKind.Stop && command.Kind != UnitCommandKind.Hold
+                && !ReleasePost(command, true, out error))
+            {
+                LastMoveError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
+                valid = false;
+            }
+            if (valid && command.Kind != UnitCommandKind.Embark && !keepEmbarkStash) orders.ClearStash();
+            else if (valid && command.Kind == UnitCommandKind.Embark && !command.Append && orders.StashCount == 0)
                 orders.Stash(hasActiveCommand && activeCommand.Kind != UnitCommandKind.Embark, activeCommand);
             switch (orders.Commit(command, OrderBusy, valid))
             {
@@ -722,14 +726,21 @@ namespace RiskAI
             return true;
         }
 
+        CapturePlan.View CaptureView(in UnitCommand command)
+        {
+            captureView = CapturePlan.Fresh(session, command, captureView);
+            return captureView;
+        }
+
         bool CaptureFinished()
         {
             if (mode != OrderMode.Capture || !capture.Active) return false;
-            var view = CapturePlan.Look(session, activeCommand);
+            var view = CaptureView(activeCommand);
             capturePoint = view.Point;
             // Land has no voyage after the post becomes ours, so the approach counts as finished.
-            if (!capture.Done(view.Found, view.Owner, Team, true)) return false;
+            if (!capture.Done(view.Found, view.Owner, Team, true, Type.CanCapture)) return false;
             capture.Clear();
+            captureView = default;
             return true;
         }
 
@@ -738,18 +749,26 @@ namespace RiskAI
             var view = CapturePlan.Look(session, command);
             if (!view.Found) { LastMoveError = "Elige una ciudad o un puerto."; return false; }
             Remember(command);
-            capture.Begin(view.Found, view.Owner);
+            captureView = view;
+            capture.Begin(view.Found, view.Owner, view.Zone != null ? 1 : 0);
             capturePoint = view.Point;
-            if (capture.Done(view.Found, view.Owner, Team, true)) { hasActiveCommand = false; capture.Clear(); return false; }
+            if (capture.Done(view.Found, view.Owner, Team, true, Type.CanCapture))
+            {
+                hasActiveCommand = false;
+                capture.Clear();
+                captureView = default;
+                Complete();
+                return true;
+            }
             return StepCapture();
         }
 
         /// <summary>False when this capture is finished and the next queued order should run.</summary>
         bool StepCapture()
         {
-            var view = CapturePlan.Look(session, activeCommand);
+            var view = CaptureView(activeCommand);
             capturePoint = view.Point;
-            if (capture.Done(view.Found, view.Owner, Team, true)) { capture.Clear(); return false; }
+            if (capture.Done(view.Found, view.Owner, Team, true, Type.CanCapture)) { capture.Clear(); captureView = default; return false; }
             if (CapturePlan.HostileGuardian(view, Team))
             {
                 BeginAttack(view.Guardian);
@@ -788,6 +807,20 @@ namespace RiskAI
             if (WithinLoad(ship) && ship.TryEmbark(this)) return true;
             ResumePath();
             return true;
+        }
+
+        /// <summary>The boarding retry re-walks the embark already in progress. It does not submit a second order.</summary>
+        public void RetryEmbarkApproach()
+        {
+            if (mode != OrderMode.Embark || !hasActiveCommand || activeCommand.Kind != UnitCommandKind.Embark) return;
+            var ship = session.FindTarget(activeCommand.TargetId) as Ship;
+            if (!ship) return;
+            var landing = new Vector3(activeCommand.X, activeCommand.Y, activeCommand.Z);
+            if (landing.sqrMagnitude > .01f && NavMesh.SamplePosition(landing, out var shore, 8, NavMesh.AllAreas))
+                destination = shore.position;
+            else if (NavMesh.SamplePosition(ship.transform.position, out var hit, 8, NavMesh.AllAreas))
+                destination = hit.position;
+            ResumePath();
         }
 
         bool WithinLoad(Ship ship)
@@ -837,8 +870,10 @@ namespace RiskAI
         {
             int count = orders.StashCount;
             if (count <= 0) return;
-            for (int i = 0; i < count; i++) ApplyOrder(orders.StashedCommand(i).WithAppend(i > 0));
+            var copy = new UnitCommand[count];
+            for (int i = 0; i < count; i++) copy[i] = orders.StashedCommand(i);
             orders.ClearStash();
+            for (int i = 0; i < count; i++) ApplyOrder(copy[i].WithAppend(i > 0));
         }
 
         public int PathCornerCount => pathCornerCount;

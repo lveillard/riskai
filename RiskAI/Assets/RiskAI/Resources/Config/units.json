@@ -1428,7 +1428,7 @@
       "weapons": [
         {
           "source": "h00M",
-          "sound": "Mortar",
+          "sound": "Bow",
           "attackType": "Piercing",
           "base": 55,
           "dice": 1,

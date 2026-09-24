@@ -229,6 +229,31 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator WarshipCaptureAdvancesWhileAnEnemyStaysInRange()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var target = naval.Harbors.First(harbor => harbor != home && harbor.Owner != 0 && !harbor.IsImportedPort);
+            var guard = target.Defender;
+            if (guard) guard.TakeDamage(guard.MaxHealth + 1, guard.Team == 0 ? 1 : 0);
+            var frigate = BattleTestScenario.Ship(naval, 0, UnitKind.Frigate, target.Berth);
+            var enemy = BattleTestScenario.Ship(naval, target.Owner < 0 ? 1 : target.Owner, UnitKind.Frigate, target.Berth + new Vector3(6f, 0f, 0f));
+            var away = target.Berth + new Vector3(0f, 0f, 50f);
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, frigate.EntityId, UnitCommandKind.Capture, target.Landing.x, target.Landing.y, target.Landing.z, structureId: target.BuildingId.LocalId, structureKind: BuildingKind.Harbor)), Is.True);
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, frigate.EntityId, UnitCommandKind.Move, away.x, away.y, away.z, append: true)), Is.True);
+            for (int tick = 0; tick < 40 && enemy.IsAlive; tick++)
+            {
+                battle.Commands.Tick();
+                frigate.SimTick(.2f);
+                enemy.SimTick(.2f);
+                target.SimTick(.2f);
+            }
+            Assert.That(enemy.IsAlive, Is.True, "The enemy has to still be in the fight, or a dead target would hide the stall.");
+            Assert.That(target.Owner, Is.EqualTo(0));
+            Assert.That(frigate.Orders.Count, Is.Zero, "The queued move is no longer stuck behind the capture while a target is in range.");
+            yield return null;
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {

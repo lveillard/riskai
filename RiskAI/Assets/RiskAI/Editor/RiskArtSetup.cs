@@ -124,7 +124,7 @@ namespace RiskAI.Editor
             var bounds = new Bounds(); bool found = false;
             foreach (var renderer in root.GetComponentsInChildren<Renderer>())
             {
-                if (!renderer.enabled || renderer is LineRenderer || renderer.name == "Soft ground shadow") continue;
+                if (!PortraitFraming.FramesRenderer(renderer)) continue;
                 if (!found) { bounds = renderer.bounds; found = true; } else bounds.Encapsulate(renderer.bounds);
             }
             if (!found) return;
@@ -152,13 +152,12 @@ namespace RiskAI.Editor
             var cameraObject = new GameObject("Portrait camera");
             var camera = cameraObject.AddComponent<Camera>(); camera.cullingMask = 1 << 31;
             camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.075f,.085f,.09f);
-            bool ship=System.Enum.IsDefined(typeof(UnitKind),name);
-            bool siege=name=="Mortar"||name=="Artillery"||name=="Tank";
-            camera.orthographic = true; camera.orthographicSize = ship?(name==UnitKind.Battleship.ToString()?4.2f:name==UnitKind.Warship.ToString()?3.8f:3.35f):siege?(name=="Mortar"?1.35f:1.7f):name=="MountedKnight"?1.85f:name=="ArmyGeneral"?2.1f:1.4f;
-            Vector3 focus = root.transform.position + Vector3.up * (ship?2.15f:siege?1.15f:name=="ArmyGeneral"?1.95f:1.75f);
-            camera.transform.position = focus + (ship?new Vector3(4.8f,3.1f,6.8f):new Vector3(2,1,5)); camera.transform.LookAt(focus);
-            if (name == "MountedKnight" || name == "ArmyGeneral" || name == "MarineMajor" || name == "MarineGeneral" || name == "Roarer")
-                FitPortrait(camera, root, name == "Roarer" ? .78f : .8f, name == "Roarer" ? new Vector3(2, 1, 5) : new Vector3(4.5f, 1.6f, 3));
+            var frame = PortraitFraming.For(name);
+            camera.orthographic = true; camera.orthographicSize = frame.OrthographicSize;
+            Vector3 focus = root.transform.position + Vector3.up * frame.FocusHeight;
+            camera.transform.position = focus + frame.Offset; camera.transform.LookAt(focus);
+            if (frame.Refit)
+                FitPortrait(camera, root, frame.UpperFraction, frame.RefitOffset);
             var keyObject = new GameObject("Portrait light"); var key = keyObject.AddComponent<Light>();
             key.type = LightType.Directional; key.intensity = 1.8f; key.cullingMask = 1 << 31; key.transform.rotation = Quaternion.Euler(35, -30, 0);
             var output = new RenderTexture(192, 192, 24); camera.targetTexture = output;

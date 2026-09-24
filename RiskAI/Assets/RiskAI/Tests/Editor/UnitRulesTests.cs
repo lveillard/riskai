@@ -168,14 +168,18 @@ namespace RiskAI.Tests
         {
             var order = new CaptureOrderState();
             order.Begin(true, 2);
-            Assert.That(order.Done(true, 2, 0, true), Is.False, "standing on an enemy post does not finish the capture");
-            Assert.That(order.Done(true, 1, 0, false), Is.True, "another player taking the post finishes it at once");
+            Assert.That(order.Done(true, 2, 0, true, true), Is.False, "standing on an enemy post does not finish the capture");
+            Assert.That(order.Done(true, 1, 0, false, true), Is.True, "another player taking the post finishes it at once");
+            Assert.That(order.Done(true, PlayerRules.NeutralOwner, 0, true, true), Is.False, "a freed neutral post is still captured");
             order.Begin(true, 2);
-            Assert.That(order.Done(true, 0, 0, false), Is.False, "a ship keeps sailing after the port becomes ours");
-            Assert.That(order.Done(true, 0, 0, true), Is.True, "once the approach is done and the post is ours, the order ends");
+            Assert.That(order.Done(true, 0, 0, false, true), Is.False, "a ship keeps sailing after the port becomes ours");
+            Assert.That(order.Done(true, 0, 0, true, true), Is.True, "once the approach is done and the post is ours, the order ends");
             order.Begin(true, 0);
-            Assert.That(order.Done(true, 0, 0, false), Is.False, "a friendly port waits for the disembark");
-            Assert.That(order.Done(true, 0, 0, true), Is.True);
+            Assert.That(order.Done(true, 0, 0, false, true), Is.False, "a friendly port waits for the disembark");
+            Assert.That(order.Done(true, 0, 0, true, true), Is.True);
+            order.Begin(true, 2);
+            Assert.That(order.Done(true, 2, 0, false, false), Is.False, "a transport still sailing has not finished");
+            Assert.That(order.Done(true, 2, 0, true, false), Is.True, "a transport that cannot claim is done when the unload finishes");
         }
     }
 }

@@ -44,8 +44,9 @@ namespace RiskAI.Tests
             var first = Walkable(home.Rally, 6f);
             var second = Walkable(first, 6f);
             var third = Walkable(second, 6f);
-            unit.Select(true);
-            var routes = Object.FindFirstObjectByType<RtsController>().GetComponent<OrderRoutes>();
+            var controller = Object.FindFirstObjectByType<RtsController>();
+            controller.SelectOnly(unit);
+            var routes = controller.GetComponent<OrderRoutes>();
             Assert.That(routes, Is.Not.Null);
 
             Assert.That(battle.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Move, first.x, first.y, first.z, append: true)), Is.True);

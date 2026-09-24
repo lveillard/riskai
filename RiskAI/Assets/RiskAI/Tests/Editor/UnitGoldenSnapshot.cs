@@ -32,7 +32,7 @@ namespace RiskAI.Tests
             production.Add("harbor", Layout(ProductionBuilding.Harbor));
             root.Add("production", production);
             root.Add("rules", Rules());
-            root.Add("behaviour", Behaviour());
+
             var text = new StringBuilder();
             Write(text, root, 0);
             text.Append('\n');
@@ -306,8 +306,8 @@ namespace RiskAI.Tests
             rules.Add("meleeApproachMargin", footman.Weapon.ApproachMargin);
             rules.Add("meleeStrikeTolerance", footman.Weapon.StrikeTolerance);
             rules.Add("allyAlertRadius", footman.Acquisition.AllyAlertRadius);
-            rules.Add("unitOrderQueueLimit", 35);
-            rules.Add("commandInboxLimit", 1024);
+            rules.Add("unitOrderQueueLimit", OrderQueue.Limit);
+            rules.Add("commandInboxLimit", RiskAI.BattleCommands.InboxLimit);
             rules.Add("transportLoadRadius", UnitCatalog.TransportLoadRadius);
             rules.Add("transportLoadOrderLimit", UnitCatalog.TransportLoadLimit);
             rules.Add("shipSeparation", UnitCatalog.Get(UnitKind.Frigate).Separation);
@@ -328,33 +328,6 @@ namespace RiskAI.Tests
             roar.Add("multiplierRoaring", 1 + UnitCatalog.Get(UnitKind.Roarer).Roar.DamageBonus);
             rules.Add("roar", roar);
             return rules;
-        }
-
-        // Conducts that are code today and must survive the refactor unchanged
-        // (except plan §7). Recorded as the inventory the later steps are checked against.
-        static Obj Behaviour()
-        {
-            var behaviour = new Obj();
-            var measure = new Obj();
-            measure.Add("bodyEdges", "3D distance to target.ApproachPoint minus own and target body radius (soldiers only)");
-            measure.Add("centerToApproach", "3D distance from pivot to target.ApproachPoint");
-            measure.Add("toHull", "XZ distance from pivot to target.ApproachPoint (a ship's oriented hull)");
-            measure.Add("centerToCenter", "XZ distance between pivots");
-            behaviour.Add("measure", measure);
-            // Queue semantics are plan §7. UnitRulesTests asserts that matrix; a frozen
-            // v0.33 sentence here would stay green if Shift+Attack regressed.
-            var click = new Arr();
-            click.Add("enemy ship with an attack-capable fleet beats the harbor");
-            click.Add("harbor with a fleet: dock/land");
-            click.Add("town with a port and a fleet: dock at its port");
-            click.Add("enemy target: soldiers Attack via inbox, attack ships Attack directly");
-            click.Add("own transport with a selection: embark");
-            click.Add("harbor with a fleet: dock");
-            click.Add("ally soldier not selected: Follow");
-            click.Add("enemy tower: attack-move to its claim point / landing");
-            click.Add("ground: move (attack-move to a hostile town/harbor point)");
-            behaviour.Add("click", click);
-            return behaviour;
         }
 
         static string Measure(RangeMeasure measure) =>

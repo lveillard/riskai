@@ -484,7 +484,7 @@ namespace RiskAI
                 // Avoidance can stop a boarder just outside a narrow beach. Retry
                 // the already validated landing, without relaxing shore rules.
                 if(recover&&agent&&!agent.pathPending&&agent.velocity.sqrMagnitude<.04f&&offset.sqrMagnitude<=UnitCatalog.TransportLoadRadius*UnitCatalog.TransportLoadRadius)
-                    session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Embark,pendingBoardingLanding.x,pendingBoardingLanding.y,pendingBoardingLanding.z,pendingBoardingTransport.EntityId));
+                    soldier.RetryEmbarkApproach();
             }
             if(pendingBoarders.Count==0)
             {session.Message("Embarque terminado: "+pendingBoardingTransport.CargoCount+" / "+pendingBoardingTransport.Type.Transport.Capacity+".",MessageKind.Info);CancelPendingBoarding();return;}

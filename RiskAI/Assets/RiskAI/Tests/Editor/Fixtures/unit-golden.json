@@ -2212,24 +2212,5 @@
       "evaluation": 0.5,
       "multiplierRoaring": 1.25
     }
-  },
-  "behaviour": {
-    "measure": {
-      "bodyEdges": "3D distance to target.ApproachPoint minus own and target body radius (soldiers only)",
-      "centerToApproach": "3D distance from pivot to target.ApproachPoint",
-      "toHull": "XZ distance from pivot to target.ApproachPoint (a ship's oriented hull)",
-      "centerToCenter": "XZ distance between pivots"
-    },
-    "click": [
-      "enemy ship with an attack-capable fleet beats the harbor",
-      "harbor with a fleet: dock/land",
-      "town with a port and a fleet: dock at its port",
-      "enemy target: soldiers Attack via inbox, attack ships Attack directly",
-      "own transport with a selection: embark",
-      "harbor with a fleet: dock",
-      "ally soldier not selected: Follow",
-      "enemy tower: attack-move to its claim point / landing",
-      "ground: move (attack-move to a hostile town/harbor point)"
-    ]
   }
 }

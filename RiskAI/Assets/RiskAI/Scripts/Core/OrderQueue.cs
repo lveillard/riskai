@@ -68,6 +68,17 @@ namespace RiskAI.Core
             return true;
         }
 
+        public bool TryAt(int index, out UnitCommand command)
+        {
+            if (index < 0 || index >= count)
+            {
+                command = default;
+                return false;
+            }
+            command = items[(head + index) % Limit];
+            return true;
+        }
+
         public bool TryDequeue(out UnitCommand command)
         {
             if (count == 0)

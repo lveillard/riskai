@@ -17,6 +17,7 @@ namespace RiskAI
         }
 
         readonly BattleSession session;
+        public const int InboxLimit = 1024;
         readonly Queue<QueuedCommand> queue = new Queue<QueuedCommand>(256);
         readonly CommandResult[] results = new CommandResult[64];
         int nextCommandId, resultCount;
@@ -64,8 +65,8 @@ namespace RiskAI
             CommandResult result;
             if(session.Paused) result = Fail(command, "La partida está detenida.");
             else if(session.Winner>=0) result = Fail(command, "La batalla ha terminado.");
-            else if(queue.Count>=1024) result = Fail(command, OrderQueue.FullError);
-            else if(!Valid(command, false)) result = Fail(command, RejectionReason(command));
+            else if(queue.Count>=InboxLimit) result = Fail(command, OrderQueue.FullError);
+            else if(!Valid(command, true)) result = Fail(command, RejectionReason(command));
             else
             {
                 double submittedAt = Time.realtimeSinceStartupAsDouble;
@@ -122,11 +123,12 @@ namespace RiskAI
             if (actor != null && !string.IsNullOrEmpty(actor.OrderError)) return actor.OrderError;
             return OrderQueue.InvalidError;
         }
-        bool Valid(UnitCommand command, bool releaseGarrison)
+        bool Valid(UnitCommand command, bool plan)
         {
+            var actor=session.FindTarget(command.UnitId) as IOrderable;
+            if(actor!=null) actor.ClearOrderError();
             if(!PlayerRules.IsPlayer(command.PlayerId) || command.PlayerId>=session.PlayerCount || !Finite(command.X) || !Finite(command.Y) || !Finite(command.Z))return false;
             if(command.Kind<UnitCommandKind.Move || command.Kind>UnitCommandKind.Unload)return false;
-            var actor=session.FindTarget(command.UnitId) as IOrderable;
             if(actor==null || !actor.IsAlive || actor.Team!=command.PlayerId)return false;
             if(command.HasPoint && actor.Type.Domain==UnitDomain.Land)
             {
@@ -134,7 +136,7 @@ namespace RiskAI
                 if(!NavMesh.SamplePosition(point,out _,8,NavMesh.AllAreas))return false;
             }
             if(command.HasPoint && actor.Type.Domain==UnitDomain.Static)return false;
-            return actor.Authorize(command, releaseGarrison);
+            return actor.Authorize(command, plan);
         }
         static bool Finite(float value)=>!float.IsNaN(value)&&!float.IsInfinity(value);
         void Reject(UnitCommand command,string reason)
@@ -153,7 +155,7 @@ namespace RiskAI
             {
                 var queued=queue.Dequeue();
                 var command=queued.Command;
-                if(!Valid(command,true)){Reject(command,"La unidad, el relevo o el objetivo cambió antes de aplicar la orden.");continue;}
+                if(!Valid(command,false)){FailDrain(command,"La unidad, el relevo o el objetivo cambió antes de aplicar la orden.");continue;}
                 var actor=(IOrderable)session.FindTarget(command.UnitId);
                 bool firstMoveEligible = actor.HumanMoveEligible(command);
                 bool applied=actor.ApplyOrder(command);
@@ -164,13 +166,14 @@ namespace RiskAI
                         ObservedPausedSeconds() - queued.PausedSecondsAtSubmit);
                     actor.BeginHumanMove(command, queued.SubmittedAt, queued.PausedSecondsAtSubmit, firstMoveEligible);
                 }
-                else
-                {
-                    string reason = string.IsNullOrEmpty(actor.OrderError) ? "No se ha podido aplicar la orden." : actor.OrderError;
-                    Revise(CommandResult.Reject(command, reason));
-                    Reject(command, reason);
-                }
+                else FailDrain(command, string.IsNullOrEmpty(actor.OrderError) ? "No se ha podido aplicar la orden." : actor.OrderError);
             }
+        }
+
+        void FailDrain(UnitCommand command, string reason)
+        {
+            Revise(CommandResult.Reject(command, reason));
+            Reject(command, reason);
         }
 
         internal void RecordHumanFirstMotion(double submittedAt, double pausedSecondsAtSubmit)

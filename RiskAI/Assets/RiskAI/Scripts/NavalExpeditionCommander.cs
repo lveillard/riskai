@@ -74,7 +74,8 @@ namespace RiskAI
         float nextDecision, phaseDeadline, retryAt;
         float plannedSeaDistance, plannedGatherDistance, boardingDeadline;
         int sourceHarborCursor, troopCursor, recoveryHarborCursor, recoveryPass;
-        bool embarkOrdersIssued, sailOrderIssued, attackOrderIssued;
+        bool embarkOrdersIssued, sailOrderIssued, sailConfirmed, attackOrderIssued;
+        int sailCommandId;
 
         public bool IsActive => phase != Phase.Planning && phase != Phase.Cooldown;
         int MaximumTroops => Mathf.Clamp(session.AiProfile.ExpeditionTroops, MinimumTroops, TroopCapacity);
@@ -213,9 +214,16 @@ namespace RiskAI
             if(!transport||!transport.IsAlive||!destination||!destination.TryTransportLanding(out _,out destinationTransportBerth)){Fail();return;}
             if(!sailOrderIssued)
             {
-                if(!DisembarkAccepted(world.SubmitDisembark(transport,destination))){Fail();return;}
+                var submitted=world.SubmitDisembark(transport,destination);
+                if(submitted.CommandId==0||!submitted.Accepted){Fail();return;}
+                sailCommandId=submitted.CommandId;sailConfirmed=false;sailOrderIssued=true;
                 if(session.AiProfile.NavalEscort)OrderEscort();
-                sailOrderIssued=true;return;
+                return;
+            }
+            if(!sailConfirmed)
+            {
+                sailConfirmed=true;
+                if(!session.Commands.TryGetResult(sailCommandId,out var stored)||!stored.Accepted){sailOrderIssued=false;Fail();return;}
             }
             if(transport.CargoCount==0)
             {
@@ -541,7 +549,7 @@ namespace RiskAI
         void ClearPlan()
         {
             source=null;destination=null;target=null;returnHarbor=null;sourceLanding=sourceTransportBerth=destinationTransportBerth=default;troops.Clear();plannedSeaDistance=plannedGatherDistance=boardingDeadline=0;
-            embarkOrdersIssued=sailOrderIssued=attackOrderIssued=false;
+            embarkOrdersIssued=sailOrderIssued=sailConfirmed=attackOrderIssued=false;sailCommandId=0;
         }
         static int PositiveModulo(int value,int divisor) => divisor<=0?0:(value%divisor+divisor)%divisor;
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}

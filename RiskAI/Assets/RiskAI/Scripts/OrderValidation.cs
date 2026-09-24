@@ -8,7 +8,7 @@ namespace RiskAI
     /// </summary>
     public static class OrderValidation
     {
-        public static bool Check(BattleSession session, IOrderable actor, in UnitCommand command, bool commitRelease, out string error)
+        public static bool Check(BattleSession session, IOrderable actor, in UnitCommand command, bool plan, out string error)
         {
             error = null;
             if (actor == null) { error = OrderQueue.InvalidError; return false; }
@@ -17,9 +17,10 @@ namespace RiskAI
                 error = "La partida está detenida.";
                 return false;
             }
-            if (!actor.ReleasePost(command, commitRelease, out error)) return false;
+            // Relief is only checked here. The post is released when the order starts.
+            if (!actor.ReleasePost(command, false, out error)) return false;
             if (!Aim(session, actor, command, out error)) return false;
-            return actor.Reach(command, commitRelease, out error);
+            return actor.Reach(command, plan, out error);
         }
 
         static bool Aim(BattleSession session, IOrderable actor, in UnitCommand command, out string error)

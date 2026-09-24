@@ -17,12 +17,13 @@ namespace RiskAI
         ref readonly UnitType Type { get; }
         string OrderError { get; }
         OrderQueue Orders { get; }
-        /// <summary>Shared aim checks, post release, then <see cref="Reach"/>. Does not start the order.</summary>
-        bool Authorize(in UnitCommand command, bool commitRelease);
-        /// <summary>Leave a bound post. The relief message is only for this failure.</summary>
+        void ClearOrderError();
+        /// <summary>Shared aim checks, then <see cref="Reach"/>. Does not release a post and does not start the order.</summary>
+        bool Authorize(in UnitCommand command, bool plan);
+        /// <summary>Leave a bound post. Commit only when the order is about to start. The relief message is only for this failure.</summary>
         bool ReleasePost(in UnitCommand command, bool commitRelease, out string error);
-        /// <summary>Motor only: a NavMesh point, or a sea path. Aim checks have already passed.</summary>
-        bool Reach(in UnitCommand command, bool commitRelease, out string error);
+        /// <summary>Motor only. <paramref name="plan"/> builds the sea path once; a cheap check does not.</summary>
+        bool Reach(in UnitCommand command, bool plan, out string error);
         bool ApplyOrder(in UnitCommand command);
         bool HumanMoveEligible(in UnitCommand command);
         void BeginHumanMove(in UnitCommand command, double submittedAt, double pausedAtSubmit, bool eligible);

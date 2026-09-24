@@ -56,6 +56,20 @@ namespace RiskAI.Tests
         }
 
         [Test]
+        public void TheClickTableIsTheContract()
+        {
+            Assert.That(ClickRules.Resolve(Click(fleet: true, fleetCanAttack: true, enemy: true, enemyShip: true, harbor: true)), Is.EqualTo(ClickDecision.Attack));
+            Assert.That(ClickRules.Resolve(Click(fleet: true, harbor: true)), Is.EqualTo(ClickDecision.FleetToHarbor));
+            Assert.That(ClickRules.Resolve(Click(fleet: true, townPort: true)), Is.EqualTo(ClickDecision.FleetToTownPort));
+            Assert.That(ClickRules.Resolve(Click(land: true, fleet: true, enemy: true)), Is.EqualTo(ClickDecision.Attack));
+            Assert.That(ClickRules.Resolve(Click(land: true, transport: true)), Is.EqualTo(ClickDecision.Board));
+            Assert.That(ClickRules.Resolve(Click(land: true, ally: true)), Is.EqualTo(ClickDecision.Follow));
+            Assert.That(ClickRules.Resolve(Click(land: true, enemy: true, post: true)), Is.EqualTo(ClickDecision.Capture));
+            Assert.That(ClickRules.Resolve(Click(land: true, town: true, townHostile: true)), Is.EqualTo(ClickDecision.Capture));
+            Assert.That(ClickRules.Resolve(Click(land: true)), Is.EqualTo(ClickDecision.OrderGround));
+        }
+
+        [Test]
         public void MoveCursorDoesNotAttackOrCaptureWhatTheAttackCursorDoes()
         {
             Assert.That(ClickRules.Resolve(Click(land: true, enemy: true, armed: true)), Is.EqualTo(ClickDecision.Attack));
