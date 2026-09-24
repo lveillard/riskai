@@ -127,7 +127,7 @@ namespace RiskAI
             // empty transport can possibly start an expedition. An empty
             // disconnected transport must not veto a local purchase.
             bool canBuyTransport=CanFundTransportPurchase();
-            if(!canBuyTransport&&!HasEligibleEmptyTransport()){Defer();return;}
+            if(!canBuyTransport&&!HasEligibleEmptyTransport()){Teardown(true,phase,RetrySeconds,false,false,true);return;}
             if(!TryChooseSourceAndTroops(canBuyTransport,out source,out transport))
             {
                 if(SourcePassComplete()){attemptedSources.Clear();examinedSources.Clear();}
@@ -135,13 +135,13 @@ namespace RiskAI
             }
             if(!TryChooseTarget(source,out target,out destination))
             {
-                attemptedSources.Add(source);Defer();return;
+                attemptedSources.Add(source);Teardown(true,phase,RetrySeconds,false,false,true);return;
             }
             if(!transport)
             {
                 // Recheck mutable cheap conditions immediately before the normal
                 // paid harbor command.
-                if(!CanFundTransportPurchase()||!CanQueueTransportAt(source)){Defer();return;}
+                if(!CanFundTransportPurchase()||!CanQueueTransportAt(source)){Teardown(true,phase,RetrySeconds,false,false,true);return;}
                 if(buildingCommands.Execute(team,PlayerBuildingIntent.Recruit(source.BuildingId,UnitKind.Transport))!=null){Fail();return;}
                 phase=Phase.WaitingForTransport;phaseDeadline=session.BattleTime+UnitCatalog.Get(UnitKind.Transport).TrainSeconds+PhaseTimeout;return;
             }
@@ -260,24 +260,23 @@ namespace RiskAI
 
         void Attack()
         {
-            if(!target||target.State.Owner==team){Reset();return;}
+            if(!target||target.State.Owner==team){Teardown(false,Phase.Planning,RetrySeconds,true,true,true);return;}
             if(!attackOrderIssued){Fail();return;}
             for(int i=0;i<troops.Count;i++)if(Eligible(troops[i]))return;
             // A dead landing wave has no order left to protect. Release it now
             // rather than reserving the team until the attack timeout expires.
-            Reset();
+            Teardown(false,Phase.Planning,RetrySeconds,true,true,true);
         }
 
         void ReturnCargo()
         {
-            if(!transport||!transport.IsAlive){transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
-            if(transport.CargoCount==0){transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
+            if(!transport||!transport.IsAlive||transport.CargoCount==0){transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
             // The order still on the hull is the return, even when the slot is no longer waiting.
             bool running=returnDisembark.CommandId!=0&&transport.RunsCommand(returnDisembark.CommandId);
             bool aimed=returnDisembark.Waiting&&transport.RouteGoalMatches(returnDisembark.Berth);
             if(running||aimed)return;
             if(returnDisembark.Waiting&&returnHarbor&&session.Commands.TryGetResult(returnDisembark.CommandId,out var stored)&&!stored.Accepted)
-            {CoolDown();return;}
+            {Teardown(false,Phase.Cooldown,RetrySeconds,true,true,false);return;}
             // The beach already gave up, or the route no longer ends at this berth. One new order per interval.
             if(transport.ShoreUnloadPending||session.BattleTime<returnRetryAt)return;
             if(!returnHarbor||!returnHarbor.TryTransportLanding(out _,out _))
@@ -288,7 +287,7 @@ namespace RiskAI
             returnDisembark.Waiting=false;
             var check=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
             returnRetryAt=session.BattleTime+ReturnRetryInterval;
-            if(check==DisembarkConfirmation.Status.Rejected)CoolDown();
+            if(check==DisembarkConfirmation.Status.Rejected)Teardown(false,Phase.Cooldown,RetrySeconds,true,true,false);
         }
 
         bool TryChooseSourceAndTroops(bool canBuyTransport,out Harbor selected,out Ship selectedTransport)
@@ -570,27 +569,27 @@ namespace RiskAI
                     phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
                     return;
                 }
-                CoolDown();
+                Teardown(false,Phase.Cooldown,RetrySeconds,true,true,false);
                 return;
             }
             // A confirmation already in flight must be read, not wiped and sent again.
             if(returnDisembark.Waiting&&transport&&transport.IsAlive&&transport.CargoCount>0&&returnHarbor)
             {
                 var waiting=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
-                if(waiting==DisembarkConfirmation.Status.Rejected){CoolDown();return;}
+                if(waiting==DisembarkConfirmation.Status.Rejected){Teardown(false,Phase.Cooldown,RetrySeconds,true,true,false);return;}
                 // A parked ship is stalled. That does not block a new order once the old one has ended.
                 if(waiting==DisembarkConfirmation.Status.Accepted&&transport.CargoCount>0&&!transport.ShoreUnloadPending&&session.BattleTime>=returnRetryAt)
                 {
                     returnDisembark.Waiting=false;
                     var again=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
                     returnRetryAt=session.BattleTime+ReturnRetryInterval;
-                    if(again==DisembarkConfirmation.Status.Rejected){CoolDown();return;}
+                    if(again==DisembarkConfirmation.Status.Rejected){Teardown(false,Phase.Cooldown,RetrySeconds,true,true,false);return;}
                     // Keep the slot. Do not grant another voyage budget and do not wipe it.
                     if(again==DisembarkConfirmation.Status.Pending){phase=Phase.ReturningCargo;return;}
                 }
                 // Pending is unknown, not a failure. Keep the slot so the result can arrive during the cooldown.
-                if(waiting==DisembarkConfirmation.Status.Pending){ParkReturn();return;}
-                CoolDown();
+                if(waiting==DisembarkConfirmation.Status.Pending){Teardown(true,Phase.Cooldown,RetrySeconds,true,true,false);return;}
+                Teardown(false,Phase.Cooldown,RetrySeconds,true,true,false);
                 return;
             }
             var ship=transport;
@@ -609,16 +608,21 @@ namespace RiskAI
                 }
                 returnDisembark=default;
             }
-            CoolDown();
+            Teardown(false,Phase.Cooldown,RetrySeconds,true,true,false);
         }
-        void CoolDown()
+        /// <summary>
+        /// Shared end of a phase. <paramref name="keepReturn"/> leaves the return slot and the hull
+        /// (park). <paramref name="replacePhase"/> is false for a defer, which only rearms the retry.
+        /// Defer also leaves the source lists; the others clear them. ClearPlan is Reset and Defer.
+        /// </summary>
+        void Teardown(bool keepReturn, Phase next, float retry, bool replacePhase, bool clearSources, bool clearPlan)
         {
-            returnDisembark=default;
-            attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
-        }
-        void ParkReturn()
-        {
-            attemptedSources.Clear();examinedSources.Clear();phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
+            if (!keepReturn) returnDisembark = default;
+            if (clearSources) { attemptedSources.Clear(); examinedSources.Clear(); }
+            if (!keepReturn) transport = null;
+            if (replacePhase) phase = next;
+            retryAt = session.BattleTime + retry;
+            if (clearPlan) ClearPlan();
         }
         bool TryResumePreservedReturn()
         {
@@ -631,8 +635,6 @@ namespace RiskAI
             returnRetryAt=session.BattleTime+ReturnRetryInterval;
             return true;
         }
-        void Reset(){attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Planning;retryAt=session.BattleTime+RetrySeconds;ClearPlan();}
-        void Defer(){retryAt=session.BattleTime+RetrySeconds;ClearPlan();}
         void ClearPlan()
         {
             source=null;destination=null;target=null;returnHarbor=null;sourceLanding=sourceTransportBerth=destinationTransportBerth=default;troops.Clear();plannedSeaDistance=plannedGatherDistance=boardingDeadline=0;

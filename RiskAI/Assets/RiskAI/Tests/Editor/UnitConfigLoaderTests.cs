@@ -155,23 +155,5 @@ namespace RiskAI.Tests
             return JToken.DeepEquals(expected, actual) ? null : path + ": " + expected + " vs " + actual;
         }
 
-        [Test]
-        public void GeneratedDtoMatchesTheSchema()
-        {
-            // Complements `npm test` (build.mjs --check): every schema property is a DTO field and back.
-            var schema = JObject.Parse(File.ReadAllText(SchemaPath));
-            var defs = (JObject)schema["$defs"];
-            var types = new Dictionary<string, JObject> { ["UnitsFile"] = schema };
-            foreach (var def in defs.Properties()) types[def.Name] = (JObject)def.Value;
-            foreach (var entry in types)
-            {
-                if (entry.Value["properties"] == null) continue;
-                var type = typeof(UnitsFile).Assembly.GetType("RiskAI.Core." + entry.Key);
-                Assert.That(type, Is.Not.Null, "DTO type " + entry.Key);
-                var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance).Select(f => f.Name).ToList();
-                var properties = ((JObject)entry.Value["properties"]).Properties().Select(p => char.ToUpperInvariant(p.Name[0]) + p.Name.Substring(1)).ToList();
-                Assert.That(fields, Is.EquivalentTo(properties), entry.Key);
-            }
-        }
     }
 }

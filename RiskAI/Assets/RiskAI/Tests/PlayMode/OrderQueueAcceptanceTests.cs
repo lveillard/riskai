@@ -137,7 +137,7 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
-        public IEnumerator EmbarkRestoresThePassengerQueueIntact()
+        public IEnumerator EmbarkKeepsThePassengerQueueOnADirectBoardAndOnAnOrder()
         {
             var home = naval.Harbors.First(harbor => harbor.Owner == 0);
             var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
@@ -154,30 +154,21 @@ namespace RiskAI.Tests
             Assert.That(soldier.OrderLegCount, Is.GreaterThanOrEqualTo(2));
             Assert.That(soldier.OrderLegKind(0), Is.EqualTo(UnitCommandKind.Move));
             Assert.That(soldier.OrderLegKind(1), Is.EqualTo(UnitCommandKind.Attack));
-            yield return null;
-        }
 
-        [UnityTest]
-        public IEnumerator EmbarkApproachKeepsQueuedPassengerOrders()
-        {
-            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
-            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
-            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Landing);
-            var enemy = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, home.Landing + Vector3.right * 3f);
-            var point = Walkable(home.Landing, 4f);
-            Submit(soldier, UnitCommandKind.Move, point, append: true);
+            var ordered = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Landing + Vector3.forward);
+            Submit(ordered, UnitCommandKind.Move, point, append: true);
             Step();
-            Assert.That(battle.Commands.Submit(new UnitCommand(0, soldier.EntityId, UnitCommandKind.Attack, targetId: enemy.EntityId, append: true)), Is.True);
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, ordered.EntityId, UnitCommandKind.Attack, targetId: enemy.EntityId, append: true)), Is.True);
             Step();
-            Assert.That(naval.TryOrderEmbark(transport, soldier, out var error), Is.True, error);
+            Assert.That(naval.TryOrderEmbark(transport, ordered, out var error), Is.True, error);
             Step();
-            if (soldier.gameObject.activeInHierarchy)
-                Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            if (ordered.gameObject.activeInHierarchy)
+                Assert.That(transport.TryEmbark(ordered), Is.True, transport.LastActionError);
             Assert.That(transport.UnloadAt(home.Landing), Is.True, transport.LastActionError);
             Step();
-            Assert.That(soldier.OrderLegCount, Is.GreaterThanOrEqualTo(2));
-            Assert.That(soldier.OrderLegKind(0), Is.EqualTo(UnitCommandKind.Move));
-            Assert.That(soldier.OrderLegKind(1), Is.EqualTo(UnitCommandKind.Attack));
+            Assert.That(ordered.OrderLegCount, Is.GreaterThanOrEqualTo(2));
+            Assert.That(ordered.OrderLegKind(0), Is.EqualTo(UnitCommandKind.Move));
+            Assert.That(ordered.OrderLegKind(1), Is.EqualTo(UnitCommandKind.Attack));
             yield return null;
         }
 
@@ -418,7 +409,7 @@ namespace RiskAI.Tests
             Assert.That(naval.TryOrderEmbark(transport, soldier, out var error), Is.True, error);
             Step();
             var filler = new UnitCommand(0, soldier.EntityId, UnitCommandKind.Move, 1f, 0f, 1f);
-            while (soldier.Orders.CanStash(filler))
+            while (soldier.Orders.StashCount < OrderQueue.LegCap)
             {
                 Assert.That(soldier.Orders.AppendStash(filler), Is.True);
                 filler = new UnitCommand(0, soldier.EntityId, UnitCommandKind.Move, filler.X + 1f, 0f, 1f);

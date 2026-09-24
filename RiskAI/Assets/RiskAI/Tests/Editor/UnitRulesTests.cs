@@ -88,20 +88,20 @@ namespace RiskAI.Tests
         {
             var queue = new OrderQueue();
             var move = new UnitCommand(0, 1, UnitCommandKind.Move, 1, 0, 2, append: true);
-            Assert.That(queue.Admit(move, false), Is.EqualTo(OrderQueue.AdmitResult.Run), "the first Shift order on an idle unit starts now");
+            Assert.That(queue.Admit(move, false, true), Is.EqualTo(OrderQueue.AdmitResult.Run), "the first Shift order on an idle unit starts now");
             Assert.That(queue.Count, Is.EqualTo(0));
-            Assert.That(queue.Admit(move, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
+            Assert.That(queue.Admit(move, true, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
             var replace = new UnitCommand(0, 1, UnitCommandKind.AttackMove, 3, 0, 4, append: false);
-            Assert.That(queue.Admit(replace, true), Is.EqualTo(OrderQueue.AdmitResult.Run));
+            Assert.That(queue.Admit(replace, true, true), Is.EqualTo(OrderQueue.AdmitResult.Run));
             Assert.That(queue.Count, Is.EqualTo(0), "an order without Shift replaces the queue");
             for (int i = 0; i < OrderQueue.Limit; i++)
-                Assert.That(queue.Admit(move, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
-            Assert.That(queue.Admit(move, true), Is.EqualTo(OrderQueue.AdmitResult.Full));
-            Assert.That(queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Stop, append: true), true), Is.EqualTo(OrderQueue.AdmitResult.Run));
+                Assert.That(queue.Admit(move, true, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
+            Assert.That(queue.Admit(move, true, true), Is.EqualTo(OrderQueue.AdmitResult.Full));
+            Assert.That(queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Stop, append: true), true, true), Is.EqualTo(OrderQueue.AdmitResult.Run));
             Assert.That(queue.Count, Is.EqualTo(0), "Stop never stays in the queue");
-            Assert.That(queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Hold), true), Is.EqualTo(OrderQueue.AdmitResult.Run));
+            Assert.That(queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Hold), true, true), Is.EqualTo(OrderQueue.AdmitResult.Run));
 
-            queue.Admit(move, true);
+            queue.Admit(move, true, true);
             queue.Publish(true, UnitCommandKind.Move, 8, 0, 9);
             Assert.That(queue.LegCount, Is.EqualTo(2));
             queue.Leg(0, out var x, out _, out var z, out var kind);
@@ -109,7 +109,7 @@ namespace RiskAI.Tests
             Assert.That(z, Is.EqualTo(9f));
             Assert.That(kind, Is.EqualTo((byte)UnitCommandKind.Move));
             var attack = new UnitCommand(0, 1, UnitCommandKind.Attack, 4, 1, 5, targetId: 90, append: true);
-            Assert.That(queue.Admit(attack, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
+            Assert.That(queue.Admit(attack, true, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
             queue.Publish(true, UnitCommandKind.Move, 8, 0, 9);
             queue.Stash(true, new UnitCommand(0, 1, UnitCommandKind.Follow, 8, 0, 9, targetId: 40, structureId: "town-1", structureKind: BuildingKind.Settlement));
             queue.Clear();
@@ -152,8 +152,8 @@ namespace RiskAI.Tests
             Assert.That(UnitRules.OnTargetLost(UnitCommandKind.AttackMove), Is.EqualTo(UnitRules.TargetLost.KeepDestination));
 
             var queue = new OrderQueue();
-            queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Move, 1, 0, 2, append: true), true);
-            Assert.That(queue.Commit(new UnitCommand(0, 1, UnitCommandKind.Attack, append: false), true, false), Is.EqualTo(OrderQueue.AdmitResult.Rejected));
+            queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Move, 1, 0, 2, append: true), true, true);
+            Assert.That(queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Attack, append: false), true, false), Is.EqualTo(OrderQueue.AdmitResult.Rejected));
             Assert.That(queue.Count, Is.EqualTo(1), "a rejected order does not clear the queue");
         }
 
@@ -197,7 +197,7 @@ namespace RiskAI.Tests
             var active = new UnitCommand(0, 1, UnitCommandKind.Move, 2, 0, 3);
             queue.Stash(true, active);
             var extra = new UnitCommand(0, 1, UnitCommandKind.Move, 8, 0, 1, append: true);
-            Assert.That(queue.Admit(extra, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
+            Assert.That(queue.Admit(extra, true, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
             queue.AppendStash(extra);
             queue.MergeQueue();
             Assert.That(queue.StashCount, Is.EqualTo(2));
@@ -231,7 +231,6 @@ namespace RiskAI.Tests
             for (int i = 0; i < OrderQueue.LegCap; i++)
                 Assert.That(queue.AppendStash(new UnitCommand(0, 1, UnitCommandKind.Move, i, 0, 1)), Is.True);
             var extra = new UnitCommand(0, 1, UnitCommandKind.Move, 80, 0, 1);
-            Assert.That(queue.CanStash(extra), Is.False);
             Assert.That(queue.AppendStash(extra), Is.False);
             Assert.That(queue.StashCount, Is.EqualTo(OrderQueue.LegCap));
         }

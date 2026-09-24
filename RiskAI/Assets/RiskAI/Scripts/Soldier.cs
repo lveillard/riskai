@@ -5,23 +5,6 @@ using UnityEngine.AI;
 
 namespace RiskAI
 {
-    /// <summary>Test seam for the move-order path budget. Armed only by PlayMode tests.</summary>
-    public static class SoldierPathBudget
-    {
-        public static bool Armed;
-        public static int SetDestination, ResetPath, Stopped, Sampled, Calculated;
-        public static void Arm()
-        {
-            Armed = true;
-            SetDestination = ResetPath = Stopped = Sampled = Calculated = 0;
-        }
-        public static void NoteSetDestination() { if (Armed) SetDestination++; }
-        public static void NoteResetPath() { if (Armed) ResetPath++; }
-        public static void NoteStopped() { if (Armed) Stopped++; }
-        public static void NoteSample() { if (Armed) Sampled++; }
-        public static void NoteCalculated() { if (Armed) Calculated++; }
-    }
-
     [RequireComponent(typeof(NavMeshAgent))]
     public sealed class Soldier : CombatTarget, IOrderable, IPostClaimant, IQueuedOrderRunner
     {
@@ -102,7 +85,7 @@ namespace RiskAI
         bool hasActiveCommand;
         CaptureOrderState capture;
         CapturePlan.View captureView;
-        bool keepEmbarkStash;
+
         Vector3 capturePoint;
         Vector3 pathDestination;
         Vector3 attackRouteAnchor;
@@ -115,7 +98,7 @@ namespace RiskAI
             Garrison=null; simulationPaused=false; enabled=true; roarUntil=-1; roarBonus=0;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
             mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; hasActiveCommand=false; capture.Clear(); captureView=default; orders.Reset();
-            admissionSnapReady=false; admissionSnapId=0; admissionSnap=default;
+            admissionSnapReady=false; admissionSnap=default;
             nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
             humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
             bool first=!Agent;
@@ -130,7 +113,7 @@ namespace RiskAI
             UpdateTerrainSpeed();
             session.RegisterTarget(this);
             Agent.avoidancePriority=25+EntityId%32;
-            if(Agent.isOnNavMesh){Agent.Warp(transform.position);Agent.ResetPath();SoldierPathBudget.NoteResetPath();Agent.isStopped=false;}
+            if(Agent.isOnNavMesh){Agent.Warp(transform.position);Agent.ResetPath();Agent.isStopped=false;}
             transform.rotation=Quaternion.Euler(0,team==0?180:0,0);
             if(first)
             {
@@ -165,7 +148,7 @@ namespace RiskAI
             if(!zone.TryGetGarrisonAnchor(out var point))return false;
             Stand(OrderMode.Hold);
             Agent.updatePosition=true; Agent.updateRotation=true;
-            Agent.ResetPath(); SoldierPathBudget.NoteResetPath(); Agent.isStopped=true; SoldierPathBudget.NoteStopped();
+            Agent.ResetPath();  Agent.isStopped=true; 
             if(!Agent.Warp(point))return false;
             transform.position=point;
             anchor=garrisonAnchor=point;Garrison=zone;
@@ -185,7 +168,7 @@ namespace RiskAI
             if(!Agent || !Agent.enabled)return;
             Agent.updatePosition=true; Agent.updateRotation=true;
             Agent.obstacleAvoidanceType=ObstacleAvoidanceType.LowQualityObstacleAvoidance;
-            if(Agent.isOnNavMesh){Agent.Warp(transform.position);Agent.ResetPath();SoldierPathBudget.NoteResetPath();Agent.isStopped=false;}
+            if(Agent.isOnNavMesh){Agent.Warp(transform.position);Agent.ResetPath();Agent.isStopped=false;}
         }
 
         void MaintainGarrisonAnchor()
@@ -244,10 +227,10 @@ namespace RiskAI
             Agent.isStopped = false; Agent.stoppingDistance = .15f; nextPath = 0;
             if (mode == OrderMode.Move || mode == OrderMode.AttackMove || mode == OrderMode.Patrol)
             {
-                SoldierPathBudget.NoteSetDestination();
+                
                 if(!Agent.SetDestination(destination))LastMoveError="No se ha podido calcular la ruta a ese destino.";
             }
-            else { Agent.ResetPath(); SoldierPathBudget.NoteResetPath(); }
+            else { Agent.ResetPath();  }
         }
         // Autonomous behaviors run frequently.  Never discard an in-flight path for one of
         // their small destination adjustments, and retain a route that already reaches it.
@@ -258,7 +241,7 @@ namespace RiskAI
             var delta = Agent.destination - point;
             delta.y = 0;
             if (Agent.hasPath && delta.sqrMagnitude <= .1225f) return true;
-            SoldierPathBudget.NoteSetDestination();
+            
             return Agent.SetDestination(point);
         }
         public void Attack(CombatTarget enemy, bool append = false)
@@ -282,14 +265,14 @@ namespace RiskAI
             var point = ally.transform.position;
             ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Follow, point.x, point.y, point.z, ally.EntityId, append));
         }
-        public void Stop() => ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Stop));
+        public void Stop() => ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Stop), false);
         public void HoldPosition() => ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Hold));
-        void Stand(OrderMode orderMode)
+        void Stand(OrderMode orderMode, bool keepPassengerPlan = false)
         {
             if(IsGarrison)return;
-            if (!keepEmbarkStash) orders.ClearStash();
+            if (!keepPassengerPlan) orders.ClearStash();
             orders.Clear(); hasActiveCommand = false; capture.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false; PublishRoute();
-            if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); SoldierPathBudget.NoteResetPath(); Agent.isStopped = false; }
+            if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); Agent.isStopped = false; }
         }
         void Complete(bool failed=false)
         {
@@ -304,7 +287,7 @@ namespace RiskAI
             // The destination was sampled when the order was admitted. Starting it must not sample again.
             if (!OrderValidation.Check(session, this, command, false, out _)) { LastMoveError = null; return false; }
             if (!ReleasePost(command, true, out _)) { LastMoveError = null; return false; }
-            return Execute(command);
+            return Execute(command, false);
         }
         bool IQueuedOrderRunner.TryStartQueued(in UnitCommand command) => RunQueued(command);
         void SetTarget(CombatTarget enemy) { target = enemy; pursuitOrigin = transform.position; nextPath = 0; }
@@ -588,7 +571,7 @@ namespace RiskAI
                     if (mode == OrderMode.Capture) { if (!StepCapture()) Complete(); }
                     else Complete();
                 }
-                else if (!Agent.hasPath && session.BattleTime >= nextPath) { Agent.stoppingDistance = .15f; SoldierPathBudget.NoteSetDestination(); Agent.SetDestination(destination); nextPath = session.BattleTime + .5f; }
+                else if (!Agent.hasPath && session.BattleTime >= nextPath) { Agent.stoppingDistance = .15f; Agent.SetDestination(destination); nextPath = session.BattleTime + .5f; }
             }
         }
         /// <summary>An idle ally joins against the attacker of a nearby friend.</summary>
@@ -618,7 +601,7 @@ namespace RiskAI
             admissionSnapReady = false;
             bool ok = OrderValidation.Check(session, this, command, plan, out var error);
             if (!ok) LastMoveError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
-            else if (admissionSnapReady && admissionSnapId == command.CommandId)
+            else if (admissionSnapReady)
                 command = command.WithSnap(admissionSnap.x, admissionSnap.y, admissionSnap.z);
             admissionSnapReady = false;
             return ok;
@@ -665,20 +648,17 @@ namespace RiskAI
         }
 
         bool admissionSnapReady;
-        int admissionSnapId;
         Vector3 admissionSnap;
         bool SnapDestination(in UnitCommand command, out string error)
         {
             error = null;
             admissionSnapReady = false;
             if (!OnMesh(out error)) return false;
-            SoldierPathBudget.NoteSample();
             if (!NavMesh.SamplePosition(new Vector3(command.X, command.Y, command.Z), out var hit, 8, NavMesh.AllAreas))
             {
                 error = "Ese destino no es transitable; usa un transporte para cruzar el agua.";
                 return false;
             }
-            admissionSnapId = command.CommandId;
             admissionSnap = hit.position;
             admissionSnapReady = true;
             return true;
@@ -691,7 +671,6 @@ namespace RiskAI
                 point = new Vector3(command.SnapX, command.SnapY, command.SnapZ);
                 return true;
             }
-            SoldierPathBudget.NoteSample();
             if (!NavMesh.SamplePosition(new Vector3(command.X, command.Y, command.Z), out var hit, 8, NavMesh.AllAreas))
             {
                 point = default;
@@ -709,7 +688,7 @@ namespace RiskAI
             return false;
         }
 
-        bool ApplyOrder(in UnitCommand command)
+        bool ApplyOrder(in UnitCommand command, bool keepPassengerPlan = false)
         {
             // plan=false: admission already snapped a command that came through the inbox.
             bool valid = OrderValidation.Check(session, this, command, false, out var error);
@@ -722,20 +701,20 @@ namespace RiskAI
                 valid = false;
             }
             // A replacing order cancels the voyage plan. An appended order keeps it,
-            // and a full queue must not wipe the stash before Commit refuses the order.
+            // and a full queue must not wipe the stash before Admit refuses the order.
             bool replacing = willRun && command.Kind != UnitCommandKind.Stop && command.Kind != UnitCommandKind.Hold
                 && command.Kind != UnitCommandKind.Embark;
-            if (valid && replacing && !keepEmbarkStash) orders.ClearStash();
+            if (valid && replacing && !keepPassengerPlan) orders.ClearStash();
             else if (valid && command.Kind == UnitCommandKind.Embark && !command.Append)
-                KeepEmbarkPlan();
+                RetainOrdersForEmbark();
             else if (valid && hasActiveCommand && activeCommand.Kind == UnitCommandKind.Embark
                 && UnitRules.Queue(command.Kind, command.Append, OrderBusy) == UnitRules.OrderQueueAction.Append
-                && !orders.CanStash(command))
+                && orders.StashCount >= OrderQueue.LegCap && !StashHolds(command))
             {
                 LastMoveError = OrderQueue.FullError;
                 valid = false;
             }
-            switch (orders.Commit(command, OrderBusy, valid))
+            switch (orders.Admit(command, OrderBusy, valid))
             {
                 case OrderQueue.AdmitResult.Rejected:
                     if (string.IsNullOrEmpty(LastMoveError)) LastMoveError = OrderQueue.InvalidError;
@@ -749,13 +728,13 @@ namespace RiskAI
                     PublishRoute();
                     return true;
                 default:
-                    bool ok = Execute(command);
+                    bool ok = Execute(command, keepPassengerPlan);
                     PublishRoute();
                     return ok;
             }
         }
 
-        bool Execute(in UnitCommand command)
+        bool Execute(in UnitCommand command, bool keepPassengerPlan)
         {
             switch (command.Kind)
             {
@@ -766,7 +745,7 @@ namespace RiskAI
                 case UnitCommandKind.Follow: return ExecuteFollow(command);
                 case UnitCommandKind.Capture: return ExecuteCapture(command);
                 case UnitCommandKind.Embark: return ExecuteEmbark(command);
-                case UnitCommandKind.Stop: Stand(OrderMode.Idle); return true;
+                case UnitCommandKind.Stop: Stand(OrderMode.Idle, keepPassengerPlan); return true;
                 case UnitCommandKind.Hold: Stand(OrderMode.Hold); return true;
                 default: LastMoveError = OrderQueue.InvalidError; return false;
             }
@@ -925,8 +904,11 @@ namespace RiskAI
             }
         }
 
-        /// <summary>A replacing embark keeps the live plan. An existing stash is merged, not left behind.</summary>
-        void KeepEmbarkPlan()
+        /// <summary>
+        /// Boarding keeps every queued command, including its target, for after the unload.
+        /// An empty plan copies the live order and the queue. A plan already started only appends.
+        /// </summary>
+        public void RetainOrdersForEmbark()
         {
             if (orders.StashCount == 0)
             {
@@ -938,23 +920,23 @@ namespace RiskAI
             orders.MergeQueue();
         }
 
-        /// <summary>Boarding keeps every queued command, including its target, for after the unload.</summary>
-        public void RetainOrdersForEmbark()
+        bool StashHolds(in UnitCommand command)
         {
-            // A direct board (no Embark order) still has the live move as the active command.
-            // An Embark order already stashed that plan; the active command is then the embark itself.
-            if (hasActiveCommand && activeCommand.Kind != UnitCommandKind.Embark)
-                orders.AppendStash(activeCommand);
-            orders.MergeQueue();
+            for (int i = 0; i < orders.StashCount; i++)
+            {
+                var saved = orders.StashedCommand(i);
+                if (saved.Kind == command.Kind && saved.TargetId == command.TargetId && saved.CommandId == command.CommandId
+                    && saved.X == command.X && saved.Y == command.Y && saved.Z == command.Z && saved.StructureId == command.StructureId)
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>Stop the motor but keep the passenger plan that <see cref="RetainOrdersForEmbark"/> just stored.</summary>
         public void StopKeepingPassengerPlan()
         {
             RetainOrdersForEmbark();
-            keepEmbarkStash = true;
-            Stop();
-            keepEmbarkStash = false;
+            ApplyOrder(new UnitCommand(Team, EntityId, UnitCommandKind.Stop), true);
         }
 
         /// <summary>One buffer for every soldier. A second caller while the first is still copying fails instead of mixing the two plans.</summary>
@@ -969,7 +951,6 @@ namespace RiskAI
             embarkRestoreDepth++;
             try
             {
-                if (count > embarkRestore.Length) count = embarkRestore.Length;
                 for (int i = 0; i < count; i++) embarkRestore[i] = orders.StashedCommand(i);
                 orders.ClearStash();
                 for (int i = 0; i < count; i++) ApplyOrder(embarkRestore[i].WithAppend(i > 0));
@@ -986,7 +967,6 @@ namespace RiskAI
         {
             if (!Agent || !Agent.isOnNavMesh || !Agent.hasPath) { pathCornerCount = 0; return; }
             if (pathQuery == null) pathQuery = new NavMeshPath();
-            SoldierPathBudget.NoteCalculated();
             if (!Agent.CalculatePath(Agent.destination, pathQuery)) { pathCornerCount = 0; return; }
             pathCornerCount = pathQuery.GetCornersNonAlloc(pathCorners);
         }

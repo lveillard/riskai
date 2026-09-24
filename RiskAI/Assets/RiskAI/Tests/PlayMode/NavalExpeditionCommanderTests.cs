@@ -140,7 +140,6 @@ namespace RiskAI.Tests
             route.Clear();
             route.Add(berth);
             typeof(Ship).GetField("routeIndex", hidden).SetValue(transport, 0);
-            typeof(Ship).GetField("hasRouteGoal", hidden).SetValue(transport, true);
             typeof(Ship).GetField("routeGoal", hidden).SetValue(transport, berth);
             typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(transport, -100f);
             typeof(Ship).GetField("hasActiveCommand", hidden).SetValue(transport, true);
@@ -233,7 +232,6 @@ namespace RiskAI.Tests
             route.Clear();
             route.Add(berth);
             typeof(Ship).GetField("routeIndex", hidden).SetValue(transport, 0);
-            typeof(Ship).GetField("hasRouteGoal", hidden).SetValue(transport, true);
             typeof(Ship).GetField("routeGoal", hidden).SetValue(transport, berth);
             typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(transport, battle.BattleTime);
             typeof(Ship).GetField("hasActiveCommand", hidden).SetValue(transport, true);
@@ -285,11 +283,9 @@ namespace RiskAI.Tests
             var capture = default(CaptureOrderState);
             capture.Begin(true, home.Owner);
             typeof(Ship).GetField("capture", hidden).SetValue(transport, capture);
-            typeof(Ship).GetField("captureSailing", hidden).SetValue(transport, true);
             var route = (System.Collections.Generic.List<Vector3>)typeof(Ship).GetField("route", hidden).GetValue(transport);
             route.Clear();
             typeof(Ship).GetField("routeIndex", hidden).SetValue(transport, 0);
-            typeof(Ship).GetField("hasRouteGoal", hidden).SetValue(transport, true);
             typeof(Ship).GetField("routeGoal", hidden).SetValue(transport, berth);
             typeof(Ship).GetField("pendingShoreUnload", hidden).SetValue(transport, true);
             typeof(Ship).GetField("pendingShore", hidden).SetValue(transport, transport.transform.position);
@@ -305,7 +301,7 @@ namespace RiskAI.Tests
             }
             Assert.That(transport.CargoCount, Is.EqualTo(1));
             Assert.That((bool)typeof(Ship).GetField("pendingShoreUnload", hidden).GetValue(transport), Is.False);
-            Assert.That((bool)typeof(Ship).GetField("hasRouteGoal", hidden).GetValue(transport), Is.False, "ending the order clears the berth");
+            Assert.That(transport.RouteGoalMatches(berth), Is.False, "ending the order clears the berth");
             var commander = naval.ExpeditionFor(1);
             var phaseType = typeof(NavalExpeditionCommander).GetNestedType("Phase", BindingFlags.NonPublic);
             var slotType = typeof(DisembarkConfirmation).GetNestedType("Slot");

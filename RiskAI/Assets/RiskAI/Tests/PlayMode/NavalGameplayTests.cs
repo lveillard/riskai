@@ -129,7 +129,7 @@ namespace RiskAI.Tests
    var route=(List<Vector3>)type.GetField("route",hidden).GetValue(ship);
    // This represents a route whose ocean clearance disappeared after it was accepted.
    route.Clear();route.Add(home.Landing);type.GetField("routeIndex",hidden).SetValue(ship,0);
-   type.GetField("routeGoal",hidden).SetValue(ship,target.Berth);type.GetField("hasRouteGoal",hidden).SetValue(ship,true);
+   type.GetField("routeGoal",hidden).SetValue(ship,target.Berth);
    type.GetField("lastRouteProgressAt",hidden).SetValue(ship,battle.BattleTime);
    Assert.That(ship.IsAtOrRoutingTo(target.Berth),Is.True,"An active route initially suppresses duplicate AI orders.");
    float stalledUntil=battle.BattleTime+6.2f;while(battle.BattleTime<stalledUntil)battle.Clock.Advance(.1,false,battle.World.Tick);

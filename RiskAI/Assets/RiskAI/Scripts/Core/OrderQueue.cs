@@ -43,18 +43,13 @@ namespace RiskAI.Core
         }
 
         /// <summary>
-        /// Plan §4.5. Stop and Hold clear and still run (the motor stands; the command is not queued).
-        /// Shift while the unit is busy appends. Anything else replaces the queue and runs now.
+        /// Plan §4.5. A rejected order leaves the queue as it was. Stop and Hold clear and still run.
+        /// Shift while busy appends. Anything else replaces the queue and runs now.
         /// </summary>
-        public AdmitResult Admit(in UnitCommand command, bool busy)
+        public AdmitResult Admit(in UnitCommand command, bool busy, bool valid)
         {
-            var action = UnitRules.Queue(command.Kind, command.Append, busy);
-            if (action == UnitRules.OrderQueueAction.Clear)
-            {
-                Clear();
-                return AdmitResult.Run;
-            }
-            if (action == UnitRules.OrderQueueAction.Append)
+            if (!valid) return AdmitResult.Rejected;
+            if (UnitRules.Queue(command.Kind, command.Append, busy) == UnitRules.OrderQueueAction.Append)
                 return TryEnqueue(command) ? AdmitResult.Queued : AdmitResult.Full;
             Clear();
             return AdmitResult.Run;
@@ -125,31 +120,18 @@ namespace RiskAI.Core
             kind = legKind[index];
         }
 
-        /// <summary>
-        /// Validates before any mutation. A rejected order leaves the queue as it was.
-        /// Stop and Hold still clear. Shift while busy appends. Anything else replaces and runs.
-        /// </summary>
-        public AdmitResult Commit(in UnitCommand command, bool busy, bool valid)
-        {
-            if (!valid) return AdmitResult.Rejected;
-            return Admit(command, busy);
-        }
-
-        /// <summary>Boarding keeps the active command and the queue, kinds and targets included.</summary>
+        /// <summary>Boarding keeps the active command and the queue, kinds and targets included. The active order plus the queue is exactly LegCap.</summary>
         public void Stash(bool hasActive, in UnitCommand active)
         {
             stashCount = 0;
-            if (hasActive && stashCount < LegCap) stash[stashCount++] = active;
-            for (int i = 0; i < count && stashCount < LegCap; i++)
+            if (hasActive) stash[stashCount++] = active;
+            for (int i = 0; i < count; i++)
                 stash[stashCount++] = items[(head + i) % Limit];
         }
 
         public UnitCommand StashedCommand(int index) => stash[index];
 
         public void ClearStash() => stashCount = 0;
-
-        /// <summary>The passenger plan uses the same cap as the queue, plus the order already being carried out.</summary>
-        public bool CanStash(in UnitCommand command) => ContainsStash(command) || stashCount < LegCap;
 
         /// <summary>Keeps an order for after the voyage. A second copy of the same order is ignored. False when the plan is full.</summary>
         public bool AppendStash(in UnitCommand command)

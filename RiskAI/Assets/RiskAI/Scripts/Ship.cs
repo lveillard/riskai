@@ -18,13 +18,12 @@ namespace RiskAI
         bool hasActiveCommand;
         CaptureOrderState capture;
         CapturePlan.View captureView;
-        bool captureSailing;
         int plannedCommandId;
         bool plannedReady;
         Vector3 plannedPoint, plannedFrom;
         NavalWorld world;int routeIndex;float nextAttack,nextTargetPath,simDelta,nextSense,lastRouteProgressAt;
         Vector3 routeGoal, attackMoveGoal;
-        bool hasRouteGoal, hasAttackMoveGoal;
+        bool hasAttackMoveGoal;
         readonly List<CombatTarget> nearby = new List<CombatTarget>(48);
         CombatTarget target;
         bool attackMoveOrder;
@@ -72,13 +71,13 @@ namespace RiskAI
         public bool IsAtOrRoutingTo(Vector3 point,float tolerance=1.5f)
         {
             var here=transform.position-point;here.y=0;if(here.sqrMagnitude<=tolerance*tolerance)return true;
-            if(!hasRouteGoal||routeIndex>=route.Count||RouteHasStalled())return false;
-            var goal=routeGoal-point;goal.y=0;return goal.sqrMagnitude<=tolerance*tolerance;
+            if(RouteHasStalled())return false;
+            return RouteGoalMatches(point, tolerance);
         }
         /// <summary>The goal of a route that is still being sailed. A finished order does not keep a stale berth.</summary>
         public bool RouteGoalMatches(Vector3 point, float tolerance = 1.5f)
         {
-            if (!hasRouteGoal || routeIndex >= route.Count) return false;
+            if (routeIndex >= route.Count) return false;
             var delta = routeGoal - point;
             delta.y = 0f;
             return delta.sqrMagnitude <= tolerance * tolerance;
@@ -107,7 +106,7 @@ namespace RiskAI
 
         internal void Initialize(NavalWorld naval,int team,UnitKind kind)
         {
-            world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;hasActiveCommand=false;capture.Clear();captureView=default;captureSailing=false;plannedCommandId=0;plannedReady=false;plannedPath.Clear();unloadSlot=0;shoreFailureReported=false;shoreUnloadElapsed=shoreUnloadCooldown=0;orders.Reset();transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
+            world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;hasActiveCommand=false;capture.Clear();captureView=default;plannedCommandId=0;plannedReady=false;plannedPath.Clear();unloadSlot=0;shoreFailureReported=false;shoreUnloadElapsed=shoreUnloadCooldown=0;orders.Reset();transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
             NavalArt.CreateShip(this);
             targetVolume=GetComponent<BoxCollider>();
         }
@@ -135,7 +134,7 @@ namespace RiskAI
                 if(!TryLeaveHarborGuard(plannedPoint))return;
                 orderedHarbor=null;
                 ClearShoreUnload();
-                CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=plannedPoint;
+                CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=plannedPoint;
                 plannedReady=false;
                 return;
             }
@@ -148,7 +147,7 @@ namespace RiskAI
             if(!TryLeaveHarborGuard(destination))return;
             orderedHarbor=null;
             ClearShoreUnload();
-            CopyScratchToRoute();routeIndex=0;routeGoal=destination;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=destination;
+            CopyScratchToRoute();routeIndex=0;routeGoal=destination;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=destination;
         }
         public void SailToHarbor(Harbor harbor)
         {
@@ -181,7 +180,7 @@ namespace RiskAI
             {
                 orderedHarbor=null;
                 ClearShoreUnload();
-                CopyPlanToRoute();routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=plannedPath.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;
+                CopyPlanToRoute();routeIndex=0;routeGoal=enemy.transform.position;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;
                 plannedReady=false;
                 return true;
             }
@@ -195,11 +194,11 @@ namespace RiskAI
             }
             orderedHarbor=null;
             ClearShoreUnload();
-            CopyScratchToRoute();routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=pathScratch.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;
+            CopyScratchToRoute();routeIndex=0;routeGoal=enemy.transform.position;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;
             return true;
         }
-        public void Stop(){HaltMotor();orders.Clear();hasActiveCommand=false;capture.Clear();captureView=default;captureSailing=false;plannedReady=false;PublishOrders();}
-        void HaltMotor(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;triedMoveRepath=false;ClearShoreUnload();}
+        public void Stop(){HaltMotor();orders.Clear();hasActiveCommand=false;capture.Clear();captureView=default;plannedReady=false;PublishOrders();}
+        void HaltMotor(){orderedHarbor=null;route.Clear();routeIndex=0;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;triedMoveRepath=false;ClearShoreUnload();}
         void CopyScratchToRoute(){route.Clear();for(int i=0;i<pathScratch.Count;i++)route.Add(pathScratch[i]);}
         /// <summary>Queues a source-style unload at a validated shore after sailing there.</summary>
         public string SailToShore(Vector3 shore)
@@ -208,19 +207,19 @@ namespace RiskAI
             if(!IsAlive||!Type.CanTransport)return LastActionError="Selecciona un transporte.";
             if(HasPlan())
             {
-                if(!TryValidateShore(shore,out var plannedLanding,out var plannedError))return LastActionError=plannedError;
+                if(!ShoreAccess.TryLanding(shore,out var plannedLanding,out var plannedError))return LastActionError=plannedError;
                 if(!TryLeaveHarborGuard(plannedPoint))return LastActionError;
                 orderedHarbor=null;
                 triedMoveRepath=false;
-                CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
+                CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
                 ArmShoreUnload(plannedLanding);plannedReady=false;return null;
             }
-            if(!TryValidateShore(shore,out var landing,out var error))return LastActionError=error;
+            if(!ShoreAccess.TryLanding(shore,out var landing,out var error))return LastActionError=error;
             if(!SeaNavigation.TryNearestOcean(landing,ShoreBerthSearchRadius,out var berth)||!SeaNavigation.TryBuildPath(transform.position,berth,pathScratch))return LastActionError="No hay una ruta marítima segura hasta esa playa.";
             if(!TryLeaveHarborGuard(berth))return LastActionError;
             orderedHarbor=null;
             triedMoveRepath=false;
-            CopyScratchToRoute();routeIndex=0;routeGoal=berth;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
+            CopyScratchToRoute();routeIndex=0;routeGoal=berth;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
             ArmShoreUnload(landing);return null;
         }
         int shoreCommandId;
@@ -250,21 +249,18 @@ namespace RiskAI
             return harbor&&UnloadAt(harbor.Landing);
         }
         /// <summary>A00X unloads at the vessel; this adapter requires a nearby walkable shore.</summary>
-        /// <param name="landingLimit">0 lands every soldier who fits. A positive limit stops after that many, so a test can open one spot per retry.</param>
-        public bool UnloadAt(Vector3 shore, int landingLimit = 0)
+        public bool UnloadAt(Vector3 shore)
         {
             LastActionError=null;
             if(world.Session.Paused||world.Session.Winner>=0)return false;
             if(!IsAlive||!Type.CanTransport){LastActionError="Selecciona un transporte.";return false;}
             if(!TryFindDisembarkPoint(shore,out shore,out var error)){LastActionError=error;return false;}
             bool unloaded=false;
-            int landed=0;
             cargoScratch.Clear();for(int i=0;i<cargo.Count;i++)cargoScratch.Add(cargo[i]);
             foreach(var soldier in cargoScratch)
             {
                 if(!soldier){cargo.Remove(soldier);continue;}
-                if(landingLimit>0&&landed>=landingLimit)break;
-                if(TryUnloadSoldier(soldier,shore,unloadSlot)){unloaded=true;unloadSlot++;landed++;}
+                if(TryUnloadSoldier(soldier,shore,unloadSlot)){unloaded=true;unloadSlot++;}
             }
             if(!unloaded&&cargo.Count>0)LastActionError="No hay sitio transitable para desembarcar en esa playa.";
             if(cargo.Count==0)unloadSlot=0;
@@ -273,7 +269,7 @@ namespace RiskAI
         public bool TryFindDisembarkPoint(Vector3 requested,out Vector3 landing,out string error)
         {
             landing=default;error=null;
-            if(!TryValidateShore(requested,out landing,out error))return false;
+            if(!ShoreAccess.TryLanding(requested,out landing,out error))return false;
             if(DistanceXZ(transform.position,landing)>LoadRadius){error="Acerca el transporte a una playa marcada.";landing=default;return false;}
             return true;
         }
@@ -309,9 +305,7 @@ namespace RiskAI
             }
             return false;
         }
-        static bool TryValidateShore(Vector3 requested,out Vector3 landing,out string error)
-            => ShoreAccess.TryLanding(requested,out landing,out error);
-        public void SimTick(float delta, int shoreLandingLimit = 0)
+        public void SimTick(float delta)
         {
             simDelta=delta;
             if(!IsAlive||!world||world.Session.Paused||world.Session.Winner>=0)return;
@@ -329,7 +323,7 @@ namespace RiskAI
                     {
                         shoreUnloadCooldown=ShoreUnloadRetryInterval;
                         int before=CargoCount;
-                        bool landed=UnloadAt(pendingShore, shoreLandingLimit);
+                        bool landed=UnloadAt(pendingShore);
                         // A beach that is landing troops is not "a beach that admits nobody".
                         if(CargoCount==0)ClearShoreUnload();
                         else if(landed&&CargoCount<before)shoreUnloadElapsed=0;
@@ -364,7 +358,7 @@ namespace RiskAI
             {
                 if(SeaNavigation.TryNearestOcean(target.transform.position,8,out var ocean)&&SeaNavigation.TryBuildPath(transform.position,ocean,pathScratch))
                 {
-                    CopyScratchToRoute();routeIndex=0;routeGoal=ocean;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;nextTargetPath=world.Session.BattleTime+.7f;
+                    CopyScratchToRoute();routeIndex=0;routeGoal=ocean;NoteRouteAccepted();RouteRevision++;nextTargetPath=world.Session.BattleTime+.7f;
                 }
                 else nextTargetPath=world.Session.BattleTime+.7f;
                 if(routeIndex<route.Count)Advance();
@@ -421,7 +415,6 @@ namespace RiskAI
             bool unloadApproach = pendingShoreUnload && routeOpen && DistanceXZ(transform.position, pendingShore) > LoadRadius;
             bool plainMove = !unloadApproach && hasActiveCommand && activeCommand.Kind == UnitCommandKind.Move && routeOpen;
             if ((!plainMove && !unloadApproach) || !RouteHasStalled()) return;
-            if (!hasRouteGoal) { EndStalledRoute(plainMove, blocked: false); return; }
             if (!triedMoveRepath)
             {
                 triedMoveRepath = true;
@@ -430,7 +423,7 @@ namespace RiskAI
                     EndStalledRoute(plainMove, blocked: false);
                     return;
                 }
-                CopyScratchToRoute(); routeIndex = 0; hasRouteGoal = true; NoteRouteAccepted(); RouteRevision++;
+                CopyScratchToRoute(); routeIndex = 0; NoteRouteAccepted(); RouteRevision++;
                 return;
             }
             EndStalledRoute(plainMove, blocked: true);
@@ -485,14 +478,14 @@ namespace RiskAI
             }
             if(!SeaNavigation.TryBuildPath(transform.position,attackMoveGoal,pathScratch))
             {hasAttackMoveGoal=false;attackMoveOrder=false;ClearRoute();return false;}
-            CopyScratchToRoute();routeIndex=0;routeGoal=attackMoveGoal;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;
+            CopyScratchToRoute();routeIndex=0;routeGoal=attackMoveGoal;NoteRouteAccepted();RouteRevision++;
             return true;
         }
-        void ClearRoute(){route.Clear();routeIndex=0;hasRouteGoal=false;}
+        void ClearRoute(){route.Clear();routeIndex=0;}
         internal void BindHarborGuard(Harbor harbor)
         {
             if(!harbor||!Type.HarborGuard)return;
-            harborGuard=harbor;orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
+            harborGuard=harbor;orderedHarbor=null;route.Clear();routeIndex=0;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
             MaintainHarborGuard();
         }
         internal void ReleaseHarborGuard(Harbor harbor)
@@ -524,7 +517,7 @@ namespace RiskAI
             Health=Mathf.Max(0,Health-damage);if(IsAlive)return;
             cargoScratch.Clear();for(int i=0;i<cargo.Count;i++)cargoScratch.Add(cargo[i]);
             for(int i=0;i<cargoScratch.Count;i++)if(cargoScratch[i])cargoScratch[i].DestroyEmbarked(attacker);
-            cargo.Clear();route.Clear();routeIndex=0;hasRouteGoal=false;hasAttackMoveGoal=false;target=null;orderedHarbor=null;ReleaseHarborGuard(harborGuard);
+            cargo.Clear();route.Clear();routeIndex=0;hasAttackMoveGoal=false;target=null;orderedHarbor=null;ReleaseHarborGuard(harborGuard);
             world.Ships.Remove(this);world.Session.UnregisterTarget(this);
             if(PlayerRules.IsPlayer(attacker)&&attacker<world.Session.PlayerCount){world.Session.Kills[attacker]++;world.Session.Economy.GrantBounty(attacker,Type.Points);}
             VisualFactory.Impact(AimPoint,new Color(.72f,.78f,.86f),.75f);Destroy(gameObject);
@@ -598,19 +591,19 @@ namespace RiskAI
             {
                 case UnitCommandKind.Move:
                 case UnitCommandKind.AttackMove:
-                    ok = plan ? PlanMove(point) : CheapWater(point, UnitCatalog.TransportLoadRadius);
+                    ok = ReachWater(point, UnitCatalog.TransportLoadRadius, plan);
                     remembered = plan && ok;
                     break;
                 case UnitCommandKind.Attack:
-                    ok = plan ? PlanAttack(command) : CheapAttack(command);
+                    ok = ReachAttack(command, plan);
                     remembered = plan && ok;
                     break;
                 case UnitCommandKind.Unload:
-                    ok = plan ? PlanUnload(point) : CheapUnload(point);
+                    ok = ReachUnload(point, plan);
                     remembered = plan && ok;
                     break;
                 case UnitCommandKind.Capture:
-                    ok = plan ? PlanCapture(command) : CheapCapture(command);
+                    ok = ReachCapture(command, plan);
                     remembered = plan && ok;
                     break;
                 default:
@@ -627,97 +620,74 @@ namespace RiskAI
             return ok;
         }
 
-        bool CheapWater(Vector3 point, float search)
+        /// <summary>Cheap checks the water. <paramref name="build"/> also stores the path.</summary>
+        bool ReachWater(Vector3 point, float search, bool build)
         {
-            if (harborGuard && harborGuard.IsInBerthCircle(point)) return true;
-            if (SeaNavigation.HasClearance(point) || SeaNavigation.TryNearestOcean(point, search, out _)) return true;
-            LastActionError = "Elige mar o tierra cercana a la costa.";
-            return false;
-        }
-
-        bool PlanMove(Vector3 point)
-        {
-            if (harborGuard && harborGuard.IsInBerthCircle(point)) { pathScratch.Clear(); plannedPoint = point; return true; }
-            if (!PlanDestination(point, UnitCatalog.TransportLoadRadius, out plannedPoint)) return false;
-            return true;
-        }
-
-        bool CheapAttack(in UnitCommand command)
-        {
-            var enemy = world != null ? world.Session.FindTarget(command.TargetId) : null;
-            if (enemy && RangeTo(enemy) <= AttackRange) return true;
-            if (enemy && SeaNavigation.TryNearestOcean(enemy.transform.position, 8, out _)) return true;
-            LastActionError = "No hay mar accesible a 8 m de ese objetivo.";
-            return false;
-        }
-
-        bool PlanAttack(in UnitCommand command)
-        {
-            var enemy = world != null ? world.Session.FindTarget(command.TargetId) : null;
-            pathScratch.Clear();
-            if (enemy && RangeTo(enemy) <= AttackRange) { plannedPoint = enemy.transform.position; return true; }
-            if (enemy && SeaNavigation.TryNearestOcean(enemy.transform.position, 8, out var ocean) && SeaNavigation.TryBuildPath(transform.position, ocean, pathScratch))
-            { plannedPoint = ocean; return true; }
-            LastActionError = "No hay mar accesible a 8 m de ese objetivo.";
-            return false;
-        }
-
-        bool CheapUnload(Vector3 point)
-        {
-            if (!Type.CanTransport) { LastActionError = "Selecciona un transporte."; return false; }
-            if (!TryValidateShore(point, out var landing, out var error)) { LastActionError = error; return false; }
-            if (SeaNavigation.TryNearestOcean(landing, ShoreBerthSearchRadius, out _)) return true;
-            LastActionError = "No hay una ruta marítima segura hasta esa playa.";
-            return false;
-        }
-
-        bool PlanUnload(Vector3 point)
-        {
-            if (!Type.CanTransport) { LastActionError = "Selecciona un transporte."; return false; }
-            if (!TryValidateShore(point, out var landing, out var error)) { LastActionError = error; return false; }
-            if (!SeaNavigation.TryNearestOcean(landing, ShoreBerthSearchRadius, out var berth) || !SeaNavigation.TryBuildPath(transform.position, berth, pathScratch))
-            { LastActionError = "No hay una ruta marítima segura hasta esa playa."; return false; }
-            plannedPoint = berth;
-            return true;
-        }
-
-        bool CheapCapture(in UnitCommand command)
-        {
-            var harbor = CaptureHarbor(command);
-            if (!harbor) { LastActionError = "Elige un puerto de desembarco."; return false; }
-            if (Type.CanTransport)
+            if (harborGuard && harborGuard.IsInBerthCircle(point))
             {
-                if (!harbor.TryTransportLanding(out var landing, out _))
-                { LastActionError = "El puerto no tiene una playa o pasarela al alcance del transporte."; return false; }
-                return CheapUnload(landing);
+                if (build) { pathScratch.Clear(); plannedPoint = point; }
+                return true;
             }
-            return CheapWater(harbor.Berth, UnitCatalog.TransportLoadRadius);
-        }
-
-        bool PlanCapture(in UnitCommand command)
-        {
-            var harbor = CaptureHarbor(command);
-            if (!harbor) { LastActionError = "Elige un puerto de desembarco."; return false; }
-            if (Type.CanTransport)
+            var destination = point;
+            if (!(SeaNavigation.HasClearance(destination) || SeaNavigation.TryNearestOcean(point, search, out destination)))
             {
-                if (!harbor.TryTransportLanding(out var landing, out _))
-                { LastActionError = "El puerto no tiene una playa o pasarela al alcance del transporte."; return false; }
-                return PlanUnload(landing);
+                LastActionError = "Elige mar o tierra cercana a la costa.";
+                return false;
             }
-            return PlanMove(harbor.Berth);
-        }
-
-        bool PlanDestination(Vector3 point, float search, out Vector3 destination)
-        {
-            destination = point;
-            if (SeaNavigation.HasClearance(destination) || SeaNavigation.TryNearestOcean(point, search, out destination))
+            if (!build) return true;
+            if (!SeaNavigation.TryBuildPath(transform.position, destination, pathScratch))
             {
-                if (SeaNavigation.TryBuildPath(transform.position, destination, pathScratch)) return true;
                 LastActionError = "No hay una ruta marítima hasta ese destino.";
                 return false;
             }
-            LastActionError = "Elige mar o tierra cercana a la costa.";
+            plannedPoint = destination;
+            return true;
+        }
+
+        bool ReachAttack(in UnitCommand command, bool build)
+        {
+            var enemy = world != null ? world.Session.FindTarget(command.TargetId) : null;
+            if (build) pathScratch.Clear();
+            if (enemy && RangeTo(enemy) <= AttackRange)
+            {
+                if (build) plannedPoint = enemy.transform.position;
+                return true;
+            }
+            if (enemy && SeaNavigation.TryNearestOcean(enemy.transform.position, 8, out var ocean)
+                && (!build || SeaNavigation.TryBuildPath(transform.position, ocean, pathScratch)))
+            {
+                if (build) plannedPoint = ocean;
+                return true;
+            }
+            LastActionError = "No hay mar accesible a 8 m de ese objetivo.";
             return false;
+        }
+
+        bool ReachUnload(Vector3 point, bool build)
+        {
+            if (!Type.CanTransport) { LastActionError = "Selecciona un transporte."; return false; }
+            if (!ShoreAccess.TryLanding(point, out var landing, out var error)) { LastActionError = error; return false; }
+            if (!SeaNavigation.TryNearestOcean(landing, ShoreBerthSearchRadius, out var berth)
+                || (build && !SeaNavigation.TryBuildPath(transform.position, berth, pathScratch)))
+            {
+                LastActionError = "No hay una ruta marítima segura hasta esa playa.";
+                return false;
+            }
+            if (build) plannedPoint = berth;
+            return true;
+        }
+
+        bool ReachCapture(in UnitCommand command, bool build)
+        {
+            var harbor = CaptureHarbor(command);
+            if (!harbor) { LastActionError = "Elige un puerto de desembarco."; return false; }
+            if (Type.CanTransport)
+            {
+                if (!harbor.TryTransportLanding(out var landing, out _))
+                { LastActionError = "El puerto no tiene una playa o pasarela al alcance del transporte."; return false; }
+                return ReachUnload(landing, build);
+            }
+            return ReachWater(harbor.Berth, UnitCatalog.TransportLoadRadius, build);
         }
 
         void PublishOrders()
@@ -731,7 +701,7 @@ namespace RiskAI
             OrderLegView.Publish(orders, true, kind, point);
         }
 
-        bool ApproachFinished() => captureSailing && routeIndex >= route.Count && !pendingShoreUnload;
+        bool ApproachFinished() => routeIndex >= route.Count && !pendingShoreUnload;
 
         bool CapturePending()
         {
@@ -767,7 +737,6 @@ namespace RiskAI
             {
                 capture.Clear();
                 captureView = default;
-                captureSailing = false;
                 // The beach still has to land its troops. Anything else closes through the same halt.
                 if (!pendingShoreUnload) FinishActiveOrder();
             }
@@ -782,7 +751,6 @@ namespace RiskAI
             hasActiveCommand = false;
             capture.Clear();
             captureView = default;
-            captureSailing = false;
             HaltMotor();
             PublishOrders();
         }
@@ -806,7 +774,7 @@ namespace RiskAI
                 LastActionError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
                 if (!willRun) plannedReady = false;
             }
-            switch (orders.Commit(command, BusyOrder(), valid))
+            switch (orders.Admit(command, BusyOrder(), valid))
             {
                 case OrderQueue.AdmitResult.Full:
                     LastActionError = OrderQueue.FullError;
@@ -849,15 +817,13 @@ namespace RiskAI
                     if (!harbor) { LastActionError = "Elige un puerto de desembarco."; return false; }
                     captureView = view;
                     capture.Begin(view.Found, view.Owner);
-                    captureSailing = true;
                     SailToHarbor(harbor);
-                    if (!string.IsNullOrEmpty(LastActionError)) { capture.Clear(); captureView = default; captureSailing = false; return false; }
+                    if (!string.IsNullOrEmpty(LastActionError)) { capture.Clear(); captureView = default; return false; }
                     if (!CapturePending())
                     {
                         hasActiveCommand = false;
                         capture.Clear();
                         captureView = default;
-                        captureSailing = false;
                         if (!OrderAdvance.Drain(orders, this)) { hasActiveCommand = false; PublishOrders(); }
                         return true;
                     }
