@@ -48,7 +48,7 @@ comunes, lo que funciona para una unidad de tierra funciona para un barco.
    medición de alcance, acercamiento, adquisición, captura, transporte y resolución de órdenes.
    Las clases de actor solo conservan su adaptador de motor (NavMesh o `SeaNavigation`) y su
    presentación.
-4. **Cola de órdenes con Shift** para todos los tipos, con ruta visible, que los barcos heredan.
+4. **Cola de órdenes con Shift** para todos los tipos, con la ruta visible mientras Shift o Encolar están activos, que los barcos heredan.
 
 Añadir una unidad = una entrada en `units.json` + su modelo (+ su retrato renderizado).
 
@@ -120,7 +120,7 @@ mismas reglas con motor estático.
 | `InRange` / `ReachPlan` | entrar, sostener (histéresis), retirarse por `minRange` | márgenes 0,2/0,4 del cuerpo a cuerpo, retirada del mortero |
 | `Acquire` | objetivo automático con correas, `pressureBias`, desempate por `EntityId`, alerta a aliados | el comportamiento de soldados y el «solo en alcance de arma» de barcos, ahora como datos |
 | `CanAttack` | `targetMask` contra clase y relación del objetivo | que un soldado cuerpo a cuerpo pueda atacar barcos como hoy |
-| `ResolveClick(selection, hit, modifiers)` | atacar / mover / seguir / embarcar / capturar / atracar, con la **prioridad actual** escrita como tabla | barco enemigo antes que puerto, transporte propio embarca, torre → captura |
+| `ResolveClick(selection, hit, modifiers)` | atacar / mover / seguir / embarcar / capturar, una decisión para toda la selección | un enemigo atacable gana al lugar; el lugar hostil se captura si `canCapture`; si no, es un movimiento |
 | Captura, guarnición y relevo | una sola ruta para soldado y barco guardián | `CityClaimZone` sin ramas por clase |
 | Transporte | máquina de estados: reserva de plazas, embarque, descarga parcial, muerte del transporte | radio 10,24 y tope 10 |
 
@@ -152,8 +152,10 @@ por datos y capacidades. Las diferencias de motor viven en `IUnitMotor`.
   El atacar-mover conserva su destino si su objetivo muere (hoy lo hace el barco; pasa a ser
   la regla para todos).
 - **Ruta visible**: puntos y líneas finas con el color de la orden, usando la polilínea real
-  (`NavMeshPath` o `SeaNavigation`), con un **tope agregado** de segmentos dibujados y pooling;
-  se muestra para la selección mientras se mantiene Shift.
+  (`NavMeshPath` o `SeaNavigation`), con un **tope agregado** de segmentos dibujados y pooling.
+  El tramo activo empieza en la unidad: las esquinas y los tramos ya recorridos no se dibujan.
+  La cola completa se ve mientras se mantiene Shift o el conmutador Encolar. Una orden sin
+  ellos muestra la ruta `OrderRoutes.ConfirmSeconds` (1,2 s) desvaneciéndose, y luego no hay línea.
 - **Tecla**: Shift deja de acelerar la cámara (pasa a otra tecla) para no chocar con la cola.
 - **Táctil**: un conmutador «Encolar» en la barra rápida.
 
@@ -227,6 +229,8 @@ Solo estos; todo lo demás debe quedar igual:
 3. Shift deja de acelerar la cámara.
 4. El atacar-mover conserva su destino si muere el objetivo también en soldados.
 5. Una playa que no admite a nadie se reintenta unos 5 s y después la cola del transporte sigue; la tropa permanece a bordo.
+6. Clic en un enemigo: siempre atacar, para cada actor cuyo `targetMask` lo admite, aunque el enemigo esté dentro del círculo de un puesto o un puerto. Eso incluye al guardián: clic en el guardián lo ataca y no empieza una captura. La captura solo ocurre al clicar el puesto, el puerto o la ciudad (la estructura o su círculo, sin una unidad enemiga bajo el cursor) y solo en actores con `canCapture`. Quien no puede capturar recibe un movimiento al punto de reclamación o, si es un barco, al atraque. Un transporte ya no trata el clic en un puerto como captura y descarga; desembarcar sigue siendo la orden explícita. Un puerto amigo es un movimiento, no una captura.
+7. La ruta de la selección no está siempre visible. Shift o Encolar muestran la cola entera. Una orden sin ellos la enseña 1,2 s mientras se desvanece. El tramo ya recorrido no se dibuja.
 
 ## 8. Riesgos
 
