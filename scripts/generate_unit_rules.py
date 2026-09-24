@@ -112,6 +112,10 @@ def main():
             flags.append("guarnición")
         if caps.get("canEmbark"):
             flags.append("embarca")
+        if caps.get("canFollow"):
+            flags.append("sigue")
+        if caps.get("canPatrol"):
+            flags.append("patrulla")
         if caps.get("harborGuard"):
             flags.append("guardia de puerto")
         transport = caps.get("transport")

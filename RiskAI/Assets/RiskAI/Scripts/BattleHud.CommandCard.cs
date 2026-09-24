@@ -333,7 +333,7 @@ namespace RiskAI
             { "Tab en el chat · /w color", "Cambiar de destinatario · mensaje privado (p. ej. /w azul hola, /azul hola)" },
             { "Esc", "Cancelar la orden o deseleccionar" },
             { "Alt", "Mostrar vida y nombres" },
-            { "Mayús", "Con una tropa ocupada añade la orden: mover, atacar, capturar, seguir, embarcar y desembarcar. Sin Mayús, la orden sustituye la cola. El conmutador de la barra rápida hace lo mismo." },
+            { "Mayús", "Con una tropa ocupada añade la orden: mover, atacar, capturar, seguir, embarcar y desembarcar. Sin Mayús, la orden sustituye la cola. La ruta se ve con Mayús o Encolar; si no, aparece 1,2 s y se desvanece. El conmutador de la barra rápida hace lo mismo." },
             { "F4", "Mantener junto a las flechas: la cámara se mueve más rápido" },
             { "Flechas · Retroceso", "Mover la cámara · restablecer la cámara" },
         };

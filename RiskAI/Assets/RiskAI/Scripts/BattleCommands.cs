@@ -129,7 +129,6 @@ namespace RiskAI
             if(!PlayerRules.IsPlayer(command.PlayerId) || command.PlayerId>=session.PlayerCount || !Finite(command.X) || !Finite(command.Y) || !Finite(command.Z))return false;
             if(command.Kind<UnitCommandKind.Move || command.Kind>UnitCommandKind.Unload)return false;
             if(actor==null || !actor.IsAlive || actor.Team!=command.PlayerId)return false;
-            if(command.HasPoint && actor.Type.Domain==UnitDomain.Static)return false;
             return actor.Authorize(ref command, plan);
         }
         static bool Finite(float value)=>!float.IsNaN(value)&&!float.IsInfinity(value);

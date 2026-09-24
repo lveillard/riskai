@@ -35,5 +35,9 @@ namespace RiskAI
         int ActivePathCount { get; }
         Vector3 ActivePathPoint(int index);
         void RefreshActivePath();
+        /// <summary>Where this motor goes for a place click: the claim or landing it was given, or the berth.</summary>
+        Vector3 PlacePoint(Vector3 claim, Harbor harbor);
+        /// <summary>The motor can take a player order: on the navmesh, or afloat.</summary>
+        bool MotorReady { get; }
     }
 }

@@ -543,6 +543,12 @@ namespace RiskAI.Core
         /// <summary>Can board a transport.</summary>
         [UnitConfigField(Required = true)]
         public bool CanEmbark;
+        /// <summary>Can be given a follow order.</summary>
+        [UnitConfigField(Required = true)]
+        public bool CanFollow;
+        /// <summary>Can be given a patrol order.</summary>
+        [UnitConfigField(Required = true)]
+        public bool CanPatrol;
         /// <summary>Can be bound as a harbor guard ship.</summary>
         [UnitConfigField(Required = true)]
         public bool HarborGuard;

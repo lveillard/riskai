@@ -107,7 +107,7 @@ namespace RiskAI.Core
         public readonly float VisualHeight, VisualRadius, StandingHeight, StandingWidth, MdxHeight, MdxWidth, SpawnRadius;
         public readonly WeaponProfile Weapon, TownWeapon, HarborWeapon;
         public readonly AcquisitionProfile Acquisition;
-        public readonly bool CanCapture, CanGarrison, CanEmbark, HarborGuard;
+        public readonly bool CanCapture, CanGarrison, CanEmbark, CanFollow, CanPatrol, HarborGuard;
         public readonly TransportProfile Transport;
         public readonly HealProfile Heal;
         public readonly RoarProfile Roar;
@@ -149,7 +149,8 @@ namespace RiskAI.Core
                 a.Leash != null, a.Leash?.Hostile ?? 0, a.Leash?.Neutral ?? 0, a.QueryPadding, a.PressureBias,
                 a.AllyAlertRadius, a.Retaliate, a.Measure, a.Visibility, a.TieBreak);
             var caps = c.Capabilities;
-            CanCapture = caps.CanCapture; CanGarrison = caps.CanGarrison; CanEmbark = caps.CanEmbark; HarborGuard = caps.HarborGuard;
+            CanCapture = caps.CanCapture; CanGarrison = caps.CanGarrison; CanEmbark = caps.CanEmbark;
+            CanFollow = caps.CanFollow; CanPatrol = caps.CanPatrol; HarborGuard = caps.HarborGuard;
             Transport = caps.Transport == null ? default : new TransportProfile(caps.Transport.Capacity, caps.Transport.LoadRadius, caps.Transport.LoadLimit);
             Heal = caps.Heal == null ? default : new HealProfile(caps.Heal.Amount, caps.Heal.Range, caps.Heal.Cooldown, caps.Heal.ManaCost,
                 caps.Heal.Rescan, caps.Heal.MaxVerticalDelta, caps.Heal.OrganicOnly);

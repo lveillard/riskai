@@ -26,7 +26,7 @@ namespace RiskAI
         static bool Aim(BattleSession session, IOrderable actor, in UnitCommand command, out string error)
         {
             error = null;
-            if (!UnitRules.KindAllowed(actor.Type.Domain, command.Kind))
+            if (!UnitRules.KindAllowed(actor.Type, command.Kind))
             {
                 error = OrderQueue.InvalidError;
                 return false;
@@ -46,7 +46,7 @@ namespace RiskAI
                 case UnitCommandKind.Follow:
                 {
                     var ally = session.FindTarget(command.TargetId);
-                    if (!ally || !ally.IsAlive || ally.Type.Domain != UnitDomain.Land || ally.Team != actor.Team || ally.EntityId == actor.EntityId)
+                    if (!ally || !ally.IsAlive || ally.Team != actor.Team || ally.EntityId == actor.EntityId)
                     {
                         error = OrderQueue.InvalidError;
                         return false;
@@ -66,12 +66,9 @@ namespace RiskAI
                 case UnitCommandKind.Capture:
                 {
                     var view = CapturePlan.Look(session, command);
-                    bool harbor = view.Harbor || (view.Town && view.Town.Port);
-                    if (!view.Found || (actor.Type.Domain == UnitDomain.Sea && !harbor))
+                    if (!view.Found)
                     {
-                        error = actor.Type.Domain == UnitDomain.Sea
-                            ? "Elige un puerto de desembarco."
-                            : "Elige una ciudad o un puerto.";
+                        error = "Elige una ciudad o un puerto.";
                         return false;
                     }
                     return true;
