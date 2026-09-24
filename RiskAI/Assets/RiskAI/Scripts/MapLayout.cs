@@ -29,8 +29,8 @@ namespace RiskAI
                 : scenario == ScenarioMap.Riverlands ? ExpandedPads.Length : ImportedMapData.ScenarioCityCount(scenario);
             return PlayerRules.MaximumPlayersForCityCount(cities);
         }
-        static readonly int[] ClassicMainlandHarborX = { -58, -37, -3, 22, 43 };
-        static readonly int[] ExpandedMainlandHarborX = { -54, -41, -19, 20, 43 };
+        static readonly int[] ClassicMainlandHarborX = { -55, -37, -3, 26, 43 };
+        static readonly int[] ExpandedMainlandHarborX = { -60, -42, -16, 8, 43 };
         public static int[] MainlandHarborX => IsExpanded ? ExpandedMainlandHarborX : ClassicMainlandHarborX;
 
         // Shared by port placement and vegetation, before the ports exist in the scene.
@@ -80,8 +80,14 @@ namespace RiskAI
         }
         static readonly AuthoredCity[] ClassicCityCatalog=BuildClassicCatalog();
         static readonly AuthoredCity[] ExpandedCityCatalog=BuildExpandedCatalog();
+        // v0.34 Las Marcas: eleven countries. The western plateau (pine, mill, meadow and
+        // cordillera-norte at its west foot) forms one zone with its shore -- including the
+        // Muelle del Oeste that faces isla-bruma across the channel -- and with the island
+        // itself. Below the plateau's south wall the vega splits along its relief into Marca
+        // del Alba (north-east, with the P0 capital) and Escarpa de Poniente (south-west).
+        // The plateau country leads the array because its shore hosts the linked mainland ports.
         static readonly Country[] ClassicCountries = {
-            new Country("Marca del Alba",0,UnitKind.Archer,1), new Country("Bahía de Poniente",1,UnitKind.Archer,1),
+            new Country("Meseta de los Pinos",0,UnitKind.Archer,1), new Country("Marca del Alba",1,UnitKind.Archer,1),
             new Country("Escarpa de Poniente",2,UnitKind.Archer,1), new Country("Cuenca del Fresno",3,UnitKind.Archer,1),
             new Country("Puertas de Oriente",4,UnitKind.Archer,1), new Country("Sierra Carmesí",5,UnitKind.Archer,1),
             new Country("Dehesa de Poniente",6,UnitKind.Archer,1), new Country("Campos del Secano",7,UnitKind.Archer,1),
@@ -155,17 +161,17 @@ namespace RiskAI
         static AuthoredCity[] BuildClassicCatalog()
         {
             return new[] {
-                new AuthoredCity("dawn","Bastión del Alba",-38,-12,0,0,0,true),new AuthoredCity("pine","Pinar Alto",-47,12,0,0,0),new AuthoredCity("cordillera-norte","Cordillera del Alba",-60,-8,-1,0,0),
-                new AuthoredCity("mill","Molino Viejo",-21,5,-1,0,0),new AuthoredCity("meadow","Valdeluz",-23,30,-1,1,1),new AuthoredCity("encinar-centro","Encinar Central",-37,-47,-1,2,2),
-                new AuthoredCity("crest-west","Cresta de Poniente",-60,-30,-1,2,2),new AuthoredCity("dehesa-norte","Dehesa Norte",-54,-47,-1,2,2),
-                new AuthoredCity("gate","Puerta de Piedra",-2,21,-1,10,10),new AuthoredCity("ford","Valle del Fresno",8,3,-1,3,3),new AuthoredCity("stone","Piedra Vieja",1,-18,-1,3,3),new AuthoredCity("west","Marca del Sur",-24,-34,-1,2,2),
-                new AuthoredCity("ash","Torre del Roble",28,30,-1,4,4),new AuthoredCity("watch","Vigía del Este",43,9,-1,4,4),new AuthoredCity("senda-orient","Senda Oriental",65,15,-1,4,4),new AuthoredCity("torre-norte","Torre del Norte",10,43,-1,10,10),
+                new AuthoredCity("dawn","Bastión del Alba",-38,-12,0,1,1,true),new AuthoredCity("pine","Pinar Alto",-47,12,0,0,0),new AuthoredCity("cordillera-norte","Cordillera del Alba",-64,16,-1,0,0),
+                new AuthoredCity("mill","Molino Viejo",-21,5,-1,0,0),new AuthoredCity("meadow","Valdeluz",-21,23,-1,0,0),new AuthoredCity("encinar-centro","Encinar Central",-34,-52,-1,2,2),
+                new AuthoredCity("crest-west","Cresta de Poniente",-62,-26,-1,2,2),new AuthoredCity("dehesa-norte","Dehesa Norte",-52,-44,-1,2,2),
+                new AuthoredCity("gate","Puerta de Piedra",7,20,-1,10,10),new AuthoredCity("ford","Valle del Fresno",8,3,-1,3,3),new AuthoredCity("stone","Piedra Vieja",1,-18,-1,3,3),new AuthoredCity("west","Marca del Sur",-22,-36,-1,1,1),
+                new AuthoredCity("ash","Torre del Roble",28,28,-1,4,4),new AuthoredCity("watch","Vigía del Este",43,9,-1,4,4),new AuthoredCity("senda-orient","Senda Oriental",65,15,-1,4,4),new AuthoredCity("torre-norte","Torre del Norte",10,43,-1,10,10),
                 new AuthoredCity("red","Fortaleza Carmesí",38,-25,1,5,5,true),new AuthoredCity("highland","Altos de Ceniza",20,-39,1,5,5),new AuthoredCity("guardia-oriental","Guardia Oriental",57,-25,-1,5,5),
                 new AuthoredCity("dehesa","Dehesa de Poniente",-58,-62,-1,6,6),new AuthoredCity("encina","Encinar Bajo",-49,-81,-1,6,6),
-                new AuthoredCity("secano","Campos del Secano",-33,-63,-1,7,7),new AuthoredCity("trigal","Trigal Dorado",-32,-85,-1,7,7),new AuthoredCity("azafran-norte","Azafrán del Norte",-10,-48,-1,8,8),
+                new AuthoredCity("secano","Campos del Secano",-30,-70,-1,7,7),new AuthoredCity("trigal","Trigal Dorado",-28,-86,-1,7,7),new AuthoredCity("azafran-norte","Azafrán del Norte",-10,-48,-1,8,8),
                 new AuthoredCity("azafran","Lomas de Azafrán",-8,-69,-1,8,8),new AuthoredCity("olivar","Olivar de la Marca",1,-85,-1,8,8),new AuthoredCity("loma-sur","Loma del Sur",18,-62,-1,8,8),
                 new AuthoredCity("costa-sur","Costa del Sur",36,-70,-1,9,9),new AuthoredCity("vigia-sal","Vigía de la Sal",59,-56,-1,9,9),
-                new AuthoredCity("isla-bruma","Isla de la Bruma",-47,57,-1,1,1),new AuthoredCity("isla-roble","Dehesa de la Frontera",-69,-78,-1,6,6),new AuthoredCity("isla-viento","Isla del Viento",-8,74,-1,10,10),new AuthoredCity("isla-faro","Torre de la Sal",50,-83,-1,9,9)
+                new AuthoredCity("isla-bruma","Isla de la Bruma",-47,57,-1,0,0),new AuthoredCity("isla-roble","Dehesa de la Frontera",-69,-78,-1,6,6),new AuthoredCity("isla-viento","Isla del Viento",-8,74,-1,10,10),new AuthoredCity("isla-faro","Torre de la Sal",50,-83,-1,9,9)
             };
         }
         static void UploadShaderGlobals()
@@ -181,17 +187,17 @@ namespace RiskAI
         static AuthoredCity[] BuildExpandedCatalog()
         {
             return new[] {
-                new AuthoredCity("west-01","Bastión Occidental",-55,-59,0,0,0,true),new AuthoredCity("west-05","Marca del Sur",-67,-82,-1,0,0),new AuthoredCity("west-06","Bosque Bajo",-43,-83,-1,1,1),new AuthoredCity("west-07","Paso de Poniente",-66,-44,-1,0,0),
-                new AuthoredCity("west-02","Pinar Occidental",-50,-27,0,3,3),new AuthoredCity("west-08","Loma del Roble",-39,-48,-1,1,1),new AuthoredCity("west-09","Marjal Occidental",-65,-10,-1,3,3),new AuthoredCity("west-10","Cresta del Bosque",-42,-5,-1,3,3),
-                new AuthoredCity("river-01","Puerta del Río",-28,-59,0,1,1),new AuthoredCity("river-05","Vega del Sur",-20,-86,-1,1,1),new AuthoredCity("river-02","Molino del Río",-23,-22,0,2,2),new AuthoredCity("river-06","Vado Bajo",-14,-5,-1,2,2),new AuthoredCity("river-03","Ribera del Río",-27,12,1,2,2),
-                new AuthoredCity("west-03","Linde Occidental",-53,8,1,3,3),new AuthoredCity("west-11","Peña del Mar",-64,24,-1,4,4),new AuthoredCity("west-04","Cresta Occidental",-44,44,1,4,4),new AuthoredCity("west-13","Puerto Alto",-63,54,-1,4,4),
-                new AuthoredCity("west-12","Colina del Vado",-40,25,-1,2,2),new AuthoredCity("west-14","Senda del Norte",-31,55,-1,5,5),
-                new AuthoredCity("river-04","Ribera Alta",-19,43,1,5,5),new AuthoredCity("river-07","Paso de los Sauces",-12,22,-1,5,5),new AuthoredCity("river-08","Estuario Verde",-7,59,-1,5,5),
-                new AuthoredCity("high-01","Bastión Central",17,-58,0,6,6),new AuthoredCity("high-05","Altos del Sur",42,-85,-1,6,6),new AuthoredCity("high-02","Loma Central",22,-28,0,6,6),new AuthoredCity("high-06","Cerro de Piedra",35,-43,-1,6,6),
-                new AuthoredCity("east-01","Puerta Oriental",49,-57,0,7,7),new AuthoredCity("east-05","Frontera del Sur",67,-75,-1,7,7),new AuthoredCity("east-02","Cantera Oriental",44,-18,0,7,7),new AuthoredCity("east-06","Paso de Levante",68,-40,-1,7,7),new AuthoredCity("high-07","Mirador del Río",32,-3,-1,10,10),new AuthoredCity("east-07","Fuerte del Este",66,-4,-1,8,8),
-                new AuthoredCity("high-03","Paso Central",18,9,1,10,10),new AuthoredCity("east-03","Vigía Oriental",48,17,1,10,10),new AuthoredCity("high-08","Atalaya del Llano",31,28,-1,10,10),new AuthoredCity("east-08","Costa de Levante",65,31,-1,8,8),new AuthoredCity("east-04","Cresta Oriental",51,47,1,8,8),
-                new AuthoredCity("high-04","Altos del Estuario",26,46,1,9,9),new AuthoredCity("high-09","Puerta del Estuario",18,61,-1,9,9),
-                new AuthoredCity("isle-01","Isla del Roble",-54,94,0,4,4),new AuthoredCity("isle-02","Isla del Viento",-12,104,0,9,9),new AuthoredCity("isle-03","Vega del Confín",-60,-95,1,0,0),new AuthoredCity("isle-04","Isla del Alba",34,103,1,9,9),new AuthoredCity("isle-05","Vigía de Levante",68,52,-1,8,8)
+                new AuthoredCity("west-01","Bastión Occidental",-55,-59,0,1,1,true),new AuthoredCity("west-05","Marca del Sur",-63,-78,-1,0,0),new AuthoredCity("west-06","Bosque Bajo",-42,-81,-1,0,0),new AuthoredCity("west-07","Paso de Poniente",-66,-44,-1,1,1),
+                new AuthoredCity("west-02","Pinar Occidental",-50,-27,0,3,3),new AuthoredCity("west-08","Loma del Roble",-40,-48,-1,1,1),new AuthoredCity("west-09","Marjal Occidental",-65,-10,-1,3,3),new AuthoredCity("west-10","Cresta del Bosque",-42,-5,-1,3,3),
+                new AuthoredCity("river-01","Puerta del Río",-28,-59,0,1,1),new AuthoredCity("river-05","Vega del Sur",-23,-86,-1,0,0),new AuthoredCity("river-02","Molino del Río",-23,-22,0,2,2),new AuthoredCity("river-06","Vado Bajo",-14,-5,-1,2,2),new AuthoredCity("river-03","Ribera del Río",-27,12,1,2,2),
+                new AuthoredCity("west-03","Linde Occidental",-53,8,1,3,3),new AuthoredCity("west-11","Peña del Mar",-64,24,-1,4,4),new AuthoredCity("west-04","Cresta Occidental",-44,44,1,4,4),new AuthoredCity("west-13","Puerto Alto",-68,44,-1,4,4),
+                new AuthoredCity("west-12","Colina del Vado",-40,25,-1,4,4),new AuthoredCity("west-14","Senda del Norte",-28,50,-1,5,5),
+                new AuthoredCity("river-04","Ribera Alta",-26,34,1,5,5),new AuthoredCity("river-07","Paso de los Sauces",-12,22,-1,2,2),new AuthoredCity("river-08","Estuario Verde",-3,51,-1,5,5),
+                new AuthoredCity("high-01","Bastión Central",17,-58,0,6,6),new AuthoredCity("high-05","Altos del Sur",44,-88,-1,6,6),new AuthoredCity("high-02","Loma Central",22,-30,0,7,7),new AuthoredCity("high-06","Cerro de Piedra",38,-40,-1,7,7),
+                new AuthoredCity("east-01","Puerta Oriental",49,-57,0,6,6),new AuthoredCity("east-05","Frontera del Sur",67,-75,-1,6,6),new AuthoredCity("east-02","Cantera Oriental",52,-30,0,7,7),new AuthoredCity("east-06","Paso de Levante",67,-43,-1,7,7),new AuthoredCity("high-07","Mirador del Río",35,3,-1,10,10),new AuthoredCity("east-07","Fuerte del Este",64,4,-1,10,10),
+                new AuthoredCity("high-03","Paso Central",16,10,1,10,10),new AuthoredCity("east-03","Vigía Oriental",48,12,1,10,10),new AuthoredCity("high-08","Atalaya del Llano",31,28,-1,9,9),new AuthoredCity("east-08","Costa de Levante",65,31,-1,8,8),new AuthoredCity("east-04","Cresta Oriental",46,50,1,8,8),
+                new AuthoredCity("high-04","Altos del Estuario",26,46,1,9,9),new AuthoredCity("high-09","Puerta del Estuario",15,58,-1,9,9),
+                new AuthoredCity("isle-01","Isla del Roble",-54,94,0,4,4),new AuthoredCity("isle-02","Isla del Viento",-12,104,0,5,5),new AuthoredCity("isle-03","Vega del Confín",-53,-93,1,0,0),new AuthoredCity("isle-04","Isla del Alba",34,103,1,9,9),new AuthoredCity("isle-05","Vigía de Levante",68,52,-1,8,8)
             };
         }
         public static float Coast(float x)

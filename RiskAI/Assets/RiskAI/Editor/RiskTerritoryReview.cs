@@ -150,6 +150,18 @@ namespace RiskAI.Editor
                     }
                     camp.Select(false);
                 }
+                // Free views: --riskai-territory-look "x,z,zoom;x,z,zoom" (world XZ, gameplay camera).
+                var looks=Argument("--riskai-territory-look");
+                if(looks!=null)
+                {
+                    int n=0;
+                    foreach(var look in looks.Split(';'))
+                    {
+                        var part=look.Split(',');if(part.Length<3)continue;
+                        float lx=float.Parse(part[0],CultureInfo.InvariantCulture),lz=float.Parse(part[1],CultureInfo.InvariantCulture),lzoom=float.Parse(part[2],CultureInfo.InvariantCulture);
+                        Render(camera,readback,Path.Combine(directory,prefix+"-look-"+(n++)+".png"),new Vector3(lx,0,lz),lzoom,55);
+                    }
+                }
                 // Strategic readability at an early-game ownership: every country neutral except
                 // the first two focus camps (player 0 and 1), full map and a closer strategic zoom.
                 var owned=focus.Select(n=>Array.FindIndex(MapLayout.Countries,c=>c.Name==n)).Where(c=>c>=0).Take(2).ToArray();

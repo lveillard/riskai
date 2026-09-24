@@ -22,7 +22,9 @@ namespace RiskAI
         // costs like a wide strait, so borders follow precipices instead of eating the terrain below.
         const float CliffCost = 14f, CliffSlope = .55f, CliffSlopeRange = .45f;
         // Authored maps: a gentle deterministic cost relief (plus or minus Roughness) bends the
-        // otherwise ruler-straight bisectors between two cities on open plains.
+        // otherwise ruler-straight bisectors between two cities on open plains. Finer or stronger
+        // relief was tried in v0.34: it straightened cliff borders away from their precipices and
+        // did not reduce the longest straight runs, so cities are de-aligned instead.
         const float Roughness = .35f, RoughnessScale = .07f;
         const float ForeignTileCost = 16f;
         const float ProceduralCell = .7f;
