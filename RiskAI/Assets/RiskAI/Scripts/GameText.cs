@@ -74,17 +74,8 @@ namespace RiskAI
             ["ÓRDENES DE HOGUERA"]="CAMP ORDERS", ["BORRAR SALIDA"]="CLEAR RALLY",
             ["Mover"]="Move", ["Atacar"]="Attack", ["Patrullar"]="Patrol", ["Detener"]="Stop",
             ["Mantener"]="Hold", ["Centrar"]="Focus", ["Embarcar"]="Board", ["Desembarcar"]="Unload",
-            ["Puerto"]="Harbor", 
-            
-            
-            
-            
-            
+            ["Puerto"]="Harbor",
             ["maná"]="mana", ["rugido +25%"]="roar +25%",
-            
-            
-            
-            
             ["· carga "]="· cargo ", [" daño · "]=" damage · ",
             ["Preparado"]="Ready", ["Moviendo"]="Moving", ["En combate"]="In combat", ["Patrullando"]="Patrolling",
             ["Siguiendo"]="Following", ["Manteniendo posición"]="Holding position", ["En puerto"]="In harbor",

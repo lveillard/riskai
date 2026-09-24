@@ -16,7 +16,8 @@ namespace RiskAI.Tests
         {
             string expectedPath = Path.Combine(Application.dataPath, UnitGoldenSnapshot.FixturePath);
             string actual = UnitGoldenSnapshot.Capture();
-            string actualPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Logs", "unit-golden.actual.json"));
+            string actualPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Temp", "unit-golden.actual.json"));
+            Directory.CreateDirectory(Path.GetDirectoryName(actualPath));
             File.WriteAllText(actualPath, actual, new UTF8Encoding(false));
             Assert.That(File.Exists(expectedPath), Is.True, "Missing golden fixture " + expectedPath + "; the capture was written to " + actualPath);
             string expected = File.ReadAllText(expectedPath).Replace("\r\n", "\n");
