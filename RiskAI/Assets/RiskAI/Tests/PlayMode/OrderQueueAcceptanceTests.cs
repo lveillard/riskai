@@ -382,6 +382,88 @@ namespace RiskAI.Tests
         }
 
         [UnityTest]
+        public IEnumerator AFullStashRejectsTheShiftOrder()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var inland = (home.Landing - home.Berth);
+            inland.y = 0;
+            if (inland.sqrMagnitude < .01f) inland = Vector3.forward;
+            Assert.That(NavMesh.SamplePosition(home.Landing + inland.normalized * 14f, out var spawn, 8f, NavMesh.AllAreas), Is.True);
+            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, spawn.position);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            var pointA = Walkable(spawn.position, 5f);
+            Submit(soldier, UnitCommandKind.Move, pointA, false);
+            Step();
+            Assert.That(naval.TryOrderEmbark(transport, soldier, out var error), Is.True, error);
+            Step();
+            var filler = new UnitCommand(0, soldier.EntityId, UnitCommandKind.Move, 1f, 0f, 1f);
+            while (soldier.Orders.CanStash(filler))
+            {
+                Assert.That(soldier.Orders.AppendStash(filler), Is.True);
+                filler = new UnitCommand(0, soldier.EntityId, UnitCommandKind.Move, filler.X + 1f, 0f, 1f);
+            }
+            int stash = soldier.Orders.StashCount;
+            int queued = soldier.Orders.Count;
+            var point = Walkable(pointA, 7f);
+            Submit(soldier, UnitCommandKind.Move, point, true);
+            Step();
+            Assert.That(soldier.Orders.StashCount, Is.EqualTo(stash));
+            Assert.That(soldier.Orders.Count, Is.EqualTo(queued));
+            Assert.That(soldier.LastMoveError, Is.EqualTo(OrderQueue.FullError));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ALostTransportRestoresThePassengerPlan()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var inland = (home.Landing - home.Berth);
+            inland.y = 0;
+            if (inland.sqrMagnitude < .01f) inland = Vector3.forward;
+            Assert.That(NavMesh.SamplePosition(home.Landing + inland.normalized * 14f, out var spawn, 8f, NavMesh.AllAreas), Is.True);
+            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, spawn.position);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            var pointA = Walkable(spawn.position, 5f);
+            Submit(soldier, UnitCommandKind.Move, pointA, false);
+            Step();
+            Assert.That(naval.TryOrderEmbark(transport, soldier, out var error), Is.True, error);
+            Step();
+            Assert.That(soldier.Orders.StashCount, Is.GreaterThan(0));
+            transport.TakeDamage(transport.MaxHealth + 1, 1);
+            Step();
+            Assert.That(soldier.OrderLegCount, Is.GreaterThan(0));
+            Assert.That(soldier.OrderLegKind(0), Is.EqualTo(UnitCommandKind.Move));
+            Assert.That(Vector3.Distance(soldier.OrderLegPoint(0), pointA), Is.LessThan(1.5f));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AReplacingEmbarkMergesTheLiveQueueIntoTheExistingStash()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var inland = (home.Landing - home.Berth);
+            inland.y = 0;
+            if (inland.sqrMagnitude < .01f) inland = Vector3.forward;
+            Assert.That(NavMesh.SamplePosition(home.Landing + inland.normalized * 14f, out var spawn, 8f, NavMesh.AllAreas), Is.True);
+            var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, spawn.position);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            var pointA = Walkable(spawn.position, 5f);
+            Submit(soldier, UnitCommandKind.Move, pointA, false);
+            Step();
+            Assert.That(naval.TryOrderEmbark(transport, soldier, out var error), Is.True, error);
+            Step();
+            var extra = new UnitCommand(soldier.Team, soldier.EntityId, UnitCommandKind.Move, pointA.x + 4f, pointA.y, pointA.z + 4f);
+            Assert.That(soldier.Orders.TryEnqueue(extra), Is.True);
+            Assert.That(battle.Commands.Submit(new UnitCommand(0, soldier.EntityId, UnitCommandKind.Embark, home.Landing.x, home.Landing.y, home.Landing.z, transport.EntityId)), Is.True, battle.Commands.LastRejection);
+            Step();
+            bool found = false;
+            for (int i = 0; i < soldier.Orders.StashCount; i++)
+                if (Mathf.Abs(soldier.Orders.StashedCommand(i).X - extra.X) < .1f) found = true;
+            Assert.That(found, Is.True, "a second embark keeps the order that was only in the live queue");
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator CommandResultRingKeepsAResultPastTheOld64()
         {
             var home = battle.Towns.First(town => town.State.Owner == 0);

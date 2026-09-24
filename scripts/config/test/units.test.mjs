@@ -66,13 +66,13 @@ test('a variant portrait is a land unit', () => {
 
 test('a hull camera is only for a sea unit', () => {
   const file = load();
-  find(file, 'Footman').presentation.portraitFraming = 'Frigate';
+  find(file, 'Footman').presentation.portraitCamera.ship = true;
   assert.ok(validate(file).some((e) => e.includes('hull camera is only for a sea unit')));
 });
 
 test('a sea portrait uses a hull camera', () => {
   const file = load();
-  find(file, 'Frigate').presentation.portraitFraming = 'Standard';
+  find(file, 'Frigate').presentation.portraitCamera.ship = false;
   assert.ok(validate(file).some((e) => e.includes('sea portrait uses a hull camera')));
 });
 

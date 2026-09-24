@@ -216,6 +216,21 @@ namespace RiskAI.Tests
             Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, false, false, true), Is.EqualTo(DisembarkConfirmation.Status.Accepted));
             slot = new DisembarkConfirmation.Slot { CommandId = 4, Waiting = true };
             Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, true, false, true), Is.EqualTo(DisembarkConfirmation.Status.Rejected));
+            var attributed = new DisembarkConfirmation.Slot { Waiting = true, HarborId = 3, CommandId = 4 };
+            Assert.That(DisembarkConfirmation.ForHarbor(attributed, 3), Is.True);
+            Assert.That(DisembarkConfirmation.ForHarbor(attributed, 9), Is.False, "an old result is not a confirmation for a different harbor");
+        }
+
+        [Test]
+        public void AFullPassengerPlanRejectsAnotherStashedOrder()
+        {
+            var queue = new OrderQueue();
+            for (int i = 0; i < OrderQueue.LegCap; i++)
+                Assert.That(queue.AppendStash(new UnitCommand(0, 1, UnitCommandKind.Move, i, 0, 1)), Is.True);
+            var extra = new UnitCommand(0, 1, UnitCommandKind.Move, 80, 0, 1);
+            Assert.That(queue.CanStash(extra), Is.False);
+            Assert.That(queue.AppendStash(extra), Is.False);
+            Assert.That(queue.StashCount, Is.EqualTo(OrderQueue.LegCap));
         }
     }
 }

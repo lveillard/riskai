@@ -469,7 +469,6 @@ namespace RiskAI
                 returnHarbor=NearestRecoveryHarbor(ship.transform.position);
                 if(!returnHarbor){retryAt=session.BattleTime+RetrySeconds;return true;}
                 var check=ConfirmDisembark(ref returnDisembark,ship,returnHarbor);
-                if(check==DisembarkConfirmation.Status.Pending){phase=Phase.ReturningCargo;return true;}
                 if(check==DisembarkConfirmation.Status.Rejected){returnDisembark=default;retryAt=session.BattleTime+RetrySeconds;return true;}
                 phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
                 return true;
@@ -535,18 +534,38 @@ namespace RiskAI
 
         void Fail()
         {
-            var retreat=transport&&transport.IsAlive&&transport.CargoCount>0?NearestRecoveryHarbor(transport.transform.position):null;
+            // A confirmation already in flight must be read, not wiped and sent again.
+            if(returnDisembark.Waiting&&transport&&transport.IsAlive&&transport.CargoCount>0&&returnHarbor)
+            {
+                var waiting=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
+                if(waiting==DisembarkConfirmation.Status.Rejected)
+                {
+                    returnDisembark=default;
+                    attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
+                    return;
+                }
+                if(waiting==DisembarkConfirmation.Status.Accepted)
+                {
+                    phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
+                    return;
+                }
+                phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
+                return;
+            }
+            var ship=transport;
+            var retreat=ship&&ship.IsAlive&&ship.CargoCount>0?NearestRecoveryHarbor(ship.transform.position):null;
             ClearPlan();
+            transport=ship;
             if(retreat&&transport&&transport.IsAlive&&transport.CargoCount>0)
             {
                 returnHarbor=retreat;
                 var check=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
                 if(check!=DisembarkConfirmation.Status.Rejected)
                 {
-                    phase=Phase.ReturningCargo;
-                    if(check==DisembarkConfirmation.Status.Accepted)phaseDeadline=session.BattleTime+ReturnDeadline();
+                    phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
                     return;
                 }
+                returnDisembark=default;
             }
             attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
         }
@@ -559,6 +578,10 @@ namespace RiskAI
         }
         DisembarkConfirmation.Status ConfirmDisembark(ref DisembarkConfirmation.Slot slot, Ship ship, Harbor harbor)
         {
+            int harborId = harbor ? harbor.GetInstanceID() : 0;
+            Vector3 berth = harbor ? harbor.Berth : default;
+            // An older result belongs to the harbor that was ordered, not to whichever dock is nearest now.
+            if (!DisembarkConfirmation.ForHarbor(slot, harborId)) slot.Waiting = false;
             int submittedId = 0;
             bool submittedOk = false;
             if (!slot.Waiting)
@@ -574,7 +597,13 @@ namespace RiskAI
                 resultAccepted = stored.Accepted;
             }
             bool runs = ship && ship.IsAlive && ship.RunsCommand(slot.Waiting ? slot.CommandId : submittedId);
-            return DisembarkConfirmation.Advance(ref slot, submittedId, submittedOk, hasResult, resultAccepted, runs);
+            var status = DisembarkConfirmation.Advance(ref slot, submittedId, submittedOk, hasResult, resultAccepted, runs);
+            if (status == DisembarkConfirmation.Status.Pending)
+            {
+                slot.HarborId = harborId;
+                slot.Berth = berth;
+            }
+            return status;
         }
 
         static int PositiveModulo(int value,int divisor) => divisor<=0?0:(value%divisor+divisor)%divisor;
@@ -593,7 +622,12 @@ namespace RiskAI
         {
             public int CommandId;
             public bool Waiting;
+            public int HarborId;
+            public Vector3 Berth;
         }
+
+        /// <summary>A stored result counts only for the harbor that was submitted.</summary>
+        public static bool ForHarbor(in Slot slot, int harborId) => !slot.Waiting || slot.HarborId == harborId;
 
         public static Status Advance(ref Slot slot, int submittedId, bool submittedOk, bool hasResult, bool resultAccepted, bool shipRunsCommand)
         {

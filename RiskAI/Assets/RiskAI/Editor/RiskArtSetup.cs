@@ -114,7 +114,7 @@ namespace RiskAI.Editor
                     UnitTeamColor.Apply(visual,kind,0);UnitVariantViews.Decorate(visual,kind,0);
                     variantAnimation=visual.GetComponentInChildren<Animation>();
                 }
-                RenderPortrait(variantRoot,variantAnimation,UnitCatalog.Get(kind).Portrait);
+                RenderPortrait(variantRoot,variantAnimation,UnitCatalog.Get(kind).PortraitName);
                 Object.DestroyImmediate(variantRoot);
             }
         }

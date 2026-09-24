@@ -53,7 +53,7 @@ namespace RiskAI
         }
 
         /// <summary>Resources path of the unit portrait (units.json portrait, then portraitFallback until the art setup renders it).</summary>
-        public static string PortraitResource(UnitKind kind) => Resolve(UnitCatalog.Get(kind).Portrait,UnitCatalog.Get(kind).PortraitFallback);
+        public static string PortraitResource(UnitKind kind) => Resolve(UnitCatalog.Get(kind).PortraitName,UnitCatalog.Get(kind).PortraitFallback);
 
         static string Resolve(string preferred,string fallback)
         {

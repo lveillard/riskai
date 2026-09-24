@@ -35,6 +35,11 @@ namespace RiskAI
         Vector3 pendingShore;
         int unloadSlot;
         bool shoreFailureReported;
+        float shoreUnloadElapsed, shoreUnloadCooldown;
+        /// <summary>How often a blocked beach is tried again. Combined with <see cref="ShoreUnloadWindow"/>.</summary>
+        public const float ShoreUnloadRetryInterval = 1f;
+        /// <summary>Sim seconds spent in range before a blocked unload releases the queue. The troops stay aboard.</summary>
+        public const float ShoreUnloadWindow = 5f;
         public UnitKind Kind { get; private set; }
         public bool Selected { get; private set; }
         public Harbor Garrison=>harborGuard;
@@ -92,7 +97,7 @@ namespace RiskAI
 
         internal void Initialize(NavalWorld naval,int team,UnitKind kind)
         {
-            world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;hasActiveCommand=false;capture.Clear();captureView=default;captureSailing=false;plannedCommandId=0;plannedReady=false;plannedPath.Clear();unloadSlot=0;shoreFailureReported=false;orders.Reset();transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
+            world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;hasActiveCommand=false;capture.Clear();captureView=default;captureSailing=false;plannedCommandId=0;plannedReady=false;plannedPath.Clear();unloadSlot=0;shoreFailureReported=false;shoreUnloadElapsed=shoreUnloadCooldown=0;orders.Reset();transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
             NavalArt.CreateShip(this);
             targetVolume=GetComponent<BoxCollider>();
         }
@@ -188,18 +193,27 @@ namespace RiskAI
             if(!IsAlive||!Type.CanTransport)return LastActionError="Selecciona un transporte.";
             if(HasPlan())
             {
+                if(!TryValidateShore(shore,out var plannedLanding,out var plannedError))return LastActionError=plannedError;
                 if(!TryLeaveHarborGuard(plannedPoint))return LastActionError;
                 orderedHarbor=null;
                 CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
-                pendingShore=shore;pendingShoreUnload=true;unloadSlot=0;shoreFailureReported=false;plannedReady=false;return null;
+                ArmShoreUnload(plannedLanding);plannedReady=false;return null;
             }
             if(!TryValidateShore(shore,out var landing,out var error))return LastActionError=error;
             if(!SeaNavigation.TryNearestOcean(landing,ShoreBerthSearchRadius,out var berth)||!SeaNavigation.TryBuildPath(transform.position,berth,pathScratch))return LastActionError="No hay una ruta marítima segura hasta esa playa.";
             if(!TryLeaveHarborGuard(berth))return LastActionError;
             orderedHarbor=null;
             CopyScratchToRoute();routeIndex=0;routeGoal=berth;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
-            pendingShore=landing;pendingShoreUnload=true;unloadSlot=0;shoreFailureReported=false;return null;
+            ArmShoreUnload(landing);return null;
         }
+        /// <summary>The same validated landing keeps the soldier slot. A different beach starts again.</summary>
+        void ArmShoreUnload(Vector3 landing)
+        {
+            bool same=pendingShoreUnload && DistanceXZ(pendingShore,landing)<.5f;
+            pendingShore=landing;pendingShoreUnload=true;
+            if(!same){unloadSlot=0;shoreUnloadElapsed=0;shoreUnloadCooldown=0;shoreFailureReported=false;}
+        }
+        void ClearShoreUnload(){pendingShoreUnload=false;unloadSlot=0;shoreFailureReported=false;shoreUnloadElapsed=shoreUnloadCooldown=0;}
         public bool TryEmbark(Soldier soldier)
         {
             LastActionError=null;
@@ -229,6 +243,7 @@ namespace RiskAI
                 if(TryUnloadSoldier(soldier,shore,unloadSlot)){unloaded=true;unloadSlot++;}
             }
             if(!unloaded&&cargo.Count>0)LastActionError="No hay sitio transitable para desembarcar en esa playa.";
+            if(cargo.Count==0)unloadSlot=0;
             return unloaded;
         }
         public bool TryFindDisembarkPoint(Vector3 requested,out Vector3 landing,out string error)
@@ -248,8 +263,10 @@ namespace RiskAI
             {LastActionError=error;return false;}
             if(DistanceXZ(transform.position,landing)>LoadRadius)
             {LastActionError="Acerca el transporte a una playa marcada.";return false;}
-            bool unloaded=TryUnloadSoldier(soldier,landing,0);
-            if(!unloaded)LastActionError="No hay sitio transitable para desembarcar en esa playa.";
+            bool unloaded=TryUnloadSoldier(soldier,landing,unloadSlot);
+            if(unloaded)unloadSlot++;
+            else LastActionError="No hay sitio transitable para desembarcar en esa playa.";
+            if(cargo.Count==0)unloadSlot=0;
             return unloaded;
         }
         bool TryUnloadSoldier(Soldier soldier,Vector3 landing,int slot)
@@ -277,13 +294,24 @@ namespace RiskAI
             MaintainHarborGuard();
             if(pendingShoreUnload&&DistanceXZ(transform.position,pendingShore)<=LoadRadius)
             {
-                // An empty hold has nothing to land. A blocked beach keeps the order
-                // and retries; v0.33 did not sail the next order away with the army aboard.
-                if(CargoCount==0){pendingShoreUnload=false;unloadSlot=0;shoreFailureReported=false;}
-                else if(UnloadAt(pendingShore)&&CargoCount==0){pendingShoreUnload=false;unloadSlot=0;shoreFailureReported=false;}
-                else if(CargoCount>0&&!string.IsNullOrEmpty(LastActionError))
+                // An empty hold has nothing to land. A blocked beach is tried on an interval
+                // and then releases the queue; the troops stay aboard.
+                if(CargoCount==0)ClearShoreUnload();
+                else
                 {
-                    if(!shoreFailureReported&&Team==0){world.Session.Message(LastActionError,MessageKind.Info);shoreFailureReported=true;}
+                    shoreUnloadElapsed+=delta;
+                    shoreUnloadCooldown-=delta;
+                    if(shoreUnloadCooldown<=0f)
+                    {
+                        shoreUnloadCooldown=ShoreUnloadRetryInterval;
+                        if(UnloadAt(pendingShore)&&CargoCount==0)ClearShoreUnload();
+                        else if(shoreUnloadElapsed>=ShoreUnloadWindow)
+                        {
+                            if(!shoreFailureReported&&Team==0&&!string.IsNullOrEmpty(LastActionError))
+                            {world.Session.Message(LastActionError,MessageKind.Info);shoreFailureReported=true;}
+                            pendingShoreUnload=false;unloadSlot=0;shoreUnloadElapsed=shoreUnloadCooldown=0;
+                        }
+                    }
                 }
             }
             if(!object.ReferenceEquals(target,null)&&!UnitTargeting.CanTarget(this,Team,Type.Weapon,target))
@@ -354,7 +382,8 @@ namespace RiskAI
             {
                 hasAttackMoveGoal=false;ClearRoute();return true;
             }
-            if(!SeaNavigation.TryBuildPath(transform.position,attackMoveGoal,pathScratch))return false;
+            if(!SeaNavigation.TryBuildPath(transform.position,attackMoveGoal,pathScratch))
+            {hasAttackMoveGoal=false;attackMoveOrder=false;ClearRoute();return false;}
             CopyScratchToRoute();routeIndex=0;routeGoal=attackMoveGoal;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;
             return true;
         }
@@ -463,21 +492,25 @@ namespace RiskAI
             }
             LastActionError = null;
             var point = new Vector3(command.X, command.Y, command.Z);
-            bool ok;
+            bool ok, remembered = false;
             switch (command.Kind)
             {
                 case UnitCommandKind.Move:
                 case UnitCommandKind.AttackMove:
                     ok = plan ? PlanMove(point) : CheapWater(point, UnitCatalog.TransportLoadRadius);
+                    remembered = plan && ok;
                     break;
                 case UnitCommandKind.Attack:
                     ok = plan ? PlanAttack(command) : CheapAttack(command);
+                    remembered = plan && ok;
                     break;
                 case UnitCommandKind.Unload:
                     ok = plan ? PlanUnload(point) : CheapUnload(point);
+                    remembered = plan && ok;
                     break;
                 case UnitCommandKind.Capture:
                     ok = plan ? PlanCapture(command) : CheapCapture(command);
+                    remembered = plan && ok;
                     break;
                 default:
                     ok = true;
@@ -485,9 +518,9 @@ namespace RiskAI
             }
             if (plan)
             {
-                plannedReady = ok;
-                plannedCommandId = ok ? command.CommandId : 0;
-                if (ok) { plannedFrom = transform.position; RememberPlan(); }
+                plannedReady = remembered;
+                plannedCommandId = remembered ? command.CommandId : 0;
+                if (remembered) { plannedFrom = transform.position; RememberPlan(); }
             }
             error = ok ? null : (string.IsNullOrEmpty(LastActionError) ? OrderQueue.InvalidError : LastActionError);
             return ok;
@@ -609,9 +642,16 @@ namespace RiskAI
         /// <summary>A combat target does not keep a finished move, unload or capture busy.</summary>
         bool MotorIdle()
         {
-            if (CapturePending() || routeIndex < route.Count || pendingShoreUnload) return false;
-            if (hasAttackMoveGoal) return false;
-            if (hasActiveCommand && !OrderAdvance.MotorIdle(activeCommand.Kind, target != null)) return false;
+            if (CapturePending() || pendingShoreUnload) return false;
+            bool routeOpen = routeIndex < route.Count && !RouteHasStalled();
+            if (routeOpen) return false;
+            if (hasAttackMoveGoal && !RouteHasStalled()) return false;
+            // A finished attack-move (nowhere left to sail) does not stay busy just because
+            // this tick acquired someone after the goal was dropped.
+            bool attackMoveFinished = hasActiveCommand && activeCommand.Kind == UnitCommandKind.AttackMove
+                && !hasAttackMoveGoal && !routeOpen;
+            bool liveTarget = target != null && !attackMoveFinished;
+            if (hasActiveCommand && !OrderAdvance.MotorIdle(activeCommand.Kind, liveTarget)) return false;
             return true;
         }
 

@@ -148,11 +148,16 @@ namespace RiskAI.Core
 
         public void ClearStash() => stashCount = 0;
 
-        /// <summary>Keeps an order for after the voyage. A second copy of the same order is ignored.</summary>
-        public void AppendStash(in UnitCommand command)
+        /// <summary>The passenger plan uses the same cap as the queue, plus the order already being carried out.</summary>
+        public bool CanStash(in UnitCommand command) => ContainsStash(command) || stashCount < LegCap;
+
+        /// <summary>Keeps an order for after the voyage. A second copy of the same order is ignored. False when the plan is full.</summary>
+        public bool AppendStash(in UnitCommand command)
         {
-            if (stashCount >= LegCap || ContainsStash(command)) return;
+            if (ContainsStash(command)) return true;
+            if (stashCount >= LegCap) return false;
             stash[stashCount++] = command;
+            return true;
         }
 
         /// <summary>Orders queued while walking to the ship join the plan. Existing stash entries stay.</summary>
@@ -162,7 +167,7 @@ namespace RiskAI.Core
                 AppendStash(items[(head + i) % Limit]);
         }
 
-        public bool ContainsStash(in UnitCommand command)
+        bool ContainsStash(in UnitCommand command)
         {
             for (int i = 0; i < stashCount; i++)
                 if (SameOrder(stash[i], command)) return true;

@@ -106,10 +106,22 @@
         "portrait": "Knight",
         "portraitFallback": "Knight",
         "portraitSource": "Model",
-        "portraitFraming": "Standard",
         "attackClip": "1H_Melee_Attack_Slice_Horizontal",
         "contact": 0.25,
-        "silhouette": "Infantry"
+        "silhouette": "Infantry",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -217,10 +229,22 @@
         "portrait": "RogueHooded",
         "portraitFallback": "RogueHooded",
         "portraitSource": "Model",
-        "portraitFraming": "Standard",
         "attackClip": "2H_Ranged_Shoot",
         "contact": 0.25,
-        "silhouette": "Ranged"
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -330,10 +354,22 @@
         "portrait": "MountedKnight",
         "portraitFallback": "RoyalGuard",
         "portraitSource": "Model",
-        "portraitFraming": "Mounted",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Mounted"
+        "silhouette": "Mounted",
+        "portraitCamera": {
+          "orthographicSize": 1.85,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": true,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -462,10 +498,22 @@
         "portrait": "Mage",
         "portraitFallback": "Mage",
         "portraitSource": "Model",
-        "portraitFraming": "Standard",
         "attackClip": "Spellcast_Shoot",
         "contact": 0.32142857,
-        "silhouette": "Ranged"
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -592,10 +640,22 @@
         "portrait": "Mortar",
         "portraitFallback": "Mortar",
         "portraitSource": "Model",
-        "portraitFraming": "Mortar",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Siege"
+        "silhouette": "Siege",
+        "portraitCamera": {
+          "orthographicSize": 1.35,
+          "focusHeight": 1.15,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -718,10 +778,22 @@
         "portrait": "Medic",
         "portraitFallback": "Medic",
         "portraitSource": "Model",
-        "portraitFraming": "Standard",
         "attackClip": "2H_Ranged_Shoot",
         "contact": 0.25,
-        "silhouette": "Ranged"
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -823,10 +895,22 @@
         "portrait": "MarinePrivate",
         "portraitFallback": "MarinePrivate",
         "portraitSource": "Model",
-        "portraitFraming": "Standard",
         "attackClip": "1H_Ranged_Shoot",
         "contact": 0.25,
-        "silhouette": "Marine"
+        "silhouette": "Marine",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -932,10 +1016,22 @@
         "portrait": "MarineMajor",
         "portraitFallback": "MountedKnight",
         "portraitSource": "Variant",
-        "portraitFraming": "Command",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Mounted"
+        "silhouette": "Mounted",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": true,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -1041,10 +1137,22 @@
         "portrait": "MarineGeneral",
         "portraitFallback": "MountedKnight",
         "portraitSource": "Variant",
-        "portraitFraming": "Command",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Mounted"
+        "silhouette": "Mounted",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": true,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -1146,10 +1254,22 @@
         "portrait": "EliteRifleman",
         "portraitFallback": "RogueHooded",
         "portraitSource": "Variant",
-        "portraitFraming": "Standard",
         "attackClip": "2H_Ranged_Shoot",
         "contact": 0.25,
-        "silhouette": "Ranged"
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -1265,10 +1385,22 @@
         "portrait": "Roarer",
         "portraitFallback": "RogueHooded",
         "portraitSource": "Variant",
-        "portraitFraming": "Roarer",
         "attackClip": "2H_Ranged_Shoot",
         "contact": 0.25,
-        "silhouette": "Ranged"
+        "silhouette": "Ranged",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": true,
+          "upperFraction": 0.78,
+          "refitOffsetX": 2,
+          "refitOffsetY": 1,
+          "refitOffsetZ": 5,
+          "ship": false
+        }
       }
     },
     {
@@ -1388,10 +1520,22 @@
         "portrait": "ArmyGeneral",
         "portraitFallback": "MountedKnight",
         "portraitSource": "Variant",
-        "portraitFraming": "General",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Mounted"
+        "silhouette": "Mounted",
+        "portraitCamera": {
+          "orthographicSize": 2.1,
+          "focusHeight": 1.95,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": true,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -1514,10 +1658,22 @@
         "portrait": "Artillery",
         "portraitFallback": "Mortar",
         "portraitSource": "Variant",
-        "portraitFraming": "Siege",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Siege"
+        "silhouette": "Siege",
+        "portraitCamera": {
+          "orthographicSize": 1.7,
+          "focusHeight": 1.15,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -1619,10 +1775,22 @@
         "portrait": "Tank",
         "portraitFallback": "Mortar",
         "portraitSource": "Variant",
-        "portraitFraming": "Siege",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Siege"
+        "silhouette": "Siege",
+        "portraitCamera": {
+          "orthographicSize": 1.7,
+          "focusHeight": 1.15,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     },
     {
@@ -1727,10 +1895,22 @@
         "portrait": "Frigate",
         "portraitFallback": "Frigate",
         "portraitSource": "Model",
-        "portraitFraming": "Frigate",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Hull"
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 3.35,
+          "focusHeight": 2.15,
+          "offsetX": 4.8,
+          "offsetY": 3.1,
+          "offsetZ": 6.8,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": true
+        }
       },
       "acquisition": {
         "radius": {
@@ -1805,10 +1985,22 @@
         "portrait": "Transport",
         "portraitFallback": "Transport",
         "portraitSource": "Model",
-        "portraitFraming": "Frigate",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Hull"
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 3.35,
+          "focusHeight": 2.15,
+          "offsetX": 4.8,
+          "offsetY": 3.1,
+          "offsetZ": 6.8,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": true
+        }
       }
     },
     {
@@ -1913,10 +2105,22 @@
         "portrait": "Warship",
         "portraitFallback": "Frigate",
         "portraitSource": "Model",
-        "portraitFraming": "Warship",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Hull"
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 3.8,
+          "focusHeight": 2.15,
+          "offsetX": 4.8,
+          "offsetY": 3.1,
+          "offsetZ": 6.8,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": true
+        }
       },
       "acquisition": {
         "radius": {
@@ -2035,10 +2239,22 @@
         "portrait": "Battleship",
         "portraitFallback": "Frigate",
         "portraitSource": "Model",
-        "portraitFraming": "Battleship",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Hull"
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 4.2,
+          "focusHeight": 2.15,
+          "offsetX": 4.8,
+          "offsetY": 3.1,
+          "offsetZ": 6.8,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": true
+        }
       },
       "acquisition": {
         "radius": {
@@ -2113,10 +2329,22 @@
         "portrait": "ArmoredTransport",
         "portraitFallback": "Transport",
         "portraitSource": "Model",
-        "portraitFraming": "Frigate",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Hull"
+        "silhouette": "Hull",
+        "portraitCamera": {
+          "orthographicSize": 3.35,
+          "focusHeight": 2.15,
+          "offsetX": 4.8,
+          "offsetY": 3.1,
+          "offsetZ": 6.8,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": true
+        }
       }
     },
     {
@@ -2233,10 +2461,22 @@
         "portrait": "Tower",
         "portraitFallback": "Tower",
         "portraitSource": "Model",
-        "portraitFraming": "Standard",
         "attackClip": null,
         "contact": 0.5,
-        "silhouette": "Structure"
+        "silhouette": "Structure",
+        "portraitCamera": {
+          "orthographicSize": 1.4,
+          "focusHeight": 1.75,
+          "offsetX": 2,
+          "offsetY": 1,
+          "offsetZ": 5,
+          "refit": false,
+          "upperFraction": 0.8,
+          "refitOffsetX": 4.5,
+          "refitOffsetY": 1.6,
+          "refitOffsetZ": 3,
+          "ship": false
+        }
       }
     }
   ]

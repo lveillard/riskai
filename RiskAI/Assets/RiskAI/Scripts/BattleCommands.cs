@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using RiskAI.Core;
 using UnityEngine;
-using UnityEngine.AI;
 
 namespace RiskAI
 {
@@ -130,11 +129,6 @@ namespace RiskAI
             if(!PlayerRules.IsPlayer(command.PlayerId) || command.PlayerId>=session.PlayerCount || !Finite(command.X) || !Finite(command.Y) || !Finite(command.Z))return false;
             if(command.Kind<UnitCommandKind.Move || command.Kind>UnitCommandKind.Unload)return false;
             if(actor==null || !actor.IsAlive || actor.Team!=command.PlayerId)return false;
-            if(command.HasPoint && actor.Type.Domain==UnitDomain.Land)
-            {
-                var point=new Vector3(command.X,command.Y,command.Z);
-                if(!NavMesh.SamplePosition(point,out _,8,NavMesh.AllAreas))return false;
-            }
             if(command.HasPoint && actor.Type.Domain==UnitDomain.Static)return false;
             return actor.Authorize(command, plan);
         }

@@ -132,7 +132,7 @@ namespace RiskAI.Tests
             var presentation = new Obj();
             presentation.Add("attackClip", UnitCatalog.Get(kind).AttackClip);
             presentation.Add("contact", UnitCatalog.Get(kind).AttackContact);
-            presentation.Add("portrait", profile.Portrait);
+            presentation.Add("portrait", profile.PortraitName);
             presentation.Add("portraitResource", UnitVariantViews.PortraitResource(kind));
             unit.Add("presentation", presentation);
 

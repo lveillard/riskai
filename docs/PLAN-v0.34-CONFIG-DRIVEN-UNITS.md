@@ -230,6 +230,7 @@ Solo estos; todo lo demás debe quedar igual:
 2. Shift sobre una unidad parada empieza la primera orden (hoy no encola).
 3. Shift deja de acelerar la cámara.
 4. El atacar-mover conserva su destino si muere el objetivo también en soldados.
+5. Una playa que no admite a nadie se reintenta unos 5 s y después la cola del transporte sigue; la tropa permanece a bordo.
 
 ## 8. Riesgos
 

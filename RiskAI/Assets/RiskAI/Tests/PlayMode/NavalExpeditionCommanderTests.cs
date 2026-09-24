@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using RiskAI.Core;
 using UnityEngine;
@@ -89,6 +90,40 @@ namespace RiskAI.Tests
                 Assert.That(unit.Agent.pathStatus,Is.EqualTo(NavMeshPathStatus.PathComplete));
                 Assert.That(unit.Agent.hasPath,Is.True,"Landed troops must receive the normal attack-move capture order.");
             }
+        }
+
+        [UnityTest]
+        public IEnumerator AFailedExpeditionSubmitsOneReturnAndARejectedDrainGoesIdle()
+        {
+            var naval = NavalWorld.Current;
+            var home = naval.Harbors.First(harbor => harbor.Owner == 1 && harbor.CanLaunch);
+            var transport = BattleTestScenario.Ship(naval, 1, UnitKind.Transport, home.Berth);
+            var soldier = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, home.Landing);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            var commander = naval.ExpeditionFor(1);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            var phaseType = typeof(NavalExpeditionCommander).GetNestedType("Phase", BindingFlags.NonPublic);
+            typeof(NavalExpeditionCommander).GetField("transport", hidden).SetValue(commander, transport);
+            typeof(NavalExpeditionCommander).GetField("phase", hidden).SetValue(commander, System.Enum.Parse(phaseType, "Sailing"));
+            typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).SetValue(commander, battle.BattleTime - 1f);
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            battle.AiEnabled = true;
+            long before = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount;
+            commander.Tick(0);
+            long submitted = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(submitted, Is.EqualTo(1), "Fail submits the return once");
+            float deadline = (float)typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).GetValue(commander);
+            Assert.That(deadline, Is.GreaterThan(battle.BattleTime), "ReturningCargo arms a deadline on the pending confirmation");
+            Assert.That(typeof(NavalExpeditionCommander).GetField("phase", hidden).GetValue(commander).ToString(), Is.EqualTo("ReturningCargo"));
+            typeof(CombatTarget).GetProperty("Team").SetValue(transport, 0);
+            battle.Commands.Tick();
+            battle.Clock.Advance(1.5f, false, _ => { });
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            commander.Tick(0);
+            long after = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(after, Is.EqualTo(1), "a drain rejection cools down instead of submitting another return");
+            Assert.That(typeof(NavalExpeditionCommander).GetField("phase", hidden).GetValue(commander).ToString(), Is.EqualTo("Cooldown"));
+            yield return null;
         }
 
         static float DistanceXZ(Vector3 a,Vector3 b)

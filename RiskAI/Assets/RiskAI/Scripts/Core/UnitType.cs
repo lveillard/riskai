@@ -2,6 +2,28 @@ using System;
 
 namespace RiskAI.Core
 {
+    /// <summary>Portrait camera from units.json. The renderer does not keep a second table of these numbers.</summary>
+    public readonly struct PortraitView
+    {
+        public readonly bool Exists, Ship, Refit;
+        public readonly float OrthographicSize, FocusHeight, UpperFraction;
+        public readonly float OffsetX, OffsetY, OffsetZ, RefitX, RefitY, RefitZ;
+
+        public static PortraitView From(PortraitCamera camera)
+        {
+            if (camera == null) return default;
+            return new PortraitView(true, camera.Ship, camera.Refit, camera.OrthographicSize, camera.FocusHeight, camera.UpperFraction,
+                camera.OffsetX, camera.OffsetY, camera.OffsetZ, camera.RefitOffsetX, camera.RefitOffsetY, camera.RefitOffsetZ);
+        }
+
+        PortraitView(bool exists, bool ship, bool refit, float size, float focus, float upper,
+            float offsetX, float offsetY, float offsetZ, float refitX, float refitY, float refitZ)
+        {
+            Exists = exists; Ship = ship; Refit = refit; OrthographicSize = size; FocusHeight = focus; UpperFraction = upper;
+            OffsetX = offsetX; OffsetY = offsetY; OffsetZ = offsetZ; RefitX = refitX; RefitY = refitY; RefitZ = refitZ;
+        }
+    }
+
     /// <summary>Oriented ship hull from units.json; builds the NavalArt scale and target collider.</summary>
     public readonly struct HullShape
     {
@@ -89,9 +111,9 @@ namespace RiskAI.Core
         public readonly HealProfile Heal;
         public readonly RoarProfile Roar;
         public readonly ManaProfile Mana;
-        public readonly string Model, Portrait, PortraitFallback, AttackClip;
+        public readonly string Model, PortraitName, PortraitFallback, AttackClip;
         public readonly PortraitSource PortraitSource;
-        public readonly PortraitFraming PortraitFraming;
+        public readonly PortraitView Portrait;
         public readonly float AttackContact;
         public readonly UnitSilhouette Silhouette;
 
@@ -132,8 +154,8 @@ namespace RiskAI.Core
             Roar = caps.Roar == null ? default : new RoarProfile(caps.Roar.Area, caps.Roar.Duration, caps.Roar.ManaCost, caps.Roar.DamageBonus, caps.Roar.Evaluation);
             Mana = caps.Mana == null ? default : new ManaProfile(caps.Mana.Max, caps.Mana.Initial, caps.Mana.Regen);
             var p = c.Presentation;
-            Model = p.Model; Portrait = p.Portrait; PortraitFallback = p.PortraitFallback; AttackClip = p.AttackClip; AttackContact = p.Contact;
-            PortraitSource = p.PortraitSource; PortraitFraming = p.PortraitFraming; Silhouette = p.Silhouette;
+            Model = p.Model; PortraitName = p.Portrait; PortraitFallback = p.PortraitFallback; AttackClip = p.AttackClip; AttackContact = p.Contact;
+            PortraitSource = p.PortraitSource; Portrait = PortraitView.From(p.PortraitCamera); Silhouette = p.Silhouette;
         }
 
         internal static UnitType From(UnitConfig config, int index) => new UnitType(config, index);

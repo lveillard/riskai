@@ -207,16 +207,28 @@ export const PortraitSource = Enum('PortraitSource',
   'Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab.',
   ['Model', 'Variant']);
 
-export const PortraitFraming = Enum('PortraitFraming',
-  'v0.33 portrait camera. Hull values are ships. An unknown name is rejected by the schema.',
-  ['Standard', 'Mortar', 'Siege', 'Mounted', 'General', 'Command', 'Roarer', 'Frigate', 'Warship', 'Battleship']);
+export const PortraitCamera = Named('PortraitCamera',
+  'v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name.',
+  Type.Object({
+    orthographicSize: Type.Number({ exclusiveMinimum: 0, description: 'Orthographic camera size.' }),
+    focusHeight: Type.Number({ description: 'Focus height above the model root.' }),
+    offsetX: Type.Number({ description: 'Camera offset X.' }),
+    offsetY: Type.Number({ description: 'Camera offset Y.' }),
+    offsetZ: Type.Number({ description: 'Camera offset Z.' }),
+    refit: Type.Boolean({ description: 'Refit the camera to the renderer bounds.' }),
+    upperFraction: Type.Number({ minimum: 0, maximum: 1, description: 'Fraction of the bounds kept when refitting.' }),
+    refitOffsetX: Type.Number({ description: 'Refit view offset X.' }),
+    refitOffsetY: Type.Number({ description: 'Refit view offset Y.' }),
+    refitOffsetZ: Type.Number({ description: 'Refit view offset Z.' }),
+    ship: Type.Boolean({ description: 'Hull camera. Only a sea unit may set this.' }),
+  }, strict));
 
 export const Presentation = Named('UnitPresentation', 'Model, portrait, attack clip and proxy shape.', Type.Object({
   model: Type.Union([Type.String(), Type.Null()], { description: 'Model prefab name.' }),
   portrait: Type.String({ description: 'Preferred portrait resource name.' }),
   portraitFallback: Type.String({ description: 'Portrait used until the preferred one is rendered.' }),
   portraitSource: PortraitSource,
-  portraitFraming: PortraitFraming,
+  portraitCamera: PortraitCamera,
   attackClip: Type.Union([Type.String(), Type.Null()], { description: 'Attack clip; null for procedural attacks.' }),
   contact: Type.Number({ minimum: 0, maximum: 1, description: 'Normalised clip time of the hit.' }),
   silhouette: UnitSilhouette,

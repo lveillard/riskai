@@ -133,21 +133,6 @@ namespace RiskAI.Core
         Variant
     }
 
-    /// <summary>v0.33 portrait camera. Hull values are ships. An unknown name is rejected by the schema.</summary>
-    public enum PortraitFraming
-    {
-        Standard,
-        Mortar,
-        Siege,
-        Mounted,
-        General,
-        Command,
-        Roarer,
-        Frigate,
-        Warship,
-        Battleship
-    }
-
     /// <summary>Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal.</summary>
     public enum UnitSilhouette
     {
@@ -665,9 +650,9 @@ namespace RiskAI.Core
         /// <summary>Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab.</summary>
         [UnitConfigField(Required = true)]
         public PortraitSource PortraitSource;
-        /// <summary>v0.33 portrait camera. Hull values are ships. An unknown name is rejected by the schema.</summary>
+        /// <summary>v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name.</summary>
         [UnitConfigField(Required = true)]
-        public PortraitFraming PortraitFraming;
+        public PortraitCamera PortraitCamera;
         /// <summary>Attack clip; null for procedural attacks.</summary>
         [UnitConfigField(Required = true, Nullable = true)]
         public string AttackClip;
@@ -677,5 +662,44 @@ namespace RiskAI.Core
         /// <summary>Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal.</summary>
         [UnitConfigField(Required = true)]
         public UnitSilhouette Silhouette;
+    }
+
+    /// <summary>v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name.</summary>
+    [Serializable]
+    public sealed class PortraitCamera
+    {
+        /// <summary>Orthographic camera size.</summary>
+        [UnitConfigField(Required = true)]
+        public float OrthographicSize;
+        /// <summary>Focus height above the model root.</summary>
+        [UnitConfigField(Required = true)]
+        public float FocusHeight;
+        /// <summary>Camera offset X.</summary>
+        [UnitConfigField(Required = true)]
+        public float OffsetX;
+        /// <summary>Camera offset Y.</summary>
+        [UnitConfigField(Required = true)]
+        public float OffsetY;
+        /// <summary>Camera offset Z.</summary>
+        [UnitConfigField(Required = true)]
+        public float OffsetZ;
+        /// <summary>Refit the camera to the renderer bounds.</summary>
+        [UnitConfigField(Required = true)]
+        public bool Refit;
+        /// <summary>Fraction of the bounds kept when refitting.</summary>
+        [UnitConfigField(Required = true)]
+        public float UpperFraction;
+        /// <summary>Refit view offset X.</summary>
+        [UnitConfigField(Required = true)]
+        public float RefitOffsetX;
+        /// <summary>Refit view offset Y.</summary>
+        [UnitConfigField(Required = true)]
+        public float RefitOffsetY;
+        /// <summary>Refit view offset Z.</summary>
+        [UnitConfigField(Required = true)]
+        public float RefitOffsetZ;
+        /// <summary>Hull camera. Only a sea unit may set this.</summary>
+        [UnitConfigField(Required = true)]
+        public bool Ship;
     }
 }
