@@ -30,7 +30,8 @@ namespace RiskAI
         public bool UnderConstruction { get; private set; }
         public float BuildProgress { get; private set; }
         public int ShotsFired { get; private set; }
-        public CombatTarget CurrentTarget { get; private set; }
+        CombatTarget current;
+        public override CombatTarget CurrentTarget => current;
         public bool IsWindingUp => launchAt >= 0;
         BattleSession session;
         GameObject upper, scaffolding;
@@ -85,18 +86,18 @@ namespace RiskAI
 
         public void BeginBuild()
         {
-            Team = CombatTeam(HostOwner); UnderConstruction = true; BuildProgress = 0; CurrentTarget=null; CancelLaunch(); RefreshVisuals();
+            Team = CombatTeam(HostOwner); UnderConstruction = true; BuildProgress = 0; current=null; CancelLaunch(); RefreshVisuals();
         }
         public void SetBuildProgress(float progress) { BuildProgress = progress; }
         public void CancelBuild() { UnderConstruction = false; BuildProgress = 0; CancelLaunch(); RefreshVisuals(); }
         public void CompleteBuild()
         {
             Team = CombatTeam(HostOwner); Health = MaxHealth; UnderConstruction = false; BuildProgress = 1;
-            CurrentTarget=null;nextShot=0;CancelLaunch();
+            current=null;nextShot=0;CancelLaunch();
             session.RegisterTarget(this);
             RefreshVisuals();
         }
-        public void ChangeOwner() { Team = CombatTeam(HostOwner); CurrentTarget=null; CancelLaunch(); nextShot=Mathf.Max(nextShot,session.BattleTime+.2f); RefreshVisuals(); }
+        public void ChangeOwner() { Team = CombatTeam(HostOwner); current=null; CancelLaunch(); nextShot=Mathf.Max(nextShot,session.BattleTime+.2f); RefreshVisuals(); }
         void RefreshVisuals()
         {
             upper.SetActive(IsAlive); scaffolding.SetActive(UnderConstruction);
@@ -106,7 +107,7 @@ namespace RiskAI
 
         public void SimTick(float delta)
         {
-            if (!IsAlive || UnderConstruction || !Guardian || !Guardian.IsAlive) { CurrentTarget=null; CancelLaunch(); return; }
+            if (!IsAlive || UnderConstruction || !Guardian || !Guardian.IsAlive) { current=null; CancelLaunch(); return; }
             if (session.Paused || session.Winner >= 0) return;
             if (launchAt >= 0 && session.BattleTime >= launchAt)
             {
@@ -114,14 +115,14 @@ namespace RiskAI
                 CancelLaunch();
                 if (IsValidTarget(launchTarget))
                 {
-                    CurrentTarget = launchTarget;
+                    current = launchTarget;
                     ShotsFired++;
                     ref readonly var weapon = ref HostWeapon;
                     session.Combat.FireWeapon(AttackOrigin, launchTarget.AimPoint, launchTarget,
                         session.RollDamage(weapon), Team, this, weapon);
                 }
             }
-            if (!IsValidTarget(CurrentTarget)) CurrentTarget=FindTarget();
+            if (!IsValidTarget(CurrentTarget)) current=FindTarget();
             if (!CurrentTarget || launchAt >= 0 || session.BattleTime < nextShot) return;
             nextShot = session.BattleTime + AttackCooldown;
             launchAt = session.BattleTime + HostWeapon.AttackPoint;

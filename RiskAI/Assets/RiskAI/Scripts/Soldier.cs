@@ -22,7 +22,7 @@ namespace RiskAI
         public bool IsGarrison => Garrison != null;
         public bool IsIdle => !IsGarrison && isActiveAndEnabled && mode == OrderMode.Idle && !target && Agent && Agent.enabled && !Agent.hasPath;
         public NavMeshAgent Agent { get; private set; }
-        public CombatTarget CurrentTarget => target;
+        public override CombatTarget CurrentTarget => target;
         // Presentation-only projection of the strike already scheduled by SimTick.
         // It does not schedule, cancel, or resolve combat.
         public float StrikeWindupProgress => strikeAt < 0 || !strikeTarget || !session ? -1 :
@@ -543,7 +543,7 @@ namespace RiskAI
             }
             if (mode == OrderMode.Follow)
             {
-                var followTarget = session.FindTarget(followTargetId) as Soldier;
+                var followTarget = session.FindTarget(followTargetId);
                 if (!followTarget || !followTarget.IsAlive || followTarget.Team != Team) { followTargetId = 0; Complete(); return; }
                 if (session.BattleTime >= nextPath) { nextPath = session.BattleTime + .2f; Agent.stoppingDistance = 2; RequestAutonomousPath(followTarget.transform.position); }
                 if (followTarget.CurrentTarget && Vector3.Distance(transform.position, followTarget.CurrentTarget.transform.position) < 9) SetTarget(followTarget.CurrentTarget);
@@ -582,6 +582,8 @@ namespace RiskAI
         public UnitCommandKind OrderLegKind(int index) => OrderLegView.Kind(orders, index);
         public int ActivePathCount => pathCornerCount;
         public Vector3 ActivePathPoint(int index) => pathCorners[index];
+        public Vector3 PlacePoint(Vector3 claim, Harbor harbor) => claim;
+        public bool MotorReady => isActiveAndEnabled && IsAlive && Agent && Agent.enabled;
         public void RefreshActivePath()
         {
             if (!Agent || !Agent.isOnNavMesh || Agent.pathPending || !Agent.hasPath) { if (Agent && !Agent.hasPath) pathCornerCount = 0; return; }
@@ -773,8 +775,8 @@ namespace RiskAI
 
         bool ExecuteFollow(in UnitCommand command)
         {
-            var ally = session.FindTarget(command.TargetId) as Soldier;
-            if (!ally) { LastMoveError = OrderQueue.InvalidError; return false; }
+            var ally = session.FindTarget(command.TargetId);
+            if (!ally || ally.Team != Team) { LastMoveError = OrderQueue.InvalidError; return false; }
             Remember(command);
             Apply(OrderMode.Follow, ally.transform.position, ally.EntityId);
             return true;

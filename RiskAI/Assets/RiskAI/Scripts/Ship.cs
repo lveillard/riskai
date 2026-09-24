@@ -46,7 +46,7 @@ namespace RiskAI
         public IReadOnlyList<Soldier> Cargo=>cargo;
         public int CargoCount=>cargo.Count;
         public int CargoCapacity=>Capacity;
-        public CombatTarget CurrentTarget=>target;
+        public override CombatTarget CurrentTarget=>target;
         public override ref readonly UnitType Type=>ref UnitCatalog.Get(Kind);
         public string DisplayName=>Type.Name;
         public string OrderLabel=>IsGarrison?"Guarnición · mantiene el puerto":target?"En combate":route.Count>routeIndex?"Navegando":"En puerto";
@@ -531,6 +531,8 @@ namespace RiskAI
         public UnitCommandKind OrderLegKind(int index) => OrderLegView.Kind(orders, index);
         public int ActivePathCount => routeIndex < route.Count ? route.Count - routeIndex + 1 : 0;
         public Vector3 ActivePathPoint(int index) => index == 0 ? transform.position : route[routeIndex + index - 1];
+        public Vector3 PlacePoint(Vector3 claim, Harbor harbor) => harbor ? harbor.Berth : claim;
+        public bool MotorReady => isActiveAndEnabled && IsAlive;
         public void RefreshActivePath() { }
         string IOrderable.OrderError => LastActionError;
         void IOrderable.ClearOrderError() => LastActionError = null;

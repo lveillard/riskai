@@ -17,6 +17,8 @@ namespace RiskAI
         public virtual void JoinAlert(CombatTarget attacker) { }
         public abstract float MaxHealth { get; }
         public bool IsAlive => Health > 0 && gameObject.activeInHierarchy;
+        /// <summary>Who this actor is fighting. Follow reads it; actors with no target leave it empty.</summary>
+        public virtual CombatTarget CurrentTarget => null;
         public virtual bool CanBeAttacked => IsAlive;
         public virtual Vector3 AimPoint => transform.position + Vector3.up * 1.5f;
         public virtual Vector3 ApproachPoint(Vector3 from) => transform.position;

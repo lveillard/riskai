@@ -118,8 +118,8 @@ namespace RiskAI.Core
         public static TargetLost OnTargetLost(UnitCommandKind active) =>
             active == UnitCommandKind.Attack ? TargetLost.Advance : TargetLost.KeepDestination;
 
-        /// <summary>Which commands a domain can carry. The motor still checks the point.</summary>
-        public static bool KindAllowed(UnitDomain domain, UnitCommandKind kind)
+        /// <summary>Which commands this unit's capabilities accept. The motor still checks the point.</summary>
+        public static bool KindAllowed(in UnitType type, UnitCommandKind kind)
         {
             switch (kind)
             {
@@ -129,13 +129,15 @@ namespace RiskAI.Core
                 case UnitCommandKind.Stop:
                 case UnitCommandKind.Hold:
                 case UnitCommandKind.Capture:
-                    return domain == UnitDomain.Land || domain == UnitDomain.Sea;
+                    return true;
                 case UnitCommandKind.Patrol:
+                    return type.CanPatrol;
                 case UnitCommandKind.Follow:
+                    return type.CanFollow;
                 case UnitCommandKind.Embark:
-                    return domain == UnitDomain.Land;
+                    return type.CanEmbark;
                 case UnitCommandKind.Unload:
-                    return domain == UnitDomain.Sea;
+                    return type.CanTransport;
                 default:
                     return false;
             }

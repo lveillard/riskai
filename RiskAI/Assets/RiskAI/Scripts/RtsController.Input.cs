@@ -121,25 +121,20 @@ namespace RiskAI
                 foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanTransport) OrderShip(ship, UnitCommandKind.Unload, shore, append: QueueOrders);
                 ShowOrder(shore, false); CancelCursor(); pressedWorld = false; return;
             }
+            // The move cursor never hands the click an enemy or a place: it is a plain move.
+            if (!AttackCursor) { OrderAt(Ground(point), false); CancelCursor(); pressedWorld = false; return; }
             var picked = RtsPicking.Target(session, cam, point, -1);
-            var victim = AttackCursor ? AttackRecipient(picked) : null;
-            var armed = ClickRules.Resolve(ClickOf(AttackCursor ? picked : null, victim, null, null, null, null, AttackCursor));
-            if (armed == ClickDecision.Capture) OrderCaptureOf(picked);
-            else if (armed == ClickDecision.Attack)
+            var town = RtsPicking.Town(session, cam, point);
+            var harbor = RtsPicking.Harbor(session, cam, point);
+            if (harbor) town = null;
+            switch (ClickRules.Resolve(Describe(picked, null, town, harbor, true)))
             {
-                foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Attack, targetId: victim.EntityId, append: QueueOrders));
-                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanAttack) OrderShip(ship, UnitCommandKind.Attack, victim.transform.position, victim.EntityId, append: QueueOrders);
-                ShowOrder(victim.transform.position, true); GameFeel.FlashTarget(victim);
+                case ClickDecision.Attack: IssueAttack(picked); break;
+                case ClickDecision.Capture: IssuePlace(harbor, town, true); break;
+                default: OrderAt(Ground(point), true); break;
             }
-            else OrderAt(Ground(point), AttackCursor);
             CancelCursor();
             pressedWorld = false;
-        }
-
-        bool HasAttackShip()
-        {
-            foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanAttack) return true;
-            return false;
         }
 
         internal void ContextAction(Vector2 point)
@@ -147,47 +142,107 @@ namespace RiskAI
             if (BlocksWorldInput(point) || OrderCursor || session.Paused || session.Winner >= 0) { if (OrderCursor) CancelCursor(); return; }
             if(StrategicMapView.Active){FocusStrategicPoint(point);return;}
             PurgeStaleSelection();
-            var clickedEnemy = RtsPicking.Target(session, cam, point, -1); var enemy = AttackRecipient(clickedEnemy);
+            var picked = RtsPicking.Target(session, cam, point, -1);
             var friendly = RtsPicking.Target(session, cam, point, 1);
-            var ally = friendly && friendly.Type.Domain == UnitDomain.Land ? friendly as Soldier : null;
-            var ownShip = friendly && friendly.Type.Domain == UnitDomain.Sea ? friendly as Ship : null;
-            var town = RtsPicking.Town(session, cam, point); var harbor = RtsPicking.Harbor(session, cam, point);
-            switch (ClickRules.Resolve(ClickOf(clickedEnemy, enemy, ally, ownShip, town, harbor, false)))
+            var town = RtsPicking.Town(session, cam, point);
+            var harbor = RtsPicking.Harbor(session, cam, point);
+            if (harbor) town = null;
+            switch (ClickRules.Resolve(Describe(picked, friendly, town, harbor, false)))
             {
-                case ClickDecision.FleetToHarbor: MoveFleetToHarbor(harbor); break;
-                case ClickDecision.FleetToTownPort: MoveFleetToHarbor(town.Port); break;
-                case ClickDecision.Attack:
-                    CancelBoardingForSelection();
-                    foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Attack, targetId: enemy.EntityId, append: QueueOrders));
-                    foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanAttack) OrderShip(ship, UnitCommandKind.Attack, enemy.transform.position, enemy.EntityId, append: QueueOrders);
-                    ShowOrder(enemy.transform.position, true); GameFeel.FlashTarget(enemy);
-                    break;
-                case ClickDecision.Capture: OrderCaptureOf(clickedEnemy, town, harbor); break;
-                case ClickDecision.Board: BeginBoarding(ownShip); break;
-                case ClickDecision.Follow:
-                    CancelBoardingForSelection();
-                    foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Follow, targetId: ally.EntityId, append: QueueOrders));
-                    ShowOrder(ally.transform.position, false);
-                    break;
-                case ClickDecision.OrderHarbor: OrderAt(harbor.Landing, harbor.Owner != 0); break;
-                case ClickDecision.OrderTown: OrderAt(town.ClaimPoint, town.State.Owner != 0); break;
+                case ClickDecision.Attack: IssueAttack(picked); break;
+                case ClickDecision.Capture: IssuePlace(harbor, town, true); break;
+                case ClickDecision.OrderPlace: IssuePlace(harbor, town, false); break;
+                case ClickDecision.Board: if (friendly is Ship transport) BeginBoarding(transport); break;
+                case ClickDecision.Follow: IssueFollow(friendly); break;
                 default: OrderAt(Ground(point), false); break;
             }
         }
 
-        ClickContext ClickOf(CombatTarget clicked, CombatTarget enemy, Soldier ally, Ship ownShip, Settlement town, Harbor harbor, bool armed) =>
-            new ClickContext(HasSelection, Selection.Count > 0, Fleet.Count > 0, HasAttackShip(),
-                enemy && enemy.Type.Domain == UnitDomain.Sea, enemy && enemy.Team != 0, clicked && clicked.Type.Domain == UnitDomain.Static,
-                harbor, town && town.Port, town, ownShip && ownShip.Type.CanTransport, ally && !IsSelected(ally),
-                harbor && harbor.Owner != 0, town && town.State.Owner != 0, armed);
-
-        void OrderCaptureOf(CombatTarget clicked, Settlement town = null, Harbor harbor = null)
+        /// <summary>Capabilities of the selection plus what the pointer hit. One decision for every actor.</summary>
+        ClickContext Describe(CombatTarget picked, CombatTarget friendly, Settlement town, Harbor harbor, bool armed)
         {
-            var post = clicked as DefenseTower;
-            if (post && post.Town) { OrderCapture(BuildingKind.Settlement, post.Town.BuildingId.LocalId, post.Town.ClaimPoint); ShowOrder(post.Town.ClaimPoint, true); return; }
-            if (post && post.Harbor) { OrderCapture(BuildingKind.Harbor, post.Harbor.BuildingId.LocalId, post.Harbor.Landing); ShowOrder(post.Harbor.Landing, true); return; }
-            if (harbor) { OrderCapture(BuildingKind.Harbor, harbor.BuildingId.LocalId, harbor.Landing); ShowOrder(harbor.Landing, true); return; }
-            if (town) { OrderCapture(BuildingKind.Settlement, town.BuildingId.LocalId, town.ClaimPoint); ShowOrder(town.ClaimPoint, true); }
+            bool enemy = picked && picked.CanBeAttacked && picked.Team != 0;
+            bool canAttack = false, canCapture = false, canEmbark = false, canFollow = false;
+            for (int i = 0; i < Selection.Count; i++) Note(Selection[i], enemy ? picked : null, ref canAttack, ref canCapture, ref canEmbark, ref canFollow);
+            for (int i = 0; i < Fleet.Count; i++) Note(Fleet[i], enemy ? picked : null, ref canAttack, ref canCapture, ref canEmbark, ref canFollow);
+            bool ownTransport = friendly && friendly.Team == 0 && friendly.Type.CanTransport;
+            // A post is not an ally to follow: only an attackable actor is. The place under the cursor is separate.
+            bool ally = friendly && friendly.Team == 0 && friendly.CanBeAttacked && !ownTransport && !(friendly is IOrderable ordered && ordered.Selected);
+            bool hostile = harbor ? harbor.Owner != 0 : town && town.State.Owner != 0;
+            return new ClickContext(canAttack, canCapture, canEmbark, canFollow, enemy, ownTransport, ally, harbor || town, hostile, armed);
+        }
+
+        static void Note(IOrderable actor, CombatTarget enemy, ref bool canAttack, ref bool canCapture, ref bool canEmbark, ref bool canFollow)
+        {
+            if (actor == null || actor.Team != 0 || !actor.MotorReady) return;
+            if (actor.Type.CanCapture) canCapture = true;
+            if (actor.Type.CanEmbark) canEmbark = true;
+            if (actor.Type.CanFollow) canFollow = true;
+            if (enemy && UnitRules.CanAttack(actor.Type.Weapon, enemy.Type, UnitRules.Relation(actor.Team, enemy.Team, false, PlayerRules.NeutralTeam)))
+                canAttack = true;
+        }
+
+        static bool PlayerOrder(IOrderable actor) => actor != null && actor.Team == 0 && actor.MotorReady;
+
+        void IssueAttack(CombatTarget enemy)
+        {
+            if (!enemy) return;
+            CancelBoardingForSelection();
+            bool issued = false;
+            for (int i = 0; i < Selection.Count; i++) issued |= TryAttack(Selection[i], enemy);
+            for (int i = 0; i < Fleet.Count; i++) issued |= TryAttack(Fleet[i], enemy);
+            if (!issued) return;
+            ShowOrder(enemy.transform.position, true);
+            GameFeel.FlashTarget(enemy);
+        }
+
+        bool TryAttack(IOrderable actor, CombatTarget enemy)
+        {
+            if (!PlayerOrder(actor)) return false;
+            if (!UnitRules.CanAttack(actor.Type.Weapon, enemy.Type, UnitRules.Relation(actor.Team, enemy.Team, false, PlayerRules.NeutralTeam))) return false;
+            var point = enemy.transform.position;
+            return session.Commands.Submit(new UnitCommand(0, actor.EntityId, UnitCommandKind.Attack, point.x, point.y, point.z, enemy.EntityId, append: QueueOrders));
+        }
+
+        void IssueFollow(CombatTarget ally)
+        {
+            if (!ally) return;
+            CancelBoardingForSelection();
+            bool issued = false;
+            for (int i = 0; i < Selection.Count; i++) issued |= TryFollow(Selection[i], ally);
+            for (int i = 0; i < Fleet.Count; i++) issued |= TryFollow(Fleet[i], ally);
+            if (issued) ShowOrder(ally.transform.position, false);
+        }
+
+        bool TryFollow(IOrderable actor, CombatTarget ally)
+        {
+            if (!PlayerOrder(actor) || !actor.Type.CanFollow) return false;
+            var point = ally.transform.position;
+            return session.Commands.Submit(new UnitCommand(0, actor.EntityId, UnitCommandKind.Follow, point.x, point.y, point.z, ally.EntityId, append: QueueOrders));
+        }
+
+        /// <summary>Capture for actors that can claim; a plain move to the same place for the others.</summary>
+        void IssuePlace(Harbor harbor, Settlement town, bool capture)
+        {
+            Harbor port = harbor ? harbor : town ? town.Port : null;
+            Vector3 claim = harbor ? harbor.Landing : town ? town.ClaimPoint : Vector3.zero;
+            string id = harbor ? harbor.BuildingId.LocalId : town ? town.BuildingId.LocalId : null;
+            var structure = harbor ? BuildingKind.Harbor : BuildingKind.Settlement;
+            CancelBoardingForSelection();
+            bool issued = false;
+            for (int i = 0; i < Selection.Count; i++) issued |= TryPlace(Selection[i], claim, port, capture, id, structure);
+            for (int i = 0; i < Fleet.Count; i++) issued |= TryPlace(Fleet[i], claim, port, capture, id, structure);
+            if (issued) ShowOrder(claim, capture);
+            else if (Selection.Count == 0 && Fleet.Count == 0) OrderAt(claim, false);
+        }
+
+        bool TryPlace(IOrderable actor, Vector3 claim, Harbor port, bool capture, string id, BuildingKind structure)
+        {
+            if (!PlayerOrder(actor) || string.IsNullOrEmpty(id)) return false;
+            var point = actor.PlacePoint(claim, port);
+            if (capture && actor.Type.CanCapture)
+                return session.Commands.Submit(new UnitCommand(0, actor.EntityId, UnitCommandKind.Capture, point.x, point.y, point.z, append: QueueOrders, structureId: id, structureKind: structure));
+            return session.Commands.Submit(new UnitCommand(0, actor.EntityId, UnitCommandKind.Move, point.x, point.y, point.z, append: QueueOrders));
         }
 
         void FocusStrategicPoint(Vector2 point)

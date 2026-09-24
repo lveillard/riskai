@@ -236,13 +236,20 @@ namespace RiskAI
             SelectShips(NavalWorld.Current.Ships);
         }
         public void CancelCursor() { AttackCursor=MoveCursor=PatrolCursor=UnloadCursor=false; }
-        static CombatTarget AttackRecipient(CombatTarget target) => target is DefenseTower tower ? tower.Guardian : target;
         bool HasSelection => Selection.Count>0||Fleet.Count>0;
         public void ArmAttack() { CancelCursor();PurgeStaleSelection();if(HasSelection)AttackCursor=true; }
         public void ArmMove() { CancelCursor();PurgeStaleSelection();if(HasSelection)MoveCursor=true; }
         public void ArmPatrol() { CancelCursor();PurgeStaleSelection();if(HasSelection)PatrolCursor=true; }
-        public void Stop() { if(session.Paused||session.Winner>=0)return;PurgeStaleSelection();CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Stop));foreach(var ship in Fleet)if(IsSelectableShip(ship))session.Commands.Submit(new UnitCommand(0,ship.EntityId,UnitCommandKind.Stop));CancelCursor(); }
-        public void Hold() { if(session.Paused||session.Winner>=0)return;PurgeStaleSelection();CancelBoardingForSelection();foreach(var u in Selection)if(IsSelectableSoldier(u))session.Commands.Submit(new UnitCommand(0,u.EntityId,UnitCommandKind.Hold));foreach(var ship in Fleet)if(IsSelectableShip(ship))session.Commands.Submit(new UnitCommand(0,ship.EntityId,UnitCommandKind.Hold));CancelCursor(); }
+        public void Stop() { OrderEach(UnitCommandKind.Stop); }
+        public void Hold() { OrderEach(UnitCommandKind.Hold); }
+        void OrderEach(UnitCommandKind kind)
+        {
+            if(session.Paused||session.Winner>=0)return;
+            PurgeStaleSelection();CancelBoardingForSelection();
+            foreach(var unit in Selection)if(IsSelectableSoldier(unit))session.Commands.Submit(new UnitCommand(0,unit.EntityId,kind));
+            foreach(var ship in Fleet)if(IsSelectableShip(ship))session.Commands.Submit(new UnitCommand(0,ship.EntityId,kind));
+            CancelCursor();
+        }
         static bool IsSelectableSoldier(Soldier unit) => unit&&unit.Team==0&&unit.IsAlive&&unit.isActiveAndEnabled&&unit.Agent&&unit.Agent.enabled;
         static bool IsSelectableShip(Ship ship) => ship&&ship.Team==0&&ship.IsAlive&&ship.isActiveAndEnabled;
         Ship SelectedTransport
@@ -274,14 +281,6 @@ namespace RiskAI
             var result = session.Commands.SubmitResult(new UnitCommand(0, ship.EntityId, kind, point.x, point.y, point.z, targetId, append, structureId: structureId, structureKind: structureKind));
             if (!result.Accepted) Feedback(result.Error);
             return result;
-        }
-        void OrderCapture(BuildingKind kind, string id, Vector3 point)
-        {
-            if (string.IsNullOrEmpty(id)) return;
-            foreach (var unit in Selection) if (IsSelectableSoldier(unit))
-                session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Capture, point.x, point.y, point.z, append: QueueOrders, structureId: id, structureKind: kind));
-            foreach (var ship in Fleet) if (IsSelectableShip(ship))
-                OrderShip(ship, UnitCommandKind.Capture, point, append: QueueOrders, structureId: id, structureKind: kind);
         }
         void OnApplicationFocus(bool hasFocus)
         {
@@ -382,7 +381,9 @@ namespace RiskAI
             var mobile=Selection.Where(unit=>!unit.IsGarrison).ToArray();
             if(mobile.Length>0)
             {
-                BattleSession.GiveFormation(mobile,point,attack,QueueOrders,PatrolCursor);
+                bool patrol=PatrolCursor;
+                for(int i=0;i<mobile.Length;i++)if(!mobile[i].Type.CanPatrol)patrol=false;
+                BattleSession.GiveFormation(mobile,point,attack,QueueOrders,patrol);
                 issued=true;
             }
             bool fleetIssued=false;
@@ -390,7 +391,9 @@ namespace RiskAI
             {
                 foreach(var ship in Fleet)if(IsSelectableShip(ship))
                 {
-                    var sailed=OrderShip(ship,attack?UnitCommandKind.AttackMove:UnitCommandKind.Move,point,append:QueueOrders);
+                    var sail=attack?UnitCommandKind.AttackMove:UnitCommandKind.Move;
+                    if(PatrolCursor&&ship.Type.CanPatrol)sail=UnitCommandKind.Patrol;
+                    var sailed=OrderShip(ship,sail,point,append:QueueOrders);
                     if(sailed.Accepted)fleetIssued=true;
                 }
                 issued|=fleetIssued;
@@ -416,7 +419,8 @@ namespace RiskAI
             orderMarkerColor=attack?new Color(1,.35f,.22f):new Color(.55f,1,.65f);
             orderMarker.startColor=orderMarker.endColor=orderMarkerColor;
             orderMarker.transform.localScale=Vector3.one*1.6f;
-            orderMarkerUntil=Time.unscaledTime+.7f;
+            orderMarkerUntil=Time.unscaledTime+OrderRoutes.ConfirmSeconds;
+            if(!QueueOrders)GetComponent<OrderRoutes>()?.Confirm();
             Sfx.Ui(attack?SfxId.OrderAttack:SfxId.OrderMove);
         }
         void AnimateOrderMarker()
@@ -424,20 +428,13 @@ namespace RiskAI
             if(!orderMarker || !orderMarker.enabled)return;
             float remaining=orderMarkerUntil-Time.unscaledTime;
             if(remaining<=0){orderMarker.enabled=false;return;}
-            float progress=1-remaining/.7f;
+            float progress=1-remaining/OrderRoutes.ConfirmSeconds;
             // Reuse one marker: a fast inward pulse confirms the destination,
-            // followed by a short fade. No spawned effects or extra materials.
+            // then the same window fades it out.
             float pulse=1-Mathf.Pow(1-progress,3);
             orderMarker.transform.localScale=Vector3.one*Mathf.Lerp(1.6f,.55f,pulse);
-            var color=orderMarkerColor;color.a=Mathf.Clamp01(remaining/.3f);
+            var color=orderMarkerColor;color.a=Mathf.Clamp01(remaining/OrderRoutes.ConfirmSeconds);
             orderMarker.startColor=orderMarker.endColor=color;
-        }
-        void MoveFleetToHarbor(Harbor harbor)
-        {
-            PurgeStaleSelection();
-            if(!harbor||Fleet.Count==0)return;
-            CancelBoardingForSelection();
-            foreach(var ship in Fleet)if(IsSelectableShip(ship))OrderShip(ship,UnitCommandKind.Capture,harbor.Landing,append:QueueOrders,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
         }
         void BeginBoarding(Ship transport) => BeginBoarding(transport,Selection);
         void BeginBoarding(Ship transport,IReadOnlyList<Soldier> candidates)

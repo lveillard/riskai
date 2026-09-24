@@ -125,11 +125,14 @@ namespace RiskAI.Tests
             Assert.That(UnitRules.OnTargetLost(UnitCommandKind.AttackMove), Is.EqualTo(UnitRules.TargetLost.KeepDestination));
             Assert.That(UnitRules.OnTargetLost(UnitCommandKind.Attack), Is.EqualTo(UnitRules.TargetLost.Advance));
             Assert.That(UnitRules.OnTargetLost(UnitCommandKind.Move), Is.EqualTo(UnitRules.TargetLost.KeepDestination));
-            Assert.That(UnitRules.KindAllowed(UnitDomain.Land, UnitCommandKind.Unload), Is.False);
-            Assert.That(UnitRules.KindAllowed(UnitDomain.Sea, UnitCommandKind.Unload), Is.True);
-            Assert.That(UnitRules.KindAllowed(UnitDomain.Land, UnitCommandKind.Patrol), Is.True);
-            Assert.That(UnitRules.KindAllowed(UnitDomain.Sea, UnitCommandKind.Patrol), Is.False);
-            Assert.That(UnitRules.KindAllowed(UnitDomain.Sea, UnitCommandKind.Capture), Is.True);
+            Assert.That(UnitRules.KindAllowed(UnitCatalog.Get(UnitKind.Footman), UnitCommandKind.Unload), Is.False);
+            Assert.That(UnitRules.KindAllowed(UnitCatalog.Get(UnitKind.Transport), UnitCommandKind.Unload), Is.True);
+            Assert.That(UnitRules.KindAllowed(UnitCatalog.Get(UnitKind.Footman), UnitCommandKind.Patrol), Is.True);
+            Assert.That(UnitRules.KindAllowed(UnitCatalog.Get(UnitKind.Footman), UnitCommandKind.Follow), Is.True);
+            Assert.That(UnitRules.KindAllowed(UnitCatalog.Get(UnitKind.Frigate), UnitCommandKind.Patrol), Is.False);
+            Assert.That(UnitRules.KindAllowed(UnitCatalog.Get(UnitKind.Frigate), UnitCommandKind.Follow), Is.False);
+            Assert.That(UnitRules.KindAllowed(UnitCatalog.Get(UnitKind.Frigate), UnitCommandKind.Capture), Is.True);
+            Assert.That(UnitRules.KindAllowed(UnitCatalog.Get(UnitKind.Transport), UnitCommandKind.Capture), Is.True);
         }
 
         [Test]
