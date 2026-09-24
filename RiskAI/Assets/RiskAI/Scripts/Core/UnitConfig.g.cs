@@ -701,5 +701,7 @@ namespace RiskAI.Core
         /// <summary>Hull camera. Only a sea unit may set this.</summary>
         [UnitConfigField(Required = true)]
         public bool Ship;
+        /// <summary>The one land camera used when a shared mesh has no portrait of its own. Exactly one unit sets this.</summary>
+        public bool? LandDefault;
     }
 }

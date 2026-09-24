@@ -70,15 +70,15 @@ namespace RiskAI
             return false;
         }
 
-        /// <summary>The v0.33 land camera, stored on the Knight portrait.</summary>
+        /// <summary>The land camera marked <c>landDefault</c> in units.json. A shared mesh uses it.</summary>
         static PortraitView LandDefault()
         {
             foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
             {
                 ref readonly var type = ref UnitCatalog.Get(kind);
-                if (type.PortraitName == "Knight" && type.Portrait.Exists) return type.Portrait;
+                if (type.PortraitLandDefault && type.Portrait.Exists) return type.Portrait;
             }
-            throw new System.InvalidOperationException("units.json has no Knight portrait camera.");
+            throw new System.InvalidOperationException("units.json has no landDefault portrait camera.");
         }
 
         static Choice From(PortraitView view) =>

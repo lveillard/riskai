@@ -221,6 +221,7 @@ export const PortraitCamera = Named('PortraitCamera',
     refitOffsetY: Type.Number({ description: 'Refit view offset Y.' }),
     refitOffsetZ: Type.Number({ description: 'Refit view offset Z.' }),
     ship: Type.Boolean({ description: 'Hull camera. Only a sea unit may set this.' }),
+    landDefault: Type.Optional(Type.Boolean({ description: 'The one land camera used when a shared mesh has no portrait of its own. Exactly one unit sets this.' })),
   }, strict));
 
 export const Presentation = Named('UnitPresentation', 'Model, portrait, attack clip and proxy shape.', Type.Object({

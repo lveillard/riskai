@@ -34,6 +34,8 @@ namespace RiskAI
         bool pendingShoreUnload;
         Vector3 pendingShore;
         int unloadSlot;
+        // 0 lands every soldier who fits. Tests set 1 to reproduce a beach that frees one spot per retry.
+        int shoreLandingLimit;
         bool shoreFailureReported;
         float shoreUnloadElapsed, shoreUnloadCooldown;
         /// <summary>How often a blocked beach is tried again. Combined with <see cref="ShoreUnloadWindow"/>.</summary>
@@ -128,6 +130,7 @@ namespace RiskAI
         public void MoveTo(Vector3 point,bool attackMove=false)
         {
             LastActionError=null;
+            triedMoveRepath=false;
             if(HasPlan())
             {
                 if(plannedPath.Count==0){ if(harborGuard&&harborGuard.IsInBerthCircle(point)) MaintainHarborGuard(); return; }
@@ -198,7 +201,7 @@ namespace RiskAI
             return true;
         }
         public void Stop(){HaltMotor();orders.Clear();hasActiveCommand=false;capture.Clear();captureView=default;captureSailing=false;plannedReady=false;PublishOrders();}
-        void HaltMotor(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;ClearShoreUnload();}
+        void HaltMotor(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;triedMoveRepath=false;ClearShoreUnload();}
         void CopyScratchToRoute(){route.Clear();for(int i=0;i<pathScratch.Count;i++)route.Add(pathScratch[i]);}
         /// <summary>Queues a source-style unload at a validated shore after sailing there.</summary>
         public string SailToShore(Vector3 shore)
@@ -254,11 +257,13 @@ namespace RiskAI
             if(!IsAlive||!Type.CanTransport){LastActionError="Selecciona un transporte.";return false;}
             if(!TryFindDisembarkPoint(shore,out shore,out var error)){LastActionError=error;return false;}
             bool unloaded=false;
+            int landed=0;
             cargoScratch.Clear();for(int i=0;i<cargo.Count;i++)cargoScratch.Add(cargo[i]);
             foreach(var soldier in cargoScratch)
             {
                 if(!soldier){cargo.Remove(soldier);continue;}
-                if(TryUnloadSoldier(soldier,shore,unloadSlot)){unloaded=true;unloadSlot++;}
+                if(shoreLandingLimit>0&&landed>=shoreLandingLimit)break;
+                if(TryUnloadSoldier(soldier,shore,unloadSlot)){unloaded=true;unloadSlot++;landed++;}
             }
             if(!unloaded&&cargo.Count>0)LastActionError="No hay sitio transitable para desembarcar en esa playa.";
             if(cargo.Count==0)unloadSlot=0;
@@ -322,7 +327,11 @@ namespace RiskAI
                     if(shoreUnloadCooldown<=0f)
                     {
                         shoreUnloadCooldown=ShoreUnloadRetryInterval;
-                        if(UnloadAt(pendingShore)&&CargoCount==0)ClearShoreUnload();
+                        int before=CargoCount;
+                        bool landed=UnloadAt(pendingShore);
+                        // A beach that is landing troops is not "a beach that admits nobody".
+                        if(CargoCount==0)ClearShoreUnload();
+                        else if(landed&&CargoCount<before)shoreUnloadElapsed=0;
                         else if(shoreUnloadElapsed>=ShoreUnloadWindow)
                         {
                             if(!shoreFailureReported&&Team==0&&!string.IsNullOrEmpty(LastActionError))
@@ -359,6 +368,7 @@ namespace RiskAI
                 if(routeIndex<route.Count)Advance();
             }
             else if(!IsGarrison&&routeIndex<route.Count)Advance();
+            ConsiderStalledMove();
             DrainOrders();
         }
         // Only enemies already inside weapon range (units.json acquisition); the query padding covers long hulls.
@@ -393,6 +403,17 @@ namespace RiskAI
         void NoteRouteAccepted(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;}
         void NoteRouteProgress(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;}
         bool RouteHasStalled()=>world&&world.Session!=null&&world.Session.BattleTime-lastRouteProgressAt>RouteStallSeconds;
+        bool triedMoveRepath;
+        /// <summary>A plain move waits, as in v0.33. One rebuild may clear a jam; it does not finish the order.</summary>
+        void ConsiderStalledMove()
+        {
+            bool moving=hasActiveCommand&&activeCommand.Kind==UnitCommandKind.Move&&routeIndex<route.Count;
+            if(!moving||!RouteHasStalled()){triedMoveRepath=false;return;}
+            if(triedMoveRepath||!hasRouteGoal)return;
+            triedMoveRepath=true;
+            if(!SeaNavigation.TryBuildPath(transform.position,routeGoal,pathScratch))return;
+            CopyScratchToRoute();routeIndex=0;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;
+        }
         bool ResumeAttackMove()
         {
             if(!attackMoveOrder||!hasAttackMoveGoal)return false;
@@ -661,14 +682,16 @@ namespace RiskAI
         bool MotorIdle()
         {
             if (CapturePending() || pendingShoreUnload) return false;
-            bool routeOpen = routeIndex < route.Count && !RouteHasStalled();
+            // A stall ends an attack-move. A move, unload or capture keeps its order and may rebuild once.
+            bool stalledArrival = hasActiveCommand && activeCommand.Kind == UnitCommandKind.AttackMove && RouteHasStalled();
+            bool routeOpen = routeIndex < route.Count && !stalledArrival;
             if (routeOpen) return false;
-            if (hasAttackMoveGoal && !RouteHasStalled()) return false;
-            // A finished attack-move (nowhere left to sail) does not stay busy just because
-            // this tick acquired someone after the goal was dropped.
-            bool attackMoveFinished = hasActiveCommand && activeCommand.Kind == UnitCommandKind.AttackMove
-                && !hasAttackMoveGoal && !routeOpen;
-            bool liveTarget = target != null && !attackMoveFinished;
+            if (hasAttackMoveGoal && !stalledArrival) return false;
+            // The shared rule: a live target keeps AttackMove busy. The exception is a target
+            // acquired after a failed re-plan already released the goal (attackMoveOrder is cleared there).
+            bool releasedGoal = hasActiveCommand && activeCommand.Kind == UnitCommandKind.AttackMove && !hasAttackMoveGoal && !routeOpen;
+            bool acquiredAfterRelease = releasedGoal && !attackMoveOrder;
+            bool liveTarget = target != null && !acquiredAfterRelease;
             if (hasActiveCommand && !OrderAdvance.MotorIdle(activeCommand.Kind, liveTarget)) return false;
             return true;
         }

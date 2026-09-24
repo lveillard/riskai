@@ -1088,6 +1088,10 @@
         "ship": {
           "description": "Hull camera. Only a sea unit may set this.",
           "type": "boolean"
+        },
+        "landDefault": {
+          "description": "The one land camera used when a shared mesh has no portrait of its own. Exactly one unit sets this.",
+          "type": "boolean"
         }
       },
       "description": "v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name."

@@ -183,6 +183,48 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator APendingReturnResultSurvivesTheCooldown()
+        {
+            var naval = NavalWorld.Current;
+            var home = naval.Harbors.First(harbor => harbor.Owner == 1 && harbor.CanLaunch);
+            var transport = BattleTestScenario.Ship(naval, 1, UnitKind.Transport, home.Berth);
+            var soldier = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, home.Landing);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            var submitted = naval.SubmitDisembark(transport, home);
+            Assert.That(submitted.Accepted, Is.True, submitted.Error);
+            battle.Commands.Tick();
+            Assert.That(transport.RunsCommand(submitted.CommandId), Is.True);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            var commander = naval.ExpeditionFor(1);
+            var phaseType = typeof(NavalExpeditionCommander).GetNestedType("Phase", BindingFlags.NonPublic);
+            var slotType = typeof(DisembarkConfirmation).GetNestedType("Slot");
+            object slot = System.Activator.CreateInstance(slotType);
+            slotType.GetField("CommandId").SetValue(slot, submitted.CommandId);
+            slotType.GetField("Waiting").SetValue(slot, true);
+            slotType.GetField("HarborId").SetValue(slot, home.GetInstanceID());
+            slotType.GetField("Berth").SetValue(slot, transport.RouteGoalMatches(home.Berth) ? home.Berth : SubmittedBerth(transport));
+            typeof(NavalExpeditionCommander).GetField("transport", hidden).SetValue(commander, transport);
+            typeof(NavalExpeditionCommander).GetField("returnHarbor", hidden).SetValue(commander, home);
+            typeof(NavalExpeditionCommander).GetField("returnDisembark", hidden).SetValue(commander, slot);
+            typeof(NavalExpeditionCommander).GetField("phase", hidden).SetValue(commander, System.Enum.Parse(phaseType, "Cooldown"));
+            typeof(NavalExpeditionCommander).GetField("retryAt", hidden).SetValue(commander, battle.BattleTime);
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            battle.AiEnabled = true;
+            long before = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount;
+            commander.Tick(0);
+            long after = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(after, Is.EqualTo(0), "an accepted return already in the ring is not sent again");
+            Assert.That(typeof(NavalExpeditionCommander).GetField("phase", hidden).GetValue(commander).ToString(), Is.EqualTo("ReturningCargo"));
+            yield return null;
+        }
+
+        static Vector3 SubmittedBerth(Ship transport)
+        {
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            return (Vector3)typeof(Ship).GetField("routeGoal", hidden).GetValue(transport);
+        }
+
         static float DistanceXZ(Vector3 a,Vector3 b)
         {
             a.y=b.y=0;return Vector3.Distance(a,b);

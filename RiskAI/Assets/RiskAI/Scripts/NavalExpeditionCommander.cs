@@ -106,7 +106,11 @@ namespace RiskAI
                 case Phase.Landing: Land(); break;
                 case Phase.Attacking: Attack(); break;
                 case Phase.ReturningCargo: ReturnCargo(); break;
-                case Phase.Cooldown: if(session.BattleTime>=retryAt){phase=Phase.Planning;ClearPlan();} break;
+                case Phase.Cooldown:
+                    if(session.BattleTime<retryAt)break;
+                    if(TryResumePreservedReturn())break;
+                    phase=Phase.Planning;ClearPlan();
+                    break;
             }
         }
 
@@ -567,6 +571,8 @@ namespace RiskAI
                     returnRetryAt=session.BattleTime+ReturnRetryInterval;
                     if(again==DisembarkConfirmation.Status.Rejected){CoolDown();return;}
                 }
+                // Pending is unknown, not a failure. Keep the slot so the result can arrive during the cooldown.
+                if(waiting==DisembarkConfirmation.Status.Pending){ParkReturn();return;}
                 CoolDown();
                 return;
             }
@@ -592,6 +598,21 @@ namespace RiskAI
         {
             returnDisembark=default;
             attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
+        }
+        void ParkReturn()
+        {
+            attemptedSources.Clear();examinedSources.Clear();phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
+        }
+        bool TryResumePreservedReturn()
+        {
+            if(!returnDisembark.Waiting||!transport||!transport.IsAlive||transport.CargoCount==0)return false;
+            if(!session.Commands.TryGetResult(returnDisembark.CommandId,out var stored)||!stored.Accepted)return false;
+            bool held=transport.RunsCommand(returnDisembark.CommandId)||transport.RouteGoalMatches(returnDisembark.Berth)||transport.ShoreUnloadPending;
+            if(!held||(transport.RouteIsStalled&&!transport.ShoreUnloadPending))return false;
+            phase=Phase.ReturningCargo;
+            phaseDeadline=session.BattleTime+ReturnDeadline();
+            returnRetryAt=session.BattleTime+ReturnRetryInterval;
+            return true;
         }
         void Reset(){attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Planning;retryAt=session.BattleTime+RetrySeconds;ClearPlan();}
         void Defer(){retryAt=session.BattleTime+RetrySeconds;ClearPlan();}

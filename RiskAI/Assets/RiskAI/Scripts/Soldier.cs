@@ -957,14 +957,15 @@ namespace RiskAI
             keepEmbarkStash = false;
         }
 
+        readonly UnitCommand[] embarkRestore = new UnitCommand[OrderQueue.LegCap];
         public void RestoreEmbarkOrders()
         {
             int count = orders.StashCount;
             if (count <= 0) return;
-            var copy = new UnitCommand[count];
-            for (int i = 0; i < count; i++) copy[i] = orders.StashedCommand(i);
+            if (count > embarkRestore.Length) count = embarkRestore.Length;
+            for (int i = 0; i < count; i++) embarkRestore[i] = orders.StashedCommand(i);
             orders.ClearStash();
-            for (int i = 0; i < count; i++) ApplyOrder(copy[i].WithAppend(i > 0));
+            for (int i = 0; i < count; i++) ApplyOrder(embarkRestore[i].WithAppend(i > 0));
         }
 
         public int PathCornerCount => pathCornerCount;

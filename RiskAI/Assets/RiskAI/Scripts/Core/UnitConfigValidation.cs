@@ -18,6 +18,7 @@ namespace RiskAI.Core
             if (file.Units == null || file.Units.Length == 0) return errors;
             var seen = new HashSet<string>();
             float? clearance = null;
+            int landDefaults = 0;
             foreach (var unit in file.Units)
             {
                 if (unit == null) { errors.Add("null unit entry"); continue; }
@@ -35,14 +36,17 @@ namespace RiskAI.Core
                 if ((unit.Domain == UnitDomain.Land && ((unit.Presentation != null && unit.Presentation.PortraitSource == PortraitSource.Model) && !((unit.Presentation != null && unit.Presentation.Model != null))))) errors.Add("" + at + ": a land model portrait needs a model name");
                 if ((unit.Domain == UnitDomain.Sea && (!((unit.Presentation != null && unit.Presentation.PortraitCamera != null)) || !(unit.Presentation.PortraitCamera.Ship == true)))) errors.Add("" + at + ": a sea portrait uses a hull camera");
                 if ((unit.Domain != UnitDomain.Sea && ((unit.Presentation != null && unit.Presentation.PortraitCamera != null) && unit.Presentation.PortraitCamera.Ship == true))) errors.Add("" + at + ": a hull camera is only for a sea unit");
+                if ((unit.Presentation.PortraitCamera.LandDefault == true && (unit.Domain != UnitDomain.Land || unit.Presentation.PortraitCamera.Ship == true))) errors.Add("" + at + ": the shared land camera belongs to one land unit");
                 if (unit.Domain == UnitDomain.Sea && unit.Hull != null)
                 {
                     if (!(unit.Hull.Clearance > 0) || clearance != null && unit.Hull.Clearance != clearance) errors.Add("every sea hull shares one positive clearance (the sea grid is global)");
                     clearance = unit.Hull.Clearance;
                 }
+                if (unit.Presentation != null && unit.Presentation.PortraitCamera != null && unit.Presentation.PortraitCamera.LandDefault == true) landDefaults++;
                 if (unit.Weapons != null) foreach (var weapon in unit.Weapons) Check(unit, weapon, at, errors);
                 if (unit.HostWeapons != null) { Check(unit, unit.HostWeapons.Town, at, errors); Check(unit, unit.HostWeapons.Harbor, at, errors); }
             }
+            if (landDefaults != 1) errors.Add("units.json needs exactly one landDefault portrait camera");
             return errors;
         }
 

@@ -120,7 +120,8 @@
           "refitOffsetX": 4.5,
           "refitOffsetY": 1.6,
           "refitOffsetZ": 3,
-          "ship": false
+          "ship": false,
+          "landDefault": true
         }
       }
     },

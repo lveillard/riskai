@@ -512,7 +512,7 @@ namespace RiskAI.Tests
             var home = naval.Harbors.First(harbor => harbor.Owner == 0);
             var frigate = BattleTestScenario.Ship(naval, 0, UnitKind.Frigate, home.Berth);
             int enemyTeam = home.Owner == 1 ? 2 : 1;
-            var enemy = BattleTestScenario.Ship(naval, enemyTeam, UnitKind.Frigate, home.Berth + new Vector3(8f, 0f, 0f));
+            var enemy = BattleTestScenario.Ship(naval, enemyTeam, UnitKind.Frigate, SeaAway(home.Berth, 16f));
             var away = SeaAway(home.Berth, 30f);
             const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
             typeof(Ship).GetField("hasActiveCommand", hidden).SetValue(frigate, true);
@@ -546,7 +546,67 @@ namespace RiskAI.Tests
             Assert.That(frigate.Orders.TryEnqueue(new UnitCommand(0, frigate.EntityId, UnitCommandKind.Move, away.x, away.y, away.z)), Is.True);
             // A full step would sail far enough to count as progress and clear the stall.
             frigate.SimTick(.001f);
-            Assert.That(frigate.Orders.Count, Is.EqualTo(0), "a route that has stopped making progress does not hold the queue");
+            Assert.That((bool)typeof(Ship).GetField("hasActiveCommand", hidden).GetValue(frigate), Is.True, "a stalled move keeps its order");
+            Assert.That(frigate.Orders.Count, Is.EqualTo(1), "a stalled move does not start the next order");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AnAttackMoveInCombatDoesNotStartTheNextOrder()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var frigate = BattleTestScenario.Ship(naval, 0, UnitKind.Frigate, home.Berth);
+            int enemyTeam = home.Owner == 1 ? 2 : 1;
+            var enemy = BattleTestScenario.Ship(naval, enemyTeam, UnitKind.Frigate, home.Berth + new Vector3(6f, 0f, 0f));
+            var away = SeaAway(home.Berth, 30f);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(Ship).GetField("hasActiveCommand", hidden).SetValue(frigate, true);
+            typeof(Ship).GetField("activeCommand", hidden).SetValue(frigate, new UnitCommand(0, frigate.EntityId, UnitCommandKind.AttackMove, away.x, away.y, away.z));
+            typeof(Ship).GetField("attackMoveOrder", hidden).SetValue(frigate, true);
+            typeof(Ship).GetField("hasAttackMoveGoal", hidden).SetValue(frigate, false);
+            typeof(Ship).GetField("hasRouteGoal", hidden).SetValue(frigate, false);
+            typeof(Ship).GetField("target", hidden).SetValue(frigate, enemy);
+            typeof(Ship).GetField("nextSense", hidden).SetValue(frigate, 10000f);
+            typeof(Ship).GetField("nextAttack", hidden).SetValue(frigate, 10000f);
+            typeof(Ship).GetField("nextTargetPath", hidden).SetValue(frigate, 10000f);
+            Assert.That(frigate.Orders.TryEnqueue(new UnitCommand(0, frigate.EntityId, UnitCommandKind.Move, away.x, away.y, away.z)), Is.True);
+            frigate.SimTick(.2f);
+            Assert.That(frigate.Orders.Count, Is.EqualTo(1), "a live target keeps the attack-move busy");
+            Assert.That((bool)typeof(Ship).GetField("hasActiveCommand", hidden).GetValue(frigate), Is.True);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator APartialUnloadResetsTheWindowAndFinishesAfterFiveSeconds()
+        {
+            var home = naval.Harbors.First(harbor => harbor.Owner == 0);
+            var transport = BattleTestScenario.Ship(naval, 0, UnitKind.Transport, home.Berth);
+            const int troops = 6;
+            for (int i = 0; i < troops; i++)
+            {
+                var soldier = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, home.Landing + Vector3.right * (i * .4f));
+                Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            }
+            var away = SeaAway(home.Berth, 24f);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(Ship).GetField("hasActiveCommand", hidden).SetValue(transport, true);
+            typeof(Ship).GetField("activeCommand", hidden).SetValue(transport, new UnitCommand(0, transport.EntityId, UnitCommandKind.Unload, home.Landing.x, home.Landing.y, home.Landing.z));
+            typeof(Ship).GetField("pendingShoreUnload", hidden).SetValue(transport, true);
+            typeof(Ship).GetField("pendingShore", hidden).SetValue(transport, home.Landing);
+            typeof(Ship).GetField("shoreLandingLimit", hidden).SetValue(transport, 1);
+            Assert.That(transport.Orders.TryEnqueue(new UnitCommand(0, transport.EntityId, UnitCommandKind.Move, away.x, away.y, away.z)), Is.True);
+            bool releasedEarly = false;
+            float elapsed = 0f;
+            while (elapsed < 6.4f)
+            {
+                transport.SimTick(.2f);
+                elapsed += .2f;
+                bool pending = (bool)typeof(Ship).GetField("pendingShoreUnload", hidden).GetValue(transport);
+                if (!pending && transport.CargoCount > 0) releasedEarly = true;
+            }
+            Assert.That(releasedEarly, Is.False, "progress keeps the unload open past five seconds");
+            Assert.That(transport.CargoCount, Is.EqualTo(0), transport.LastActionError);
+            Assert.That(transport.Orders.Count, Is.EqualTo(0), "the queued move runs only after the hold is empty");
             yield return null;
         }
 

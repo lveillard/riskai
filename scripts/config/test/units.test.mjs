@@ -76,6 +76,15 @@ test('a sea portrait uses a hull camera', () => {
   assert.ok(validate(file).some((e) => e.includes('sea portrait uses a hull camera')));
 });
 
+test('exactly one land camera is the shared default', () => {
+  const file = load();
+  const marked = file.units.filter((unit) => unit.presentation.portraitCamera.landDefault === true);
+  assert.equal(marked.length, 1);
+  assert.equal(marked[0].domain, 'Land');
+  find(file, 'Footman').presentation.portraitCamera.landDefault = false;
+  assert.ok(validate(file).some((e) => e.includes('exactly one landDefault')));
+});
+
 test('a land model portrait needs a model name', () => {
   const file = load();
   find(file, 'Mage').presentation.model = null;

@@ -26,6 +26,7 @@ export const unitRules = [
   { error: '{at}: a land model portrait needs a model name', when: ['and', ['eq', ['get', 'domain'], ['lit', 'Land']], ['and', ['eq', ['get', 'presentation.portraitSource'], ['lit', 'Model']], ['not', ['has', 'presentation.model']]]] },
   { error: '{at}: a sea portrait uses a hull camera', when: ['and', ['eq', ['get', 'domain'], ['lit', 'Sea']], ['or', ['not', ['has', 'presentation.portraitCamera']], ['not', ['eq', ['get', 'presentation.portraitCamera.ship'], ['lit', true]]]]] },
   { error: '{at}: a hull camera is only for a sea unit', when: ['and', ['neq', ['get', 'domain'], ['lit', 'Sea']], ['and', ['has', 'presentation.portraitCamera'], ['eq', ['get', 'presentation.portraitCamera.ship'], ['lit', true]]]] },
+  { error: '{at}: the shared land camera belongs to one land unit', when: ['and', ['eq', ['get', 'presentation.portraitCamera.landDefault'], ['lit', true]], ['or', ['neq', ['get', 'domain'], ['lit', 'Land']], ['eq', ['get', 'presentation.portraitCamera.ship'], ['lit', true]]]] },
 ];
 
 export const weaponRules = [
@@ -96,6 +97,7 @@ export function invariants(file) {
   if (!Array.isArray(file.units)) return errors;
   const seen = new Set();
   let clearance = null;
+  let landDefaults = 0;
   for (const unit of file.units) {
     if (!unit) { errors.push('null unit entry'); continue; }
     const at = `units[${unit.id}]`;
@@ -107,6 +109,7 @@ export function invariants(file) {
       if (!(unit.hull.clearance > 0) || (clearance != null && unit.hull.clearance !== clearance)) errors.push(sharedClearanceMessage);
       clearance = unit.hull.clearance;
     }
+    if (unit.presentation?.portraitCamera?.landDefault === true) landDefaults++;
     const weapons = [...(unit.weapons ?? []), ...(unit.hostWeapons ? [unit.hostWeapons.town, unit.hostWeapons.harbor] : [])];
     for (const weapon of weapons) {
       if (!weapon) continue;
@@ -122,6 +125,7 @@ export function invariants(file) {
       }
     }
   }
+  if (landDefaults !== 1) errors.push('units.json needs exactly one landDefault portrait camera');
   return errors;
 }
 
@@ -235,6 +239,7 @@ ${fileChecks}
             if (file.Units == null || file.Units.Length == 0) return errors;
             var seen = new HashSet<string>();
             float? clearance = null;
+            int landDefaults = 0;
             foreach (var unit in file.Units)
             {
                 if (unit == null) { errors.Add("null unit entry"); continue; }
@@ -246,9 +251,11 @@ ${unitChecks}
                     if (!(unit.Hull.Clearance > 0) || clearance != null && unit.Hull.Clearance != clearance) errors.Add("${sharedClearanceMessage}");
                     clearance = unit.Hull.Clearance;
                 }
+                if (unit.Presentation != null && unit.Presentation.PortraitCamera != null && unit.Presentation.PortraitCamera.LandDefault == true) landDefaults++;
                 if (unit.Weapons != null) foreach (var weapon in unit.Weapons) Check(unit, weapon, at, errors);
                 if (unit.HostWeapons != null) { Check(unit, unit.HostWeapons.Town, at, errors); Check(unit, unit.HostWeapons.Harbor, at, errors); }
             }
+            if (landDefaults != 1) errors.Add("units.json needs exactly one landDefault portrait camera");
             return errors;
         }
 
