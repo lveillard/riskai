@@ -219,6 +219,167 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator AMovingReturnWhoseDeadlineExpiresIsNotOrderedAgain()
+        {
+            var naval = NavalWorld.Current;
+            var home = naval.Harbors.First(harbor => harbor.Owner == 1 && harbor.CanLaunch);
+            var transport = BattleTestScenario.Ship(naval, 1, UnitKind.Transport, home.Berth);
+            var soldier = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, home.Landing);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            Assert.That(home.TryTransportLanding(out _, out var berth), Is.True);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            var route = (System.Collections.Generic.List<Vector3>)typeof(Ship).GetField("route", hidden).GetValue(transport);
+            route.Clear();
+            route.Add(berth);
+            typeof(Ship).GetField("routeIndex", hidden).SetValue(transport, 0);
+            typeof(Ship).GetField("hasRouteGoal", hidden).SetValue(transport, true);
+            typeof(Ship).GetField("routeGoal", hidden).SetValue(transport, berth);
+            typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(transport, battle.BattleTime);
+            typeof(Ship).GetField("hasActiveCommand", hidden).SetValue(transport, true);
+            typeof(Ship).GetField("activeCommand", hidden).SetValue(transport,
+                new UnitCommand(1, transport.EntityId, UnitCommandKind.Capture, home.Landing.x, home.Landing.y, home.Landing.z).WithCommandId(77));
+            var commander = naval.ExpeditionFor(1);
+            var phaseType = typeof(NavalExpeditionCommander).GetNestedType("Phase", BindingFlags.NonPublic);
+            var slotType = typeof(DisembarkConfirmation).GetNestedType("Slot");
+            object slot = System.Activator.CreateInstance(slotType);
+            slotType.GetField("CommandId").SetValue(slot, 77);
+            slotType.GetField("Waiting").SetValue(slot, true);
+            slotType.GetField("HarborId").SetValue(slot, home.GetInstanceID());
+            slotType.GetField("Berth").SetValue(slot, berth);
+            typeof(NavalExpeditionCommander).GetField("transport", hidden).SetValue(commander, transport);
+            typeof(NavalExpeditionCommander).GetField("returnHarbor", hidden).SetValue(commander, home);
+            typeof(NavalExpeditionCommander).GetField("returnDisembark", hidden).SetValue(commander, slot);
+            typeof(NavalExpeditionCommander).GetField("phase", hidden).SetValue(commander, System.Enum.Parse(phaseType, "ReturningCargo"));
+            typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).SetValue(commander, battle.BattleTime - 1f);
+            typeof(NavalExpeditionCommander).GetField("returnRetryAt", hidden).SetValue(commander, 0f);
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            battle.AiEnabled = true;
+            long before = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount;
+            commander.Tick(0);
+            long once = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(once, Is.EqualTo(0), "a moving return is extended, not ordered again");
+            Assert.That((float)typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).GetValue(commander), Is.GreaterThan(battle.BattleTime));
+            Assert.That(((DisembarkConfirmation.Slot)typeof(NavalExpeditionCommander).GetField("returnDisembark", hidden).GetValue(commander)).Waiting, Is.True);
+            battle.Clock.Advance(1.5f, false, _ => { });
+            typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(transport, battle.BattleTime);
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            commander.Tick(0);
+            long twice = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(twice, Is.EqualTo(0), "the next second still sees the same order");
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ADockedBeachThatLandsNobodyIsOrderedAgain()
+        {
+            var naval = NavalWorld.Current;
+            var home = naval.Harbors.First(harbor => harbor.Owner == 1 && harbor.CanLaunch);
+            var transport = BattleTestScenario.Ship(naval, 1, UnitKind.Transport, home.Berth);
+            var soldier = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, home.Landing);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            Assert.That(transport.UnloadAt(transport.transform.position), Is.False);
+            Assert.That(transport.CargoCount, Is.EqualTo(1));
+            Assert.That(home.TryTransportLanding(out _, out var berth), Is.True);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            var capture = default(CaptureOrderState);
+            capture.Begin(true, home.Owner);
+            typeof(Ship).GetField("capture", hidden).SetValue(transport, capture);
+            typeof(Ship).GetField("captureSailing", hidden).SetValue(transport, true);
+            var route = (System.Collections.Generic.List<Vector3>)typeof(Ship).GetField("route", hidden).GetValue(transport);
+            route.Clear();
+            typeof(Ship).GetField("routeIndex", hidden).SetValue(transport, 0);
+            typeof(Ship).GetField("hasRouteGoal", hidden).SetValue(transport, true);
+            typeof(Ship).GetField("routeGoal", hidden).SetValue(transport, berth);
+            typeof(Ship).GetField("pendingShoreUnload", hidden).SetValue(transport, true);
+            typeof(Ship).GetField("pendingShore", hidden).SetValue(transport, transport.transform.position);
+            typeof(Ship).GetField("hasActiveCommand", hidden).SetValue(transport, true);
+            typeof(Ship).GetField("activeCommand", hidden).SetValue(transport,
+                new UnitCommand(1, transport.EntityId, UnitCommandKind.Capture, home.Landing.x, home.Landing.y, home.Landing.z,
+                    structureId: home.BuildingId.LocalId, structureKind: BuildingKind.Harbor).WithCommandId(41));
+            float elapsed = 0f;
+            while (elapsed < Ship.ShoreUnloadWindow + Ship.ShoreUnloadRetryInterval)
+            {
+                transport.SimTick(.2f);
+                elapsed += .2f;
+            }
+            Assert.That(transport.CargoCount, Is.EqualTo(1));
+            Assert.That((bool)typeof(Ship).GetField("pendingShoreUnload", hidden).GetValue(transport), Is.False);
+            Assert.That((bool)typeof(Ship).GetField("hasRouteGoal", hidden).GetValue(transport), Is.False, "ending the order clears the berth");
+            var commander = naval.ExpeditionFor(1);
+            var phaseType = typeof(NavalExpeditionCommander).GetNestedType("Phase", BindingFlags.NonPublic);
+            var slotType = typeof(DisembarkConfirmation).GetNestedType("Slot");
+            object slot = System.Activator.CreateInstance(slotType);
+            slotType.GetField("CommandId").SetValue(slot, 41);
+            slotType.GetField("Waiting").SetValue(slot, true);
+            slotType.GetField("HarborId").SetValue(slot, home.GetInstanceID());
+            slotType.GetField("Berth").SetValue(slot, berth);
+            typeof(NavalExpeditionCommander).GetField("transport", hidden).SetValue(commander, transport);
+            typeof(NavalExpeditionCommander).GetField("returnHarbor", hidden).SetValue(commander, home);
+            typeof(NavalExpeditionCommander).GetField("returnDisembark", hidden).SetValue(commander, slot);
+            typeof(NavalExpeditionCommander).GetField("phase", hidden).SetValue(commander, System.Enum.Parse(phaseType, "ReturningCargo"));
+            typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).SetValue(commander, battle.BattleTime + 100f);
+            typeof(NavalExpeditionCommander).GetField("returnRetryAt", hidden).SetValue(commander, battle.BattleTime);
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            battle.AiEnabled = true;
+            long before = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount;
+            commander.Tick(0);
+            long submitted = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(submitted, Is.EqualTo(1), "a docked return is ordered again inside the retry interval");
+            Assert.That(typeof(NavalExpeditionCommander).GetField("phase", hidden).GetValue(commander).ToString(), Is.EqualTo("ReturningCargo"));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AFinishedReturnResubmitKeepsTheSlot()
+        {
+            var naval = NavalWorld.Current;
+            var home = naval.Harbors.First(harbor => harbor.Owner == 1 && harbor.CanLaunch);
+            var transport = BattleTestScenario.Ship(naval, 1, UnitKind.Transport, home.Berth);
+            var soldier = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, home.Landing);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            var submitted = naval.SubmitDisembark(transport, home);
+            Assert.That(submitted.Accepted, Is.True, submitted.Error);
+            battle.Commands.Tick();
+            transport.Stop();
+            Assert.That(transport.CargoCount, Is.EqualTo(1));
+            Assert.That(transport.RunsCommand(submitted.CommandId), Is.False);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            var commander = naval.ExpeditionFor(1);
+            var phaseType = typeof(NavalExpeditionCommander).GetNestedType("Phase", BindingFlags.NonPublic);
+            var slotType = typeof(DisembarkConfirmation).GetNestedType("Slot");
+            object slot = System.Activator.CreateInstance(slotType);
+            slotType.GetField("CommandId").SetValue(slot, submitted.CommandId);
+            slotType.GetField("Waiting").SetValue(slot, true);
+            slotType.GetField("HarborId").SetValue(slot, home.GetInstanceID());
+            slotType.GetField("Berth").SetValue(slot, SubmittedBerth(transport));
+            typeof(NavalExpeditionCommander).GetField("transport", hidden).SetValue(commander, transport);
+            typeof(NavalExpeditionCommander).GetField("returnHarbor", hidden).SetValue(commander, home);
+            typeof(NavalExpeditionCommander).GetField("returnDisembark", hidden).SetValue(commander, slot);
+            typeof(NavalExpeditionCommander).GetField("phase", hidden).SetValue(commander, System.Enum.Parse(phaseType, "ReturningCargo"));
+            float deadline = battle.BattleTime - 1f;
+            typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).SetValue(commander, deadline);
+            typeof(NavalExpeditionCommander).GetField("returnRetryAt", hidden).SetValue(commander, 0f);
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(transport, -100f);
+            battle.AiEnabled = true;
+            long before = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount;
+            commander.Tick(0);
+            long once = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(once, Is.EqualTo(1), "the finished return is sent once");
+            Assert.That(typeof(NavalExpeditionCommander).GetField("phase", hidden).GetValue(commander).ToString(), Is.EqualTo("ReturningCargo"));
+            var kept = (DisembarkConfirmation.Slot)typeof(NavalExpeditionCommander).GetField("returnDisembark", hidden).GetValue(commander);
+            Assert.That(kept.Waiting, Is.True, "the new slot is kept");
+            Assert.That(kept.CommandId, Is.Not.EqualTo(submitted.CommandId));
+            Assert.That((float)typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).GetValue(commander), Is.EqualTo(deadline), "the resubmit does not grant a new deadline");
+            battle.Clock.Advance(1.5f, false, _ => { });
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            commander.Tick(0);
+            long twice = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(twice, Is.EqualTo(1), "the kept slot is not sent again on the next second");
+            yield return null;
+        }
+
         static Vector3 SubmittedBerth(Ship transport)
         {
             const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;

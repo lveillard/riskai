@@ -85,6 +85,20 @@ test('exactly one land camera is the shared default', () => {
   assert.ok(validate(file).some((e) => e.includes('exactly one landDefault')));
 });
 
+test('a unit without a presentation block is a readable error', () => {
+  const file = load();
+  delete find(file, 'Footman').presentation;
+  const errors = validate(file);
+  assert.ok(errors.length > 0);
+  assert.ok(errors.some((error) => error.toLowerCase().includes('presentation')));
+  assert.ok(errors.every((error) => !error.includes('NullReference')));
+});
+
+test('generated validation guards a missing portrait camera', () => {
+  const source = csharpValidation();
+  assert.match(source, /Presentation != null && unit\.Presentation\.PortraitCamera != null && \(unit\.Presentation\.PortraitCamera\.LandDefault == true\)/);
+});
+
 test('a land model portrait needs a model name', () => {
   const file = load();
   find(file, 'Mage').presentation.model = null;

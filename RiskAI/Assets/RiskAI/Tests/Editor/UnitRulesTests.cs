@@ -57,6 +57,8 @@ namespace RiskAI.Tests
             ref readonly var frigate = ref UnitCatalog.Get(UnitKind.Frigate).Acquisition;
             Assert.That(UnitRules.BetterCandidate(frigate, 3, 5, 3, 9, true), Is.False, "ships keep the first candidate found");
             Assert.That(frigate.HasLeash, Is.False);
+            Assert.That(UnitRules.AttackMoveHold(footman, false), Is.EqualTo(UnitRules.Leash(footman, false)));
+            Assert.That(UnitRules.AttackMoveHold(frigate, false), Is.EqualTo(UnitRules.AcquireRadius(frigate, false, false)));
         }
 
         [Test]
@@ -209,13 +211,13 @@ namespace RiskAI.Tests
         public void AMissingDisembarkResultStaysPendingUntilTheShipConfirmsIt()
         {
             var slot = new DisembarkConfirmation.Slot();
-            Assert.That(DisembarkConfirmation.Advance(ref slot, 4, true, false, false, false), Is.EqualTo(DisembarkConfirmation.Status.Pending));
+            Assert.That(DisembarkConfirmation.Advance(ref slot, 4, true, false, false), Is.EqualTo(DisembarkConfirmation.Status.Pending));
             Assert.That(slot.Waiting, Is.True);
-            Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, false, false, false), Is.EqualTo(DisembarkConfirmation.Status.Pending),
-                "an evicted result is unknown, not a failure");
-            Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, false, false, true), Is.EqualTo(DisembarkConfirmation.Status.Accepted));
+            Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, false, false), Is.EqualTo(DisembarkConfirmation.Status.Pending),
+                "an evicted result is unknown, not a failure, and the hull still sailing does not close the slot");
+            Assert.That(slot.Waiting, Is.True);
             slot = new DisembarkConfirmation.Slot { CommandId = 4, Waiting = true };
-            Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, true, false, true), Is.EqualTo(DisembarkConfirmation.Status.Rejected));
+            Assert.That(DisembarkConfirmation.Advance(ref slot, 0, false, true, false), Is.EqualTo(DisembarkConfirmation.Status.Rejected));
             var attributed = new DisembarkConfirmation.Slot { Waiting = true, HarborId = 3, CommandId = 4 };
             Assert.That(DisembarkConfirmation.ForHarbor(attributed, 3), Is.True);
             Assert.That(DisembarkConfirmation.ForHarbor(attributed, 9), Is.False, "an old result is not a confirmation for a different harbor");

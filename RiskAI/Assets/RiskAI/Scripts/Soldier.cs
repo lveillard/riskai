@@ -957,7 +957,8 @@ namespace RiskAI
             keepEmbarkStash = false;
         }
 
-        readonly UnitCommand[] embarkRestore = new UnitCommand[OrderQueue.LegCap];
+        /// <summary>One buffer for every soldier. Restore runs to completion before the next caller.</summary>
+        static readonly UnitCommand[] embarkRestore = new UnitCommand[OrderQueue.LegCap];
         public void RestoreEmbarkOrders()
         {
             int count = orders.StashCount;

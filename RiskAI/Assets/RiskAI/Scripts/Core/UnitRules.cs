@@ -49,6 +49,13 @@ namespace RiskAI.Core
         public static float Leash(in AcquisitionProfile acquisition, bool neutralOwner) =>
             neutralOwner ? acquisition.LeashNeutral : acquisition.LeashHostile;
 
+        /// <summary>
+        /// After an attack-move reaches its goal, a target keeps the order only inside this
+        /// distance of the goal. A leash from units.json wins; otherwise the acquisition radius.
+        /// </summary>
+        public static float AttackMoveHold(in AcquisitionProfile acquisition, bool neutralOwner) =>
+            acquisition.HasLeash ? Leash(acquisition, neutralOwner) : AcquireRadius(acquisition, false, neutralOwner);
+
         /// <summary>Acquisition score: nearer first, spread by the attackers already on the candidate.</summary>
         public static float AcquireScore(in AcquisitionProfile acquisition, float distance, int pressure) =>
             distance + pressure * acquisition.PressureBias;

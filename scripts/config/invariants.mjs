@@ -155,6 +155,19 @@ function receiverOf(path, hint) {
   return { recv: 'unit', path };
 }
 
+function guardedCompare(left, right, op, hint) {
+  const guards = [];
+  const side = (part) => {
+    if (part[0] !== 'get') return csExpr(part, hint);
+    const shifted = receiverOf(part[1], hint);
+    const access = chain(shifted.path, shifted.recv);
+    guards.push(...access.guards);
+    return access.code;
+  };
+  const compare = `${side(left)} ${op} ${side(right)}`;
+  return guards.length ? `(${guards.join(' && ')} && (${compare}))` : compare;
+}
+
 function csExpr(expr, hint) {
   const op = expr[0];
   if (op === 'lit') return typeof expr[1] === 'string' ? JSON.stringify(expr[1]) : String(expr[1]);
@@ -192,7 +205,7 @@ function csExpr(expr, hint) {
       // (delivery == Instant) != (projectileSpeed == 0)
       return `(${csExpr(expr[1], hint)}) ${map[op]} (${csExpr(right, hint)})`;
     }
-    return `${csExpr(expr[1], hint)} ${map[op]} ${csExpr(right, hint)}`;
+    return guardedCompare(expr[1], right, map[op], hint);
   }
   if (op === 'shrink') return 'SplashShrinks(weapon.Splash.Rings)';
   throw new Error('Cannot emit ' + op);

@@ -34,8 +34,6 @@ namespace RiskAI
         bool pendingShoreUnload;
         Vector3 pendingShore;
         int unloadSlot;
-        // 0 lands every soldier who fits. Tests set 1 to reproduce a beach that frees one spot per retry.
-        int shoreLandingLimit;
         bool shoreFailureReported;
         float shoreUnloadElapsed, shoreUnloadCooldown;
         /// <summary>How often a blocked beach is tried again. Combined with <see cref="ShoreUnloadWindow"/>.</summary>
@@ -77,10 +75,10 @@ namespace RiskAI
             if(!hasRouteGoal||routeIndex>=route.Count||RouteHasStalled())return false;
             var goal=routeGoal-point;goal.y=0;return goal.sqrMagnitude<=tolerance*tolerance;
         }
-        /// <summary>The route's goal, ignoring whether the hull has stopped making progress.</summary>
+        /// <summary>The goal of a route that is still being sailed. A finished order does not keep a stale berth.</summary>
         public bool RouteGoalMatches(Vector3 point, float tolerance = 1.5f)
         {
-            if (!hasRouteGoal) return false;
+            if (!hasRouteGoal || routeIndex >= route.Count) return false;
             var delta = routeGoal - point;
             delta.y = 0f;
             return delta.sqrMagnitude <= tolerance * tolerance;
@@ -250,7 +248,8 @@ namespace RiskAI
             return harbor&&UnloadAt(harbor.Landing);
         }
         /// <summary>A00X unloads at the vessel; this adapter requires a nearby walkable shore.</summary>
-        public bool UnloadAt(Vector3 shore)
+        /// <param name="landingLimit">0 lands every soldier who fits. A positive limit stops after that many, so a test can open one spot per retry.</param>
+        public bool UnloadAt(Vector3 shore, int landingLimit = 0)
         {
             LastActionError=null;
             if(world.Session.Paused||world.Session.Winner>=0)return false;
@@ -262,7 +261,7 @@ namespace RiskAI
             foreach(var soldier in cargoScratch)
             {
                 if(!soldier){cargo.Remove(soldier);continue;}
-                if(shoreLandingLimit>0&&landed>=shoreLandingLimit)break;
+                if(landingLimit>0&&landed>=landingLimit)break;
                 if(TryUnloadSoldier(soldier,shore,unloadSlot)){unloaded=true;unloadSlot++;landed++;}
             }
             if(!unloaded&&cargo.Count>0)LastActionError="No hay sitio transitable para desembarcar en esa playa.";
@@ -310,7 +309,7 @@ namespace RiskAI
         }
         static bool TryValidateShore(Vector3 requested,out Vector3 landing,out string error)
             => ShoreAccess.TryLanding(requested,out landing,out error);
-        public void SimTick(float delta)
+        public void SimTick(float delta, int shoreLandingLimit = 0)
         {
             simDelta=delta;
             if(!IsAlive||!world||world.Session.Paused||world.Session.Winner>=0)return;
@@ -328,7 +327,7 @@ namespace RiskAI
                     {
                         shoreUnloadCooldown=ShoreUnloadRetryInterval;
                         int before=CargoCount;
-                        bool landed=UnloadAt(pendingShore);
+                        bool landed=UnloadAt(pendingShore, shoreLandingLimit);
                         // A beach that is landing troops is not "a beach that admits nobody".
                         if(CargoCount==0)ClearShoreUnload();
                         else if(landed&&CargoCount<before)shoreUnloadElapsed=0;
@@ -353,6 +352,7 @@ namespace RiskAI
             // not move it off the same fixed anchor used by the capture circle.
             if(IsGarrison&&target&&RangeTo(target)>AttackRange)target=null;
             if(!target&&Type.CanAttack&&world.Session.BattleTime>=nextSense&&(attackMoveOrder||routeIndex>=route.Count)){nextSense=world.Session.BattleTime+.2f;target=FindNearbyEnemy();}
+            ReleaseAttackMoveBeyondHold();
             if(target&&RangeTo(target)<=AttackRange&&Visible(target))
             {
                 Face(target.transform.position);
@@ -401,18 +401,43 @@ namespace RiskAI
             }
         }
         void NoteRouteAccepted(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;}
-        void NoteRouteProgress(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;}
+        void NoteRouteProgress(){lastRouteProgressAt=world&&world.Session!=null?world.Session.BattleTime:0;triedMoveRepath=false;}
         bool RouteHasStalled()=>world&&world.Session!=null&&world.Session.BattleTime-lastRouteProgressAt>RouteStallSeconds;
         bool triedMoveRepath;
-        /// <summary>A plain move waits, as in v0.33. One rebuild may clear a jam; it does not finish the order.</summary>
+        /// <summary>
+        /// One rebuild per goal. Accepting that path does not clear the guard; only real progress
+        /// or a new goal does. If the rebuild cannot be made, or it stalls too, the move is unreachable.
+        /// </summary>
         void ConsiderStalledMove()
         {
             bool moving=hasActiveCommand&&activeCommand.Kind==UnitCommandKind.Move&&routeIndex<route.Count;
-            if(!moving||!RouteHasStalled()){triedMoveRepath=false;return;}
-            if(triedMoveRepath||!hasRouteGoal)return;
-            triedMoveRepath=true;
-            if(!SeaNavigation.TryBuildPath(transform.position,routeGoal,pathScratch))return;
-            CopyScratchToRoute();routeIndex=0;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;
+            if(!moving||!RouteHasStalled())return;
+            if(!hasRouteGoal){EndUnreachableMove();return;}
+            if(!triedMoveRepath)
+            {
+                triedMoveRepath=true;
+                if(!SeaNavigation.TryBuildPath(transform.position,routeGoal,pathScratch)){EndUnreachableMove();return;}
+                CopyScratchToRoute();routeIndex=0;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;
+                return;
+            }
+            EndUnreachableMove();
+        }
+        void EndUnreachableMove()
+        {
+            if(Team==0&&string.IsNullOrEmpty(LastActionError))
+            {
+                LastActionError="No hay una ruta marítima hasta ese destino.";
+                if(world&&world.Session!=null)world.Session.Message(LastActionError,MessageKind.Info);
+            }
+            ClearRoute();
+        }
+        /// <summary>A finished attack-move keeps a target only inside the catalog hold around its goal.</summary>
+        void ReleaseAttackMoveBeyondHold()
+        {
+            if(!hasActiveCommand||activeCommand.Kind!=UnitCommandKind.AttackMove||hasAttackMoveGoal||!target)return;
+            float hold=UnitRules.AttackMoveHold(Type.Acquisition,Team==PlayerRules.NeutralTeam);
+            if(DistanceXZ(target.transform.position,attackMoveGoal)<=hold)return;
+            target=null;
         }
         bool ResumeAttackMove()
         {
@@ -691,7 +716,9 @@ namespace RiskAI
             // acquired after a failed re-plan already released the goal (attackMoveOrder is cleared there).
             bool releasedGoal = hasActiveCommand && activeCommand.Kind == UnitCommandKind.AttackMove && !hasAttackMoveGoal && !routeOpen;
             bool acquiredAfterRelease = releasedGoal && !attackMoveOrder;
-            bool liveTarget = target != null && !acquiredAfterRelease;
+            bool inHold = !releasedGoal || target == null
+                || DistanceXZ(target.transform.position, attackMoveGoal) <= UnitRules.AttackMoveHold(Type.Acquisition, Team == PlayerRules.NeutralTeam);
+            bool liveTarget = target != null && !acquiredAfterRelease && inHold;
             if (hasActiveCommand && !OrderAdvance.MotorIdle(activeCommand.Kind, liveTarget)) return false;
             return true;
         }
@@ -701,13 +728,11 @@ namespace RiskAI
         {
             if (hasActiveCommand && activeCommand.Kind == UnitCommandKind.Capture && !CapturePending())
             {
-                bool sailing = routeIndex < route.Count;
-                hasActiveCommand = false;
                 capture.Clear();
                 captureView = default;
                 captureSailing = false;
-                // A pending unload still has to land its troops. Stopping here would leave them aboard.
-                if (sailing && !pendingShoreUnload) HaltMotor();
+                // The beach still has to land its troops. Anything else closes through the same halt.
+                if (!pendingShoreUnload) FinishActiveOrder();
             }
             if (!MotorIdle()) return;
             if (OrderAdvance.Drain(orders, this)) { PublishOrders(); return; }

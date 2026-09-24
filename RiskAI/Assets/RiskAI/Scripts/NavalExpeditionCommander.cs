@@ -96,6 +96,10 @@ namespace RiskAI
         {
             if(!session.AiEnabled||session.Paused||session.Winner>=0||session.BattleTime<nextDecision)return;
             nextDecision=session.BattleTime+DecisionSeconds;
+            // A resubmit keeps the slot and does not buy a new voyage budget. Watch the hull
+            // until the retry instant instead of failing the clock that already expired.
+            if(phase==Phase.ReturningCargo&&returnDisembark.Waiting&&session.BattleTime>phaseDeadline&&session.BattleTime<returnRetryAt)
+            {ReturnCargo();return;}
             if(phase!=Phase.Cooldown&&phase!=Phase.Planning&&session.BattleTime>phaseDeadline){Fail();return;}
             switch(phase)
             {
@@ -261,10 +265,10 @@ namespace RiskAI
         {
             if(!transport||!transport.IsAlive){transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
             if(transport.CargoCount==0){transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
-            // The goal, not the stall. A hull that has stopped making progress still owns this return.
-            bool live=returnDisembark.Waiting&&transport.RunsCommand(returnDisembark.CommandId);
+            // The order still on the hull is the return, even when the slot is no longer waiting.
+            bool running=returnDisembark.CommandId!=0&&transport.RunsCommand(returnDisembark.CommandId);
             bool aimed=returnDisembark.Waiting&&transport.RouteGoalMatches(returnDisembark.Berth);
-            if(live||aimed)return;
+            if(running||aimed)return;
             if(returnDisembark.Waiting&&returnHarbor&&session.Commands.TryGetResult(returnDisembark.CommandId,out var stored)&&!stored.Accepted)
             {CoolDown();return;}
             // The beach already gave up, or the route no longer ends at this berth. One new order per interval.
@@ -549,27 +553,33 @@ namespace RiskAI
 
         void Fail()
         {
-            // A confirmation already in flight must be read, not wiped and sent again.
-            if(returnDisembark.Waiting&&transport&&transport.IsAlive&&transport.CargoCount>0&&returnHarbor)
+            // A hull still carrying the return is extended or cooled down. ConfirmDisembark would
+            // clear Waiting, and the next second would send another Capture.
+            if(returnDisembark.CommandId!=0&&transport&&transport.IsAlive&&transport.CargoCount>0&&returnHarbor
+                &&transport.RunsCommand(returnDisembark.CommandId))
             {
-                bool live=transport.RunsCommand(returnDisembark.CommandId);
-                bool stalled=transport.RouteIsStalled&&transport.RouteGoalMatches(returnDisembark.Berth);
-                // A stalled return stays on its order. Timing out must not rebuild the path or grant a new deadline.
-                if(live&&stalled){CoolDown();return;}
-                var waiting=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
-                if(waiting==DisembarkConfirmation.Status.Rejected){CoolDown();return;}
-                // Only a hull that is still carrying this order, and still moving, earns more time.
-                if(waiting==DisembarkConfirmation.Status.Accepted&&transport.RunsCommand(returnDisembark.CommandId)&&!transport.RouteIsStalled)
+                if(!transport.RouteIsStalled)
                 {
                     phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
                     return;
                 }
-                if(waiting==DisembarkConfirmation.Status.Accepted&&transport.CargoCount>0&&!transport.ShoreUnloadPending&&!transport.RouteIsStalled&&session.BattleTime>=returnRetryAt)
+                CoolDown();
+                return;
+            }
+            // A confirmation already in flight must be read, not wiped and sent again.
+            if(returnDisembark.Waiting&&transport&&transport.IsAlive&&transport.CargoCount>0&&returnHarbor)
+            {
+                var waiting=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
+                if(waiting==DisembarkConfirmation.Status.Rejected){CoolDown();return;}
+                // A parked ship is stalled. That does not block a new order once the old one has ended.
+                if(waiting==DisembarkConfirmation.Status.Accepted&&transport.CargoCount>0&&!transport.ShoreUnloadPending&&session.BattleTime>=returnRetryAt)
                 {
                     returnDisembark.Waiting=false;
                     var again=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
                     returnRetryAt=session.BattleTime+ReturnRetryInterval;
                     if(again==DisembarkConfirmation.Status.Rejected){CoolDown();return;}
+                    // Keep the slot. Do not grant another voyage budget and do not wipe it.
+                    if(again==DisembarkConfirmation.Status.Pending){phase=Phase.ReturningCargo;return;}
                 }
                 // Pending is unknown, not a failure. Keep the slot so the result can arrive during the cooldown.
                 if(waiting==DisembarkConfirmation.Status.Pending){ParkReturn();return;}
@@ -642,8 +652,7 @@ namespace RiskAI
                 hasResult = true;
                 resultAccepted = stored.Accepted;
             }
-            bool runs = ship && ship.IsAlive && ship.RunsCommand(slot.Waiting ? slot.CommandId : submittedId);
-            var status = DisembarkConfirmation.Advance(ref slot, submittedId, submittedOk, hasResult, resultAccepted, runs);
+            var status = DisembarkConfirmation.Advance(ref slot, submittedId, submittedOk, hasResult, resultAccepted);
             if (status == DisembarkConfirmation.Status.Pending)
             {
                 slot.HarborId = harborId;
@@ -676,7 +685,7 @@ namespace RiskAI
         /// <summary>A stored result counts only for the harbor that was submitted.</summary>
         public static bool ForHarbor(in Slot slot, int harborId) => !slot.Waiting || slot.HarborId == harborId;
 
-        public static Status Advance(ref Slot slot, int submittedId, bool submittedOk, bool hasResult, bool resultAccepted, bool shipRunsCommand)
+        public static Status Advance(ref Slot slot, int submittedId, bool submittedOk, bool hasResult, bool resultAccepted)
         {
             if (!slot.Waiting)
             {
@@ -690,11 +699,7 @@ namespace RiskAI
                 slot.Waiting = false;
                 return resultAccepted ? Status.Accepted : Status.Rejected;
             }
-            if (shipRunsCommand)
-            {
-                slot.Waiting = false;
-                return Status.Accepted;
-            }
+            // No stored result yet. Running the order must not clear Waiting: the next tick would send it again.
             return Status.Pending;
         }
     }

@@ -94,6 +94,20 @@ namespace RiskAI.Tests
         }
 
         [Test]
+        public void AMissingPresentationBlockIsAReadableError()
+        {
+            string json = Edit(root => UnitNamed(root, "Footman").Remove("presentation"));
+            var error = Assert.Throws<FormatException>(() => UnitConfigLoader.Parse(json));
+            Assert.That(error.Message, Does.Contain("presentation").IgnoreCase);
+            Assert.That(error.Message, Does.Not.Contain("NullReference"));
+            var file = UnitConfigLoader.Parse(ShippedJson);
+            file.Units.Single(unit => unit.Id == "Footman").Presentation = null;
+            List<string> errors = null;
+            Assert.DoesNotThrow(() => errors = UnitConfigValidation.Errors(file));
+            Assert.That(errors, Has.Some.Contain("landDefault"));
+        }
+
+        [Test]
         public void InvariantsAreEnforcedAtLoad()
         {
             string json = Edit(root => ((JObject)UnitNamed(root, "Medic")["capabilities"]).Remove("mana"));

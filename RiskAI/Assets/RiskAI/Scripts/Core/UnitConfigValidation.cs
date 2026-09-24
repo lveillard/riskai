@@ -34,9 +34,9 @@ namespace RiskAI.Core
                 if ((unit.Weapons == null ? 0 : unit.Weapons.Length) > 1) errors.Add("" + at + ": a unit carries at most one weapon");
                 if (((unit.Presentation != null && unit.Presentation.PortraitSource == PortraitSource.Variant) && unit.Domain != UnitDomain.Land)) errors.Add("" + at + ": a variant portrait is a land unit");
                 if ((unit.Domain == UnitDomain.Land && ((unit.Presentation != null && unit.Presentation.PortraitSource == PortraitSource.Model) && !((unit.Presentation != null && unit.Presentation.Model != null))))) errors.Add("" + at + ": a land model portrait needs a model name");
-                if ((unit.Domain == UnitDomain.Sea && (!((unit.Presentation != null && unit.Presentation.PortraitCamera != null)) || !(unit.Presentation.PortraitCamera.Ship == true)))) errors.Add("" + at + ": a sea portrait uses a hull camera");
-                if ((unit.Domain != UnitDomain.Sea && ((unit.Presentation != null && unit.Presentation.PortraitCamera != null) && unit.Presentation.PortraitCamera.Ship == true))) errors.Add("" + at + ": a hull camera is only for a sea unit");
-                if ((unit.Presentation.PortraitCamera.LandDefault == true && (unit.Domain != UnitDomain.Land || unit.Presentation.PortraitCamera.Ship == true))) errors.Add("" + at + ": the shared land camera belongs to one land unit");
+                if ((unit.Domain == UnitDomain.Sea && (!((unit.Presentation != null && unit.Presentation.PortraitCamera != null)) || !((unit.Presentation != null && unit.Presentation.PortraitCamera != null && (unit.Presentation.PortraitCamera.Ship == true)))))) errors.Add("" + at + ": a sea portrait uses a hull camera");
+                if ((unit.Domain != UnitDomain.Sea && ((unit.Presentation != null && unit.Presentation.PortraitCamera != null) && (unit.Presentation != null && unit.Presentation.PortraitCamera != null && (unit.Presentation.PortraitCamera.Ship == true))))) errors.Add("" + at + ": a hull camera is only for a sea unit");
+                if (((unit.Presentation != null && unit.Presentation.PortraitCamera != null && (unit.Presentation.PortraitCamera.LandDefault == true)) && (unit.Domain != UnitDomain.Land || (unit.Presentation != null && unit.Presentation.PortraitCamera != null && (unit.Presentation.PortraitCamera.Ship == true))))) errors.Add("" + at + ": the shared land camera belongs to one land unit");
                 if (unit.Domain == UnitDomain.Sea && unit.Hull != null)
                 {
                     if (!(unit.Hull.Clearance > 0) || clearance != null && unit.Hull.Clearance != clearance) errors.Add("every sea hull shares one positive clearance (the sea grid is global)");
@@ -60,11 +60,11 @@ namespace RiskAI.Core
                 if ((weapon.Targeting == WeaponTargeting.LaunchPoint && weapon.Delivery != WeaponDelivery.Artillery)) errors.Add("" + w + ": LaunchPoint needs Artillery delivery");
                 if ((weapon.Delivery == WeaponDelivery.Instant) != (weapon.ProjectileSpeed == 0)) errors.Add("" + w + ": projectileSpeed must be 0 exactly for Instant delivery");
                 if (weapon.MinRange > weapon.Range) errors.Add("" + w + ": minRange above range");
-                if ((weapon.FlightTime != null && ((weapon.FlightTime != null && weapon.FlightTime.Max != null) && weapon.FlightTime.Max < weapon.FlightTime.Min))) errors.Add("" + w + ": flightTime max below min");
+                if ((weapon.FlightTime != null && ((weapon.FlightTime != null && weapon.FlightTime.Max != null) && (weapon.FlightTime != null && weapon.FlightTime != null && (weapon.FlightTime.Max < weapon.FlightTime.Min))))) errors.Add("" + w + ": flightTime max below min");
                 if ((weapon.Splash != null && (weapon.Splash != null ? (weapon.Splash.Rings == null ? 0 : weapon.Splash.Rings.Length) : 0) != 3)) { errors.Add("" + w + ": splash needs three rings"); skipSplash = true; }
-                if (!skipSplash && (weapon.Splash != null && weapon.Splash.Rings[0].Factor != 1)) errors.Add("" + w + ": the first splash ring deals full damage");
+                if (!skipSplash && (weapon.Splash != null && (weapon.Splash != null && weapon.Splash.Rings != null && (weapon.Splash.Rings[0].Factor != 1)))) errors.Add("" + w + ": the first splash ring deals full damage");
                 if (!skipSplash && (weapon.Splash != null && SplashShrinks(weapon.Splash.Rings))) errors.Add("" + w + ": splash rings must not shrink");
-                if (!skipSplash && (weapon.Splash != null && weapon.Splash.Rings[weapon.Splash.Rings.Length - 1].Radius <= 0)) errors.Add("" + w + ": splash needs a positive outer radius");
+                if (!skipSplash && (weapon.Splash != null && (weapon.Splash != null && weapon.Splash.Rings != null && (weapon.Splash.Rings[weapon.Splash.Rings.Length - 1].Radius <= 0)))) errors.Add("" + w + ": splash needs a positive outer radius");
         }
 
         static bool SplashShrinks(SplashRing[] rings)
