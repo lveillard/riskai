@@ -19,7 +19,7 @@ namespace RiskAI
         OrderQueue Orders { get; }
         void ClearOrderError();
         /// <summary>Shared aim checks, then <see cref="Reach"/>. Does not release a post and does not start the order.</summary>
-        bool Authorize(in UnitCommand command, bool plan);
+        bool Authorize(ref UnitCommand command, bool plan);
         /// <summary>Leave a bound post. Commit only when the order is about to start. The relief message is only for this failure.</summary>
         bool ReleasePost(in UnitCommand command, bool commitRelease, out string error);
         /// <summary>Motor only. <paramref name="plan"/> builds the sea path once; a cheap check does not.</summary>

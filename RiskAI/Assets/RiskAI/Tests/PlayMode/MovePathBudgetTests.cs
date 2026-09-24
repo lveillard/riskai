@@ -62,11 +62,55 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator AShiftBurstSamplesEachMoveOnce()
+        {
+            var origin = battle.Towns.First(town => town.State.Owner == 0).ClaimPoint;
+            Assert.That(NavMesh.SamplePosition(origin, out var start, 8f, NavMesh.AllAreas), Is.True);
+            const int count = 4;
+            const int burst = 3;
+            var units = new Soldier[count];
+            for (int i = 0; i < count; i++)
+            {
+                var probe = start.position + new Vector3(i * 1.6f, 0f, 0f);
+                Assert.That(NavMesh.SamplePosition(probe, out var hit, 2f, NavMesh.AllAreas), Is.True);
+                units[i] = BattleTestScenario.Mobile(battle, 0, UnitKind.Footman, hit.position);
+            }
+            yield return null;
+            SoldierPathBudget.Arm();
+            for (int n = 0; n < burst; n++)
+                for (int i = 0; i < count; i++)
+                {
+                    var goal = units[i].transform.position;
+                    Assert.That(battle.Commands.Submit(new UnitCommand(0, units[i].EntityId, UnitCommandKind.Move, goal.x, goal.y, goal.z, append: true)), Is.True,
+                        battle.Commands.LastRejection);
+                }
+            battle.Commands.Tick();
+            Assert.That(SoldierPathBudget.Sampled, Is.EqualTo(count * burst), "each queued move samples once at admission");
+            float guard = 0f;
+            while (guard < 3f && StillQueued(units))
+            {
+                guard += 0.2f;
+                for (int i = 0; i < count; i++) units[i].SimTick(0.2f);
+                yield return null;
+            }
+            Assert.That(StillQueued(units), Is.False, "the queued moves run");
+            Assert.That(SoldierPathBudget.Sampled, Is.EqualTo(count * burst), "starting a queued move does not sample again");
+            yield return null;
+        }
+
         void Issue(Soldier[] units, Vector3 goal)
         {
             for (int i = 0; i < units.Length; i++)
                 Assert.That(battle.Commands.Submit(new UnitCommand(0, units[i].EntityId, UnitCommandKind.Move, goal.x, goal.y, goal.z)), Is.True,
                     battle.Commands.LastRejection);
+        }
+
+        static bool StillQueued(Soldier[] units)
+        {
+            for (int i = 0; i < units.Length; i++)
+                if (units[i].Orders.Count > 0) return true;
+            return false;
         }
 
         static void AssertBudget(int count, string round)

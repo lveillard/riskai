@@ -13,6 +13,8 @@ namespace RiskAI
         const float PhaseTimeout = 45f;
         const float NoPlanRetrySeconds = 6f;
         const float RetrySeconds = 10f;
+        /// <summary>How often a return that is no longer on its berth may be ordered again. A resubmit does not extend <see cref="phaseDeadline"/>.</summary>
+        public const float ReturnRetryInterval = 10f;
         const int MinimumTroops = 2;
         // A transport carries ten; the difficulty profile decides how much of it a wave fills.
         const int TroopCapacity = 10;
@@ -71,7 +73,7 @@ namespace RiskAI
         Vector3 sourceLanding, sourceTransportBerth, destinationTransportBerth;
         Settlement target;
         Ship transport;
-        float nextDecision, phaseDeadline, retryAt;
+        float nextDecision, phaseDeadline, retryAt, returnRetryAt;
         float plannedSeaDistance, plannedGatherDistance, boardingDeadline;
         int sourceHarborCursor, troopCursor, recoveryHarborCursor, recoveryPass;
         bool embarkOrdersIssued, sailConfirmed, attackOrderIssued;
@@ -255,15 +257,23 @@ namespace RiskAI
         {
             if(!transport||!transport.IsAlive){transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
             if(transport.CargoCount==0){transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
-            if(!returnHarbor||!returnHarbor.TryTransportLanding(out _,out var returnBerth)||!transport.IsAtOrRoutingTo(returnBerth))
+            // The goal, not the stall. A hull that has stopped making progress still owns this return.
+            bool live=returnDisembark.Waiting&&transport.RunsCommand(returnDisembark.CommandId);
+            bool aimed=returnDisembark.Waiting&&transport.RouteGoalMatches(returnDisembark.Berth);
+            if(live||aimed)return;
+            if(returnDisembark.Waiting&&returnHarbor&&session.Commands.TryGetResult(returnDisembark.CommandId,out var stored)&&!stored.Accepted)
+            {CoolDown();return;}
+            // The beach already gave up, or the route no longer ends at this berth. One new order per interval.
+            if(transport.ShoreUnloadPending||session.BattleTime<returnRetryAt)return;
+            if(!returnHarbor||!returnHarbor.TryTransportLanding(out _,out _))
             {
                 returnHarbor=NearestRecoveryHarbor(transport.transform.position);
                 if(!returnHarbor){phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
-                var check=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
-                if(check==DisembarkConfirmation.Status.Pending)return;
-                if(check==DisembarkConfirmation.Status.Rejected){returnDisembark=default;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
-                phaseDeadline=session.BattleTime+ReturnDeadline();
             }
+            returnDisembark.Waiting=false;
+            var check=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
+            returnRetryAt=session.BattleTime+ReturnRetryInterval;
+            if(check==DisembarkConfirmation.Status.Rejected)CoolDown();
         }
 
         bool TryChooseSourceAndTroops(bool canBuyTransport,out Harbor selected,out Ship selectedTransport)
@@ -471,6 +481,7 @@ namespace RiskAI
                 var check=ConfirmDisembark(ref returnDisembark,ship,returnHarbor);
                 if(check==DisembarkConfirmation.Status.Rejected){returnDisembark=default;retryAt=session.BattleTime+RetrySeconds;return true;}
                 phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
+                returnRetryAt=session.BattleTime+ReturnRetryInterval;
                 return true;
             }
             return false;
@@ -537,19 +548,26 @@ namespace RiskAI
             // A confirmation already in flight must be read, not wiped and sent again.
             if(returnDisembark.Waiting&&transport&&transport.IsAlive&&transport.CargoCount>0&&returnHarbor)
             {
+                bool live=transport.RunsCommand(returnDisembark.CommandId);
+                bool stalled=transport.RouteIsStalled&&transport.RouteGoalMatches(returnDisembark.Berth);
+                // A stalled return stays on its order. Timing out must not rebuild the path or grant a new deadline.
+                if(live&&stalled){CoolDown();return;}
                 var waiting=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
-                if(waiting==DisembarkConfirmation.Status.Rejected)
-                {
-                    returnDisembark=default;
-                    attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
-                    return;
-                }
-                if(waiting==DisembarkConfirmation.Status.Accepted)
+                if(waiting==DisembarkConfirmation.Status.Rejected){CoolDown();return;}
+                // Only a hull that is still carrying this order, and still moving, earns more time.
+                if(waiting==DisembarkConfirmation.Status.Accepted&&transport.RunsCommand(returnDisembark.CommandId)&&!transport.RouteIsStalled)
                 {
                     phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
                     return;
                 }
-                phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
+                if(waiting==DisembarkConfirmation.Status.Accepted&&transport.CargoCount>0&&!transport.ShoreUnloadPending&&!transport.RouteIsStalled&&session.BattleTime>=returnRetryAt)
+                {
+                    returnDisembark.Waiting=false;
+                    var again=ConfirmDisembark(ref returnDisembark,transport,returnHarbor);
+                    returnRetryAt=session.BattleTime+ReturnRetryInterval;
+                    if(again==DisembarkConfirmation.Status.Rejected){CoolDown();return;}
+                }
+                CoolDown();
                 return;
             }
             var ship=transport;
@@ -563,10 +581,16 @@ namespace RiskAI
                 if(check!=DisembarkConfirmation.Status.Rejected)
                 {
                     phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
+                    returnRetryAt=session.BattleTime+ReturnRetryInterval;
                     return;
                 }
                 returnDisembark=default;
             }
+            CoolDown();
+        }
+        void CoolDown()
+        {
+            returnDisembark=default;
             attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;
         }
         void Reset(){attemptedSources.Clear();examinedSources.Clear();transport=null;phase=Phase.Planning;retryAt=session.BattleTime+RetrySeconds;ClearPlan();}
@@ -574,12 +598,13 @@ namespace RiskAI
         void ClearPlan()
         {
             source=null;destination=null;target=null;returnHarbor=null;sourceLanding=sourceTransportBerth=destinationTransportBerth=default;troops.Clear();plannedSeaDistance=plannedGatherDistance=boardingDeadline=0;
-            embarkOrdersIssued=sailConfirmed=attackOrderIssued=false;sailDisembark=default;returnDisembark=default;
+            embarkOrdersIssued=sailConfirmed=attackOrderIssued=false;sailDisembark=default;returnDisembark=default;returnRetryAt=0;
         }
         DisembarkConfirmation.Status ConfirmDisembark(ref DisembarkConfirmation.Slot slot, Ship ship, Harbor harbor)
         {
             int harborId = harbor ? harbor.GetInstanceID() : 0;
             Vector3 berth = harbor ? harbor.Berth : default;
+            if (harbor && harbor.TryTransportLanding(out _, out var transportBerth)) berth = transportBerth;
             // An older result belongs to the harbor that was ordered, not to whichever dock is nearest now.
             if (!DisembarkConfirmation.ForHarbor(slot, harborId)) slot.Waiting = false;
             int submittedId = 0;
@@ -623,6 +648,7 @@ namespace RiskAI
             public int CommandId;
             public bool Waiting;
             public int HarborId;
+            /// <summary>Transport approach stored with the order. Compared with the ship's route goal; a stall does not change it.</summary>
             public Vector3 Berth;
         }
 

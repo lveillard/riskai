@@ -65,7 +65,7 @@ namespace RiskAI
             if(session.Paused) result = Fail(command, "La partida está detenida.");
             else if(session.Winner>=0) result = Fail(command, "La batalla ha terminado.");
             else if(queue.Count>=InboxLimit) result = Fail(command, OrderQueue.FullError);
-            else if(!Valid(command, true)) result = Fail(command, RejectionReason(command));
+            else if(!Valid(ref command, true)) result = Fail(command, RejectionReason(command));
             else
             {
                 double submittedAt = Time.realtimeSinceStartupAsDouble;
@@ -122,7 +122,7 @@ namespace RiskAI
             if (actor != null && !string.IsNullOrEmpty(actor.OrderError)) return actor.OrderError;
             return OrderQueue.InvalidError;
         }
-        bool Valid(UnitCommand command, bool plan)
+        bool Valid(ref UnitCommand command, bool plan)
         {
             var actor=session.FindTarget(command.UnitId) as IOrderable;
             if(actor!=null) actor.ClearOrderError();
@@ -130,7 +130,7 @@ namespace RiskAI
             if(command.Kind<UnitCommandKind.Move || command.Kind>UnitCommandKind.Unload)return false;
             if(actor==null || !actor.IsAlive || actor.Team!=command.PlayerId)return false;
             if(command.HasPoint && actor.Type.Domain==UnitDomain.Static)return false;
-            return actor.Authorize(command, plan);
+            return actor.Authorize(ref command, plan);
         }
         static bool Finite(float value)=>!float.IsNaN(value)&&!float.IsInfinity(value);
         void Reject(UnitCommand command,string reason)
@@ -149,7 +149,7 @@ namespace RiskAI
             {
                 var queued=queue.Dequeue();
                 var command=queued.Command;
-                if(!Valid(command,false)){FailDrain(command,"La unidad, el relevo o el objetivo cambió antes de aplicar la orden.");continue;}
+                if(!Valid(ref command,false)){FailDrain(command,"La unidad, el relevo o el objetivo cambió antes de aplicar la orden.");continue;}
                 var actor=(IOrderable)session.FindTarget(command.UnitId);
                 bool firstMoveEligible = actor.HumanMoveEligible(command);
                 bool applied=actor.ApplyOrder(command);

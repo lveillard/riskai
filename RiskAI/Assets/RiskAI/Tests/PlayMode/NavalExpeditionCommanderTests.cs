@@ -126,6 +126,63 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator AStalledReturnDoesNotResubmitAndThePhaseTimesOut()
+        {
+            var naval = NavalWorld.Current;
+            var home = naval.Harbors.First(harbor => harbor.Owner == 1 && harbor.CanLaunch);
+            var transport = BattleTestScenario.Ship(naval, 1, UnitKind.Transport, home.Berth);
+            var soldier = BattleTestScenario.Mobile(battle, 1, UnitKind.Footman, home.Landing);
+            Assert.That(transport.TryEmbark(soldier), Is.True, transport.LastActionError);
+            Assert.That(home.TryTransportLanding(out _, out var berth), Is.True);
+            const BindingFlags hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+            var route = (System.Collections.Generic.List<Vector3>)typeof(Ship).GetField("route", hidden).GetValue(transport);
+            route.Clear();
+            route.Add(berth);
+            typeof(Ship).GetField("routeIndex", hidden).SetValue(transport, 0);
+            typeof(Ship).GetField("hasRouteGoal", hidden).SetValue(transport, true);
+            typeof(Ship).GetField("routeGoal", hidden).SetValue(transport, berth);
+            typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(transport, -100f);
+            typeof(Ship).GetField("hasActiveCommand", hidden).SetValue(transport, true);
+            typeof(Ship).GetField("activeCommand", hidden).SetValue(transport,
+                new UnitCommand(1, transport.EntityId, UnitCommandKind.Capture, home.Landing.x, home.Landing.y, home.Landing.z).WithCommandId(77));
+            var commander = naval.ExpeditionFor(1);
+            var phaseType = typeof(NavalExpeditionCommander).GetNestedType("Phase", BindingFlags.NonPublic);
+            var slotType = typeof(DisembarkConfirmation).GetNestedType("Slot");
+            object slot = System.Activator.CreateInstance(slotType);
+            slotType.GetField("CommandId").SetValue(slot, 77);
+            slotType.GetField("Waiting").SetValue(slot, true);
+            slotType.GetField("HarborId").SetValue(slot, home.GetInstanceID());
+            slotType.GetField("Berth").SetValue(slot, berth);
+            typeof(NavalExpeditionCommander).GetField("transport", hidden).SetValue(commander, transport);
+            typeof(NavalExpeditionCommander).GetField("returnHarbor", hidden).SetValue(commander, home);
+            typeof(NavalExpeditionCommander).GetField("returnDisembark", hidden).SetValue(commander, slot);
+            typeof(NavalExpeditionCommander).GetField("phase", hidden).SetValue(commander, System.Enum.Parse(phaseType, "ReturningCargo"));
+            float deadline = battle.BattleTime + 30f;
+            typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).SetValue(commander, deadline);
+            typeof(NavalExpeditionCommander).GetField("returnRetryAt", hidden).SetValue(commander, 0f);
+            battle.AiEnabled = true;
+            long before = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount;
+            for (int i = 0; i < 4; i++)
+            {
+                typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+                commander.Tick(0);
+                battle.Clock.Advance(1f, false, _ => { });
+                typeof(Ship).GetField("lastRouteProgressAt", hidden).SetValue(transport, -100f);
+            }
+            long during = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(during, Is.EqualTo(0), "a stalled route that still aims at the return berth is not ordered again");
+            Assert.That((float)typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).GetValue(commander), Is.EqualTo(deadline), "a resubmit must not extend the phase");
+            typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).SetValue(commander, battle.BattleTime - 1f);
+            typeof(NavalExpeditionCommander).GetField("nextDecision", hidden).SetValue(commander, battle.BattleTime);
+            commander.Tick(0);
+            long after = battle.Commands.PendingCount + battle.Commands.AppliedCount + battle.Commands.RejectedCount - before;
+            Assert.That(after, Is.EqualTo(0), "timing out a stalled return does not order another");
+            Assert.That(typeof(NavalExpeditionCommander).GetField("phase", hidden).GetValue(commander).ToString(), Is.EqualTo("Cooldown"), "the stalled phase times out");
+            Assert.That((float)typeof(NavalExpeditionCommander).GetField("phaseDeadline", hidden).GetValue(commander), Is.LessThanOrEqualTo(battle.BattleTime), "timing out does not arm a new deadline");
+            yield return null;
+        }
+
         static float DistanceXZ(Vector3 a,Vector3 b)
         {
             a.y=b.y=0;return Vector3.Distance(a,b);

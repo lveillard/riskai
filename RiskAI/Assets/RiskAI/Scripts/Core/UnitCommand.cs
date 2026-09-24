@@ -12,18 +12,25 @@ namespace RiskAI.Core
         /// <summary>Stable building id for <see cref="UnitCommandKind.Capture"/> (town or harbor local id).</summary>
         public readonly string StructureId;
         public readonly BuildingKind StructureKind;
+        /// <summary>NavMesh point taken once at admission. Execution reuses it and does not sample again.</summary>
+        public readonly bool HasSnap;
+        public readonly float SnapX, SnapY, SnapZ;
 
-        public UnitCommand(int playerId, int unitId, UnitCommandKind kind, float x = 0, float y = 0, float z = 0, int targetId = 0, bool append = false, int commandId = 0, string structureId = null, BuildingKind structureKind = BuildingKind.Settlement)
+        public UnitCommand(int playerId, int unitId, UnitCommandKind kind, float x = 0, float y = 0, float z = 0, int targetId = 0, bool append = false, int commandId = 0, string structureId = null, BuildingKind structureKind = BuildingKind.Settlement, bool hasSnap = false, float snapX = 0, float snapY = 0, float snapZ = 0)
         {
             PlayerId = playerId; UnitId = unitId; Kind = kind; X = x; Y = y; Z = z; TargetId = targetId; Append = append;
             CommandId = commandId; StructureId = structureId; StructureKind = structureKind;
+            HasSnap = hasSnap; SnapX = snapX; SnapY = snapY; SnapZ = snapZ;
         }
 
         public UnitCommand WithCommandId(int commandId) =>
-            new UnitCommand(PlayerId, UnitId, Kind, X, Y, Z, TargetId, Append, commandId, StructureId, StructureKind);
+            new UnitCommand(PlayerId, UnitId, Kind, X, Y, Z, TargetId, Append, commandId, StructureId, StructureKind, HasSnap, SnapX, SnapY, SnapZ);
 
         public UnitCommand WithAppend(bool append) =>
-            new UnitCommand(PlayerId, UnitId, Kind, X, Y, Z, TargetId, append, CommandId, StructureId, StructureKind);
+            new UnitCommand(PlayerId, UnitId, Kind, X, Y, Z, TargetId, append, CommandId, StructureId, StructureKind, HasSnap, SnapX, SnapY, SnapZ);
+
+        public UnitCommand WithSnap(float x, float y, float z) =>
+            new UnitCommand(PlayerId, UnitId, Kind, X, Y, Z, TargetId, Append, CommandId, StructureId, StructureKind, true, x, y, z);
 
         public bool HasPoint => Kind == UnitCommandKind.Move || Kind == UnitCommandKind.AttackMove || Kind == UnitCommandKind.Patrol || Kind == UnitCommandKind.Unload;
     }

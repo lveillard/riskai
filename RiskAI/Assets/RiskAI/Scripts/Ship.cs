@@ -75,6 +75,16 @@ namespace RiskAI
             if(!hasRouteGoal||routeIndex>=route.Count||RouteHasStalled())return false;
             var goal=routeGoal-point;goal.y=0;return goal.sqrMagnitude<=tolerance*tolerance;
         }
+        /// <summary>The route's goal, ignoring whether the hull has stopped making progress.</summary>
+        public bool RouteGoalMatches(Vector3 point, float tolerance = 1.5f)
+        {
+            if (!hasRouteGoal) return false;
+            var delta = routeGoal - point;
+            delta.y = 0f;
+            return delta.sqrMagnitude <= tolerance * tolerance;
+        }
+        public bool RouteIsStalled => RouteHasStalled();
+        public bool ShoreUnloadPending => pendingShoreUnload;
         // A00V selects up to ten nearby units inside 512 native range (10.24 m): units.json transport.
         float LoadRadius=>Type.Transport.LoadRadius;
         public override float MaxHealth=>Type.MaxHealth;
@@ -123,7 +133,8 @@ namespace RiskAI
                 if(plannedPath.Count==0){ if(harborGuard&&harborGuard.IsInBerthCircle(point)) MaintainHarborGuard(); return; }
                 if(!TryLeaveHarborGuard(plannedPoint))return;
                 orderedHarbor=null;
-                CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=plannedPoint;pendingShoreUnload=false;
+                ClearShoreUnload();
+                CopyPlanToRoute();routeIndex=0;routeGoal=plannedPoint;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=plannedPoint;
                 plannedReady=false;
                 return;
             }
@@ -135,7 +146,8 @@ namespace RiskAI
             if(!SeaNavigation.TryBuildPath(transform.position,destination,pathScratch)){LastActionError="No hay una ruta marítima hasta ese destino.";return;}
             if(!TryLeaveHarborGuard(destination))return;
             orderedHarbor=null;
-            CopyScratchToRoute();routeIndex=0;routeGoal=destination;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=destination;pendingShoreUnload=false;
+            ClearShoreUnload();
+            CopyScratchToRoute();routeIndex=0;routeGoal=destination;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=attackMove;hasAttackMoveGoal=attackMove;attackMoveGoal=destination;
         }
         public void SailToHarbor(Harbor harbor)
         {
@@ -167,7 +179,8 @@ namespace RiskAI
             if(HasPlan())
             {
                 orderedHarbor=null;
-                CopyPlanToRoute();routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=plannedPath.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;pendingShoreUnload=false;
+                ClearShoreUnload();
+                CopyPlanToRoute();routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=plannedPath.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;
                 plannedReady=false;
                 return true;
             }
@@ -180,11 +193,12 @@ namespace RiskAI
                 if(!TryLeaveHarborGuard(ocean))return false;
             }
             orderedHarbor=null;
-            CopyScratchToRoute();routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=pathScratch.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;pendingShoreUnload=false;
+            ClearShoreUnload();
+            CopyScratchToRoute();routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=pathScratch.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;
             return true;
         }
         public void Stop(){HaltMotor();orders.Clear();hasActiveCommand=false;capture.Clear();captureView=default;captureSailing=false;plannedReady=false;PublishOrders();}
-        void HaltMotor(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;pendingShoreUnload=false;}
+        void HaltMotor(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;ClearShoreUnload();}
         void CopyScratchToRoute(){route.Clear();for(int i=0;i<pathScratch.Count;i++)route.Add(pathScratch[i]);}
         /// <summary>Queues a source-style unload at a validated shore after sailing there.</summary>
         public string SailToShore(Vector3 shore)
@@ -206,14 +220,18 @@ namespace RiskAI
             CopyScratchToRoute();routeIndex=0;routeGoal=berth;hasRouteGoal=true;NoteRouteAccepted();RouteRevision++;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;
             ArmShoreUnload(landing);return null;
         }
-        /// <summary>The same validated landing keeps the soldier slot. A different beach starts again.</summary>
+        int shoreCommandId;
+        /// <summary>The same validated landing keeps the soldier slot. A new order renews the five-second window.</summary>
         void ArmShoreUnload(Vector3 landing)
         {
+            int commandId=hasActiveCommand?activeCommand.CommandId:0;
             bool same=pendingShoreUnload && DistanceXZ(pendingShore,landing)<.5f;
-            pendingShore=landing;pendingShoreUnload=true;
+            bool renew=commandId!=shoreCommandId;
+            pendingShore=landing;pendingShoreUnload=true;shoreCommandId=commandId;
             if(!same){unloadSlot=0;shoreUnloadElapsed=0;shoreUnloadCooldown=0;shoreFailureReported=false;}
+            else if(renew){shoreUnloadElapsed=0;shoreUnloadCooldown=0;shoreFailureReported=false;}
         }
-        void ClearShoreUnload(){pendingShoreUnload=false;unloadSlot=0;shoreFailureReported=false;shoreUnloadElapsed=shoreUnloadCooldown=0;}
+        void ClearShoreUnload(){pendingShoreUnload=false;unloadSlot=0;shoreFailureReported=false;shoreUnloadElapsed=shoreUnloadCooldown=0;shoreCommandId=0;}
         public bool TryEmbark(Soldier soldier)
         {
             LastActionError=null;
@@ -309,7 +327,7 @@ namespace RiskAI
                         {
                             if(!shoreFailureReported&&Team==0&&!string.IsNullOrEmpty(LastActionError))
                             {world.Session.Message(LastActionError,MessageKind.Info);shoreFailureReported=true;}
-                            pendingShoreUnload=false;unloadSlot=0;shoreUnloadElapsed=shoreUnloadCooldown=0;
+                            ClearShoreUnload();
                         }
                     }
                 }
@@ -440,7 +458,7 @@ namespace RiskAI
         public void RefreshActivePath() { }
         string IOrderable.OrderError => LastActionError;
         void IOrderable.ClearOrderError() => LastActionError = null;
-        bool IOrderable.Authorize(in UnitCommand command, bool plan)
+        bool IOrderable.Authorize(ref UnitCommand command, bool plan)
         {
             bool ok = OrderValidation.Check(world != null ? world.Session : null, this, command, plan, out var error);
             if (!ok) LastActionError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
@@ -670,7 +688,18 @@ namespace RiskAI
             }
             if (!MotorIdle()) return;
             if (OrderAdvance.Drain(orders, this)) { PublishOrders(); return; }
-            if (hasActiveCommand) { hasActiveCommand = false; PublishOrders(); }
+            if (hasActiveCommand) FinishActiveOrder();
+        }
+
+        /// <summary>The order is over, so the hull stops too. A queued order has already replaced it.</summary>
+        void FinishActiveOrder()
+        {
+            hasActiveCommand = false;
+            capture.Clear();
+            captureView = default;
+            captureSailing = false;
+            HaltMotor();
+            PublishOrders();
         }
 
         bool IQueuedOrderRunner.TryStartQueued(in UnitCommand command)

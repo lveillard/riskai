@@ -115,6 +115,7 @@ namespace RiskAI
             Garrison=null; simulationPaused=false; enabled=true; roarUntil=-1; roarBonus=0;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
             mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; hasActiveCommand=false; capture.Clear(); captureView=default; orders.Reset();
+            admissionSnapReady=false; admissionSnapId=0; admissionSnap=default;
             nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
             humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
             bool first=!Agent;
@@ -612,10 +613,14 @@ namespace RiskAI
         }
         string IOrderable.OrderError => LastMoveError;
         void IOrderable.ClearOrderError() => LastMoveError = null;
-        bool IOrderable.Authorize(in UnitCommand command, bool plan)
+        bool IOrderable.Authorize(ref UnitCommand command, bool plan)
         {
+            admissionSnapReady = false;
             bool ok = OrderValidation.Check(session, this, command, plan, out var error);
             if (!ok) LastMoveError = string.IsNullOrEmpty(error) ? OrderQueue.InvalidError : error;
+            else if (admissionSnapReady && admissionSnapId == command.CommandId)
+                command = command.WithSnap(admissionSnap.x, admissionSnap.y, admissionSnap.z);
+            admissionSnapReady = false;
             return ok;
         }
         bool IOrderable.ApplyOrder(in UnitCommand command) => ApplyOrder(command);
@@ -659,11 +664,13 @@ namespace RiskAI
             }
         }
 
-        int snappedCommandId = -1;
-        Vector3 snappedDestination;
+        bool admissionSnapReady;
+        int admissionSnapId;
+        Vector3 admissionSnap;
         bool SnapDestination(in UnitCommand command, out string error)
         {
             error = null;
+            admissionSnapReady = false;
             if (!OnMesh(out error)) return false;
             SoldierPathBudget.NoteSample();
             if (!NavMesh.SamplePosition(new Vector3(command.X, command.Y, command.Z), out var hit, 8, NavMesh.AllAreas))
@@ -671,17 +678,17 @@ namespace RiskAI
                 error = "Ese destino no es transitable; usa un transporte para cruzar el agua.";
                 return false;
             }
-            snappedCommandId = command.CommandId;
-            snappedDestination = hit.position;
+            admissionSnapId = command.CommandId;
+            admissionSnap = hit.position;
+            admissionSnapReady = true;
             return true;
         }
 
-        bool TrySnappedDestination(in UnitCommand command, out Vector3 point)
+        bool ResolveDestination(in UnitCommand command, out Vector3 point)
         {
-            if (snappedCommandId == command.CommandId && command.CommandId != 0)
+            if (command.HasSnap)
             {
-                point = snappedDestination;
-                snappedCommandId = -1;
+                point = new Vector3(command.SnapX, command.SnapY, command.SnapZ);
                 return true;
             }
             SoldierPathBudget.NoteSample();
@@ -768,7 +775,7 @@ namespace RiskAI
         bool ExecuteMove(in UnitCommand command, OrderMode orderMode)
         {
             LastMoveError = null;
-            if (!TrySnappedDestination(command, out var hit))
+            if (!ResolveDestination(command, out var hit))
             { LastMoveError = "Ese destino no es transitable; usa un transporte para cruzar el agua."; return false; }
             Remember(command);
             Apply(orderMode, hit, 0);
