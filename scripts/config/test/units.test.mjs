@@ -57,3 +57,15 @@ test('LaunchPoint requires Artillery delivery', () => {
   find(file, 'Mortar').weapons[0].delivery = 'Missile';
   assert.ok(validate(file).some((e) => e.includes('LaunchPoint needs Artillery')));
 });
+
+test('a variant portrait is a land unit', () => {
+  const file = load();
+  find(file, 'Frigate').presentation.portraitSource = 'Variant';
+  assert.ok(validate(file).some((e) => e.includes('variant portrait is a land unit')));
+});
+
+test('a land model portrait needs a model name', () => {
+  const file = load();
+  find(file, 'Mage').presentation.model = null;
+  assert.ok(validate(file).some((e) => e.includes('needs a model name')));
+});

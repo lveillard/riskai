@@ -1012,6 +1012,19 @@
       },
       "description": "Typed capabilities; rules decide by these, never by type."
     },
+    "PortraitSource": {
+      "anyOf": [
+        {
+          "const": "Model",
+          "type": "string"
+        },
+        {
+          "const": "Variant",
+          "type": "string"
+        }
+      ],
+      "description": "Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab."
+    },
     "UnitSilhouette": {
       "anyOf": [
         {
@@ -1052,6 +1065,7 @@
         "model",
         "portrait",
         "portraitFallback",
+        "portraitSource",
         "attackClip",
         "contact",
         "silhouette"
@@ -1075,6 +1089,9 @@
         "portraitFallback": {
           "description": "Portrait used until the preferred one is rendered.",
           "type": "string"
+        },
+        "portraitSource": {
+          "$ref": "#/$defs/PortraitSource"
         },
         "attackClip": {
           "description": "Attack clip; null for procedural attacks.",

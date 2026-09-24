@@ -105,6 +105,7 @@
         "model": "Knight",
         "portrait": "Knight",
         "portraitFallback": "Knight",
+        "portraitSource": "Model",
         "attackClip": "1H_Melee_Attack_Slice_Horizontal",
         "contact": 0.25,
         "silhouette": "Infantry"
@@ -214,6 +215,7 @@
         "model": "RogueHooded",
         "portrait": "RogueHooded",
         "portraitFallback": "RogueHooded",
+        "portraitSource": "Model",
         "attackClip": "2H_Ranged_Shoot",
         "contact": 0.25,
         "silhouette": "Ranged"
@@ -325,6 +327,7 @@
         "model": "RoyalGuard",
         "portrait": "MountedKnight",
         "portraitFallback": "RoyalGuard",
+        "portraitSource": "Model",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Mounted"
@@ -455,6 +458,7 @@
         "model": "Mage",
         "portrait": "Mage",
         "portraitFallback": "Mage",
+        "portraitSource": "Model",
         "attackClip": "Spellcast_Shoot",
         "contact": 0.32142857,
         "silhouette": "Ranged"
@@ -583,6 +587,7 @@
         "model": "Mortar",
         "portrait": "Mortar",
         "portraitFallback": "Mortar",
+        "portraitSource": "Model",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Siege"
@@ -707,6 +712,7 @@
         "model": "Medic",
         "portrait": "Medic",
         "portraitFallback": "Medic",
+        "portraitSource": "Model",
         "attackClip": "2H_Ranged_Shoot",
         "contact": 0.25,
         "silhouette": "Ranged"
@@ -810,6 +816,7 @@
         "model": "MarinePrivate",
         "portrait": "MarinePrivate",
         "portraitFallback": "MarinePrivate",
+        "portraitSource": "Model",
         "attackClip": "1H_Ranged_Shoot",
         "contact": 0.25,
         "silhouette": "Marine"
@@ -917,6 +924,7 @@
         "model": "RoyalGuard",
         "portrait": "MarineMajor",
         "portraitFallback": "MountedKnight",
+        "portraitSource": "Variant",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Mounted"
@@ -1024,6 +1032,7 @@
         "model": "RoyalGuard",
         "portrait": "MarineGeneral",
         "portraitFallback": "MountedKnight",
+        "portraitSource": "Variant",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Mounted"
@@ -1127,6 +1136,7 @@
         "model": "RogueHooded",
         "portrait": "EliteRifleman",
         "portraitFallback": "RogueHooded",
+        "portraitSource": "Variant",
         "attackClip": "2H_Ranged_Shoot",
         "contact": 0.25,
         "silhouette": "Ranged"
@@ -1244,6 +1254,7 @@
         "model": "RogueHooded",
         "portrait": "Roarer",
         "portraitFallback": "RogueHooded",
+        "portraitSource": "Variant",
         "attackClip": "2H_Ranged_Shoot",
         "contact": 0.25,
         "silhouette": "Ranged"
@@ -1365,6 +1376,7 @@
         "model": "RoyalGuard",
         "portrait": "ArmyGeneral",
         "portraitFallback": "MountedKnight",
+        "portraitSource": "Variant",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Mounted"
@@ -1489,6 +1501,7 @@
         "model": "Mortar",
         "portrait": "Artillery",
         "portraitFallback": "Mortar",
+        "portraitSource": "Variant",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Siege"
@@ -1592,6 +1605,7 @@
         "model": "Tank",
         "portrait": "Tank",
         "portraitFallback": "Mortar",
+        "portraitSource": "Variant",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Siege"
@@ -1698,6 +1712,7 @@
         "model": null,
         "portrait": "Frigate",
         "portraitFallback": "Frigate",
+        "portraitSource": "Model",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Hull"
@@ -1774,6 +1789,7 @@
         "model": null,
         "portrait": "Transport",
         "portraitFallback": "Transport",
+        "portraitSource": "Model",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Hull"
@@ -1880,6 +1896,7 @@
         "model": null,
         "portrait": "Warship",
         "portraitFallback": "Frigate",
+        "portraitSource": "Model",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Hull"
@@ -2000,6 +2017,7 @@
         "model": null,
         "portrait": "Battleship",
         "portraitFallback": "Frigate",
+        "portraitSource": "Model",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Hull"
@@ -2076,6 +2094,7 @@
         "model": null,
         "portrait": "ArmoredTransport",
         "portraitFallback": "Transport",
+        "portraitSource": "Model",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Hull"
@@ -2194,6 +2213,7 @@
         "model": null,
         "portrait": "Tower",
         "portraitFallback": "Tower",
+        "portraitSource": "Model",
         "attackClip": null,
         "contact": 0.5,
         "silhouette": "Structure"

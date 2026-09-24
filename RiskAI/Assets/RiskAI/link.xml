@@ -44,6 +44,8 @@
     <type fullname="RiskAI.Core.UnitDomain" preserve="all" />
     <type fullname="RiskAI.Core.UnitBuilding" preserve="all" />
     <type fullname="RiskAI.Core.UnitSilhouette" preserve="all" />
+    <type fullname="RiskAI.Core.PortraitSource" preserve="all" />
+    <type fullname="RiskAI.Core.WeaponSound" preserve="all" />
     <type fullname="RiskAI.Core.ArmorKind" preserve="all" />
     <type fullname="RiskAI.Core.AttackKind" preserve="all" />
     <type fullname="RiskAI.Core.RangeMeasure" preserve="all" />

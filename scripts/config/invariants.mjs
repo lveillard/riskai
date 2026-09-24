@@ -5,6 +5,7 @@ const enums = {
   rangeMeasure: 'RangeMeasure',
   targeting: 'WeaponTargeting',
   delivery: 'WeaponDelivery',
+  portraitSource: 'PortraitSource',
 };
 
 export const fileRules = [
@@ -21,6 +22,8 @@ export const unitRules = [
   { error: '{at}: acquisition without a weapon', when: ['and', ['has', 'acquisition'], ['and', ['eq', ['len', 'weapons'], ['lit', 0]], ['not', ['has', 'hostWeapons']]]] },
   { error: '{at}: a weapon needs acquisition', when: ['and', ['not', ['has', 'acquisition']], ['or', ['gt', ['len', 'weapons'], ['lit', 0]], ['has', 'hostWeapons']]] },
   { error: '{at}: a unit carries at most one weapon', when: ['gt', ['len', 'weapons'], ['lit', 1]] },
+  { error: '{at}: a variant portrait is a land unit', when: ['and', ['eq', ['get', 'presentation.portraitSource'], ['lit', 'Variant']], ['neq', ['get', 'domain'], ['lit', 'Land']]] },
+  { error: '{at}: a land model portrait needs a model name', when: ['and', ['eq', ['get', 'domain'], ['lit', 'Land']], ['and', ['eq', ['get', 'presentation.portraitSource'], ['lit', 'Model']], ['not', ['has', 'presentation.model']]]] },
 ];
 
 export const weaponRules = [

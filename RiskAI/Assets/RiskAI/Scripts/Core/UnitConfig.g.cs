@@ -126,6 +126,13 @@ namespace RiskAI.Core
         FirstFound
     }
 
+    /// <summary>Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab.</summary>
+    public enum PortraitSource
+    {
+        Model,
+        Variant
+    }
+
     /// <summary>Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal.</summary>
     public enum UnitSilhouette
     {
@@ -640,6 +647,9 @@ namespace RiskAI.Core
         /// <summary>Portrait used until the preferred one is rendered.</summary>
         [UnitConfigField(Required = true)]
         public string PortraitFallback;
+        /// <summary>Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab.</summary>
+        [UnitConfigField(Required = true)]
+        public PortraitSource PortraitSource;
         /// <summary>Attack clip; null for procedural attacks.</summary>
         [UnitConfigField(Required = true, Nullable = true)]
         public string AttackClip;

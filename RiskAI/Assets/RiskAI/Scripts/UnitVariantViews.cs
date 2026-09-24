@@ -14,11 +14,42 @@ namespace RiskAI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset() => resolvedPortraits.Clear();
 
-        /// <summary>A land type whose units.json portrait is its own id is rendered from its variant view.</summary>
-        public static bool HasVariantPortrait(UnitKind kind)
+        /// <summary>units.json presentation.portraitSource is Variant: the art setup renders the unit view and does not claim a prefab.</summary>
+        public static bool HasVariantPortrait(UnitKind kind) =>
+            UnitCatalog.Get(kind).PortraitSource == PortraitSource.Variant;
+
+        /// <summary>Land unit whose portrait is the shared model (or the Mortar cart), so the art setup prepares that prefab.</summary>
+        public static bool PreparesBaseModel(UnitKind kind)
         {
             ref readonly var type = ref UnitCatalog.Get(kind);
-            return type.Domain == UnitDomain.Land && type.Portrait == type.Id;
+            return type.Domain == UnitDomain.Land && type.PortraitSource == PortraitSource.Model;
+        }
+
+        /// <summary>Variant portraits in catalog order. The art setup and the editor test both call this.</summary>
+        public static void CollectVariantPortraits(List<UnitKind> kinds)
+        {
+            kinds.Clear();
+            foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
+                if (HasVariantPortrait(kind)) kinds.Add(kind);
+        }
+
+        /// <summary>
+        /// First land claimant of each model name, catalog order. A repeated model is prepared once.
+        /// Mortar stays in this list: its portrait is the procedural cart, not a variant view.
+        /// </summary>
+        public static void CollectBasePreparations(List<UnitKind> kinds, List<string> models)
+        {
+            kinds.Clear();
+            models.Clear();
+            var seen = new HashSet<string>();
+            foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
+            {
+                if (!PreparesBaseModel(kind)) continue;
+                string name = UnitCatalog.Get(kind).Model;
+                if (string.IsNullOrEmpty(name) || !seen.Add(name)) continue;
+                kinds.Add(kind);
+                models.Add(name);
+            }
         }
 
         /// <summary>Resources path of the unit portrait (units.json portrait, then portraitFallback until the art setup renders it).</summary>

@@ -203,10 +203,15 @@ export const UnitSilhouette = Enum('UnitSilhouette',
   'Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal.',
   ['Infantry', 'Ranged', 'Mounted', 'Siege', 'Marine', 'Hull', 'Structure']);
 
+export const PortraitSource = Enum('PortraitSource',
+  'Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab.',
+  ['Model', 'Variant']);
+
 export const Presentation = Named('UnitPresentation', 'Model, portrait, attack clip and proxy shape.', Type.Object({
   model: Type.Union([Type.String(), Type.Null()], { description: 'Model prefab name.' }),
   portrait: Type.String({ description: 'Preferred portrait resource name.' }),
   portraitFallback: Type.String({ description: 'Portrait used until the preferred one is rendered.' }),
+  portraitSource: PortraitSource,
   attackClip: Type.Union([Type.String(), Type.Null()], { description: 'Attack clip; null for procedural attacks.' }),
   contact: Type.Number({ minimum: 0, maximum: 1, description: 'Normalised clip time of the hit.' }),
   silhouette: UnitSilhouette,

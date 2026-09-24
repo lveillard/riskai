@@ -13,13 +13,13 @@ namespace RiskAI.Editor
         {
             Directory.CreateDirectory("Assets/RiskAI/Resources/Units");
             Directory.CreateDirectory("Assets/RiskAI/Resources/Portraits");
-            var prepared=new System.Collections.Generic.HashSet<string>();
-            foreach (UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
+            var baseKinds=new System.Collections.Generic.List<UnitKind>();
+            var baseModels=new System.Collections.Generic.List<string>();
+            UnitVariantViews.CollectBasePreparations(baseKinds, baseModels);
+            for(int prepared=0; prepared<baseKinds.Count; prepared++)
             {
-                if(UnitCatalog.Get(kind).Domain!=UnitDomain.Land)continue;
-                if(UnitVariantViews.HasVariantPortrait(kind))continue; // rendered below from their variant views
-                string name = UnitCatalog.Get(kind).Model;
-                if(!prepared.Add(name))continue;
+                UnitKind kind=baseKinds[prepared];
+                string name=baseModels[prepared];
                 if(kind==UnitKind.Mortar)
                 {
                     var cart=new GameObject("Mortar portrait model");VisualFactory.MortarModel(cart.transform,VisualFactory.TeamColor(0));
@@ -98,9 +98,10 @@ namespace RiskAI.Editor
             MountedKnightView.Create(mountedRoot.transform,0);
             RenderPortrait(mountedRoot,null,"MountedKnight");
             Object.DestroyImmediate(mountedRoot);
-            foreach(UnitKind kind in System.Enum.GetValues(typeof(UnitKind)))
+            var variantKinds=new System.Collections.Generic.List<UnitKind>();
+            UnitVariantViews.CollectVariantPortraits(variantKinds);
+            foreach(UnitKind kind in variantKinds)
             {
-                if(!UnitVariantViews.HasVariantPortrait(kind))continue;
                 var variantRoot=new GameObject(kind+" portrait model");Animation variantAnimation=null;
                 if(MountedKnightView.IsMounted(kind))MountedKnightView.CreateVariant(variantRoot.transform,0,kind);
                 else if(kind==UnitKind.Artillery)UnitVariantViews.ArtilleryModel(variantRoot.transform,VisualFactory.TeamColor(0));
