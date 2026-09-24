@@ -57,6 +57,7 @@ namespace RiskAI
             {
                 int n = Mathf.Min(unit.ActivePathCount, scratch.Length);
                 for (int c = 0; c < n; c++) scratch[c] = unit.ActivePathPoint(c);
+                if (unit.OrderLegKind(0) == UnitCommandKind.Attack) scratch[n - 1] = to;
                 Show(ref legs[drawn], scratch, n, color, emphasis ? EmphasizedWidth : NormalWidth, false);
             }
             else ShowSegment(ref legs[drawn], from, to, color, emphasis);

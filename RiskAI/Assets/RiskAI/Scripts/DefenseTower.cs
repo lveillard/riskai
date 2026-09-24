@@ -39,7 +39,7 @@ namespace RiskAI
         int launchTargetId;
         readonly System.Collections.Generic.List<CombatTarget> nearby = new System.Collections.Generic.List<CombatTarget>(48);
         float AttackCooldown=>HostWeapon.Cooldown;
-        float AttackRange=>Type.Acquisition.RadiusHostile;
+        float AttackRange => HostWeapon.Range;
 
         public void Initialize(BattleSession battle, Settlement town, bool built, BuildingVariant? visualVariant=null)
         {

@@ -455,7 +455,7 @@ namespace RiskAI
             var sailed=OrderShip(transport,UnitCommandKind.Move,berth,append:QueueOrders);
             if(!sailed.Accepted){session.Message(sailed.Error,MessageKind.Info);CancelPendingBoarding();return;}
             foreach(var soldier in available)
-            {pendingBoarders.Add(new SoldierRef(soldier));session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z,append:QueueOrders));}
+            {pendingBoarders.Add(new SoldierRef(soldier));session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Embark,landing.x,landing.y,landing.z,transport.EntityId,append:QueueOrders));}
             lastBoardingProgress=session.BattleTime;previousBoarderCount=pendingBoarders.Count;
             nextBoardingCheck=session.BattleTime;nextBoardingRecovery=session.BattleTime+1f;
             ShowOrder(landing,false);session.Message("Embarcando: tropas y transporte se reúnen en la costa marcada.",MessageKind.Info);
@@ -484,7 +484,7 @@ namespace RiskAI
                 // Avoidance can stop a boarder just outside a narrow beach. Retry
                 // the already validated landing, without relaxing shore rules.
                 if(recover&&agent&&!agent.pathPending&&agent.velocity.sqrMagnitude<.04f&&offset.sqrMagnitude<=UnitCatalog.TransportLoadRadius*UnitCatalog.TransportLoadRadius)
-                    session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,pendingBoardingLanding.x,pendingBoardingLanding.y,pendingBoardingLanding.z));
+                    session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Embark,pendingBoardingLanding.x,pendingBoardingLanding.y,pendingBoardingLanding.z,pendingBoardingTransport.EntityId));
             }
             if(pendingBoarders.Count==0)
             {session.Message("Embarque terminado: "+pendingBoardingTransport.CargoCount+" / "+pendingBoardingTransport.Type.Transport.Capacity+".",MessageKind.Info);CancelPendingBoarding();return;}

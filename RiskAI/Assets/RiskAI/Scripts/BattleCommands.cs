@@ -119,9 +119,6 @@ namespace RiskAI
         string RejectionReason(UnitCommand command)
         {
             var actor = session.FindTarget(command.UnitId) as IOrderable;
-            // A land post guard keeps the historical relief message for every rejection.
-            if (actor != null && actor.IsGarrison && actor.Type.Domain == UnitDomain.Land)
-                return "El defensor necesita un relevo aliado dentro del círculo.";
             if (actor != null && !string.IsNullOrEmpty(actor.OrderError)) return actor.OrderError;
             return OrderQueue.InvalidError;
         }

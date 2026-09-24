@@ -162,5 +162,20 @@ namespace RiskAI.Tests
             Assert.That(UnitRules.Relation(1, PlayerRules.NeutralTeam, false, PlayerRules.NeutralTeam), Is.EqualTo(UnitRelation.Neutral));
             Assert.That(UnitRules.Relation(1, 2, false, PlayerRules.NeutralTeam), Is.EqualTo(UnitRelation.Enemy));
         }
+
+        [Test]
+        public void CaptureEndsWhenThePostIsTakenNotWhenTheApproachFinishes()
+        {
+            var order = new CaptureOrderState();
+            order.Begin(true, 2);
+            Assert.That(order.Done(true, 2, 0, true), Is.False, "standing on an enemy post does not finish the capture");
+            Assert.That(order.Done(true, 1, 0, false), Is.True, "another player taking the post finishes it at once");
+            order.Begin(true, 2);
+            Assert.That(order.Done(true, 0, 0, false), Is.False, "a ship keeps sailing after the port becomes ours");
+            Assert.That(order.Done(true, 0, 0, true), Is.True, "once the approach is done and the post is ours, the order ends");
+            order.Begin(true, 0);
+            Assert.That(order.Done(true, 0, 0, false), Is.False, "a friendly port waits for the disembark");
+            Assert.That(order.Done(true, 0, 0, true), Is.True);
+        }
     }
 }

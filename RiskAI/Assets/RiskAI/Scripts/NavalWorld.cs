@@ -134,7 +134,7 @@ namespace RiskAI
             if(!TryPlanEmbark(ship,selected,out var landing,out var berth,out error))return false;
             var sailed=Session.Commands.SubmitResult(ship.Team,ship.EntityId,UnitCommandKind.Move,berth.x,berth.y,berth.z);
             if(!sailed.Accepted){error=sailed.Error;return false;}
-            var walked=Session.Commands.SubmitResult(soldier.Team,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z);
+            var walked=Session.Commands.SubmitResult(soldier.Team,soldier.EntityId,UnitCommandKind.Embark,landing.x,landing.y,landing.z,ship.EntityId);
             if(!walked.Accepted){error=string.IsNullOrEmpty(walked.Error)?"La tropa no puede llegar al embarque marcado.":walked.Error;return false;}
             error=null;return true;
         }
@@ -148,7 +148,7 @@ namespace RiskAI
             {error="El puerto no tiene una playa o pasarela al alcance del transporte.";return false;}
             var sailed=Session.Commands.SubmitResult(ship.Team,ship.EntityId,UnitCommandKind.Move,berth.x,berth.y,berth.z);
             if(!sailed.Accepted){error=sailed.Error;return false;}
-            var walked=Session.Commands.SubmitResult(soldier.Team,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z);
+            var walked=Session.Commands.SubmitResult(soldier.Team,soldier.EntityId,UnitCommandKind.Embark,landing.x,landing.y,landing.z,ship.EntityId);
             if(!walked.Accepted){error=string.IsNullOrEmpty(walked.Error)?"La tropa no puede llegar al embarque marcado.":walked.Error;return false;}
             return true;
         }
