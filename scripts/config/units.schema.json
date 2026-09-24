@@ -978,6 +978,8 @@
         "canCapture",
         "canGarrison",
         "canEmbark",
+        "canFollow",
+        "canPatrol",
         "harborGuard"
       ],
       "properties": {
@@ -991,6 +993,14 @@
         },
         "canEmbark": {
           "description": "Can board a transport.",
+          "type": "boolean"
+        },
+        "canFollow": {
+          "description": "Can be given a follow order.",
+          "type": "boolean"
+        },
+        "canPatrol": {
+          "description": "Can be given a patrol order.",
           "type": "boolean"
         },
         "harborGuard": {

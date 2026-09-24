@@ -99,6 +99,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -214,6 +216,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -330,6 +334,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -471,6 +477,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -604,6 +612,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -719,6 +729,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false,
         "heal": {
           "amount": 25,
@@ -841,6 +853,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -953,6 +967,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -1071,6 +1087,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -1185,6 +1203,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -1295,6 +1315,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false,
         "roar": {
           "area": 14,
@@ -1427,6 +1449,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false,
         "roar": {
           "area": 14,
@@ -1574,6 +1598,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -1682,6 +1708,8 @@
         "canCapture": true,
         "canGarrison": true,
         "canEmbark": true,
+        "canFollow": true,
+        "canPatrol": true,
         "harborGuard": false
       },
       "presentation": {
@@ -1793,6 +1821,8 @@
         "canCapture": true,
         "canGarrison": false,
         "canEmbark": false,
+        "canFollow": false,
+        "canPatrol": false,
         "harborGuard": true
       },
       "presentation": {
@@ -1869,6 +1899,8 @@
         "canCapture": false,
         "canGarrison": false,
         "canEmbark": false,
+        "canFollow": false,
+        "canPatrol": false,
         "harborGuard": false,
         "transport": {
           "capacity": 10,
@@ -1985,6 +2017,8 @@
         "canCapture": true,
         "canGarrison": false,
         "canEmbark": false,
+        "canFollow": false,
+        "canPatrol": false,
         "harborGuard": true
       },
       "presentation": {
@@ -2110,6 +2144,8 @@
         "canCapture": true,
         "canGarrison": false,
         "canEmbark": false,
+        "canFollow": false,
+        "canPatrol": false,
         "harborGuard": true
       },
       "presentation": {
@@ -2186,6 +2222,8 @@
         "canCapture": false,
         "canGarrison": false,
         "canEmbark": false,
+        "canFollow": false,
+        "canPatrol": false,
         "harborGuard": false,
         "transport": {
           "capacity": 10,
@@ -2314,6 +2352,8 @@
         "canCapture": false,
         "canGarrison": false,
         "canEmbark": false,
+        "canFollow": false,
+        "canPatrol": false,
         "harborGuard": false
       },
       "presentation": {

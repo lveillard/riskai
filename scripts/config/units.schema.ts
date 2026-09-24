@@ -192,6 +192,8 @@ export const Capabilities = Named('UnitCapabilities', 'Typed capabilities; rules
   canCapture: Type.Boolean({ description: 'Can claim a city/harbor circle.' }),
   canGarrison: Type.Boolean({ description: 'Can be bound as a city guardian.' }),
   canEmbark: Type.Boolean({ description: 'Can board a transport.' }),
+  canFollow: Type.Boolean({ description: 'Can be given a follow order.' }),
+  canPatrol: Type.Boolean({ description: 'Can be given a patrol order.' }),
   harborGuard: Type.Boolean({ description: 'Can be bound as a harbor guard ship.' }),
   transport: Type.Optional(Transport),
   heal: Type.Optional(Heal),

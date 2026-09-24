@@ -18,7 +18,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 200, armadura 2 Heavy, velocidad 5.4, penalización de bosque.
 - Arma: 18–21 (17+1d4) cada 1.35 s, alcance 0.9 (BodyEdges, Instant).
 - Adquisición: hostil 7.5, neutral 5, mantener posición 0.9 (CenterToApproach, NavMeshRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Ballestero (Archer)
 
@@ -30,7 +30,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 200, armadura 0 Light, velocidad 5.4, penalización de bosque.
 - Arma: 17–23 (15+2d4) cada 1.6 s, alcance 8 (CenterToApproach, Missile).
 - Adquisición: hostil 12, neutral 12, mantener posición 12 (CenterToApproach, TerrainRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Caballero (Knight)
 
@@ -41,7 +41,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 650, armadura 7 Heavy, velocidad 7, penalización de bosque.
 - Arma: 39–47 (37+2d5) cada 1.36 s, alcance 2 (BodyEdges, Instant).
 - Adquisición: hostil 10, neutral 10, mantener posición 10 (CenterToApproach, NavMeshRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Mago (Mage)
 
@@ -53,7 +53,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 250, armadura 1 Unarmored, velocidad 5.4, penalización de bosque.
 - Arma: 30–32 (29+1d3) cada 1.6 s, alcance 10 (CenterToApproach, Missile).
 - Adquisición: hostil 11, neutral 11, mantener posición 11 (CenterToApproach, TerrainRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Mortero (Mortar)
 
@@ -64,7 +64,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 350, armadura 0 Medium, velocidad 4.6, penalización de bosque.
 - Arma: 19–31 (18+1d13) cada 3.5 s, alcance 18 (CenterToApproach, Artillery, mínimo 5).
 - Adquisición: hostil 18, neutral 18, mantener posición 18 (CenterToApproach, TerrainRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Sanador (Medic)
 
@@ -77,7 +77,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 220, armadura 1 Light, velocidad 5.4, penalización de bosque.
 - Arma: 8–9 (7+1d2) cada 2 s, alcance 8 (CenterToApproach, Missile).
 - Adquisición: hostil 8, neutral 8, mantener posición 8 (CenterToApproach, TerrainRay).
-- Capacidades: captura, guarnición, embarca, cura 25 a 5.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla, cura 25 a 5.
 
 ## Marine Private (MarinePrivate)
 
@@ -88,7 +88,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 200, armadura 1 Light, velocidad 5.4, penalización de bosque.
 - Arma: 18–24 (16+2d4) cada 1.6 s, alcance 6 (CenterToApproach, Instant).
 - Adquisición: hostil 12, neutral 12, mantener posición 12 (CenterToApproach, TerrainRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Marine Major (MarineMajor)
 
@@ -99,7 +99,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 650, armadura 6 Heavy, velocidad 5.6, penalización de bosque.
 - Arma: 39–47 (37+2d5) cada 1.36 s, alcance 2 (BodyEdges, Instant).
 - Adquisición: hostil 10, neutral 10, mantener posición 10 (CenterToApproach, NavMeshRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Marine General (MarineGeneral)
 
@@ -110,7 +110,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 800, armadura 8 Heavy, velocidad 5.6, penalización de bosque.
 - Arma: 66–74 (64+2d5) cada 1.45 s, alcance 2 (BodyEdges, Instant).
 - Adquisición: hostil 10, neutral 10, mantener posición 10 (CenterToApproach, NavMeshRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Fusilero de élite (EliteRifleman)
 
@@ -121,7 +121,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 450, armadura 1 Light, velocidad 5.4, penalización de bosque.
 - Arma: 38–44 (36+2d4) cada 1 s, alcance 7 (CenterToApproach, Instant).
 - Adquisición: hostil 12, neutral 12, mantener posición 12 (CenterToApproach, TerrainRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Rugidor (Roarer)
 
@@ -133,7 +133,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 400, armadura 1 Light, velocidad 5.4, penalización de bosque.
 - Arma: 30–32 (29+1d3) cada 2 s, alcance 10 (CenterToApproach, Missile).
 - Adquisición: hostil 8, neutral 8, mantener posición 8 (CenterToApproach, TerrainRay).
-- Capacidades: captura, guarnición, embarca, rugido 14 durante 45 s.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla, rugido 14 durante 45 s.
 
 ## General (ArmyGeneral)
 
@@ -145,7 +145,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 800, armadura 10 Heavy, velocidad 7, penalización de bosque.
 - Arma: 57–65 (55+2d5) cada 1.45 s, alcance 2 (BodyEdges, Instant).
 - Adquisición: hostil 10, neutral 10, mantener posición 10 (CenterToApproach, NavMeshRay).
-- Capacidades: captura, guarnición, embarca, rugido 14 durante 45 s.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla, rugido 14 durante 45 s.
 
 ## Artillería (Artillery)
 
@@ -156,7 +156,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 900, armadura 3 Unarmored, velocidad 4, penalización de bosque.
 - Arma: 56–68 (55+1d13) cada 3 s, alcance 20 (CenterToApproach, Artillery).
 - Adquisición: hostil 20, neutral 20, mantener posición 20 (CenterToApproach, TerrainRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Tanque (Tank)
 
@@ -167,7 +167,7 @@ Semántica de órdenes (la matriz completa está en el plan §4.5): atacar y ata
 - Vida 1500, armadura 9 Fortified, velocidad 5.2, penalización de bosque.
 - Arma: 81–91 (80+1d11) cada 1.8 s, alcance 10 (CenterToApproach, MissileSplash).
 - Adquisición: hostil 10, neutral 10, mantener posición 10 (CenterToApproach, TerrainRay).
-- Capacidades: captura, guarnición, embarca.
+- Capacidades: captura, guarnición, embarca, sigue, patrulla.
 
 ## Fragata (Frigate)
 
