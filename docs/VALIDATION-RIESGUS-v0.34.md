@@ -78,3 +78,10 @@ IL2CPP con stripping `Minimal` fijado. `link.xml` preserva Newtonsoft.Json y el 
 - Barra de desplazamiento vacía junto al pie en escritorio. El chevron del destinatario del chat en
   móvil apunta al revés.
 - Sonidos de muerte retirados en v0.33; pendientes de rehacer.
+
+## v0.34.1
+
+Publicado como `20260924T222934Z-v0341-46c8647` (merge de la PR #12, `46c8647`). El recibo da `activated=true`, 10 archivos
+verificados y verificación pública `success=true`. El arranque público en 390×844 funciona y no da errores.
+La partida en Europa con 16 IA aplica 171 órdenes y rechaza 0, a 19,9 ms por fotograma, sin errores de consola.
+Pruebas: EditMode 325/325, PlayMode 320/320 en 4 tandas más los tests nuevos, npm 14/14.
