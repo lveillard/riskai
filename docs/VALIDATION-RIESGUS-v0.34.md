@@ -1,6 +1,10 @@
 # Validación Riesgus v0.34.0
 
-Publicación: pendiente (se completa tras el despliegue).
+Publicado en https://riesgus.com como `20260924T203350Z-v034-93b19c7` (merge de la PR #10, `93b19c7`).
+El recibo da `activated=true` y 10 archivos verificados en el servidor. La verificación pública da `success=true`
+(10/10 hashes; `.deploy/20260924T203350Z-v034-93b19c7/{receipt,public-verification}.json`). Sustituye a `20260923T194330Z-v033-b0303a1`,
+que sigue en el servidor como vuelta atrás. Prueba pública: el arranque en 390×844 sale correcto, con 5 capturas y sin errores.
+La partida de Europa con 16 IA aplica 171 órdenes, rechaza 0, da 18,2 ms/fotograma y 0 fotogramas >100 ms, sin errores de consola.
 
 ## Alcance
 

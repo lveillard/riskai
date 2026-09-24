@@ -1,14 +1,10 @@
 # Riesgus · v0.34.0
 
-Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.30.0
-(`20260923T150510Z-v030-050e773`). La verificación pública coincide en 10/10 hashes
-([validación v0.30](docs/VALIDATION-RIESGUS-v0.30.md)). El ajuste de altura aprueba 32 tests de ejecución; la base v0.29 aprobó
-221 tests Unity y comprobaciones Web de escritorio, móvil y tablet emulados,
-no hardware móvil físico.
-[Torre más alta v0.29.1](docs/VALIDATION-RIESGUS-v0.29.1.md) ·
-[Agua, torres y virotes v0.29](docs/VALIDATION-RIESGUS-v0.29.md) ·
-[Mediciones de rendimiento](docs/audits/PERFORMANCE-PARETO-v0.28.md) · [Mapas
-y aguas someras v0.27](docs/VALIDATION-RIESGUS-v0.27.md).
+Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.34.0
+(`20260924T203350Z-v034-93b19c7`). La verificación pública coincide en 10/10 hashes
+([validación v0.34](docs/VALIDATION-RIESGUS-v0.34.md)): EditMode 322/322, PlayMode 326/326 y npm 14/14; comprobado en
+Web de escritorio y en móvil emulado, sin probar en hardware móvil físico.
+[Validación v0.30](docs/VALIDATION-RIESGUS-v0.30.md) · [Mediciones de rendimiento](docs/audits/PERFORMANCE-PARETO-v0.28.md).
 
 Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP y arte propio/CC0. Abre **Play-Riesgus.cmd** para jugar la compilación local. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`.
 
