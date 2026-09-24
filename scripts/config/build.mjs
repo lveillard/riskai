@@ -4,11 +4,13 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { UnitsFile } from './units.schema.ts';
+import { csharpValidation } from './invariants.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const schemaPath = join(here, 'units.schema.json');
 export const csharpPath = join(here, '..', '..', 'RiskAI', 'Assets', 'RiskAI', 'Scripts', 'Core', 'UnitConfig.g.cs');
 export const unitKindPath = join(here, '..', '..', 'RiskAI', 'Assets', 'RiskAI', 'Scripts', 'Core', 'UnitKind.g.cs');
+export const validationPath = join(here, '..', '..', 'RiskAI', 'Assets', 'RiskAI', 'Scripts', 'Core', 'UnitConfigValidation.cs');
 export const unitsPath = join(here, '..', '..', 'RiskAI', 'Assets', 'RiskAI', 'Resources', 'Config', 'units.json');
 
 const FLAG_ENUMS = new Set(['WeaponTargetMask']);
@@ -125,7 +127,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const check = process.argv.includes('--check');
   const units = JSON.parse(readFileSync(unitsPath, 'utf8'));
   const ok = [emit(schemaPath, schemaJson(), check), emit(csharpPath, csharp(), check),
-    emit(unitKindPath, unitKindSource(units), check)].every(Boolean);
+    emit(unitKindPath, unitKindSource(units), check), emit(validationPath, csharpValidation(), check)].every(Boolean);
   if (check && ok) console.log('generated contract up to date');
   process.exit(ok ? 0 : 1);
 }

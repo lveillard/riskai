@@ -5,10 +5,10 @@ namespace RiskAI.Core
     /// <summary>Oriented ship hull from units.json; builds the NavalArt scale and target collider.</summary>
     public readonly struct HullShape
     {
-        public readonly float Length, Beam, Height, CenterHeight, Scale;
+        public readonly float Length, Beam, Height, CenterHeight, Scale, Clearance;
         public readonly bool Warship, Exists;
-        public HullShape(float length, float beam, float height, float centerHeight, float scale, bool warship)
-        { Length = length; Beam = beam; Height = height; CenterHeight = centerHeight; Scale = scale; Warship = warship; Exists = true; }
+        public HullShape(float length, float beam, float height, float centerHeight, float scale, bool warship, float clearance)
+        { Length = length; Beam = beam; Height = height; CenterHeight = centerHeight; Scale = scale; Warship = warship; Clearance = clearance; Exists = true; }
     }
 
     /// <summary>Automatic acquisition resolved per owner/order (units.json acquisition).</summary>
@@ -91,6 +91,7 @@ namespace RiskAI.Core
         public readonly ManaProfile Mana;
         public readonly string Model, Portrait, PortraitFallback, AttackClip;
         public readonly float AttackContact;
+        public readonly UnitSilhouette Silhouette;
 
         public bool CanAttack => Weapon.IsValid;
         public bool CanTransport => Transport.Enabled;
@@ -109,7 +110,7 @@ namespace RiskAI.Core
             Mechanical = c.Mechanical; CanBeAttacked = c.CanBeAttacked;
             Speed = c.Movement.Speed; ForestPenalty = c.Movement.ForestPenalty; Separation = c.Movement.Separation ?? 0;
             CollisionRadius = c.Collision?.Radius ?? 0; BodyRadius = c.Body?.Radius ?? 0; FootprintSize = c.Footprint?.Size ?? 0;
-            Hull = c.Hull == null ? default : new HullShape(c.Hull.Length, c.Hull.Beam, c.Hull.Height, c.Hull.CenterHeight, c.Hull.Scale, c.Hull.Warship);
+            Hull = c.Hull == null ? default : new HullShape(c.Hull.Length, c.Hull.Beam, c.Hull.Height, c.Hull.CenterHeight, c.Hull.Scale, c.Hull.Warship, c.Hull.Clearance);
             VisualHeight = c.Visual.Height; VisualRadius = c.Visual.Radius;
             StandingHeight = c.Visual.StandingHeight; StandingWidth = c.Visual.StandingWidth;
             MdxHeight = c.Visual.Mdx?.Height ?? 0; MdxWidth = c.Visual.Mdx?.Width ?? 0;
@@ -130,6 +131,7 @@ namespace RiskAI.Core
             Mana = caps.Mana == null ? default : new ManaProfile(caps.Mana.Max, caps.Mana.Initial, caps.Mana.Regen);
             var p = c.Presentation;
             Model = p.Model; Portrait = p.Portrait; PortraitFallback = p.PortraitFallback; AttackClip = p.AttackClip; AttackContact = p.Contact;
+            Silhouette = p.Silhouette;
         }
 
         internal static UnitType From(UnitConfig config, int index) => new UnitType(config, index);

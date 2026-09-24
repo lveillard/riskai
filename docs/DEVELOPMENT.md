@@ -124,6 +124,12 @@ No hay una tabla C# que copiar.
    calculando `ProductionHotkeys` (coste, orden del JSON, tierra antes que mar).
 4. Regenera el resumen: `python scripts/generate_unit_rules.py`
    (`docs/RISK-RULES-v0.34.md`). Lo que no venga de la fuente va en `adaptation`.
+   `python scripts/generate_unit_rules.py --check` falla si el markdown commiteado no coincide
+   (lo mismo que `npm test` hace con el DTO). `npm test` en `scripts/config` ya lo lanza.
+5. `RiskAI/Assets/RiskAI/link.xml` conserva `Newtonsoft.Json` entero y los tipos generados
+   de `RiskAI.Core` (`UnitsFile`, `UnitConfig` y el resto del contrato). Sin eso, el
+   stripping de IL2CPP/WebGL puede quitar los setters que Newtonsoft rellena por reflexión
+   y `UnitCatalog.Bind` no arranca.
 
 ## Normas del repositorio
 

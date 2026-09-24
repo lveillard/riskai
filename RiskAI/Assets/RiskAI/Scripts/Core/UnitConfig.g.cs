@@ -114,6 +114,18 @@ namespace RiskAI.Core
         FirstFound
     }
 
+    /// <summary>Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal.</summary>
+    public enum UnitSilhouette
+    {
+        Infantry,
+        Ranged,
+        Mounted,
+        Siege,
+        Marine,
+        Hull,
+        Structure
+    }
+
     /// <summary>units.json root.</summary>
     [Serializable]
     public sealed class UnitsFile
@@ -200,7 +212,7 @@ namespace RiskAI.Core
         /// <summary>Typed capabilities; rules decide by these, never by type.</summary>
         [UnitConfigField(Required = true)]
         public UnitCapabilities Capabilities;
-        /// <summary>Model, portrait and attack clip.</summary>
+        /// <summary>Model, portrait, attack clip and proxy shape.</summary>
         [UnitConfigField(Required = true)]
         public UnitPresentation Presentation;
     }
@@ -270,6 +282,9 @@ namespace RiskAI.Core
         /// <summary>Warship silhouette (false: transport silhouette).</summary>
         [UnitConfigField(Required = true)]
         public bool Warship;
+        /// <summary>Draft the sea grid keeps around this hull. Every hull shares one value.</summary>
+        [UnitConfigField(Required = true)]
+        public float Clearance;
     }
 
     /// <summary>Square building footprint (towers).</summary>
@@ -597,7 +612,7 @@ namespace RiskAI.Core
         public float Regen;
     }
 
-    /// <summary>Model, portrait and attack clip.</summary>
+    /// <summary>Model, portrait, attack clip and proxy shape.</summary>
     [Serializable]
     public sealed class UnitPresentation
     {
@@ -616,5 +631,8 @@ namespace RiskAI.Core
         /// <summary>Normalised clip time of the hit.</summary>
         [UnitConfigField(Required = true)]
         public float Contact;
+        /// <summary>Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal.</summary>
+        [UnitConfigField(Required = true)]
+        public UnitSilhouette Silhouette;
     }
 }

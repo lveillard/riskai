@@ -7,6 +7,7 @@ editing Resources/Config/units.json:
     python scripts/generate_unit_rules.py
 """
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -117,7 +118,16 @@ def main():
         if flags:
             lines.append("- Capacidades: " + ", ".join(flags) + ".")
         lines.append("")
-    OUT.write_text("\n".join(lines), encoding="utf-8", newline="\n")
+    text = "\n".join(lines)
+    check = "--check" in sys.argv
+    current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
+    if current.replace("\r\n", "\n") == text:
+        print(f"up to date: {OUT.relative_to(ROOT)}")
+        return
+    if check:
+        print(f"out of date: {OUT.relative_to(ROOT)} (run python scripts/generate_unit_rules.py)", file=sys.stderr)
+        sys.exit(1)
+    OUT.write_text(text, encoding="utf-8", newline="\n")
     print(f"wrote {OUT.relative_to(ROOT)}")
 
 

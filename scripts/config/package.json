@@ -8,7 +8,7 @@
     "build": "node build.mjs",
     "check": "node build.mjs --check",
     "validate": "node validate.mjs",
-    "test": "node build.mjs --check && node validate.mjs && node --test \"test/*.test.mjs\""
+    "test": "node build.mjs --check && node validate.mjs && node --test \"test/*.test.mjs\" && python ../generate_unit_rules.py --check"
   },
   "dependencies": {
     "@sinclair/typebox": "0.34.52",

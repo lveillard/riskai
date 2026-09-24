@@ -12,4 +12,45 @@
     <type fullname="UnityEngine.MeshFilter" preserve="all" />
     <type fullname="UnityEngine.MeshRenderer" preserve="all" />
   </assembly>
+  <!-- Newtonsoft sets DTO fields by reflection. IL2CPP stripping must keep the serializer and the generated contract. -->
+  <assembly fullname="Newtonsoft.Json" preserve="all" />
+  <assembly fullname="RiskAI.Core">
+    <type fullname="RiskAI.Core.UnitConfigFieldAttribute" preserve="all" />
+    <type fullname="RiskAI.Core.UnitsFile" preserve="all" />
+    <type fullname="RiskAI.Core.UnitConfig" preserve="all" />
+    <type fullname="RiskAI.Core.UnitNames" preserve="all" />
+    <type fullname="RiskAI.Core.UnitSource" preserve="all" />
+    <type fullname="RiskAI.Core.UnitMovement" preserve="all" />
+    <type fullname="RiskAI.Core.UnitRadius" preserve="all" />
+    <type fullname="RiskAI.Core.UnitHull" preserve="all" />
+    <type fullname="RiskAI.Core.UnitFootprint" preserve="all" />
+    <type fullname="RiskAI.Core.UnitVisual" preserve="all" />
+    <type fullname="RiskAI.Core.UnitStandingBounds" preserve="all" />
+    <type fullname="RiskAI.Core.UnitWeapon" preserve="all" />
+    <type fullname="RiskAI.Core.WeaponReach" preserve="all" />
+    <type fullname="RiskAI.Core.WeaponFlightTime" preserve="all" />
+    <type fullname="RiskAI.Core.WeaponSplash" preserve="all" />
+    <type fullname="RiskAI.Core.SplashRing" preserve="all" />
+    <type fullname="RiskAI.Core.UnitHostWeapons" preserve="all" />
+    <type fullname="RiskAI.Core.UnitAcquisition" preserve="all" />
+    <type fullname="RiskAI.Core.AcquisitionRadius" preserve="all" />
+    <type fullname="RiskAI.Core.AcquisitionLeash" preserve="all" />
+    <type fullname="RiskAI.Core.UnitCapabilities" preserve="all" />
+    <type fullname="RiskAI.Core.UnitTransport" preserve="all" />
+    <type fullname="RiskAI.Core.UnitHeal" preserve="all" />
+    <type fullname="RiskAI.Core.UnitRoar" preserve="all" />
+    <type fullname="RiskAI.Core.UnitMana" preserve="all" />
+    <type fullname="RiskAI.Core.UnitPresentation" preserve="all" />
+    <type fullname="RiskAI.Core.UnitDomain" preserve="all" />
+    <type fullname="RiskAI.Core.UnitBuilding" preserve="all" />
+    <type fullname="RiskAI.Core.UnitSilhouette" preserve="all" />
+    <type fullname="RiskAI.Core.ArmorKind" preserve="all" />
+    <type fullname="RiskAI.Core.AttackKind" preserve="all" />
+    <type fullname="RiskAI.Core.RangeMeasure" preserve="all" />
+    <type fullname="RiskAI.Core.WeaponDelivery" preserve="all" />
+    <type fullname="RiskAI.Core.WeaponTargeting" preserve="all" />
+    <type fullname="RiskAI.Core.WeaponTargetMask" preserve="all" />
+    <type fullname="RiskAI.Core.UnitVisibility" preserve="all" />
+    <type fullname="RiskAI.Core.AcquisitionTieBreak" preserve="all" />
+  </assembly>
 </linker>

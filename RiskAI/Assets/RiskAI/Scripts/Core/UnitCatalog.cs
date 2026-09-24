@@ -16,7 +16,7 @@ namespace RiskAI.Core
         static UnitKind[] kindOfIndex;
         static Dictionary<string, int> byId;
         static UnitKind[] cityUnits, harborUnits, harborShips;
-        static float transportLoadRadius;
+        static float transportLoadRadius, hullClearance;
         static int transportLoadLimit;
 
         public static bool IsBound => types != null;
@@ -54,21 +54,28 @@ namespace RiskAI.Core
             }
 
             var city = new List<UnitKind>(); var harbor = new List<UnitKind>(); var ships = new List<UnitKind>();
-            float loadRadius = 0; int loadLimit = 0;
+            float loadRadius = 0; int loadLimit = 0; float draft = 0;
             for (int i = 0; i < resolved.Length; i++)
             {
                 ref readonly var type = ref resolved[i];
                 if (type.Building == UnitBuilding.City) city.Add(kinds[i]);
                 if (type.Building == UnitBuilding.Harbor) (type.Domain == UnitDomain.Sea ? ships : harbor).Add(kinds[i]);
+                if (type.Domain == UnitDomain.Sea)
+                {
+                    if (draft != 0 && type.Hull.Clearance != draft)
+                        throw new ArgumentException("Every hull shares one clearance (the sea grid is global).", nameof(file));
+                    draft = type.Hull.Clearance;
+                }
                 if (!type.CanTransport) continue;
                 if (loadLimit != 0 && (type.Transport.LoadRadius != loadRadius || type.Transport.LoadLimit != loadLimit))
                     throw new ArgumentException("Every transport shares one load radius/limit (shore and harbor geometry use it).", nameof(file));
                 loadRadius = type.Transport.LoadRadius; loadLimit = type.Transport.LoadLimit;
             }
+            if (draft <= 0) throw new ArgumentException("units.json has no sea hull clearance.", nameof(file));
 
             types = resolved; byId = ids; indexOfKind = index; kindOfIndex = kinds;
             cityUnits = city.ToArray(); harborUnits = harbor.ToArray(); harborShips = ships.ToArray();
-            transportLoadRadius = loadRadius; transportLoadLimit = loadLimit;
+            transportLoadRadius = loadRadius; transportLoadLimit = loadLimit; hullClearance = draft;
             Revision++;
         }
 
@@ -108,5 +115,7 @@ namespace RiskAI.Core
         /// <summary>Load radius shared by every transport (A00V 512 native); shore and harbor geometry use it.</summary>
         public static float TransportLoadRadius { get { var _ = Types; return transportLoadRadius; } }
         public static int TransportLoadLimit { get { var _ = Types; return transportLoadLimit; } }
+        /// <summary>Draft shared by every hull. SeaNavigation's grid is built from it.</summary>
+        public static float HullClearance { get { var _ = Types; return hullClearance; } }
     }
 }

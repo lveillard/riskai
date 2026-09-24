@@ -188,7 +188,8 @@
         "height",
         "centerHeight",
         "scale",
-        "warship"
+        "warship",
+        "clearance"
       ],
       "properties": {
         "length": {
@@ -218,6 +219,11 @@
         "warship": {
           "description": "Warship silhouette (false: transport silhouette).",
           "type": "boolean"
+        },
+        "clearance": {
+          "minimum": 0,
+          "description": "Draft the sea grid keeps around this hull. Every hull shares one value.",
+          "type": "number"
         }
       },
       "description": "Oriented ship hull: builds the NavalArt model scale and the target BoxCollider."
@@ -969,6 +975,39 @@
       },
       "description": "Typed capabilities; rules decide by these, never by type."
     },
+    "UnitSilhouette": {
+      "anyOf": [
+        {
+          "const": "Infantry",
+          "type": "string"
+        },
+        {
+          "const": "Ranged",
+          "type": "string"
+        },
+        {
+          "const": "Mounted",
+          "type": "string"
+        },
+        {
+          "const": "Siege",
+          "type": "string"
+        },
+        {
+          "const": "Marine",
+          "type": "string"
+        },
+        {
+          "const": "Hull",
+          "type": "string"
+        },
+        {
+          "const": "Structure",
+          "type": "string"
+        }
+      ],
+      "description": "Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal."
+    },
     "UnitPresentation": {
       "additionalProperties": false,
       "type": "object",
@@ -977,7 +1016,8 @@
         "portrait",
         "portraitFallback",
         "attackClip",
-        "contact"
+        "contact",
+        "silhouette"
       ],
       "properties": {
         "model": {
@@ -1015,9 +1055,12 @@
           "maximum": 1,
           "description": "Normalised clip time of the hit.",
           "type": "number"
+        },
+        "silhouette": {
+          "$ref": "#/$defs/UnitSilhouette"
         }
       },
-      "description": "Model, portrait and attack clip."
+      "description": "Model, portrait, attack clip and proxy shape."
     },
     "UnitConfig": {
       "additionalProperties": false,

@@ -63,6 +63,7 @@ export const Hull = Named('UnitHull', 'Oriented ship hull: builds the NavalArt m
   centerHeight: Type.Number({ description: 'Collider centre height above the pivot.' }),
   scale: NonNegative('Model scale relative to the base silhouette.'),
   warship: Type.Boolean({ description: 'Warship silhouette (false: transport silhouette).' }),
+  clearance: NonNegative('Draft the sea grid keeps around this hull. Every hull shares one value.'),
 }, strict));
 
 export const Footprint = Named('UnitFootprint', 'Square building footprint (towers).', Type.Object({ size: NonNegative('Side length in metres.') }, strict));
@@ -193,12 +194,17 @@ export const Capabilities = Named('UnitCapabilities', 'Typed capabilities; rules
   mana: Type.Optional(Mana),
 }, strict));
 
-export const Presentation = Named('UnitPresentation', 'Model, portrait and attack clip.', Type.Object({
+export const UnitSilhouette = Enum('UnitSilhouette',
+  'Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal.',
+  ['Infantry', 'Ranged', 'Mounted', 'Siege', 'Marine', 'Hull', 'Structure']);
+
+export const Presentation = Named('UnitPresentation', 'Model, portrait, attack clip and proxy shape.', Type.Object({
   model: Type.Union([Type.String(), Type.Null()], { description: 'Model prefab name.' }),
   portrait: Type.String({ description: 'Preferred portrait resource name.' }),
   portraitFallback: Type.String({ description: 'Portrait used until the preferred one is rendered.' }),
   attackClip: Type.Union([Type.String(), Type.Null()], { description: 'Attack clip; null for procedural attacks.' }),
   contact: Type.Number({ minimum: 0, maximum: 1, description: 'Normalised clip time of the hit.' }),
+  silhouette: UnitSilhouette,
 }, strict));
 
 export const Unit = Named('UnitConfig', 'One unit type.', Type.Object({

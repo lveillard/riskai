@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validate, unitsPath } from '../validate.mjs';
-import { csharp, schemaJson, csharpPath, schemaPath, unitKindSource, unitKindPath } from '../build.mjs';
+import { csharp, schemaJson, csharpPath, schemaPath, unitKindSource, unitKindPath, validationPath } from '../build.mjs';
+import { csharpValidation } from '../invariants.mjs';
 
 const load = () => JSON.parse(readFileSync(unitsPath, 'utf8'));
 const find = (file, id) => file.units.find((unit) => unit.id === id);
@@ -12,6 +13,7 @@ test('shipped units.json is valid', () => assert.deepEqual(validate(load()), [])
 test('generated outputs are committed', () => {
   assert.equal(readFileSync(schemaPath, 'utf8').replace(/\r\n/g, '\n'), schemaJson());
   assert.equal(readFileSync(csharpPath, 'utf8').replace(/\r\n/g, '\n'), csharp());
+  assert.equal(readFileSync(validationPath, 'utf8').replace(/\r\n/g, '\n'), csharpValidation());
 });
 
 test('unknown fields are rejected', () => {
