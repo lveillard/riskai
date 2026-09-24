@@ -14,6 +14,7 @@ namespace RiskAI.Tests
             {
                 var frame = PortraitFraming.For(name);
                 Assert.That(frame.Ship, Is.False, name);
+                Assert.That(frame.Offset, Is.EqualTo(PortraitFraming.LandOffset), name);
                 Assert.That(frame.OrthographicSize, Is.EqualTo(1.4f), name);
             }
             Assert.That(PortraitFraming.For("Mortar").OrthographicSize, Is.EqualTo(1.35f));
@@ -27,6 +28,7 @@ namespace RiskAI.Tests
         public void SeaNamesKeepTheHullCameras()
         {
             Assert.That(PortraitFraming.For("Frigate").OrthographicSize, Is.EqualTo(3.35f));
+            Assert.That(PortraitFraming.For("Frigate").Offset, Is.EqualTo(PortraitFraming.SeaOffset));
             Assert.That(PortraitFraming.For("Warship").OrthographicSize, Is.EqualTo(3.8f));
             Assert.That(PortraitFraming.For("Battleship").OrthographicSize, Is.EqualTo(4.2f));
             Assert.That(PortraitFraming.For("Transport").Ship, Is.True);

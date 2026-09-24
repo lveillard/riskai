@@ -112,15 +112,6 @@
         "portraitCamera": {
           "orthographicSize": 1.4,
           "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false,
           "landDefault": true
         }
       }
@@ -235,16 +226,7 @@
         "silhouette": "Ranged",
         "portraitCamera": {
           "orthographicSize": 1.4,
-          "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "focusHeight": 1.75
         }
       }
     },
@@ -361,15 +343,12 @@
         "portraitCamera": {
           "orthographicSize": 1.85,
           "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": true,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "refit": {
+            "upperFraction": 0.8,
+            "offsetX": 4.5,
+            "offsetY": 1.6,
+            "offsetZ": 3
+          }
         }
       }
     },
@@ -504,16 +483,7 @@
         "silhouette": "Ranged",
         "portraitCamera": {
           "orthographicSize": 1.4,
-          "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "focusHeight": 1.75
         }
       }
     },
@@ -646,16 +616,7 @@
         "silhouette": "Siege",
         "portraitCamera": {
           "orthographicSize": 1.35,
-          "focusHeight": 1.15,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "focusHeight": 1.15
         }
       }
     },
@@ -784,16 +745,7 @@
         "silhouette": "Ranged",
         "portraitCamera": {
           "orthographicSize": 1.4,
-          "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "focusHeight": 1.75
         }
       }
     },
@@ -901,16 +853,7 @@
         "silhouette": "Marine",
         "portraitCamera": {
           "orthographicSize": 1.4,
-          "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "focusHeight": 1.75
         }
       }
     },
@@ -1023,15 +966,12 @@
         "portraitCamera": {
           "orthographicSize": 1.4,
           "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": true,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "refit": {
+            "upperFraction": 0.8,
+            "offsetX": 4.5,
+            "offsetY": 1.6,
+            "offsetZ": 3
+          }
         }
       }
     },
@@ -1144,15 +1084,12 @@
         "portraitCamera": {
           "orthographicSize": 1.4,
           "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": true,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "refit": {
+            "upperFraction": 0.8,
+            "offsetX": 4.5,
+            "offsetY": 1.6,
+            "offsetZ": 3
+          }
         }
       }
     },
@@ -1260,16 +1197,7 @@
         "silhouette": "Ranged",
         "portraitCamera": {
           "orthographicSize": 1.4,
-          "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "focusHeight": 1.75
         }
       }
     },
@@ -1392,15 +1320,12 @@
         "portraitCamera": {
           "orthographicSize": 1.4,
           "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": true,
-          "upperFraction": 0.78,
-          "refitOffsetX": 2,
-          "refitOffsetY": 1,
-          "refitOffsetZ": 5,
-          "ship": false
+          "refit": {
+            "upperFraction": 0.78,
+            "offsetX": 2,
+            "offsetY": 1,
+            "offsetZ": 5
+          }
         }
       }
     },
@@ -1527,15 +1452,12 @@
         "portraitCamera": {
           "orthographicSize": 2.1,
           "focusHeight": 1.95,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": true,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "refit": {
+            "upperFraction": 0.8,
+            "offsetX": 4.5,
+            "offsetY": 1.6,
+            "offsetZ": 3
+          }
         }
       }
     },
@@ -1664,16 +1586,7 @@
         "silhouette": "Siege",
         "portraitCamera": {
           "orthographicSize": 1.7,
-          "focusHeight": 1.15,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "focusHeight": 1.15
         }
       }
     },
@@ -1781,16 +1694,7 @@
         "silhouette": "Siege",
         "portraitCamera": {
           "orthographicSize": 1.7,
-          "focusHeight": 1.15,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "focusHeight": 1.15
         }
       }
     },
@@ -1901,16 +1805,7 @@
         "silhouette": "Hull",
         "portraitCamera": {
           "orthographicSize": 3.35,
-          "focusHeight": 2.15,
-          "offsetX": 4.8,
-          "offsetY": 3.1,
-          "offsetZ": 6.8,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": true
+          "focusHeight": 2.15
         }
       },
       "acquisition": {
@@ -1991,16 +1886,7 @@
         "silhouette": "Hull",
         "portraitCamera": {
           "orthographicSize": 3.35,
-          "focusHeight": 2.15,
-          "offsetX": 4.8,
-          "offsetY": 3.1,
-          "offsetZ": 6.8,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": true
+          "focusHeight": 2.15
         }
       }
     },
@@ -2111,16 +1997,7 @@
         "silhouette": "Hull",
         "portraitCamera": {
           "orthographicSize": 3.8,
-          "focusHeight": 2.15,
-          "offsetX": 4.8,
-          "offsetY": 3.1,
-          "offsetZ": 6.8,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": true
+          "focusHeight": 2.15
         }
       },
       "acquisition": {
@@ -2245,16 +2122,7 @@
         "silhouette": "Hull",
         "portraitCamera": {
           "orthographicSize": 4.2,
-          "focusHeight": 2.15,
-          "offsetX": 4.8,
-          "offsetY": 3.1,
-          "offsetZ": 6.8,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": true
+          "focusHeight": 2.15
         }
       },
       "acquisition": {
@@ -2335,16 +2203,7 @@
         "silhouette": "Hull",
         "portraitCamera": {
           "orthographicSize": 3.35,
-          "focusHeight": 2.15,
-          "offsetX": 4.8,
-          "offsetY": 3.1,
-          "offsetZ": 6.8,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": true
+          "focusHeight": 2.15
         }
       }
     },
@@ -2467,16 +2326,7 @@
         "silhouette": "Structure",
         "portraitCamera": {
           "orthographicSize": 1.4,
-          "focusHeight": 1.75,
-          "offsetX": 2,
-          "offsetY": 1,
-          "offsetZ": 5,
-          "refit": false,
-          "upperFraction": 0.8,
-          "refitOffsetX": 4.5,
-          "refitOffsetY": 1.6,
-          "refitOffsetZ": 3,
-          "ship": false
+          "focusHeight": 1.75
         }
       }
     }

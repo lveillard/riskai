@@ -207,21 +207,23 @@ export const PortraitSource = Enum('PortraitSource',
   'Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab.',
   ['Model', 'Variant']);
 
+export const PortraitRefit = Named('PortraitRefit',
+  'Present only when the portrait camera is refit to the renderer bounds.',
+  Type.Object({
+    upperFraction: Type.Number({ minimum: 0, maximum: 1, description: 'Fraction of the bounds kept when refitting.' }),
+    offsetX: Type.Number({ description: 'Refit view offset X.' }),
+    offsetY: Type.Number({ description: 'Refit view offset Y.' }),
+    offsetZ: Type.Number({ description: 'Refit view offset Z.' }),
+  }, strict));
+
 export const PortraitCamera = Named('PortraitCamera',
-  'v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name.',
+  'v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name. ' +
+  'The view offset is the land or sea constant in PortraitFraming. A hull camera is a sea unit.',
   Type.Object({
     orthographicSize: Type.Number({ exclusiveMinimum: 0, description: 'Orthographic camera size.' }),
     focusHeight: Type.Number({ description: 'Focus height above the model root.' }),
-    offsetX: Type.Number({ description: 'Camera offset X.' }),
-    offsetY: Type.Number({ description: 'Camera offset Y.' }),
-    offsetZ: Type.Number({ description: 'Camera offset Z.' }),
-    refit: Type.Boolean({ description: 'Refit the camera to the renderer bounds.' }),
-    upperFraction: Type.Number({ minimum: 0, maximum: 1, description: 'Fraction of the bounds kept when refitting.' }),
-    refitOffsetX: Type.Number({ description: 'Refit view offset X.' }),
-    refitOffsetY: Type.Number({ description: 'Refit view offset Y.' }),
-    refitOffsetZ: Type.Number({ description: 'Refit view offset Z.' }),
-    ship: Type.Boolean({ description: 'Hull camera. Only a sea unit may set this.' }),
     landDefault: Type.Optional(Type.Boolean({ description: 'The one land camera used when a shared mesh has no portrait of its own. Exactly one unit sets this.' })),
+    refit: Type.Optional(PortraitRefit),
   }, strict));
 
 export const Presentation = Named('UnitPresentation', 'Model, portrait, attack clip and proxy shape.', Type.Object({

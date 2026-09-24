@@ -7,20 +7,21 @@ namespace RiskAI.Core
     {
         public readonly bool Exists, Ship, Refit;
         public readonly float OrthographicSize, FocusHeight, UpperFraction;
-        public readonly float OffsetX, OffsetY, OffsetZ, RefitX, RefitY, RefitZ;
+        public readonly float RefitX, RefitY, RefitZ;
 
-        public static PortraitView From(PortraitCamera camera)
+        /// <summary>Ship is domain == Sea. The view offset is not stored here; PortraitFraming owns the two constants.</summary>
+        public static PortraitView From(PortraitCamera camera, UnitDomain domain)
         {
             if (camera == null) return default;
-            return new PortraitView(true, camera.Ship, camera.Refit, camera.OrthographicSize, camera.FocusHeight, camera.UpperFraction,
-                camera.OffsetX, camera.OffsetY, camera.OffsetZ, camera.RefitOffsetX, camera.RefitOffsetY, camera.RefitOffsetZ);
+            var refit = camera.Refit;
+            return new PortraitView(true, domain == UnitDomain.Sea, refit != null, camera.OrthographicSize, camera.FocusHeight,
+                refit != null ? refit.UpperFraction : 0f, refit != null ? refit.OffsetX : 0f, refit != null ? refit.OffsetY : 0f, refit != null ? refit.OffsetZ : 0f);
         }
 
-        PortraitView(bool exists, bool ship, bool refit, float size, float focus, float upper,
-            float offsetX, float offsetY, float offsetZ, float refitX, float refitY, float refitZ)
+        PortraitView(bool exists, bool ship, bool refit, float size, float focus, float upper, float refitX, float refitY, float refitZ)
         {
             Exists = exists; Ship = ship; Refit = refit; OrthographicSize = size; FocusHeight = focus; UpperFraction = upper;
-            OffsetX = offsetX; OffsetY = offsetY; OffsetZ = offsetZ; RefitX = refitX; RefitY = refitY; RefitZ = refitZ;
+            RefitX = refitX; RefitY = refitY; RefitZ = refitZ;
         }
     }
 
@@ -156,7 +157,7 @@ namespace RiskAI.Core
             Mana = caps.Mana == null ? default : new ManaProfile(caps.Mana.Max, caps.Mana.Initial, caps.Mana.Regen);
             var p = c.Presentation;
             Model = p.Model; PortraitName = p.Portrait; PortraitFallback = p.PortraitFallback; AttackClip = p.AttackClip; AttackContact = p.Contact;
-            PortraitSource = p.PortraitSource; Portrait = PortraitView.From(p.PortraitCamera); PortraitLandDefault = p.PortraitCamera?.LandDefault == true; Silhouette = p.Silhouette;
+            PortraitSource = p.PortraitSource; Portrait = PortraitView.From(p.PortraitCamera, c.Domain); PortraitLandDefault = p.PortraitCamera?.LandDefault == true; Silhouette = p.Silhouette;
         }
 
         internal static UnitType From(UnitConfig config, int index) => new UnitType(config, index);

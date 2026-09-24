@@ -650,7 +650,7 @@ namespace RiskAI.Core
         /// <summary>Where the art setup renders this portrait. Model claims the shared prefab (the Mortar cart is still a model portrait). Variant renders the unit view and does not claim a prefab.</summary>
         [UnitConfigField(Required = true)]
         public PortraitSource PortraitSource;
-        /// <summary>v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name.</summary>
+        /// <summary>v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name. The view offset is the land or sea constant in PortraitFraming. A hull camera is a sea unit.</summary>
         [UnitConfigField(Required = true)]
         public PortraitCamera PortraitCamera;
         /// <summary>Attack clip; null for procedural attacks.</summary>
@@ -664,7 +664,7 @@ namespace RiskAI.Core
         public UnitSilhouette Silhouette;
     }
 
-    /// <summary>v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name.</summary>
+    /// <summary>v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name. The view offset is the land or sea constant in PortraitFraming. A hull camera is a sea unit.</summary>
     [Serializable]
     public sealed class PortraitCamera
     {
@@ -674,34 +674,27 @@ namespace RiskAI.Core
         /// <summary>Focus height above the model root.</summary>
         [UnitConfigField(Required = true)]
         public float FocusHeight;
-        /// <summary>Camera offset X.</summary>
-        [UnitConfigField(Required = true)]
-        public float OffsetX;
-        /// <summary>Camera offset Y.</summary>
-        [UnitConfigField(Required = true)]
-        public float OffsetY;
-        /// <summary>Camera offset Z.</summary>
-        [UnitConfigField(Required = true)]
-        public float OffsetZ;
-        /// <summary>Refit the camera to the renderer bounds.</summary>
-        [UnitConfigField(Required = true)]
-        public bool Refit;
+        /// <summary>The one land camera used when a shared mesh has no portrait of its own. Exactly one unit sets this.</summary>
+        public bool? LandDefault;
+        /// <summary>Present only when the portrait camera is refit to the renderer bounds.</summary>
+        public PortraitRefit Refit;
+    }
+
+    /// <summary>Present only when the portrait camera is refit to the renderer bounds.</summary>
+    [Serializable]
+    public sealed class PortraitRefit
+    {
         /// <summary>Fraction of the bounds kept when refitting.</summary>
         [UnitConfigField(Required = true)]
         public float UpperFraction;
         /// <summary>Refit view offset X.</summary>
         [UnitConfigField(Required = true)]
-        public float RefitOffsetX;
+        public float OffsetX;
         /// <summary>Refit view offset Y.</summary>
         [UnitConfigField(Required = true)]
-        public float RefitOffsetY;
+        public float OffsetY;
         /// <summary>Refit view offset Z.</summary>
         [UnitConfigField(Required = true)]
-        public float RefitOffsetZ;
-        /// <summary>Hull camera. Only a sea unit may set this.</summary>
-        [UnitConfigField(Required = true)]
-        public bool Ship;
-        /// <summary>The one land camera used when a shared mesh has no portrait of its own. Exactly one unit sets this.</summary>
-        public bool? LandDefault;
+        public float OffsetZ;
     }
 }

@@ -24,9 +24,7 @@ export const unitRules = [
   { error: '{at}: a unit carries at most one weapon', when: ['gt', ['len', 'weapons'], ['lit', 1]] },
   { error: '{at}: a variant portrait is a land unit', when: ['and', ['eq', ['get', 'presentation.portraitSource'], ['lit', 'Variant']], ['neq', ['get', 'domain'], ['lit', 'Land']]] },
   { error: '{at}: a land model portrait needs a model name', when: ['and', ['eq', ['get', 'domain'], ['lit', 'Land']], ['and', ['eq', ['get', 'presentation.portraitSource'], ['lit', 'Model']], ['not', ['has', 'presentation.model']]]] },
-  { error: '{at}: a sea portrait uses a hull camera', when: ['and', ['eq', ['get', 'domain'], ['lit', 'Sea']], ['or', ['not', ['has', 'presentation.portraitCamera']], ['not', ['eq', ['get', 'presentation.portraitCamera.ship'], ['lit', true]]]]] },
-  { error: '{at}: a hull camera is only for a sea unit', when: ['and', ['neq', ['get', 'domain'], ['lit', 'Sea']], ['and', ['has', 'presentation.portraitCamera'], ['eq', ['get', 'presentation.portraitCamera.ship'], ['lit', true]]]] },
-  { error: '{at}: the shared land camera belongs to one land unit', when: ['and', ['eq', ['get', 'presentation.portraitCamera.landDefault'], ['lit', true]], ['or', ['neq', ['get', 'domain'], ['lit', 'Land']], ['eq', ['get', 'presentation.portraitCamera.ship'], ['lit', true]]]] },
+  { error: '{at}: the shared land camera belongs to one land unit', when: ['and', ['eq', ['get', 'presentation.portraitCamera.landDefault'], ['lit', true]], ['neq', ['get', 'domain'], ['lit', 'Land']]] },
 ];
 
 export const weaponRules = [

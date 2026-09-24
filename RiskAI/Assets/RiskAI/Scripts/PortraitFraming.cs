@@ -10,6 +10,11 @@ namespace RiskAI
     /// </summary>
     public static class PortraitFraming
     {
+        /// <summary>Every land and static portrait uses this offset. It is not stored per unit.</summary>
+        public static readonly Vector3 LandOffset = new Vector3(2f, 1f, 5f);
+        /// <summary>Every sea portrait uses this offset. A hull camera is a sea unit.</summary>
+        public static readonly Vector3 SeaOffset = new Vector3(4.8f, 3.1f, 6.8f);
+
         public readonly struct Choice
         {
             public readonly bool Ship;
@@ -87,7 +92,7 @@ namespace RiskAI
 
         static Choice From(PortraitView view) =>
             new Choice(view.Ship, view.OrthographicSize, view.FocusHeight,
-                new Vector3(view.OffsetX, view.OffsetY, view.OffsetZ), view.Refit, view.UpperFraction,
+                view.Ship ? SeaOffset : LandOffset, view.Refit, view.UpperFraction,
                 new Vector3(view.RefitX, view.RefitY, view.RefitZ));
 
         public static bool FramesRenderer(Renderer renderer) =>
