@@ -84,8 +84,12 @@ namespace RiskAI.Tests
                 Assert.That(distance,Is.LessThan(30f),"The staging point is next to the objective.");
             }
 
-            // Arrive together: the next strategic pass launches the whole wave.
-            foreach(var unit in army)Assert.That(unit.Agent.Warp(unit.Agent.destination),Is.True);
+            // Formation slots can sit outside the gather radius, so warp onto the stage itself.
+            // One strategic pass must then send the whole assembled wave.
+            var armies=(System.Collections.IList)typeof(SkirmishCommander).GetField("armies",Hidden).GetValue(Commander);
+            Assert.That(armies.Count,Is.EqualTo(1));
+            var stage=(Vector3)armies[0].GetType().GetField("Stage").GetValue(armies[0]);
+            foreach(var unit in army)Assert.That(unit.Agent.Warp(stage),Is.True);
             foreach(var unit in army)unit.Stop();
             Invoke("IssueOffensiveOrders",false);
             battle.Commands.Tick();
