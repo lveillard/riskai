@@ -101,8 +101,13 @@ export const Reach = Named('WeaponReach', 'Melee hysteresis: first blow this far
   holdMargin: NonNegative('First blow inside the reach.'),
 }, strict));
 
+export const WeaponSound = Enum('WeaponSound',
+  'Which clip plays for this weapon. Presentation reads this field; it does not list unit kinds.',
+  ['Blade', 'Lance', 'Bow', 'Firearm', 'Magic', 'Mortar', 'Cannon']);
+
 export const Weapon = Named('UnitWeapon', 'One attack: damage roll, timing, reach and delivery.', Type.Object({
   source: Type.String({ description: 'Weapon provenance id.' }),
+  sound: WeaponSound,
   attackType: AttackKind,
   base: NonNegative('Base damage.'),
   dice: Count('Damage dice.'),

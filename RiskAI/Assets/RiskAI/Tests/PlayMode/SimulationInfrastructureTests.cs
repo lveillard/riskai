@@ -165,7 +165,7 @@ namespace RiskAI.Tests
             Vector3 from = target.AimPoint + Vector3.left * 44;
             var magicMissile = new WeaponProfile("test-magic-missile", AttackKind.Magic, 0, 0, 0, 0, 0, 0, 0, 0, true,
                 RangeMeasure.CenterToApproach, 0, 0, 0, WeaponDelivery.Missile, WeaponTargeting.Target, 22,
-                0, 0, 0, 0, 0, 0, float.PositiveInfinity, WeaponTargetMask.None, WeaponTargetMask.None, false);
+                0, 0, 0, 0, 0, 0, float.PositiveInfinity, WeaponTargetMask.None, WeaponTargetMask.None, false, WeaponSound.Magic);
             int missileId = battle.Combat.FireWeapon(from, target.AimPoint, target, 20,
                 source.Team, source, magicMissile);
             Assert.That(battle.Combat.TryGetProjectile(missileId, out var missile), Is.True);

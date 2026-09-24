@@ -30,6 +30,7 @@ namespace RiskAI.Core
                 if ((unit.HostWeapons != null && unit.Domain != UnitDomain.Static)) errors.Add("" + at + ": hostWeapons are only for static posts");
                 if ((unit.Acquisition != null && ((unit.Weapons == null ? 0 : unit.Weapons.Length) == 0 && !(unit.HostWeapons != null)))) errors.Add("" + at + ": acquisition without a weapon");
                 if ((!(unit.Acquisition != null) && ((unit.Weapons == null ? 0 : unit.Weapons.Length) > 0 || unit.HostWeapons != null))) errors.Add("" + at + ": a weapon needs acquisition");
+                if ((unit.Weapons == null ? 0 : unit.Weapons.Length) > 1) errors.Add("" + at + ": a unit carries at most one weapon");
                 if (unit.Domain == UnitDomain.Sea && unit.Hull != null)
                 {
                     if (!(unit.Hull.Clearance > 0) || clearance != null && unit.Hull.Clearance != clearance) errors.Add("every sea hull shares one positive clearance (the sea grid is global)");

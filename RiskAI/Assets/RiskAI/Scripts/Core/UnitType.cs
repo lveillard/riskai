@@ -152,7 +152,7 @@ namespace RiskAI.Core
             return new WeaponProfile(w.Source, w.AttackType, w.Base, w.Dice, w.Sides, w.Cooldown, w.AttackPoint, w.Backswing,
                 w.Range, w.MinRange, w.Ranged, w.RangeMeasure, w.Reach?.ApproachMargin ?? 0, w.Reach?.HoldMargin ?? 0,
                 w.StrikeTolerance ?? 0, w.Delivery, w.Targeting, w.ProjectileSpeed, full, medium, small, mediumFactor, smallFactor,
-                minFlight, maxFlight, splashMask, Combine(w.TargetMask), w.Tracer);
+                minFlight, maxFlight, splashMask, Combine(w.TargetMask), w.Tracer, w.Sound);
         }
 
         static WeaponTargetMask Combine(WeaponTargetMask[] flags)

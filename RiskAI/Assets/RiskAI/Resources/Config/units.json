@@ -49,6 +49,7 @@
       "weapons": [
         {
           "source": "local-melee",
+          "sound": "Blade",
           "attackType": "Normal",
           "base": 17,
           "dice": 1,
@@ -161,6 +162,7 @@
       "weapons": [
         {
           "source": "h00B-crossbow-adaptation",
+          "sound": "Bow",
           "attackType": "Piercing",
           "base": 15,
           "dice": 2,
@@ -267,6 +269,7 @@
       "weapons": [
         {
           "source": "local-melee",
+          "sound": "Lance",
           "attackType": "Normal",
           "base": 37,
           "dice": 2,
@@ -375,6 +378,7 @@
       "weapons": [
         {
           "source": "local-mage",
+          "sound": "Magic",
           "attackType": "Magic",
           "base": 29,
           "dice": 1,
@@ -506,6 +510,7 @@
       "weapons": [
         {
           "source": "h00H",
+          "sound": "Mortar",
           "attackType": "Siege",
           "base": 18,
           "dice": 1,
@@ -636,6 +641,7 @@
       "weapons": [
         {
           "source": "h00E",
+          "sound": "Bow",
           "attackType": "Piercing",
           "base": 7,
           "dice": 1,
@@ -752,6 +758,7 @@
       "weapons": [
         {
           "source": "h012/h00R",
+          "sound": "Firearm",
           "attackType": "Piercing",
           "base": 16,
           "dice": 2,
@@ -854,6 +861,7 @@
       "weapons": [
         {
           "source": "local-melee",
+          "sound": "Lance",
           "attackType": "Normal",
           "base": 37,
           "dice": 2,
@@ -960,6 +968,7 @@
       "weapons": [
         {
           "source": "local-melee",
+          "sound": "Lance",
           "attackType": "Normal",
           "base": 64,
           "dice": 2,
@@ -1066,6 +1075,7 @@
       "weapons": [
         {
           "source": "h00F",
+          "sound": "Firearm",
           "attackType": "Piercing",
           "base": 36,
           "dice": 2,
@@ -1170,6 +1180,7 @@
       "weapons": [
         {
           "source": "h00I",
+          "sound": "Bow",
           "attackType": "Piercing",
           "base": 29,
           "dice": 1,
@@ -1286,6 +1297,7 @@
       "weapons": [
         {
           "source": "local-melee",
+          "sound": "Lance",
           "attackType": "Normal",
           "base": 55,
           "dice": 2,
@@ -1404,6 +1416,7 @@
       "weapons": [
         {
           "source": "h00M",
+          "sound": "Mortar",
           "attackType": "Piercing",
           "base": 55,
           "dice": 1,
@@ -1527,6 +1540,7 @@
       "weapons": [
         {
           "source": "h01A",
+          "sound": "Mortar",
           "attackType": "Siege",
           "base": 80,
           "dice": 1,
@@ -1627,6 +1641,7 @@
       "weapons": [
         {
           "source": "h00W",
+          "sound": "Cannon",
           "attackType": "Normal",
           "base": 30,
           "dice": 1,
@@ -1808,6 +1823,7 @@
       "weapons": [
         {
           "source": "h00U",
+          "sound": "Cannon",
           "attackType": "Normal",
           "base": 90,
           "dice": 1,
@@ -1927,6 +1943,7 @@
       "weapons": [
         {
           "source": "h001",
+          "sound": "Cannon",
           "attackType": "Normal",
           "base": 130,
           "dice": 1,
@@ -2106,6 +2123,7 @@
       "hostWeapons": {
         "town": {
           "source": "h00N",
+          "sound": "Bow",
           "attackType": "Piercing",
           "base": 45,
           "dice": 1,
@@ -2129,6 +2147,7 @@
         },
         "harbor": {
           "source": "h00O",
+          "sound": "Bow",
           "attackType": "Piercing",
           "base": 45,
           "dice": 1,

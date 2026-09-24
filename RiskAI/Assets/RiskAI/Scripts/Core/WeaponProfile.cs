@@ -29,6 +29,7 @@ namespace RiskAI.Core
         public readonly float MinimumFlightTime, MaximumFlightTime;
         public readonly WeaponTargetMask SplashTargets, TargetMask;
         public readonly bool Tracer;
+        public readonly WeaponSound Sound;
         readonly bool initialized;
 
         public bool IsValid => initialized && (Delivery == WeaponDelivery.Instant || ProjectileSpeed > 0);
@@ -47,7 +48,7 @@ namespace RiskAI.Core
             float fullDamageRadius, float mediumDamageRadius, float smallDamageRadius,
             float mediumDamageFactor, float smallDamageFactor,
             float minimumFlightTime, float maximumFlightTime,
-            WeaponTargetMask splashTargets, WeaponTargetMask targetMask, bool tracer)
+            WeaponTargetMask splashTargets, WeaponTargetMask targetMask, bool tracer, WeaponSound sound)
         {
             if (delivery != WeaponDelivery.Instant &&
                 (projectileSpeed <= 0 || float.IsNaN(projectileSpeed) || float.IsInfinity(projectileSpeed)))
@@ -81,6 +82,7 @@ namespace RiskAI.Core
             SplashTargets = splashTargets;
             TargetMask = targetMask;
             Tracer = tracer;
+            Sound = sound;
             initialized = true;
         }
 

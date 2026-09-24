@@ -20,6 +20,7 @@ export const unitRules = [
   { error: '{at}: hostWeapons are only for static posts', when: ['and', ['has', 'hostWeapons'], ['neq', ['get', 'domain'], ['lit', 'Static']]] },
   { error: '{at}: acquisition without a weapon', when: ['and', ['has', 'acquisition'], ['and', ['eq', ['len', 'weapons'], ['lit', 0]], ['not', ['has', 'hostWeapons']]]] },
   { error: '{at}: a weapon needs acquisition', when: ['and', ['not', ['has', 'acquisition']], ['or', ['gt', ['len', 'weapons'], ['lit', 0]], ['has', 'hostWeapons']]] },
+  { error: '{at}: a unit carries at most one weapon', when: ['gt', ['len', 'weapons'], ['lit', 1]] },
 ];
 
 export const weaponRules = [

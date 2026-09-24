@@ -300,6 +300,39 @@
       },
       "description": "Picking and presentation sizes, independent from collision."
     },
+    "WeaponSound": {
+      "anyOf": [
+        {
+          "const": "Blade",
+          "type": "string"
+        },
+        {
+          "const": "Lance",
+          "type": "string"
+        },
+        {
+          "const": "Bow",
+          "type": "string"
+        },
+        {
+          "const": "Firearm",
+          "type": "string"
+        },
+        {
+          "const": "Magic",
+          "type": "string"
+        },
+        {
+          "const": "Mortar",
+          "type": "string"
+        },
+        {
+          "const": "Cannon",
+          "type": "string"
+        }
+      ],
+      "description": "Which clip plays for this weapon. Presentation reads this field; it does not list unit kinds."
+    },
     "AttackKind": {
       "anyOf": [
         {
@@ -538,6 +571,7 @@
       "type": "object",
       "required": [
         "source",
+        "sound",
         "attackType",
         "base",
         "dice",
@@ -559,6 +593,9 @@
         "source": {
           "description": "Weapon provenance id.",
           "type": "string"
+        },
+        "sound": {
+          "$ref": "#/$defs/WeaponSound"
         },
         "attackType": {
           "$ref": "#/$defs/AttackKind"

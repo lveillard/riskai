@@ -43,6 +43,18 @@ namespace RiskAI.Core
         Divine
     }
 
+    /// <summary>Which clip plays for this weapon. Presentation reads this field; it does not list unit kinds.</summary>
+    public enum WeaponSound
+    {
+        Blade,
+        Lance,
+        Bow,
+        Firearm,
+        Magic,
+        Mortar,
+        Cannon
+    }
+
     /// <summary>Warcraft attack type (damage table row).</summary>
     public enum AttackKind
     {
@@ -335,6 +347,9 @@ namespace RiskAI.Core
         /// <summary>Weapon provenance id.</summary>
         [UnitConfigField(Required = true)]
         public string Source;
+        /// <summary>Which clip plays for this weapon. Presentation reads this field; it does not list unit kinds.</summary>
+        [UnitConfigField(Required = true)]
+        public WeaponSound Sound;
         /// <summary>Warcraft attack type (damage table row).</summary>
         [UnitConfigField(Required = true)]
         public AttackKind AttackType;
