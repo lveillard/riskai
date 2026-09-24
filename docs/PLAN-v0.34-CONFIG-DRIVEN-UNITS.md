@@ -171,10 +171,7 @@ Cada paso termina con `python scripts/quick_compile.py` limpio y **todas** las p
 Cada paso borra lo que sustituye en ese mismo paso: no quedan alias, forwarders ni tablas viejas
 entre pasos.
 
-1. **Inventario y fixture de oro.** Script de Editor que vuelca desde las tablas vivas cada
-   campo consumido por el código a `Tests/Fixtures/unit-golden.json` y una matriz de conductas
-   (quién mide qué, correas, prioridades de clic, semántica de cola actual). Prueba de paridad
-   que compara el catálogo contra ese fixture. No se borra nada.
+1. **Inventario.** Parity with v0.33 was verified by the golden fixture up to commit 5490e79, then removed. `units.json` is the single source.
 2. **Esquema, generación y carga.** TypeBox, `units.schema.json`, DTO generado, `validate.mjs`,
    `npm test`, `UnitConfigLoader` con Newtonsoft (dependencia directa). `units.json` se genera
    desde el fixture. Pruebas de ida y vuelta (enums como texto, nulos, campos desconocidos →
@@ -182,8 +179,7 @@ entre pasos.
 3. **Catálogo desde datos (atómico).** Todos los lectores (`UnitCatalog`, `NavalProfiles`,
    `SourceWeapons`, `SourceGeometry`, `SupportAbilities`, `ProductionCatalog`, `VisualMetrics`,
    `DefenseTower`, `NavalArt`, `GameText` para nombres de unidad) leen del catálogo enlazado y
-   se **borran** las tablas en el mismo paso. La prueba de paridad del paso 1 sigue en verde sin
-   editar sus expectativas. `ProductionHotkeys` conserva su algoritmo.
+   se **borran** las tablas en el mismo paso. Parity with v0.33 was verified by the golden fixture up to commit 5490e79, then removed. `ProductionHotkeys` conserva su algoritmo.
 4. **Fuera los índices por ordinal.** `SoldierPool`, `AiPlanning`, `UnitPresentationLod`,
    `AttackPresentationTiming`, `UnitVariantViews` y pruebas usan el índice denso del catálogo.
    Después se fusiona `NavalUnitKind` en `UnitKind` (o se sustituyen ambos por el id), también
