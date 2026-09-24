@@ -29,11 +29,11 @@ namespace RiskAI
             int legsDrawn = 0, marksDrawn = 0;
             if (session.Units != null)
                 for (int i = 0; i < session.Units.Count; i++)
-                    legsDrawn = DrawSoldier(session.Units[i], legsDrawn, ref marksDrawn, emphasis);
+                    legsDrawn = Draw(session.Units[i], legsDrawn, ref marksDrawn, emphasis);
             var naval = session.Naval;
             if (naval)
                 for (int i = 0; i < naval.Ships.Count; i++)
-                    legsDrawn = DrawShip(naval.Ships[i], legsDrawn, ref marksDrawn, emphasis);
+                    legsDrawn = Draw(naval.Ships[i], legsDrawn, ref marksDrawn, emphasis);
             LegCount = legsDrawn;
             for (int i = legsDrawn; i < legCount; i++) if (legs[i]) legs[i].enabled = false;
             for (int i = marksDrawn; i < markCount; i++) if (marks[i]) marks[i].enabled = false;
@@ -49,47 +49,28 @@ namespace RiskAI
             return shift || (controller && controller.QueueOrdersArmed);
         }
 
-        int DrawSoldier(Soldier unit, int drawn, ref int marksDrawn, bool emphasis)
+        int Draw(IOrderable unit, int drawn, ref int marksDrawn, bool emphasis)
         {
-            if (!unit || !unit.Selected || unit.OrderLegCount <= 0 || drawn >= SegmentCap) return drawn;
-            if (unit.PathCornerCount < 2 && unit.Agent && unit.Agent.hasPath && !unit.Agent.pathPending) unit.RememberPath();
-            Vector3 from = unit.transform.position;
-            for (int i = 0; i < unit.OrderLegCount && drawn < SegmentCap; i++)
+            var body = unit as Component;
+            if (!body || !unit.Selected || unit.OrderLegCount <= 0 || drawn >= SegmentCap) return drawn;
+            unit.RefreshActivePath();
+            Vector3 from = body.transform.position;
+            var to = unit.OrderLegPoint(0);
+            var color = ColorOf(unit.OrderLegKind(0), emphasis);
+            if (unit.ActivePathCount >= 2)
             {
-                var to = unit.RoutePoint(i);
-                var color = ColorOf((UnitCommandKind)unit.RouteKind(i), emphasis);
-                if (i == 0 && unit.PathCornerCount >= 2)
-                {
-                    int n = Mathf.Min(unit.PathCornerCount, scratch.Length);
-                    for (int c = 0; c < n; c++) scratch[c] = unit.PathCorner(c);
-                    Show(ref legs[drawn], scratch, n, color, emphasis ? EmphasizedWidth : NormalWidth, false);
-                }
-                else ShowSegment(ref legs[drawn], from, to, color, emphasis);
-                drawn++;
-                if (marksDrawn < SegmentCap) ShowMark(ref marks[marksDrawn++], to, color, emphasis);
-                from = to;
-            }
-            return drawn;
-        }
-
-        int DrawShip(Ship ship, int drawn, ref int marksDrawn, bool emphasis)
-        {
-            if (!ship || !ship.Selected || ship.OrderLegCount <= 0 || drawn >= SegmentCap) return drawn;
-            var color = ColorOf((UnitCommandKind)ship.OrderKind(0), emphasis);
-            if (ship.SeaRouteCount >= 2)
-            {
-                int n = Mathf.Min(ship.SeaRouteCount, scratch.Length);
-                for (int c = 0; c < n; c++) scratch[c] = ship.SeaRoutePoint(c);
+                int n = Mathf.Min(unit.ActivePathCount, scratch.Length);
+                for (int c = 0; c < n; c++) scratch[c] = unit.ActivePathPoint(c);
                 Show(ref legs[drawn], scratch, n, color, emphasis ? EmphasizedWidth : NormalWidth, false);
             }
-            else ShowSegment(ref legs[drawn], ship.transform.position, ship.OrderPoint(0), color, emphasis);
+            else ShowSegment(ref legs[drawn], from, to, color, emphasis);
             drawn++;
-            if (marksDrawn < SegmentCap) ShowMark(ref marks[marksDrawn++], ship.OrderPoint(0), color, emphasis);
-            Vector3 from = ship.OrderPoint(0);
-            for (int i = 1; i < ship.OrderLegCount && drawn < SegmentCap; i++)
+            if (marksDrawn < SegmentCap) ShowMark(ref marks[marksDrawn++], to, color, emphasis);
+            from = to;
+            for (int i = 1; i < unit.OrderLegCount && drawn < SegmentCap; i++)
             {
-                var to = ship.OrderPoint(i);
-                color = ColorOf((UnitCommandKind)ship.OrderKind(i), emphasis);
+                to = unit.OrderLegPoint(i);
+                color = ColorOf(unit.OrderLegKind(i), emphasis);
                 ShowSegment(ref legs[drawn], from, to, color, emphasis);
                 drawn++;
                 if (marksDrawn < SegmentCap) ShowMark(ref marks[marksDrawn++], to, color, emphasis);

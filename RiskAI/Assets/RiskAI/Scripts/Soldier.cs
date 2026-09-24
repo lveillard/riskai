@@ -6,10 +6,9 @@ using UnityEngine.AI;
 namespace RiskAI
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public sealed class Soldier : CombatTarget, IOrderable
+    public sealed class Soldier : CombatTarget, IOrderable, IPostClaimant
     {
         enum OrderMode { Idle, Move, AttackMove, Attack, Hold, Patrol, Follow }
-        struct Order { public Vector3 Point; public OrderMode Mode; public int TargetId; }
         public UnitKind Kind { get; private set; }
         public override ref readonly UnitType Type => ref UnitCatalog.Get(Kind);
         public int OriginCountry { get; set; } = -1;
@@ -78,11 +77,9 @@ namespace RiskAI
         public ManaPool Mana => medic ? medic.Mana : roar ? roar.Mana : null;
         readonly List<CombatTarget> nearby = new List<CombatTarget>(64);
         readonly List<CombatTarget> alerted = new List<CombatTarget>(32);
-        readonly Queue<Order> orders = new Queue<Order>();
-        readonly Vector3[] routePoints = new Vector3[36];
-        readonly byte[] routeKinds = new byte[36];
+        readonly OrderQueue orders = new OrderQueue();
         readonly Vector3[] pathCorners = new Vector3[48];
-        int routePointCount, pathCornerCount, routeRevision;
+        int pathCornerCount;
 
         public void Initialize(BattleSession battle, int team, UnitKind kind)
         {
@@ -90,7 +87,7 @@ namespace RiskAI
             session=battle; Team=team; Kind=kind; Health=MaxHealth; OriginCountry=-1;
             Garrison=null; simulationPaused=false; enabled=true; roarUntil=-1; roarBonus=0;
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
-            mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; orders.Clear();
+            mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; orders.Reset();
             nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
             humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
             bool first=!Agent;
@@ -156,6 +153,7 @@ namespace RiskAI
             if(Garrison!=zone)return;
             Garrison=null; orders.Clear(); CancelStrike(); target=null; followTargetId=0; mode=OrderMode.Idle;
             anchor=destination=transform.position; nextSense=0; wasFighting=false;
+            PublishRoute();
             if(!Agent || !Agent.enabled)return;
             Agent.updatePosition=true; Agent.updateRotation=true;
             Agent.obstacleAvoidanceType=ObstacleAvoidanceType.LowQualityObstacleAvoidance;
@@ -203,6 +201,7 @@ namespace RiskAI
         void OnDisable() { ClearHumanMoveTelemetry(true); }
         public bool TryMoveTo(Vector3 point,bool attackMove,bool append) => Issue(point,attackMove?OrderMode.AttackMove:OrderMode.Move,append);
         public bool Patrol(Vector3 point, bool append) => Issue(point, OrderMode.Patrol, append);
+        bool OrderBusy => mode != OrderMode.Idle && mode != OrderMode.Hold;
         bool Issue(Vector3 point, OrderMode orderMode, bool append)
         {
             LastMoveError=null;
@@ -210,16 +209,34 @@ namespace RiskAI
             if(session.Paused||session.Winner>=0){LastMoveError="La partida está detenida.";return false;}
             if(!Agent||!Agent.enabled||!Agent.isOnNavMesh){LastMoveError="La unidad no está sobre terreno transitable.";return false;}
             if(!NavMesh.SamplePosition(point,out var hit,8,NavMesh.AllAreas)){LastMoveError="Ese destino no es transitable; usa un transporte para cruzar el agua.";return false;}
-            var order = new Order { Point = hit.position, Mode = orderMode };
-            if (UnitRules.Queue(CommandKind(orderMode), append, mode != OrderMode.Idle && mode != OrderMode.Hold) == UnitRules.OrderQueueAction.Append)
-            { if (orders.Count < 35){orders.Enqueue(order);NoteRoute();return true;}LastMoveError="La cola de órdenes está llena.";return false; }
-            orders.Clear(); Apply(order);NoteRoute();return LastMoveError==null;
+            var command = new UnitCommand(Team, EntityId, CommandKind(orderMode), hit.position.x, hit.position.y, hit.position.z, append: append);
+            if (!Admit(command, out var run)) return false;
+            if (run) Apply(orderMode, hit.position, 0);
+            PublishRoute();
+            return run ? LastMoveError == null : true;
         }
-        void Apply(Order order)
+        /// <summary>Shared queue decision. <paramref name="run"/> means the motor starts this command now.</summary>
+        bool Admit(in UnitCommand command, out bool run)
+        {
+            switch (orders.Admit(command, OrderBusy))
+            {
+                case OrderQueue.AdmitResult.Full:
+                    LastMoveError = OrderQueue.FullError;
+                    run = false;
+                    return false;
+                case OrderQueue.AdmitResult.Queued:
+                    run = false;
+                    return true;
+                default:
+                    run = true;
+                    return true;
+            }
+        }
+        void Apply(OrderMode orderMode, Vector3 point, int targetId)
         {
             ClearHumanMoveTelemetry(true);
-            CancelStrike(); mode = order.Mode; destination = order.Point; patrolOrigin = anchor = transform.position;
-            target = null; followTargetId = order.TargetId; stalled = 0; nextSense = 0; wasFighting = false;
+            CancelStrike(); mode = orderMode; destination = point; patrolOrigin = anchor = transform.position;
+            target = null; followTargetId = targetId; stalled = 0; nextSense = 0; wasFighting = false;
             ResumePath();
         }
         void ResumePath()
@@ -243,32 +260,69 @@ namespace RiskAI
         public void Attack(CombatTarget enemy, bool append = false)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !enemy || enemy.Team == Team || !Agent.enabled || !Agent.isOnNavMesh) return;
-            if (UnitRules.Queue(UnitCommandKind.Attack, append, mode != OrderMode.Idle && mode != OrderMode.Hold) == UnitRules.OrderQueueAction.Append)
-            { if (orders.Count < 35) { orders.Enqueue(new Order { Mode = OrderMode.Attack, TargetId = enemy.EntityId, Point = enemy.transform.position }); NoteRoute(); } else LastMoveError = "La cola de órdenes está llena."; return; }
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); followTargetId=0; mode = OrderMode.Attack; SetTarget(enemy); Agent.isStopped = false; NoteRoute();
+            LastMoveError = null;
+            var point = enemy.transform.position;
+            var command = new UnitCommand(Team, EntityId, UnitCommandKind.Attack, point.x, point.y, point.z, enemy.EntityId, append);
+            if (!Admit(command, out var run)) return;
+            if (run) BeginAttack(enemy);
+            PublishRoute();
+        }
+        void BeginAttack(CombatTarget enemy)
+        {
+            ClearHumanMoveTelemetry(true);
+            CancelStrike();
+            followTargetId = 0;
+            mode = OrderMode.Attack;
+            SetTarget(enemy);
+            Agent.isStopped = false;
         }
         public void Follow(Soldier ally, bool append = false)
         {
             if (IsGarrison || session.Paused || session.Winner>=0 || !ally || ally == this || ally.Team != Team) return;
-            var order = new Order { Mode = OrderMode.Follow, TargetId = ally.EntityId, Point = ally.transform.position };
-            if (UnitRules.Queue(UnitCommandKind.Follow, append, mode != OrderMode.Idle && mode != OrderMode.Hold) == UnitRules.OrderQueueAction.Append)
-            { if (orders.Count < 35) { orders.Enqueue(order); NoteRoute(); } else LastMoveError = "La cola de órdenes está llena."; return; }
-            orders.Clear(); ClearHumanMoveTelemetry(true); Apply(order); NoteRoute();
+            LastMoveError = null;
+            var point = ally.transform.position;
+            var command = new UnitCommand(Team, EntityId, UnitCommandKind.Follow, point.x, point.y, point.z, ally.EntityId, append);
+            if (!Admit(command, out var run)) return;
+            if (run) Apply(OrderMode.Follow, point, ally.EntityId);
+            PublishRoute();
         }
         public void Stop() => Stand(OrderMode.Idle);
         public void HoldPosition() => Stand(OrderMode.Hold);
         void Stand(OrderMode orderMode)
         {
             if(IsGarrison)return;
-            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false; NoteRoute();
+            orders.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false; PublishRoute();
             if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); Agent.isStopped = false; }
         }
         void Complete(bool failed=false)
         {
-            if (orders.Count > 0) Apply(orders.Dequeue());
-            else if (mode == OrderMode.Patrol && !failed) { var swap = destination; destination = patrolOrigin; patrolOrigin = swap; ResumePath(); }
+            while (orders.TryDequeue(out var next))
+            {
+                if (RunQueued(next)) { PublishRoute(); return; }
+            }
+            if (mode == OrderMode.Patrol && !failed) { var swap = destination; destination = patrolOrigin; patrolOrigin = swap; ResumePath(); }
             else Stop();
-            NoteRoute();
+            PublishRoute();
+        }
+        /// <summary>A dequeued command runs on the motor. It is not admitted again (its append flag would re-queue it).</summary>
+        bool RunQueued(in UnitCommand command)
+        {
+            switch (command.Kind)
+            {
+                case UnitCommandKind.Move:
+                case UnitCommandKind.AttackMove:
+                case UnitCommandKind.Patrol:
+                case UnitCommandKind.Follow:
+                    Apply(ModeOf(command.Kind), new Vector3(command.X, command.Y, command.Z), command.TargetId);
+                    return true;
+                case UnitCommandKind.Attack:
+                    var enemy = session.FindTarget(command.TargetId);
+                    if (!enemy || !enemy.IsAlive || enemy.Team == Team || !enemy.CanBeAttacked) return false;
+                    BeginAttack(enemy);
+                    return true;
+                default:
+                    return false;
+            }
         }
         void SetTarget(CombatTarget enemy) { target = enemy; pursuitOrigin = transform.position; nextPath = 0; }
         void CancelStrike()
@@ -337,7 +391,8 @@ namespace RiskAI
                 if (wasFighting || mode == OrderMode.Attack)
                 {
                     CancelStrike();
-                    if (mode == OrderMode.Attack) Complete(); else ResumePath();
+                    if (UnitRules.OnTargetLost(CommandKind(mode)) == UnitRules.TargetLost.Advance) Complete();
+                    else ResumePath();
                     if (mode == OrderMode.Idle && Vector3.Distance(transform.position, anchor) > 1.5f) RequestAutonomousPath(anchor);
                 }
             }
@@ -528,6 +583,24 @@ namespace RiskAI
         }
         /// <summary>An idle ally joins against the attacker of a nearby friend.</summary>
         public override void JoinAlert(CombatTarget attacker) { if (IsIdle) SetTarget(attacker); }
+        public OrderQueue Orders => orders;
+        public int OrderLegCount => orders.LegCount;
+        public Vector3 OrderLegPoint(int index)
+        {
+            orders.Leg(index, out var x, out var y, out var z, out _);
+            return new Vector3(x, y, z);
+        }
+        public UnitCommandKind OrderLegKind(int index)
+        {
+            orders.Leg(index, out _, out _, out _, out var kind);
+            return (UnitCommandKind)kind;
+        }
+        public int ActivePathCount => pathCornerCount;
+        public Vector3 ActivePathPoint(int index) => pathCorners[index];
+        public void RefreshActivePath()
+        {
+            if (pathCornerCount < 2 && Agent && Agent.isOnNavMesh && Agent.hasPath && !Agent.pathPending) RememberPath();
+        }
         string IOrderable.OrderError => LastMoveError;
         bool IOrderable.Authorize(in UnitCommand command, bool commitRelease) => Authorize(command, commitRelease);
         bool IOrderable.ApplyOrder(in UnitCommand command) => ApplyOrder(command);
@@ -548,8 +621,13 @@ namespace RiskAI
             if (IsGarrison && command.Kind != UnitCommandKind.Stop && command.Kind != UnitCommandKind.Hold)
             {
                 var zone = Garrison;
-                if (zone == null || !(commitRelease ? zone.TryReleaseDefenderForOrder(session, this) : zone.CanReleaseDefenderForOrder(session, this)))
+                if (zone == null || !(commitRelease ? zone.TryReleaseGuardianForOrder(session, this) : zone.HasRelief(session, this)))
                     return false;
+            }
+            if (!UnitRules.KindAllowed(Type.Domain, command.Kind))
+            {
+                LastMoveError = OrderQueue.InvalidError;
+                return false;
             }
             if (command.Kind == UnitCommandKind.Attack || command.Kind == UnitCommandKind.Follow || command.Kind == UnitCommandKind.Embark)
             {
@@ -560,7 +638,6 @@ namespace RiskAI
                 if (command.Kind == UnitCommandKind.Embark && (!aimed.Type.CanTransport || aimed.Team != Team)) return false;
             }
             if (command.Kind == UnitCommandKind.Capture) return StructureLookup.Find(session, command).Zone != null;
-            if (command.Kind == UnitCommandKind.Unload) return false;
             return true;
         }
 
@@ -584,7 +661,7 @@ namespace RiskAI
                 case UnitCommandKind.Hold: HoldPosition(); return true;
                 case UnitCommandKind.Capture: return ApplyCapture(command);
                 case UnitCommandKind.Embark: return ApplyEmbark(command);
-                default: LastMoveError = "La orden ya no es válida para esa unidad o su objetivo."; return false;
+                default: LastMoveError = OrderQueue.InvalidError; return false;
             }
         }
 
@@ -596,9 +673,13 @@ namespace RiskAI
             if (guardian && guardian.IsAlive && guardian.CanBeAttacked && guardian.Team != Team)
             {
                 Attack(guardian);
-                if (target == guardian && orders.Count < 35)
-                    orders.Enqueue(new Order { Point = structure.Point, Mode = OrderMode.AttackMove });
-                if (target == guardian) return true;
+                if (target == guardian)
+                {
+                    var point = structure.Point;
+                    orders.TryEnqueue(new UnitCommand(Team, EntityId, UnitCommandKind.AttackMove, point.x, point.y, point.z));
+                    PublishRoute();
+                    return true;
+                }
             }
             return TryMoveTo(structure.Point, true, false);
         }
@@ -629,33 +710,37 @@ namespace RiskAI
             }
         }
 
-        int stowedCount;
-        Vector3[] stowedPoints;
-        byte[] stowedKinds;
-
-        /// <summary>Boarding clears the live order but the passenger keeps it for after the unload.</summary>
-        public void RetainOrdersForEmbark()
+        static OrderMode ModeOf(UnitCommandKind kind)
         {
-            if (stowedPoints == null) { stowedPoints = new Vector3[routePoints.Length]; stowedKinds = new byte[routeKinds.Length]; }
-            stowedCount = routePointCount;
-            for (int i = 0; i < stowedCount; i++) { stowedPoints[i] = routePoints[i]; stowedKinds[i] = routeKinds[i]; }
+            switch (kind)
+            {
+                case UnitCommandKind.AttackMove: return OrderMode.AttackMove;
+                case UnitCommandKind.Attack: return OrderMode.Attack;
+                case UnitCommandKind.Patrol: return OrderMode.Patrol;
+                case UnitCommandKind.Follow: return OrderMode.Follow;
+                case UnitCommandKind.Hold: return OrderMode.Hold;
+                default: return OrderMode.Move;
+            }
         }
+
+        /// <summary>Boarding clears the live order but the passenger keeps the drawn route for after the unload.</summary>
+        public void RetainOrdersForEmbark() => orders.StashLegs();
 
         public void RestoreEmbarkOrders()
         {
-            if (stowedCount <= 0) return;
-            TryMoveTo(stowedPoints[0], stowedKinds[0] == (byte)UnitCommandKind.AttackMove, false);
-            for (int i = 1; i < stowedCount; i++)
-                TryMoveTo(stowedPoints[i], stowedKinds[i] == (byte)UnitCommandKind.AttackMove, true);
-            stowedCount = 0;
+            int count = orders.StashCount;
+            if (count <= 0) return;
+            orders.Stashed(0, out var x, out var y, out var z, out var kind);
+            TryMoveTo(new Vector3(x, y, z), kind == (byte)UnitCommandKind.AttackMove, false);
+            for (int i = 1; i < count; i++)
+            {
+                orders.Stashed(i, out x, out y, out z, out kind);
+                TryMoveTo(new Vector3(x, y, z), kind == (byte)UnitCommandKind.AttackMove, true);
+            }
+            orders.ClearStash();
         }
 
-        /// <summary>Waypoints still ahead, including the order being carried out. The first is the active one.</summary>
-        public int OrderLegCount => routePointCount;
-        public int RouteRevision => routeRevision;
         public int PathCornerCount => pathCornerCount;
-        public Vector3 RoutePoint(int index) => routePoints[index];
-        public byte RouteKind(int index) => routeKinds[index];
         public Vector3 PathCorner(int index) => pathCorners[index];
         public void RememberPath()
         {
@@ -665,28 +750,28 @@ namespace RiskAI
             for (int i = 0; i < pathCornerCount; i++) pathCorners[i] = corners[i];
         }
 
-        void NoteRoute()
+        void PublishRoute()
         {
-            routeRevision++;
-            routePointCount = 0;
-            pathCornerCount = 0;
-            if (Agent && Agent.isOnNavMesh && Agent.hasPath)
+            RememberPath();
+            if (mode == OrderMode.Move || mode == OrderMode.AttackMove || mode == OrderMode.Patrol)
+                orders.Publish(true, CommandKind(mode), destination.x, destination.y, destination.z);
+            else if (mode == OrderMode.Attack && target)
             {
-                var corners = Agent.path.corners;
-                pathCornerCount = corners == null ? 0 : Mathf.Min(corners.Length, pathCorners.Length);
-                for (int i = 0; i < pathCornerCount; i++) pathCorners[i] = corners[i];
+                var point = target.transform.position;
+                orders.Publish(true, UnitCommandKind.Attack, point.x, point.y, point.z);
             }
-            void Add(OrderMode orderMode, Vector3 point)
-            {
-                if (routePointCount >= routePoints.Length) return;
-                routeKinds[routePointCount] = (byte)CommandKind(orderMode);
-                routePoints[routePointCount++] = point;
-            }
-            if (mode == OrderMode.Move || mode == OrderMode.AttackMove || mode == OrderMode.Patrol) Add(mode, destination);
-            else if (mode == OrderMode.Attack && target) Add(OrderMode.Attack, target.transform.position);
-            else if (mode == OrderMode.Follow && followTargetId != 0) Add(OrderMode.Follow, destination);
-            foreach (var order in orders) Add(order.Mode, order.Point);
+            else if (mode == OrderMode.Follow && followTargetId != 0)
+                orders.Publish(true, UnitCommandKind.Follow, destination.x, destination.y, destination.z);
+            else orders.Publish(false, UnitCommandKind.Move, 0, 0, 0);
         }
+
+        bool IPostClaimant.ContendsOnFoot => this && isActiveAndEnabled && IsAlive && Agent && Agent.enabled && Agent.isOnNavMesh &&
+            (PlayerRules.IsPlayer(Team) || Team == PlayerRules.NeutralTeam);
+        bool IPostClaimant.BlockedByOtherPost(CityClaimZone zone) => this && IsGarrison && Garrison != zone;
+        bool IPostClaimant.TryBindPost(CityClaimZone zone) =>
+            this && zone != null && ((IPostClaimant)this).ContendsOnFoot && !(IsGarrison && Garrison != zone) && BindGarrison(zone);
+        void IPostClaimant.ReleasePost(CityClaimZone zone) { if (this) ReleaseGarrison(zone); }
+        bool IPostClaimant.DropStale(CityClaimZone zone) => !this || !((IPostClaimant)this).ContendsOnFoot || Garrison != zone;
 
         public float Heal(float amount)
         {

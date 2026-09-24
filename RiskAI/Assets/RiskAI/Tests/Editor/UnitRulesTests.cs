@@ -81,6 +81,46 @@ namespace RiskAI.Tests
         }
 
         [Test]
+        public void OneQueueAdmitsShiftStopAndTheCap()
+        {
+            var queue = new OrderQueue();
+            var move = new UnitCommand(0, 1, UnitCommandKind.Move, 1, 0, 2, append: true);
+            Assert.That(queue.Admit(move, false), Is.EqualTo(OrderQueue.AdmitResult.Run), "the first Shift order on an idle unit starts now");
+            Assert.That(queue.Count, Is.EqualTo(0));
+            Assert.That(queue.Admit(move, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
+            var replace = new UnitCommand(0, 1, UnitCommandKind.AttackMove, 3, 0, 4, append: false);
+            Assert.That(queue.Admit(replace, true), Is.EqualTo(OrderQueue.AdmitResult.Run));
+            Assert.That(queue.Count, Is.EqualTo(0), "an order without Shift replaces the queue");
+            for (int i = 0; i < OrderQueue.Limit; i++)
+                Assert.That(queue.Admit(move, true), Is.EqualTo(OrderQueue.AdmitResult.Queued));
+            Assert.That(queue.Admit(move, true), Is.EqualTo(OrderQueue.AdmitResult.Full));
+            Assert.That(queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Stop, append: true), true), Is.EqualTo(OrderQueue.AdmitResult.Run));
+            Assert.That(queue.Count, Is.EqualTo(0), "Stop never stays in the queue");
+            Assert.That(queue.Admit(new UnitCommand(0, 1, UnitCommandKind.Hold), true), Is.EqualTo(OrderQueue.AdmitResult.Run));
+
+            queue.Admit(move, true);
+            queue.Publish(true, UnitCommandKind.Move, 8, 0, 9);
+            Assert.That(queue.LegCount, Is.EqualTo(2));
+            queue.Leg(0, out var x, out _, out var z, out var kind);
+            Assert.That(x, Is.EqualTo(8f));
+            Assert.That(z, Is.EqualTo(9f));
+            Assert.That(kind, Is.EqualTo((byte)UnitCommandKind.Move));
+            queue.StashLegs();
+            queue.Clear();
+            queue.Publish(false, UnitCommandKind.Move, 0, 0, 0);
+            Assert.That(queue.LegCount, Is.EqualTo(0));
+            Assert.That(queue.StashCount, Is.EqualTo(2), "boarding keeps the route that was showing");
+            Assert.That(UnitRules.OnTargetLost(UnitCommandKind.AttackMove), Is.EqualTo(UnitRules.TargetLost.KeepDestination));
+            Assert.That(UnitRules.OnTargetLost(UnitCommandKind.Attack), Is.EqualTo(UnitRules.TargetLost.Advance));
+            Assert.That(UnitRules.OnTargetLost(UnitCommandKind.Move), Is.EqualTo(UnitRules.TargetLost.KeepDestination));
+            Assert.That(UnitRules.KindAllowed(UnitDomain.Land, UnitCommandKind.Unload), Is.False);
+            Assert.That(UnitRules.KindAllowed(UnitDomain.Sea, UnitCommandKind.Unload), Is.True);
+            Assert.That(UnitRules.KindAllowed(UnitDomain.Land, UnitCommandKind.Patrol), Is.True);
+            Assert.That(UnitRules.KindAllowed(UnitDomain.Sea, UnitCommandKind.Patrol), Is.False);
+            Assert.That(UnitRules.KindAllowed(UnitDomain.Sea, UnitCommandKind.Capture), Is.True);
+        }
+
+        [Test]
         public void RelationsFollowTeams()
         {
             Assert.That(UnitRules.Relation(1, 1, true, PlayerRules.NeutralTeam), Is.EqualTo(UnitRelation.Self));

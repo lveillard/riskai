@@ -64,7 +64,7 @@ namespace RiskAI
             CommandResult result;
             if(session.Paused) result = Fail(command, "La partida está detenida.");
             else if(session.Winner>=0) result = Fail(command, "La batalla ha terminado.");
-            else if(queue.Count>=1024) result = Fail(command, "La cola de órdenes está llena.");
+            else if(queue.Count>=1024) result = Fail(command, OrderQueue.FullError);
             else if(!Valid(command, false)) result = Fail(command, RejectionReason(command));
             else if(SeaOrder(command)) result = ApplyNow(command);
             else
@@ -129,7 +129,7 @@ namespace RiskAI
             if (actor != null && actor.IsGarrison && actor.Type.Domain == UnitDomain.Land)
                 return "El defensor necesita un relevo aliado dentro del círculo.";
             if (actor != null && !string.IsNullOrEmpty(actor.OrderError)) return actor.OrderError;
-            return "La orden ya no es válida para esa unidad o su objetivo.";
+            return OrderQueue.InvalidError;
         }
         bool Valid(UnitCommand command, bool releaseGarrison)
         {

@@ -105,6 +105,35 @@ namespace RiskAI.Core
             return OrderQueueAction.Append;
         }
 
+        /// <summary>A direct attack advances the queue when its target dies. Attack-move keeps the point.</summary>
+        public enum TargetLost { KeepDestination, Advance }
+
+        public static TargetLost OnTargetLost(UnitCommandKind active) =>
+            active == UnitCommandKind.Attack ? TargetLost.Advance : TargetLost.KeepDestination;
+
+        /// <summary>Which commands a domain can carry. The motor still checks the point.</summary>
+        public static bool KindAllowed(UnitDomain domain, UnitCommandKind kind)
+        {
+            switch (kind)
+            {
+                case UnitCommandKind.Move:
+                case UnitCommandKind.AttackMove:
+                case UnitCommandKind.Attack:
+                case UnitCommandKind.Stop:
+                case UnitCommandKind.Hold:
+                case UnitCommandKind.Capture:
+                    return domain == UnitDomain.Land || domain == UnitDomain.Sea;
+                case UnitCommandKind.Patrol:
+                case UnitCommandKind.Follow:
+                case UnitCommandKind.Embark:
+                    return domain == UnitDomain.Land;
+                case UnitCommandKind.Unload:
+                    return domain == UnitDomain.Sea;
+                default:
+                    return false;
+            }
+        }
+
         public static UnitRelation Relation(int ownTeam, int targetTeam, bool self, int neutralTeam)
         {
             if (self) return UnitRelation.Self;

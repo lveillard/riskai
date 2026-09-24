@@ -7,14 +7,11 @@ using UnityEngine.AI;
 namespace RiskAI
 {
     // Mirrors Core.UnitKind ordinals (cast directly): append new kinds at the end only.
-    public sealed class Ship : CombatTarget, IOrderable
+    public sealed class Ship : CombatTarget, IOrderable, IPostClaimant
     {
         readonly List<Soldier> cargo=new List<Soldier>();
         readonly List<Vector3> route=new List<Vector3>();
-        readonly Queue<UnitCommand> orderQueue=new Queue<UnitCommand>(8);
-        readonly Vector3[] orderPoints=new Vector3[36];
-        readonly byte[] orderKinds=new byte[36];
-        int orderPointCount, orderRevision;
+        readonly OrderQueue orders=new OrderQueue();
         NavalWorld world;int routeIndex;float nextAttack,nextTargetPath,simDelta,nextSense,lastRouteProgressAt;
         Vector3 routeGoal, attackMoveGoal;
         bool hasRouteGoal, hasAttackMoveGoal;
@@ -83,7 +80,7 @@ namespace RiskAI
 
         internal void Initialize(NavalWorld naval,int team,UnitKind kind)
         {
-            world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
+            world=naval;Team=team;Kind=kind;Health=MaxHealth;harborGuard=orderedHarbor=null;orders.Reset();transform.position=new Vector3(transform.position.x,-.24f,transform.position.z);
             NavalArt.CreateShip(this);
             targetVolume=GetComponent<BoxCollider>();
         }
@@ -137,7 +134,7 @@ namespace RiskAI
             orderedHarbor=null;
             route.Clear();route.AddRange(next);routeIndex=0;routeGoal=enemy.transform.position;hasRouteGoal=next.Count>0;NoteRouteAccepted();RouteRevision++;target=enemy;attackMoveOrder=false;hasAttackMoveGoal=false;nextTargetPath=0;pendingShoreUnload=false;
         }
-        public void Stop(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;pendingShoreUnload=false;orderQueue.Clear();NoteOrderRoute();}
+        public void Stop(){orderedHarbor=null;route.Clear();routeIndex=0;hasRouteGoal=false;target=null;attackMoveOrder=false;hasAttackMoveGoal=false;pendingShoreUnload=false;orders.Clear();PublishOrders();}
         /// <summary>Queues a source-style unload at a validated shore after sailing there.</summary>
         public string SailToShore(Vector3 shore)
         {
@@ -231,8 +228,11 @@ namespace RiskAI
             }
             if(!object.ReferenceEquals(target,null)&&!UnitTargeting.CanTarget(this,Team,Type.Weapon,target))
             {
+                var kind=attackMoveOrder?UnitCommandKind.AttackMove:UnitCommandKind.Attack;
                 target=null;
-                if(!ResumeAttackMove())ClearRoute();
+                if(UnitRules.OnTargetLost(kind)==UnitRules.TargetLost.KeepDestination){if(!ResumeAttackMove())ClearRoute();}
+                else ClearRoute();
+                PublishOrders();
             }
             // A garrison can fire and turn in place, but autonomous targeting may
             // not move it off the same fixed anchor used by the capture circle.
@@ -341,6 +341,21 @@ namespace RiskAI
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}
         // Weapon range by the units.json measure (ToHull: to the target's attackable surface).
         float RangeTo(CombatTarget enemy)=>enemy?UnitTargeting.WeaponDistance(this,Type.Weapon,enemy):float.MaxValue;
+        public OrderQueue Orders => orders;
+        public int OrderLegCount => orders.LegCount;
+        public Vector3 OrderLegPoint(int index)
+        {
+            orders.Leg(index, out var x, out var y, out var z, out _);
+            return new Vector3(x, y, z);
+        }
+        public UnitCommandKind OrderLegKind(int index)
+        {
+            orders.Leg(index, out _, out _, out _, out var kind);
+            return (UnitCommandKind)kind;
+        }
+        public int ActivePathCount => routeIndex < route.Count ? route.Count - routeIndex : 0;
+        public Vector3 ActivePathPoint(int index) => route[routeIndex + index];
+        public void RefreshActivePath() { }
         string IOrderable.OrderError => LastActionError;
         bool IOrderable.Authorize(in UnitCommand command, bool commitRelease) => Authorize(command, commitRelease);
         bool IOrderable.ApplyOrder(in UnitCommand command) => ApplyOrder(command);
@@ -352,6 +367,11 @@ namespace RiskAI
             LastActionError = null;
             if (!IsAlive) return false;
             if (world == null || world.Session.Paused || world.Session.Winner >= 0) return false;
+            if (!UnitRules.KindAllowed(Type.Domain, command.Kind))
+            {
+                LastActionError = OrderQueue.InvalidError;
+                return false;
+            }
             var point = new Vector3(command.X, command.Y, command.Z);
             switch (command.Kind)
             {
@@ -371,7 +391,7 @@ namespace RiskAI
                     if (!harbor) { LastActionError = "Elige un puerto de desembarco."; return false; }
                     return true;
                 default:
-                    LastActionError = "La orden ya no es válida para esa unidad o su objetivo.";
+                    LastActionError = OrderQueue.InvalidError;
                     return false;
             }
         }
@@ -414,84 +434,98 @@ namespace RiskAI
             return false;
         }
 
-        public int OrderLegCount => orderPointCount;
-        public int OrderRevision => orderRevision;
-        public Vector3 OrderPoint(int index) => orderPoints[index];
-        public byte OrderKind(int index) => orderKinds[index];
-        public int SeaRouteCount => routeIndex < route.Count ? route.Count - routeIndex : 0;
-        public Vector3 SeaRoutePoint(int index) => route[routeIndex + index];
-
-        void NoteOrderRoute()
+        void PublishOrders()
         {
-            orderRevision++;
-            orderPointCount = 0;
             if (routeIndex < route.Count)
             {
-                orderKinds[orderPointCount] = (byte)(attackMoveOrder ? UnitCommandKind.AttackMove : UnitCommandKind.Move);
-                orderPoints[orderPointCount++] = route[route.Count - 1];
+                var end = route[route.Count - 1];
+                orders.Publish(true, attackMoveOrder ? UnitCommandKind.AttackMove : UnitCommandKind.Move, end.x, end.y, end.z);
             }
             else if (target)
             {
-                orderKinds[orderPointCount] = (byte)UnitCommandKind.Attack;
-                orderPoints[orderPointCount++] = target.transform.position;
+                var point = target.transform.position;
+                orders.Publish(true, UnitCommandKind.Attack, point.x, point.y, point.z);
             }
-            foreach (var order in orderQueue)
-            {
-                if (orderPointCount >= orderPoints.Length) break;
-                orderKinds[orderPointCount] = (byte)order.Kind;
-                orderPoints[orderPointCount++] = new Vector3(order.X, order.Y, order.Z);
-            }
+            else orders.Publish(false, UnitCommandKind.Move, 0, 0, 0);
         }
 
         bool BusyOrder() => target != null || routeIndex < route.Count || pendingShoreUnload;
         void DrainOrders()
         {
-            if (orderQueue.Count == 0 || BusyOrder()) return;
-            ApplyOrder(orderQueue.Dequeue(), false);
+            if (orders.Count == 0 || BusyOrder()) return;
+            if (orders.TryDequeue(out var next)) ApplyOrder(next, false);
         }
 
         bool ApplyOrder(in UnitCommand command) => ApplyOrder(command, true);
         bool ApplyOrder(in UnitCommand command, bool honorQueue)
         {
-            if (honorQueue && command.Append && BusyOrder())
+            if (honorQueue)
             {
-                if (orderQueue.Count >= 35) { LastActionError = "La cola de órdenes está llena."; return false; }
-                orderQueue.Enqueue(command);
-                NoteOrderRoute();
-                return true;
+                switch (orders.Admit(command, BusyOrder()))
+                {
+                    case OrderQueue.AdmitResult.Full:
+                        LastActionError = OrderQueue.FullError;
+                        return false;
+                    case OrderQueue.AdmitResult.Queued:
+                        PublishOrders();
+                        return true;
+                }
             }
-            if (honorQueue && !command.Append) orderQueue.Clear();
+            bool ok = Run(command);
+            PublishOrders();
+            return ok;
+        }
+
+        bool Run(in UnitCommand command)
+        {
             var point = new Vector3(command.X, command.Y, command.Z);
-            bool ok;
             switch (command.Kind)
             {
-                case UnitCommandKind.Move: MoveTo(point, false); ok = string.IsNullOrEmpty(LastActionError); break;
-                case UnitCommandKind.AttackMove: MoveTo(point, true); ok = string.IsNullOrEmpty(LastActionError); break;
+                case UnitCommandKind.Move: MoveTo(point, false); return string.IsNullOrEmpty(LastActionError);
+                case UnitCommandKind.AttackMove: MoveTo(point, true); return string.IsNullOrEmpty(LastActionError);
                 case UnitCommandKind.Attack:
                     Attack(world.Session.FindTarget(command.TargetId));
-                    ok = true;
-                    break;
+                    return true;
                 case UnitCommandKind.Stop:
                 case UnitCommandKind.Hold:
                     Stop();
-                    ok = true;
-                    break;
+                    return true;
                 case UnitCommandKind.Unload:
-                    ok = string.IsNullOrEmpty(SailToShore(point));
-                    break;
+                    return string.IsNullOrEmpty(SailToShore(point));
                 case UnitCommandKind.Capture:
                     var harbor = CaptureHarbor(command);
-                    if (!harbor) { LastActionError = "Elige un puerto de desembarco."; ok = false; break; }
+                    if (!harbor) { LastActionError = "Elige un puerto de desembarco."; return false; }
                     SailToHarbor(harbor);
-                    ok = string.IsNullOrEmpty(LastActionError);
-                    break;
+                    return string.IsNullOrEmpty(LastActionError);
                 default:
-                    LastActionError = "La orden ya no es válida para esa unidad o su objetivo.";
-                    ok = false;
-                    break;
+                    LastActionError = OrderQueue.InvalidError;
+                    return false;
             }
-            NoteOrderRoute();
-            return ok;
+        }
+
+        bool IPostClaimant.ContendsOnFoot => false;
+        bool IPostClaimant.BlockedByOtherPost(CityClaimZone zone) => harborGuard && (zone == null || harborGuard.ClaimZone != zone);
+        bool IPostClaimant.TryBindPost(CityClaimZone zone)
+        {
+            if (!this) return false;
+            var port = zone != null ? zone.Port : null;
+            if (!port || !IsAlive || !Type.CanCapture || (harborGuard && harborGuard != port)) return false;
+            BindHarborGuard(port);
+            return true;
+        }
+        void IPostClaimant.ReleasePost(CityClaimZone zone)
+        {
+            if (!this) return;
+            var port = zone != null ? zone.Port : null;
+            ReleaseHarborGuard(port ? port : harborGuard);
+        }
+        bool IPostClaimant.DropStale(CityClaimZone zone)
+        {
+            if (!this) return true;
+            var port = zone != null ? zone.Port : null;
+            if (port && port.HasNavalDefender) return false;
+            ReleaseHarborGuard(harborGuard);
+            return true;
         }
 
         Harbor CaptureHarbor(in UnitCommand command)

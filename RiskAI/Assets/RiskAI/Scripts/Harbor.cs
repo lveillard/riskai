@@ -192,7 +192,7 @@ namespace RiskAI
             if(navalDefender!=departing)return true;
             return claimZone.TryReleaseGuardianForOrder(world.Session,departing);
         }
-        internal Ship FindDockedSuccessor(int owner,Ship excluded,bool alliesOnly)
+        internal CombatTarget FindDockedSuccessor(int owner,CombatTarget excluded,bool alliesOnly)
         {
             if(!world)return null;
             Ship best=null;float bestDistance=float.MaxValue;
