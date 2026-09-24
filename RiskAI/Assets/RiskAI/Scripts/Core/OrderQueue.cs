@@ -13,17 +13,14 @@ namespace RiskAI.Core
         public const string FullError = "La cola de órdenes está llena.";
         public const string InvalidError = "La orden ya no es válida para esa unidad o su objetivo.";
 
-        public enum AdmitResult { Run, Queued, Full }
+        public enum AdmitResult { Run, Queued, Full, Rejected }
 
         readonly UnitCommand[] items = new UnitCommand[Limit];
         readonly float[] legX = new float[LegCap];
         readonly float[] legY = new float[LegCap];
         readonly float[] legZ = new float[LegCap];
         readonly byte[] legKind = new byte[LegCap];
-        readonly float[] stashX = new float[LegCap];
-        readonly float[] stashY = new float[LegCap];
-        readonly float[] stashZ = new float[LegCap];
-        readonly byte[] stashKind = new byte[LegCap];
+        readonly UnitCommand[] stash = new UnitCommand[LegCap];
         int head, count, legCount, revision, stashCount;
 
         public int Count => count;
@@ -117,26 +114,26 @@ namespace RiskAI.Core
             kind = legKind[index];
         }
 
-        /// <summary>Boarding keeps the drawn route (active leg plus queue) for after the unload.</summary>
-        public void StashLegs()
+        /// <summary>
+        /// Validates before any mutation. A rejected order leaves the queue as it was.
+        /// Stop and Hold still clear. Shift while busy appends. Anything else replaces and runs.
+        /// </summary>
+        public AdmitResult Commit(in UnitCommand command, bool busy, bool valid)
         {
-            stashCount = legCount;
-            for (int i = 0; i < stashCount; i++)
-            {
-                stashX[i] = legX[i];
-                stashY[i] = legY[i];
-                stashZ[i] = legZ[i];
-                stashKind[i] = legKind[i];
-            }
+            if (!valid) return AdmitResult.Rejected;
+            return Admit(command, busy);
         }
 
-        public void Stashed(int index, out float x, out float y, out float z, out byte kind)
+        /// <summary>Boarding keeps the active command and the queue, kinds and targets included.</summary>
+        public void Stash(bool hasActive, in UnitCommand active)
         {
-            x = stashX[index];
-            y = stashY[index];
-            z = stashZ[index];
-            kind = stashKind[index];
+            stashCount = 0;
+            if (hasActive && stashCount < LegCap) stash[stashCount++] = active;
+            for (int i = 0; i < count && stashCount < LegCap; i++)
+                stash[stashCount++] = items[(head + i) % Limit];
         }
+
+        public UnitCommand StashedCommand(int index) => stash[index];
 
         public void ClearStash() => stashCount = 0;
     }

@@ -213,8 +213,7 @@ namespace RiskAI
             if(!transport||!transport.IsAlive||!destination||!destination.TryTransportLanding(out _,out destinationTransportBerth)){Fail();return;}
             if(!sailOrderIssued)
             {
-                world.OrderDisembark(transport,destination);
-                if(!string.IsNullOrEmpty(transport.LastActionError)){Fail();return;}
+                if(!DisembarkAccepted(world.SubmitDisembark(transport,destination))){Fail();return;}
                 if(session.AiProfile.NavalEscort)OrderEscort();
                 sailOrderIssued=true;return;
             }
@@ -253,8 +252,7 @@ namespace RiskAI
             {
                 returnHarbor=NearestRecoveryHarbor(transport.transform.position);
                 if(!returnHarbor){phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
-                world.OrderDisembark(transport,returnHarbor);
-                if(!string.IsNullOrEmpty(transport.LastActionError)){phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
+                if(!DisembarkAccepted(world.SubmitDisembark(transport,returnHarbor))){phase=Phase.Cooldown;retryAt=session.BattleTime+RetrySeconds;return;}
                 phaseDeadline=session.BattleTime+ReturnDeadline();
             }
         }
@@ -461,8 +459,7 @@ namespace RiskAI
                 transport=ship;
                 returnHarbor=NearestRecoveryHarbor(ship.transform.position);
                 if(!returnHarbor){retryAt=session.BattleTime+RetrySeconds;return true;}
-                world.OrderDisembark(ship,returnHarbor);
-                if(!string.IsNullOrEmpty(ship.LastActionError)){retryAt=session.BattleTime+RetrySeconds;return true;}
+                if(!DisembarkAccepted(world.SubmitDisembark(ship,returnHarbor))){retryAt=session.BattleTime+RetrySeconds;return true;}
                 phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();
                 return true;
             }
@@ -510,9 +507,11 @@ namespace RiskAI
         float ReturnDeadline()
         {
             if(!transport)return PhaseTimeout;
-            // OrderDisembark already built the route; timing it must not run A*
-            // again in the same AI decision.
-            return Mathf.Clamp(transport.RemainingRouteDistance/Mathf.Max(.5f,transport.Speed)*1.6f+20f,40f,240f);
+            // The route is applied on the next command drain. Until then the straight
+            // line is enough for the deadline, and it does not search again.
+            float distance=transport.RemainingRouteDistance;
+            if(distance<1f&&returnHarbor)distance=DistanceXZ(transport.transform.position,returnHarbor.Berth);
+            return Mathf.Clamp(distance/Mathf.Max(.5f,transport.Speed)*1.6f+20f,40f,240f);
         }
         static float PathDistance(Vector3 start,IReadOnlyList<Vector3> route,Vector3 end)
         {
@@ -529,8 +528,8 @@ namespace RiskAI
             ClearPlan();
             if(retreat&&transport&&transport.IsAlive&&transport.CargoCount>0)
             {
-                returnHarbor=retreat;world.OrderDisembark(transport,returnHarbor);
-                if(string.IsNullOrEmpty(transport.LastActionError))
+                returnHarbor=retreat;
+                if(DisembarkAccepted(world.SubmitDisembark(transport,returnHarbor)))
                 {
                     phase=Phase.ReturningCargo;phaseDeadline=session.BattleTime+ReturnDeadline();return;
                 }
@@ -546,5 +545,7 @@ namespace RiskAI
         }
         static int PositiveModulo(int value,int divisor) => divisor<=0?0:(value%divisor+divisor)%divisor;
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}
+        bool DisembarkAccepted(CommandResult submitted) =>
+            submitted.CommandId != 0 && session.Commands.TryGetResult(submitted.CommandId, out var stored) && stored.Accepted;
     }
 }

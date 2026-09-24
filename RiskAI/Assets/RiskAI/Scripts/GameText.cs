@@ -142,6 +142,10 @@ namespace RiskAI
             Pair("Menú · ir a tu base · ir a tu puerto","Menu · go to your base · go to your harbor"),
             Pair("Mantener para ver la clasificación","Hold to show the ranking"), Pair("Escribir en el chat","Type in chat"),
             Pair("Cancelar la orden o deseleccionar","Cancel the order or deselect"), Pair("Mostrar vida y nombres","Show health and names"),
+            Pair("Con una tropa ocupada añade la orden: mover, atacar, capturar, seguir, embarcar y desembarcar. Sin Mayús, la orden sustituye la cola. El conmutador de la barra rápida hace lo mismo.",
+                "With a busy unit, add the order: move, attack, capture, follow, board and unload. Without Shift the order replaces the queue. The quick-bar switch does the same."),
+            Pair("Mantener junto a las flechas: la cámara se mueve más rápido","Hold with the arrows: the camera pans faster"),
+            Pair("Encolar","Queue"),
             Pair("Mover la cámara · restablecer la cámara","Pan the camera · reset the camera"),
             Pair("Flechas · Retroceso","Arrows · Backspace"), Pair("Espacio","Space"), Pair("Intro","Enter"),
             // Feedback overlay: log, toasts, alerts, chat and audio settings (BattleHud.Feedback).

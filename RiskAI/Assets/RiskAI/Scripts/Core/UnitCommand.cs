@@ -22,6 +22,9 @@ namespace RiskAI.Core
         public UnitCommand WithCommandId(int commandId) =>
             new UnitCommand(PlayerId, UnitId, Kind, X, Y, Z, TargetId, Append, commandId, StructureId, StructureKind);
 
+        public UnitCommand WithAppend(bool append) =>
+            new UnitCommand(PlayerId, UnitId, Kind, X, Y, Z, TargetId, append, CommandId, StructureId, StructureKind);
+
         public bool HasPoint => Kind == UnitCommandKind.Move || Kind == UnitCommandKind.AttackMove || Kind == UnitCommandKind.Patrol || Kind == UnitCommandKind.Unload;
     }
 

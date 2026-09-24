@@ -64,7 +64,7 @@ namespace RiskAI
             }
             foreach (var town in battle.Towns)
             {
-                if (!town.Selected && !(Keyboard.current != null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed))) continue;
+                if (!town.Selected && (ChatInput.IsTyping || Keyboard.current == null || (!Keyboard.current.leftAltKey.isPressed && !Keyboard.current.rightAltKey.isPressed))) continue;
                 Vector3 label = camera.WorldToScreenPoint(town.transform.position + Vector3.up * BuildingSelection.LabelHeight(town));
                 float s=BattleHud.Scale;
                 // The name plate sits just above its anchor (BattleHud.DrawWorld).

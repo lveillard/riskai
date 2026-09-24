@@ -1,6 +1,5 @@
 using RiskAI.Core;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace RiskAI
 {
@@ -17,8 +16,11 @@ namespace RiskAI
         readonly LineRenderer[] legs = new LineRenderer[SegmentCap];
         readonly LineRenderer[] marks = new LineRenderer[SegmentCap];
         readonly Vector3[] scratch = new Vector3[48];
+        RtsController controller;
         int legCount, markCount;
         public int LegCount { get; private set; }
+
+        void OnEnable() { controller = GetComponent<RtsController>(); }
 
         public void Refresh() => LateUpdate();
         void LateUpdate()
@@ -41,13 +43,7 @@ namespace RiskAI
             markCount = marksDrawn;
         }
 
-        static bool Emphasis()
-        {
-            var keys = Keyboard.current;
-            bool shift = keys != null && (keys.leftShiftKey.isPressed || keys.rightShiftKey.isPressed);
-            var controller = Object.FindFirstObjectByType<RtsController>();
-            return shift || (controller && controller.QueueOrdersArmed);
-        }
+        bool Emphasis() => controller && controller.QueueOrders;
 
         int Draw(IOrderable unit, int drawn, ref int marksDrawn, bool emphasis)
         {

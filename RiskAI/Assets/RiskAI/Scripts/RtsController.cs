@@ -20,7 +20,7 @@ namespace RiskAI
         public bool PatrolCursor { get; private set; }
         public bool UnloadCursor { get; private set; }
         public bool OrderCursor => AttackCursor || MoveCursor || PatrolCursor || UnloadCursor;
-        public bool ShowHealthBars => Keyboard.current!=null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed);
+        public bool ShowHealthBars => !ChatInput.IsTyping && Keyboard.current!=null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed);
         public bool HelpVisible;
         public bool ScoreboardVisible => !HelpVisible && !ChatInput.IsTyping && Keyboard.current!=null && Keyboard.current.tabKey.isPressed;
         public bool EdgePan=true;
@@ -103,8 +103,9 @@ namespace RiskAI
             CameraDragging=false;previousMouse=Pointer;
         }
         public bool OverHud(Vector2 screen) => RtsUiInput.BlocksWorld(screen) || HelpVisible || ScoreboardVisible || session.Winner>=0;
-        bool Shift => Keyboard.current!=null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
-        bool FastPan => Keyboard.current!=null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed);
+        bool Shift => !ChatInput.IsTyping && Keyboard.current!=null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+        // F4 is free: Alt shows health, Shift queues orders, Ctrl stores groups.
+        bool FastPan => !ChatInput.IsTyping && Keyboard.current!=null && Keyboard.current.f4Key.isPressed;
         /// <summary>Shift, or the touch "Encolar" switch, appends an order.</summary>
         public bool QueueOrders => Shift || queueOrders;
         bool queueOrders;
@@ -280,7 +281,7 @@ namespace RiskAI
             foreach (var unit in Selection) if (IsSelectableSoldier(unit))
                 session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Capture, point.x, point.y, point.z, append: QueueOrders, structureId: id, structureKind: kind));
             foreach (var ship in Fleet) if (IsSelectableShip(ship))
-                OrderShip(ship, UnitCommandKind.Capture, point, structureId: id, structureKind: kind);
+                OrderShip(ship, UnitCommandKind.Capture, point, append: QueueOrders, structureId: id, structureKind: kind);
         }
         void OnApplicationFocus(bool hasFocus)
         {
@@ -348,7 +349,7 @@ namespace RiskAI
             if(!harbor){CancelCursor();UnloadCursor=true;session.Message("Desembarco: haz clic en una playa transitable. El transporte navegará hasta ella.",MessageKind.Info);return;}
             foreach(var ship in Fleet)if(IsSelectableShip(ship)&&ship.Type.CanTransport)
             {
-                var sailed=OrderShip(ship,UnitCommandKind.Capture,harbor.Landing,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
+                var sailed=OrderShip(ship,UnitCommandKind.Capture,harbor.Landing,append:QueueOrders,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
                 if(!sailed.Accepted)session.Message(sailed.Error,MessageKind.Info);
             }
         }
@@ -436,7 +437,7 @@ namespace RiskAI
             PurgeStaleSelection();
             if(!harbor||Fleet.Count==0)return;
             CancelBoardingForSelection();
-            foreach(var ship in Fleet)if(IsSelectableShip(ship))OrderShip(ship,UnitCommandKind.Capture,harbor.Landing,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
+            foreach(var ship in Fleet)if(IsSelectableShip(ship))OrderShip(ship,UnitCommandKind.Capture,harbor.Landing,append:QueueOrders,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
         }
         void BeginBoarding(Ship transport) => BeginBoarding(transport,Selection);
         void BeginBoarding(Ship transport,IReadOnlyList<Soldier> candidates)
@@ -451,10 +452,10 @@ namespace RiskAI
             if(available.Count==0){session.Message("Embarque completado: "+transport.CargoCount+" / "+transport.Type.Transport.Capacity+".",MessageKind.Info);return;}
             if(!naval.TryPlanEmbark(transport,available,out var landing,out var berth,out var error)){session.Message(error,MessageKind.Info);return;}
             pendingBoardingTransport=transport;pendingBoardingLanding=landing;
-            var sailed=OrderShip(transport,UnitCommandKind.Move,berth);
+            var sailed=OrderShip(transport,UnitCommandKind.Move,berth,append:QueueOrders);
             if(!sailed.Accepted){session.Message(sailed.Error,MessageKind.Info);CancelPendingBoarding();return;}
             foreach(var soldier in available)
-            {pendingBoarders.Add(new SoldierRef(soldier));session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z));}
+            {pendingBoarders.Add(new SoldierRef(soldier));session.Commands.Submit(new UnitCommand(0,soldier.EntityId,UnitCommandKind.Move,landing.x,landing.y,landing.z,append:QueueOrders));}
             lastBoardingProgress=session.BattleTime;previousBoarderCount=pendingBoarders.Count;
             nextBoardingCheck=session.BattleTime;nextBoardingRecovery=session.BattleTime+1f;
             ShowOrder(landing,false);session.Message("Embarcando: tropas y transporte se reúnen en la costa marcada.",MessageKind.Info);

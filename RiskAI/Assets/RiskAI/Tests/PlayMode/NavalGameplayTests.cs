@@ -155,6 +155,7 @@ namespace RiskAI.Tests
    Assert.That(MapLayout.IsLand(land.position.x,land.position.z),Is.True,"The fixture must click land beside navigable sea.");
    var controller=Object.FindFirstObjectByType<RtsController>();controller.SelectShip(ship);
    long revision=ship.RouteRevision;controller.OrderAt(land.position);
+   battle.Clock.Advance(SimClock.StepSeconds,false,battle.World.Tick);
    Assert.That(ship.LastActionError,Is.Null);
    Assert.That(ship.RouteRevision,Is.GreaterThan(revision),"A coastal land click must become a valid sea route.");
    const BindingFlags hidden=BindingFlags.Instance|BindingFlags.NonPublic;

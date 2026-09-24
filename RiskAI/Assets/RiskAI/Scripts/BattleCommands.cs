@@ -66,7 +66,6 @@ namespace RiskAI
             else if(session.Winner>=0) result = Fail(command, "La batalla ha terminado.");
             else if(queue.Count>=1024) result = Fail(command, OrderQueue.FullError);
             else if(!Valid(command, false)) result = Fail(command, RejectionReason(command));
-            else if(SeaOrder(command)) result = ApplyNow(command);
             else
             {
                 double submittedAt = Time.realtimeSinceStartupAsDouble;
@@ -95,27 +94,22 @@ namespace RiskAI
         public CommandResult SubmitResult(int playerId, int unitId, UnitCommandKind kind, float x = 0, float y = 0, float z = 0, int targetId = 0, bool append = false, string structureId = null, BuildingKind structureKind = BuildingKind.Settlement) =>
             SubmitResult(new UnitCommand(playerId, unitId, kind, x, y, z, targetId, append, structureId: structureId, structureKind: structureKind));
 
-        bool SeaOrder(UnitCommand command)
-        {
-            var actor = session.FindTarget(command.UnitId) as IOrderable;
-            return actor != null && actor.Type.Domain == UnitDomain.Sea;
-        }
-        // A sea route is part of the result the caller reads in this call. The hull still
-        // moves on the next ship tick, which is the same boundary as a direct motor order.
-        CommandResult ApplyNow(UnitCommand command)
-        {
-            var actor = session.FindTarget(command.UnitId) as IOrderable;
-            if (actor == null || !Valid(command, true)) return Fail(command, "La unidad, el relevo o el objetivo cambió antes de aplicar la orden.");
-            if (!actor.ApplyOrder(command)) return Fail(command, string.IsNullOrEmpty(actor.OrderError) ? "No se ha podido aplicar la orden." : actor.OrderError);
-            AppliedCount++;
-            if (command.PlayerId == 0) telemetry.HumanSubmitted++; else telemetry.AiSubmitted++;
-            RecordApplied(command.PlayerId, 0, 0);
-            return CommandResult.Accept(command);
-        }
         void Remember(CommandResult result)
         {
             results[resultCount % results.Length] = result;
             resultCount++;
+        }
+        void Revise(CommandResult result)
+        {
+            int available = resultCount < results.Length ? resultCount : results.Length;
+            for (int i = 0; i < available; i++)
+            {
+                int slot = (resultCount - 1 - i + results.Length) % results.Length;
+                if (results[slot].CommandId != result.CommandId) continue;
+                results[slot] = result;
+                return;
+            }
+            Remember(result);
         }
         CommandResult Fail(UnitCommand command, string reason)
         {
@@ -173,7 +167,12 @@ namespace RiskAI
                         ObservedPausedSeconds() - queued.PausedSecondsAtSubmit);
                     actor.BeginHumanMove(command, queued.SubmittedAt, queued.PausedSecondsAtSubmit, firstMoveEligible);
                 }
-                else Reject(command,actor.OrderError??"No se ha podido aplicar la orden.");
+                else
+                {
+                    string reason = string.IsNullOrEmpty(actor.OrderError) ? "No se ha podido aplicar la orden." : actor.OrderError;
+                    Revise(CommandResult.Reject(command, reason));
+                    Reject(command, reason);
+                }
             }
         }
 

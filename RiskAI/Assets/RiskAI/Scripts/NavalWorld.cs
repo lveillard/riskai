@@ -174,11 +174,15 @@ namespace RiskAI
             if(!best){error="No hay playa o muelle de embarque alcanzable.";return false;}
             return true;
         }
+        public CommandResult SubmitDisembark(Ship ship,Harbor harbor)
+        {
+            if(!ship||!ship.Type.CanTransport)return CommandResult.Reject(default,"Selecciona un transporte.");
+            if(!harbor)return CommandResult.Reject(default,"Elige una playa o muelle de desembarco marcado.");
+            return Session.Commands.SubmitResult(ship.Team,ship.EntityId,UnitCommandKind.Capture,harbor.Landing.x,harbor.Landing.y,harbor.Landing.z,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
+        }
         public string OrderDisembark(Ship ship,Harbor harbor)
         {
-            if(!ship||!ship.Type.CanTransport)return "Selecciona un transporte.";
-            if(!harbor)return "Elige una playa o muelle de desembarco marcado.";
-            var sailed=Session.Commands.SubmitResult(ship.Team,ship.EntityId,UnitCommandKind.Capture,harbor.Landing.x,harbor.Landing.y,harbor.Landing.z,structureId:harbor.BuildingId.LocalId,structureKind:BuildingKind.Harbor);
+            var sailed=SubmitDisembark(ship,harbor);
             return sailed.Accepted?"El transporte navega al desembarco marcado.":sailed.Error;
         }
         public int PendingShips(int team)

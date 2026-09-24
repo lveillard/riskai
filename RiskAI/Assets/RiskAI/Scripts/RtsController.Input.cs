@@ -118,17 +118,17 @@ namespace RiskAI
             if (UnloadCursor)
             {
                 var shore = Ground(point);
-                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanTransport) OrderShip(ship, UnitCommandKind.Unload, shore);
+                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanTransport) OrderShip(ship, UnitCommandKind.Unload, shore, append: QueueOrders);
                 ShowOrder(shore, false); CancelCursor(); pressedWorld = false; return;
             }
             var picked = RtsPicking.Target(session, cam, point, -1);
             var victim = AttackCursor ? AttackRecipient(picked) : null;
-            var armed = ClickRules.Resolve(ClickOf(picked, victim, null, null, null, null, true));
+            var armed = ClickRules.Resolve(ClickOf(AttackCursor ? picked : null, victim, null, null, null, null, AttackCursor));
             if (armed == ClickDecision.Capture) OrderCaptureOf(picked);
             else if (armed == ClickDecision.Attack)
             {
-                foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Attack, targetId: victim.EntityId));
-                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanAttack) OrderShip(ship, UnitCommandKind.Attack, victim.transform.position, victim.EntityId);
+                foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Attack, targetId: victim.EntityId, append: QueueOrders));
+                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanAttack) OrderShip(ship, UnitCommandKind.Attack, victim.transform.position, victim.EntityId, append: QueueOrders);
                 ShowOrder(victim.transform.position, true); GameFeel.FlashTarget(victim);
             }
             else OrderAt(Ground(point), AttackCursor);
@@ -158,15 +158,15 @@ namespace RiskAI
                 case ClickDecision.FleetToTownPort: MoveFleetToHarbor(town.Port); break;
                 case ClickDecision.Attack:
                     CancelBoardingForSelection();
-                    foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Attack, targetId: enemy.EntityId));
-                    foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanAttack) OrderShip(ship, UnitCommandKind.Attack, enemy.transform.position, enemy.EntityId);
+                    foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Attack, targetId: enemy.EntityId, append: QueueOrders));
+                    foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanAttack) OrderShip(ship, UnitCommandKind.Attack, enemy.transform.position, enemy.EntityId, append: QueueOrders);
                     ShowOrder(enemy.transform.position, true); GameFeel.FlashTarget(enemy);
                     break;
                 case ClickDecision.Capture: OrderCaptureOf(clickedEnemy, town, harbor); break;
                 case ClickDecision.Board: BeginBoarding(ownShip); break;
                 case ClickDecision.Follow:
                     CancelBoardingForSelection();
-                    foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Follow, targetId: ally.EntityId));
+                    foreach (var unit in Selection) if (IsSelectableSoldier(unit)) session.Commands.Submit(new UnitCommand(0, unit.EntityId, UnitCommandKind.Follow, targetId: ally.EntityId, append: QueueOrders));
                     ShowOrder(ally.transform.position, false);
                     break;
                 case ClickDecision.OrderHarbor: OrderAt(harbor.Landing, harbor.Owner != 0); break;
