@@ -1,4 +1,4 @@
-# Riesgus · v0.34.0
+# Riesgus · v0.34.1
 
 Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.34.0
 (`20260924T203350Z-v034-93b19c7`). La verificación pública coincide en 10/10 hashes
@@ -27,6 +27,8 @@ La v0.32 hace que los países de los mapas propios sigan acantilados, ríos y la
 La v0.33 hace que los buques con orden de ataque disparen desde su alcance (clic en todo el casco, alcance medido al casco), muestra siempre el aviso de zona perdida, cambia el granate del jugador 13 por burdeos, retira los sonidos de muerte provisionales y elimina capas de compatibilidad, alias y código legacy.
 
 La v0.34 lleva todas las unidades a una sola fuente de datos: `units.json`, con esquema TypeBox y contrato C# generado, alimenta estadísticas, armas, sonidos, retratos y reglas ([cómo añadir una unidad](docs/DEVELOPMENT.md), [reglas generadas](docs/RISK-RULES-v0.34.md)). Soldados, barcos y torres comparten una capa de reglas y un único punto de despacho de órdenes. Shift (o el conmutador **Encolar** en táctil) encola cualquier orden —mover, atacar, seguir, capturar, embarcar, desembarcar—, también en barcos, y mientras está pulsado muestra las rutas de la selección. Una orden sin Shift enseña la ruta un momento y se desvanece. El paneo rápido de cámara pasa a F4. Las Marcas y Cuatro Riberas reciben países más compactos ([reglas de disposición](docs/audits/LAYOUT-v0.34.md)). Cambios de comportamiento intencionados: plan §7 de [PLAN-v0.34](docs/PLAN-v0.34-CONFIG-DRIVEN-UNITS.md).
+
+La v0.34.1 da una sola regla de clic para toda la selección, sin distinguir tierra y mar: pinchar una unidad enemiga es siempre atacar (también dentro del círculo de un puerto o puesto), y capturar es pinchar el puesto o su círculo. Seguir y patrullar pasan a ser capacidades de `units.json`. Las líneas de ruta solo se muestran con Shift o **Encolar**, o como un destello de 1,2 s tras una orden, y nunca dibujan el tramo ya recorrido.
 
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
