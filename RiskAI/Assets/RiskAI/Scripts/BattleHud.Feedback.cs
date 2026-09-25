@@ -212,7 +212,7 @@ namespace RiskAI
             recipientChip.tooltip = GameText.Localize("Destinatario · Tab cambia · Mayús+Intro envía a todos");
             recipientSwatch = new VisualElement { pickingMode = PickingMode.Ignore }; recipientSwatch.style.width = recipientSwatch.style.height = 10; recipientSwatch.style.marginRight = 5;
             recipientLabel = new Label { pickingMode = PickingMode.Ignore }; recipientLabel.style.fontSize = 12; recipientLabel.style.color = RtsUiStyle.Text;
-            var chevron = new RtsChevron(true); chevron.style.width = 12; chevron.style.height = 8; chevron.style.marginLeft = 5;
+            var chevron = new RtsIcon(RtsGlyph.ChevronUp, 12); chevron.style.marginLeft = 5;
             recipientChip.Add(recipientSwatch); recipientChip.Add(recipientLabel); recipientChip.Add(chevron);
             // The WebGL DOM field would blur on this tap; keep it open and refocus it afterwards.
             recipientChip.RegisterCallback<PointerDownEvent>(_ => { if (webChat) WebChatInput.Hold(); }, TrickleDown.TrickleDown);

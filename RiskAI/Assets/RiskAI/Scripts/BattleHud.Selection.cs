@@ -12,11 +12,11 @@ namespace RiskAI
             public Label Name,Cities,Units,Income,Countries;
         }
 
-        static Label AddMetric(VisualElement parent,RtsHudGlyph glyph,string value,string tooltip, System.Action action=null, string name=null)
+        static Label AddMetric(VisualElement parent,RtsGlyph glyph,string value,string tooltip, System.Action action=null, string name=null)
         {
             var row=action==null?new VisualElement():ResourceButton(action,name);row.tooltip=GameText.Localize(tooltip);RtsUiStyle.Row(row);
             row.style.flexGrow=1;row.style.minWidth=0;row.style.marginRight=5;
-            var icon=new RtsHudIcon(glyph);icon.style.width=20;icon.style.height=20;
+            var icon=new RtsIcon(glyph);icon.style.width=20;icon.style.height=20;
             row.Add(icon);
             var label=RtsUiStyle.Label(value,null,11);label.style.marginLeft=3;label.style.minWidth=0;label.pickingMode=PickingMode.Ignore;
             label.style.whiteSpace=WhiteSpace.NoWrap;label.style.overflow=Overflow.Hidden;label.style.textOverflow=TextOverflow.Ellipsis;
@@ -26,21 +26,30 @@ namespace RiskAI
 
         void AddPopulationDisplay(VisualElement parent)
         {
-            populationLabel=AddMetric(parent,RtsHudGlyph.Sword,PopulationText,"Unidades totales. Límite de reclutamiento: incluye encargos; los defensores y barcos no consumen plazas.",ShowPopulation,"HUD units button");
+            populationLabel=AddMetric(parent,RtsGlyph.Sword,PopulationText,"Unidades totales. Límite de reclutamiento: incluye encargos; los defensores y barcos no consumen plazas.",ShowPopulation,"HUD units button");
             populationLabel.name="HUD unit population";
         }
 
-        static Button ActionButton(string title,RtsHudGlyph glyph,System.Action action,string hotkey=null)
+        /// <summary>A unit command. With <paramref name="strip"/> it is an icon-only square for the collapsed
+        /// one-row footer: centred, sized to the cell, the name in the tooltip.</summary>
+        static Button ActionButton(string title,RtsGlyph glyph,System.Action action,string hotkey=null,float strip=0)
         {
             var button=RtsUiStyle.Button("",action,"HUD action "+title);
-            button.tooltip=GameText.Localize(title);button.style.flexBasis=0;button.style.flexGrow=1;button.style.minWidth=0;
+            button.tooltip=GameText.Localize(title);
+            if(strip>0)
+            {
+                SquareCell(button,strip);button.style.alignItems=Align.Center;
+                button.Add(new RtsIcon(glyph,Mathf.Round(strip*.6f)));
+                return button;
+            }
+            button.style.flexBasis=0;button.style.flexGrow=1;button.style.minWidth=0;
             button.style.marginLeft=0;button.style.marginTop=0;button.style.marginRight=2;button.style.marginBottom=5;
             button.style.paddingLeft=1;button.style.paddingRight=1;button.style.paddingTop=3;button.style.paddingBottom=3;
             button.style.height=48;button.style.minHeight=48;button.style.flexShrink=0;button.style.alignItems=Align.Center;
             bool cell=!UiViewport.IsCompact;
             // Desktop: the same square command-cell language as the production grid.
             if(cell){SquareCell(button,CommandCellSize);button.style.alignItems=Align.Center;}
-            var icon=new RtsHudIcon(glyph);icon.style.width=cell?26:24;icon.style.height=cell?26:24;button.Add(icon);
+            button.Add(new RtsIcon(glyph,cell?28:26));
             var label=RtsUiStyle.Label(title,null,9);label.pickingMode=PickingMode.Ignore;
             label.style.maxWidth=Length.Percent(100);label.style.overflow=Overflow.Hidden;label.style.textOverflow=TextOverflow.Ellipsis;
             button.Add(label);

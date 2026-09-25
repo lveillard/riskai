@@ -482,16 +482,16 @@ namespace RiskAI
         }
 
         // Unit command card. Keys are the unit hotkeys that stay live while no building is selected.
-        (string title,RtsHudGlyph glyph,System.Action action,string key)[] PrimaryOrders() => new (string,RtsHudGlyph,System.Action,string)[]
+        (string title,RtsGlyph glyph,System.Action action,string key)[] PrimaryOrders() => new (string,RtsGlyph,System.Action,string)[]
         {
-            ("Mover",RtsHudGlyph.Move,controller.ArmMove,"M"),("Atacar",RtsHudGlyph.Sword,controller.ArmAttack,"A"),
-            ("Patrullar",RtsHudGlyph.Patrol,controller.ArmPatrol,"P"),("Detener",RtsHudGlyph.Stop,controller.Stop,"S"),
-            ("Mantener",RtsHudGlyph.Shield,controller.Hold,"H"),("Centrar",RtsHudGlyph.Focus,controller.FocusSelection,null)
+            ("Mover",RtsGlyph.Move,controller.ArmMove,"M"),("Atacar",RtsGlyph.Sword,controller.ArmAttack,"A"),
+            ("Patrullar",RtsGlyph.Patrol,controller.ArmPatrol,"P"),("Detener",RtsGlyph.Stop,controller.Stop,"S"),
+            ("Mantener",RtsGlyph.Shield,controller.Hold,"H"),("Centrar",RtsGlyph.Focus,controller.FocusSelection,null)
         };
-        (string title,RtsHudGlyph glyph,System.Action action,string key)[] NavalOrders() => new (string,RtsHudGlyph,System.Action,string)[]
+        (string title,RtsGlyph glyph,System.Action action,string key)[] NavalOrders() => new (string,RtsGlyph,System.Action,string)[]
         {
-            ("Embarcar",RtsHudGlyph.Board,controller.BoardNearby,"B"),("Desembarcar",RtsHudGlyph.Unload,controller.UnloadFleet,"D"),
-            ("Puerto",RtsHudGlyph.City,controller.FocusHarbor,"F3")
+            ("Embarcar",RtsGlyph.Board,controller.BoardNearby,"B"),("Desembarcar",RtsGlyph.Unload,controller.UnloadFleet,"D"),
+            ("Puerto",RtsGlyph.Port,controller.FocusHarbor,"F3")
         };
 
         void BuildOrders(VisualElement root)
@@ -511,9 +511,9 @@ namespace RiskAI
 
         void BuildOrderCells(VisualElement strip,float size)
         {
-            foreach(var order in PrimaryOrders()){var button=ActionButton(order.title,order.glyph,order.action,null);SquareCell(button,size);strip.Add(button);}
+            foreach(var order in PrimaryOrders())strip.Add(ActionButton(order.title,order.glyph,order.action,null,size));
             if(controller.Selection.Exists(actor=>actor&&actor.Type.SeaMotor))
-                foreach(var order in NavalOrders()){var button=ActionButton(order.title,order.glyph,order.action,null);SquareCell(button,size);strip.Add(button);}
+                foreach(var order in NavalOrders())strip.Add(ActionButton(order.title,order.glyph,order.action,null,size));
         }
 
         static string UnitTooltip(in UnitType profile)

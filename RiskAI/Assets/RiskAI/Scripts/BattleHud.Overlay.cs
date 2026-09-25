@@ -22,7 +22,7 @@ namespace RiskAI
 
         sealed class QuickButton
         {
-            public Button Button; public RtsQuickIcon Icon;
+            public Button Button; public RtsIcon Icon;
             public System.Func<bool> Struck, Active;
         }
 
@@ -82,18 +82,18 @@ namespace RiskAI
             quickButtons.RemoveAll(q => q.Button == null || q.Button.panel == null);
             var bar = new VisualElement { name = compact ? "HUD quick bar compact" : "HUD quick bar", pickingMode = PickingMode.Ignore };
             RtsUiStyle.Row(bar); bar.style.flexShrink = 0;
-            AddQuick(bar, RtsQuickGlyph.Speaker, "Efectos de sonido (F7)", "HUD quick effects", () => ToggleEffects(false), () => Sfx.Muted, null);
-            AddQuick(bar, RtsQuickGlyph.Note, "Música (F8)", "HUD quick music", () => Music.ToggleMusic(), () => !Music.MusicEnabled, null);
-            AddQuick(bar, RtsQuickGlyph.Ranking, "Clasificación (Tab)", "HUD quick ranking", ToggleRanking, null, () => RankingVisible);
-            AddQuick(bar, RtsQuickGlyph.Map, "Minimapa (F9)", "HUD quick map", ToggleMinimap, null, () => MinimapVisible);
-            AddQuick(bar, RtsQuickGlyph.Queue, "Encolar", "HUD quick queue", controller.ToggleQueueOrders, null, () => controller.QueueOrdersArmed);
-            var chatQuick = AddQuick(bar, RtsQuickGlyph.Chat, "Chat (Intro)", "HUD quick chat", OpenChat, null, () => chatOpen);
+            AddQuick(bar, RtsGlyph.Speaker, "Efectos de sonido (F7)", "HUD quick effects", () => ToggleEffects(false), () => Sfx.Muted, null);
+            AddQuick(bar, RtsGlyph.Note, "Música (F8)", "HUD quick music", () => Music.ToggleMusic(), () => !Music.MusicEnabled, null);
+            AddQuick(bar, RtsGlyph.Ranking, "Clasificación (Tab)", "HUD quick ranking", ToggleRanking, null, () => RankingVisible);
+            AddQuick(bar, RtsGlyph.Map, "Minimapa (F9)", "HUD quick map", ToggleMinimap, null, () => MinimapVisible);
+            AddQuick(bar, RtsGlyph.Queue, "Encolar", "HUD quick queue", controller.ToggleQueueOrders, null, () => controller.QueueOrdersArmed);
+            var chatQuick = AddQuick(bar, RtsGlyph.Chat, "Chat (Intro)", "HUD quick chat", OpenChat, null, () => chatOpen);
             // Touch browsers need the DOM input armed inside the same finger gesture.
             chatQuick.RegisterCallback<PointerDownEvent>(_ => { if (WebChatInput.Supported) WebChatInput.Arm(ChatPlaceholder()); }, TrickleDown.TrickleDown);
             return bar;
         }
 
-        Button AddQuick(VisualElement bar, RtsQuickGlyph glyph, string tooltip, string name, System.Action action, System.Func<bool> struck, System.Func<bool> active)
+        Button AddQuick(VisualElement bar, RtsGlyph glyph, string tooltip, string name, System.Action action, System.Func<bool> struck, System.Func<bool> active)
         {
             var button = RtsUiStyle.Button("", action, name);
             float size = QuickSize;
@@ -103,7 +103,7 @@ namespace RiskAI
             button.style.alignItems = Align.Center; button.style.justifyContent = Justify.Center;
             button.style.backgroundColor = new Color(.06f, .065f, .055f, .88f);
             button.tooltip = GameText.Localize(tooltip);
-            var icon = new RtsQuickIcon(glyph); icon.style.width = icon.style.height = Mathf.Round(size * .62f);
+            var icon = new RtsIcon(glyph); icon.style.width = icon.style.height = Mathf.Round(size * .62f);
             button.Add(icon); bar.Add(button);
             var quick = new QuickButton { Button = button, Icon = icon, Struck = struck, Active = active };
             quickButtons.Add(quick); RefreshQuick(quick);
@@ -188,11 +188,11 @@ namespace RiskAI
             var head = new VisualElement { name = "HUD ranking header", pickingMode = PickingMode.Ignore }; RtsUiStyle.Row(head);
             head.style.marginBottom = 3; head.style.borderBottomWidth = 1; head.style.borderBottomColor = new Color(.72f, .56f, .30f, .45f); head.style.paddingBottom = 2;
             var title = BoardLabel("CLASIFICACIÓN", 0, false); title.style.flexGrow = 1; title.style.color = RtsUiStyle.Gold; head.Add(title);
-            head.Add(BoardHeader(RtsHudGlyph.City, "Ciudades"));
-            head.Add(BoardHeader(RtsHudGlyph.Sword, "Unidades totales, incluidos defensores y barcos"));
+            head.Add(BoardHeader(RtsGlyph.City, "Ciudades"));
+            head.Add(BoardHeader(RtsGlyph.Sword, "Unidades totales, incluidos defensores y barcos"));
             var coin = new VisualElement { pickingMode = PickingMode.Ignore }; coin.style.width = ColumnWidth; coin.style.alignItems = Align.FlexEnd;
             var gold = new RtsGoldIcon(); gold.style.width = gold.style.height = 15; gold.tooltip = GameText.Localize("Ingreso por ronda"); coin.Add(gold); head.Add(coin);
-            head.Add(BoardHeader(RtsHudGlyph.Shield, "Países completos"));
+            head.Add(BoardHeader(RtsGlyph.Shield, "Países completos"));
             board.Add(head);
 
             var rows = new ScrollView(ScrollViewMode.Vertical) { name = "HUD ranking rows" }; rows.style.flexShrink = 1; rows.style.minHeight = 0;
@@ -228,11 +228,11 @@ namespace RiskAI
             return label;
         }
 
-        static VisualElement BoardHeader(RtsHudGlyph glyph, string tooltip)
+        static VisualElement BoardHeader(RtsGlyph glyph, string tooltip)
         {
             var cell = new VisualElement(); cell.style.width = ColumnWidth; cell.style.alignItems = Align.FlexEnd; cell.style.flexShrink = 0;
             cell.tooltip = GameText.Localize(tooltip);
-            var icon = new RtsHudIcon(glyph); icon.style.width = icon.style.height = 15; cell.Add(icon);
+            var icon = new RtsIcon(glyph); icon.style.width = icon.style.height = 15; cell.Add(icon);
             return cell;
         }
 

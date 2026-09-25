@@ -179,7 +179,7 @@ namespace RiskAI.Tests
             Assert.That(root.Q<VisualElement>("HUD tabs"),Is.Null);
             var actions=root.Q<VisualElement>("HUD direct actions");Assert.That(actions,Is.Not.Null);
             Assert.That(actions.Query<Button>().ToList().Count,Is.EqualTo(6));
-            Assert.That(actions.Query<RtsHudIcon>().ToList().Count,Is.EqualTo(6));
+            Assert.That(actions.Query<RtsIcon>().ToList().Count,Is.EqualTo(6));
             var buttons=actions.Query<Button>().ToList();
             foreach(var button in buttons)
             {

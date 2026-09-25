@@ -203,7 +203,7 @@ namespace RiskAI
             button.tooltip = GameText.Localize("Más opciones · página " + (page + 1) + " / " + pages);
             SquareCell(button, size); button.style.justifyContent = Justify.Center; button.style.alignItems = Align.Center;
             var label = RtsUiStyle.Label((page + 1) + "/" + pages, null, 12); label.pickingMode = PickingMode.Ignore; label.style.color = RtsUiStyle.Gold;
-            button.Add(new RtsChevron(false)); button.Add(label);
+            button.Add(new RtsIcon(RtsGlyph.ChevronDown, 18)); button.Add(label);
             if (showKey) button.Add(Badge(ProductionHotkeys.PageKey, RtsUiStyle.Gold, true, true, 11));
             return button;
         }
@@ -279,7 +279,7 @@ namespace RiskAI
             handle.style.paddingLeft = handle.style.paddingRight = handle.style.paddingTop = handle.style.paddingBottom = 0;
             handle.style.alignItems = Align.Center; handle.style.justifyContent = Justify.Center;
             handle.style.backgroundColor = RtsUiStyle.PanelColor;
-            handle.Add(new RtsChevron(collapsed));
+            handle.Add(new RtsIcon(collapsed ? RtsGlyph.ChevronUp : RtsGlyph.ChevronDown, 24));
             root.Add(handle);
         }
 

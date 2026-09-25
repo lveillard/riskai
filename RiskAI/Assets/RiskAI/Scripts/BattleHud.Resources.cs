@@ -46,7 +46,7 @@ namespace RiskAI
 
         void AddCitiesDisplay(VisualElement parent)
         {
-            citiesLabel=AddMetric(parent,RtsHudGlyph.City,CitiesText,GameText.Localize("Ciudades controladas / total · abrir clasificación"),ShowPlayers,"HUD cities button");
+            citiesLabel=AddMetric(parent,RtsGlyph.City,CitiesText,GameText.Localize("Ciudades controladas / total · abrir clasificación"),ShowPlayers,"HUD cities button");
         }
 
         public void ShowIncome() { controller.CancelCursor();menuTab=3;controller.HelpVisible=true;BuildRetainedUi(false); }
