@@ -89,12 +89,9 @@ namespace RiskAI
             bool emphasis = queue;
             float fade = queue ? 1f : ConfirmAlpha(age);
             int legsDrawn = 0, marksDrawn = 0;
-            var soldiers = controller.Selection;
-            for (int i = 0; i < soldiers.Count; i++)
-                if (soldiers[i]) legsDrawn = Draw(soldiers[i], legsDrawn, ref marksDrawn, emphasis, fade, !queue);
-            var fleet = controller.Fleet;
-            for (int i = 0; i < fleet.Count; i++)
-                if (fleet[i]) legsDrawn = Draw(fleet[i], legsDrawn, ref marksDrawn, emphasis, fade, !queue);
+            var selected = controller.Selection;
+            for (int i = 0; i < selected.Count; i++)
+                if (selected[i] is IOrderable actor) legsDrawn = Draw(actor, legsDrawn, ref marksDrawn, emphasis, fade, !queue);
             LegCount = legsDrawn;
             for (int i = legsDrawn; i < legCount; i++)
             {

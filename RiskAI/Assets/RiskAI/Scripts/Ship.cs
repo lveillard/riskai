@@ -40,11 +40,11 @@ namespace RiskAI
         /// <summary>Sim seconds spent in range before a blocked unload releases the queue. The troops stay aboard.</summary>
         public const float ShoreUnloadWindow = 5f;
         public UnitKind Kind { get; private set; }
-        public bool Selected { get; private set; }
+        public override bool Selected { get; protected set; }
         public Harbor Garrison=>harborGuard;
-        public bool IsGarrison=>harborGuard;
+        public override bool IsGarrison=>harborGuard;
         public IReadOnlyList<Soldier> Cargo=>cargo;
-        public int CargoCount=>cargo.Count;
+        public override int CargoCount=>cargo.Count;
         public int CargoCapacity=>Capacity;
         public override CombatTarget CurrentTarget=>target;
         public override ref readonly UnitType Type=>ref UnitCatalog.Get(Kind);
@@ -110,7 +110,7 @@ namespace RiskAI
             NavalArt.CreateShip(this);
             targetVolume=GetComponent<BoxCollider>();
         }
-        public void Select(bool value){Selected=value;}
+        public override void Select(bool value){Selected=value;}
         bool HasPlan() => plannedReady && activeCommand.CommandId != 0 && activeCommand.CommandId == plannedCommandId
             && (transform.position - plannedFrom).sqrMagnitude < 1f;
         public bool RunsCommand(int commandId) => hasActiveCommand && activeCommand.CommandId == commandId;
@@ -352,7 +352,7 @@ namespace RiskAI
             if(target&&RangeTo(target)<=AttackRange&&Visible(target))
             {
                 Face(target.transform.position);
-                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Type.Weapon),Team,this,Type.Weapon);}
+                if(world.Session.BattleTime>=nextAttack){nextAttack=world.Session.BattleTime+AttackInterval;world.Session.Combat.FireWeapon(AimPoint,target.AimPoint,target,world.Session.RollDamage(Type.Weapon)*RoarDamageScale,Team,this,Type.Weapon);}
             }
             else if(!IsGarrison&&target&&world.Session.BattleTime>=nextTargetPath)
             {
@@ -520,6 +520,7 @@ namespace RiskAI
             cargo.Clear();route.Clear();routeIndex=0;hasAttackMoveGoal=false;target=null;orderedHarbor=null;ReleaseHarborGuard(harborGuard);
             world.Ships.Remove(this);world.Session.UnregisterTarget(this);
             if(PlayerRules.IsPlayer(attacker)&&attacker<world.Session.PlayerCount){world.Session.Kills[attacker]++;world.Session.Economy.GrantBounty(attacker,Type.Points);}
+            world.Session.Feedback.RaiseDied(this);
             VisualFactory.Impact(AimPoint,new Color(.72f,.78f,.86f),.75f);Destroy(gameObject);
         }
         static float DistanceXZ(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.Distance(a,b);}
@@ -543,8 +544,6 @@ namespace RiskAI
             return ok;
         }
         bool IOrderable.ApplyOrder(in UnitCommand command) => ApplyOrder(command);
-        bool IOrderable.HumanMoveEligible(in UnitCommand command) => false;
-        void IOrderable.BeginHumanMove(in UnitCommand command, double submittedAt, double pausedAtSubmit, bool eligible) { }
 
         public bool ReleasePost(in UnitCommand command, bool commitRelease, out string error)
         {

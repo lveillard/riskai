@@ -17,7 +17,7 @@ namespace RiskAI
         bool FocusLastAlertWhenIdle()
         {
             PurgeStaleSelection();
-            if (Selection.Count > 0 || Fleet.Count > 0 || SelectedTown || SelectedHarbor || SelectedCamp) return false;
+            if (Selection.Count > 0 || SelectedTown || SelectedHarbor || SelectedCamp) return false;
             return FocusLastAlert();
         }
     }

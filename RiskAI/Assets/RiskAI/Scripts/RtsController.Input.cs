@@ -44,13 +44,13 @@ namespace RiskAI
             areaPointer = screen;
             var rect = Rect.MinMaxRect(Mathf.Min(DragStart.x, areaPointer.x), Screen.height - Mathf.Max(DragStart.y, areaPointer.y),
                 Mathf.Max(DragStart.x, areaPointer.x), Screen.height - Mathf.Min(DragStart.y, areaPointer.y));
-            var units = session.Units.Where(unit => !StrategicMapView.Active && IsSelectableSoldier(unit) && !unit.IsGarrison && InSelection(unit, rect)).ToList();
-            var ships = NavalWorld.Current ? NavalWorld.Current.Ships.Where(ship => !StrategicMapView.Active && IsSelectableShip(ship) && InSelection(ship, rect)).ToList() : new List<Ship>();
-            if (units.Count + ships.Count > 0)
+            var actors = new List<CombatTarget>();
+            if (!StrategicMapView.Active)
             {
-                SelectUnits(units, append);
-                SelectShips(ships, true);
+                foreach (var unit in session.Units) if (Selectable(unit) && !unit.IsGarrison && InSelection(unit, rect)) actors.Add(unit);
+                if (NavalWorld.Current) foreach (var ship in NavalWorld.Current.Ships) if (Selectable(ship) && InSelection(ship, rect)) actors.Add(ship);
             }
+            if (actors.Count > 0) SelectActors(actors, append);
             else SelectBuildingsIn(rect, append);
             areaPointerActive = false; Dragging = false; pressedWorld = false;
         }
@@ -104,9 +104,9 @@ namespace RiskAI
             var key=UnityEngine.InputSystem.Keyboard.current;
             bool controlSelect=desktopDoubleSelect&&key!=null&&(key.leftCtrlKey.isPressed||key.rightCtrlKey.isPressed);
             bool sameType = controlSelect || desktopDoubleSelect && Time.unscaledTime - lastSelectTime < .3f && lastSelectKind == unit.Kind;
-            if (sameType) SelectUnits(session.Units.Where(candidate => candidate.Team == 0 && candidate.Kind == unit.Kind && !candidate.IsGarrison && OnScreen(candidate)), append);
+            if (sameType) SelectActors(session.Units.Where(candidate => candidate.Team == 0 && candidate.Kind == unit.Kind && !candidate.IsGarrison && OnScreen(candidate)), append);
             else if (append && IsSelected(unit)) { RemoveSelected(unit); unit.Select(false); }
-            else SelectUnits(new[] { unit }, append);
+            else SelectActors(new[] { unit }, append);
             if (unit.IsGarrison && !sameType) session.Message("El defensor puede salir si un aliado ocupa su círculo como relevo.", MessageKind.Info);
             lastSelectTime = Time.unscaledTime; lastSelectKind = unit.Kind;
         }
@@ -118,7 +118,7 @@ namespace RiskAI
             if (UnloadCursor)
             {
                 var shore = Ground(point);
-                foreach (var ship in Fleet) if (IsSelectableShip(ship) && ship.Type.CanTransport) OrderShip(ship, UnitCommandKind.Unload, shore, append: QueueOrders);
+                foreach (var actor in Selection) if (Selectable(actor) && actor.Type.CanTransport) OrderShip(actor, UnitCommandKind.Unload, shore, append: QueueOrders);
                 ShowOrder(shore, false); CancelCursor(); pressedWorld = false; return;
             }
             // The move cursor never hands the click an enemy or a place: it is a plain move.
@@ -163,8 +163,7 @@ namespace RiskAI
         {
             bool enemy = picked && picked.CanBeAttacked && picked.Team != 0;
             bool canAttack = false, canCapture = false, canEmbark = false, canFollow = false;
-            for (int i = 0; i < Selection.Count; i++) Note(Selection[i], enemy ? picked : null, ref canAttack, ref canCapture, ref canEmbark, ref canFollow);
-            for (int i = 0; i < Fleet.Count; i++) Note(Fleet[i], enemy ? picked : null, ref canAttack, ref canCapture, ref canEmbark, ref canFollow);
+            for (int i = 0; i < Selection.Count; i++) if (Selection[i] is IOrderable actor) Note(actor, enemy ? picked : null, ref canAttack, ref canCapture, ref canEmbark, ref canFollow);
             bool ownTransport = friendly && friendly.Team == 0 && friendly.Type.CanTransport;
             // A post is not an ally to follow: only an attackable actor is. The place under the cursor is separate.
             bool ally = friendly && friendly.Team == 0 && friendly.CanBeAttacked && !ownTransport && !(friendly is IOrderable ordered && ordered.Selected);
@@ -189,8 +188,7 @@ namespace RiskAI
             if (!enemy) return;
             CancelBoardingForSelection();
             bool issued = false;
-            for (int i = 0; i < Selection.Count; i++) issued |= TryAttack(Selection[i], enemy);
-            for (int i = 0; i < Fleet.Count; i++) issued |= TryAttack(Fleet[i], enemy);
+            for (int i = 0; i < Selection.Count; i++) if (Selection[i] is IOrderable actor) issued |= TryAttack(actor, enemy);
             if (!issued) return;
             ShowOrder(enemy.transform.position, true);
             GameFeel.FlashTarget(enemy);
@@ -209,8 +207,7 @@ namespace RiskAI
             if (!ally) return;
             CancelBoardingForSelection();
             bool issued = false;
-            for (int i = 0; i < Selection.Count; i++) issued |= TryFollow(Selection[i], ally);
-            for (int i = 0; i < Fleet.Count; i++) issued |= TryFollow(Fleet[i], ally);
+            for (int i = 0; i < Selection.Count; i++) if (Selection[i] is IOrderable actor) issued |= TryFollow(actor, ally);
             if (issued) ShowOrder(ally.transform.position, false);
         }
 
@@ -230,10 +227,9 @@ namespace RiskAI
             var structure = harbor ? BuildingKind.Harbor : BuildingKind.Settlement;
             CancelBoardingForSelection();
             bool issued = false;
-            for (int i = 0; i < Selection.Count; i++) issued |= TryPlace(Selection[i], claim, port, capture, id, structure);
-            for (int i = 0; i < Fleet.Count; i++) issued |= TryPlace(Fleet[i], claim, port, capture, id, structure);
+            for (int i = 0; i < Selection.Count; i++) if (Selection[i] is IOrderable actor) issued |= TryPlace(actor, claim, port, capture, id, structure);
             if (issued) ShowOrder(claim, capture);
-            else if (Selection.Count == 0 && Fleet.Count == 0) OrderAt(claim, false);
+            else if (Selection.Count == 0) OrderAt(claim, false);
         }
 
         bool TryPlace(IOrderable actor, Vector3 claim, Harbor port, bool capture, string id, BuildingKind structure)

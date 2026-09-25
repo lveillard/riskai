@@ -25,8 +25,6 @@ namespace RiskAI
         /// <summary>Motor only. <paramref name="plan"/> builds the sea path once; a cheap check does not.</summary>
         bool Reach(in UnitCommand command, bool plan, out string error);
         bool ApplyOrder(in UnitCommand command);
-        bool HumanMoveEligible(in UnitCommand command);
-        void BeginHumanMove(in UnitCommand command, double submittedAt, double pausedAtSubmit, bool eligible);
         /// <summary>Drawn legs from <see cref="Orders"/>: the active order, then the queue.</summary>
         int OrderLegCount { get; }
         Vector3 OrderLegPoint(int index);
