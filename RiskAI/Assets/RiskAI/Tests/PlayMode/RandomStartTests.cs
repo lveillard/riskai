@@ -135,7 +135,7 @@ namespace RiskAI.Tests
             int mortarCost = UnitCatalog.Get(UnitKind.Mortar).Cost;
             battle.Economy.Gold[0] = mortarCost;
             controller.SelectTown(town);
-            controller.Recruit(UnitKind.Mortar);
+            controller.Produce(UnitKind.Mortar);
             Assert.That(town.QueueCount, Is.EqualTo(1), "Mortars are available at the declared profile level.");
             Assert.That(town.QueuedKind(0), Is.EqualTo(UnitKind.Mortar));
             Assert.That(battle.Economy.Gold[0], Is.EqualTo(0));

@@ -45,10 +45,10 @@ namespace RiskAI.Tests
             Assert.That(soldier.gameObject.activeInHierarchy, Is.True);
 
             int marineCost=UnitCatalog.Get(UnitKind.MarinePrivate).Cost;battle.Economy.Gold[0]=marineCost;
-            Assert.That(home.RecruitLand(UnitKind.MarinePrivate,0),Is.Null);
-            Assert.That(home.LandQueueCount,Is.EqualTo(1));
+            Assert.That(home.Train(UnitKind.MarinePrivate,0),Is.Null);
+            Assert.That(home.QueueCount,Is.EqualTo(1));
             home.State.Owner=1;home.SimTick(.1f);
-            Assert.That(home.LandQueueCount,Is.Zero);
+            Assert.That(home.QueueCount,Is.Zero);
             Assert.That(battle.Economy.Gold[0],Is.EqualTo(marineCost),"Capturing a port refunds its pending land recruit.");
 
             var target = naval.Harbors.First(harbor => harbor!=home && harbor.Owner != 0 && !harbor.IsImportedPort);

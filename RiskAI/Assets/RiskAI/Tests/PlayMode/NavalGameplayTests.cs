@@ -73,9 +73,9 @@ namespace RiskAI.Tests
   [UnityTest] public IEnumerator NavalPurchasesCancelRefundAndCompleteExactlyOnce()
   {
    var port=naval.Harbors.First(h=>h.State.Owner==0);const int budget=300;int frigateCost=UnitCatalog.Get(UnitKind.Frigate).Cost,transportCost=UnitCatalog.Get(UnitKind.Transport).Cost;battle.Economy.Gold[0]=budget;
-   Assert.That(port.Buy(UnitKind.Frigate),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-frigateCost));
+   Assert.That(port.Train(UnitKind.Frigate),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-frigateCost));
    Assert.That(port.CancelTraining(0),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget));
-   Assert.That(port.Buy(UnitKind.Transport),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-transportCost));
+   Assert.That(port.Train(UnitKind.Transport),Is.Null);Assert.That(battle.Economy.Gold[0],Is.EqualTo(budget-transportCost));
    Assert.That(port.LinkedTown,Is.Not.Null);int linkedOwner=port.LinkedTown.State.Owner;
    long tick=battle.Clock.TickCount;float deadline=Time.realtimeSinceStartup+2;
    port.State.Owner=1;while(battle.Clock.TickCount==tick&&Time.realtimeSinceStartup<deadline)yield return null;
@@ -83,7 +83,7 @@ namespace RiskAI.Tests
    tick=battle.Clock.TickCount;deadline=Time.realtimeSinceStartup+2;
    port.State.Owner=0;while(battle.Clock.TickCount==tick&&Time.realtimeSinceStartup<deadline)yield return null;
    Assert.That(battle.Clock.TickCount,Is.GreaterThan(tick));int count=naval.Ships.Count;
-   Assert.That(port.Buy(UnitKind.Frigate),Is.Null);
+   Assert.That(port.Train(UnitKind.Frigate),Is.Null);
    float finishAt=battle.BattleTime+UnitCatalog.Get(UnitKind.Frigate).TrainSeconds+.2f;
    deadline=Time.realtimeSinceStartup+10;
    while(naval.Ships.Count==count&&battle.BattleTime<finishAt&&Time.realtimeSinceStartup<deadline)yield return null;

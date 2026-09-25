@@ -117,8 +117,7 @@ namespace RiskAI
             // Purging first leaves only actors this selection still owns, so every
             // remaining ring is cleared and a replaced actor keeps its own state.
             PurgeStaleSelection();
-            foreach (var unit in Selection) unit.Select(false);
-            foreach (var ship in Fleet) ship.Select(false);
+            foreach (var actor in Selection) actor.Select(false);
             ClearSelectionLists();
             InspectedTarget = null;
         }
@@ -224,9 +223,6 @@ namespace RiskAI
                 : PreviewSelectedBuildings(OwnSelectedTowns(),cost);
         }
 
-        public ProductionBatchPreview PreviewShipPurchase(UnitKind kind) =>
-            PreviewSelectedBuildings(OwnSelectedHarbors(),UnitCatalog.Get(kind).Cost);
-
         IEnumerable<Settlement> OwnSelectedTowns() => selectedTowns.Where(t=>t&&t.State.Owner==0);
         IEnumerable<Harbor> OwnSelectedHarbors() => selectedHarbors.Where(h=>h&&h.Owner==0);
 
@@ -238,31 +234,23 @@ namespace RiskAI
             return new ProductionBatchPreview(candidates,planned,planned*unitCost);
         }
 
-        /// <summary>Queues one land unit at every selected, allied compatible building, shortest queues first.</summary>
-        public string TryRecruitSelected(UnitKind kind)
+        /// <summary>Queues one order at every selected, allied compatible building, shortest queues first.</summary>
+        public string TryProduceSelected(UnitKind kind)
         {
-            if ((UnitCatalog.Get(kind).Building==UnitBuilding.Harbor))
+            ref readonly var type = ref UnitCatalog.Get(kind);
+            if (type.Building == UnitBuilding.Harbor)
             {
+                bool sea = type.SeaMotor; int cost = type.Cost;
                 LastProductionResult=QueueAtSelectedBuildings(
-                    OwnSelectedHarbors(), h => h.LandQueueCount, StableHarborIndex,
+                    OwnSelectedHarbors(), h => sea ? h.SeaOrders : h.PopulationOrders, StableHarborIndex,
                     h => ExecuteBuilding(PlayerBuildingIntent.Recruit(h.BuildingId,kind)),
-                    UnitCatalog.Get(kind).Cost,"Selecciona un puerto de tu bando para reclutar Marines.");
+                    cost, sea ? "Selecciona un puerto de tu bando para comprar barcos." : "Selecciona un puerto de tu bando para reclutar Marines.");
                 return LastProductionResult.Error;
             }
             LastProductionResult=QueueAtSelectedBuildings(
                 OwnSelectedTowns(), t => t.QueueCount, t => t.State.Id,
                 t => ExecuteBuilding(PlayerBuildingIntent.Recruit(t.BuildingId,kind)),
-                UnitCatalog.Get(kind).Cost,"Selecciona una ciudad de tu bando para reclutar.");
-            return LastProductionResult.Error;
-        }
-
-        /// <summary>Queues one ship at every selected allied harbor, shortest naval queues first.</summary>
-        public string TryBuySelected(UnitKind kind)
-        {
-            LastProductionResult=QueueAtSelectedBuildings(
-                OwnSelectedHarbors(), h => h.QueueCount, StableHarborIndex,
-                h => ExecuteBuilding(PlayerBuildingIntent.Recruit(h.BuildingId,kind)),
-                UnitCatalog.Get(kind).Cost,"Selecciona un puerto de tu bando para comprar barcos.");
+                type.Cost,"Selecciona una ciudad de tu bando para reclutar.");
             return LastProductionResult.Error;
         }
 
@@ -299,7 +287,7 @@ namespace RiskAI
             foreach (var town in selectedTowns)
             {
                 if (!town || town.State.Owner != 0) continue;
-                if(ExecuteBuilding(PlayerBuildingIntent.SetLandRally(town.BuildingId,point.x,point.y,point.z))==null)changed=true;
+                if(ExecuteBuilding(PlayerBuildingIntent.SetRally(town.BuildingId,point.x,point.y,point.z))==null)changed=true;
             }
             foreach (var harbor in selectedHarbors)
             {
@@ -308,9 +296,9 @@ namespace RiskAI
                 if (town)
                 {
                     if (selectedTowns.Contains(town)) continue;
-                    if(ExecuteBuilding(PlayerBuildingIntent.SetLandRally(harbor.BuildingId,point.x,point.y,point.z))==null)changed=true;
+                    if(ExecuteBuilding(PlayerBuildingIntent.SetRally(harbor.BuildingId,point.x,point.y,point.z))==null)changed=true;
                 }
-                else if(ExecuteBuilding(PlayerBuildingIntent.SetLandRally(harbor.BuildingId,point.x,point.y,point.z))==null)changed=true;
+                else if(ExecuteBuilding(PlayerBuildingIntent.SetRally(harbor.BuildingId,point.x,point.y,point.z))==null)changed=true;
             }
             return changed;
         }

@@ -29,7 +29,6 @@ namespace RiskAI
         public Vector3 DefaultLandEntry => transform.position + Vector3.back * 4f;
         public int QueueCount => queue.Count;
         public float TrainingProgress => queue.Count == 0 ? 0 : 1 - queue[0].Remaining / UnitCatalog.Get(queue[0].Kind).TrainSeconds;
-        public UnitKind TrainingKind => queue.Count == 0 ? UnitKind.Footman : queue[0].Kind;
         public LineRenderer Ring { get; private set; }
         bool navalClaimVisual;
         bool selected;
@@ -145,8 +144,7 @@ namespace RiskAI
             if(!(UnitCatalog.Get(kind).Building==UnitBuilding.City))return "Esta ciudad sólo recluta tropas regulares.";
             return QueueRecruit(kind,team);
         }
-        // Imported port cities retain one shared land queue. Only their Harbor
-        // may enter the Marine catalog through this narrow domain path.
+        // A linked town owns the harbor's land-motor orders, so the port is not a second queue.
         internal string RecruitPortMarine(UnitKind kind,int team)
         {
             if(!IsPort||!(UnitCatalog.Get(kind).Building==UnitBuilding.Harbor))return "Este puerto sólo recluta Marines.";
@@ -156,7 +154,7 @@ namespace RiskAI
         {
             string error=CanManage(team);if(error!=null)return error;
             if(State.Level<UnitCatalog.Get(kind).Level)return "Mejora la ciudad a nivel II para reclutar esta unidad.";
-            if(queue.Count>=5)return "La cola está llena. Pulsa un encargo para cancelarlo.";
+            if(queue.Count>=BattleRules.QueueCapacity)return "La cola está llena. Pulsa un encargo para cancelarlo.";
             if(session.RecruitmentReservations(team)>=BattleRules.PopulationLimit)return "Límite de 100 soldados móviles alcanzado.";
             if(!session.Economy.Spend(team,UnitCatalog.Get(kind).Cost))return "Oro insuficiente. Recibirás ingresos al terminar la ronda.";
             queue.Add(new Training{Team=team,Kind=kind,Remaining=UnitCatalog.Get(kind).TrainSeconds});return null;

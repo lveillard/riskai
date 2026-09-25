@@ -12,13 +12,13 @@ namespace RiskAI.Core
         public readonly UnitKind Kind;
         ProductionOption(UnitKind kind){Kind=kind;}
         public static ProductionOption For(UnitKind kind) => new ProductionOption(kind);
-        /// <summary>Hulls queue on the harbor's naval channel; the grid places them after the land block.</summary>
-        public bool IsShip => UnitCatalog.Get(Kind).Domain==UnitDomain.Sea;
+        /// <summary>Sea-motor hulls queue on the harbor; the grid places them after the land block.</summary>
+        public bool SeaMotor => UnitCatalog.Get(Kind).SeaMotor;
         public int Cost => UnitCatalog.Get(Kind).Cost;
         public bool Equals(ProductionOption other) => Kind==other.Kind;
         public override bool Equals(object obj) => obj is ProductionOption other&&Equals(other);
         public override int GetHashCode() => Kind.GetHashCode();
-        public override string ToString() => (IsShip?"Ship ":"Unit ")+Kind;
+        public override string ToString() => Kind.ToString();
     }
 
     /// <summary>A product's cell on the command card: page, row/column and its grid hotkey.</summary>

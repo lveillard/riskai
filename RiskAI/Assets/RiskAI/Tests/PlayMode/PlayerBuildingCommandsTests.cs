@@ -38,7 +38,8 @@ namespace RiskAI.Tests
             Assert.That(port.BuildingId.LocalId,Is.EqualTo("imported/"+town.State.Id));
             Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(port.BuildingId,UnitKind.MarinePrivate)),Is.Null);
             Assert.That(town.QueueCount,Is.EqualTo(1));
-            Assert.That(port.LandQueueCount,Is.EqualTo(town.QueueCount),"An imported dock is an alias of its source town queue, not a second land queue.");
+            Assert.That(port.QueueCount,Is.Zero,"An imported dock keeps land-motor orders on its town, not a second queue.");
+            Assert.That(port.PopulationOrders,Is.EqualTo(town.QueueCount));
             Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(town.BuildingId,UnitKind.MarinePrivate)),Is.Not.Null);
             Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(port.BuildingId,UnitKind.Footman)),Is.Not.Null);
             Assert.That(town.Recruit(UnitKind.MarinePrivate),Is.Not.Null,"A city API cannot bypass the harbor Marine catalog.");
@@ -102,9 +103,9 @@ namespace RiskAI.Tests
         {
             var town=battle.Towns.First(item=>!item.IsPort);town.State.Owner=0;battle.Economy.Gold[0]=100;
             Vector3 original=town.Rally;
-            Assert.That(commands.Execute(0,PlayerBuildingIntent.SetLandRally(town.BuildingId,float.NaN,0,0)),Is.Not.Null);
+            Assert.That(commands.Execute(0,PlayerBuildingIntent.SetRally(town.BuildingId,float.NaN,0,0)),Is.Not.Null);
             Assert.That(town.Rally,Is.EqualTo(original));
-            Assert.That(commands.Execute(0,PlayerBuildingIntent.CancelLand(town.BuildingId,-1)),Is.Not.Null);
+            Assert.That(commands.Execute(0,PlayerBuildingIntent.CancelTraining(town.BuildingId,-1)),Is.Not.Null);
             Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(new BuildingId(BuildingKind.Settlement,"removed-town"),UnitKind.Footman)),Is.Not.Null);
             town.State.Owner=1;
             Assert.That(commands.Execute(0,PlayerBuildingIntent.Recruit(town.BuildingId,UnitKind.Footman)),Is.Not.Null);
@@ -112,12 +113,12 @@ namespace RiskAI.Tests
 
             var port=NavalWorld.Current.Harbors.First(item=>item.IsImportedPort);port.LinkedTown.State.Owner=0;
             Vector3 portRally=port.LandRally;
-            Assert.That(commands.Execute(0,PlayerBuildingIntent.SetNavalRally(port.BuildingId,portRally.x,portRally.y,portRally.z)),Is.Not.Null,"Ports expose only land rally commands; naval rally is intentionally unsupported.");
+            Assert.That(commands.Execute(0,PlayerBuildingIntent.SetRally(port.BuildingId,portRally.x,portRally.y,portRally.z)),Is.Null);
             Assert.That(port.LandRally,Is.EqualTo(portRally));
 
             var camp=battle.Camps.First(item=>item!=null);
             foreach(var member in battle.Towns.Where(item=>item.State.Country==camp.Country))member.State.Owner=0;
-            Assert.That(commands.Execute(0,PlayerBuildingIntent.SetLandRally(camp.BuildingId,town.Rally.x,town.Rally.y,town.Rally.z)),Is.Null);
+            Assert.That(commands.Execute(0,PlayerBuildingIntent.SetRally(camp.BuildingId,town.Rally.x,town.Rally.y,town.Rally.z)),Is.Null);
             Assert.That(camp.HasRally,Is.True);
             Assert.That(commands.Execute(0,PlayerBuildingIntent.ClearRally(camp.BuildingId)),Is.Null);
             Assert.That(camp.HasRally,Is.False);

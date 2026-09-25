@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using RiskAI.Core;
 using UnityEngine;
 using UnityEngine.AI;
@@ -9,9 +8,7 @@ namespace RiskAI
     public sealed class Harbor : MonoBehaviour
     {
         sealed class Order { public UnitKind Kind; public int Team; public float Remaining; }
-        sealed class LandOrder { public UnitKind Kind; public int Team; public float Remaining; }
         readonly List<Order> queue=new List<Order>();
-        readonly List<LandOrder> landQueue=new List<LandOrder>();
         NavalWorld world;TownState state;int lastOwner;
         CityClaimZone claimZone;LineRenderer claimRing,selectionRing,navalClaimRing;
         Ship navalDefender=>claimZone?.NavalDefender;
@@ -51,11 +48,28 @@ namespace RiskAI
         public int Owner => state!=null?state.Owner:-1;
         public float CaptureProgress => state==null?0:state.Capture;
         public int QueueCount=>queue.Count;
-        public const int QueueCapacity = 5;
         public const int FleetCapacity = 12;
-        public int LandQueueCount=>sharesTown&&LinkedTown?LinkedTown.QueueCount:landQueue.Count;
-        public UnitKind QueuedLandKind(int index)=>sharesTown&&LinkedTown?LinkedTown.QueuedKind(index):landQueue[index].Kind;
-        public float LandTrainingProgress=>sharesTown&&LinkedTown?LinkedTown.TrainingProgress:landQueue.Count==0?0:1-landQueue[0].Remaining/UnitCatalog.Get(landQueue[0].Kind).TrainSeconds;
+        /// <summary>Orders that reserve population. A linked town owns those orders.</summary>
+        public int PopulationOrders
+        {
+            get
+            {
+                if(sharesTown&&LinkedTown)return LinkedTown.QueueCount;
+                int count=0;
+                for(int i=0;i<queue.Count;i++)if(!UnitCatalog.Get(queue[i].Kind).SeaMotor)count++;
+                return count;
+            }
+        }
+        /// <summary>Orders that spawn on the sea motor.</summary>
+        public int SeaOrders
+        {
+            get
+            {
+                int count=0;
+                for(int i=0;i<queue.Count;i++)if(UnitCatalog.Get(queue[i].Kind).SeaMotor)count++;
+                return count;
+            }
+        }
         public bool Selected { get; private set; }
         public const float BerthRadius = 7.5f;
         public float TrainingProgress=>queue.Count==0?0:1-queue[0].Remaining/UnitCatalog.Get(queue[0].Kind).TrainSeconds;
@@ -219,46 +233,42 @@ namespace RiskAI
         {
             claimZone.SetNavalDefender(ship,this);
         }
-        public string Buy(UnitKind kind,int team=0)
+        /// <summary>One queue. A linked town keeps land-motor orders; the type picks the spawn motor.</summary>
+        public string Train(UnitKind kind,int team=0)
         {
-            if(UnitCatalog.Get(kind).Domain!=UnitDomain.Sea||UnitCatalog.Get(kind).Building!=UnitBuilding.Harbor)return "Tipo de barco inválido.";
+            ref readonly var type=ref UnitCatalog.Get(kind);
+            if(type.Building!=UnitBuilding.Harbor)return type.SeaMotor?"Tipo de barco inválido.":"Este muelle sólo entrena Marines.";
+            if(!type.SeaMotor&&sharesTown&&LinkedTown)return LinkedTown.RecruitPortMarine(kind,team);
             if(!world||!world.Session)return "No hay una batalla activa.";
             if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
-            if(!CanLaunch)return LaunchBlockReason;
+            if(type.SeaMotor&&!CanLaunch)return LaunchBlockReason;
             if(world.Session.Winner>=0)return "La batalla ha terminado.";
-            if(world.Session.Paused)return "Reanuda la partida para comprar barcos.";
+            if(world.Session.Paused)return type.SeaMotor?"Reanuda la partida para comprar barcos.":"Reanuda la partida para reclutar.";
             if(Owner!=team)return "Este puerto no pertenece a tu bando.";
-            if(queue.Count>=QueueCapacity)return "La cola naval está llena.";
-            if(world.Ships.Count(s=>s&&s.IsAlive&&s.Team==team)+world.PendingShips(team)>=FleetCapacity)return "Límite naval de "+FleetCapacity+" barcos alcanzado.";
-            int cost=UnitCatalog.Get(kind).Cost;if(!world.Session.Economy.Spend(team,cost))return "Oro insuficiente para comprar este barco.";
-            queue.Add(new Order{Kind=kind,Team=team,Remaining=UnitCatalog.Get(kind).TrainSeconds});return null;
+            if(queue.Count>=BattleRules.QueueCapacity)return type.SeaMotor?"La cola naval está llena.":"La cola de Marines está llena.";
+            if(type.SeaMotor)
+            {
+                int alive=0;var ships=world.Ships;
+                for(int i=0;i<ships.Count;i++){var ship=ships[i];if(ship&&ship.IsAlive&&ship.Team==team)alive++;}
+                if(alive+world.PendingShips(team)>=FleetCapacity)return "Límite naval de "+FleetCapacity+" barcos alcanzado.";
+            }
+            else if(world.Session.RecruitmentReservations(team)>=BattleRules.PopulationLimit)return "Límite de soldados alcanzado.";
+            if(!world.Session.Economy.Spend(team,type.Cost))return type.SeaMotor?"Oro insuficiente para comprar este barco.":"Oro insuficiente para reclutar este Marine.";
+            queue.Add(new Order{Kind=kind,Team=team,Remaining=type.TrainSeconds});return null;
         }
-        public string RecruitLand(UnitKind kind,int team=0)
+        internal int PendingLandRecruits(int team)
         {
-            if(UnitCatalog.Get(kind).Domain!=UnitDomain.Land||UnitCatalog.Get(kind).Building!=UnitBuilding.Harbor)return "Este muelle sólo entrena Marines.";
-            if(sharesTown&&LinkedTown)return LinkedTown.RecruitPortMarine(kind,team);
-            if(!world||!world.Session)return "No hay una batalla activa.";
-            if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
-            if(world.Session.Winner>=0)return "La batalla ha terminado.";
-            if(world.Session.Paused)return "Reanuda la partida para reclutar.";
-            if(Owner!=team)return "Este puerto no pertenece a tu bando.";
-            if(landQueue.Count>=5)return "La cola de Marines está llena.";
-            if(world.Session.RecruitmentReservations(team)>=BattleRules.PopulationLimit)return "Límite de soldados alcanzado.";
-            if(!world.Session.Economy.Spend(team,UnitCatalog.Get(kind).Cost))return "Oro insuficiente para reclutar este Marine.";
-            landQueue.Add(new LandOrder{Kind=kind,Team=team,Remaining=UnitCatalog.Get(kind).TrainSeconds});return null;
+            if(sharesTown)return 0;
+            int count=0;
+            for(int i=0;i<queue.Count;i++)if(queue[i].Team==team&&!UnitCatalog.Get(queue[i].Kind).SeaMotor)count++;
+            return count;
         }
-        public string CancelLandTraining(int index,int team=0)
+        internal int PendingCount(int team)
         {
-            if(sharesTown&&LinkedTown)return LinkedTown.CancelTraining(index,team);
-            if(!world||!world.Session)return "No hay una batalla activa.";
-            if(!PlayerRules.IsPlayer(team)||team>=world.Session.PlayerCount)return "Bando inválido.";
-            if(world.Session.Paused||world.Session.Winner>=0)return "La partida está detenida.";
-            if(Owner!=team)return "Este puerto no pertenece a tu bando.";
-            if(index<0||index>=landQueue.Count)return "Este encargo ya no está en la cola.";
-            var order=landQueue[index];landQueue.RemoveAt(index);world.Session.Economy.Refund(order.Team,UnitCatalog.Get(order.Kind).Cost);return null;
+            int count=0;
+            for(int i=0;i<queue.Count;i++)if(queue[i].Team==team&&UnitCatalog.Get(queue[i].Kind).SeaMotor)count++;
+            return count;
         }
-        internal int PendingLandRecruits(int team){if(sharesTown)return 0;int count=0;foreach(var order in landQueue)if(order.Team==team)count++;return count;}
-        internal int PendingCount(int team){int count=0;foreach(var item in queue)if(item.Team==team)count++;return count;}
         public string CancelTraining(int index,int team=0)
         {
             if(!world||!world.Session)return "No hay una batalla activa.";
@@ -275,7 +285,7 @@ namespace RiskAI
             if(navalDefender&&navalDefender.Team!=Owner)SetNavalDefender(null);
             if(Owner!=lastOwner)
             {
-                RefundQueue();RefundLandQueue();
+                RefundQueue();
                 if(!sharesTown)Defense.ChangeOwner();
                 lastOwner=Owner;
             }
@@ -287,30 +297,38 @@ namespace RiskAI
             }
             if(queue.Count>0)
             {
-                queue[0].Remaining-=delta;
-                if(queue[0].Remaining<=0){var item=queue[0];queue.RemoveAt(0);var ship=CanLaunch?world.Spawn(item.Team,item.Kind,Berth):null;if(!ship)world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);}
+                var first=queue[0];first.Remaining-=delta;
+                if(first.Remaining<=0)
+                {
+                    ref readonly var type=ref UnitCatalog.Get(first.Kind);
+                    if(type.SeaMotor)
+                    {
+                        queue.RemoveAt(0);
+                        var ship=CanLaunch?world.Spawn(first.Team,first.Kind,Berth):null;
+                        if(!ship)world.Session.Economy.Refund(first.Team,type.Cost);
+                    }
+                    else if(world.Session.RecruitmentPopulation(first.Team)<BattleRules.PopulationLimit)
+                    {
+                        queue.RemoveAt(0);
+                        var unit=world.Session.Spawn(first.Team,first.Kind,LandEntry);
+                        if(unit)unit.TryMoveTo(LandRally,true,false);
+                        else world.Session.Economy.Refund(first.Team,type.Cost);
+                    }
+                }
             }
-            TickLandQueue(delta);
             RefreshTrainingView();
         }
         void Captured()
         {
-            RefundQueue();RefundLandQueue();Defense.ChangeOwner();lastOwner=Owner;world.Session.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".",MessageKind.Info);
+            RefundQueue();Defense.ChangeOwner();lastOwner=Owner;world.Session.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".",MessageKind.Info);
         }
         void RefundQueue(){foreach(var item in queue)world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);queue.Clear();}
-        void RefundLandQueue(){foreach(var item in landQueue)world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);landQueue.Clear();}
         void RefreshTrainingView()
         {
-            if(sharesTown&&LinkedTown){LinkedTown.SetPortNavalTraining(queue.Count>0);return;}
-            if(trainingView)trainingView.SetActivity(landQueue.Count>0,queue.Count>0,world.Session.BattleTime);
-        }
-        void TickLandQueue(float delta)
-        {
-            if(sharesTown||landQueue.Count==0)return;
-            landQueue[0].Remaining-=delta;if(landQueue[0].Remaining>0)return;
-            var item=landQueue[0];if(world.Session.RecruitmentPopulation(item.Team)>=BattleRules.PopulationLimit)return;landQueue.RemoveAt(0);
-            var unit=world.Session.Spawn(item.Team,item.Kind,LandEntry);
-            if(unit)unit.TryMoveTo(LandRally,true,false);else world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);
+            bool land=false,sea=false;
+            for(int i=0;i<queue.Count;i++)if(UnitCatalog.Get(queue[i].Kind).SeaMotor)sea=true;else land=true;
+            if(sharesTown&&LinkedTown){LinkedTown.SetPortNavalTraining(sea);return;}
+            if(trainingView)trainingView.SetActivity(land,sea,world.Session.BattleTime);
         }
         static float FlatDistance(Vector3 a,Vector3 b){a.y=b.y=0;return Vector3.SqrMagnitude(a-b);}
     }
