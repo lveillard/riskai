@@ -1,8 +1,8 @@
-# Riesgus · v0.34.2
+# Riesgus · v0.34.3
 
-Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.34.2
-(`20260925T030132Z-v0342-3597a20`). La verificación pública coincide en 10/10 hashes
-([validación v0.34](docs/VALIDATION-RIESGUS-v0.34.md)): EditMode 322/322, PlayMode 326/326 y npm 14/14; comprobado en
+Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.34.3
+(`20260925T140609Z-v0343-5508055`). La verificación pública coincide en 10/10 hashes
+([validación v0.34](docs/VALIDATION-RIESGUS-v0.34.md)): EditMode 325/325, PlayMode 320/320 y npm 14/14; comprobado en
 Web de escritorio y en móvil emulado, sin probar en hardware móvil físico.
 [Validación v0.30](docs/VALIDATION-RIESGUS-v0.30.md) · [Mediciones de rendimiento](docs/audits/PERFORMANCE-PARETO-v0.28.md).
 
