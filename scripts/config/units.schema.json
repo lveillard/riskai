@@ -179,6 +179,31 @@
       },
       "description": "A circle radius in metres."
     },
+    "ShipModel": {
+      "anyOf": [
+        {
+          "const": "Frigate",
+          "type": "string"
+        },
+        {
+          "const": "Juggernaught",
+          "type": "string"
+        },
+        {
+          "const": "Battleship",
+          "type": "string"
+        },
+        {
+          "const": "Transport",
+          "type": "string"
+        },
+        {
+          "const": "ArmoredTransport",
+          "type": "string"
+        }
+      ],
+      "description": "Which Warcraft III ship the hull model follows: Human Frigate, Orc Juggernaught, Human Battleship, Human Transport Ship or Orc Transport Ship."
+    },
     "UnitHull": {
       "additionalProperties": false,
       "type": "object",
@@ -188,7 +213,7 @@
         "height",
         "centerHeight",
         "scale",
-        "warship",
+        "model",
         "clearance"
       ],
       "properties": {
@@ -216,9 +241,8 @@
           "description": "Model scale relative to the base silhouette.",
           "type": "number"
         },
-        "warship": {
-          "description": "Warship silhouette (false: transport silhouette).",
-          "type": "boolean"
+        "model": {
+          "$ref": "#/$defs/ShipModel"
         },
         "clearance": {
           "minimum": 0,
@@ -566,6 +590,31 @@
       },
       "description": "Area damage by rings and the classes/relations it may hit."
     },
+    "ProjectileLook": {
+      "anyOf": [
+        {
+          "const": "None",
+          "type": "string"
+        },
+        {
+          "const": "Bolt",
+          "type": "string"
+        },
+        {
+          "const": "Orb",
+          "type": "string"
+        },
+        {
+          "const": "Shell",
+          "type": "string"
+        },
+        {
+          "const": "Cannonball",
+          "type": "string"
+        }
+      ],
+      "description": "What flies from the weapon to the target. An instant weapon draws it as a short tracer; None draws nothing. Shell lobs high."
+    },
     "UnitWeapon": {
       "additionalProperties": false,
       "type": "object",
@@ -587,7 +636,7 @@
         "targeting",
         "projectileSpeed",
         "targetMask",
-        "tracer"
+        "projectile"
       ],
       "properties": {
         "source": {
@@ -641,7 +690,7 @@
           "type": "number"
         },
         "ranged": {
-          "description": "Ranged: terrain line of sight, rear formation rows, projectile/tracer delivery.",
+          "description": "Ranged: terrain line of sight, rear formation rows, projectile delivery.",
           "type": "boolean"
         },
         "rangeMeasure": {
@@ -679,9 +728,8 @@
             "$ref": "#/$defs/WeaponTargetMask"
           }
         },
-        "tracer": {
-          "description": "Draw an instant tracer for an instant ranged hit.",
-          "type": "boolean"
+        "projectile": {
+          "$ref": "#/$defs/ProjectileLook"
         }
       },
       "description": "One attack: damage roll, timing, reach and delivery."

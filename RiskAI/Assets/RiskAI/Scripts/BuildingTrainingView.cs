@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Rendering;
 
 namespace RiskAI
@@ -23,6 +24,18 @@ namespace RiskAI
             return go.AddComponent<BuildingEntranceAnchor>();
         }
         public static BuildingEntranceAnchor Find(Transform root) => root ? root.GetComponentInChildren<BuildingEntranceAnchor>() : null;
+
+        const float DoorstepMetres = .8f, DoorstepSnap = 1.5f;
+        /// <summary>
+        /// Where a recruit appears: on the walkable doorstep of <paramref name="entrance"/>, so it walks
+        /// out of the door to its rally point. <paramref name="fallback"/> when the art has no walkable doorstep.
+        /// </summary>
+        public static Vector3 RecruitExit(BuildingEntranceAnchor entrance, Vector3 fallback)
+        {
+            if (!entrance) return fallback;
+            var doorstep = entrance.Position + entrance.Outward * DoorstepMetres;
+            return NavMesh.SamplePosition(doorstep, out var hit, DoorstepSnap, NavMesh.AllAreas) ? hit.position : fallback;
+        }
     }
 
     /// <summary>

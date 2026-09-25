@@ -43,6 +43,16 @@ namespace RiskAI.Core
         Divine
     }
 
+    /// <summary>Which Warcraft III ship the hull model follows: Human Frigate, Orc Juggernaught, Human Battleship, Human Transport Ship or Orc Transport Ship.</summary>
+    public enum ShipModel
+    {
+        Frigate,
+        Juggernaught,
+        Battleship,
+        Transport,
+        ArmoredTransport
+    }
+
     /// <summary>Which clip plays for this weapon. Presentation reads this field; it does not list unit kinds.</summary>
     public enum WeaponSound
     {
@@ -110,6 +120,16 @@ namespace RiskAI.Core
         Neutral = 1 << 10,
         Ally = 1 << 11,
         Soldier = 1 << 12
+    }
+
+    /// <summary>What flies from the weapon to the target. An instant weapon draws it as a short tracer; None draws nothing. Shell lobs high.</summary>
+    public enum ProjectileLook
+    {
+        None,
+        Bolt,
+        Orb,
+        Shell,
+        Cannonball
     }
 
     /// <summary>Line of sight: terrain ray between aim points, or a NavMesh ray to the approach point.</summary>
@@ -298,9 +318,9 @@ namespace RiskAI.Core
         /// <summary>Model scale relative to the base silhouette.</summary>
         [UnitConfigField(Required = true)]
         public float Scale;
-        /// <summary>Warship silhouette (false: transport silhouette).</summary>
+        /// <summary>Which Warcraft III ship the hull model follows: Human Frigate, Orc Juggernaught, Human Battleship, Human Transport Ship or Orc Transport Ship.</summary>
         [UnitConfigField(Required = true)]
-        public bool Warship;
+        public ShipModel Model;
         /// <summary>Draft the sea grid keeps around this hull. Every hull shares one value.</summary>
         [UnitConfigField(Required = true)]
         public float Clearance;
@@ -384,7 +404,7 @@ namespace RiskAI.Core
         /// <summary>Minimum range; closer targets make the unit back off.</summary>
         [UnitConfigField(Required = true)]
         public float MinRange;
-        /// <summary>Ranged: terrain line of sight, rear formation rows, projectile/tracer delivery.</summary>
+        /// <summary>Ranged: terrain line of sight, rear formation rows, projectile delivery.</summary>
         [UnitConfigField(Required = true)]
         public bool Ranged;
         /// <summary>BodyEdges: 3D to the target approach point minus both body radii. CenterToApproach: 3D pivot to approach point. ToHull: XZ pivot to approach point (a ship hull). CenterToCenter: XZ pivot to pivot.</summary>
@@ -409,9 +429,9 @@ namespace RiskAI.Core
         public WeaponSplash Splash;
         [UnitConfigField(Required = true)]
         public WeaponTargetMask[] TargetMask;
-        /// <summary>Draw an instant tracer for an instant ranged hit.</summary>
+        /// <summary>What flies from the weapon to the target. An instant weapon draws it as a short tracer; None draws nothing. Shell lobs high.</summary>
         [UnitConfigField(Required = true)]
-        public bool Tracer;
+        public ProjectileLook Projectile;
     }
 
     /// <summary>Melee hysteresis: first blow this far inside the reach; path this far inside it.</summary>

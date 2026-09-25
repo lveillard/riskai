@@ -92,7 +92,7 @@ namespace RiskAI.Editor
                 // gameplay flight/contact timing is covered by PlayMode tests.
                 var bolt=new GameObject("Preview physical crossbow bolt").AddComponent<ArrowFlight>();
                 Vector3 origin=post+new Vector3(2.1f,1.1f,0);
-                bolt.InitVisual(origin,origin+Vector3.right*4,AttackKind.Piercing);
+                bolt.InitVisual(origin,origin+Vector3.right*4,ProjectileLook.Bolt);
                 try{Render(camera,readback,directory,map,"bolt-detail",origin,1.65f);}
                 finally{UnityEngine.Object.DestroyImmediate(bolt.gameObject);}
             }

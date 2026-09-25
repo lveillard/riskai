@@ -78,7 +78,7 @@ namespace RiskAI
         /// <summary>
         /// Probability that the forest scatter keeps a candidate tree at a world point,
         /// before slope and building-clearance checks. Every term is a continuous field
-        /// (ribbons, groves, woods, the board edge, oases), so no rule can plant a
+        /// (ribbons, groves, woods, the board edge, oases, country-link lanes), so no rule can plant a
         /// straight line or leave a straight clearing; GroundZoneShapeTests checks it.
         /// </summary>
         public static float TreeChance(float px,float pz)
@@ -119,7 +119,62 @@ namespace RiskAI
             bool rampPass=MapLayout.IsExpanded ? TerrainHydrology.IsChannel(px,pz) : (Mathf.Abs(bx+32+j)<5.5f&&bz>-14+k&&bz<7+k)||(Mathf.Abs(bx-34+j)<5.5f&&bz>-16+k&&bz<8+k)
                 ||(Mathf.Abs(bz-12+j)<5&&bx>-21+k&&bx<6+k)||(Mathf.Abs(bz-13+j)<5&&bx>44+k);
             if(edge<.5f&&(Mathf.Abs(bz-2+j)<3.2f||Mathf.Abs(bz-22+j)<3||rampPass))chance=0;
-            return Mathf.Lerp(chance,desertChance*(rampPass?0:1),desert);
+            return Mathf.Lerp(chance,desertChance*(rampPass?0:1),desert)*CountryLinkOpenness(px,pz);
+        }
+        // Forest never separates the cities of one country: a meandering lane stays open along
+        // every country link, so the cities that close a country read as one group.
+        // The meander (plus or minus half LinkMeander) never reaches LinkClearance, so the link itself is always open.
+        const float LinkClearance=5f,LinkFeather=4f,LinkMeander=8f;
+        static MapLayout.City[] linkTowns;static Vector4[] countryLinks;
+        /// <summary>
+        /// World XZ segments (a.x, a.z, b.x, b.z) of each country's shortest spanning tree over
+        /// its cities, per landmass so no link spans a strait. Rebuilt when the map is configured.
+        /// </summary>
+        static Vector4[] Links()
+        {
+            if(countryLinks!=null&&ReferenceEquals(linkTowns,MapLayout.Towns))return countryLinks;
+            var towns=MapLayout.Towns;var landmass=new int[towns.Length];var joined=new bool[towns.Length];
+            for(int i=0;i<towns.Length;i++)landmass[i]=Landmass(towns[i].Position);
+            var links=new List<Vector4>();var group=new List<int>();
+            for(int root=0;root<towns.Length;root++)
+            {
+                if(joined[root])continue;
+                joined[root]=true;group.Clear();group.Add(root);
+                // Prim: repeatedly join the nearest unjoined city of the same country and landmass.
+                while(true)
+                {
+                    int from=-1,to=-1;float best=float.MaxValue;
+                    foreach(int a in group)for(int b=0;b<towns.Length;b++)
+                    {
+                        if(joined[b]||towns[b].Country!=towns[root].Country||landmass[b]!=landmass[root])continue;
+                        float d=(towns[a].Position-towns[b].Position).sqrMagnitude;
+                        if(d<best){best=d;from=a;to=b;}
+                    }
+                    if(to<0)break;
+                    joined[to]=true;group.Add(to);
+                    links.Add(new Vector4(towns[from].Position.x,towns[from].Position.z,towns[to].Position.x,towns[to].Position.z));
+                }
+            }
+            linkTowns=towns;return countryLinks=links.ToArray();
+        }
+        static int Landmass(Vector3 point)
+        {
+            for(int i=0;i<MapLayout.Islands.Length;i++)if(MapLayout.IslandDistance(point.x,point.z,i)>=0)return i;
+            return -1;
+        }
+        /// <summary>0 on a country link, rising to 1 past its feathered, noise-meandered lane.</summary>
+        static float CountryLinkOpenness(float px,float pz)
+        {
+            float reach=LinkClearance+LinkFeather+LinkMeander*.5f,nearest=reach*reach;
+            foreach(var link in Links())
+            {
+                float dx=link.z-link.x,dz=link.w-link.y,lengthSquared=dx*dx+dz*dz;
+                float t=lengthSquared>0?Mathf.Clamp01(((px-link.x)*dx+(pz-link.y)*dz)/lengthSquared):0;
+                float ox=px-link.x-dx*t,oz=pz-link.y-dz*t;nearest=Mathf.Min(nearest,ox*ox+oz*oz);
+            }
+            if(nearest>=reach*reach)return 1;
+            float meander=(FictionalGround.Fbm(px*.07f+83,pz*.07f+29)-.5f)*LinkMeander;
+            return Mathf.SmoothStep(0,1,Mathf.InverseLerp(LinkClearance,LinkClearance+LinkFeather,Mathf.Sqrt(nearest)+meander));
         }
         static void BakeCoastWeights(Mesh mesh,IReadOnlyList<Vector3> vertices)
         {
@@ -163,7 +218,7 @@ namespace RiskAI
                 {
                     var offset=along*((c-(columns-1)*.5f)*2.4f)+across*((r-(rows-1)*.5f)*2.4f)+new Vector2((float)random.NextDouble()-.5f,(float)random.NextDouble()-.5f)*.5f;
                     float x=cx+offset.x,z=cz+offset.y;
-                    if(!MapLayout.IsLand(x,z)||NearClearing(x,z,clearings,2.5f)||random.NextDouble()<.12)continue;
+                    if(!MapLayout.IsLand(x,z)||NearClearing(x,z,clearings,2.5f)||random.NextDouble()<.12||CountryLinkOpenness(x,z)<.5f)continue;
                     var point=new Vector3(x,MapLayout.Height(x,z),z);float h=1.9f+(float)random.NextDouble()*.7f;
                     if(ObscuresBuilding(point,h,clearings))continue;
                     BiomeVegetation.SecanoOlive(groves.transform,point,h,seed++);

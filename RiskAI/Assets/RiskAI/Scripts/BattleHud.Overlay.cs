@@ -87,6 +87,8 @@ namespace RiskAI
             AddQuick(bar, RtsGlyph.Ranking, "Clasificación (Tab)", "HUD quick ranking", ToggleRanking, null, () => RankingVisible);
             AddQuick(bar, RtsGlyph.Map, "Minimapa (F9)", "HUD quick map", ToggleMinimap, null, () => MinimapVisible);
             AddQuick(bar, RtsGlyph.Queue, "Encolar", "HUD quick queue", controller.ToggleQueueOrders, null, () => controller.QueueOrdersArmed);
+            if (UiViewport.IsTouchLayout)
+                AddQuick(bar, RtsGlyph.Hand, "Mano: un dedo mueve el mapa; doble toque y arrastra para seleccionar", "HUD quick hand", controller.ToggleTouchPanMode, null, () => controller.TouchPanMode);
             var chatQuick = AddQuick(bar, RtsGlyph.Chat, "Chat (Intro)", "HUD quick chat", OpenChat, null, () => chatOpen);
             // Touch browsers need the DOM input armed inside the same finger gesture.
             chatQuick.RegisterCallback<PointerDownEvent>(_ => { if (WebChatInput.Supported) WebChatInput.Arm(ChatPlaceholder()); }, TrickleDown.TrickleDown);

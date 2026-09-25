@@ -364,11 +364,34 @@ namespace RiskAI
                 if(routeIndex<route.Count)Advance();
             }
             else if(!IsGarrison&&routeIndex<route.Count)Advance();
+            if(!IsGarrison&&routeIndex>=route.Count)DriftApart();
             ConsiderStalledMove();
             DrainOrders();
         }
         // Only enemies already inside weapon range (units.json acquisition); the query padding covers long hulls.
         CombatTarget FindNearbyEnemy()=>UnitTargeting.Acquire(world.Session,this,Team,Type,Type.Acquisition.RadiusHostile,false,default,0,nearby);
+        /// <summary>Push away from every hull closer than units.json movement.separation; coincident hulls split by id.</summary>
+        Vector3 Separation(bool ignoreGuards=false)
+        {
+            Vector3 separation=Vector3.zero;float separationDistance=Type.Separation;
+            foreach(var other in world.Ships)if(other&&other!=this&&!(ignoreGuards&&other.IsGarrison))
+            {
+                Vector3 away=transform.position-other.transform.position;away.y=0;float distance=away.magnitude;
+                if(distance>=separationDistance)continue;
+                if(distance<=.01f){float angle=EntityId*2.399963f;away=new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle));distance=0;}
+                separation+=away.normalized*(separationDistance-distance);
+            }
+            return separation;
+        }
+        // An idle hull does not sit inside another: it drifts clear at half speed, never onto land.
+        // A port guard is ignored, so a relief ship can wait inside the guard's circle.
+        void DriftApart()
+        {
+            var separation=Separation(true);
+            if(separation.sqrMagnitude<.0025f)return;
+            Vector3 next=transform.position+separation.normalized*Mathf.Min(.8f,separation.magnitude)*simDelta*Speed*.5f;next.y=-.24f;
+            if(SeaNavigation.HasClearance(next)&&SeaNavigation.ClearSegment(transform.position,next))transform.position=next;
+        }
         void Advance()
         {
             Vector3 destination=route[routeIndex];Vector3 direction=destination-transform.position;direction.y=0;
@@ -381,12 +404,7 @@ namespace RiskAI
                 if(routeIndex>=route.Count&&hasAttackMoveGoal&&DistanceXZ(transform.position,attackMoveGoal)<1)hasAttackMoveGoal=false;
                 return;
             }
-            Vector3 separation=Vector3.zero;float separationDistance=Type.Separation;
-            foreach(var other in world.Ships)if(other&&other!=this)
-            {
-                Vector3 away=transform.position-other.transform.position;away.y=0;float distance=away.magnitude;
-                if(distance<separationDistance&&distance>.01f)separation+=away.normalized*(separationDistance-distance);
-            }
+            Vector3 separation=Separation();
             Vector3 next=Vector3.MoveTowards(transform.position,destination,Speed*simDelta);
             if(separation.sqrMagnitude>.001f)next+=separation.normalized*Mathf.Min(.8f,separation.magnitude)*simDelta*Speed;
             next.y=-.24f;

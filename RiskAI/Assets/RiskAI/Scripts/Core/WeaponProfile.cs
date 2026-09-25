@@ -28,10 +28,13 @@ namespace RiskAI.Core
         public readonly float MediumDamageFactor, SmallDamageFactor;
         public readonly float MinimumFlightTime, MaximumFlightTime;
         public readonly WeaponTargetMask SplashTargets, TargetMask;
-        public readonly bool Tracer;
+        /// <summary>What units.json says flies to the target; an instant weapon draws it as a tracer.</summary>
+        public readonly ProjectileLook Projectile;
         public readonly WeaponSound Sound;
         readonly bool initialized;
 
+        /// <summary>Attack kind shown by fire/impact feedback: every artillery delivery reads as a siege blast.</summary>
+        public AttackKind FeedbackAttack => Delivery == WeaponDelivery.Artillery ? AttackKind.Siege : DamageType;
         public bool IsValid => initialized && (Delivery == WeaponDelivery.Instant || ProjectileSpeed > 0);
         public bool IsProjectile => Delivery != WeaponDelivery.Instant;
         public bool HasSplash => SmallDamageRadius > 0;
@@ -48,7 +51,7 @@ namespace RiskAI.Core
             float fullDamageRadius, float mediumDamageRadius, float smallDamageRadius,
             float mediumDamageFactor, float smallDamageFactor,
             float minimumFlightTime, float maximumFlightTime,
-            WeaponTargetMask splashTargets, WeaponTargetMask targetMask, bool tracer, WeaponSound sound)
+            WeaponTargetMask splashTargets, WeaponTargetMask targetMask, ProjectileLook projectile, WeaponSound sound)
         {
             if (delivery != WeaponDelivery.Instant &&
                 (projectileSpeed <= 0 || float.IsNaN(projectileSpeed) || float.IsInfinity(projectileSpeed)))
@@ -81,7 +84,7 @@ namespace RiskAI.Core
             MaximumFlightTime = maximumFlightTime;
             SplashTargets = splashTargets;
             TargetMask = targetMask;
-            Tracer = tracer;
+            Projectile = projectile;
             Sound = sound;
             initialized = true;
         }

@@ -51,11 +51,13 @@ namespace RiskAI.Core
         DeferredTap deferred;
         PointerPoint lastCenter,initialCenter;
         float lastDistance,initialDistance;
-        bool threePointer,area,twoPointer,twoMoved,retiredTwo,cancelledGesture,blockedUntilAllReleased;
+        bool threePointer,area,onePan,twoPointer,twoMoved,retiredTwo,cancelledGesture,blockedUntilAllReleased;
 
         public bool Active => contacts.Count>0||deferred.Valid||retiredTwo||blockedUntilAllReleased;
         public int ContactCount => contacts.Count;
         public float CoordinateScale { get; set; }=1;
+        /// <summary>Hand mode: a one-finger drag pans instead of drawing an area; a double tap then drag still draws one.</summary>
+        public bool PanMode { get; set; }
         float Pixels(float logical) => logical*Math.Max(.5f,Math.Min(4,CoordinateScale));
 
         public void Begin(int id,PointerPoint position,float now)
@@ -98,6 +100,7 @@ namespace RiskAI.Core
         public void Move(int id,PointerPoint position)
         {
             if(!contacts.TryGetValue(id,out var contact)||retiredTwo||blockedUntilAllReleased)return;
+            var previous=contact.Position;
             contact.Position=position;contacts[id]=contact;
             if(threePointer)
             {
@@ -127,11 +130,23 @@ namespace RiskAI.Core
                 lastCenter=center;lastDistance=distance;return;
             }
             if(contacts.Count!=1)return;
+            if(onePan)
+            {
+                if(PointerPoint.SqrDistance(position,previous)>.01f)actions.Add(new DirectPointerAction(DirectPointerActionKind.Pan,position,previous));
+                return;
+            }
             if(!area)
             {
                 float threshold=Pixels(DragThreshold);
                 if(PointerPoint.SqrDistance(contact.Position,contact.Start)<=threshold*threshold)return;
-                area=true;deferred.Valid=false;
+                deferred.Valid=false;
+                if(PanMode&&!contact.DoubleCandidate)
+                {
+                    onePan=true;
+                    actions.Add(new DirectPointerAction(DirectPointerActionKind.Pan,contact.Position,contact.Start));
+                    return;
+                }
+                area=true;
                 actions.Add(new DirectPointerAction(DirectPointerActionKind.AreaBegin,contact.Start,contact.Start));
             }
             actions.Add(new DirectPointerAction(DirectPointerActionKind.AreaUpdate,contact.Position,contact.Start));
@@ -155,6 +170,7 @@ namespace RiskAI.Core
                 if(twoPointer&&!twoMoved&&!cancelledGesture)actions.Add(new DirectPointerAction(DirectPointerActionKind.Context,lastCenter,lastCenter));
                 ResetContacts();return;
             }
+            if(onePan){ResetContacts();return;}
             if(area)
             {
                 actions.Add(new DirectPointerAction(cancelledGesture?DirectPointerActionKind.AreaCancel:DirectPointerActionKind.AreaEnd,contact.Position,contact.Start));
@@ -178,7 +194,7 @@ namespace RiskAI.Core
         public void Cancel() { contacts.Clear();actions.Clear();deferred.Valid=false;ResetContacts(); }
         void ResetContacts(bool clearContacts=true)
         {
-            if(clearContacts)contacts.Clear();area=false;threePointer=false;twoPointer=false;twoMoved=false;retiredTwo=false;cancelledGesture=false;blockedUntilAllReleased=false;
+            if(clearContacts)contacts.Clear();area=false;onePan=false;threePointer=false;twoPointer=false;twoMoved=false;retiredTwo=false;cancelledGesture=false;blockedUntilAllReleased=false;
         }
         PointerPoint ComputeCenter()
         {

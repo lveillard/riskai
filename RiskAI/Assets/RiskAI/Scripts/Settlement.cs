@@ -56,6 +56,7 @@ namespace RiskAI
         BuildingProject project;
         LineRenderer rallyRing;
         BuildingTrainingView trainingView;
+        BuildingEntranceAnchor entrance;
         bool portNavalTraining;
         public LineRenderer SelectionRing { get; private set; }
         enum BuildingProject { None, Upgrade }
@@ -81,7 +82,6 @@ namespace RiskAI
             }
             ClaimZone = new CityClaimZone(ClaimPoint);
             session.Towns.Add(this); session.Economy.Towns.Add(State);
-            BuildingEntranceAnchor entrance;
             if(IsPort)
             {
                 var visual=NavalArt.CreateHarborBuildingCentered(transform,owner,PortBuildingPoint,PortSeaward,
@@ -279,7 +279,7 @@ namespace RiskAI
                 // A full population is a temporary cap: retain this paid order until a slot opens.
                 if (session.RecruitmentPopulation(first.Team) < BattleRules.PopulationLimit)
                 {
-                    Vector3 spawn = IsPort && Port ? Port.LandEntry : DefaultLandEntry;
+                    Vector3 spawn = BuildingEntranceAnchor.RecruitExit(entrance, IsPort && Port ? Port.LandEntry : DefaultLandEntry);
                     var unit = session.SpawnSeparated(first.Team, first.Kind, spawn);
                     if (unit) { queue.RemoveAt(0); unit.TryMoveTo(Rally, true, false); }
                     else { queue.RemoveAt(0); session.Economy.Refund(first.Team, UnitCatalog.Get(first.Kind).Cost); }

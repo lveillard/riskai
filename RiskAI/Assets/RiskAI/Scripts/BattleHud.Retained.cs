@@ -16,7 +16,7 @@ namespace RiskAI
         VisualElement startCountdown, pauseNotice;
         Label startCountdownNumber;
         VisualElement startCountdownProgress;
-        readonly Label[] startCountdownMilestones = new Label[3];
+        readonly Label[] startCountdownMilestones = new Label[BattleSession.BriefingLines];
         Button pauseButton;
         int retainedTab;
         bool showMinimap = true;
@@ -202,7 +202,7 @@ namespace RiskAI
             var heading=new VisualElement();RtsUiStyle.Row(heading);heading.pickingMode=PickingMode.Ignore;
             var title=RtsUiStyle.Title("RIESGUS · DESPLIEGUE",null,UiViewport.IsCompact?15:18);title.pickingMode=PickingMode.Ignore;title.style.flexGrow=1;
             heading.Add(title);
-            startCountdownNumber=RtsUiStyle.Title("5","Countdown number",UiViewport.IsCompact?38:44);startCountdownNumber.pickingMode=PickingMode.Ignore;
+            startCountdownNumber=RtsUiStyle.Title(Mathf.CeilToInt(BattleSession.DefaultStartCountdownSeconds).ToString(),"Countdown number",UiViewport.IsCompact?38:44);startCountdownNumber.pickingMode=PickingMode.Ignore;
             heading.Add(startCountdownNumber);startCountdown.Add(heading);
 
             var progressTrack=new VisualElement { name="Countdown progress",pickingMode=PickingMode.Ignore };
@@ -219,7 +219,7 @@ namespace RiskAI
             for(int i=0;i<startCountdownMilestones.Length;i++)
             {
                 var label=RtsUiStyle.Label(names[i],"Countdown milestone "+(i+1),UiViewport.IsCompact?13:14);label.pickingMode=PickingMode.Ignore;
-                label.style.whiteSpace=WhiteSpace.Normal;label.style.marginBottom=i<2?5:0;
+                label.style.whiteSpace=WhiteSpace.Normal;label.style.marginBottom=i<startCountdownMilestones.Length-1?5:0;
                 startCountdownMilestones[i]=label;milestones.Add(label);
             }
             startCountdown.Add(milestones);root.Add(startCountdown);RefreshStartCountdown();
@@ -232,8 +232,8 @@ namespace RiskAI
             if(!session.IsStarting)return;
             float remaining=session.StartCountdownRemaining;
             startCountdownNumber.text=Mathf.CeilToInt(remaining).ToString();
-            startCountdownProgress.style.width=Length.Percent(Mathf.Clamp01((5f-remaining)/5f)*100);
-            int stage=remaining>3f?0:remaining>1f?1:2;
+            startCountdownProgress.style.width=Length.Percent(session.StartCountdownProgress*100);
+            int stage=session.BriefingLine;
             for(int i=0;i<startCountdownMilestones.Length;i++)
             {
                 startCountdownMilestones[i].style.color=i==stage?RtsUiStyle.Gold:RtsUiStyle.Muted;

@@ -117,6 +117,23 @@ namespace RiskAI
             var go=new GameObject(UnitCatalog.Get(kind).Name);go.transform.SetParent(transform,false);go.transform.position=new Vector3(point.x,-.24f,point.z);
             var ship=go.AddComponent<Ship>();ship.Initialize(this,team,kind);Ships.Add(ship);Session.RegisterTarget(ship);return ship;
         }
+        /// <summary>The requested sea point, or the nearest ring point around it (open water, reachable) with no hull within <paramref name="spacing"/>.</summary>
+        public Vector3 FreeBerth(Vector3 point,float spacing)
+        {
+            if(spacing<=0||HullFree(point,spacing))return point;
+            for(int ring=1;ring<=4;ring++)for(int i=0;i<12;i++)
+            {
+                float angle=i*Mathf.PI/6+ring*.5f;
+                var probe=point+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*spacing*ring;
+                if(SeaNavigation.HasClearance(probe)&&SeaNavigation.ClearSegment(point,probe)&&HullFree(probe,spacing))return probe;
+            }
+            return point;
+        }
+        bool HullFree(Vector3 point,float spacing)
+        {
+            foreach(var ship in Ships)if(ship&&FlatDistance(ship.transform.position,point)<spacing*spacing)return false;
+            return true;
+        }
         public Harbor NearestHarbor(Vector3 point,float radius=float.MaxValue)
         {
             Harbor best=null;float distance=radius*radius;

@@ -7,7 +7,7 @@ namespace RiskAI
     public enum RtsGlyph
     {
         City, Port, Sword, Shield, Move, Patrol, Stop, Focus, Board, Unload,
-        Speaker, Note, Ranking, Map, Chat, Close, Queue, ChevronUp, ChevronDown
+        Speaker, Note, Ranking, Map, Chat, Close, Queue, ChevronUp, ChevronDown, Hand
     }
 
     /// <summary>
@@ -153,6 +153,13 @@ namespace RiskAI
                     Begin(.36f, .12f); To(.64f, .22f); To(.64f, .88f); To(.36f, .78f); Solid(shade);
                     Begin(.64f, .22f); To(.92f, .12f); To(.92f, .78f); To(.64f, .88f); Solid(ink);
                     Disc(.24f, .56f, .05f, Cut, false); Disc(.5f, .44f, .05f, Cut, false); Disc(.78f, .5f, .05f, Cut, false);
+                    break;
+                case RtsGlyph.Hand:
+                    // Open palm: four fingers, a thumb to the left, then the palm over their roots.
+                    Bar(.33f, .5f, .33f, .2f, .12f, ink); Bar(.47f, .48f, .47f, .1f, .12f, ink);
+                    Bar(.61f, .48f, .61f, .14f, .12f, ink); Bar(.75f, .52f, .75f, .26f, .11f, ink);
+                    Bar(.26f, .66f, .12f, .44f, .12f, ink);
+                    Begin(.26f, .44f); To(.81f, .44f); To(.79f, .74f); To(.64f, .92f); To(.36f, .92f); To(.24f, .72f); Solid(ink);
                     break;
                 case RtsGlyph.Chat:
                     Begin(.12f, .16f); To(.88f, .16f); To(.88f, .66f); To(.46f, .66f); To(.24f, .88f); To(.28f, .66f); To(.12f, .66f); Solid(ink);

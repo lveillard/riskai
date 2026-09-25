@@ -17,7 +17,7 @@ namespace RiskAI.Tests
             try
             {
                 battle.BeginStartCountdown();
-                Assert.That(battle.StartCountdownRemaining,Is.EqualTo(5));
+                Assert.That(battle.StartCountdownRemaining,Is.EqualTo(BattleSession.DefaultStartCountdownSeconds));
                 foreach(string callback in new[]{"OnApplicationFocus","OnApplicationPause"})
                 {
                     battle.BeginStartCountdown(.25f);

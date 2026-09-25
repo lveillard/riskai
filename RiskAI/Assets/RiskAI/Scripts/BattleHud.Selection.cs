@@ -38,7 +38,7 @@ namespace RiskAI
             button.tooltip=GameText.Localize(title);
             if(strip>0)
             {
-                SquareCell(button,strip);button.style.alignItems=Align.Center;
+                SquareCell(button,strip);button.style.alignItems=Align.Center;button.style.justifyContent=Justify.Center;
                 button.Add(new RtsIcon(glyph,Mathf.Round(strip*.6f)));
                 return button;
             }
@@ -49,8 +49,12 @@ namespace RiskAI
             bool cell=!UiViewport.IsCompact;
             // Desktop: the same square command-cell language as the production grid.
             if(cell){SquareCell(button,CommandCellSize);button.style.alignItems=Align.Center;}
-            button.Add(new RtsIcon(glyph,cell?28:26));
+            // Icon and caption sit together as one group, centred vertically in the button.
+            button.style.flexDirection=FlexDirection.Column;button.style.justifyContent=Justify.Center;
+            var icon=new RtsIcon(glyph,cell?28:26);icon.style.marginTop=0;icon.style.marginBottom=0;button.Add(icon);
             var label=RtsUiStyle.Label(title,null,9);label.pickingMode=PickingMode.Ignore;
+            label.style.marginTop=1;label.style.marginBottom=0;label.style.paddingTop=0;label.style.paddingBottom=0;
+            label.style.unityTextAlign=TextAnchor.MiddleCenter;
             label.style.maxWidth=Length.Percent(100);label.style.overflow=Overflow.Hidden;label.style.textOverflow=TextOverflow.Ellipsis;
             button.Add(label);
             if(cell&&ShowGridHotkeys&&!string.IsNullOrEmpty(hotkey))button.Add(Badge(hotkey,RtsUiStyle.Gold,true,true,10));
