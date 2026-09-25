@@ -865,7 +865,8 @@
         "manaCost",
         "rescan",
         "maxVerticalDelta",
-        "organicOnly"
+        "organicOnly",
+        "mask"
       ],
       "properties": {
         "amount": {
@@ -901,6 +902,14 @@
         "organicOnly": {
           "description": "Mechanical units are not healed.",
           "type": "boolean"
+        },
+        "mask": {
+          "minItems": 1,
+          "description": "Classes and relations this heal may target.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WeaponTargetMask"
+          }
         }
       },
       "description": "Ahea autocast heal."
@@ -913,7 +922,8 @@
         "duration",
         "manaCost",
         "damageBonus",
-        "evaluation"
+        "evaluation",
+        "mask"
       ],
       "properties": {
         "area": {
@@ -940,6 +950,14 @@
           "minimum": 0,
           "description": "Seconds between autocast evaluations (local).",
           "type": "number"
+        },
+        "mask": {
+          "minItems": 1,
+          "description": "Classes and relations that receive the bonus.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WeaponTargetMask"
+          }
         }
       },
       "description": "Aroa roar autocast."
@@ -1005,6 +1023,14 @@
         },
         "harborGuard": {
           "description": "Can be bound as a harbor guard ship.",
+          "type": "boolean"
+        },
+        "startingGarrison": {
+          "description": "Spawned at every post and used as country reinforcement. Exactly one unit sets this.",
+          "type": "boolean"
+        },
+        "expeditionTransport": {
+          "description": "The transport a naval expedition buys. Exactly one unit sets this.",
           "type": "boolean"
         },
         "transport": {

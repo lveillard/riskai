@@ -218,7 +218,8 @@
         "canEmbark": true,
         "canFollow": true,
         "canPatrol": true,
-        "harborGuard": false
+        "harborGuard": false,
+        "startingGarrison": true
       },
       "presentation": {
         "model": "RogueHooded",
@@ -739,7 +740,8 @@
           "manaCost": 5,
           "rescan": 0.25,
           "maxVerticalDelta": 3,
-          "organicOnly": true
+          "organicOnly": true,
+          "mask": ["Soldier", "Ally"]
         },
         "mana": {
           "max": 200,
@@ -1323,7 +1325,8 @@
           "duration": 45,
           "manaCost": 100,
           "damageBonus": 0.25,
-          "evaluation": 0.5
+          "evaluation": 0.5,
+          "mask": ["Soldier", "Ally"]
         },
         "mana": {
           "max": 300,
@@ -1457,7 +1460,8 @@
           "duration": 45,
           "manaCost": 100,
           "damageBonus": 0.25,
-          "evaluation": 0.5
+          "evaluation": 0.5,
+          "mask": ["Soldier", "Ally"]
         },
         "mana": {
           "max": 300,
@@ -1902,6 +1906,7 @@
         "canFollow": false,
         "canPatrol": false,
         "harborGuard": false,
+        "expeditionTransport": true,
         "transport": {
           "capacity": 10,
           "loadRadius": 10.24,

@@ -19,6 +19,8 @@ namespace RiskAI.Core
             var seen = new HashSet<string>();
             float? clearance = null;
             int landDefaults = 0;
+            int garrisons = 0;
+            int expeditions = 0;
             foreach (var unit in file.Units)
             {
                 if (unit == null) { errors.Add("null unit entry"); continue; }
@@ -26,6 +28,8 @@ namespace RiskAI.Core
                 if (!seen.Add(unit.Id)) errors.Add(at + ": duplicate id");
                 if ((((unit.Capabilities != null && unit.Capabilities.Heal != null) || (unit.Capabilities != null && unit.Capabilities.Roar != null)) && !((unit.Capabilities != null && unit.Capabilities.Mana != null)))) errors.Add("" + at + ": heal/roar require mana");
                 if (((unit.Capabilities != null && unit.Capabilities.Transport != null) && unit.Domain != UnitDomain.Sea)) errors.Add("" + at + ": transport is only for sea units");
+                if (((unit.Capabilities != null && (unit.Capabilities.ExpeditionTransport == true)) && !((unit.Capabilities != null && unit.Capabilities.Transport != null)))) errors.Add("" + at + ": expeditionTransport requires transport");
+                if (((unit.Capabilities != null && (unit.Capabilities.StartingGarrison == true)) && unit.Domain != UnitDomain.Land)) errors.Add("" + at + ": startingGarrison is a land unit");
                 if ((unit.Domain == UnitDomain.Land && (!(unit.Collision != null) || !(unit.Body != null)))) errors.Add("" + at + ": land units need collision and body radii");
                 if ((unit.Domain == UnitDomain.Sea && !(unit.Hull != null))) errors.Add("" + at + ": sea units need a hull");
                 if ((unit.HostWeapons != null && unit.Domain != UnitDomain.Static)) errors.Add("" + at + ": hostWeapons are only for static posts");
@@ -41,10 +45,14 @@ namespace RiskAI.Core
                     clearance = unit.Hull.Clearance;
                 }
                 if (unit.Presentation != null && unit.Presentation.PortraitCamera != null && unit.Presentation.PortraitCamera.LandDefault == true) landDefaults++;
+                if (unit.Capabilities != null && unit.Capabilities.StartingGarrison == true) garrisons++;
+                if (unit.Capabilities != null && unit.Capabilities.ExpeditionTransport == true) expeditions++;
                 if (unit.Weapons != null) foreach (var weapon in unit.Weapons) Check(unit, weapon, at, errors);
                 if (unit.HostWeapons != null) { Check(unit, unit.HostWeapons.Town, at, errors); Check(unit, unit.HostWeapons.Harbor, at, errors); }
             }
             if (landDefaults != 1) errors.Add("units.json needs exactly one landDefault portrait camera");
+            if (garrisons != 1) errors.Add("units.json needs exactly one startingGarrison");
+            if (expeditions != 1) errors.Add("units.json needs exactly one expeditionTransport");
             return errors;
         }
 

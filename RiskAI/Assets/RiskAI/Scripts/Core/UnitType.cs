@@ -69,17 +69,19 @@ namespace RiskAI.Core
     {
         public readonly float Amount, Range, Cooldown, ManaCost, Rescan, MaxVerticalDelta;
         public readonly bool OrganicOnly, Enabled;
-        public HealProfile(float amount, float range, float cooldown, float manaCost, float rescan, float maxVerticalDelta, bool organicOnly)
-        { Amount = amount; Range = range; Cooldown = cooldown; ManaCost = manaCost; Rescan = rescan; MaxVerticalDelta = maxVerticalDelta; OrganicOnly = organicOnly; Enabled = true; }
+        public readonly WeaponTargetMask Mask;
+        public HealProfile(float amount, float range, float cooldown, float manaCost, float rescan, float maxVerticalDelta, bool organicOnly, WeaponTargetMask mask)
+        { Amount = amount; Range = range; Cooldown = cooldown; ManaCost = manaCost; Rescan = rescan; MaxVerticalDelta = maxVerticalDelta; OrganicOnly = organicOnly; Mask = mask; Enabled = true; }
     }
 
     /// <summary>Aroa roar (units.json capabilities.roar).</summary>
     public readonly struct RoarProfile
     {
         public readonly float Area, Duration, ManaCost, DamageBonus, Evaluation;
+        public readonly WeaponTargetMask Mask;
         public readonly bool Enabled;
-        public RoarProfile(float area, float duration, float manaCost, float damageBonus, float evaluation)
-        { Area = area; Duration = duration; ManaCost = manaCost; DamageBonus = damageBonus; Evaluation = evaluation; Enabled = true; }
+        public RoarProfile(float area, float duration, float manaCost, float damageBonus, float evaluation, WeaponTargetMask mask)
+        { Area = area; Duration = duration; ManaCost = manaCost; DamageBonus = damageBonus; Evaluation = evaluation; Mask = mask; Enabled = true; }
     }
 
     /// <summary>
@@ -107,7 +109,7 @@ namespace RiskAI.Core
         public readonly float VisualHeight, VisualRadius, StandingHeight, StandingWidth, MdxHeight, MdxWidth, SpawnRadius;
         public readonly WeaponProfile Weapon, TownWeapon, HarborWeapon;
         public readonly AcquisitionProfile Acquisition;
-        public readonly bool CanCapture, CanGarrison, CanEmbark, CanFollow, CanPatrol, HarborGuard;
+        public readonly bool CanCapture, CanGarrison, CanEmbark, CanFollow, CanPatrol, HarborGuard, StartingGarrison, ExpeditionTransport;
         public readonly TransportProfile Transport;
         public readonly HealProfile Heal;
         public readonly RoarProfile Roar;
@@ -121,6 +123,8 @@ namespace RiskAI.Core
 
         public bool CanAttack => Weapon.IsValid;
         public bool CanTransport => Transport.Enabled;
+        /// <summary>Sea motor (SeaNavigation). Land and static types move on the NavMesh.</summary>
+        public bool SeaMotor => Domain == UnitDomain.Sea;
         /// <summary>The attack type the unit deals (Normal for unarmed types, as before).</summary>
         public AttackKind AttackType => Weapon.DamageType;
 
@@ -151,10 +155,11 @@ namespace RiskAI.Core
             var caps = c.Capabilities;
             CanCapture = caps.CanCapture; CanGarrison = caps.CanGarrison; CanEmbark = caps.CanEmbark;
             CanFollow = caps.CanFollow; CanPatrol = caps.CanPatrol; HarborGuard = caps.HarborGuard;
+            StartingGarrison = caps.StartingGarrison == true; ExpeditionTransport = caps.ExpeditionTransport == true;
             Transport = caps.Transport == null ? default : new TransportProfile(caps.Transport.Capacity, caps.Transport.LoadRadius, caps.Transport.LoadLimit);
             Heal = caps.Heal == null ? default : new HealProfile(caps.Heal.Amount, caps.Heal.Range, caps.Heal.Cooldown, caps.Heal.ManaCost,
-                caps.Heal.Rescan, caps.Heal.MaxVerticalDelta, caps.Heal.OrganicOnly);
-            Roar = caps.Roar == null ? default : new RoarProfile(caps.Roar.Area, caps.Roar.Duration, caps.Roar.ManaCost, caps.Roar.DamageBonus, caps.Roar.Evaluation);
+                caps.Heal.Rescan, caps.Heal.MaxVerticalDelta, caps.Heal.OrganicOnly, Combine(caps.Heal.Mask));
+            Roar = caps.Roar == null ? default : new RoarProfile(caps.Roar.Area, caps.Roar.Duration, caps.Roar.ManaCost, caps.Roar.DamageBonus, caps.Roar.Evaluation, Combine(caps.Roar.Mask));
             Mana = caps.Mana == null ? default : new ManaProfile(caps.Mana.Max, caps.Mana.Initial, caps.Mana.Regen);
             var p = c.Presentation;
             Model = p.Model; PortraitName = p.Portrait; PortraitFallback = p.PortraitFallback; AttackClip = p.AttackClip; AttackContact = p.Contact;

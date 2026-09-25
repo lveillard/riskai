@@ -14,6 +14,8 @@ namespace RiskAI.Core
         public const int BaseIncome = 4;
         public const int TownIncome = 1;
         public const int PopulationLimit = 100;
+        /// <summary>Orders one building may hold. The unit type picks the spawn motor.</summary>
+        public const int QueueCapacity = 5;
         public const float RoundSeconds = 60f;
         public const float VictoryHoldSeconds = 20f;
         public const int BountyDivisor = 4;

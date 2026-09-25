@@ -552,6 +552,10 @@ namespace RiskAI.Core
         /// <summary>Can be bound as a harbor guard ship.</summary>
         [UnitConfigField(Required = true)]
         public bool HarborGuard;
+        /// <summary>Spawned at every post and used as country reinforcement. Exactly one unit sets this.</summary>
+        public bool? StartingGarrison;
+        /// <summary>The transport a naval expedition buys. Exactly one unit sets this.</summary>
+        public bool? ExpeditionTransport;
         /// <summary>Transport capability (A00V/Sch3).</summary>
         public UnitTransport Transport;
         /// <summary>Ahea autocast heal.</summary>
@@ -602,6 +606,9 @@ namespace RiskAI.Core
         /// <summary>Mechanical units are not healed.</summary>
         [UnitConfigField(Required = true)]
         public bool OrganicOnly;
+        /// <summary>Classes and relations this heal may target.</summary>
+        [UnitConfigField(Required = true)]
+        public WeaponTargetMask[] Mask;
     }
 
     /// <summary>Aroa roar autocast.</summary>
@@ -623,6 +630,9 @@ namespace RiskAI.Core
         /// <summary>Seconds between autocast evaluations (local).</summary>
         [UnitConfigField(Required = true)]
         public float Evaluation;
+        /// <summary>Classes and relations that receive the bonus.</summary>
+        [UnitConfigField(Required = true)]
+        public WeaponTargetMask[] Mask;
     }
 
     /// <summary>Mana pool.</summary>
