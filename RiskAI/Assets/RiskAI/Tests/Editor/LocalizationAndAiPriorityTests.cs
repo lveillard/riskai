@@ -5,16 +5,16 @@ namespace RiskAI.Tests
     public sealed class LocalizationAndAiPriorityTests
     {
         [TearDown]
-        public void ResetLanguage() => GameText.Set(GameLanguage.English);
+        public void ResetLanguage() => ProbeHooks.SetLanguage(GameLanguage.English);
 
         [Test]
         public void EnglishIsDefaultAndSpanishCanBeSelected()
         {
-            GameText.Set(GameLanguage.English);
+            ProbeHooks.SetLanguage(GameLanguage.English);
             Assert.That(GameText.Localize("DESGLOSE DEL ORO"),Is.EqualTo("GOLD BREAKDOWN"));
             Assert.That(GameText.Localize("Las Marcas · 33 ciudades"),Is.EqualTo("The Marches · 33 cities"));
             Assert.That(GameText.Localize("Próxima ronda: +4 oro en 51 s"),Is.EqualTo("Next round: +4 gold in 51 s"));
-            GameText.Set(GameLanguage.Spanish);
+            ProbeHooks.SetLanguage(GameLanguage.Spanish);
             Assert.That(GameText.Localize("DESGLOSE DEL ORO"),Is.EqualTo("DESGLOSE DEL ORO"));
             Assert.That(GameText.SwitchLabel,Is.EqualTo("EN"));
         }

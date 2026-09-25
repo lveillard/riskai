@@ -188,14 +188,14 @@ namespace RiskAI.Tests
         [Test]
         public void BrokenCountryToastReadsPlainlyInEnglish()
         {
-            GameText.Set(GameLanguage.English);
+            ProbeHooks.SetLanguage(GameLanguage.English);
             try
             {
                 Assert.That(GameText.Localize("¡Has perdido Las Marcas!"), Is.EqualTo("You lost The Marches!"));
                 Assert.That(GameText.Localize("País roto: sin oro ni refuerzos de Las Marcas"), Is.EqualTo("Country broken: no gold or reinforcements from The Marches"));
                 Assert.That(GameText.Localize("Has perdido Encinar Bajo"), Is.EqualTo("You lost Lower Oakwood"));
             }
-            finally { GameText.Set(GameLanguage.English); }
+            finally { ProbeHooks.SetLanguage(GameLanguage.English); }
         }
 
         [Test]

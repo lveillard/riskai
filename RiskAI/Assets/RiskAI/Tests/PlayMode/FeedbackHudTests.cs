@@ -25,7 +25,7 @@ namespace RiskAI.Tests
             previousPlayers=BattleSession.PlayerCountForNewMatch;previousSeed=BattleSession.SeedForNewMatch;
             BattleSession.MapForNewMatch=ScenarioMap.Classic;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.Fixed;
             BattleSession.PlayerCountForNewMatch=2;BattleSession.SeedForNewMatch=19031;
-            GameText.Set(GameLanguage.Spanish);
+            ProbeHooks.SetLanguage(GameLanguage.Spanish);
             scene=SceneManager.CreateScene("Battle feedback overlay");SceneManager.SetActiveScene(scene);
             new GameObject("Battle feedback bootstrap").AddComponent<RiskBootstrap>();battle=BattleSession.Current;battle.AiEnabled=false;
             Object.FindFirstObjectByType<RtsController>().enabled=false;hud=Object.FindFirstObjectByType<BattleHud>();
@@ -107,7 +107,7 @@ namespace RiskAI.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            UiViewport.ResetHudHeights();GameText.Set(GameLanguage.English);BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
+            UiViewport.ResetHudHeights();ProbeHooks.SetLanguage(GameLanguage.English);BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
             BattleSession.PlayerCountForNewMatch=previousPlayers;BattleSession.SeedForNewMatch=previousSeed;
             SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);
         }

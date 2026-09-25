@@ -9,7 +9,7 @@ namespace RiskAI
     /// <summary>Single presentation boundary for the two supported UI languages.</summary>
     public static class GameText
     {
-        public static GameLanguage Language { get; private set; } = GameLanguage.English;
+        public static GameLanguage Language { get; internal set; } = GameLanguage.English;
         public static bool IsSpanish => Language == GameLanguage.Spanish;
         public static string SwitchLabel => IsSpanish ? "EN" : "ES";
 
@@ -49,8 +49,6 @@ namespace RiskAI
             try { PlayerPrefs.SetInt(PreferenceKey, (int)Language); PlayerPrefs.Save(); }
             catch (Exception) { }
         }
-        /// <summary>Sets the language for this session only (tests, probes); not persisted.</summary>
-        public static void Set(GameLanguage language) => Language = language;
 
         static readonly Dictionary<string,string> Exact = new Dictionary<string,string>
         {

@@ -21,8 +21,6 @@ namespace RiskAI
         readonly CommandResult[] results = new CommandResult[InboxLimit];
         int nextCommandId, resultCount;
         CommandTelemetry telemetry;
-        // Live lifecycle count; unlike interval aggregates, ConsumeTelemetry does not reset it.
-        long humanMoveOutstanding;
         bool telemetryPaused;
         double telemetryPauseStartedAt, observedPausedSeconds, pausedSecondsAtLastConsume;
         public int PendingCount => queue.Count;
@@ -48,7 +46,6 @@ namespace RiskAI
         {
             var snapshot = telemetry;
             double pausedNow = ObservedPausedSeconds();
-            snapshot.HumanMoveOutstanding = humanMoveOutstanding;
             snapshot.ObservedPauseMilliseconds = (pausedNow - pausedSecondsAtLastConsume) * 1000.0;
             pausedSecondsAtLastConsume = pausedNow;
             telemetry = default;
@@ -150,14 +147,14 @@ namespace RiskAI
                 var command=queued.Command;
                 if(!Valid(ref command,false)){FailDrain(command,"La unidad, el relevo o el objetivo cambió antes de aplicar la orden.");continue;}
                 var actor=(IOrderable)session.FindTarget(command.UnitId);
-                bool firstMoveEligible = actor.HumanMoveEligible(command);
+                var moveSampling=HumanMoveProbe.Prepare(actor,in command);
                 bool applied=actor.ApplyOrder(command);
                 if(applied)
                 {
                     AppliedCount++;
                     RecordApplied(command.PlayerId, Time.realtimeSinceStartupAsDouble - queued.SubmittedAt,
                         ObservedPausedSeconds() - queued.PausedSecondsAtSubmit);
-                    actor.BeginHumanMove(command, queued.SubmittedAt, queued.PausedSecondsAtSubmit, firstMoveEligible);
+                    HumanMoveProbe.Commit(actor,in command,queued.SubmittedAt,queued.PausedSecondsAtSubmit,moveSampling);
                 }
                 else FailDrain(command, string.IsNullOrEmpty(actor.OrderError) ? "No se ha podido aplicar la orden." : actor.OrderError);
             }
@@ -168,51 +165,6 @@ namespace RiskAI
             Revise(CommandResult.Reject(command, reason));
             Reject(command, reason);
         }
-
-        internal void RecordHumanFirstMotion(double submittedAt, double pausedSecondsAtSubmit)
-        {
-            double activeSeconds = Time.realtimeSinceStartupAsDouble - submittedAt -
-                (ObservedPausedSeconds() - pausedSecondsAtSubmit);
-            if (activeSeconds < 0) activeSeconds = 0;
-            double milliseconds = activeSeconds * 1000.0;
-            telemetry.HumanFirstMoveCount++;
-            telemetry.HumanFirstMoveMilliseconds += milliseconds;
-            if (milliseconds > telemetry.HumanFirstMoveMaxMilliseconds) telemetry.HumanFirstMoveMaxMilliseconds = milliseconds;
-        }
-        internal double HumanMoveActiveSeconds(double submittedAt, double pausedSecondsAtSubmit) =>
-            System.Math.Max(0, Time.realtimeSinceStartupAsDouble - submittedAt - (ObservedPausedSeconds() - pausedSecondsAtSubmit));
-
-        // Stages are simulation-tick observations, not exact NavMesh solver completion times.
-        // Each interval is paired on one command; stage counts may fall in different report windows.
-        internal void RecordHumanRouteReady(double applyToRouteSeconds)
-        {
-            telemetry.HumanRouteReadyCount++;
-            AccumulateStage(applyToRouteSeconds, ref telemetry.HumanApplyToRouteMilliseconds, ref telemetry.HumanApplyToRouteMaxMilliseconds);
-        }
-        internal void RecordHumanSpeed(double submitToSpeedSeconds, double routeToSpeedSeconds)
-        {
-            telemetry.HumanSpeedCount++;
-            AccumulateStage(submitToSpeedSeconds, ref telemetry.HumanSubmitToSpeedMilliseconds, ref telemetry.HumanSubmitToSpeedMaxMilliseconds);
-            if (routeToSpeedSeconds >= 0)
-            {
-                telemetry.HumanRouteToSpeedCount++;
-                AccumulateStage(routeToSpeedSeconds, ref telemetry.HumanRouteToSpeedMilliseconds, ref telemetry.HumanRouteToSpeedMaxMilliseconds);
-            }
-        }
-        internal void RecordHumanSpeedToDirected(double seconds)
-        {
-            telemetry.HumanSpeedToDirectedCount++;
-            AccumulateStage(seconds, ref telemetry.HumanSpeedToDirectedMilliseconds, ref telemetry.HumanSpeedToDirectedMaxMilliseconds);
-        }
-        static void AccumulateStage(double seconds, ref double total, ref double maximum)
-        {
-            double milliseconds = System.Math.Max(0, seconds) * 1000.0;
-            total += milliseconds;
-            if (milliseconds > maximum) maximum = milliseconds;
-        }
-        internal void RecordHumanMoveEnded() { humanMoveOutstanding--; }
-        internal void RecordHumanFirstMoveEligible() { telemetry.HumanFirstMoveEligible++; humanMoveOutstanding++; }
-        internal void RecordHumanFirstMoveCancelled() { telemetry.HumanFirstMoveCancelled++; }
 
         void RecordApplied(int playerId, double elapsedSeconds, double observedPauseSeconds)
         {
@@ -234,7 +186,7 @@ namespace RiskAI
                 if (milliseconds > telemetry.AiSubmitToApplyMaxMilliseconds) telemetry.AiSubmitToApplyMaxMilliseconds = milliseconds;
             }
         }
-        double ObservedPausedSeconds() => observedPausedSeconds + (telemetryPaused ? Time.realtimeSinceStartupAsDouble - telemetryPauseStartedAt : 0);
+        internal double ObservedPausedSeconds() => observedPausedSeconds + (telemetryPaused ? Time.realtimeSinceStartupAsDouble - telemetryPauseStartedAt : 0);
     }
 
     /// <summary>Allocation-free aggregate returned by <see cref="BattleCommands.ConsumeTelemetry"/>.</summary>
@@ -242,16 +194,8 @@ namespace RiskAI
     {
         public int MaxQueueDepth;
         public long HumanSubmitted, AiSubmitted, HumanApplied, AiApplied, HumanRejected, AiRejected;
-        public long HumanFirstMoveEligible, HumanFirstMoveCancelled, HumanFirstMoveCount;
         public double HumanSubmitToApplyMilliseconds, HumanSubmitToApplyMaxMilliseconds;
         public double AiSubmitToApplyMilliseconds, AiSubmitToApplyMaxMilliseconds;
-        public double HumanFirstMoveMilliseconds, HumanFirstMoveMaxMilliseconds;
-        public long HumanMoveOutstanding;
-        public long HumanRouteReadyCount, HumanSpeedCount, HumanRouteToSpeedCount, HumanSpeedToDirectedCount;
-        public double HumanApplyToRouteMilliseconds, HumanApplyToRouteMaxMilliseconds;
-        public double HumanSubmitToSpeedMilliseconds, HumanSubmitToSpeedMaxMilliseconds;
-        public double HumanRouteToSpeedMilliseconds, HumanRouteToSpeedMaxMilliseconds;
-        public double HumanSpeedToDirectedMilliseconds, HumanSpeedToDirectedMaxMilliseconds;
         public double ObservedPauseMilliseconds;
     }
 }

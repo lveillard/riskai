@@ -91,12 +91,6 @@ also include:
   observed by `RuntimeDiagnostics`; `commandObservedPauseMs` reports that
   observed time. If the diagnostics component was absent or unable to update,
   pause exclusion is necessarily incomplete.
-- `firstMoveHumanEligible`, `firstMoveHumanCancelled`, and
-  `firstMoveHuman*Active*Ms`: a stricter movement sample for a direct player-0
-  Move or AttackMove. It is eligible only when its agent initially has no path,
-  no pending path, and negligible velocity. It completes only after the new
-  route has resolved and a velocity toward the new destination is observed.
-  A cancelled or absent sample is not proof that an order did not apply.
 - `pathPending`, `pathPendingAvgAgeMs`, and `pathPendingMaxAgeMs`: a single
   per-unit snapshot at report time, with age measured in simulation time. They
   do not count all pending routes that occurred during the 30-second window.
@@ -122,9 +116,9 @@ reading a report does not reset this live count.
   paired interval from first speed crossing to the original direction-qualified
   first-move condition. A detour may move away from the destination initially.
 
-The original `firstMoveHuman*` fields remain compatible. Both old and new
-observations are sampled in the simulation tick and exclude only observed
-pauses. They are velocity observations, not per-command transform displacement.
+The movement stages are sampled in the simulation tick and exclude only
+observed pauses. They are velocity observations, not per-command transform
+displacement.
 Counts can land in different reporting windows; do not subtract independently
 averaged stages or compare them to all applied commands (which include Hold).
 Desired/actual velocity and navigation traces are still needed before assigning
@@ -186,7 +180,7 @@ attribute every difference to the budget (fixture target: roughly 600 units):
 & ./Builds/Windows-v0.21/RiskAI.exe -screen-width 1600 -screen-height 900 -screen-fullscreen 0 --riskai-map europe --riskai-players 16 --riskai-seed 160212 --riskai-probe --riskai-probe-warmup 900 --riskai-probe-warmup-commander --riskai-probe-recruits 24 --riskai-probe-seconds 90 --riskai-path-budget 1000 -logFile ./RiskAI/Logs/path-budget-1000.log
 ```
 
-Compare `firstMoveHumanActive*Ms`, `pathPending*`, frame thresholds, and the
+Compare the movement stages (`routeReady*`, `speed*`), `pathPending*`, frame thresholds, and the
 world phase timings. The first exploratory Windows runs are documented in
 [VALIDATION-v0.21](VALIDATION-v0.21.md); unequal battles and external load
 prevent attributing their differences solely to this budget. The default

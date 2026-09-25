@@ -13,7 +13,7 @@ namespace RiskAI.Tests
         [UnityTest]
         public IEnumerator SetupScreenDoesNotCreateBattlefieldOrSimulation()
         {
-            GameText.Set(GameLanguage.English);
+            ProbeHooks.SetLanguage(GameLanguage.English);
             var previous=SceneManager.GetActiveScene();var scene=SceneManager.CreateScene("Frontend isolation");
             SceneManager.SetActiveScene(scene);
             var menu=new GameObject("Standalone match setup").AddComponent<FrontEndController>();
@@ -32,7 +32,7 @@ namespace RiskAI.Tests
             yield return null;
             Assert.That(runtime.Root.Query<Label>().ToList().Any(label=>label.text=="RIESGUS"),Is.True);
             Assert.That(runtime.Root.Q<Label>("Campaign setup eyebrow").text,Does.StartWith("SALA DE GUERRA"));
-            GameText.Set(GameLanguage.English);
+            ProbeHooks.SetLanguage(GameLanguage.English);
             foreach(var root in scene.GetRootGameObjects())
             {
                 Assert.That(root.GetComponentInChildren<BattleSession>(),Is.Null);
