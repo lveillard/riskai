@@ -102,3 +102,11 @@ La partida en Europa con 16 IA aplica 166 órdenes y rechaza 0, sin fotogramas d
 El fotograma medio es de 34–37 ms. Una prueba A/B local en la misma máquina da 34,85 ms con v0.34.2 y 34,89 ms con v0.34.3,
 así que la diferencia con los 20,8 ms anteriores viene del estado del equipo y no de esta versión.
 Pruebas: EditMode 325/325, PlayMode 320/320 en 4 tandas (dos pasadas completas) y npm 14/14.
+
+## v0.34.4
+
+Publicado como `20260925T175329Z-v0344-fa721b5` (merge de la PR #18, `fa721b5`). Recibo `activated=true`, 10 archivos
+verificados y verificación pública `success=true`. El arranque público en 390×844 funciona y no da errores; muestra el
+joystick de cámara y el botón de mano. La partida en Europa con 16 IA aplica 171 órdenes y rechaza 0, a 20,75 ms por
+fotograma, sin fotogramas de más de 100 ms ni errores de consola.
+Pruebas: EditMode 325/325, PlayMode 320/320 en 4 tandas (la tanda 4 repetida tras corregir la separación de barcos) y npm 14/14.
