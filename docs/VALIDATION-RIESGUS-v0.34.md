@@ -85,3 +85,11 @@ Publicado como `20260924T222934Z-v0341-46c8647` (merge de la PR #12, `46c8647`).
 verificados y verificación pública `success=true`. El arranque público en 390×844 funciona y no da errores.
 La partida en Europa con 16 IA aplica 171 órdenes y rechaza 0, a 19,9 ms por fotograma, sin errores de consola.
 Pruebas: EditMode 325/325, PlayMode 320/320 en 4 tandas más los tests nuevos, npm 14/14.
+
+## v0.34.2
+
+Publicado como `20260925T030132Z-v0342-3597a20` (merge de la PR #14, `3597a20`). Recibo `activated=true`, 10 archivos
+verificados y verificación pública `success=true`. El arranque público en 390×844 funciona y no da errores.
+La partida en Europa con 16 IA aplica 171 órdenes y rechaza 0, a 20,8 ms por fotograma, sin fotogramas de más de 100 ms
+y sin errores de consola. Pruebas: EditMode 325/325, PlayMode 320/320 en 4 tandas (la tanda 3 repetida tres veces),
+pase de huecos 9/9 y npm 14/14. El test de la oleada pasa 10/10 cuando se ejecuta solo.
