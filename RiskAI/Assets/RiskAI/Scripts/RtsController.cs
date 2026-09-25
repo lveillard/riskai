@@ -106,6 +106,9 @@ namespace RiskAI
         bool queueOrders;
         public bool QueueOrdersArmed => queueOrders;
         public void ToggleQueueOrders() { queueOrders = !queueOrders; }
+        /// <summary>Touch hand mode: one finger pans the map; a double tap then drag draws the selection area.</summary>
+        public bool TouchPanMode { get; private set; }
+        public void ToggleTouchPanMode() { TouchPanMode = !TouchPanMode; }
         // Selection stays a plain public list; the identity map records which
         // actor each listed object was taken with. A pooled reuse therefore drops
         // the entry instead of inheriting the previous owner's orders, and a

@@ -89,16 +89,16 @@ namespace RiskAI.Tests
             Assert.That(VisualFactory.ActiveProjectileViewCount, Is.Zero);
 
             Vector3 from=new Vector3(280,2,280),to=new Vector3(290,2,280);
-            FireVisual(from,to,UnitKind.Archer,AttackKind.Piercing);
-            FireVisual(from,to,UnitKind.Mage,AttackKind.Magic);
-            FireVisual(from,to,UnitKind.Mortar,AttackKind.Siege);
+            FireVisual(from,to,UnitKind.Archer);
+            FireVisual(from,to,UnitKind.Mage);
+            FireVisual(from,to,UnitKind.Mortar);
+            FireVisual(from,to,UnitKind.Frigate);
             yield return null;
 
             var views=Object.FindObjectsOfType<ArrowFlight>();
-            Assert.That(views.Any(view=>view.transform.Find("Piercing projectile").gameObject.activeSelf),Is.True);
-            Assert.That(views.Any(view=>view.transform.Find("Magic projectile").gameObject.activeSelf),Is.True);
-            Assert.That(views.Any(view=>view.transform.Find("Siege projectile").gameObject.activeSelf),Is.True);
-            var piercing=views.Select(view=>view.transform.Find("Piercing projectile")).First(group=>group.gameObject.activeSelf);
+            foreach(string look in new[]{"Bolt","Orb","Shell","Cannonball"})
+                Assert.That(views.Any(view=>view.transform.Find(look+" projectile").gameObject.activeSelf),Is.True,look);
+            var piercing=views.Select(view=>view.transform.Find("Bolt projectile")).First(group=>group.gameObject.activeSelf);
             var piercingParts=piercing.GetComponentsInChildren<MeshRenderer>();
             CollectionAssert.AreEquivalent(new[]{"Bolt shaft","Bolt metal point","Bolt fletching top","Bolt fletching side"},
                 piercingParts.Select(renderer=>renderer.name));
@@ -149,12 +149,12 @@ namespace RiskAI.Tests
             yield return new WaitForSecondsRealtime(.85f);
             Assert.That(battle.Combat.ActiveProjectileCount,Is.Zero);
             Assert.That(VisualFactory.ActiveProjectileViewCount,Is.Zero);
-            FireVisual(from,to,UnitKind.Mortar,AttackKind.Siege);
+            FireVisual(from,to,UnitKind.Mortar);
             yield return null;
             Assert.That(VisualFactory.ProjectilePoolCreatedCount,Is.EqualTo(created));
         }
 
-        void FireVisual(Vector3 from,Vector3 to,UnitKind kind,AttackKind attack)=>
+        void FireVisual(Vector3 from,Vector3 to,UnitKind kind)=>
             battle.Combat.FireWeapon(from,to,null,0,0,null,UnitCatalog.Get(kind).Weapon);
 
         [UnityTest]

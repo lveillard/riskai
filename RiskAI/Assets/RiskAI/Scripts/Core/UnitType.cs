@@ -29,9 +29,10 @@ namespace RiskAI.Core
     public readonly struct HullShape
     {
         public readonly float Length, Beam, Height, CenterHeight, Scale, Clearance;
-        public readonly bool Warship, Exists;
-        public HullShape(float length, float beam, float height, float centerHeight, float scale, bool warship, float clearance)
-        { Length = length; Beam = beam; Height = height; CenterHeight = centerHeight; Scale = scale; Warship = warship; Clearance = clearance; Exists = true; }
+        public readonly ShipModel Model;
+        public readonly bool Exists;
+        public HullShape(float length, float beam, float height, float centerHeight, float scale, ShipModel model, float clearance)
+        { Length = length; Beam = beam; Height = height; CenterHeight = centerHeight; Scale = scale; Model = model; Clearance = clearance; Exists = true; }
     }
 
     /// <summary>Automatic acquisition resolved per owner/order (units.json acquisition).</summary>
@@ -142,7 +143,7 @@ namespace RiskAI.Core
             Mechanical = c.Mechanical; CanBeAttacked = c.CanBeAttacked;
             Speed = c.Movement.Speed; ForestPenalty = c.Movement.ForestPenalty; Separation = c.Movement.Separation ?? 0;
             CollisionRadius = c.Collision?.Radius ?? 0; BodyRadius = c.Body?.Radius ?? 0; FootprintSize = c.Footprint?.Size ?? 0;
-            Hull = c.Hull == null ? default : new HullShape(c.Hull.Length, c.Hull.Beam, c.Hull.Height, c.Hull.CenterHeight, c.Hull.Scale, c.Hull.Warship, c.Hull.Clearance);
+            Hull = c.Hull == null ? default : new HullShape(c.Hull.Length, c.Hull.Beam, c.Hull.Height, c.Hull.CenterHeight, c.Hull.Scale, c.Hull.Model, c.Hull.Clearance);
             VisualHeight = c.Visual.Height; VisualRadius = c.Visual.Radius;
             StandingHeight = c.Visual.StandingHeight; StandingWidth = c.Visual.StandingWidth;
             MdxHeight = c.Visual.Mdx?.Height ?? 0; MdxWidth = c.Visual.Mdx?.Width ?? 0;
@@ -186,7 +187,7 @@ namespace RiskAI.Core
             return new WeaponProfile(w.Source, w.AttackType, w.Base, w.Dice, w.Sides, w.Cooldown, w.AttackPoint, w.Backswing,
                 w.Range, w.MinRange, w.Ranged, w.RangeMeasure, w.Reach?.ApproachMargin ?? 0, w.Reach?.HoldMargin ?? 0,
                 w.StrikeTolerance ?? 0, w.Delivery, w.Targeting, w.ProjectileSpeed, full, medium, small, mediumFactor, smallFactor,
-                minFlight, maxFlight, splashMask, Combine(w.TargetMask), w.Tracer, w.Sound);
+                minFlight, maxFlight, splashMask, Combine(w.TargetMask), w.Projectile, w.Sound);
         }
 
         static WeaponTargetMask Combine(WeaponTargetMask[] flags)

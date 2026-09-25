@@ -95,9 +95,9 @@ namespace RiskAI
             return go;
         }
 
-        internal static void ConfigureProjectile(ArrowFlight flight, AttackKind attack)
+        internal static void ConfigureProjectile(ArrowFlight flight, ProjectileLook look)
         {
-            if (flight) flight.ConfigureAppearance(attack);
+            if (flight) flight.ConfigureAppearance(look);
         }
 
         internal static void Release(ArrowFlight flight)
@@ -336,19 +336,19 @@ namespace RiskAI
             if (pulse) pulse.Init(BattleSession.Current, point, color, size, attack);
         }
 
-        public static void ProjectileView(BattleSession session, int projectileId, Vector3 from, Vector3 to, float duration, AttackKind attack)
+        public static void ProjectileView(BattleSession session, int projectileId, Vector3 from, Vector3 to, float duration, ProjectileLook look)
         {
             if (!session) return;
             if (!fxRoot || projectilePool == null) FxRoot();
             var view = projectilePool.Rent();
-            if (view) view.Init(session, projectileId, from, to, duration, attack);
+            if (view) view.Init(session, projectileId, from, to, duration, look);
         }
 
-        public static void InstantProjectileView(Vector3 from, Vector3 to, AttackKind attack)
+        public static void InstantProjectileView(Vector3 from, Vector3 to, ProjectileLook look)
         {
             if (!fxRoot || projectilePool == null) FxRoot();
             var view = projectilePool.Rent();
-            if (view) view.InitVisual(from, to, attack);
+            if (view) view.InitVisual(from, to, look);
         }
 
         sealed class ProjectilePool
@@ -464,13 +464,13 @@ namespace RiskAI
         int projectileId = -1;
         Vector3 from, to;
         float elapsed, duration;
-        AttackKind attack;
+        ProjectileLook look;
         bool visualOnly;
         bool pooled;
         bool poolOwned;
-        AttackKind configuredAttack;
+        ProjectileLook configuredLook;
         bool appearanceConfigured;
-        Transform piercingView, magicView, siegeView;
+        Transform boltView, orbView, shellView, cannonballView;
 
         static Renderer Part(Transform parent, PrimitiveType type, string name, Vector3 position, Vector3 scale, Color color)
         {
@@ -502,35 +502,39 @@ namespace RiskAI
         }
         void EnsureAppearance()
         {
-            if(piercingView)return;
+            if(boltView)return;
             var rootRenderer=GetComponent<Renderer>();if(rootRenderer)rootRenderer.enabled=false;
             Color wood=new Color(.30f,.16f,.065f),metal=new Color(.72f,.76f,.79f),feather=new Color(.63f,.48f,.25f);
-            piercingView=Group(transform,"Piercing projectile");
-            Part(piercingView,PrimitiveType.Cube,"Bolt shaft",new Vector3(0,0,-.02f),new Vector3(.045f,.045f,.62f),wood);
-            var tip=VisualFactory.Cone(piercingView,"Bolt metal point",new Vector3(0,0,.29f),.055f,.18f,metal,4,45);
+            boltView=Group(transform,"Bolt projectile");
+            Part(boltView,PrimitiveType.Cube,"Bolt shaft",new Vector3(0,0,-.02f),new Vector3(.045f,.045f,.62f),wood);
+            var tip=VisualFactory.Cone(boltView,"Bolt metal point",new Vector3(0,0,.29f),.055f,.18f,metal,4,45);
             tip.transform.localRotation=Quaternion.Euler(90,0,0);
             var tipRenderer=tip.GetComponent<Renderer>();tipRenderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;tipRenderer.receiveShadows=false;
-            var fletchingMesh=BoltFletchingMesh(piercingView);var fletchingMaterial=VisualFactory.Mat(feather);
-            FletchingPart(piercingView,fletchingMesh,"Bolt fletching top",0,fletchingMaterial);
-            FletchingPart(piercingView,fletchingMesh,"Bolt fletching side",90,fletchingMaterial);
+            var fletchingMesh=BoltFletchingMesh(boltView);var fletchingMaterial=VisualFactory.Mat(feather);
+            FletchingPart(boltView,fletchingMesh,"Bolt fletching top",0,fletchingMaterial);
+            FletchingPart(boltView,fletchingMesh,"Bolt fletching side",90,fletchingMaterial);
 
-            magicView=Group(transform,"Magic projectile");
-            Part(magicView,PrimitiveType.Sphere,"Arcane orb",Vector3.zero,Vector3.one*.22f,new Color(.42f,.55f,1f));
-            Part(magicView,PrimitiveType.Sphere,"Arcane core",Vector3.zero,Vector3.one*.11f,new Color(.72f,.48f,1f));
+            orbView=Group(transform,"Orb projectile");
+            Part(orbView,PrimitiveType.Sphere,"Arcane orb",Vector3.zero,Vector3.one*.22f,new Color(.42f,.55f,1f));
+            Part(orbView,PrimitiveType.Sphere,"Arcane core",Vector3.zero,Vector3.one*.11f,new Color(.72f,.48f,1f));
 
-            siegeView=Group(transform,"Siege projectile");
-            Part(siegeView,PrimitiveType.Sphere,"Mortar shell",Vector3.zero,Vector3.one*.18f,new Color(.16f,.17f,.16f));
-            Part(siegeView,PrimitiveType.Cube,"Mortar ember trail",new Vector3(0,0,-.23f),new Vector3(.045f,.045f,.30f),new Color(1f,.39f,.12f));
-            piercingView.gameObject.SetActive(false);magicView.gameObject.SetActive(false);siegeView.gameObject.SetActive(false);
+            shellView=Group(transform,"Shell projectile");
+            Part(shellView,PrimitiveType.Sphere,"Mortar shell",Vector3.zero,Vector3.one*.18f,new Color(.16f,.17f,.16f));
+            Part(shellView,PrimitiveType.Cube,"Mortar ember trail",new Vector3(0,0,-.23f),new Vector3(.045f,.045f,.30f),new Color(1f,.39f,.12f));
+            cannonballView=Group(transform,"Cannonball projectile");
+            Part(cannonballView,PrimitiveType.Sphere,"Iron cannonball",Vector3.zero,Vector3.one*.26f,new Color(.11f,.11f,.12f));
+            Part(cannonballView,PrimitiveType.Sphere,"Cannon smoke puff",new Vector3(0,0,-.26f),new Vector3(.2f,.2f,.26f),new Color(.62f,.6f,.56f));
+            boltView.gameObject.SetActive(false);orbView.gameObject.SetActive(false);shellView.gameObject.SetActive(false);cannonballView.gameObject.SetActive(false);
         }
-        internal void ConfigureAppearance(AttackKind kind)
+        internal void ConfigureAppearance(ProjectileLook kind)
         {
             EnsureAppearance();
-            if(appearanceConfigured&&configuredAttack==kind)return;
-            appearanceConfigured=true;configuredAttack=kind;transform.localScale=Vector3.one;
-            piercingView.gameObject.SetActive(kind!=AttackKind.Magic&&kind!=AttackKind.Siege);
-            magicView.gameObject.SetActive(kind==AttackKind.Magic);
-            siegeView.gameObject.SetActive(kind==AttackKind.Siege);
+            if(appearanceConfigured&&configuredLook==kind)return;
+            appearanceConfigured=true;configuredLook=kind;transform.localScale=Vector3.one;
+            boltView.gameObject.SetActive(kind==ProjectileLook.Bolt);
+            orbView.gameObject.SetActive(kind==ProjectileLook.Orb);
+            shellView.gameObject.SetActive(kind==ProjectileLook.Shell);
+            cannonballView.gameObject.SetActive(kind==ProjectileLook.Cannonball);
         }
 
         internal bool IsPooled => pooled;
@@ -547,7 +551,7 @@ namespace RiskAI
             gameObject.SetActive(false);
         }
 
-        internal void Init(BattleSession owner, int id, Vector3 a, Vector3 b, float travelDuration, AttackKind kind)
+        internal void Init(BattleSession owner, int id, Vector3 a, Vector3 b, float travelDuration, ProjectileLook kind)
         {
             session = owner;
             projectileId = id;
@@ -555,10 +559,10 @@ namespace RiskAI
             to = b;
             duration = Mathf.Max(.01f, travelDuration);
             elapsed = 0;
-            attack = kind;
+            look = kind;
             visualOnly = false;
             pooled = false;
-            VisualFactory.ConfigureProjectile(this, attack);
+            VisualFactory.ConfigureProjectile(this, look);
             gameObject.SetActive(true);
             transform.position = from;
             var direction = to - from;
@@ -566,7 +570,7 @@ namespace RiskAI
         }
 
         /// <summary>Presentation-only flight (instant weapons, previews): no simulation projectile behind it.</summary>
-        public void InitVisual(Vector3 a,Vector3 b,AttackKind kind)
+        public void InitVisual(Vector3 a,Vector3 b,ProjectileLook kind)
         {
             session = null;
             projectileId = -1;
@@ -574,10 +578,10 @@ namespace RiskAI
             to = b;
             duration = Mathf.Clamp(Vector3.Distance(a, b) / 25f, .15f, .6f);
             elapsed = 0;
-            attack = kind;
+            look = kind;
             visualOnly = true;
             pooled = false;
-            VisualFactory.ConfigureProjectile(this, attack);
+            VisualFactory.ConfigureProjectile(this, look);
             gameObject.SetActive(true);
             transform.position = from;
             var direction = to - from;
@@ -596,11 +600,8 @@ namespace RiskAI
                 }
                 from = state.From;
                 to = state.To;
-                attack = state.Attack;
-                if (attack != configuredAttack)
-                {
-                    VisualFactory.ConfigureProjectile(this, attack);
-                }
+                look = state.Look;
+                if (look != configuredLook) VisualFactory.ConfigureProjectile(this, look);
                 Vector3 previous=transform.position;
                 transform.position=state.Position;
                 Vector3 direction=state.Position-previous;
@@ -620,7 +621,7 @@ namespace RiskAI
         void SetPosition(float progress)
         {
             float t = Mathf.Clamp01(progress);
-            float arc = attack == AttackKind.Siege ? Mathf.Lerp(1.6f, 3.4f, Mathf.Clamp01(Vector3.Distance(from, to) / 18f)) : .5f;
+            float arc = look == ProjectileLook.Shell ? Mathf.Lerp(1.6f, 3.4f, Mathf.Clamp01(Vector3.Distance(from, to) / 18f)) : .5f;
             transform.position = Vector3.Lerp(from, to, t) + Vector3.up * Mathf.Sin(t * Mathf.PI) * arc;
             var direction = to - from + Vector3.up * Mathf.Cos(t * Mathf.PI) * Mathf.PI * arc;
             if (direction.sqrMagnitude > .0001f) transform.rotation = Quaternion.LookRotation(direction);

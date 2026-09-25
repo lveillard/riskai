@@ -56,13 +56,17 @@ export const Movement = Named('UnitMovement', 'Movement: base speed, forest drag
 
 export const Radius = Named('UnitRadius', 'A circle radius in metres.', Type.Object({ radius: NonNegative('Radius in metres.') }, strict));
 
+export const ShipModel = Enum('ShipModel',
+  'Which Warcraft III ship the hull model follows: Human Frigate, Orc Juggernaught, Human Battleship, Human Transport Ship or Orc Transport Ship.',
+  ['Frigate', 'Juggernaught', 'Battleship', 'Transport', 'ArmoredTransport']);
+
 export const Hull = Named('UnitHull', 'Oriented ship hull: builds the NavalArt model scale and the target BoxCollider.', Type.Object({
   length: NonNegative('Collider length along the keel.'),
   beam: NonNegative('Collider width.'),
   height: NonNegative('Collider height.'),
   centerHeight: Type.Number({ description: 'Collider centre height above the pivot.' }),
   scale: NonNegative('Model scale relative to the base silhouette.'),
-  warship: Type.Boolean({ description: 'Warship silhouette (false: transport silhouette).' }),
+  model: ShipModel,
   clearance: NonNegative('Draft the sea grid keeps around this hull. Every hull shares one value.'),
 }, strict));
 
@@ -105,6 +109,10 @@ export const WeaponSound = Enum('WeaponSound',
   'Which clip plays for this weapon. Presentation reads this field; it does not list unit kinds.',
   ['Blade', 'Lance', 'Bow', 'Firearm', 'Magic', 'Mortar', 'Cannon']);
 
+export const ProjectileLook = Enum('ProjectileLook',
+  'What flies from the weapon to the target. An instant weapon draws it as a short tracer; None draws nothing. Shell lobs high.',
+  ['None', 'Bolt', 'Orb', 'Shell', 'Cannonball']);
+
 export const Weapon = Named('UnitWeapon', 'One attack: damage roll, timing, reach and delivery.', Type.Object({
   source: Type.String({ description: 'Weapon provenance id.' }),
   sound: WeaponSound,
@@ -117,7 +125,7 @@ export const Weapon = Named('UnitWeapon', 'One attack: damage roll, timing, reac
   backswing: NonNegative('Recovery seconds after the hit (presentation).'),
   range: NonNegative('Weapon range in metres.'),
   minRange: NonNegative('Minimum range; closer targets make the unit back off.'),
-  ranged: Type.Boolean({ description: 'Ranged: terrain line of sight, rear formation rows, projectile/tracer delivery.' }),
+  ranged: Type.Boolean({ description: 'Ranged: terrain line of sight, rear formation rows, projectile delivery.' }),
   rangeMeasure: RangeMeasure,
   reach: Type.Optional(Reach),
   strikeTolerance: Type.Optional(NonNegative('Extra distance allowed when a scheduled strike resolves.')),
@@ -127,7 +135,7 @@ export const Weapon = Named('UnitWeapon', 'One attack: damage roll, timing, reac
   flightTime: Type.Optional(FlightTime),
   splash: Type.Optional(Splash),
   targetMask: Type.Array(WeaponTargetFlag, { minItems: 1 }),
-  tracer: Type.Boolean({ description: 'Draw an instant tracer for an instant ranged hit.' }),
+  projectile: ProjectileLook,
 }, strict));
 
 export const HostWeapons = Named('UnitHostWeapons', 'Tower weapon by host building.', Type.Object({

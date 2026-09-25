@@ -111,6 +111,8 @@ namespace RiskAI
         Label toastLabel, goldFloat;
         Button chatButton, recipientChip, chatSend, chatCancel;
         VisualElement recipientSwatch, recipientList, compactQuickBar;
+        RtsPanStick panStick;
+        const float PanStickSize = 104;
         RtsIcon recipientChevron;
         Label recipientLabel;
         int chatRecipient = ChatMessage.Everyone, chatTabFrame = -1;
@@ -252,6 +254,10 @@ namespace RiskAI
                 feedbackRoot.Add(compactQuickBar);
             }
 
+            // Touch: a one-thumb camera stick in the free bottom-right corner, above the footer drawer tab.
+            panStick = UiViewport.IsTouchLayout ? new RtsPanStick(PanStickSize) : null;
+            if (panStick != null) { panStick.style.right = 12; feedbackRoot.Add(panStick); }
+
             toastBox = new VisualElement { name = "HUD toast", pickingMode = PickingMode.Ignore };
             toastBox.style.position = Position.Absolute; toastBox.style.left = 0; toastBox.style.right = 0;
             toastBox.style.alignItems = Align.Center;
@@ -308,6 +314,12 @@ namespace RiskAI
             float logBottom = bottom + (chatOpen && !webChat || quick ? barHeight + 2 : 0);
             logBox.style.bottom = logBottom; logBox.style.width = width;
             toastBox.style.top = UiViewport.LogicalHeight * (UiViewport.IsPortrait ? .2f : .17f) + HeaderHeight * .5f;
+            if (panStick != null)
+            {
+                panStick.style.display = session.Winner < 0 && !controller.HelpVisible && !(chatOpen && !webChat) ? DisplayStyle.Flex : DisplayStyle.None;
+                // Clear of the drawer tab (36 px) that sits on the footer's top edge.
+                panStick.style.bottom = bottom + 44;
+            }
         }
 
         // ---------------------------------------------------------------- per frame
@@ -323,6 +335,11 @@ namespace RiskAI
             RefreshGold(now);
             PollChat();
             RefreshQuickBar();
+            if (panStick != null && panStick.Value.sqrMagnitude > 0)
+            {
+                var stick = panStick.Value;
+                controller.CameraRig.Pan(new Vector3(stick.x, 0, stick.y), Time.unscaledDeltaTime * stick.magnitude);
+            }
             var keyboard = Keyboard.current;
             PollQuickKeys(keyboard);
             if (!chatOpen && keyboard != null && !ChatInput.IsTyping && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)

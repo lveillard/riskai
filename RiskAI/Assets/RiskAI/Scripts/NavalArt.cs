@@ -22,72 +22,280 @@ namespace RiskAI
         }
         // The editor portrait generator calls the same model builder as live ships, so UI art
         // cannot drift from the silhouettes and team treatment seen in the world.
+        // units.json hull.model picks the Warcraft III ship each hull follows; every recipe is built
+        // from the same hull, mast, sail and cannon parts, so only proportions and fittings differ.
         public static Transform CreateShipModel(Transform parent,int team,UnitKind kind)
         {
-            var root=new GameObject("Ship model").transform;root.SetParent(parent,false);var resources=GeneratedResourceOwner.For(parent);
-            ref readonly var type=ref UnitCatalog.Get(kind);var hullShape=type.Hull;bool war=hullShape.Warship;
-            float length=hullShape.Length,width=hullShape.Beam;string style=type.PortraitName;
-            root.localScale=Vector3.one*hullShape.Scale;
-            var v=new List<Vector3>();var t=new List<int>();const int sections=12;
-            for(int level=0;level<3;level++)for(int s=0;s<=sections;s++)
+            var root=new GameObject("Ship model").transform;root.SetParent(parent,false);
+            ref readonly var type=ref UnitCatalog.Get(kind);var hull=type.Hull;
+            root.localScale=Vector3.one*hull.Scale;
+            var kit=new ShipKit(root,GeneratedResourceOwner.For(parent),team);
+            switch(hull.Model)
             {
-                float angle=s*Mathf.PI*2/sections,beam=level==0?.45f:level==1?1:1.02f;
-                v.Add(new(Mathf.Sin(angle)*width*.5f*beam,level==0?-.22f:level==1?.32f:.7f,Mathf.Cos(angle)*length*.5f*(level==0?.72f:1)));
-                if(level==2||s==sections)continue;int i=level*(sections+1)+s,b=i+sections+1;t.Add(i);t.Add(b);t.Add(b+1);t.Add(i);t.Add(b+1);t.Add(i+1);
+                case ShipModel.Frigate: Frigate(kit,hull.Length,hull.Beam); break;
+                case ShipModel.Juggernaught: Juggernaught(kit,hull.Length,hull.Beam); break;
+                case ShipModel.Battleship: Battleship(kit,hull.Length,hull.Beam); break;
+                case ShipModel.Transport: Transport(kit,hull.Length,hull.Beam); break;
+                case ShipModel.ArmoredTransport: ArmoredTransport(kit,hull.Length,hull.Beam); break;
             }
-            var mesh=resources.Track(new Mesh{name="Carvel planked ship hull"});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
-            var hull=new GameObject("Oak hull");hull.transform.SetParent(root,false);hull.AddComponent<MeshFilter>().sharedMesh=mesh;hull.AddComponent<MeshRenderer>().sharedMaterial=WorldArt.Painted(2,new Color(.9f,.67f,.36f),.8f);
-            Block(root,"Planked deck",new(0,.48f,0),new(width*.86f,.13f,length*.68f),2,new Color(1.35f,1.12f,.75f));
-            for(int side=-1;side<=1;side+=2)
-            {
-                Beam(root,new(side*width*.43f,.74f,-length*.32f),new(side*width*.43f,.74f,length*.32f),.13f,new Color(1.7f,1.2f,.55f));
-                if(war)for(int i=0;i<5;i++)Beam(root,new(side*.62f,.38f,-1.55f+i*.7f),new(side*1.75f,.08f,-1.9f+i*.7f),.075f,new Color(1.35f,1.1f,.72f));
-                Beam(root,new(0,4.3f,0),new(side*.7f,.7f,-1.5f),.025f,new Color(1.7f,1.5f,1));
-            }
-            Beam(root,new(0,.5f,-.15f),new(0,4.8f,-.15f),.14f,new Color(1.1f,.8f,.48f));
-            Beam(root,new(-1.42f,4.35f,-.15f),new(1.42f,4.35f,-.15f),.11f);
-            Sail(root,resources,team,war);
-            Block(root,"Raised stern",new(0,.8f,-length*.33f),new(width*.78f,.3f,.85f));
-            if(war)
-            {
-                var cannon=VisualFactory.Shape(root,PrimitiveType.Cylinder,"Deck ballista",new(0,.94f,length*.23f),new(.3f,.6f,.3f),new Color(.21f,.26f,.28f));cannon.transform.localRotation=Quaternion.Euler(90,0,0);
-                Beam(root,new(-.7f,.95f,length*.22f),new(.7f,.95f,length*.22f),.12f);
-            }
-            else for(int i=0;i<6;i++)Block(root,"Transport cargo hold",new(-.85f+i%3*.85f,.88f,-1.15f+i/3*.8f),new(.68f,.55f,.62f));
-            bool battleship=style=="Battleship",lineShip=style=="Warship"||battleship;
-            if(lineShip)
-                for(int side=-1;side<=1;side+=2)for(int i=0;i<(battleship?3:2);i++)
-                {
-                    var gun=VisualFactory.Shape(root,PrimitiveType.Cylinder,"Broadside cannon",new(side*width*.5f,.62f,-1.2f+i*1.1f),new(.2f,.38f,.2f),new Color(.18f,.2f,.22f));
-                    gun.transform.localRotation=Quaternion.Euler(0,0,90);
-                }
-            if(battleship)
-            {
-                Block(root,"Battleship armoured citadel",new(0,1.05f,.35f),new(width*.7f,.55f,1.5f),2,new Color(.55f,.6f,.66f));
-                var turret=VisualFactory.Shape(root,PrimitiveType.Cylinder,"Battleship bow turret",new(0,1.42f,length*.3f),new(.8f,.16f,.8f),new Color(.3f,.34f,.38f));
-                var barrel=VisualFactory.Shape(turret.transform,PrimitiveType.Cylinder,"Battleship bow gun",new(0,.2f,.9f),new(.28f,1.1f,.28f),new Color(.18f,.2f,.22f));barrel.transform.localRotation=Quaternion.Euler(90,0,0);
-            }
-            if(style=="ArmoredTransport")
-                for(int side=-1;side<=1;side+=2)Block(root,"Transport iron armour plate",new(side*width*.47f,.46f,0),new(.08f,.42f,length*.62f),2,new Color(.5f,.55f,.6f));
-            Beam(root,new(0,.65f,length*.35f),new(0,1.05f,length*.58f),.13f,new Color(1.6f,1.15f,.4f));
             return root;
         }
-        static void Sail(Transform root,GeneratedResourceOwner resources,int team,bool war)
+
+        static readonly Color Oak=new(.9f,.67f,.36f),DarkOak=new(.55f,.36f,.2f),Deck=new(1.35f,1.12f,.75f),Gold=new(.92f,.7f,.24f),
+            Iron=new(.2f,.21f,.23f),Plate=new(.52f,.56f,.6f),Canvas=new(.93f,.9f,.8f),Bone=new(.95f,.92f,.82f);
+
+        /// <summary>Human Frigate: slim gold-trimmed hull, three forward-raked masts with white fore-and-aft sails, gun cabin amidships.</summary>
+        static void Frigate(ShipKit k,float length,float width)
         {
-            var v=new List<Vector3>();var t=new List<int>();const int nx=8,ny=6;
-            for(int y=0;y<=ny;y++)for(int x=0;x<=nx;x++)
+            k.Hull(length,width,.78f,.36f,.05f,.62f,.2f,Oak);
+            k.Rails(length,width,.78f,.2f,Gold);
+            k.Box("Gun cabin",new(0,1.02f,-length*.04f),new(width*.7f,.48f,length*.36f),k.TeamTint(.25f));
+            k.Box("Gun cabin roof trim",new(0,1.28f,-length*.04f),new(width*.74f,.06f,length*.38f),Gold,false);
+            for(int side=-1;side<=1;side+=2)for(int i=0;i<2;i++)
+                k.Cannon(new(side*width*.36f,1.0f,-length*.12f+i*length*.18f),new(side,0,0),.5f,.09f,Iron);
+            float[] masts={length*.3f,length*.02f,-length*.26f},heights={3.5f,4.2f,3.3f};
+            for(int i=0;i<3;i++)
             {
-                float u=x/(float)nx,f=y/(float)ny,w=Mathf.Lerp(1.08f,1.36f,f);
-                v.Add(new((u*2-1)*w,Mathf.Lerp(1.55f,4.3f,f),-.15f+.55f*Mathf.Sin(u*Mathf.PI)*Mathf.Sin(f*Mathf.PI)));
-                if(x==nx||y==ny)continue;int k=y*(nx+1)+x,b=k+nx+1;t.Add(k);t.Add(b);t.Add(b+1);t.Add(k);t.Add(b+1);t.Add(k+1);
+                var top=k.Mast(new(0,.78f,masts[i]),heights[i],9f,.1f);
+                k.ForeAftSail(new(0,1.25f,masts[i]+.05f),top+new Vector3(0,-.25f,0),new(0,1.25f,masts[i]-length*.2f),.28f,Canvas);
+                k.Pennant(top);
             }
-            var mesh=resources.Track(new Mesh{name="Wind filled team sail"});mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();
-            var go=new GameObject("Team sail");go.transform.SetParent(root,false);go.AddComponent<MeshFilter>().sharedMesh=mesh;
-            var cloth=resources.Track(new Material(VisualFactory.Mat(Color.Lerp(VisualFactory.TeamMaterialColor(team),Color.white,war?.08f:.35f))));cloth.SetFloat("_Cull",0);go.AddComponent<MeshRenderer>().sharedMaterial=cloth;
-            for(int side=-1;side<=1;side+=2)Beam(root,new(side*1.08f,1.55f,-.15f),new(side*1.36f,4.3f,-.15f),.045f,new Color(1.9f,1.6f,1));
-            // Ivory standard reads at the strategic zoom without covering the team-coloured cloth.
-            Block(root,"Sail heraldry",new(0,2.9f,.405f),new(.2f,1.15f,.025f),0,new Color(1.6f,1.5f,1.15f));
-            Block(root,"Sail heraldry crossbar",new(0,3.1f,.405f),new(.8f,.18f,.025f),0,new Color(1.6f,1.5f,1.15f));
+            k.Spar(new(0,.9f,length*.45f),new(0,1.35f,length*.66f),.08f,Gold);
+        }
+
+        /// <summary>Orc Juggernaught: short, tall, spiked hull with an iron ram, two masts of big square sails and a gun deck.</summary>
+        static void Juggernaught(ShipKit k,float length,float width)
+        {
+            width*=1.2f;
+            k.Hull(length,width,1.02f,.42f,.22f,.86f,.1f,DarkOak);
+            k.Rails(length,width,1.02f,.1f,DarkOak);
+            for(int side=-1;side<=1;side+=2)for(int i=0;i<6;i++)
+                k.Spike(new(side*width*.5f,1.08f,-length*.34f+i*length*.13f),new(side*.7f,1,0),.09f,.34f,Gold);
+            k.Spike(new(0,.42f,length*.52f),Vector3.forward,.26f,1.1f,Iron);
+            k.Box("Raised gun deck",new(0,1.26f,length*.02f),new(width*.78f,.34f,length*.34f),DarkOak);
+            for(int i=-1;i<=1;i++)k.Cannon(new(i*.42f,1.52f,length*.14f),Vector3.forward,.62f,.12f,Iron);
+            for(int side=-1;side<=1;side+=2)
+            {
+                k.Cannon(new(side*width*.42f,1.2f,-length*.08f),new(side,0,0),.46f,.11f,Iron);
+                var wheel=VisualFactory.Shape(k.Root,PrimitiveType.Cylinder,"Spiked side wheel",new(side*width*.54f,.72f,-length*.2f),new(.95f,.06f,.95f),new Color(.24f,.42f,.2f));
+                wheel.transform.localRotation=Quaternion.Euler(0,0,90);
+            }
+            foreach(float z in new[]{length*.2f,-length*.18f})
+            {
+                var top=k.Mast(new(0,1.02f,z),3.2f,0,.13f);
+                k.SquareSail(new(0,top.y-1.95f,z+.12f),width*1.35f,width*1.15f,1.75f,.42f,0,k.TeamTint(.1f));
+                k.Box("Skull emblem",new(0,top.y-1.05f,z+.62f),new(.44f,.46f,.04f),Bone,false);
+                k.Spar(new(-width*.7f,top.y-.2f,z+.12f),new(width*.7f,top.y-.2f,z+.12f),.08f,DarkOak);
+                k.Pennant(top);
+            }
+        }
+
+        /// <summary>Human Battleship: broad high galleon with gold hull, striped stacked square sails, stern castle, lion bow cannon and ram.</summary>
+        static void Battleship(ShipKit k,float length,float width)
+        {
+            width*=1.1f;
+            k.Hull(length,width,1.08f,.46f,.12f,.8f,.32f,Gold*.95f);
+            k.Rails(length,width,1.08f,.32f,DarkOak);
+            k.Box("Stern castle",new(0,1.55f,-length*.36f),new(width*.88f,.86f,length*.2f),DarkOak);
+            k.Box("Stern castle gold rail",new(0,2.0f,-length*.36f),new(width*.92f,.08f,length*.22f),Gold,false);
+            k.Spike(new(0,.44f,length*.5f),Vector3.forward,.3f,.9f,Gold);
+            k.Box("Lion head",new(0,1.5f,length*.28f),new(.62f,.58f,.5f),Gold,false);
+            k.Cannon(new(0,1.5f,length*.33f),Vector3.forward,1.3f,.2f,Gold);
+            for(int side=-1;side<=1;side+=2)for(int i=0;i<3;i++)
+                k.Cannon(new(side*width*.46f,.92f,-length*.2f+i*length*.16f),new(side,0,0),.52f,.1f,Iron);
+            float[] masts={length*.17f,-length*.03f,-length*.22f},heights={4.4f,5.1f,4.0f};
+            for(int i=0;i<3;i++)
+            {
+                var top=k.Mast(new(0,1.08f,masts[i]),heights[i],0,.13f);
+                float lower=width*(i==1?1.5f:1.3f);
+                k.SquareSail(new(0,1.75f,masts[i]+.12f),lower,lower*.9f,1.35f,.36f,4,Canvas);
+                k.SquareSail(new(0,3.2f,masts[i]+.12f),lower*.82f,lower*.66f,1.1f,.3f,4,Canvas);
+                k.Spar(new(-lower*.5f,3.1f,masts[i]+.12f),new(lower*.5f,3.1f,masts[i]+.12f),.07f,DarkOak);
+                if(i==1)VisualFactory.Shape(k.Root,PrimitiveType.Cylinder,"Crow's nest",top+new Vector3(0,-.75f,0),new(.5f,.12f,.5f),DarkOak);
+                k.Pennant(top);
+            }
+        }
+
+        /// <summary>Human Transport Ship: plain brown hull, one tall mast with a big team lateen sail, canvas cargo hut and bales.</summary>
+        static void Transport(ShipKit k,float length,float width)
+        {
+            k.Hull(length,width,.72f,.34f,.1f,.7f,.24f,Oak);
+            k.Rails(length,width,.72f,.24f,DarkOak);
+            k.Box("Cargo hut",new(0,1.02f,-length*.12f),new(width*.62f,.56f,length*.3f),DarkOak);
+            k.Roof("Canvas cargo roof",new(0,1.3f,-length*.12f),width*.72f,length*.32f,.34f,Canvas);
+            for(int i=0;i<4;i++)k.Box("Cargo bale",new((i%2-.5f)*width*.42f,.96f,(i<2?length*.3f:-length*.36f)),new(.42f,.36f,.4f),new Color(.78f,.6f,.36f));
+            var top=k.Mast(new(0,.72f,length*.08f),4.6f,0,.14f);
+            // A long diagonal yard carries the lateen sail from low at the bow to high over the stern.
+            Vector3 yardLow=new(0,1.35f,length*.46f),yardHigh=top+new Vector3(0,-.1f,-length*.34f);
+            k.Spar(yardLow,yardHigh,.08f,DarkOak);
+            k.ForeAftSail(yardLow,yardHigh,new(0,1.2f,-length*.22f),.5f,k.TeamTint(.15f));
+            k.Pennant(top);
+        }
+
+        /// <summary>Orc Transport Ship: low wide hull decked over with riveted iron, bow skull, hide awning, oars and no mast.</summary>
+        static void ArmoredTransport(ShipKit k,float length,float width)
+        {
+            k.Hull(length,width,.58f,.3f,.32f,.78f,.08f,DarkOak);
+            VisualFactory.Shape(k.Root,PrimitiveType.Sphere,"Riveted iron shell",new(0,.7f,length*.06f),new(width*.94f,.86f,length*.72f),new Color(.44f,.48f,.53f));
+            for(int i=0;i<4;i++)k.Box("Iron plate rib",new(0,1.06f,-length*.2f+i*length*.16f),new(width*.66f,.08f,.12f),Iron,false);
+            k.Box("Hide awning",new(0,1.04f,-length*.3f),new(width*.74f,.46f,length*.24f),k.TeamTint(.2f));
+            VisualFactory.Shape(k.Root,PrimitiveType.Sphere,"Bow skull",new(0,.78f,length*.45f),new(.42f,.38f,.4f),Bone);
+            for(int side=-1;side<=1;side+=2)
+            {
+                for(int i=0;i<4;i++)
+                {
+                    float z=-length*.22f+i*length*.15f;
+                    k.Spar(new(side*width*.42f,.62f,z),new(side*(width*.5f+.9f),-.05f,z-.2f),.06f,DarkOak);
+                    k.Box("Red oar grip",new(side*width*.4f,.66f,z),new(.1f,.1f,.14f),new Color(.7f,.12f,.1f),false);
+                }
+                for(int i=0;i<3;i++)k.Spike(new(side*width*.47f,.66f,-length*.12f+i*length*.17f),new(side,.3f,0),.07f,.28f,Plate);
+            }
+        }
+
+        /// <summary>The parts every ship recipe is assembled from. Meshes and cloth materials die with the ship.</summary>
+        sealed class ShipKit
+        {
+            public readonly Transform Root;readonly GeneratedResourceOwner resources;readonly int team;
+            readonly Dictionary<Color,Material> cloth=new Dictionary<Color,Material>();
+            public ShipKit(Transform root,GeneratedResourceOwner owner,int team){Root=root;resources=owner;this.team=team;}
+
+            public Color TeamTint(float whiten)=>Color.Lerp(VisualFactory.TeamMaterialColor(team),Color.white,whiten);
+
+            Material Cloth(Color color)
+            {
+                if(cloth.TryGetValue(color,out var found))return found;
+                var material=resources.Track(new Material(VisualFactory.Mat(color)));material.SetFloat("_Cull",0);cloth[color]=material;return material;
+            }
+
+            public GameObject Box(string name,Vector3 position,Vector3 size,Color tint,bool painted=true)
+            {
+                var go=VisualFactory.Shape(Root,PrimitiveType.Cube,name,position,size,painted?Color.white:tint);
+                if(painted)go.GetComponent<Renderer>().sharedMaterial=WorldArt.Painted(2,tint);
+                return go;
+            }
+
+            public void Spar(Vector3 a,Vector3 b,float radius,Color tint)
+            {
+                var go=VisualFactory.Shape(Root,PrimitiveType.Cube,"Rigging and oak spars",(a+b)*.5f,new(radius,(b-a).magnitude,radius),tint);
+                go.transform.localRotation=Quaternion.FromToRotation(Vector3.up,b-a);
+            }
+
+            /// <summary>A mast from <paramref name="foot"/>, raked forward by <paramref name="rake"/> degrees; returns its top.</summary>
+            public Vector3 Mast(Vector3 foot,float height,float rake,float radius)
+            {
+                var top=foot+Quaternion.Euler(rake,0,0)*Vector3.up*height;
+                Spar(foot,top,radius,new Color(1.1f,.8f,.48f));
+                return top;
+            }
+
+            public void Pennant(Vector3 top)
+            {
+                var flag=VisualFactory.Shape(Root,PrimitiveType.Cube,"Team pennant",top+new Vector3(0,-.12f,-.36f),new(.03f,.24f,.7f),TeamTint(0));
+                flag.transform.localRotation=Quaternion.Euler(0,0,0);
+            }
+
+            public void Cannon(Vector3 position,Vector3 direction,float length,float radius,Color color)
+            {
+                var barrel=VisualFactory.Shape(Root,PrimitiveType.Cylinder,"Ship cannon",position+direction.normalized*length*.5f,new(radius*2,length*.5f,radius*2),color);
+                barrel.transform.localRotation=Quaternion.FromToRotation(Vector3.up,direction);
+            }
+
+            public void Spike(Vector3 position,Vector3 direction,float radius,float length,Color color)
+            {
+                var cone=VisualFactory.Cone(Root,"Hull spike",position,radius,length,color,6);
+                cone.transform.localRotation=Quaternion.FromToRotation(Vector3.up,direction);
+            }
+
+            public void Roof(string name,Vector3 ridge,float width,float length,float rise,Color color)
+            {
+                for(int side=-1;side<=1;side+=2)
+                {
+                    float slope=Mathf.Sqrt(width*width*.25f+rise*rise);
+                    var half=VisualFactory.Shape(Root,PrimitiveType.Cube,name,ridge+new Vector3(side*width*.25f,-rise*.5f,0),new(slope,.06f,length),color);
+                    half.transform.localRotation=Quaternion.Euler(0,0,-side*Mathf.Atan2(rise,width*.5f)*Mathf.Rad2Deg);
+                }
+            }
+
+            /// <summary>
+            /// Planked hull from stern to bow: stations with a pointed bow (<paramref name="bow"/> of the beam), a square
+            /// transom (<paramref name="stern"/>), sheer rising to both ends and a deck inside the gunwale.
+            /// </summary>
+            public void Hull(float length,float width,float deck,float keel,float bow,float stern,float sheer,Color tint)
+            {
+                const int stations=16;
+                var v=new List<Vector3>();var t=new List<int>();var deckV=new List<Vector3>();var deckT=new List<int>();
+                for(int i=0;i<=stations;i++)
+                {
+                    float u=i/(float)stations,z=Mathf.Lerp(-length*.5f,length*.5f,u);
+                    float shape=u<.45f?Mathf.Lerp(stern,1,Mathf.SmoothStep(0,1,u/.45f)):Mathf.Lerp(1,bow,Mathf.Pow((u-.45f)/.55f,1.7f));
+                    float half=width*.5f*shape,top=deck+sheer*(2*u-1)*(2*u-1);
+                    v.Add(new(-half,top,z));v.Add(new(-half*.86f,deck*.28f,z));v.Add(new(0,-keel,z));v.Add(new(half*.86f,deck*.28f,z));v.Add(new(half,top,z));
+                    deckV.Add(new(-half*.94f,top-.1f,z));deckV.Add(new(half*.94f,top-.1f,z));
+                    if(i==stations)continue;
+                    int a=i*5,n=a+5;
+                    for(int p=0;p<4;p++){t.Add(a+p);t.Add(a+p+1);t.Add(n+p);t.Add(a+p+1);t.Add(n+p+1);t.Add(n+p);}
+                    int l=i*2;deckT.Add(l);deckT.Add(l+2);deckT.Add(l+1);deckT.Add(l+2);deckT.Add(l+3);deckT.Add(l+1);
+                }
+                // Transom and bow caps, both faces: the stern is flat, the bow nearly closed.
+                foreach(int station in new[]{0,stations})
+                {
+                    int start=v.Count;for(int p=0;p<5;p++)v.Add(v[station*5+p]);
+                    for(int p=1;p<4;p++){t.Add(start);t.Add(start+p);t.Add(start+p+1);t.Add(start);t.Add(start+p+1);t.Add(start+p);}
+                }
+                var hull=resources.Track(new Mesh{name="Carvel planked ship hull"});hull.SetVertices(v);hull.SetTriangles(t,0);hull.RecalculateNormals();hull.RecalculateBounds();
+                Part("Oak hull",hull,WorldArt.Painted(2,tint,.8f));
+                var planks=resources.Track(new Mesh{name="Planked deck"});planks.SetVertices(deckV);planks.SetTriangles(deckT,0);planks.RecalculateNormals();planks.RecalculateBounds();
+                Part("Planked deck",planks,WorldArt.Painted(2,Deck));
+            }
+
+            /// <summary>Gunwale rails along both sides, following the same sheer as the hull.</summary>
+            public void Rails(float length,float width,float deck,float sheer,Color color)
+            {
+                const int pieces=6;
+                for(int side=-1;side<=1;side+=2)for(int i=0;i<pieces;i++)
+                {
+                    float u0=.08f+i*.8f/pieces,u1=u0+.8f/pieces;
+                    Vector3 Point(float u){float shape=u<.45f?1:Mathf.Lerp(1,.4f,(u-.45f)/.55f);return new(side*width*.47f*shape,deck+sheer*(2*u-1)*(2*u-1)+.05f,Mathf.Lerp(-length*.5f,length*.5f,u));}
+                    Spar(Point(u0),Point(u1),.09f,color);
+                }
+            }
+
+            void Part(string name,Mesh mesh,Material material)
+            {
+                var go=new GameObject(name);go.transform.SetParent(Root,false);go.AddComponent<MeshFilter>().sharedMesh=mesh;go.AddComponent<MeshRenderer>().sharedMaterial=material;
+            }
+
+            /// <summary>Square sail hanging below a yard, bellied forward; <paramref name="stripes"/> alternates canvas and team cloth.</summary>
+            public void SquareSail(Vector3 foot,float top,float bottom,float height,float belly,int stripes,Color cloth)
+            {
+                Vector3 bl=foot+new Vector3(-bottom*.5f,0,0),br=foot+new Vector3(bottom*.5f,0,0),tl=foot+new Vector3(-top*.5f,height,0),tr=foot+new Vector3(top*.5f,height,0);
+                Sail(bl,br,tl,tr,Vector3.forward*belly,stripes,cloth);
+            }
+
+            /// <summary>Fore-and-aft (lateen) sail in the keel plane: luff from <paramref name="low"/> to <paramref name="high"/>, clew at <paramref name="clew"/>.</summary>
+            public void ForeAftSail(Vector3 low,Vector3 high,Vector3 clew,float belly,Color cloth)
+            {
+                Sail(low,clew,high,high,Vector3.right*belly,0,cloth);
+            }
+
+            void Sail(Vector3 bl,Vector3 br,Vector3 tl,Vector3 tr,Vector3 belly,int stripes,Color color)
+            {
+                const int nx=8,ny=6;
+                var v=new List<Vector3>();var plain=new List<int>();var striped=new List<int>();
+                for(int y=0;y<=ny;y++)for(int x=0;x<=nx;x++)
+                {
+                    float u=x/(float)nx,f=y/(float)ny;
+                    v.Add(Vector3.Lerp(Vector3.Lerp(bl,br,u),Vector3.Lerp(tl,tr,u),f)+belly*(Mathf.Sin(u*Mathf.PI)*Mathf.Sin(f*Mathf.PI)));
+                    if(x==nx||y==ny)continue;
+                    int k=y*(nx+1)+x,b=k+nx+1;var list=stripes>0&&(x*stripes/nx)%2==1?striped:plain;
+                    list.Add(k);list.Add(b);list.Add(b+1);list.Add(k);list.Add(b+1);list.Add(k+1);
+                }
+                var mesh=resources.Track(new Mesh{name="Wind filled sail",subMeshCount=stripes>0?2:1});mesh.SetVertices(v);mesh.SetTriangles(plain,0);
+                if(stripes>0)mesh.SetTriangles(striped,1);
+                mesh.RecalculateNormals();mesh.RecalculateBounds();
+                var go=new GameObject("Team sail");go.transform.SetParent(Root,false);go.AddComponent<MeshFilter>().sharedMesh=mesh;
+                go.AddComponent<MeshRenderer>().sharedMaterials=stripes>0?new[]{Cloth(color),Cloth(TeamTint(.05f))}:new[]{Cloth(color)};
+            }
         }
         public sealed class HarborVisual
         {

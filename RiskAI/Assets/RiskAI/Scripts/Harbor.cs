@@ -76,6 +76,9 @@ namespace RiskAI
         public UnitKind QueuedKind(int index)=>queue[index].Kind;
         public bool BuildingTower=>Defense&&Defense.UnderConstruction;
         BuildingTrainingView trainingView;
+        BuildingEntranceAnchor entrance;
+        /// <summary>Land recruits leave through the harbour door, or the landward threshold when it is not walkable.</summary>
+        public Vector3 RecruitExit => BuildingEntranceAnchor.RecruitExit(entrance, LandEntry);
         LineRenderer rallyRing;
 
         public void Initialize(NavalWorld naval,BuildingId buildingId,string name,Settlement linked,TownState standalone,Vector3 landing,Vector3 berth,BuildingVariant? visualVariant=null)
@@ -85,7 +88,7 @@ namespace RiskAI
             if(!BuildingVariants.IsHarbor(VisualVariant))throw new System.ArgumentException("A harbor requires a harbor building variant.",nameof(visualVariant));
             sharesTown=false;canLaunch=SeaNavigation.HasClearance(berth);launchBlockReason=canLaunch?null:"El puerto no tiene una salida marítima segura.";
             world=naval;BuildingId=buildingId;DisplayName=name;LinkedTown=linked;state=standalone??new TownState(name,linked?linked.State.Owner:-1,-1,-1);Landing=landing;Berth=berth;landRally=LandEntry;lastOwner=Owner;
-            var entrance=NavalArt.CreateHarbor(this,VisualVariant);
+            entrance=NavalArt.CreateHarbor(this,VisualVariant);
             trainingView=BuildingTrainingView.Create(transform,entrance);
             claimZone=new CityClaimZone(Landing);claimZone.AttachHarbor(this);claimRing=VisualFactory.Ring(transform,ClaimRules.CircleRadius,CityClaimZone.RingWidth,CityClaimZone.RingColor);claimRing.transform.position=Landing;
             var towerObject=new GameObject("Torre de "+name);towerObject.transform.SetParent(transform,false);
@@ -304,13 +307,13 @@ namespace RiskAI
                     if(type.SeaMotor)
                     {
                         queue.RemoveAt(0);
-                        var ship=CanLaunch?world.Spawn(first.Team,first.Kind,Berth):null;
+                        var ship=CanLaunch?world.Spawn(first.Team,first.Kind,world.FreeBerth(Berth,type.Separation)):null;
                         if(!ship)world.Session.Economy.Refund(first.Team,type.Cost);
                     }
                     else if(world.Session.RecruitmentPopulation(first.Team)<BattleRules.PopulationLimit)
                     {
                         queue.RemoveAt(0);
-                        var unit=world.Session.Spawn(first.Team,first.Kind,LandEntry);
+                        var unit=world.Session.Spawn(first.Team,first.Kind,RecruitExit);
                         if(unit)unit.TryMoveTo(LandRally,true,false);
                         else world.Session.Economy.Refund(first.Team,type.Cost);
                     }

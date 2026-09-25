@@ -14,7 +14,11 @@ namespace RiskAI
         public const float FlashSeconds = .08f;
         public const float SpawnSeconds = .25f;
         public const float RingPopSeconds = .12f;
-        const int MaxFlashes = 64, MaxWorldRings = 16, MaxDecals = 40;
+        const int MaxFlashes = 64, MaxWorldRings = 16, MaxDecals = 40, MaxSouls = 24;
+        /// <summary>A fallen soldier's soul rises and fades over this time, as in The Settlers.</summary>
+        public const float SoulSeconds = 1.8f;
+        const float SoulRise = 3.2f;
+        static readonly Color SoulColor = new Color(.86f, .95f, 1f, .85f);
         const string ShakeKey = "riskai.camera.shake";
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         static readonly Color FlashColor = new Color(2.4f, 2.3f, 2.1f, 1);
@@ -33,6 +37,10 @@ namespace RiskAI
             public LineRenderer Line; public float Start, Duration, From, To; public Color Color;
             public CombatTarget Follow; public int FollowId; public bool Blink; public bool Active;
         }
+        sealed class Soul
+        {
+            public Transform Body, Head; public MeshRenderer BodyRenderer, HeadRenderer; public Vector3 Origin; public float Start, Sway; public bool Active;
+        }
         sealed class Decal
         {
             public Transform Transform; public MeshRenderer Renderer; public float Start, Duration, From, To, FadeIn; public Color Color; public bool Active;
@@ -48,6 +56,7 @@ namespace RiskAI
         readonly List<Pop> pops = new List<Pop>(32);
         readonly List<WorldRing> rings = new List<WorldRing>(MaxWorldRings);
         readonly List<Decal> decals = new List<Decal>(MaxDecals);
+        readonly List<Soul> souls = new List<Soul>(MaxSouls);
         readonly List<Renderer> scratch = new List<Renderer>(32);
         MaterialPropertyBlock flashBlock, fxBlock;
         Material glow;
@@ -184,6 +193,7 @@ namespace RiskAI
                 Unit = unit, Id = unit.EntityId, DiedAt = session.BattleTime, Origin = unit.transform.position,
                 Rotation = unit.transform.rotation, Animated = animated, Tilt = (unit.EntityId & 1) == 0 ? 1 : -1
             });
+            if (!StrategicMapView.Active && OnScreen(unit.transform.position)) ReleaseSoul(unit.transform.position, (unit.EntityId & 1) == 0 ? 1 : -1);
         }
 
         void OnSpawned(Soldier unit)
@@ -360,6 +370,70 @@ namespace RiskAI
             return decal;
         }
 
+        MeshRenderer SoulPart(Transform parent, string name)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.AddComponent<MeshFilter>().sharedMesh = Disc();
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = glow; renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; renderer.receiveShadows = false;
+            return renderer;
+        }
+
+        // A pale wisp (soft body plus head) that floats up from the body, sways and fades.
+        void ReleaseSoul(Vector3 origin, float sway)
+        {
+            if (!glow) return;
+            Soul soul = null, oldest = null;
+            for (int i = 0; i < souls.Count; i++)
+            {
+                if (!souls[i].Active) { soul = souls[i]; break; }
+                if (oldest == null || souls[i].Start < oldest.Start) oldest = souls[i];
+            }
+            if (soul == null && souls.Count >= MaxSouls) soul = oldest;
+            if (soul == null)
+            {
+                var root = new GameObject("FX soul").transform; root.SetParent(FxRoot(), false);
+                soul = new Soul { Body = root };
+                soul.BodyRenderer = SoulPart(root, "Soul body");
+                soul.HeadRenderer = SoulPart(root, "Soul head");
+                soul.Head = soul.HeadRenderer.transform;
+                soul.BodyRenderer.transform.localScale = new Vector3(.55f, 1, 1.05f);
+                soul.Head.localPosition = new Vector3(0, 0, .62f); soul.Head.localScale = Vector3.one * .42f;
+                souls.Add(soul);
+            }
+            soul.Active = true; soul.Start = Time.unscaledTime; soul.Origin = origin; soul.Sway = sway;
+            soul.Body.gameObject.SetActive(true);
+            UpdateSoul(soul, 0);
+        }
+
+        void UpdateSoul(Soul soul, float t)
+        {
+            float rise = 1 - (1 - t) * (1 - t);
+            var right = cam ? cam.transform.right : Vector3.right;
+            soul.Body.position = soul.Origin + Vector3.up * (.9f + rise * SoulRise) + right * (Mathf.Sin(t * Mathf.PI * 3) * .18f * soul.Sway);
+            // The disc lies in its XZ plane: face the camera with local Z pointing up the screen.
+            if (cam) soul.Body.rotation = Quaternion.LookRotation(cam.transform.up, -cam.transform.forward);
+            soul.Body.localScale = Vector3.one * Mathf.Lerp(.7f, 1.05f, rise);
+            float alpha = Mathf.Clamp01(t / .12f) * (t < .55f ? 1 : 1 - (t - .55f) / .45f);
+            var color = SoulColor; color.a *= alpha;
+            fxBlock.SetColor(BaseColorId, color);
+            soul.BodyRenderer.SetPropertyBlock(fxBlock);
+            soul.HeadRenderer.SetPropertyBlock(fxBlock);
+        }
+
+        void UpdateSouls(float now)
+        {
+            for (int i = 0; i < souls.Count; i++)
+            {
+                var soul = souls[i];
+                if (!soul.Active) continue;
+                float t = (now - soul.Start) / SoulSeconds;
+                if (t >= 1) { soul.Active = false; soul.Body.gameObject.SetActive(false); continue; }
+                UpdateSoul(soul, t);
+            }
+        }
+
         void Scorch(Vector3 ground, float size)
         {
             var decal = RentDecal(); if (decal == null) return;
@@ -397,6 +471,7 @@ namespace RiskAI
             UpdatePops(now);
             UpdateRings(now);
             UpdateDecals(now);
+            UpdateSouls(now);
         }
 
         void UpdateFlashes(float now)

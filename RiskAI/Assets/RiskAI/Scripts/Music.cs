@@ -22,6 +22,8 @@ namespace RiskAI
         int orderIndex = -1, active, lastTrack = -1;
         float fade = 1, fadeSpeed = 1 / FadeInSeconds, retryAt;
         bool started;
+        // Its own generator: nothing that seeds UnityEngine.Random can make the playlist predictable.
+        readonly System.Random shuffle = new System.Random(System.Environment.TickCount);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Current = null; preferencesLoaded = false; }
@@ -68,7 +70,7 @@ namespace RiskAI
         {
             orderIndex = 0;
             for (int i = 0; i < order.Length; i++) order[i] = i;
-            for (int i = order.Length - 1; i > 0; i--) { int j = Random.Range(0, i + 1); (order[i], order[j]) = (order[j], order[i]); }
+            for (int i = order.Length - 1; i > 0; i--) { int j = shuffle.Next(i + 1); (order[i], order[j]) = (order[j], order[i]); }
             // Never repeat the track that just ended across a reshuffle.
             if (order.Length > 1 && order[0] == lastTrack) (order[0], order[1]) = (order[1], order[0]);
         }

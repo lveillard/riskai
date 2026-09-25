@@ -112,6 +112,7 @@ namespace RiskAI
                 {
                     controller.ExecuteArmedPointer(position);armedTouches.Add(id);SuppressSyntheticMouse();continue;
                 }
+                gesture.PanMode=controller.TouchPanMode;
                 ownedTouches.Add(id);gesture.Begin(id,Point(position),Time.unscaledTime);SuppressSyntheticMouse();
             }
         }

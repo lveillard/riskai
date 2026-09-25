@@ -14,11 +14,18 @@ namespace RiskAI
         public const int SegmentCap = 48;
         /// <summary>How long a plain order's route stays up, and the fade across that same window.</summary>
         public const float ConfirmSeconds = 1.2f;
-        const float NormalWidth = .08f;
-        const float EmphasizedWidth = .16f;
+        const float NormalWidth = .11f;
+        const float EmphasizedWidth = .17f;
+        /// <summary>Height above the ground (or the path, where it is higher) at which every line is drawn.</summary>
+        public const float Lift = .18f;
+        /// <summary>Longest straight piece of a draped line; hills between two corners bend the line over them.</summary>
+        const float DrapeStep = .75f;
+        const int DrapedCap = 256;
         readonly LineRenderer[] legs = new LineRenderer[SegmentCap];
         readonly LineRenderer[] marks = new LineRenderer[SegmentCap];
         readonly Vector3[] scratch = new Vector3[48];
+        readonly Vector3[] draped = new Vector3[DrapedCap];
+        readonly Vector3[] mark = new Vector3[4];
         struct Stamp { public int Id, Revision, PathCount, Ends; public Vector3 Pos, Path0; public byte Emphasis; }
         readonly Stamp[] stamps = new Stamp[SegmentCap];
         RtsController controller;
@@ -141,49 +148,72 @@ namespace RiskAI
                 marksDrawn = Mathf.Min(SegmentCap, marksDrawn + keep);
                 return drawn;
             }
+            // Every leg, whatever its kind, is one polyline drawn by ShowLeg; only colour and width differ.
             var to = unit.OrderLegPoint(0);
-            var color = ColorOf(unit.OrderLegKind(0), emphasis);
-            color.a *= fade;
-            if (unit.ActivePathCount >= 2)
+            int n = 0;
+            if (pathCount >= 2)
             {
-                int n = Mathf.Min(unit.ActivePathCount, scratch.Length);
+                n = Mathf.Min(pathCount, scratch.Length);
                 for (int c = 0; c < n; c++) scratch[c] = unit.ActivePathPoint(c);
                 n = TrimTravelled(scratch, n, from);
                 if (n >= 2 && unit.OrderLegKind(0) == UnitCommandKind.Attack) scratch[n - 1] = to;
-                if (n >= 2) Show(ref legs[drawn], scratch, n, color, emphasis ? EmphasizedWidth : NormalWidth, false);
-                else ShowSegment(ref legs[drawn], from, to, color, emphasis);
             }
-            else ShowSegment(ref legs[drawn], from, to, color, emphasis);
-            drawn++;
-            if (marksDrawn < SegmentCap) ShowMark(ref marks[marksDrawn++], to, color, emphasis);
-            from = to;
+            if (n < 2) { scratch[0] = from; scratch[1] = to; n = 2; }
+            ShowLeg(ref legs[drawn++], ref marksDrawn, scratch, n, unit.OrderLegKind(0), emphasis, fade);
             for (int i = 1; i < unit.OrderLegCount && drawn < SegmentCap; i++)
             {
-                to = unit.OrderLegPoint(i);
-                color = ColorOf(unit.OrderLegKind(i), emphasis);
-                color.a *= fade;
-                ShowSegment(ref legs[drawn], from, to, color, emphasis);
-                drawn++;
-                if (marksDrawn < SegmentCap) ShowMark(ref marks[marksDrawn++], to, color, emphasis);
-                from = to;
+                scratch[0] = to; to = unit.OrderLegPoint(i); scratch[1] = to;
+                ShowLeg(ref legs[drawn++], ref marksDrawn, scratch, 2, unit.OrderLegKind(i), emphasis, fade);
             }
             return drawn;
         }
 
-        void ShowSegment(ref LineRenderer line, Vector3 from, Vector3 to, Color color, bool emphasis)
+        void ShowLeg(ref LineRenderer line, ref int marksDrawn, Vector3[] points, int count, UnitCommandKind kind, bool emphasis, float fade)
         {
-            scratch[0] = from; scratch[1] = to;
-            Show(ref line, scratch, 2, color, emphasis ? EmphasizedWidth : NormalWidth, false);
+            var color = ColorOf(kind, emphasis);
+            color.a *= fade;
+            int n = Drape(points, count, draped);
+            Show(ref line, draped, n, color, emphasis ? EmphasizedWidth : NormalWidth, false);
+            if (marksDrawn < SegmentCap) ShowMark(ref marks[marksDrawn++], points[count - 1], color, emphasis);
+        }
+
+        /// <summary>
+        /// Lays a polyline on the ground: a point every <see cref="DrapeStep"/> metres (longer on very long legs) at
+        /// the higher of the path and the terrain, plus <see cref="Lift"/>. Terrain between corners cannot hide it.
+        /// </summary>
+        public static int Drape(Vector3[] points, int count, Vector3[] output)
+        {
+            float length = 0;
+            for (int i = 1; i < count; i++) length += Vector3.Distance(points[i - 1], points[i]);
+            float step = Mathf.Max(DrapeStep, length / Mathf.Max(1, output.Length - count));
+            int written = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (i > 0)
+                {
+                    var a = points[i - 1]; var b = points[i];
+                    int pieces = Mathf.Min(Mathf.CeilToInt(Vector3.Distance(a, b) / step), output.Length - written - (count - i) + 1);
+                    for (int k = 1; k < pieces; k++) output[written++] = OnGround(Vector3.Lerp(a, b, k / (float)pieces));
+                }
+                output[written++] = OnGround(points[i]);
+            }
+            return written;
+        }
+
+        static Vector3 OnGround(Vector3 point)
+        {
+            point.y = Mathf.Max(point.y, MapLayout.Height(point.x, point.z)) + Lift;
+            return point;
         }
 
         void ShowMark(ref LineRenderer line, Vector3 point, Color color, bool emphasis)
         {
             const float r = .35f;
-            scratch[0] = point + new Vector3(r, 0, 0);
-            scratch[1] = point + new Vector3(0, 0, r);
-            scratch[2] = point + new Vector3(-r, 0, 0);
-            scratch[3] = point + new Vector3(0, 0, -r);
-            Show(ref line, scratch, 4, color, emphasis ? .1f : .06f, true);
+            mark[0] = OnGround(point + new Vector3(r, 0, 0));
+            mark[1] = OnGround(point + new Vector3(0, 0, r));
+            mark[2] = OnGround(point + new Vector3(-r, 0, 0));
+            mark[3] = OnGround(point + new Vector3(0, 0, -r));
+            Show(ref line, mark, 4, color, emphasis ? .12f : .08f, true);
         }
 
         void Show(ref LineRenderer line, Vector3[] points, int count, Color color, float width, bool loop)
@@ -210,12 +240,7 @@ namespace RiskAI
             line.positionCount = count;
             line.startWidth = line.endWidth = width;
             line.startColor = line.endColor = color;
-            for (int i = 0; i < count; i++)
-            {
-                var p = points[i];
-                p.y += .15f;
-                line.SetPosition(i, p);
-            }
+            for (int i = 0; i < count; i++) line.SetPosition(i, points[i]);
         }
 
         public bool TryLegStart(int index, out Vector3 point)
@@ -223,7 +248,7 @@ namespace RiskAI
             point = default;
             if (index < 0 || index >= legCount || !legs[index] || !legs[index].enabled) return false;
             point = legs[index].GetPosition(0);
-            point.y -= .15f;
+            point.y -= Lift;
             return true;
         }
 
@@ -241,7 +266,7 @@ namespace RiskAI
                 case UnitCommandKind.Follow: color = new Color(.85f, .85f, .9f); break;
                 default: color = new Color(.25f, .95f, .4f); break;
             }
-            color.a = emphasis ? 1f : .55f;
+            color.a = emphasis ? 1f : .8f;
             return color;
         }
 

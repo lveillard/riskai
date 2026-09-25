@@ -2242,5 +2242,9 @@
  {
   "es": "Reparto Risk",
   "en": "Risk deal"
+ },
+ {
+  "es": "Mano: un dedo mueve el mapa; doble toque y arrastra para seleccionar",
+  "en": "Hand: one finger moves the map; double tap and drag to select"
  }
 ]

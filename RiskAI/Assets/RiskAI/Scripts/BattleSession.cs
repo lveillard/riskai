@@ -86,7 +86,16 @@ namespace RiskAI
         bool manuallyPaused;
         int countdownStartFrame;
         double countdownLastTime;
+        /// <summary>The start briefing: each of its lines is highlighted for <see cref="BriefingLineSeconds"/>.</summary>
+        public const int BriefingLines = 3;
+        public const float BriefingLineSeconds = 2;
+        public const float DefaultStartCountdownSeconds = BriefingLines * BriefingLineSeconds;
         public float StartCountdownRemaining { get; private set; }
+        public float StartCountdownSeconds { get; private set; }
+        /// <summary>0 when the briefing opens, 1 when the battle starts.</summary>
+        public float StartCountdownProgress => StartCountdownSeconds > 0 ? Mathf.Clamp01(1 - StartCountdownRemaining / StartCountdownSeconds) : 1;
+        /// <summary>The briefing line highlighted now, 0..<see cref="BriefingLines"/>-1.</summary>
+        public int BriefingLine => Mathf.Min(BriefingLines - 1, Mathf.FloorToInt(StartCountdownProgress * BriefingLines));
         public bool IsStarting => StartCountdownRemaining>0;
         public bool Paused => manuallyPaused || IsStarting;
         public bool AiEnabled = true;
@@ -172,10 +181,10 @@ namespace RiskAI
         }
         public void TogglePause() { if (Winner >= 0 || IsStarting) return; manuallyPaused = !manuallyPaused; SuspendMovement(Paused); }
 
-        public void BeginStartCountdown(float seconds=5)
+        public void BeginStartCountdown(float seconds=DefaultStartCountdownSeconds)
         {
             if(Clock.TickCount>0 || Winner>=0 || seconds<=0 || float.IsNaN(seconds) || float.IsInfinity(seconds))return;
-            StartCountdownRemaining=seconds;countdownStartFrame=Time.frameCount;
+            StartCountdownRemaining=StartCountdownSeconds=seconds;countdownStartFrame=Time.frameCount;
             countdownLastTime=Time.realtimeSinceStartupAsDouble;SuspendMovement(true);
         }
 
