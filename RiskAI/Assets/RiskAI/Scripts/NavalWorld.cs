@@ -64,7 +64,7 @@ namespace RiskAI
                 AddIslandHarbor("Muelle insular "+(island+1),island,portOwners[mainland.Length+island]);
             foreach(var harbor in Harbors)
             {
-                session.Spawn(PlayerRules.ToCombatTeam(harbor.Owner),UnitKind.Archer,harbor.Landing);
+                session.Spawn(PlayerRules.ToCombatTeam(harbor.Owner),UnitCatalog.StartingGarrison,harbor.Landing);
                 harbor.InitializeGarrison();
             }
         }
@@ -196,7 +196,7 @@ namespace RiskAI
             if (!Session || !PlayerRules.IsPlayer(team) || team == 0 || team >= Session.PlayerCount ||
                 Session.BattleTime < Session.AiFirstNavalOffensiveTime || PendingShips(team) > 0) return 0;
             foreach (var ship in Ships) if (ship && ship.IsAlive && ship.Team == team) return 0;
-            foreach (var harbor in Harbors) if (harbor.Owner == team && harbor.CanLaunch) return UnitCatalog.Get(UnitKind.Frigate).Cost;
+            foreach (var harbor in Harbors) if (harbor.Owner == team && harbor.CanLaunch) return CheapestAttackingHullCost();
             return 0;
         }
         public void SimTick(float delta)
@@ -291,15 +291,26 @@ namespace RiskAI
                    FlatDistance(ship.transform.position,harbor.Berth)>2.25f)return true;
             return false;
         }
+        static int CheapestAttackingHullCost()
+        {
+            int best=int.MaxValue;
+            var options=UnitCatalog.HarborShips;
+            for(int i=0;i<options.Count;i++)
+            {
+                var profile=UnitCatalog.Get(options[i]);
+                if(profile.CanAttack&&profile.Cost<best)best=profile.Cost;
+            }
+            return best==int.MaxValue?0:best;
+        }
         static bool TryChooseWarship(int gold,out UnitKind kind)
         {
-            kind=UnitKind.Frigate;float best=float.NegativeInfinity;bool found=false;
+            kind=default;float best=float.NegativeInfinity;bool found=false;
             var options=UnitCatalog.HarborShips;
             for(int i=0;i<options.Count;i++)
             {
                 var profile=UnitCatalog.Get(options[i]);
                 if(!profile.CanAttack||profile.Cost>gold)continue;
-                float score=AiUnitAnalysis.ShipValue(profile)/Mathf.Pow(Mathf.Max(1,profile.Cost),.7f);
+                float score=AiUnitAnalysis.Value(profile)/Mathf.Pow(Mathf.Max(1,profile.Cost),.7f);
                 if(score>best){best=score;kind=options[i];found=true;}
             }
             return found;
@@ -309,7 +320,7 @@ namespace RiskAI
             float power=0;
             foreach(var ship in Ships)
                 if(ship&&ship.IsAlive&&ship.Team!=team&&PlayerRules.IsPlayer(ship.Team)&&ship.Type.CanAttack&&FlatDistance(ship.transform.position,point)<=radius*radius)
-                    power+=AiUnitAnalysis.ShipValue(ship.Type)*ship.Health/Mathf.Max(1,ship.MaxHealth);
+                    power+=AiPower.Power(ship);
             return power;
         }
         Harbor NearestOwnHarbor(int team,Vector3 point)

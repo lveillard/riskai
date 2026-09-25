@@ -131,7 +131,8 @@ namespace RiskAI.Tests
             Assert.That(archerVsLight,Is.GreaterThan(archerVsHeavy),"Piercing deals double damage to Light armor.");
             Assert.That(AiCompositionPlanner.Score(UnitKind.Archer,20,light,0),Is.EqualTo(AiCompositionPlanner.Score(UnitKind.Archer,20,heavy,0)),
                 "A zero counter weight ignores the enemy mix.");
-            Assert.That(AiUnitAnalysis.TowerValue(200,light),Is.GreaterThan(AiUnitAnalysis.TowerValue(200,heavy)),"Post towers punish Light armies.");
+            var towerWeapon=UnitCatalog.Get(UnitKind.Tower).TownWeapon;
+            Assert.That(AiUnitAnalysis.TowerValue(towerWeapon,200,light),Is.GreaterThan(AiUnitAnalysis.TowerValue(towerWeapon,200,heavy)),"Post towers punish Light armies.");
         }
 
         [Test]

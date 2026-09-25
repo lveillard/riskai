@@ -172,10 +172,9 @@ namespace RiskAI.Core
             return RawValue(dps,health,unit.Splash,unit.Healer);
         }
 
-        /// <summary>Threat of a city post tower. It only fires while the guardian lives, so the guardian's health is its effective durability.</summary>
-        public static float TowerValue(float guardianHealth,AiForceMix attackers)
+        /// <summary>Threat of a post tower. It only fires while the guardian lives, so the guardian's health is its effective durability.</summary>
+        public static float TowerValue(in WeaponProfile tower,float guardianHealth,AiForceMix attackers)
         {
-            var tower=UnitCatalog.Get(UnitKind.Tower).TownWeapon;
             float dps=tower.AverageDamage/Math.Max(.1f,tower.Cooldown);
             float multiplier=0,weights=0;
             for(int a=0;a<AiForceMix.ArmorCount;a++)
@@ -187,11 +186,11 @@ namespace RiskAI.Core
             return (float)Math.Sqrt(dps*Math.Max(50f,guardianHealth));
         }
 
-        public static float ShipValue(in UnitType ship)
+        /// <summary>Unweighted Lanchester value of any unit type. Health weighting lives in one place: AiPower.</summary>
+        public static float Value(in UnitType type)
         {
-            if(!ship.CanAttack)return 0;
-            float dps=ship.Weapon.AverageDamage/Math.Max(.1f,ship.Weapon.Cooldown);
-            return (float)Math.Sqrt(dps*ship.MaxHealth/Math.Max(.05f,CombatRules.ArmorMultiplier(ship.Armor)));
+            var table=Table;
+            return table[type.Index].Value;
         }
     }
 

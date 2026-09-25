@@ -26,6 +26,8 @@ namespace RiskAI
         const float DefenseDecisionSeconds = .75f;
         const float DefenseRadius = 12f;
         const float NavalThreatRadius = 22f;
+        // A pure naval threat is answered by ships and part of the ranged force: a frigate outranges land defenders.
+        const float RangedSupportShare = .5f;
         const float OpeningRecruitmentWindow = .15f;
         const float OpeningOffensiveWindow = 5f;
         // Stage just outside the 13 m post tower so a wave is assembled before it is fired upon.
@@ -209,7 +211,7 @@ namespace RiskAI
                     defenseAssignments[unit.EntityId] = threat.Key;
                     RemoveFromArmy(unit);
                     defenders.Add(unit);
-                    needed -= Power(unit);
+                    needed -= AiPower.Power(unit);
                     already++; assignedTotal++;
                 }
                 if (defenders.Count > 0) { BattleSession.GiveFormation(defenders, threat.Point, true, false); dispatchedAgainst[threat.Key] = threat.EnemyPower; }
@@ -228,31 +230,25 @@ namespace RiskAI
             {
                 var target = nearby[i];
                 if (!target || !target.IsAlive) continue;
-                float distance = FlatDistanceSquared(target.transform.position, point);
-                if (target is Soldier unit)
+                bool sea = target.Type.SeaMotor;
+                // Only mobile actors and armed hulls project power; posts are handled by TowerValue.
+                if (sea ? !target.Type.CanAttack : !target.OnLandMotor) continue;
+                float sight = sea ? NavalThreatRadius : DefenseRadius;
+                if (FlatDistanceSquared(target.transform.position, point) > sight * sight) continue;
+                if (target.Team == team)
                 {
-                    if (distance > DefenseRadius * DefenseRadius) continue;
-                    if (unit.Team == team)
-                    {
-                        // Assigned defenders are counted by AssignedPower, not twice once they arrive.
-                        if (defenseAssignments.TryGetValue(unit.EntityId, out int assigned) && assigned == key) continue;
-                        float value = Power(unit); friendlyPower += value; if (UnitCatalog.Get(unit.Kind).Weapon.Ranged) friendlyRanged += value;
-                    }
-                    else if (PlayerRules.IsPlayer(unit.Team)) { enemyPower += Power(unit); enemies++; }
+                    // Assigned defenders are counted by AssignedPower, not twice once they arrive.
+                    if (defenseAssignments.TryGetValue(target.EntityId, out int assigned) && assigned == key) continue;
+                    float value = AiPower.Power(target); friendlyPower += value;
+                    if (sea) friendlyShips += value; else if (target.Type.Weapon.Ranged) friendlyRanged += value;
                 }
-                else if (target is Ship ship)
-                {
-                    if (distance > NavalThreatRadius * NavalThreatRadius || !ship.Type.CanAttack) continue;
-                    float value = AiUnitAnalysis.ShipValue(ship.Type) * ship.Health / Mathf.Max(1, ship.MaxHealth);
-                    if (ship.Team == team) { friendlyPower += value; friendlyShips += value; }
-                    else if (PlayerRules.IsPlayer(ship.Team)) { enemyPower += value; navalPower += value; enemies++; }
-                }
+                else if (PlayerRules.IsPlayer(target.Team)) { float threat = AiPower.Power(target); enemyPower += threat; if (sea) navalPower += threat; enemies++; }
             }
             bool navalOnly = navalPower > 0 && navalPower >= enemyPower - .01f;
             // A frigate outranges both the 13 m post tower and a crossbow garrison:
             // against a pure naval threat only ships and part of the ranged force count.
-            if (navalOnly) friendlyPower = friendlyShips + friendlyRanged * .5f;
-            else if (TowerActive(tower, guardian)) friendlyPower += AiUnitAnalysis.TowerValue(guardian.Health, null);
+            if (navalOnly) friendlyPower = friendlyShips + friendlyRanged * RangedSupportShare;
+            else if (TowerActive(tower, guardian)) friendlyPower += AiUnitAnalysis.TowerValue(tower.AttackWeapon, guardian.Health, null);
             if (enemies == 0 && !contested && capture <= 0) return;
             if (!contested && capture <= 0 && enemyPower * profile.DefenseMargin <= friendlyPower) return;
             float weight = 1 + CountryWeight(country);
@@ -301,7 +297,11 @@ namespace RiskAI
             foreach (var assignment in defenseAssignments)
                 // Full value, not health-weighted: wounded defenders must not trigger
                 // a fresh dispatch every tick while the fight is under way.
-                if (assignment.Value == key && session.FindTarget(assignment.Key) is Soldier unit && unit.IsAlive) power += AiUnitAnalysis.For(unit.Kind).Value;
+                if (assignment.Value == key)
+                {
+                    var unit = session.FindTarget(assignment.Key);
+                    if (unit && unit.IsAlive) power += AiUnitAnalysis.Value(unit.Type);
+                }
             return power;
         }
 
@@ -312,7 +312,7 @@ namespace RiskAI
             {
                 var unit = own[i];
                 if (!IsMobileDefender(unit) || defenseAssignments.ContainsKey(unit.EntityId) || rangedOnly && !UnitCatalog.Get(unit.Kind).Weapon.Ranged) continue;
-                if (FlatDistanceSquared(unit.transform.position, point) <= radius * radius) power += Power(unit);
+                if (FlatDistanceSquared(unit.transform.position, point) <= radius * radius) power += AiPower.Power(unit);
             }
             return power;
         }
@@ -419,7 +419,11 @@ namespace RiskAI
             if (session.Naval)
                 foreach (var harbor in session.Naval.Harbors)
                     if (harbor && harbor.Owner == team && !harbor.IsImportedPort)
-                        for (int q = 0; q < harbor.LandQueueCount; q++) census.Add(harbor.QueuedLandKind(q));
+                        for (int q = 0; q < harbor.QueueCount; q++)
+                        {
+                            var kind = harbor.QueuedKind(q);
+                            if (!UnitCatalog.Get(kind).SeaMotor) census.Add(kind);
+                        }
             if (owned > 0) center /= owned;
             // The whole battlefield is visible. Weight nearby armies more, so a
             // 16-player match counters its neighbours rather than the far side.
@@ -527,7 +531,7 @@ namespace RiskAI
             {
                 var candidate=recruitmentSites[i];
                 if (candidate.Exhausted) continue;
-                int queue = candidate.Harbor ? (candidate.Harbor ? candidate.Harbor.LandQueueCount : 99) : (candidate.Town ? candidate.Town.QueueCount : 99);
+                int queue = candidate.Harbor ? candidate.Harbor.PopulationOrders : (candidate.Town ? candidate.Town.QueueCount : 99);
                 if (queue >= 2) continue;
                 // Stable site order breaks ties without consuming combat RNG.
                 float score = candidate.Score + queue * 20;
@@ -606,7 +610,7 @@ namespace RiskAI
                     for (int u = 0; u < army.Units.Count; u++)
                     {
                         var unit = army.Units[u];
-                        if (FlatDistanceSquared(unit.transform.position, army.Stage) <= GatherRadius * GatherRadius * 2.25f) { gathered++; gatheredPower += Power(unit); }
+                        if (FlatDistanceSquared(unit.transform.position, army.Stage) <= GatherRadius * GatherRadius * 2.25f) { gathered++; gatheredPower += AiPower.Power(unit); }
                         else if (unit.IsIdle || unit.IsHolding) wave.Add(unit);
                     }
                     float defense = TargetDefense(army.Target);
@@ -779,8 +783,8 @@ namespace RiskAI
                 if (cluster.Count < minimumWave) return;
                 Vector3 center = Centroid(cluster);
                 float clusterPower = 0, poolPower = 0;
-                for (int i = 0; i < cluster.Count; i++) clusterPower += Power(cluster[i]);
-                for (int i = 0; i < pool.Count; i++) poolPower += Power(pool[i]);
+                for (int i = 0; i < cluster.Count; i++) clusterPower += AiPower.Power(cluster[i]);
+                for (int i = 0; i < pool.Count; i++) poolPower += AiPower.Power(pool[i]);
                 RankTargets(center, clusterPower, clusterPower + poolPower * .5f, profile);
                 bool formed = false;
                 bool atCap = armies.Count >= profile.MaximumArmies;
@@ -808,7 +812,7 @@ namespace RiskAI
                         pathBudget--;
                         var unit = cluster[i];
                         if (!CanReachOffensiveTarget(unit, claim)) { if (++failures >= 2 && wave.Count == 0) break; continue; }
-                        wave.Add(unit); wavePower += Power(unit);
+                        wave.Add(unit); wavePower += AiPower.Power(unit);
                     }
                     if (wave.Count == 0 && failures >= 2) MarkUnreachable(candidate.Index, center);
                     if (wave.Count < minimumWave) continue;
@@ -905,16 +909,14 @@ namespace RiskAI
             {
                 var target = nearby[i];
                 if (!target || !target.IsAlive || target.Team == team) continue;
-                float distance = FlatDistanceSquared(target.transform.position, claim);
-                if (target is Soldier unit)
-                {
-                    if (distance <= TargetDefenseRadius * TargetDefenseRadius) power += Power(unit);
-                }
-                else if (target is Ship ship && ship.Type.CanAttack && distance <= NavalThreatRadius * NavalThreatRadius)
-                    power += AiUnitAnalysis.ShipValue(ship.Type) * ship.Health / Mathf.Max(1, ship.MaxHealth);
+                bool sea = target.Type.SeaMotor;
+                if (sea ? !target.Type.CanAttack : !target.OnLandMotor) continue;
+                float sight = sea ? NavalThreatRadius : TargetDefenseRadius;
+                if (FlatDistanceSquared(target.transform.position, claim) > sight * sight) continue;
+                power += AiPower.Power(target);
             }
             var guardian = town.ClaimZone != null ? town.ClaimZone.Guardian : null;
-            if (TowerActive(town.Defense, guardian)) power += AiUnitAnalysis.TowerValue(guardian.Health, ownMix);
+            if (TowerActive(town.Defense, guardian)) power += AiUnitAnalysis.TowerValue(town.Defense.AttackWeapon, guardian.Health, ownMix);
             return power;
         }
 
@@ -945,7 +947,8 @@ namespace RiskAI
                         armyOf.Remove(unit.EntityId);
                         army.Units.RemoveAt(u);
                     }
-                if (!(guardian is Soldier keeper) || keeper.Team == team) continue;
+                var keeper = guardian;
+                if (!keeper || !keeper.OnLandMotor || keeper.Team == team) continue;
                 // Troops that stopped after a guardian kill resume the assault at once
                 // while the post still has a living defender.
                 wave.Clear();
@@ -957,8 +960,8 @@ namespace RiskAI
                 float armyPower = ArmyPower(army), others = 0;
                 session.Spatial.Query(claim, TargetDefenseRadius, nearby);
                 for (int i = 0; i < nearby.Count; i++)
-                    if (nearby[i] is Soldier enemy && enemy != keeper && enemy.IsAlive && enemy.Team != team &&
-                        FlatDistanceSquared(enemy.transform.position, claim) <= TargetDefenseRadius * TargetDefenseRadius) others += Power(enemy);
+                    if (nearby[i] is { } enemy && enemy.OnLandMotor && enemy != keeper && enemy.IsAlive && enemy.Team != team &&
+                        FlatDistanceSquared(enemy.transform.position, claim) <= TargetDefenseRadius * TargetDefenseRadius) others += AiPower.Power(enemy);
                 if (others > armyPower * .35f) continue;
                 for (int u = 0; u < army.Units.Count; u++)
                 {
@@ -1021,7 +1024,7 @@ namespace RiskAI
         float ArmyPower(Army army)
         {
             float power = 0;
-            for (int u = 0; u < army.Units.Count; u++) power += Power(army.Units[u]);
+            for (int u = 0; u < army.Units.Count; u++) power += AiPower.Power(army.Units[u]);
             return power;
         }
 
@@ -1033,12 +1036,6 @@ namespace RiskAI
             Vector3 center = Vector3.zero;
             for (int i = 0; i < units.Count; i++) center += units[i].transform.position;
             return center / units.Count;
-        }
-
-        static float Power(Soldier unit)
-        {
-            if (!unit || !unit.IsAlive) return 0;
-            return AiUnitAnalysis.For(unit.Kind).Value * Mathf.Clamp01(unit.Health / Mathf.Max(1, unit.MaxHealth));
         }
 
         static void SortByDistance(List<Soldier> units, Vector3 point)
