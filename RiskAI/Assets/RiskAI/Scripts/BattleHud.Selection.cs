@@ -53,12 +53,10 @@ namespace RiskAI
         bool RosterChanged()
         {
             if (retainedSoldierCount != controller.Selection.Count ||
-                retainedRosterIds.Count != controller.Selection.Count + controller.Fleet.Count) return true;
+                retainedRosterIds.Count != controller.Selection.Count) return true;
             int index = 0;
             foreach (var unit in controller.Selection)
                 if (retainedRosterIds[index++] != RosterIdentity(unit)) return true;
-            foreach (var ship in controller.Fleet)
-                if (retainedRosterIds[index++] != RosterIdentity(ship)) return true;
             return false;
         }
 
@@ -67,7 +65,6 @@ namespace RiskAI
             retainedSoldierCount = controller.Selection.Count;
             retainedRosterIds.Clear();
             foreach (var unit in controller.Selection) retainedRosterIds.Add(RosterIdentity(unit));
-            foreach (var ship in controller.Fleet) retainedRosterIds.Add(RosterIdentity(ship));
         }
 
         static int RosterIdentity(CombatTarget actor) => actor ? actor.EntityId : 0;
@@ -81,7 +78,6 @@ namespace RiskAI
             roster.style.flexWrap = Wrap.Wrap;
             roster.style.flexShrink = 0;
             foreach (var unit in controller.Selection) AddSelectionCard(roster, unit);
-            foreach (var ship in controller.Fleet) AddSelectionCard(roster, ship);
             root.Add(roster);
         }
 
@@ -91,7 +87,7 @@ namespace RiskAI
             int entityId = actor.EntityId;
             var soldier = actor as Soldier;
             var ship = actor as Ship;
-            string name = soldier ? UnitCatalog.Get(soldier.Kind).Name : ship.DisplayName;
+            string name = actor.Type.Name;
             bool SameLiveActor() => actor && actor.EntityId == entityId && actor.IsAlive &&
                 actor.isActiveAndEnabled && actor.Team == 0;
 
@@ -101,7 +97,7 @@ namespace RiskAI
                 if (!SameLiveActor()) return;
                 // Membership is checked only when acting. Refreshing every card's
                 // health must stay linear in roster size, without nested scans.
-                if (soldier ? !controller.Selection.Contains(soldier) : !controller.Fleet.Contains(ship)) return;
+                if (!controller.Selection.Contains(actor)) return;
                 if (soldier) controller.SelectOnly(soldier);
                 else controller.SelectShip(ship);
             });
@@ -113,7 +109,7 @@ namespace RiskAI
             button.style.paddingLeft = button.style.paddingRight = 4;
             button.style.paddingTop = button.style.paddingBottom = 4;
             button.style.marginRight = button.style.marginBottom = 4;
-            button.Add(PortraitFrame(soldier?PortraitResource(soldier.Kind):UnitVariantViews.PortraitResource(ship.Kind),UiViewport.IsCompact?32:40));
+            button.Add(PortraitFrame(UnitVariantViews.PortraitResource(UnitCatalog.KindAt(actor.Type.Index)),UiViewport.IsCompact?32:40));
             var track = new VisualElement { pickingMode = PickingMode.Ignore };
             track.style.width = Length.Percent(100);
             track.style.height = 5; track.style.flexShrink = 0;
@@ -148,7 +144,7 @@ namespace RiskAI
                 button.style.height=button.style.minHeight=UiViewport.IsCompact?48:56;
                 button.style.paddingLeft=button.style.paddingRight=4;button.style.paddingTop=button.style.paddingBottom=4;
                 button.style.marginRight=button.style.marginBottom=4;
-                button.Add(PortraitFrame(PortraitResource(soldier.Kind),UiViewport.IsCompact?32:40));cargo.Add(button);
+                button.Add(PortraitFrame(UnitVariantViews.PortraitResource(soldier.Kind),UiViewport.IsCompact?32:40));cargo.Add(button);
             }
             root.Add(cargo);
         }

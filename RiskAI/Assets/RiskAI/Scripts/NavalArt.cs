@@ -24,8 +24,9 @@ namespace RiskAI
         // cannot drift from the silhouettes and team treatment seen in the world.
         public static Transform CreateShipModel(Transform parent,int team,UnitKind kind)
         {
-            var root=new GameObject("Ship model").transform;root.SetParent(parent,false);var resources=GeneratedResourceOwner.For(parent);var hullShape=UnitCatalog.Get(kind).Hull;bool war=hullShape.Warship;float length=war?7.2f:5.15f,width=war?1.65f:2.65f;
-            // v0.30 hulls reuse the frigate/transport silhouettes, scaled roughly by source collision (h001 ucol=56).
+            var root=new GameObject("Ship model").transform;root.SetParent(parent,false);var resources=GeneratedResourceOwner.For(parent);
+            ref readonly var type=ref UnitCatalog.Get(kind);var hullShape=type.Hull;bool war=hullShape.Warship;
+            float length=hullShape.Length,width=hullShape.Beam;string style=type.PortraitName;
             root.localScale=Vector3.one*hullShape.Scale;
             var v=new List<Vector3>();var t=new List<int>();const int sections=12;
             for(int level=0;level<3;level++)for(int s=0;s<=sections;s++)
@@ -53,19 +54,20 @@ namespace RiskAI
                 Beam(root,new(-.7f,.95f,length*.22f),new(.7f,.95f,length*.22f),.12f);
             }
             else for(int i=0;i<6;i++)Block(root,"Transport cargo hold",new(-.85f+i%3*.85f,.88f,-1.15f+i/3*.8f),new(.68f,.55f,.62f));
-            if(kind==UnitKind.Warship||kind==UnitKind.Battleship)
-                for(int side=-1;side<=1;side+=2)for(int i=0;i<(kind==UnitKind.Battleship?3:2);i++)
+            bool battleship=style=="Battleship",lineShip=style=="Warship"||battleship;
+            if(lineShip)
+                for(int side=-1;side<=1;side+=2)for(int i=0;i<(battleship?3:2);i++)
                 {
                     var gun=VisualFactory.Shape(root,PrimitiveType.Cylinder,"Broadside cannon",new(side*width*.5f,.62f,-1.2f+i*1.1f),new(.2f,.38f,.2f),new Color(.18f,.2f,.22f));
                     gun.transform.localRotation=Quaternion.Euler(0,0,90);
                 }
-            if(kind==UnitKind.Battleship)
+            if(battleship)
             {
                 Block(root,"Battleship armoured citadel",new(0,1.05f,.35f),new(width*.7f,.55f,1.5f),2,new Color(.55f,.6f,.66f));
                 var turret=VisualFactory.Shape(root,PrimitiveType.Cylinder,"Battleship bow turret",new(0,1.42f,length*.3f),new(.8f,.16f,.8f),new Color(.3f,.34f,.38f));
                 var barrel=VisualFactory.Shape(turret.transform,PrimitiveType.Cylinder,"Battleship bow gun",new(0,.2f,.9f),new(.28f,1.1f,.28f),new Color(.18f,.2f,.22f));barrel.transform.localRotation=Quaternion.Euler(90,0,0);
             }
-            if(kind==UnitKind.ArmoredTransport)
+            if(style=="ArmoredTransport")
                 for(int side=-1;side<=1;side+=2)Block(root,"Transport iron armour plate",new(side*width*.47f,.46f,0),new(.08f,.42f,length*.62f),2,new Color(.5f,.55f,.6f));
             Beam(root,new(0,.65f,length*.35f),new(0,1.05f,length*.58f),.13f,new Color(1.6f,1.15f,.4f));
             return root;

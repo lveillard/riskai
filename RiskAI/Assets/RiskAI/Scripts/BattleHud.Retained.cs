@@ -36,7 +36,7 @@ namespace RiskAI
         float lastDensity;
         bool wideFooter;
         bool BuildingSelection => controller.SelectedTowns.Count+controller.SelectedHarbors.Count>0;
-        bool HasSelection => controller && (controller.SelectedTown || controller.SelectedHarbor || controller.SelectedCamp || controller.InspectedTarget || controller.Selection.Count + controller.Fleet.Count > 0);
+        bool HasSelection => controller && (controller.SelectedTown || controller.SelectedHarbor || controller.SelectedCamp || controller.InspectedTarget || controller.Selection.Count > 0);
         // Compact layouts show the map inside the footer (tab 3); desktop keeps it in its own
         // always-on console at the bottom-right, independent of the selection footer.
         bool FooterVisible => HasSelection || (UiViewport.IsCompact && showMinimap && retainedTab == 3);
@@ -140,8 +140,13 @@ namespace RiskAI
                 key = key * 43 + (controller.SelectedHarbor ? controller.SelectedHarbor.GetInstanceID() * 17 + controller.SelectedHarbor.Owner : 0);
                 key = key * 47 + (controller.SelectedCamp ? controller.SelectedCamp.GetInstanceID() : 0);
                 for (int i = 0; i < controller.SelectedTowns.Count; i++) key = key * 53 + controller.SelectedTowns[i].GetInstanceID() * 17 + controller.SelectedTowns[i].State.Owner + controller.SelectedTowns[i].QueueCount * 97 + controller.SelectedTowns[i].State.Level * 101;
-                for (int i = 0; i < controller.SelectedHarbors.Count; i++) key = key * 59 + controller.SelectedHarbors[i].GetInstanceID() * 17 + controller.SelectedHarbors[i].Owner + controller.SelectedHarbors[i].QueueCount * 103 + controller.SelectedHarbors[i].LandQueueCount * 107;
-                for(int i=0;i<controller.Fleet.Count;i++)if(controller.Fleet[i])key=key*61+controller.Fleet[i].EntityId*17+controller.Fleet[i].CargoCount;
+                for (int i = 0; i < controller.SelectedHarbors.Count; i++)
+                {
+                    var harbor = controller.SelectedHarbors[i];
+                    int linked = harbor.IsImportedPort && harbor.LinkedTown ? harbor.LinkedTown.QueueCount : 0;
+                    key = key * 59 + harbor.GetInstanceID() * 17 + harbor.Owner + harbor.QueueCount * 103 + linked * 107;
+                }
+                for(int i=0;i<controller.Selection.Count;i++)if(controller.Selection[i]&&controller.Selection[i].Type.SeaMotor)key=key*61+controller.Selection[i].EntityId*17+controller.Selection[i].CargoCount;
                 key=key*67+controller.ProductionPage(ProductionBuilding.City)*3+controller.ProductionPage(ProductionBuilding.Harbor);
                 return key;
             }
@@ -349,7 +354,7 @@ namespace RiskAI
             BuildSelectionWithPortrait(selection);
             if (controller.SelectedCamp)
                 BuildCampOrders(contextual);
-            else if(controller.Selection.Count+controller.Fleet.Count>0)
+            else if(controller.Selection.Count>0)
                 BuildOrders(contextual);
         }
 
@@ -362,17 +367,17 @@ namespace RiskAI
 
         void BuildSelectionWithPortrait(VisualElement root)
         {
-            Soldier unit = controller.Selection.Count == 1 && controller.Fleet.Count == 0 ? controller.Selection[0] : controller.InspectedTarget as Soldier;
+            CombatTarget shown = controller.Selection.Count == 1 ? controller.Selection[0] : controller.InspectedTarget;
+            Soldier unit = shown as Soldier;
             if (!unit) { BuildSelection(root);return; }
             var row=new VisualElement();RtsUiStyle.Row(row);row.style.alignItems=Align.FlexStart;
             var frame=RtsUiStyle.Panel("HUD portrait frame");frame.style.paddingLeft=5;frame.style.paddingRight=5;frame.style.paddingTop=4;frame.style.paddingBottom=4;frame.style.marginRight=8;frame.style.flexShrink=0;
-            var portrait = new Image { name = "HUD unit portrait", image = CachedPortrait(PortraitResource(unit.Kind)), scaleMode = ScaleMode.ScaleToFit };
+            var portrait = new Image { name = "HUD unit portrait", image = CachedPortrait(UnitVariantViews.PortraitResource(unit.Kind)), scaleMode = ScaleMode.ScaleToFit };
             portrait.style.width = 64; portrait.style.height = 72;
             frame.Add(portrait);row.Add(frame);
             var details=new VisualElement();details.style.flexGrow=1;details.style.minWidth=0;BuildSelection(details);row.Add(details);root.Add(row);
         }
 
-        static string PortraitResource(UnitKind kind) => UnitVariantViews.PortraitResource(kind);
 
         Rect MinimapRect()
         {
@@ -417,7 +422,7 @@ namespace RiskAI
                 BuildCommandCard(root);
                 return;
             }
-            if(controller.Selection.Count+controller.Fleet.Count>0)BuildOrders(root);
+            if(controller.Selection.Count>0)BuildOrders(root);
             BuildSelectionWithPortrait(root);
         }
 
@@ -458,12 +463,13 @@ namespace RiskAI
                 var harbor = controller.SelectedHarbor;
                 BuildingInfo(root,()=>harbor?harbor.DisplayName+" · "+VisualFactory.TeamName(harbor.Owner):"Puerto retirado"); return;
             }
-            if (controller.Fleet.Count > 0)
+            if (controller.Selection.Count > 0)
             {
-                int count = controller.Selection.Count + controller.Fleet.Count;
-                AddTitle(root, count == 1 ? controller.Fleet[0].DisplayName : count + " UNIDADES SELECCIONADAS");
+                int count = controller.Selection.Count;
+                AddTitle(root, count == 1 ? controller.Selection[0].Type.Name.ToUpperInvariant() : count + " UNIDADES SELECCIONADAS");
                 BuildSelectionRoster(root);
-                foreach(var ship in controller.Fleet)if(ship&&ship.Type.CanTransport&&ship.CargoCount>0)BuildCargoRoster(root,ship);
+                foreach(var actor in controller.Selection)if(actor is Ship ship&&ship.Type.CanTransport&&ship.CargoCount>0)BuildCargoRoster(root,ship);
+                if(controller.Selection.Count==1&&controller.Selection[0] is Soldier only)LiveInfo(root,()=>SoldierStats(only));
                 return;
             }
             if (controller.InspectedTarget is Soldier inspected)
@@ -473,18 +479,6 @@ namespace RiskAI
                 LiveInfo(root,()=>SoldierStats(inspected));
                 return;
             }
-            if (controller.Selection.Count > 0)
-            {
-                AddTitle(root, controller.Selection.Count==1?UnitCatalog.Get(controller.Selection[0].Kind).Name.ToUpperInvariant():controller.Selection.Count + " TROPAS SELECCIONADAS");
-                if (controller.Selection.Count == 1)
-                {
-                    var unit = controller.Selection[0]; var profile = UnitCatalog.Get(unit.Kind);
-                    LiveInfo(root,()=>SoldierStats(unit));
-                }
-                else BuildSelectionRoster(root);
-                return;
-            }
-
         }
 
         // Unit command card. Keys are the unit hotkeys that stay live while no building is selected.
@@ -506,7 +500,7 @@ namespace RiskAI
             var row=new VisualElement { name="HUD primary action row" };RtsUiStyle.Row(row);
             row.style.flexShrink=0;grid.Add(row);
             foreach(var order in PrimaryOrders())row.Add(ActionButton(order.title,order.glyph,order.action,order.key));
-            if(controller.Fleet.Count>0)
+            if(controller.Selection.Exists(actor=>actor&&actor.Type.SeaMotor))
             {
                 row=new VisualElement { name="HUD naval action row" };RtsUiStyle.Row(row);
                 row.style.flexShrink=0;grid.Add(row);
@@ -518,15 +512,17 @@ namespace RiskAI
         void BuildOrderCells(VisualElement strip,float size)
         {
             foreach(var order in PrimaryOrders()){var button=ActionButton(order.title,order.glyph,order.action,null);SquareCell(button,size);strip.Add(button);}
-            if(controller.Fleet.Count>0)
+            if(controller.Selection.Exists(actor=>actor&&actor.Type.SeaMotor))
                 foreach(var order in NavalOrders()){var button=ActionButton(order.title,order.glyph,order.action,null);SquareCell(button,size);strip.Add(button);}
         }
 
-        static string UnitTooltip(UnitKind kind)
+        static string UnitTooltip(in UnitType profile)
         {
-            var profile=UnitCatalog.Get(kind);var mana=UnitCatalog.Get(kind).Mana;
-            return UnitCatalog.Get(kind).Role+" · "+profile.MaxHealth+" vida · "+UnitCatalog.Get(kind).Weapon.DamageText+" "+profile.AttackType+" · alcance "+profile.Weapon.Range+" · armadura "+profile.Armor+" "+profile.ArmorType+
-                (mana.Enabled?" · maná "+mana.Maximum:"");
+            string text=(string.IsNullOrEmpty(profile.Role)?profile.Name:profile.Role)+" · "+profile.MaxHealth+" vida · armadura "+profile.Armor+" "+profile.ArmorType;
+            if(profile.CanAttack)text+=" · "+profile.Weapon.DamageText+" "+profile.AttackType+" · alcance "+profile.Weapon.Range;
+            if(profile.CanTransport)text+=" · carga "+profile.Transport.Capacity;
+            if(profile.Mana.Enabled)text+=" · maná "+profile.Mana.Maximum;
+            return text;
         }
 
         static Button GridButton(string text, System.Action action)
@@ -581,7 +577,8 @@ namespace RiskAI
             if(!unit||!unit.IsAlive)return "Unidad eliminada";
             var profile=UnitCatalog.Get(unit.Kind);
             var mana=unit.Mana;
-            return UnitCatalog.Get(unit.Kind).Name+" · "+Mathf.CeilToInt(unit.Health)+" / "+profile.MaxHealth+" vida"+(mana!=null&&mana.Enabled?" · "+Mathf.FloorToInt(mana.Current)+" / "+mana.Maximum+" maná":"")+" · "+UnitCatalog.Get(unit.Kind).Weapon.DamageText+" "+profile.AttackType+" · alcance "+profile.Weapon.Range+" · armadura "+profile.Armor+" "+profile.ArmorType+(unit.IsRoaring?" · rugido +25%":"");
+            string roar=unit.IsRoaring?" · rugido +"+Mathf.RoundToInt(profile.Roar.DamageBonus*100f)+"%":"";
+            return UnitCatalog.Get(unit.Kind).Name+" · "+Mathf.CeilToInt(unit.Health)+" / "+profile.MaxHealth+" vida"+(mana!=null&&mana.Enabled?" · "+Mathf.FloorToInt(mana.Current)+" / "+mana.Maximum+" maná":"")+" · "+UnitCatalog.Get(unit.Kind).Weapon.DamageText+" "+profile.AttackType+" · alcance "+profile.Weapon.Range+" · armadura "+profile.Armor+" "+profile.ArmorType+roar;
         }
     }
 }
