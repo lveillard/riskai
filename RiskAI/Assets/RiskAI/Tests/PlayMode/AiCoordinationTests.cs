@@ -84,18 +84,35 @@ namespace RiskAI.Tests
                 Assert.That(distance,Is.LessThan(30f),"The staging point is next to the objective.");
             }
 
-            // Formation slots can sit outside the gather radius, so warp onto the stage itself.
+            // Formation slots can sit outside the gather radius, so warp the wave onto the stage,
+            // one slot per soldier as an arriving formation stands. Stacking every agent on one
+            // point made the overlapping agents shove each other and could fail one soldier's path.
             // One strategic pass must then send the whole assembled wave.
             var armies=(System.Collections.IList)typeof(SkirmishCommander).GetField("armies",Hidden).GetValue(Commander);
             Assert.That(armies.Count,Is.EqualTo(1));
             var stage=(Vector3)armies[0].GetType().GetField("Stage").GetValue(armies[0]);
-            foreach(var unit in army)Assert.That(unit.Agent.Warp(stage),Is.True);
+            int slot=0;
+            foreach(var unit in army)
+            {
+                var offset=new Vector3((slot%3-1)*1.6f,0,(slot/3-.5f)*1.6f);slot++;
+                Assert.That(NavMesh.SamplePosition(stage+offset,out var hit,2f,NavMesh.AllAreas),Is.True,"Every formation slot is on the stage.");
+                Assert.That(unit.Agent.Warp(hit.position),Is.True);
+            }
             foreach(var unit in army)unit.Stop();
             Invoke("IssueOffensiveOrders",false);
             battle.Commands.Tick();
             yield return WaitForPaths(army);
+            var launched=armies[0];var kind=launched.GetType();
+            string why="attacking="+kind.GetField("Attacking").GetValue(launched)+" required="+kind.GetField("RequiredPower").GetValue(launched)+
+                " gathered="+army.Sum(u=>AiPower.Power(u))+" units="+army.Count()+" | "+string.Join(" ; ",army.Select(u=>u.EntityId+":order="+(u.OrderLegCount>0?FlatDistance(u.OrderLegPoint(0),target.ClaimPoint).ToString("0.0"):"none")+" dest="+FlatDistance(u.Agent.destination,target.ClaimPoint).ToString("0.0")+
+                " idle="+u.IsIdle+" err="+(u.LastMoveError??"-")+" pos="+FlatDistance(u.transform.position,target.ClaimPoint).ToString("0.0")));
+            // The order goal, not the agent's current destination: an attack-move may chase an
+            // enemy it meets on the way, which is the order working, not the wave splitting.
             foreach(var unit in army)
-                Assert.That(FlatDistance(unit.Agent.destination,target.ClaimPoint),Is.LessThan(6f),"The assembled wave attacks the post together.");
+            {
+                Assert.That(unit.OrderLegCount,Is.GreaterThan(0),"Every soldier of the wave has an order. "+why);
+                Assert.That(FlatDistance(unit.OrderLegPoint(0),target.ClaimPoint),Is.LessThan(6f),"The assembled wave attacks the post together. "+why);
+            }
         }
 
         [UnityTest]
