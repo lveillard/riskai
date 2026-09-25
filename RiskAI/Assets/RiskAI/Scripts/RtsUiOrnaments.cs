@@ -19,7 +19,7 @@ namespace RiskAI
     {
         static readonly Color Ink = new Color(.93f, .84f, .6f), Off = new Color(.55f, .55f, .5f);
         static readonly Color Strike = new Color(1f, .42f, .36f), Outline = new Color(.05f, .04f, .025f, .92f), Cut = new Color(.11f, .09f, .055f);
-        readonly RtsGlyph glyph;
+        RtsGlyph glyph;
         bool struck, active;
 
         public RtsIcon(RtsGlyph glyph, float size = 22)
@@ -28,6 +28,7 @@ namespace RiskAI
             style.width = size; style.height = size; style.flexShrink = 0; generateVisualContent += Paint;
         }
 
+        public RtsGlyph Glyph { get => glyph; set { if (glyph == value) return; glyph = value; name = "HUD icon " + value; MarkDirtyRepaint(); } }
         /// <summary>Greyed and struck through: the feature is off.</summary>
         public bool Struck { get => struck; set { if (struck == value) return; struck = value; MarkDirtyRepaint(); } }
         /// <summary>Gold: the toggle is on.</summary>

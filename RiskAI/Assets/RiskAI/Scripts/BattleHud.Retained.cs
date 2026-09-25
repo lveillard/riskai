@@ -340,6 +340,10 @@ namespace RiskAI
                 context.style.minHeight=0;wideContext.style.minHeight=0;
                 columns.Add(context); columns.Add(wideContext); footer.Add(columns);
             }
+            // Like the WC3 command panel, the footer never shows a scrollbar: a few pixels of padding
+            // overflow drew an empty track beside it. Longer content still scrolls by wheel or drag.
+            ((ScrollView)context).verticalScrollerVisibility=ScrollerVisibility.Hidden;
+            if(wideContext!=null)((ScrollView)wideContext).verticalScrollerVisibility=ScrollerVisibility.Hidden;
 
             if (wideFooter) BuildWideContext(context, wideContext); else BuildContext(context);
             if (UiViewport.IsPortrait && MinimapVisible) context.style.visibility=Visibility.Hidden;

@@ -111,6 +111,7 @@ namespace RiskAI
         Label toastLabel, goldFloat;
         Button chatButton, recipientChip, chatSend, chatCancel;
         VisualElement recipientSwatch, recipientList, compactQuickBar;
+        RtsIcon recipientChevron;
         Label recipientLabel;
         int chatRecipient = ChatMessage.Everyone, chatTabFrame = -1;
         TextField chatField;
@@ -212,8 +213,8 @@ namespace RiskAI
             recipientChip.tooltip = GameText.Localize("Destinatario · Tab cambia · Mayús+Intro envía a todos");
             recipientSwatch = new VisualElement { pickingMode = PickingMode.Ignore }; recipientSwatch.style.width = recipientSwatch.style.height = 10; recipientSwatch.style.marginRight = 5;
             recipientLabel = new Label { pickingMode = PickingMode.Ignore }; recipientLabel.style.fontSize = 12; recipientLabel.style.color = RtsUiStyle.Text;
-            var chevron = new RtsIcon(RtsGlyph.ChevronUp, 12); chevron.style.marginLeft = 5;
-            recipientChip.Add(recipientSwatch); recipientChip.Add(recipientLabel); recipientChip.Add(chevron);
+            recipientChevron = new RtsIcon(RtsGlyph.ChevronUp, 12); recipientChevron.style.marginLeft = 5;
+            recipientChip.Add(recipientSwatch); recipientChip.Add(recipientLabel); recipientChip.Add(recipientChevron);
             // The WebGL DOM field would blur on this tap; keep it open and refocus it afterwards.
             recipientChip.RegisterCallback<PointerDownEvent>(_ => { if (webChat) WebChatInput.Hold(); }, TrickleDown.TrickleDown);
             chatBar.Add(recipientChip);
@@ -295,6 +296,8 @@ namespace RiskAI
             float chatHeight = touch ? Mathf.Max(34, UiViewport.MinimumTouchTarget * .8f) + 6 : 32;
             float barHeight = compactQuickBar != null ? Mathf.Max(chatHeight, QuickSize + 2) : chatHeight;
             // The WebGL DOM field sits above the on-screen keyboard; only the recipient chip stays in Unity, near the top.
+            // The recipient list opens away from the chat bar: down under the top web field, up above the bottom bar.
+            recipientChevron.Glyph = webChat ? RtsGlyph.ChevronDown : RtsGlyph.ChevronUp;
             if (webChat) { chatBar.style.top = HeaderHeight + 8; chatBar.style.bottom = StyleKeyword.Auto; chatBar.style.width = StyleKeyword.Auto; }
             else { chatBar.style.top = StyleKeyword.Auto; chatBar.style.bottom = bottom; chatBar.style.width = width; }
             if (recipientList.style.display == DisplayStyle.Flex)
