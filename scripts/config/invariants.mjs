@@ -16,6 +16,8 @@ export const fileRules = [
 export const unitRules = [
   { error: '{at}: heal/roar require mana', when: ['and', ['or', ['has', 'capabilities.heal'], ['has', 'capabilities.roar']], ['not', ['has', 'capabilities.mana']]] },
   { error: '{at}: transport is only for sea units', when: ['and', ['has', 'capabilities.transport'], ['neq', ['get', 'domain'], ['lit', 'Sea']]] },
+  { error: '{at}: expeditionTransport requires transport', when: ['and', ['eq', ['get', 'capabilities.expeditionTransport'], ['lit', true]], ['not', ['has', 'capabilities.transport']]] },
+  { error: '{at}: startingGarrison is a land unit', when: ['and', ['eq', ['get', 'capabilities.startingGarrison'], ['lit', true]], ['neq', ['get', 'domain'], ['lit', 'Land']]] },
   { error: '{at}: land units need collision and body radii', when: ['and', ['eq', ['get', 'domain'], ['lit', 'Land']], ['or', ['not', ['has', 'collision']], ['not', ['has', 'body']]]] },
   { error: '{at}: sea units need a hull', when: ['and', ['eq', ['get', 'domain'], ['lit', 'Sea']], ['not', ['has', 'hull']]] },
   { error: '{at}: hostWeapons are only for static posts', when: ['and', ['has', 'hostWeapons'], ['neq', ['get', 'domain'], ['lit', 'Static']]] },
@@ -96,6 +98,8 @@ export function invariants(file) {
   const seen = new Set();
   let clearance = null;
   let landDefaults = 0;
+  let garrisons = 0;
+  let expeditions = 0;
   for (const unit of file.units) {
     if (!unit) { errors.push('null unit entry'); continue; }
     const at = `units[${unit.id}]`;
@@ -108,6 +112,8 @@ export function invariants(file) {
       clearance = unit.hull.clearance;
     }
     if (unit.presentation?.portraitCamera?.landDefault === true) landDefaults++;
+    if (unit.capabilities?.startingGarrison === true) garrisons++;
+    if (unit.capabilities?.expeditionTransport === true) expeditions++;
     const weapons = [...(unit.weapons ?? []), ...(unit.hostWeapons ? [unit.hostWeapons.town, unit.hostWeapons.harbor] : [])];
     for (const weapon of weapons) {
       if (!weapon) continue;
@@ -124,6 +130,8 @@ export function invariants(file) {
     }
   }
   if (landDefaults !== 1) errors.push('units.json needs exactly one landDefault portrait camera');
+  if (garrisons !== 1) errors.push('units.json needs exactly one startingGarrison');
+  if (expeditions !== 1) errors.push('units.json needs exactly one expeditionTransport');
   return errors;
 }
 
@@ -251,6 +259,8 @@ ${fileChecks}
             var seen = new HashSet<string>();
             float? clearance = null;
             int landDefaults = 0;
+            int garrisons = 0;
+            int expeditions = 0;
             foreach (var unit in file.Units)
             {
                 if (unit == null) { errors.Add("null unit entry"); continue; }
@@ -263,10 +273,14 @@ ${unitChecks}
                     clearance = unit.Hull.Clearance;
                 }
                 if (unit.Presentation != null && unit.Presentation.PortraitCamera != null && unit.Presentation.PortraitCamera.LandDefault == true) landDefaults++;
+                if (unit.Capabilities != null && unit.Capabilities.StartingGarrison == true) garrisons++;
+                if (unit.Capabilities != null && unit.Capabilities.ExpeditionTransport == true) expeditions++;
                 if (unit.Weapons != null) foreach (var weapon in unit.Weapons) Check(unit, weapon, at, errors);
                 if (unit.HostWeapons != null) { Check(unit, unit.HostWeapons.Town, at, errors); Check(unit, unit.HostWeapons.Harbor, at, errors); }
             }
             if (landDefaults != 1) errors.Add("units.json needs exactly one landDefault portrait camera");
+            if (garrisons != 1) errors.Add("units.json needs exactly one startingGarrison");
+            if (expeditions != 1) errors.Add("units.json needs exactly one expeditionTransport");
             return errors;
         }
 

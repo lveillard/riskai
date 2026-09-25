@@ -232,6 +232,22 @@ Solo estos; todo lo demás debe quedar igual:
 6. Clic en un enemigo: siempre atacar, para cada actor cuyo `targetMask` lo admite, aunque el enemigo esté dentro del círculo de un puesto o un puerto. Eso incluye al guardián: clic en el guardián lo ataca y no empieza una captura. La captura solo ocurre al clicar el puesto, el puerto o la ciudad (la estructura o su círculo, sin una unidad enemiga bajo el cursor) y solo en actores con `canCapture`. Quien no puede capturar recibe un movimiento al punto de reclamación o, si es un barco, al atraque. Un transporte ya no trata el clic en un puerto como captura y descarga; desembarcar sigue siendo la orden explícita. Un puerto amigo es un movimiento, no una captura.
 7. La ruta de la selección no está siempre visible. Shift o Encolar muestran la cola entera. Una orden sin ellos la enseña 1,2 s mientras se desvanece. El tramo ya recorrido no se dibuja.
 
+### Mismo comportamiento, ahora datos (v0.34.2)
+
+- `capabilities.startingGarrison` (Arquero): la guarnición inicial de cada puesto y el refuerzo de país. Mismo comportamiento, ahora datos.
+- `capabilities.expeditionTransport` (Transporte): el casco que compra una expedición naval. Mismo comportamiento, ahora datos.
+- `capabilities.roar.mask` (`Soldier`, `Ally`): quién recibe el bonus de daño del rugido. Mismo comportamiento, ahora datos.
+- `capabilities.heal.mask` (`Soldier`, `Ally`): a quién puede curar el médico, junto con `organicOnly` y el motor de tierra. Mismo comportamiento, ahora datos.
+- El ahorro del primer escuadrón es el coste del casco de ataque más barato (la fragata). Mismo comportamiento, ahora datos.
+
+Notas del paso de unificación v0.34.2:
+
+- La muerte emite `UnitDied(CombatTarget)` para todos los actores, también los barcos: sólo
+  presentación, con el sonido de muerte existente y sin audio nuevo.
+- Una cola de producción por edificio: un puerto comparte sus 5 encargos entre Marines y
+  cascos (antes dos colas de 5). Las marinas importadas siguen encargando Marines en la cola
+  de su pueblo enlazado. Es el contenido de las filas 1+2 de la unificación.
+
 ## 8. Riesgos
 
 - **Tamaño**: ocho pasos atómicos; si un paso no queda en verde, no se empieza el siguiente.

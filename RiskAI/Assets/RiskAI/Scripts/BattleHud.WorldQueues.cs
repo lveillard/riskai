@@ -29,7 +29,7 @@ namespace RiskAI
                 if(town&&!(town.IsPort&&town.Port)&&town.State.Owner==0&&town.QueueCount>0)
                     EnsureWorldQueue(town.GetInstanceID(),town,null);
             if(session.Naval)foreach(var harbor in session.Naval.Harbors)
-                if(harbor&&harbor.Owner==0&&harbor.QueueCount+harbor.LandQueueCount>0)
+                if(harbor&&harbor.Owner==0&&(harbor.QueueCount>0||(harbor.IsImportedPort&&harbor.LinkedTown&&harbor.LinkedTown.QueueCount>0)))
                     EnsureWorldQueue(harbor.GetInstanceID(),null,harbor);
             expiredQueues.Clear();
             foreach(var pair in worldQueueViews)
@@ -45,7 +45,8 @@ namespace RiskAI
         {
             if(worldQueueViews.ContainsKey(id))return;
             var view=new WorldQueue(town,harbor,id);worldQueueViews.Add(id,view);worldQueues.Add(view.Root);
-            view.AddRow(this,false);if(harbor)view.AddRow(this,true);
+            if(town||(harbor&&harbor.IsImportedPort))view.AddRow(this,false);
+            if(harbor)view.AddRow(this,true);
         }
 
         sealed class WorldQueue
@@ -56,7 +57,7 @@ namespace RiskAI
             VisualElement landRow,navalRow;
             public readonly VisualElement Root;
             public bool Owned=>town?town.State.Owner==0:harbor&&harbor.Owner==0;
-            int LandCount=>town?town.QueueCount:harbor?harbor.LandQueueCount:0;
+            int LandCount=>town?town.QueueCount:harbor&&harbor.IsImportedPort&&harbor.LinkedTown?harbor.LinkedTown.QueueCount:0;
             int NavalCount=>harbor?harbor.QueueCount:0;
             public int Count=>LandCount+NavalCount;
             public WorldQueue(Settlement town,Harbor harbor,int id)
@@ -70,19 +71,21 @@ namespace RiskAI
             {
                 var row=new VisualElement { pickingMode=PickingMode.Ignore };RtsUiStyle.Row(row);Root.Add(row);
                 if(naval)navalRow=row;else landRow=row;
-                for(int i=0;i<Harbor.QueueCapacity;i++)
+                for(int i=0;i<BattleRules.QueueCapacity;i++)
                 {
                     int index=i;
                     var button=RtsUiStyle.Button("",()=>
                     {
                         if(!Owned)return;
-                        if(town)hud.controller.CancelTraining(town,index);else hud.controller.CancelTraining(harbor,index,naval);
-                    },"HUD queue item "+(naval?"sea ":"land ")+i);
+                        if(town)hud.controller.CancelTraining(town,index);
+                        else if(!naval&&harbor.LinkedTown)hud.controller.CancelTraining(harbor.LinkedTown,index);
+                        else hud.controller.CancelTraining(harbor,index);
+                    },"HUD queue item "+(naval?"harbor ":"town ")+i);
                     button.style.width=button.style.minWidth=44;button.style.height=button.style.minHeight=46;
                     button.style.marginLeft=button.style.marginTop=button.style.marginBottom=0;button.style.marginRight=2;
                     button.style.paddingLeft=button.style.paddingRight=button.style.paddingTop=button.style.paddingBottom=3;
                     button.style.alignItems=Align.Center;button.style.flexShrink=0;
-                    var frame=PortraitFrame(PortraitResource(UnitKind.Archer),32);button.Add(frame);
+                    var frame=PortraitFrame(UnitVariantViews.PortraitResource(UnitCatalog.KindAt(0)),32);button.Add(frame);
                     var track=new VisualElement { pickingMode=PickingMode.Ignore };track.style.width=32;track.style.height=4;track.style.marginTop=2;track.style.backgroundColor=RtsUiStyle.Slate;
                     var progress=new VisualElement { pickingMode=PickingMode.Ignore };progress.style.height=4;progress.style.backgroundColor=RtsUiStyle.Gold;track.Add(progress);button.Add(track);
                     row.Add(button);slots.Add(new WorldQueueSlot { Naval=naval,Index=i,Button=button,Portrait=frame.Q<Image>(),Progress=progress });
@@ -92,7 +95,7 @@ namespace RiskAI
             public void Refresh(BattleHud hud)
             {
                 int land=LandCount,naval=NavalCount;
-                landRow.style.display=land>0?DisplayStyle.Flex:DisplayStyle.None;
+                if(landRow!=null)landRow.style.display=land>0?DisplayStyle.Flex:DisplayStyle.None;
                 if(navalRow!=null)navalRow.style.display=naval>0?DisplayStyle.Flex:DisplayStyle.None;
                 float width=Mathf.Max(land,naval)*46,height=(land>0?46:0)+(naval>0?46:0);
                 var labelled=town?town:harbor.IsImportedPort?harbor.LinkedTown:null;
@@ -113,16 +116,17 @@ namespace RiskAI
                     bool active=slot.Index<(slot.Naval?naval:land);
                     slot.Button.style.display=active?DisplayStyle.Flex:DisplayStyle.None;
                     if(!active)continue;
-                    string resource,name;float progress;
+                    string resource,name;float progress;UnitKind kind;
                     if(slot.Naval)
                     {
-                        var kind=harbor.QueuedKind(slot.Index);resource=UnitVariantViews.PortraitResource(kind);name=UnitCatalog.Get(kind).Name;progress=harbor.TrainingProgress;
+                        kind=harbor.QueuedKind(slot.Index);progress=harbor.TrainingProgress;
                     }
                     else
                     {
-                        var kind=town?town.QueuedKind(slot.Index):harbor.QueuedLandKind(slot.Index);
-                        resource=PortraitResource(kind);name=UnitCatalog.Get(kind).Name;progress=town?town.TrainingProgress:harbor.LandTrainingProgress;
+                        var source=town?town:harbor.LinkedTown;
+                        kind=source.QueuedKind(slot.Index);progress=source.TrainingProgress;
                     }
+                    resource=UnitVariantViews.PortraitResource(kind);name=UnitCatalog.Get(kind).Name;
                     var texture=CachedPortrait(resource);if(slot.Portrait.image!=texture)slot.Portrait.image=texture;
                     slot.Progress.style.width=Length.Percent(slot.Index==0?Mathf.Clamp01(progress)*100:0);
                     slot.Button.tooltip=name+" · cancelar encargo";

@@ -12,9 +12,7 @@ namespace RiskAI
     {
         HitSword, HitLance, ShotCrossbow, ShotRifle, HitArrow, MagicBolt, MagicImpact, MortarFire, Explosion, ShipCannon, Death,
         OrderMove, OrderAttack, UiClick, Purchase, NoGold, UnitTrained, CityCaptured, CityLost, CountryCompleted, Income,
-        UnderAttack, Victory, Defeat, Chat,
-        // Appended: ordinals index Table below.
-        CountryLost
+        UnderAttack, Victory, Defeat, Chat, CountryLost
     }
 
     /// <summary>Per-clip rate limit: at most <c>budget</c> plays inside a sliding window. Pure and allocation-free.</summary>
@@ -58,27 +56,51 @@ namespace RiskAI
     {
         readonly struct ClipInfo
         {
-            public readonly string Id; public readonly bool Spatial; public readonly float Volume; public readonly int Budget; public readonly int Priority;
-            public ClipInfo(string id, bool spatial, float volume, int budget, int priority) { Id = id; Spatial = spatial; Volume = volume; Budget = budget; Priority = priority; }
+            public readonly SfxId Sound; public readonly string Id; public readonly bool Spatial; public readonly float Volume; public readonly int Budget; public readonly int Priority;
+            public ClipInfo(SfxId sound, string id, bool spatial, float volume, int budget, int priority)
+            { Sound = sound; Id = id; Spatial = spatial; Volume = volume; Budget = budget; Priority = priority; }
         }
 
-        // Keep in the same order as SfxId and in sync with Resources/Audio/clips.json.
+        // The clip id is the key. Playback finds the row by SfxId, never by enum ordinal.
         static readonly ClipInfo[] Table = {
-            new ClipInfo("hit_sword", true, .8f, 3, 1), new ClipInfo("hit_lance", true, .85f, 2, 1),
-            new ClipInfo("shot_crossbow", true, .6f, 3, 1), new ClipInfo("shot_rifle", true, .65f, 2, 1),
-            new ClipInfo("hit_arrow", true, .45f, 2, 0), new ClipInfo("magic_bolt", true, .6f, 2, 1),
-            new ClipInfo("magic_impact", true, .6f, 2, 1), new ClipInfo("mortar_fire", true, .8f, 2, 2),
-            new ClipInfo("explosion", true, .9f, 2, 3), new ClipInfo("ship_cannon", true, .85f, 2, 2),
-            new ClipInfo("death", true, .55f, 2, 1),
-            new ClipInfo("order_move", false, .45f, 1, 4), new ClipInfo("order_attack", false, .5f, 1, 4),
-            new ClipInfo("ui_click", false, .35f, 1, 4), new ClipInfo("purchase", false, .55f, 1, 4),
-            new ClipInfo("no_gold", false, .55f, 1, 4), new ClipInfo("unit_trained", false, .5f, 1, 3),
-            new ClipInfo("city_captured", false, .7f, 1, 5), new ClipInfo("city_lost", false, .7f, 1, 5),
-            new ClipInfo("country_completed", false, .8f, 1, 6), new ClipInfo("income", false, .45f, 1, 3),
-            new ClipInfo("under_attack", false, .75f, 1, 5), new ClipInfo("victory", false, .85f, 1, 7),
-            new ClipInfo("defeat", false, .85f, 1, 7), new ClipInfo("chat", false, .4f, 1, 3),
-            new ClipInfo("country_lost", false, .8f, 1, 6)
+            new ClipInfo(SfxId.HitSword, "hit_sword", true, .8f, 3, 1), new ClipInfo(SfxId.HitLance, "hit_lance", true, .85f, 2, 1),
+            new ClipInfo(SfxId.ShotCrossbow, "shot_crossbow", true, .6f, 3, 1), new ClipInfo(SfxId.ShotRifle, "shot_rifle", true, .65f, 2, 1),
+            new ClipInfo(SfxId.HitArrow, "hit_arrow", true, .45f, 2, 0), new ClipInfo(SfxId.MagicBolt, "magic_bolt", true, .6f, 2, 1),
+            new ClipInfo(SfxId.MagicImpact, "magic_impact", true, .6f, 2, 1), new ClipInfo(SfxId.MortarFire, "mortar_fire", true, .8f, 2, 2),
+            new ClipInfo(SfxId.Explosion, "explosion", true, .9f, 2, 3), new ClipInfo(SfxId.ShipCannon, "ship_cannon", true, .85f, 2, 2),
+            new ClipInfo(SfxId.Death, "death", true, .55f, 2, 1),
+            new ClipInfo(SfxId.OrderMove, "order_move", false, .45f, 1, 4), new ClipInfo(SfxId.OrderAttack, "order_attack", false, .5f, 1, 4),
+            new ClipInfo(SfxId.UiClick, "ui_click", false, .35f, 1, 4), new ClipInfo(SfxId.Purchase, "purchase", false, .55f, 1, 4),
+            new ClipInfo(SfxId.NoGold, "no_gold", false, .55f, 1, 4), new ClipInfo(SfxId.UnitTrained, "unit_trained", false, .5f, 1, 3),
+            new ClipInfo(SfxId.CityCaptured, "city_captured", false, .7f, 1, 5), new ClipInfo(SfxId.CityLost, "city_lost", false, .7f, 1, 5),
+            new ClipInfo(SfxId.CountryCompleted, "country_completed", false, .8f, 1, 6), new ClipInfo(SfxId.Income, "income", false, .45f, 1, 3),
+            new ClipInfo(SfxId.UnderAttack, "under_attack", false, .75f, 1, 5), new ClipInfo(SfxId.Victory, "victory", false, .85f, 1, 7),
+            new ClipInfo(SfxId.Defeat, "defeat", false, .85f, 1, 7), new ClipInfo(SfxId.Chat, "chat", false, .4f, 1, 3),
+            new ClipInfo(SfxId.CountryLost, "country_lost", false, .8f, 1, 6)
         };
+        static readonly Dictionary<SfxId, int> clipIndex = BuildClipIndex();
+        // One presentation map from units.json WeaponSound to the clip played on fire and on impact.
+        static readonly (WeaponSound Sound, bool Fires, SfxId Fired, SfxId Impact)[] WeaponAudio = {
+            (WeaponSound.Blade, false, default, SfxId.HitSword),
+            (WeaponSound.Lance, false, default, SfxId.HitLance),
+            (WeaponSound.Bow, true, SfxId.ShotCrossbow, SfxId.HitArrow),
+            (WeaponSound.Firearm, true, SfxId.ShotRifle, SfxId.HitArrow),
+            (WeaponSound.Magic, true, SfxId.MagicBolt, SfxId.MagicImpact),
+            (WeaponSound.Mortar, true, SfxId.MortarFire, SfxId.Explosion),
+            (WeaponSound.Cannon, true, SfxId.ShipCannon, SfxId.HitArrow)
+        };
+        static Dictionary<SfxId, int> BuildClipIndex()
+        {
+            var map = new Dictionary<SfxId, int>(Table.Length);
+            for (int i = 0; i < Table.Length; i++) map.Add(Table[i].Sound, i);
+            return map;
+        }
+        static bool WeaponClip(WeaponSound sound, out bool fires, out SfxId fired, out SfxId impact)
+        {
+            for (int i = 0; i < WeaponAudio.Length; i++)
+                if (WeaponAudio[i].Sound == sound) { fires = WeaponAudio[i].Fires; fired = WeaponAudio[i].Fired; impact = WeaponAudio[i].Impact; return true; }
+            fires = false; fired = default; impact = SfxId.HitArrow; return false;
+        }
         public const int WorldVoices = 16;
         public const int InterfaceVoices = 2;
         const string MasterKey = "riskai.audio.master", EffectsKey = "riskai.audio.sfx", MuteKey = "riskai.audio.mute";
@@ -147,7 +169,7 @@ namespace RiskAI
             var feedback = session.Feedback;
             feedback.WeaponFired += OnFired;
             feedback.Impacted += OnImpact;
-            feedback.SoldierDied += OnDied;
+            feedback.UnitDied += OnDied;
         }
 
         void OnDestroy()
@@ -156,7 +178,7 @@ namespace RiskAI
             {
                 session.Feedback.WeaponFired -= OnFired;
                 session.Feedback.Impacted -= OnImpact;
-                session.Feedback.SoldierDied -= OnDied;
+                session.Feedback.UnitDied -= OnDied;
             }
             if (Current == this) Current = null;
             if (cameraListener) cameraListener.enabled = true;
@@ -225,7 +247,9 @@ namespace RiskAI
 
         bool Prepare(SfxId id, out AudioClip clip, out ClipInfo info)
         {
-            int index = (int)id; clip = null; info = Table[index];
+            clip = null; info = default;
+            if (!clipIndex.TryGetValue(id, out int index)) return false;
+            info = Table[index];
             if (Muted || EffectsVolume <= 0) return false;
             var available = Clips(index);
             if (available.Length == 0) return false;
@@ -271,29 +295,18 @@ namespace RiskAI
 
         void OnFired(CombatTarget source, Vector3 from, Vector3 to, AttackKind attack)
         {
-            switch (source ? source.AttackWeapon.Sound : WeaponSound.Bow)
-            {
-                case WeaponSound.Firearm: At(SfxId.ShotRifle, from); break;
-                case WeaponSound.Magic: At(SfxId.MagicBolt, from); break;
-                case WeaponSound.Mortar: At(SfxId.MortarFire, from); break;
-                case WeaponSound.Cannon: At(SfxId.ShipCannon, from); break;
-                case WeaponSound.Bow: At(SfxId.ShotCrossbow, from); break;
-            }
+            var sound = source ? source.AttackWeapon.Sound : WeaponSound.Bow;
+            if (WeaponClip(sound, out bool fires, out var fired, out _)) { if (fires) At(fired, from); }
         }
 
         void OnImpact(Vector3 point, AttackKind attack, float radius, ImpactKind kind, CombatTarget source)
         {
-            switch (source ? source.AttackWeapon.Sound : WeaponSound.Blade)
-            {
-                case WeaponSound.Lance: At(SfxId.HitLance, point); break;
-                case WeaponSound.Blade: At(SfxId.HitSword, point); break;
-                case WeaponSound.Mortar: At(SfxId.Explosion, point); break;
-                case WeaponSound.Magic: At(SfxId.MagicImpact, point); break;
-                default: At(SfxId.HitArrow, point, .8f); break;
-            }
+            var sound = source ? source.AttackWeapon.Sound : WeaponSound.Blade;
+            if (!WeaponClip(sound, out _, out _, out var impact)) impact = SfxId.HitArrow;
+            At(impact, point, impact == SfxId.HitArrow ? .8f : 1f);
         }
 
-        void OnDied(Soldier unit) { if (unit) At(SfxId.Death, unit.transform.position); }
+        void OnDied(CombatTarget unit) { if (unit) At(SfxId.Death, unit.transform.position); }
 
         int PickWorldVoice(int priority)
         {

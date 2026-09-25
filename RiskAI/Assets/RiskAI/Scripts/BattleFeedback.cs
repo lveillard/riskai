@@ -188,7 +188,7 @@ namespace RiskAI
 
         public event Action<MessageEntry> MessagePosted;
         public event Action<CombatTarget, int, CombatTarget> Damaged;
-        public event Action<Soldier> SoldierDied;
+        public event Action<CombatTarget> UnitDied;
         public event Action<Soldier> SoldierSpawned;
         public event Action<CombatTarget, Vector3, Vector3, AttackKind> WeaponFired;
         public event Action<Vector3, AttackKind, float, ImpactKind, CombatTarget> Impacted;
@@ -206,7 +206,7 @@ namespace RiskAI
         }
 
         internal void RaiseDamaged(CombatTarget victim, int attacker, CombatTarget source) { if (Enabled) Damaged?.Invoke(victim, attacker, source); }
-        internal void RaiseDied(Soldier unit) { if (Enabled) SoldierDied?.Invoke(unit); }
+        internal void RaiseDied(CombatTarget unit) { if (Enabled) UnitDied?.Invoke(unit); }
         internal void RaiseSpawned(Soldier unit) { if (Enabled) SoldierSpawned?.Invoke(unit); }
         internal void RaiseFired(CombatTarget source, Vector3 from, Vector3 to, AttackKind attack) { if (Enabled) WeaponFired?.Invoke(source, from, to, attack); }
         internal void RaiseImpact(Vector3 point, AttackKind attack, float radius, ImpactKind kind, CombatTarget source) { if (Enabled) Impacted?.Invoke(point, attack, radius, kind, source); }

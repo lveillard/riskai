@@ -25,6 +25,8 @@ namespace RiskAI
         const float BoardingGraceSeconds = 8f;
         const float LandingThreatRadius = 16f;
         const float BerthThreatRadius = 24f;
+        // A hull at the berth outweighs its raw value when a landing is judged.
+        const float BerthThreatShipWeight = 1.5f;
         readonly NavalWorld world;
         readonly BattleSession session;
         readonly PlayerBuildingCommands buildingCommands;
@@ -142,8 +144,9 @@ namespace RiskAI
                 // Recheck mutable cheap conditions immediately before the normal
                 // paid harbor command.
                 if(!CanFundTransportPurchase()||!CanQueueTransportAt(source)){Teardown(true,phase,RetrySeconds,false,false,true);return;}
-                if(buildingCommands.Execute(team,PlayerBuildingIntent.Recruit(source.BuildingId,UnitKind.Transport))!=null){Fail();return;}
-                phase=Phase.WaitingForTransport;phaseDeadline=session.BattleTime+UnitCatalog.Get(UnitKind.Transport).TrainSeconds+PhaseTimeout;return;
+                var transportKind=UnitCatalog.ExpeditionTransport;
+                if(buildingCommands.Execute(team,PlayerBuildingIntent.Recruit(source.BuildingId,transportKind))!=null){Fail();return;}
+                phase=Phase.WaitingForTransport;phaseDeadline=session.BattleTime+UnitCatalog.Get(transportKind).TrainSeconds+PhaseTimeout;return;
             }
             BeginGathering();
         }
@@ -454,11 +457,14 @@ namespace RiskAI
             float threat=0;
             session.Spatial.Query(landing,LandingThreatRadius,nearbyTargets);
             for(int i=0;i<nearbyTargets.Count;i++)
-                if(nearbyTargets[i] is Soldier soldier&&soldier.IsAlive&&!soldier.IsGarrison&&soldier.Team!=team&&PlayerRules.IsPlayer(soldier.Team)&&
-                   DistanceXZ(soldier.transform.position,landing)<=LandingThreatRadius)threat+=AiUnitAnalysis.For(soldier.Kind).Value;
+            {
+                var soldier=nearbyTargets[i];
+                if(soldier&&soldier.OnLandMotor&&soldier.IsAlive&&!soldier.IsGarrison&&soldier.Team!=team&&PlayerRules.IsPlayer(soldier.Team)&&
+                   DistanceXZ(soldier.transform.position,landing)<=LandingThreatRadius)threat+=AiUnitAnalysis.Value(soldier.Type);
+            }
             foreach(var ship in world.Ships)
                 if(ship&&ship.IsAlive&&ship.Team!=team&&PlayerRules.IsPlayer(ship.Team)&&ship.Type.CanAttack&&DistanceXZ(ship.transform.position,berth)<=BerthThreatRadius)
-                    threat+=AiUnitAnalysis.ShipValue(ship.Type)*1.5f;
+                    threat+=AiUnitAnalysis.Value(ship.Type)*BerthThreatShipWeight;
             return threat;
         }
 
@@ -503,7 +509,7 @@ namespace RiskAI
 
         bool CanFundTransportPurchase()
         {
-            int transportCost=UnitCatalog.Get(UnitKind.Transport).Cost;
+            int transportCost=UnitCatalog.Get(UnitCatalog.ExpeditionTransport).Cost;
             return session.Economy.Gold[team]>=transportCost+world.FirstFleetSavingsTargetFor(team)&&TeamNavalCount()<Harbor.FleetCapacity;
         }
         bool CanQueueTransportAt(Harbor harbor) => harbor&&harbor.Owner==team&&harbor.QueueCount==0;

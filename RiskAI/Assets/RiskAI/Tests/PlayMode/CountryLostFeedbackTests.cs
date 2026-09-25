@@ -34,7 +34,7 @@ namespace RiskAI.Tests
             bool port = TestContext.CurrentContext.Test.Name.Contains("Port");
             BattleSession.MapForNewMatch = port ? ScenarioMap.Europe : ScenarioMap.Classic; BattleSession.LayoutForNewMatch = BattleSession.StartLayout.Fixed;
             BattleSession.PlayerCountForNewMatch = 2; BattleSession.SeedForNewMatch = 19031;
-            GameText.Set(GameLanguage.Spanish);
+            ProbeHooks.SetLanguage(GameLanguage.Spanish);
             scene = SceneManager.CreateScene("Country lost feedback"); SceneManager.SetActiveScene(scene);
             new GameObject("Country lost bootstrap").AddComponent<RiskBootstrap>(); battle = BattleSession.Current; battle.AiEnabled = false;
             Object.FindFirstObjectByType<RtsController>().enabled = false;
@@ -178,7 +178,7 @@ namespace RiskAI.Tests
         public IEnumerator TearDown()
         {
             if (battle) battle.Feedback.Captured -= captures.Add;
-            GameText.Set(GameLanguage.English);
+            ProbeHooks.SetLanguage(GameLanguage.English);
             BattleSession.MapForNewMatch = previousMap; BattleSession.LayoutForNewMatch = previousLayout;
             BattleSession.PlayerCountForNewMatch = previousPlayers; BattleSession.SeedForNewMatch = previousSeed;
             SceneManager.SetActiveScene(previous);

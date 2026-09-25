@@ -179,10 +179,10 @@ namespace RiskAI.Tests
             battle.Economy.Gold[0]=UnitCatalog.Get(UnitKind.Footman).Cost*4;
             controller.SelectBuildings(towns,null);
 
-            Assert.That(controller.TryRecruitSelected(UnitKind.Footman),Is.Null);
+            Assert.That(controller.TryProduceSelected(UnitKind.Footman),Is.Null);
             Assert.That(towns[0].QueueCount,Is.EqualTo(1));
             Assert.That(towns[1].QueueCount,Is.EqualTo(1),"One group purchase must enqueue once at each selected compatible town.");
-            Assert.That(controller.TryRecruitSelected(UnitKind.Footman),Is.Null);
+            Assert.That(controller.TryProduceSelected(UnitKind.Footman),Is.Null);
             Assert.That(towns[0].QueueCount,Is.EqualTo(2));
             Assert.That(towns[1].QueueCount,Is.EqualTo(2),"Repeated group purchases retain a balanced 2/2 split.");
             yield return null;
@@ -202,7 +202,7 @@ namespace RiskAI.Tests
             Assert.That(preview.PlannedCount,Is.EqualTo(2));
             Assert.That(preview.PlannedCost,Is.EqualTo(2));
             Assert.That(preview.UnfundedCount,Is.EqualTo(1));
-            Assert.That(controller.TryRecruitSelected(UnitKind.Footman),Is.Null,"A partial grouped order is still useful when two buildings can accept it.");
+            Assert.That(controller.TryProduceSelected(UnitKind.Footman),Is.Null,"A partial grouped order is still useful when two buildings can accept it.");
             Assert.That(controller.LastProductionResult.AcceptedCount,Is.EqualTo(2));
             Assert.That(controller.LastProductionResult.RejectedCount,Is.EqualTo(1));
             Assert.That(controller.LastProductionResult.SpentGold,Is.EqualTo(2));
@@ -222,7 +222,7 @@ namespace RiskAI.Tests
             battle.Economy.Gold[0]=3;
             controller.SelectBuildings(towns,null);
 
-            Assert.That(controller.TryRecruitSelected(UnitKind.Footman),Is.Null);
+            Assert.That(controller.TryProduceSelected(UnitKind.Footman),Is.Null);
             Assert.That(controller.LastProductionResult.AcceptedCount,Is.EqualTo(2));
             Assert.That(controller.LastProductionResult.RejectedCount,Is.EqualTo(1));
             Assert.That(controller.LastProductionResult.SpentGold,Is.EqualTo(2));
@@ -241,10 +241,10 @@ namespace RiskAI.Tests
             battle.Economy.Gold[0]=UnitCatalog.Get(UnitKind.Frigate).Cost*4;
             controller.SelectBuildings(null,harbors);
 
-            Assert.That(controller.TryBuySelected(UnitKind.Frigate),Is.Null);
+            Assert.That(controller.TryProduceSelected(UnitKind.Frigate),Is.Null);
             Assert.That(harbors[0].QueueCount,Is.EqualTo(1));
             Assert.That(harbors[1].QueueCount,Is.EqualTo(1));
-            Assert.That(controller.TryBuySelected(UnitKind.Frigate),Is.Null);
+            Assert.That(controller.TryProduceSelected(UnitKind.Frigate),Is.Null);
             Assert.That(harbors[0].QueueCount,Is.EqualTo(2));
             Assert.That(harbors[1].QueueCount,Is.EqualTo(2),"Repeated group ship purchases retain a balanced 2/2 split.");
             yield return null;

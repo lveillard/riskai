@@ -225,7 +225,7 @@ namespace RiskAI.Tests
                 Assert.That(unit,Is.Not.Null);unit.HoldPosition();
             }
             foreach(var unused in Enumerable.Range(0,5))Assert.That(town.Recruit(UnitKind.Footman),Is.Null);
-            foreach(var unused in Enumerable.Range(0,2))Assert.That(harbor.RecruitLand(UnitKind.MarinePrivate),Is.Null);
+            foreach(var unused in Enumerable.Range(0,2))Assert.That(harbor.Train(UnitKind.MarinePrivate),Is.Null);
             Assert.That(battle.RecruitmentReservations(0),Is.EqualTo(BattleRules.PopulationLimit),"Town and standalone-port land queues share the mobile reservation cap.");
 
             var recruits=new CountryRecruitment(battle);

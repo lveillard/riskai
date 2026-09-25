@@ -195,8 +195,8 @@ namespace RiskAI
             }
             if(port)
             {
-                for(int i=0;i<Harbor.QueueCapacity;i++)port.Buy(i%2==0?Core.UnitKind.Frigate:Core.UnitKind.Transport);
-                port.RecruitLand(Core.UnitKind.MarinePrivate);
+                port.Train(Core.UnitKind.MarinePrivate);
+                for(int i=0;i<Core.BattleRules.QueueCapacity;i++)port.Train(i%2==0?Core.UnitKind.Frigate:Core.UnitKind.Transport);
             }
             yield return new WaitForSecondsRealtime(.4f);
             if(!battle.Paused)battle.TogglePause();
@@ -218,7 +218,7 @@ namespace RiskAI
             yield return new WaitForSecondsRealtime(2);
             ScreenCapture.CaptureScreenshot(Path.Combine(directory,"v18-player-queues.png"));
             yield return new WaitForSecondsRealtime(.7f);
-            Debug.Log("RISKAI_TRAINING_CAPTURE: v18 ownCities="+queuedCities+" cityOrders="+cityOrders+" naval="+(port?port.QueueCount:0)+" capacity="+Harbor.QueueCapacity+" land="+(port?port.LandQueueCount:0));
+            Debug.Log("RISKAI_TRAINING_CAPTURE: v18 ownCities="+queuedCities+" cityOrders="+cityOrders+" queued="+(port?port.QueueCount:0)+" capacity="+Core.BattleRules.QueueCapacity+" population="+(port?port.PopulationOrders:0));
         }
         IEnumerator CaptureFrontline(BattleSession battle,RtsController input)
         {

@@ -49,7 +49,7 @@ namespace RiskAI.Tests
             new GameObject("Web pen bootstrap").AddComponent<RiskBootstrap>();
             BattleSession.Current.AiEnabled=false;controller=UnityEngine.Object.FindFirstObjectByType<RtsController>();controller.enabled=false;
             bridge=new GameObject("Test web pen bridge").AddComponent<WebPenBridge>();
-            bridge.SetSampleSourceForTests(ReadNextSample);
+            ProbeHooks.SetPenSampleSource(bridge, ReadNextSample);
             yield return null;
         }
 
@@ -59,13 +59,13 @@ namespace RiskAI.Tests
             var rows=new Queue<float[]>();
             rows.Enqueue(new[] { 0f,.5f,.5f,1f,.4f,0f,0f,10f });
             rows.Enqueue(new[] { 0f,.5f,.5f,0f,0f,0f,0f,11f });
-            bridge.SetSampleSourceForTests(destination=>
+            ProbeHooks.SetPenSampleSource(bridge, destination=>
             {
                 if(rows.Count==0)return false;
                 Array.Copy(rows.Dequeue(),destination,8);return true;
             });
             yield return null;
-            var pen=bridge.VirtualPenForTests;Assert.That(pen,Is.Not.Null);Assert.That(pen.tip.isPressed,Is.True);
+            var pen=ProbeHooks.VirtualPen(bridge);Assert.That(pen,Is.Not.Null);Assert.That(pen.tip.isPressed,Is.True);
             InputSystem.Update();InputSystem.Update();
             Assert.That(rows.Count,Is.EqualTo(1),"Repeated Dynamic updates in one rendered frame cannot consume the release before the controller sees the press.");
             yield return null;
@@ -77,8 +77,8 @@ namespace RiskAI.Tests
         public IEnumerator MapsTopOriginBrowserCoordinatesAndDomButtons()
         {
             SetState(.25f,.75f,3,.6f,45,-30);
-            Assert.That(bridge.ProcessSampleForTests(),Is.True);InputSystem.Update();yield return null;
-            var pen=bridge.VirtualPenForTests;
+            Assert.That(ProbeHooks.ProcessPenSample(bridge),Is.True);InputSystem.Update();yield return null;
+            var pen=ProbeHooks.VirtualPen(bridge);
             Assert.That(pen.position.ReadValue().x,Is.EqualTo(Screen.width*.25f).Within(.01f));
             Assert.That(pen.position.ReadValue().y,Is.EqualTo(Screen.height*.25f).Within(.01f),"Browser y=0 is top, while Input System screen coordinates are bottom-origin.");
             Assert.That(controller.Pointer,Is.EqualTo(pen.position.ReadValue()),"Picking and presentation must use the current pen position, not a stale mouse coordinate.");
@@ -93,14 +93,14 @@ namespace RiskAI.Tests
         {
             var selected=BattleSession.Current.Towns[0];controller.SelectTown(selected);
             var start=UiViewport.WorldRect.center;var end=start+Vector2.right*42f;
-            SetScreenState(start,1);Assert.That(bridge.ProcessSampleForTests(),Is.True);InputSystem.Update();controller.SendMessage("Update");yield return null;
-            SetScreenState(end,1);Assert.That(bridge.ProcessSampleForTests(),Is.True);InputSystem.Update();controller.SendMessage("Update");yield return null;
+            SetScreenState(start,1);Assert.That(ProbeHooks.ProcessPenSample(bridge),Is.True);InputSystem.Update();controller.SendMessage("Update");yield return null;
+            SetScreenState(end,1);Assert.That(ProbeHooks.ProcessPenSample(bridge),Is.True);InputSystem.Update();controller.SendMessage("Update");yield return null;
             Assert.That(controller.Dragging,Is.True,"The virtual pen must enter the same marquee path as a native pen before cancellation.");
 
             long pendingBefore=BattleSession.Current.Commands.PendingCount;
             nextSample=new[] { 1f,.5f,.5f,0f,0f,0f,0f,10f };
-            Assert.That(bridge.ProcessSampleForTests(),Is.True);InputSystem.Update();controller.SendMessage("Update");yield return null;
-            Assert.That(bridge.VirtualPenForTests,Is.Null,"Cancellation removes only the bridge-owned device.");
+            Assert.That(ProbeHooks.ProcessPenSample(bridge),Is.True);InputSystem.Update();controller.SendMessage("Update");yield return null;
+            Assert.That(ProbeHooks.VirtualPen(bridge),Is.Null,"Cancellation removes only the bridge-owned device.");
             Assert.That(controller.Dragging,Is.False,"Cancellation must happen before a synthetic release can become a tap.");
             Assert.That(BattleSession.Current.Commands.PendingCount,Is.EqualTo(pendingBefore),"A cancelled pen gesture must not issue a primary or context command.");
             nextSample=null;yield return new WaitForSecondsRealtime(.3f);controller.SendMessage("Update");
@@ -113,16 +113,16 @@ namespace RiskAI.Tests
             var selected=BattleSession.Current.Towns[0];controller.SelectTown(selected);
             var start=UiViewport.WorldRect.center;var end=start+Vector2.right*42f;
             controller.HelpVisible=true;
-            SetScreenState(start,1);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
+            SetScreenState(start,1);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();controller.SendMessage("Update");
             yield return null;
             controller.HelpVisible=false;controller.SendMessage("Update");
-            SetScreenState(end,1);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
+            SetScreenState(end,1);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();controller.SendMessage("Update");
             Assert.That(controller.Dragging,Is.False,"A held tip from a rejected frame must not begin a world gesture.");
-            SetScreenState(end,0);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
+            SetScreenState(end,0);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();controller.SendMessage("Update");
             yield return new WaitForSecondsRealtime(.3f);controller.SendMessage("Update");
             Assert.That(controller.SelectedTown,Is.SameAs(selected),"Releasing the rejected stroke must not select the world.");
-            SetScreenState(start,1);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
-            SetScreenState(end,1);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
+            SetScreenState(start,1);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();controller.SendMessage("Update");
+            SetScreenState(end,1);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();controller.SendMessage("Update");
             Assert.That(controller.Dragging,Is.True,"A fresh accepted press must still start normal area selection.");
         }
 
@@ -131,13 +131,13 @@ namespace RiskAI.Tests
         {
             controller.SelectOnly(BattleSession.Current.Units.Find(unit=>unit&&unit.Team==0));
             controller.HelpVisible=true;
-            SetState(.5f,.5f,2,0,0,0);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
+            SetState(.5f,.5f,2,0,0,0);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();controller.SendMessage("Update");
             yield return null;
             controller.HelpVisible=false;controller.ArmAttack();controller.SendMessage("Update");
             Assert.That(controller.AttackCursor,Is.True,"An old held barrel must not generate ContextAction on resuming input.");
             yield return null; // Let the retained modal detach before testing a world press.
-            SetState(.5f,.5f,0,0,0,0);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
-            SetState(.5f,.5f,2,0,0,0);bridge.ProcessSampleForTests();InputSystem.Update();controller.SendMessage("Update");
+            SetState(.5f,.5f,0,0,0,0);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();controller.SendMessage("Update");
+            SetState(.5f,.5f,2,0,0,0);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();controller.SendMessage("Update");
             Assert.That(controller.AttackCursor,Is.False,"A fresh barrel press still invokes the shared context path and cancels the armed cursor.");
         }
 
@@ -150,7 +150,7 @@ namespace RiskAI.Tests
                 controller.CameraRig.SetHome(Vector3.zero);
                 InputSystem.QueueStateEvent(mouse,new MouseState { position=new Vector2(0,Screen.height*.5f) });
                 InputSystem.Update();
-                SetState(0,.5f,0,0,0,0);bridge.ProcessSampleForTests();InputSystem.Update();
+                SetState(0,.5f,0,0,0,0);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();
                 var before=controller.CameraRig.FocusPoint;
                 controller.SendMessage("Update");yield return new WaitForSecondsRealtime(.15f);
                 Assert.That(Vector3.Distance(before,controller.CameraRig.FocusPoint),Is.LessThan(.001f),
@@ -165,12 +165,12 @@ namespace RiskAI.Tests
             var other=InputSystem.AddDevice<Pen>("Unrelated test pen");
             try
             {
-                SetState(.5f,.5f,1,.4f,0,0);bridge.ProcessSampleForTests();InputSystem.Update();
-                var owned=bridge.VirtualPenForTests;Assert.That(owned.tip.isPressed,Is.True);
+                SetState(.5f,.5f,1,.4f,0,0);ProbeHooks.ProcessPenSample(bridge);InputSystem.Update();
+                var owned=ProbeHooks.VirtualPen(bridge);Assert.That(owned.tip.isPressed,Is.True);
                 nextSample=new[] { 0f,float.NaN,.5f,1f,.4f,0f,0f,10f };
-                Assert.That(bridge.ProcessSampleForTests(),Is.False);
+                Assert.That(ProbeHooks.ProcessPenSample(bridge),Is.False);
                 Assert.That(owned.added,Is.False);Assert.That(other.added,Is.True);
-                Assert.That(bridge.VirtualPenForTests,Is.Null);
+                Assert.That(ProbeHooks.VirtualPen(bridge),Is.Null);
             }
             finally { if(other.added)InputSystem.RemoveDevice(other); }
             yield return null;

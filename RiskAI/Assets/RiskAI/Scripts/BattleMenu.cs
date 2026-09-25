@@ -81,7 +81,7 @@ namespace RiskAI
             close.style.marginLeft = 8; close.style.marginRight = 0; close.style.marginBottom = 0; close.style.flexShrink = 0;
             close.style.alignItems = Align.Center; close.style.justifyContent = Justify.Center;
             close.tooltip = GameText.Localize("Cerrar (Esc)");
-            var icon = new RtsQuickIcon(RtsQuickGlyph.Close); icon.style.width = icon.style.height = size * .5f; close.Add(icon);
+            var icon = new RtsIcon(RtsGlyph.Close); icon.style.width = icon.style.height = size * .5f; close.Add(icon);
             return close;
         }
 

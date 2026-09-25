@@ -40,13 +40,15 @@ namespace RiskAI
         public void TriggerProductionCell(ProductionBuilding card,int cell)
         {
             if(ProductionHotkeys.PageCount(card)>1&&cell==ProductionHotkeys.PageCell){NextProductionPage(card);return;}
-            if(ProductionHotkeys.TryFind(card,ProductionPage(card),cell,out var slot))Produce(slot.Option);
+            if(ProductionHotkeys.TryFind(card,ProductionPage(card),cell,out var slot))Produce(slot.Option.Kind);
         }
 
-        public void Produce(ProductionOption option)
+        /// <summary>One purchase path: the unit type decides the building, queue and spawn motor.</summary>
+        public void Produce(UnitKind kind)
         {
-            if(option.IsShip)BuyShip(option.Kind);
-            else Recruit(option.Kind);
+            string error=TryProduceSelected(kind);
+            if(!session)return;
+            session.Message(error??LastProductionResult.Feedback(UnitCatalog.Get(kind).Name),LastProductionResult.Kind);
         }
 
         /// <summary>Common local command boundary for retained UI, hotkeys and device adapters.</summary>
@@ -57,11 +59,11 @@ namespace RiskAI
         }
         public void CancelTraining(Settlement town,int index)
         {
-            if(town)Feedback(ExecuteBuilding(PlayerBuildingIntent.CancelLand(town.BuildingId,index)));
+            if(town)Feedback(ExecuteBuilding(PlayerBuildingIntent.CancelTraining(town.BuildingId,index)));
         }
-        public void CancelTraining(Harbor harbor,int index,bool naval)
+        public void CancelTraining(Harbor harbor,int index)
         {
-            if(harbor)Feedback(ExecuteBuilding(PlayerBuildingIntent.CancelTraining(harbor.BuildingId,naval?ProductionQueueChannel.Naval:ProductionQueueChannel.Land,index)));
+            if(harbor)Feedback(ExecuteBuilding(PlayerBuildingIntent.CancelTraining(harbor.BuildingId,index)));
         }
         public void ClearCampRally()
         {

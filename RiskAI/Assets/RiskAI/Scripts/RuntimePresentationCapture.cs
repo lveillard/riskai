@@ -81,8 +81,8 @@ namespace RiskAI
                 input.SelectHarbor(port);
                 Frame(input, port.Landing);
                 battle.TogglePause();
-                port.Buy(UnitKind.Transport);
-                port.RecruitLand(UnitKind.MarinePrivate);
+                port.Train(UnitKind.Transport);
+                port.Train(UnitKind.MarinePrivate);
                 port.SimTick(.05f);
                 battle.TogglePause();
                 yield return Capture("port-training");

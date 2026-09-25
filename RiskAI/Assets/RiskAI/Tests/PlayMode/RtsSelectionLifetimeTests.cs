@@ -220,7 +220,7 @@ namespace RiskAI.Tests
             var frigate=BattleTestScenario.Ship(naval,0,UnitKind.Frigate,harbor.Berth);
             var transport=BattleTestScenario.Ship(naval,0,UnitKind.Transport,harbor.Berth);
             controller.SelectShip(frigate);controller.SelectShip(transport,true);
-            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{frigate,transport}));
+            Assert.That(controller.Selection,Is.EquivalentTo(new[]{frigate,transport}));
 
             // Ships are destroyed rather than pooled today, so the identity check must
             // still drop them while no focused Update frame can run.
@@ -229,7 +229,7 @@ namespace RiskAI.Tests
             yield return null;
 
             controller.Stop();
-            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{transport}),"A destroyed ship cannot stay in the fleet of a disabled controller.");
+            Assert.That(controller.Selection,Is.EquivalentTo(new[]{transport}),"A destroyed ship cannot stay in the fleet of a disabled controller.");
             Assert.That(transport.Selected,Is.True);
         }
 
@@ -305,17 +305,17 @@ namespace RiskAI.Tests
             Pump(Key.LeftCtrl,Key.Digit1);Pump();
 
             controller.SelectShip(transport,true);
-            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{frigate}),"Appending an already selected ship toggles it off.");
+            Assert.That(controller.Selection,Is.EquivalentTo(new[]{frigate}),"Appending an already selected ship toggles it off.");
             Assert.That(transport.Selected,Is.False);
             controller.SelectShip(transport,true);
-            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{frigate,transport}));
+            Assert.That(controller.Selection,Is.EquivalentTo(new[]{frigate,transport}));
 
             controller.Clear();
             frigate.TakeDamage(frigate.MaxHealth+1,1);
             yield return null;
 
             Pump(Key.Digit1);Pump();
-            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{transport}),"Recall must skip a ship destroyed since the group was stored.");
+            Assert.That(controller.Selection,Is.EquivalentTo(new[]{transport}),"Recall must skip a ship destroyed since the group was stored.");
             Assert.That(transport.Selected,Is.True);
         }
 

@@ -17,11 +17,13 @@ namespace RiskAI
         public override AttackKind AttackType => Type.AttackType;
         public override ArmorKind ArmorType => Type.ArmorType;
         public override float Armor => Type.Armor;
-        public bool Selected { get; private set; }
+        public override bool Selected { get; protected set; }
         public CityClaimZone Garrison { get; private set; }
-        public bool IsGarrison => Garrison != null;
+        public override bool IsGarrison => Garrison != null;
         public bool IsIdle => !IsGarrison && isActiveAndEnabled && mode == OrderMode.Idle && !target && Agent && Agent.enabled && !Agent.hasPath;
         public NavMeshAgent Agent { get; private set; }
+        public override bool OnLandMotor => Agent && Agent.enabled && Agent.isOnNavMesh;
+        public override bool PlayerSelectable => base.PlayerSelectable && Agent && Agent.enabled;
         public override CombatTarget CurrentTarget => target;
         // Presentation-only projection of the strike already scheduled by SimTick.
         // It does not schedule, cancel, or resolve combat.
@@ -58,22 +60,15 @@ namespace RiskAI
         float nextSense, nextPath, nextAttack, strikeAt = -1, stalled;
         float attackPresentationStartedAt = -1, attackPresentationAttackPoint, attackPresentationRecovery;
         long attackPresentationContactTick = -1;
-        // These fields are observational only: direct player moves are timed from accepted command submit to first observed velocity.
-        double humanMoveSubmittedAt = -1;
-        double humanMovePausedSecondsAtSubmit;
-        double humanMoveAppliedActiveSeconds, humanMoveRouteActiveSeconds = -1, humanMoveSpeedActiveSeconds = -1;
-        Vector3 humanMoveDestination;
-        bool humanMoveRouteResolved;
+        // Probe-owned move sample (HumanMoveProbe); a plain struct, reset when the move ends.
+        internal HumanMoveProbe.Sample HumanMove;
+        internal BattleSession Session => session;
         float pathPendingSince = -1;
         int forestCellX=int.MinValue,forestCellZ=int.MinValue,forestRevision=-1;
         bool wasFighting, simulationPaused, stoppedBeforePause;
         float simDelta;
         MedicSupport medic;
         RoarSupport roar;
-        float roarUntil = -1, roarBonus;
-        /// <summary>Aroa buff: the caster's rolled-damage bonus until the source duration ends.</summary>
-        public bool IsRoaring => session && roarUntil > session.BattleTime;
-        public void ApplyRoar(float until, float damageBonus) { if (IsAlive) { roarUntil = Mathf.Max(roarUntil, until); roarBonus = damageBonus; } }
         public ManaPool Mana => medic ? medic.Mana : roar ? roar.Mana : null;
         readonly List<CombatTarget> nearby = new List<CombatTarget>(64);
         readonly List<CombatTarget> alerted = new List<CombatTarget>(32);
@@ -93,14 +88,14 @@ namespace RiskAI
 
         public void Initialize(BattleSession battle, int team, UnitKind kind)
         {
-            ClearHumanMoveTelemetry(true);
+            HumanMoveProbe.End(this);
             session=battle; Team=team; Kind=kind; Health=MaxHealth; OriginCountry=-1;
-            Garrison=null; simulationPaused=false; enabled=true; roarUntil=-1; roarBonus=0;
+            Garrison=null; simulationPaused=false; enabled=true; ClearRoar();
             anchor=destination=pursuitOrigin=patrolOrigin=transform.position;
             mode=OrderMode.Idle; target=strikeTarget=null; followTargetId=0; hasActiveCommand=false; capture.Clear(); captureView=default; orders.Reset();
             admissionSnapReady=false; admissionSnap=default;
             nextPath=nextAttack=stalled=0; strikeAt=-1; attackPresentationStartedAt=-1; attackPresentationContactTick=-1; wasFighting=false;
-            humanMoveSubmittedAt=-1; humanMoveRouteResolved=false; pathPendingSince=-1;
+            pathPendingSince=-1;
             bool first=!Agent;
             Agent=GetComponent<NavMeshAgent>(); Agent.enabled=true;
             // SourceGeometry holds verified W3U/SLK collision sizes. Height is
@@ -179,37 +174,11 @@ namespace RiskAI
             if(Agent.isOnNavMesh && (Agent.nextPosition-garrisonAnchor).sqrMagnitude>.000001f)Agent.Warp(garrisonAnchor);
         }
 
-        public void Select(bool value) { bool pop = value && !Selected; Selected = value; if (ring) { ring.enabled = value; if (pop) GameFeel.PopRing(ring); } if(presentationLod)presentationLod.SetSelected(value); }
+        public override void Select(bool value) { bool pop = value && !Selected; Selected = value; if (ring) { ring.enabled = value; if (pop) GameFeel.PopRing(ring); } if(presentationLod)presentationLod.SetSelected(value); }
         public string LastMoveError { get; private set; }
         internal bool PathPendingForTelemetry => Agent && Agent.enabled && Agent.isOnNavMesh && Agent.pathPending;
         internal float PathPendingAgeForTelemetry => pathPendingSince >= 0 && session != null ? Mathf.Max(0, session.BattleTime-pathPendingSince) : 0;
-        // Only orders issued while the agent is fully stationary are eligible. This
-        // avoids reporting old velocity as the response to a redirected movement.
-        internal bool CanBeginHumanMoveTelemetry => Agent && Agent.enabled && Agent.isOnNavMesh &&
-            !Agent.pathPending && !Agent.hasPath && Agent.velocity.sqrMagnitude < .0025f;
-        internal void BeginHumanMoveTelemetry(double submittedAt, double pausedSecondsAtSubmit, bool eligible, Vector3 fallbackDestination)
-        {
-            ClearHumanMoveTelemetry(true);
-            if (!eligible) return;
-            humanMoveSubmittedAt = submittedAt;
-            humanMovePausedSecondsAtSubmit = pausedSecondsAtSubmit;
-            humanMoveDestination = Agent && Agent.enabled ? Agent.destination : fallbackDestination;
-            humanMoveRouteResolved = false;
-            humanMoveAppliedActiveSeconds = session.Commands.HumanMoveActiveSeconds(submittedAt, pausedSecondsAtSubmit);
-            humanMoveRouteActiveSeconds = humanMoveSpeedActiveSeconds = -1;
-            session.Commands.RecordHumanFirstMoveEligible();
-        }
-        void ClearHumanMoveTelemetry(bool cancelled)
-        {
-            if (humanMoveSubmittedAt >= 0 && session != null)
-            {
-                if (cancelled) session.Commands.RecordHumanFirstMoveCancelled();
-                session.Commands.RecordHumanMoveEnded();
-            }
-            humanMoveSubmittedAt = -1;
-            humanMoveRouteResolved = false;
-        }
-        void OnDisable() { ClearHumanMoveTelemetry(true); }
+        void OnDisable() { HumanMoveProbe.End(this); }
         public bool TryMoveTo(Vector3 point,bool attackMove,bool append) =>
             ApplyOrder(new UnitCommand(Team, EntityId, attackMove ? UnitCommandKind.AttackMove : UnitCommandKind.Move, point.x, point.y, point.z, append: append));
         public bool Patrol(Vector3 point, bool append) =>
@@ -217,7 +186,7 @@ namespace RiskAI
         bool OrderBusy => mode != OrderMode.Idle && mode != OrderMode.Hold;
         void Apply(OrderMode orderMode, Vector3 point, int targetId)
         {
-            ClearHumanMoveTelemetry(true);
+            HumanMoveProbe.End(this);
             CancelStrike(); mode = orderMode; destination = point; patrolOrigin = anchor = transform.position;
             target = null; followTargetId = targetId; stalled = 0; nextSense = 0; wasFighting = false;
             ResumePath();
@@ -252,7 +221,7 @@ namespace RiskAI
         }
         void BeginAttack(CombatTarget enemy)
         {
-            ClearHumanMoveTelemetry(true);
+            HumanMoveProbe.End(this);
             CancelStrike();
             followTargetId = 0;
             mode = OrderMode.Attack;
@@ -271,7 +240,7 @@ namespace RiskAI
         {
             if(IsGarrison)return;
             if (!keepPassengerPlan) orders.ClearStash();
-            orders.Clear(); hasActiveCommand = false; capture.Clear(); ClearHumanMoveTelemetry(true); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false; PublishRoute();
+            orders.Clear(); hasActiveCommand = false; capture.Clear(); HumanMoveProbe.End(this); CancelStrike(); target = null; followTargetId = 0; mode = orderMode; anchor = transform.position; nextSense = 0; wasFighting = false; PublishRoute();
             if (Agent && Agent.isOnNavMesh) { Agent.ResetPath(); Agent.isStopped = false; }
         }
         void Complete(bool failed=false)
@@ -346,7 +315,7 @@ namespace RiskAI
                 if(visualAnimator)visualAnimator.SampleStrikeContact();
                 if (strikeTarget && strikeTarget.Health > 0 && UnitRules.StrikeLands(Type.Weapon, AttackDistance(strikeTarget)) && Visible(strikeTarget))
                 {
-                    float damage = session.RollDamage(Type.Weapon) * (IsRoaring ? 1 + roarBonus : 1);
+                    float damage = session.RollDamage(Type.Weapon) * RoarDamageScale;
                     if (Type.Weapon.Ranged) session.Combat.FireWeapon(AimPoint, strikeTarget.AimPoint, strikeTarget, damage, Team, this, Type.Weapon);
                     else { strikeTarget.ReceiveAttack(damage, AttackType, Team, this); session.Feedback.RaiseImpact(strikeTarget.AimPoint, AttackType, 0, ImpactKind.Melee, this); }
                 }
@@ -372,34 +341,7 @@ namespace RiskAI
             if (target) { if(!healed)Fight(); } else Travel();
             wasFighting = target != null;
             if(IsGarrison)Agent.isStopped=true;
-            if (humanMoveSubmittedAt >= 0)
-            {
-                double activeSeconds = session.Commands.HumanMoveActiveSeconds(humanMoveSubmittedAt, humanMovePausedSecondsAtSubmit);
-                // First observed non-pending state; this does not timestamp the actual solver completion.
-                if (!Agent.pathPending && !humanMoveRouteResolved)
-                {
-                    humanMoveRouteResolved = true;
-                    humanMoveRouteActiveSeconds = activeSeconds;
-                    session.Commands.RecordHumanRouteReady(activeSeconds - humanMoveAppliedActiveSeconds);
-                }
-                Vector3 toward = humanMoveDestination - transform.position;
-                toward.y = 0;
-                Vector3 velocity = Agent.velocity;
-                velocity.y = 0;
-                if (humanMoveSpeedActiveSeconds < 0 && velocity.sqrMagnitude > .04f)
-                {
-                    humanMoveSpeedActiveSeconds = activeSeconds;
-                    session.Commands.RecordHumanSpeed(activeSeconds,
-                        humanMoveRouteActiveSeconds >= 0 ? activeSeconds - humanMoveRouteActiveSeconds : -1);
-                }
-                if (humanMoveRouteResolved && velocity.sqrMagnitude > .04f &&
-                    (toward.sqrMagnitude < .25f || Vector3.Dot(velocity, toward) > 0))
-                {
-                    session.Commands.RecordHumanSpeedToDirected(activeSeconds - humanMoveSpeedActiveSeconds);
-                    session.Commands.RecordHumanFirstMotion(humanMoveSubmittedAt, humanMovePausedSecondsAtSubmit);
-                    ClearHumanMoveTelemetry(false);
-                }
-            }
+            HumanMoveProbe.Tick(this);
         }
         void UpdateTerrainSpeed()
         {
@@ -609,16 +551,6 @@ namespace RiskAI
             return ok;
         }
         bool IOrderable.ApplyOrder(in UnitCommand command) => ApplyOrder(command);
-        bool IOrderable.HumanMoveEligible(in UnitCommand command) =>
-            command.PlayerId == 0 && !command.Append &&
-            (command.Kind == UnitCommandKind.Move || command.Kind == UnitCommandKind.AttackMove) &&
-            CanBeginHumanMoveTelemetry;
-        void IOrderable.BeginHumanMove(in UnitCommand command, double submittedAt, double pausedAtSubmit, bool eligible)
-        {
-            if (command.PlayerId != 0 || command.Append) return;
-            if (command.Kind != UnitCommandKind.Move && command.Kind != UnitCommandKind.AttackMove) return;
-            BeginHumanMoveTelemetry(submittedAt, pausedAtSubmit, eligible, new Vector3(command.X, command.Y, command.Z));
-        }
 
         public bool ReleasePost(in UnitCommand command, bool commitRelease, out string error)
         {
@@ -991,14 +923,9 @@ namespace RiskAI
         void IPostClaimant.ReleasePost(CityClaimZone zone) { if (this) ReleaseGarrison(zone); }
         bool IPostClaimant.DropStale(CityClaimZone zone) => !this || !((IPostClaimant)this).ContendsOnFoot || Garrison != zone;
 
-        public float Heal(float amount)
-        {
-            if(!IsAlive||amount<=0||float.IsNaN(amount)||float.IsInfinity(amount))return 0;
-            float before=Health;Health=Mathf.Min(MaxHealth,Health+amount);return Health-before;
-        }
         public void DestroyEmbarked(int attacker)
         {
-            if(Health<=0)return;ClearHumanMoveTelemetry(true);Health=0;
+            if(Health<=0)return;HumanMoveProbe.End(this);Health=0;
             if(PlayerRules.IsPlayer(attacker)&&attacker<session.PlayerCount){session.Kills[attacker]++;session.Economy.GrantBounty(attacker,Type.Points);}
             Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);
             session.SoldierPool.Retire(this,0);
@@ -1010,7 +937,7 @@ namespace RiskAI
             Health = Mathf.Max(0, Health - damage);
             if (Health <= 0)
             {
-                ClearHumanMoveTelemetry(true);
+                HumanMoveProbe.End(this);
                 if (PlayerRules.IsPlayer(attacker) && attacker < session.PlayerCount) { session.Kills[attacker]++; session.Economy.GrantBounty(attacker,Type.Points); }
                 Garrison=null;session.Units.Remove(this);session.UnregisterTarget(this);Select(false);Agent.enabled=false;GetComponent<Collider>().enabled=false;enabled=false;
                 if(visualAnimator)visualAnimator.Die();

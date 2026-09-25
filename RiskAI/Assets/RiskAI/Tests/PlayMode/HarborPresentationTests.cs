@@ -40,15 +40,15 @@ namespace RiskAI.Tests
         public IEnumerator NavalQueueHasFiveSlotsRefundsOnCaptureAndDrivesOnePausableView()
         {
             var harbor=naval.Harbors.First(item=>item.Owner==0&&!item.IsImportedPort);
-            int cost=UnitCatalog.Get(UnitKind.Frigate).Cost;battle.Economy.Gold[0]=cost*(Harbor.QueueCapacity+1);
+            int cost=UnitCatalog.Get(UnitKind.Frigate).Cost;battle.Economy.Gold[0]=cost*(BattleRules.QueueCapacity+1);
             var view=harbor.GetComponentInChildren<BuildingTrainingView>(true);
             Assert.That(view,Is.Not.Null);Assert.That(view.Active,Is.False);
 
-            for(int i=0;i<Harbor.QueueCapacity;i++)Assert.That(harbor.Buy(UnitKind.Frigate),Is.Null);
+            for(int i=0;i<BattleRules.QueueCapacity;i++)Assert.That(harbor.Train(UnitKind.Frigate),Is.Null);
             int afterFive= battle.Economy.Gold[0];
             Assert.That(afterFive,Is.EqualTo(cost));
-            Assert.That(harbor.Buy(UnitKind.Frigate),Is.Not.Null);
-            Assert.That(harbor.QueueCount,Is.EqualTo(Harbor.QueueCapacity));
+            Assert.That(harbor.Train(UnitKind.Frigate),Is.Not.Null);
+            Assert.That(harbor.QueueCount,Is.EqualTo(BattleRules.QueueCapacity));
             Assert.That(battle.Economy.Gold[0],Is.EqualTo(afterFive));
 
             harbor.SimTick(.1f);
@@ -63,7 +63,7 @@ namespace RiskAI.Tests
 
             harbor.State.Owner=1;harbor.SimTick(.1f);
             Assert.That(harbor.QueueCount,Is.Zero);
-            Assert.That(battle.Economy.Gold[0],Is.EqualTo(cost*(Harbor.QueueCapacity+1)),"Capture refunds every accepted naval order exactly once.");
+            Assert.That(battle.Economy.Gold[0],Is.EqualTo(cost*(BattleRules.QueueCapacity+1)),"Capture refunds every accepted naval order exactly once.");
             Assert.That(view.Active,Is.False);
             yield return null;
         }

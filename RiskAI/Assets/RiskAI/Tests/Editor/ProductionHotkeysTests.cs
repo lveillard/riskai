@@ -9,7 +9,7 @@ namespace RiskAI.Tests
         static readonly string[] Grid={"Q","W","E","R","A","S","D","F","Z","X","C","V"};
 
         [TearDown]
-        public void ResetLanguage() => GameText.Set(GameLanguage.English);
+        public void ResetLanguage() => ProbeHooks.SetLanguage(GameLanguage.English);
 
         [Test]
         public void GridKeysFollowWarcraftCommandCardRows()
@@ -59,16 +59,16 @@ namespace RiskAI.Tests
             Assert.That(ProductionHotkeys.Hotkey(UnitKind.Footman),Is.EqualTo("Q"));
             Assert.That(ProductionHotkeys.Hotkey(UnitKind.Archer),Is.EqualTo("W"),"Equal costs keep catalog order.");
             Assert.That(ProductionHotkeys.Hotkey(UnitKind.Tank),Is.EqualTo(Grid[layout.Count-1]),"The most expensive unit takes the last used cell.");
-            Assert.That(layout.All(slot=>!slot.Option.IsShip),Is.True);
+            Assert.That(layout.All(slot=>!slot.Option.SeaMotor),Is.True);
         }
 
         [Test]
         public void HarborCardListsLandUnitsBeforeShips()
         {
             var layout=ProductionHotkeys.Layout(ProductionBuilding.Harbor);
-            int firstShip=layout.ToList().FindIndex(slot=>slot.Option.IsShip);
+            int firstShip=layout.ToList().FindIndex(slot=>slot.Option.SeaMotor);
             Assert.That(firstShip,Is.EqualTo(UnitCatalog.HarborUnits.Count));
-            Assert.That(layout.Skip(firstShip).All(slot=>slot.Option.IsShip),Is.True);
+            Assert.That(layout.Skip(firstShip).All(slot=>slot.Option.SeaMotor),Is.True);
             for(int i=1;i<firstShip;i++)Assert.That(layout[i].Option.Cost,Is.GreaterThanOrEqualTo(layout[i-1].Option.Cost));
             for(int i=firstShip+1;i<layout.Count;i++)Assert.That(layout[i].Option.Cost,Is.GreaterThanOrEqualTo(layout[i-1].Option.Cost));
             Assert.That(ProductionHotkeys.Hotkey(UnitKind.MarinePrivate),Is.EqualTo("Q"));
@@ -109,10 +109,10 @@ namespace RiskAI.Tests
             Assert.That(IncomeCountdown.Progress(-1f,60f),Is.EqualTo(0));
             Assert.That(IncomeCountdown.Progress(90f,60f),Is.EqualTo(1));
 
-            GameText.Set(GameLanguage.Spanish);
+            ProbeHooks.SetLanguage(GameLanguage.Spanish);
             Assert.That(GameText.Localize(IncomeCountdown.Label(1,2f,false,60f)),Is.EqualTo("R1 · Ingreso en 58 s"));
             Assert.That(GameText.Localize(IncomeCountdown.Label(1,2f,true,60f)),Is.EqualTo("58 s"));
-            GameText.Set(GameLanguage.English);
+            ProbeHooks.SetLanguage(GameLanguage.English);
             Assert.That(GameText.Localize(IncomeCountdown.Label(3,2f,false,60f)),Is.EqualTo("R3 · Income in 58 s"));
             Assert.That(GameText.Localize(IncomeCountdown.Label(3,2f,false,60f)),Does.Not.Contain("ROUND"),"The countdown is not elapsed round time.");
             Assert.That(GameText.Localize(IncomeCountdown.Detail(3,2f,7,60f)),Is.EqualTo("Round 3 · next income +7 gold in 58 s"));

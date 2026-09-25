@@ -42,6 +42,7 @@ namespace RiskAI.Tests
             yield return null;
             // Exclude any setup activity from this test's telemetry window.
             battle.Commands.ConsumeTelemetry();
+            HumanMoveProbe.Consume();
             battle.World.ConsumeTelemetry();
         }
 
@@ -113,9 +114,9 @@ namespace RiskAI.Tests
             battle.Commands.Tick();
 
             var applied = battle.Commands.ConsumeTelemetry();
-            Assert.That(applied.HumanMoveOutstanding, Is.EqualTo(1));
-            Assert.That(applied.HumanRouteReadyCount, Is.Zero, "Application alone is not an observed route.");
-            Assert.That(battle.Commands.ConsumeTelemetry().HumanMoveOutstanding, Is.EqualTo(1));
+            Assert.That(HumanMoveProbe.Outstanding, Is.EqualTo(1));
+            Assert.That(HumanMoveProbe.Consume().RouteReadyCount, Is.Zero, "Application alone is not an observed route.");
+            Assert.That(HumanMoveProbe.Outstanding, Is.EqualTo(1));
             float deadline = Time.realtimeSinceStartup + 4;
             while (Vector3.Distance(start, human.transform.position) < 1 && Time.realtimeSinceStartup < deadline)
             {
@@ -124,19 +125,18 @@ namespace RiskAI.Tests
             }
             Assert.That(Vector3.Distance(start, human.transform.position), Is.GreaterThanOrEqualTo(1),
                 "The real NavMeshAgent must move; writing counters is not the acceptance condition.");
-            var motion = battle.Commands.ConsumeTelemetry();
-            Assert.That(motion.HumanRouteReadyCount, Is.EqualTo(1));
-            Assert.That(motion.HumanSpeedCount, Is.EqualTo(1));
-            Assert.That(motion.HumanFirstMoveCount, Is.EqualTo(1));
-            Assert.That(motion.HumanRouteToSpeedCount, Is.EqualTo(1));
-            Assert.That(motion.HumanSpeedToDirectedCount, Is.EqualTo(1));
-            Assert.That(motion.HumanMoveOutstanding, Is.Zero);
-            Assert.That(motion.HumanSubmitToSpeedMilliseconds, Is.LessThanOrEqualTo(motion.HumanFirstMoveMilliseconds + .01));
-            Assert.That(motion.HumanApplyToRouteMilliseconds, Is.GreaterThanOrEqualTo(0));
-            Assert.That(motion.HumanRouteToSpeedMilliseconds, Is.GreaterThanOrEqualTo(0));
-            Assert.That(motion.HumanSpeedToDirectedMilliseconds, Is.GreaterThanOrEqualTo(0));
-            var cleared = battle.Commands.ConsumeTelemetry();
-            Assert.That(cleared.HumanRouteReadyCount + cleared.HumanSpeedCount + cleared.HumanFirstMoveCount, Is.Zero);
+            var motion = HumanMoveProbe.Consume();
+            Assert.That(motion.RouteReadyCount, Is.EqualTo(1));
+            Assert.That(motion.SpeedCount, Is.EqualTo(1));
+            Assert.That(motion.RouteToSpeedCount, Is.EqualTo(1));
+            Assert.That(motion.SpeedToDirectedCount, Is.EqualTo(1));
+            Assert.That(HumanMoveProbe.Outstanding, Is.Zero);
+            Assert.That(motion.SubmitToSpeedMilliseconds, Is.GreaterThanOrEqualTo(0));
+            Assert.That(motion.ApplyToRouteMilliseconds, Is.GreaterThanOrEqualTo(0));
+            Assert.That(motion.RouteToSpeedMilliseconds, Is.GreaterThanOrEqualTo(0));
+            Assert.That(motion.SpeedToDirectedMilliseconds, Is.GreaterThanOrEqualTo(0));
+            var cleared = HumanMoveProbe.Consume();
+            Assert.That(cleared.RouteReadyCount + cleared.SpeedCount + cleared.SpeedToDirectedCount, Is.Zero);
         }
 
         [UnityTest]
@@ -154,15 +154,13 @@ namespace RiskAI.Tests
                     destination.x, destination.y, destination.z)), Is.True);
             }
             battle.Commands.Tick();
-            Assert.That(battle.Commands.ConsumeTelemetry().HumanMoveOutstanding, Is.EqualTo(2));
+            Assert.That(HumanMoveProbe.Outstanding, Is.EqualTo(2));
             first.HoldPosition();
             first.HoldPosition();
             second.gameObject.SetActive(false);
-            var cancelled = battle.Commands.ConsumeTelemetry();
-            Assert.That(cancelled.HumanFirstMoveCancelled, Is.EqualTo(2));
-            Assert.That(cancelled.HumanMoveOutstanding, Is.Zero);
-            Assert.That(cancelled.HumanSpeedCount, Is.Zero);
-            Assert.That(battle.Commands.ConsumeTelemetry().HumanMoveOutstanding, Is.Zero);
+            Assert.That(HumanMoveProbe.Outstanding, Is.Zero, "A held and a disabled actor both end their sample exactly once.");
+            Assert.That(HumanMoveProbe.Consume().SpeedCount, Is.Zero);
+            Assert.That(HumanMoveProbe.Outstanding, Is.Zero);
             yield return null;
         }
 
@@ -192,18 +190,17 @@ namespace RiskAI.Tests
             yield return null; // NavMesh applies its requested velocity on the next engine update.
             Assert.That(Vector3.Dot(human.Agent.velocity, toward), Is.LessThan(0));
             human.SimTick((float)SimClock.StepSeconds);
-            var away = battle.Commands.ConsumeTelemetry();
-            Assert.That(away.HumanSpeedCount, Is.EqualTo(1));
-            Assert.That(away.HumanFirstMoveCount, Is.Zero);
-            Assert.That(away.HumanMoveOutstanding, Is.EqualTo(1));
+            var away = HumanMoveProbe.Consume();
+            Assert.That(away.SpeedCount, Is.EqualTo(1));
+            Assert.That(away.SpeedToDirectedCount, Is.Zero);
+            Assert.That(HumanMoveProbe.Outstanding, Is.EqualTo(1));
             human.Agent.velocity = toward;
             yield return null;
             human.SimTick((float)SimClock.StepSeconds);
-            var directed = battle.Commands.ConsumeTelemetry();
-            Assert.That(directed.HumanSpeedCount, Is.Zero, "The first-speed observation must not be counted twice.");
-            Assert.That(directed.HumanFirstMoveCount, Is.EqualTo(1));
-            Assert.That(directed.HumanSpeedToDirectedCount, Is.EqualTo(1));
-            Assert.That(directed.HumanMoveOutstanding, Is.Zero);
+            var directed = HumanMoveProbe.Consume();
+            Assert.That(directed.SpeedCount, Is.Zero, "The first-speed observation must not be counted twice.");
+            Assert.That(directed.SpeedToDirectedCount, Is.EqualTo(1));
+            Assert.That(HumanMoveProbe.Outstanding, Is.Zero);
         }
 
         [UnityTest]
@@ -212,11 +209,9 @@ namespace RiskAI.Tests
             double start = Time.realtimeSinceStartupAsDouble;
             battle.TogglePause();
             yield return null; // RuntimeDiagnostics observes the public pause transition.
-            var activeTime = typeof(BattleCommands).GetMethod("HumanMoveActiveSeconds", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(activeTime, Is.Not.Null);
-            double before = (double)activeTime.Invoke(battle.Commands, new object[] { start, 0d });
+            double before = HumanMoveProbe.ActiveSeconds(battle, start, 0d);
             yield return new WaitForSecondsRealtime(.15f);
-            double during = (double)activeTime.Invoke(battle.Commands, new object[] { start, 0d });
+            double during = HumanMoveProbe.ActiveSeconds(battle, start, 0d);
             Assert.That(during, Is.EqualTo(before).Within(.01), "Observed pause must not age any paired movement stage.");
             battle.TogglePause();
             yield return null;

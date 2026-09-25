@@ -172,6 +172,7 @@ export const Heal = Named('UnitHeal', 'Ahea autocast heal.', Type.Object({
   rescan: NonNegative('Seconds between searches while nobody needs healing (local).'),
   maxVerticalDelta: NonNegative('Maximum height difference to the target.'),
   organicOnly: Type.Boolean({ description: 'Mechanical units are not healed.' }),
+  mask: Type.Array(WeaponTargetFlag, { minItems: 1, description: 'Classes and relations this heal may target.' }),
 }, strict));
 
 export const Roar = Named('UnitRoar', 'Aroa roar autocast.', Type.Object({
@@ -180,6 +181,7 @@ export const Roar = Named('UnitRoar', 'Aroa roar autocast.', Type.Object({
   manaCost: NonNegative('Mana per cast.'),
   damageBonus: NonNegative('Rolled damage bonus fraction.'),
   evaluation: NonNegative('Seconds between autocast evaluations (local).'),
+  mask: Type.Array(WeaponTargetFlag, { minItems: 1, description: 'Classes and relations that receive the bonus.' }),
 }, strict));
 
 export const Mana = Named('UnitMana', 'Mana pool.', Type.Object({
@@ -195,6 +197,8 @@ export const Capabilities = Named('UnitCapabilities', 'Typed capabilities; rules
   canFollow: Type.Boolean({ description: 'Can be given a follow order.' }),
   canPatrol: Type.Boolean({ description: 'Can be given a patrol order.' }),
   harborGuard: Type.Boolean({ description: 'Can be bound as a harbor guard ship.' }),
+  startingGarrison: Type.Optional(Type.Boolean({ description: 'Spawned at every post and used as country reinforcement. Exactly one unit sets this.' })),
+  expeditionTransport: Type.Optional(Type.Boolean({ description: 'The transport a naval expedition buys. Exactly one unit sets this.' })),
   transport: Type.Optional(Transport),
   heal: Type.Optional(Heal),
   roar: Type.Optional(Roar),

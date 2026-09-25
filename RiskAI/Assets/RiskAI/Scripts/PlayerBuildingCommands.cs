@@ -63,9 +63,9 @@ namespace RiskAI
                 case PlayerBuildingIntentKind.Recruit:
                     return (UnitCatalog.Get(intent.Unit).Building==UnitBuilding.City) ? town.Recruit(intent.Unit,team) : "Esta ciudad sólo recluta tropas regulares.";
                 case PlayerBuildingIntentKind.CancelTraining:
-                    return intent.QueueChannel!=ProductionQueueChannel.Land?InvalidKind():InvalidCancelIndex(intent.CancelIndex)??town.CancelTraining(intent.CancelIndex,team);
+                    return InvalidCancelIndex(intent.CancelIndex)??town.CancelTraining(intent.CancelIndex,team);
                 case PlayerBuildingIntentKind.SetRally:
-                    return intent.RallyDestination!=RallyDestination.Land?InvalidKind():!Finite(intent)?"Punto de reunión inválido.":town.SetRally(Rally(intent))?null:"El punto de reunión no es transitable.";
+                    return !Finite(intent)?"Punto de reunión inválido.":town.SetRally(Rally(intent))?null:"El punto de reunión no es transitable.";
                 default:return InvalidKind();
             }
         }
@@ -76,16 +76,14 @@ namespace RiskAI
             {
                 case PlayerBuildingIntentKind.Recruit:
                 {
-                    // One order for every type: the domain picks the harbor's land or naval queue.
                     ref readonly var type=ref UnitCatalog.Get(intent.Unit);
-                    if(type.Domain==UnitDomain.Sea)return type.Building==UnitBuilding.Harbor ? harbor.Buy(intent.Unit,team) : "Tipo de barco inválido.";
-                    return type.Building==UnitBuilding.Harbor ? harbor.RecruitLand(intent.Unit,team) : "Este puerto sólo recluta Marines.";
+                    if(type.Building!=UnitBuilding.Harbor)return type.SeaMotor?"Tipo de barco inválido.":"Este puerto sólo recluta Marines.";
+                    return harbor.Train(intent.Unit,team);
                 }
                 case PlayerBuildingIntentKind.CancelTraining:
-                    if(InvalidCancelIndex(intent.CancelIndex)!=null)return InvalidCancelIndex(intent.CancelIndex);
-                    return intent.QueueChannel==ProductionQueueChannel.Land?harbor.CancelLandTraining(intent.CancelIndex,team):intent.QueueChannel==ProductionQueueChannel.Naval?harbor.CancelTraining(intent.CancelIndex,team):InvalidKind();
+                    return InvalidCancelIndex(intent.CancelIndex)??harbor.CancelTraining(intent.CancelIndex,team);
                 case PlayerBuildingIntentKind.SetRally:
-                    return intent.RallyDestination!=RallyDestination.Land?InvalidKind():!Finite(intent)?"Punto de reunión inválido.":harbor.SetRally(Rally(intent))?null:"El punto de reunión no es transitable.";
+                    return !Finite(intent)?"Punto de reunión inválido.":harbor.SetRally(Rally(intent))?null:"El punto de reunión no es transitable.";
                 default:return InvalidKind();
             }
         }
@@ -95,7 +93,7 @@ namespace RiskAI
             switch(intent.Kind)
             {
                 case PlayerBuildingIntentKind.SetRally:
-                    return intent.RallyDestination!=RallyDestination.Land?InvalidKind():!Finite(intent)?"Punto de reunión inválido.":camp.SetRally(Rally(intent))?null:"El punto de reunión no es transitable.";
+                    return !Finite(intent)?"Punto de reunión inválido.":camp.SetRally(Rally(intent))?null:"El punto de reunión no es transitable.";
                 case PlayerBuildingIntentKind.ClearRally:camp.ClearRally();return null;
                 default:return InvalidKind();
             }

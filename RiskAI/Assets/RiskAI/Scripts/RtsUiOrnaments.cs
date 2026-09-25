@@ -4,50 +4,170 @@ using UnityEngine.UIElements;
 
 namespace RiskAI
 {
-    public enum RtsHudGlyph { City,Sword,Shield,Move,Patrol,Stop,Focus,Board,Unload }
-
-    /// <summary>Small vector marks shared by resource counts, rankings and direct commands.</summary>
-    public sealed class RtsHudIcon : VisualElement
+    public enum RtsGlyph
     {
-        readonly RtsHudGlyph glyph;
-        public RtsHudIcon(RtsHudGlyph glyph)
+        City, Port, Sword, Shield, Move, Patrol, Stop, Focus, Board, Unload,
+        Speaker, Note, Ranking, Map, Chat, Close, Queue, ChevronUp, ChevronDown
+    }
+
+    /// <summary>
+    /// The one HUD icon system: commands, resources, ranking headers, quick bar and drawer marks.
+    /// Bold filled silhouettes with a dark outline, drawn square and centred in whatever box the
+    /// caller gives, so one glyph reads the same from 12 to 40 px.
+    /// </summary>
+    public sealed class RtsIcon : VisualElement
+    {
+        static readonly Color Ink = new Color(.93f, .84f, .6f), Off = new Color(.55f, .55f, .5f);
+        static readonly Color Strike = new Color(1f, .42f, .36f), Outline = new Color(.05f, .04f, .025f, .92f), Cut = new Color(.11f, .09f, .055f);
+        readonly RtsGlyph glyph;
+        bool struck, active;
+
+        public RtsIcon(RtsGlyph glyph, float size = 22)
         {
-            this.glyph=glyph;name="HUD icon "+glyph;pickingMode=PickingMode.Ignore;
-            style.width=24;style.height=24;style.flexShrink=0;generateVisualContent+=Paint;
+            this.glyph = glyph; name = "HUD icon " + glyph; pickingMode = PickingMode.Ignore;
+            style.width = size; style.height = size; style.flexShrink = 0; generateVisualContent += Paint;
         }
+
+        /// <summary>Greyed and struck through: the feature is off.</summary>
+        public bool Struck { get => struck; set { if (struck == value) return; struck = value; MarkDirtyRepaint(); } }
+        /// <summary>Gold: the toggle is on.</summary>
+        public bool Active { get => active; set { if (active == value) return; active = value; MarkDirtyRepaint(); } }
+
         void Paint(MeshGenerationContext context)
         {
-            var p=context.painter2D;var r=contentRect;
-            if(r.width<2||r.height<2)return;
-            Vector2 At(float x,float y)=>new Vector2(r.x+x*r.width,r.y+y*r.height);
-            void Line(float x,float y,float xx,float yy)=>RtsOrnamentDrawing.Line(p,At(x,y),At(xx,yy),RtsUiStyle.Gold,1.7f);
-            void Box(float x,float y,float w,float h)=>RtsOrnamentDrawing.Box(p,r.x+x*r.width,r.y+y*r.height,w*r.width,h*r.height,RtsUiStyle.Gold);
-            void Arrow(float y,bool right)
+            var p = context.painter2D; var r = contentRect;
+            float s = Mathf.Min(r.width, r.height); if (s < 4) return;
+            float ox = r.x + (r.width - s) * .5f, oy = r.y + (r.height - s) * .5f;
+            float edge = Mathf.Max(1.2f, s * .09f);
+            var ink = struck ? Off : active ? RtsUiStyle.Gold : Ink;
+            var shade = new Color(ink.r * .74f, ink.g * .74f, ink.b * .74f, 1);
+            p.lineJoin = LineJoin.Round; p.lineCap = LineCap.Round;
+
+            Vector2 P(float x, float y) => new Vector2(ox + x * s, oy + y * s);
+            void Begin(float x, float y) { p.BeginPath(); p.MoveTo(P(x, y)); }
+            void To(float x, float y) => p.LineTo(P(x, y));
+            // Outline first, then the fill over its inner half: a crisp dark rim on any background.
+            void Solid(Color fill) { p.ClosePath(); p.strokeColor = Outline; p.lineWidth = edge; p.Stroke(); p.fillColor = fill; p.Fill(); }
+            void Flat(Color fill) { p.ClosePath(); p.fillColor = fill; p.Fill(); }
+            void Rect(float x, float y, float w, float h, Color fill) { Begin(x, y); To(x + w, y); To(x + w, y + h); To(x, y + h); Solid(fill); }
+            void Disc(float x, float y, float radius, Color fill, bool outlined = true)
             {
-                float end=right?.83f:.17f,start=right?.17f:.83f,back=right?.65f:.35f;
-                Line(start,y,end,y);Line(end,y,back,y-.17f);Line(end,y,back,y+.17f);
+                p.BeginPath(); p.Arc(P(x, y), radius * s, Angle.Degrees(0), Angle.Degrees(360));
+                if (outlined) Solid(fill); else Flat(fill);
             }
-            switch(glyph)
+            void Bar(float ax, float ay, float bx, float by, float width, Color fill, bool outlined = true)
             {
-                case RtsHudGlyph.City:
-                    Box(.15f,.36f,.7f,.48f);Box(.15f,.16f,.17f,.27f);Box(.42f,.16f,.16f,.27f);Box(.68f,.16f,.17f,.27f);
-                    RtsOrnamentDrawing.Box(p,r.x+r.width*.43f,r.y+r.height*.56f,r.width*.14f,r.height*.28f,new Color(.07f,.08f,.07f));break;
-                case RtsHudGlyph.Sword:
-                    Line(.23f,.8f,.8f,.18f);Line(.19f,.6f,.42f,.83f);Line(.8f,.18f,.61f,.24f);Line(.8f,.18f,.76f,.4f);break;
-                case RtsHudGlyph.Shield:
-                    p.strokeColor=RtsUiStyle.Gold;p.lineWidth=1.7f;p.BeginPath();p.MoveTo(At(.2f,.15f));p.LineTo(At(.8f,.15f));
-                    p.LineTo(At(.76f,.59f));p.LineTo(At(.5f,.87f));p.LineTo(At(.24f,.59f));p.ClosePath();p.Stroke();Line(.5f,.2f,.5f,.7f);break;
-                case RtsHudGlyph.Move:Arrow(.5f,true);break;
-                case RtsHudGlyph.Patrol:Arrow(.29f,true);Arrow(.71f,false);break;
-                case RtsHudGlyph.Stop:Box(.23f,.23f,.54f,.54f);break;
-                case RtsHudGlyph.Focus:
-                    Line(.12f,.12f,.35f,.12f);Line(.12f,.12f,.12f,.35f);Line(.88f,.12f,.65f,.12f);Line(.88f,.12f,.88f,.35f);
-                    Line(.12f,.88f,.35f,.88f);Line(.12f,.88f,.12f,.65f);Line(.88f,.88f,.65f,.88f);Line(.88f,.88f,.88f,.65f);
-                    RtsOrnamentDrawing.Diamond(p,At(.5f,.5f),r.width*.12f,RtsUiStyle.Gold);break;
-                case RtsHudGlyph.Board:case RtsHudGlyph.Unload:
-                    Line(.13f,.68f,.28f,.85f);Line(.28f,.85f,.72f,.85f);Line(.72f,.85f,.87f,.68f);
-                    Arrow(.35f,glyph==RtsHudGlyph.Board);break;
+                Vector2 a = P(ax, ay), b = P(bx, by), d = (b - a).normalized, n = new Vector2(-d.y, d.x) * width * s * .5f;
+                p.BeginPath(); p.MoveTo(a + n); p.LineTo(b + n); p.LineTo(b - n); p.LineTo(a - n);
+                if (outlined) Solid(fill); else Flat(fill);
             }
+            void Curve(float cx, float cy, float radius, float from, float to, float width)
+            {
+                p.BeginPath(); p.Arc(P(cx, cy), radius * s, Angle.Degrees(from), Angle.Degrees(to));
+                p.strokeColor = Outline; p.lineWidth = width * s + edge; p.Stroke();
+                p.strokeColor = ink; p.lineWidth = width * s; p.Stroke();
+            }
+            void Arrow(float y, bool right, float half, float head, float from, float to)
+            {
+                float tip = right ? to : from, tail = right ? from : to, neck = tip + (right ? -1 : 1) * head * 1.25f;
+                Begin(tail, y - half); To(neck, y - half); To(neck, y - head); To(tip, y);
+                To(neck, y + head); To(neck, y + half); To(tail, y + half); Solid(ink);
+            }
+            void VerticalArrow(float x, bool up, float from, float to)
+            {
+                float tip = up ? from : to, tail = up ? to : from, neck = tip + (up ? 1 : -1) * .16f;
+                Begin(x - .055f, tail); To(x - .055f, neck); To(x - .13f, neck); To(x, tip);
+                To(x + .13f, neck); To(x + .055f, neck); To(x + .055f, tail); Solid(ink);
+            }
+            void Anchor(float cx, float k)
+            {
+                float X(float x) => cx + (x - .5f) * k;
+                float Y(float y) => .5f + (y - .5f) * k;
+                Curve(X(.5f), Y(.54f), .27f * k, 25, 155, .09f * k);
+                Bar(X(.5f), Y(.2f), X(.5f), Y(.82f), .1f * k, ink);
+                Bar(X(.3f), Y(.32f), X(.7f), Y(.32f), .09f * k, ink);
+                Disc(X(.5f), Y(.14f), .07f * k, ink);
+                Begin(X(.71f), Y(.6f)); To(X(.86f), Y(.56f)); To(X(.8f), Y(.73f)); Solid(ink);
+                Begin(X(.29f), Y(.6f)); To(X(.14f), Y(.56f)); To(X(.2f), Y(.73f)); Solid(ink);
+            }
+            void Chevron(bool up)
+            {
+                float Y(float y) => up ? y : 1 - y;
+                Begin(.1f, Y(.72f)); To(.5f, Y(.28f)); To(.9f, Y(.72f)); To(.75f, Y(.86f)); To(.5f, Y(.58f)); To(.25f, Y(.86f)); Solid(ink);
+            }
+
+            switch (glyph)
+            {
+                case RtsGlyph.City:
+                    Rect(.16f, .4f, .68f, .48f, ink);
+                    Rect(.16f, .2f, .16f, .22f, ink); Rect(.42f, .2f, .16f, .22f, ink); Rect(.68f, .2f, .16f, .22f, ink);
+                    Begin(.41f, .88f); To(.41f, .66f); To(.59f, .66f); To(.59f, .88f); Flat(Cut); Disc(.5f, .66f, .09f, Cut, false);
+                    break;
+                case RtsGlyph.Port: Anchor(.5f, 1); break;
+                case RtsGlyph.Sword:
+                    // Blade along the diagonal, a fuller groove, then grip, guard and pommel on top.
+                    Begin(.42f, .7f); To(.845f, .275f); To(.88f, .12f); To(.725f, .155f); To(.3f, .58f); Solid(ink);
+                    Bar(.43f, .57f, .79f, .21f, .03f, shade, false);
+                    Bar(.35f, .65f, .19f, .81f, .1f, shade);
+                    Bar(.2f, .48f, .52f, .8f, .12f, ink);
+                    Disc(.16f, .84f, .085f, ink);
+                    break;
+                case RtsGlyph.Shield:
+                    Begin(.18f, .12f); To(.82f, .12f); To(.8f, .5f); To(.72f, .7f); To(.5f, .9f); To(.28f, .7f); To(.2f, .5f); Solid(ink);
+                    Bar(.5f, .2f, .5f, .78f, .08f, Cut, false); Bar(.27f, .4f, .73f, .4f, .08f, Cut, false);
+                    break;
+                case RtsGlyph.Move: Arrow(.5f, true, .1f, .3f, .1f, .9f); break;
+                case RtsGlyph.Patrol: Arrow(.3f, true, .06f, .18f, .12f, .88f); Arrow(.7f, false, .06f, .18f, .12f, .88f); break;
+                case RtsGlyph.Stop:
+                    p.BeginPath();
+                    for (int i = 0; i < 8; i++)
+                    {
+                        float angle = (22.5f + i * 45) * Mathf.Deg2Rad; var point = P(.5f + Mathf.Cos(angle) * .4f, .5f + Mathf.Sin(angle) * .4f);
+                        if (i == 0) p.MoveTo(point); else p.LineTo(point);
+                    }
+                    Solid(ink); Bar(.28f, .5f, .72f, .5f, .13f, Cut, false);
+                    break;
+                case RtsGlyph.Focus:
+                    Curve(.5f, .5f, .27f, 0, 360, .085f);
+                    Bar(.5f, .05f, .5f, .27f, .09f, ink); Bar(.5f, .73f, .5f, .95f, .09f, ink);
+                    Bar(.05f, .5f, .27f, .5f, .09f, ink); Bar(.73f, .5f, .95f, .5f, .09f, ink);
+                    Disc(.5f, .5f, .075f, ink);
+                    break;
+                case RtsGlyph.Board: Anchor(.38f, .8f); VerticalArrow(.84f, true, .14f, .62f); break;
+                case RtsGlyph.Unload: Anchor(.38f, .8f); VerticalArrow(.84f, false, .38f, .86f); break;
+                case RtsGlyph.Speaker:
+                    Begin(.08f, .37f); To(.28f, .37f); To(.52f, .15f); To(.52f, .85f); To(.28f, .63f); To(.08f, .63f); Solid(ink);
+                    if (!struck) { Curve(.52f, .5f, .18f, -48, 48, .08f); Curve(.52f, .5f, .34f, -48, 48, .08f); }
+                    break;
+                case RtsGlyph.Note:
+                    Bar(.5f, .74f, .5f, .14f, .08f, ink);
+                    Begin(.5f, .12f); To(.84f, .25f); To(.84f, .42f); To(.5f, .3f); Solid(ink);
+                    Disc(.38f, .75f, .15f, ink);
+                    break;
+                case RtsGlyph.Ranking:
+                    Rect(.1f, .52f, .22f, .36f, shade); Rect(.39f, .18f, .22f, .7f, ink); Rect(.68f, .36f, .22f, .52f, shade);
+                    break;
+                case RtsGlyph.Map:
+                    Begin(.08f, .22f); To(.36f, .12f); To(.36f, .78f); To(.08f, .88f); Solid(ink);
+                    Begin(.36f, .12f); To(.64f, .22f); To(.64f, .88f); To(.36f, .78f); Solid(shade);
+                    Begin(.64f, .22f); To(.92f, .12f); To(.92f, .78f); To(.64f, .88f); Solid(ink);
+                    Disc(.24f, .56f, .05f, Cut, false); Disc(.5f, .44f, .05f, Cut, false); Disc(.78f, .5f, .05f, Cut, false);
+                    break;
+                case RtsGlyph.Chat:
+                    Begin(.12f, .16f); To(.88f, .16f); To(.88f, .66f); To(.46f, .66f); To(.24f, .88f); To(.28f, .66f); To(.12f, .66f); Solid(ink);
+                    Disc(.32f, .41f, .06f, Cut, false); Disc(.5f, .41f, .06f, Cut, false); Disc(.68f, .41f, .06f, Cut, false);
+                    break;
+                case RtsGlyph.Close: Bar(.2f, .2f, .8f, .8f, .15f, ink); Bar(.8f, .2f, .2f, .8f, .15f, ink); break;
+                case RtsGlyph.Queue:
+                    Disc(.14f, .84f, .06f, ink); Disc(.3f, .72f, .06f, ink); Disc(.46f, .64f, .06f, ink);
+                    Bar(.68f, .66f, .68f, .12f, .07f, ink);
+                    Begin(.68f, .1f); To(.94f, .22f); To(.68f, .36f); Solid(ink);
+                    Disc(.68f, .68f, .06f, ink);
+                    break;
+                case RtsGlyph.ChevronUp: Chevron(true); break;
+                case RtsGlyph.ChevronDown: Chevron(false); break;
+            }
+            if (struck) Bar(.12f, .88f, .88f, .12f, .1f, Strike);
         }
     }
 
@@ -235,96 +355,6 @@ namespace RiskAI
             if(progress<=.001f)return;
             p.strokeColor=RtsUiStyle.Gold;p.BeginPath();
             p.Arc(r.center,radius,Angle.Degrees(-90),Angle.Degrees(-90+Mathf.Min(359.9f,360*progress)));p.Stroke();
-        }
-    }
-
-    /// <summary>Drawer handle mark: points up to expand, down to collapse.</summary>
-    public sealed class RtsChevron : VisualElement
-    {
-        readonly bool up;
-        public RtsChevron(bool up)
-        {
-            this.up=up;pickingMode=PickingMode.Ignore;
-            style.width=20;style.height=12;style.flexShrink=0;generateVisualContent+=Paint;
-        }
-        void Paint(MeshGenerationContext context)
-        {
-            var p=context.painter2D;var r=contentRect;float top=r.height*.2f,bottom=r.height*.8f;
-            p.strokeColor=RtsUiStyle.Gold;p.lineWidth=2.5f;p.lineJoin=LineJoin.Round;p.BeginPath();
-            p.MoveTo(new Vector2(r.width*.15f,up?bottom:top));
-            p.LineTo(new Vector2(r.width*.5f,up?top:bottom));
-            p.LineTo(new Vector2(r.width*.85f,up?bottom:top));
-            p.Stroke();
-        }
-    }
-
-    public enum RtsQuickGlyph { Speaker, Note, Ranking, Map, Chat, Close, Queue }
-
-    /// <summary>Quick-bar and window marks: thin vector glyphs, struck through when that feature is off.</summary>
-    public sealed class RtsQuickIcon : VisualElement
-    {
-        static readonly Color Ink = new Color(.88f, .82f, .63f), Off = new Color(.55f, .55f, .5f), Strike = new Color(1f, .42f, .36f);
-        readonly RtsQuickGlyph glyph;
-        bool struck, active;
-        public RtsQuickIcon(RtsQuickGlyph glyph)
-        {
-            this.glyph = glyph; name = "HUD quick icon " + glyph; pickingMode = PickingMode.Ignore;
-            style.width = 20; style.height = 20; style.flexShrink = 0; generateVisualContent += Paint;
-        }
-        public bool Struck { get => struck; set { if (struck == value) return; struck = value; MarkDirtyRepaint(); } }
-        public bool Active { get => active; set { if (active == value) return; active = value; MarkDirtyRepaint(); } }
-
-        void Paint(MeshGenerationContext context)
-        {
-            var p = context.painter2D; var r = contentRect; float w = r.width, h = r.height;
-            if (w < 4 || h < 4) return;
-            Vector2 P(float x, float y) => new Vector2(x * w, y * h);
-            var ink = struck ? Off : active ? RtsUiStyle.Gold : Ink;
-            p.strokeColor = ink; p.fillColor = ink; p.lineWidth = Mathf.Max(1.5f, w * .08f); p.lineJoin = LineJoin.Round; p.lineCap = LineCap.Round;
-            switch (glyph)
-            {
-                case RtsQuickGlyph.Speaker:
-                    p.BeginPath(); p.MoveTo(P(.12f, .38f)); p.LineTo(P(.3f, .38f)); p.LineTo(P(.52f, .17f)); p.LineTo(P(.52f, .83f));
-                    p.LineTo(P(.3f, .62f)); p.LineTo(P(.12f, .62f)); p.ClosePath(); p.Fill();
-                    if (!struck)
-                    {
-                        p.BeginPath(); p.Arc(P(.52f, .5f), w * .18f, Angle.Degrees(-50), Angle.Degrees(50)); p.Stroke();
-                        p.BeginPath(); p.Arc(P(.52f, .5f), w * .33f, Angle.Degrees(-50), Angle.Degrees(50)); p.Stroke();
-                    }
-                    break;
-                case RtsQuickGlyph.Note:
-                    p.BeginPath(); p.MoveTo(P(.62f, .72f)); p.LineTo(P(.62f, .14f)); p.LineTo(P(.86f, .28f)); p.Stroke();
-                    p.BeginPath(); p.Arc(P(.49f, .74f), w * .15f, Angle.Degrees(0), Angle.Degrees(359.9f)); p.Fill();
-                    break;
-                case RtsQuickGlyph.Ranking:
-                    RtsOrnamentDrawing.Box(p, .1f * w, .5f * h, .22f * w, .38f * h, ink);
-                    RtsOrnamentDrawing.Box(p, .39f * w, .2f * h, .22f * w, .68f * h, ink);
-                    RtsOrnamentDrawing.Box(p, .68f * w, .36f * h, .22f * w, .52f * h, ink);
-                    break;
-                case RtsQuickGlyph.Map:
-                    p.BeginPath(); p.MoveTo(P(.1f, .24f)); p.LineTo(P(.37f, .14f)); p.LineTo(P(.63f, .24f)); p.LineTo(P(.9f, .14f));
-                    p.LineTo(P(.9f, .76f)); p.LineTo(P(.63f, .86f)); p.LineTo(P(.37f, .76f)); p.LineTo(P(.1f, .86f)); p.ClosePath(); p.Stroke();
-                    p.BeginPath(); p.MoveTo(P(.37f, .14f)); p.LineTo(P(.37f, .76f)); p.MoveTo(P(.63f, .24f)); p.LineTo(P(.63f, .86f)); p.Stroke();
-                    break;
-                case RtsQuickGlyph.Chat:
-                    p.BeginPath(); p.MoveTo(P(.12f, .2f)); p.LineTo(P(.88f, .2f)); p.LineTo(P(.88f, .66f)); p.LineTo(P(.46f, .66f));
-                    p.LineTo(P(.26f, .86f)); p.LineTo(P(.28f, .66f)); p.LineTo(P(.12f, .66f)); p.ClosePath(); p.Stroke();
-                    break;
-                case RtsQuickGlyph.Close:
-                    p.BeginPath(); p.MoveTo(P(.22f, .22f)); p.LineTo(P(.78f, .78f)); p.MoveTo(P(.78f, .22f)); p.LineTo(P(.22f, .78f)); p.Stroke();
-                    break;
-                case RtsQuickGlyph.Queue:
-                    p.BeginPath(); p.MoveTo(P(.16f, .74f)); p.LineTo(P(.84f, .26f)); p.Stroke();
-                    p.BeginPath(); p.Arc(P(.16f, .74f), w * .09f, Angle.Degrees(0), Angle.Degrees(359.9f)); p.Fill();
-                    p.BeginPath(); p.Arc(P(.5f, .5f), w * .09f, Angle.Degrees(0), Angle.Degrees(359.9f)); p.Fill();
-                    p.BeginPath(); p.Arc(P(.84f, .26f), w * .09f, Angle.Degrees(0), Angle.Degrees(359.9f)); p.Fill();
-                    break;
-            }
-            if (struck)
-            {
-                p.strokeColor = Strike; p.lineWidth = Mathf.Max(1.8f, w * .09f);
-                p.BeginPath(); p.MoveTo(P(.12f, .88f)); p.LineTo(P(.88f, .12f)); p.Stroke();
-            }
         }
     }
 

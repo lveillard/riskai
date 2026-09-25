@@ -69,7 +69,7 @@ namespace RiskAI
             {
                 town.SetRally(town.IsPort?town.ClaimPoint:MapLayout.Point(town.Rally.x,town.Rally.z));
                 // Saran creates one h00B at each circle, including neutral posts.
-                session.Spawn(PlayerRules.ToCombatTeam(town.State.Owner),UnitKind.Archer,town.ClaimPoint);
+                session.Spawn(PlayerRules.ToCombatTeam(town.State.Owner),UnitCatalog.StartingGarrison,town.ClaimPoint);
                 town.InitializeGarrison(session.Units,assignedGarrisons);
             }
             if(!MapLayout.IsImported)WorldLife.Create(session,terrain.transform);

@@ -18,6 +18,7 @@ namespace RiskAI.Core
         static UnitKind[] cityUnits, harborUnits, harborShips;
         static float transportLoadRadius, hullClearance;
         static int transportLoadLimit;
+        static UnitKind startingGarrison, expeditionTransport;
 
         public static bool IsBound => types != null;
         /// <summary>Incremented on every Bind so derived caches can refresh.</summary>
@@ -55,12 +56,15 @@ namespace RiskAI.Core
 
             var city = new List<UnitKind>(); var harbor = new List<UnitKind>(); var ships = new List<UnitKind>();
             float loadRadius = 0; int loadLimit = 0; float draft = 0;
+            int garrison = -1, expedition = -1;
             for (int i = 0; i < resolved.Length; i++)
             {
                 ref readonly var type = ref resolved[i];
+                if (type.StartingGarrison) garrison = i;
+                if (type.ExpeditionTransport) expedition = i;
                 if (type.Building == UnitBuilding.City) city.Add(kinds[i]);
-                if (type.Building == UnitBuilding.Harbor) (type.Domain == UnitDomain.Sea ? ships : harbor).Add(kinds[i]);
-                if (type.Domain == UnitDomain.Sea)
+                if (type.Building == UnitBuilding.Harbor) (type.SeaMotor ? ships : harbor).Add(kinds[i]);
+                if (type.SeaMotor)
                 {
                     if (draft != 0 && type.Hull.Clearance != draft)
                         throw new ArgumentException("Every hull shares one clearance (the sea grid is global).", nameof(file));
@@ -72,10 +76,13 @@ namespace RiskAI.Core
                 loadRadius = type.Transport.LoadRadius; loadLimit = type.Transport.LoadLimit;
             }
             if (draft <= 0) throw new ArgumentException("units.json has no sea hull clearance.", nameof(file));
+            if (garrison < 0) throw new ArgumentException("units.json needs exactly one startingGarrison.", nameof(file));
+            if (expedition < 0) throw new ArgumentException("units.json needs exactly one expeditionTransport.", nameof(file));
 
             types = resolved; byId = ids; indexOfKind = index; kindOfIndex = kinds;
             cityUnits = city.ToArray(); harborUnits = harbor.ToArray(); harborShips = ships.ToArray();
             transportLoadRadius = loadRadius; transportLoadLimit = loadLimit; hullClearance = draft;
+            startingGarrison = kinds[garrison]; expeditionTransport = kinds[expedition];
             Revision++;
         }
 
@@ -117,5 +124,9 @@ namespace RiskAI.Core
         public static int TransportLoadLimit { get { var _ = Types; return transportLoadLimit; } }
         /// <summary>Draft shared by every hull. SeaNavigation's grid is built from it.</summary>
         public static float HullClearance { get { var _ = Types; return hullClearance; } }
+        /// <summary>The one post guardian and country reinforcement (units.json startingGarrison).</summary>
+        public static UnitKind StartingGarrison { get { var _ = Types; return startingGarrison; } }
+        /// <summary>The transport a naval expedition buys (units.json expeditionTransport).</summary>
+        public static UnitKind ExpeditionTransport { get { var _ = Types; return expeditionTransport; } }
     }
 }

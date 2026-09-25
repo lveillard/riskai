@@ -27,7 +27,7 @@ namespace RiskAI.Tests
             previousMode=BattleSession.ModeForNewMatch;previousPlayers=BattleSession.PlayerCountForNewMatch;previousSeed=BattleSession.SeedForNewMatch;previousTimeScale=Time.timeScale;
             BattleSession.MapForNewMatch=ScenarioMap.Classic;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.Fixed;BattleSession.ModeForNewMatch=BattleSession.VictoryMode.Conquest;
             BattleSession.PlayerCountForNewMatch=2;BattleSession.SeedForNewMatch=19031;
-            GameText.Set(GameLanguage.English);
+            ProbeHooks.SetLanguage(GameLanguage.English);
             scene=SceneManager.CreateScene("Battle HUD gold refresh");SceneManager.SetActiveScene(scene);
             new GameObject("Battle HUD bootstrap").AddComponent<RiskBootstrap>();battle=BattleSession.Current;battle.AiEnabled=false;
             Object.FindFirstObjectByType<RtsController>().enabled=false;hud=Object.FindFirstObjectByType<BattleHud>();
@@ -179,7 +179,7 @@ namespace RiskAI.Tests
             Assert.That(root.Q<VisualElement>("HUD tabs"),Is.Null);
             var actions=root.Q<VisualElement>("HUD direct actions");Assert.That(actions,Is.Not.Null);
             Assert.That(actions.Query<Button>().ToList().Count,Is.EqualTo(6));
-            Assert.That(actions.Query<RtsHudIcon>().ToList().Count,Is.EqualTo(6));
+            Assert.That(actions.Query<RtsIcon>().ToList().Count,Is.EqualTo(6));
             var buttons=actions.Query<Button>().ToList();
             foreach(var button in buttons)
             {
@@ -287,7 +287,7 @@ namespace RiskAI.Tests
                 Is.EqualTo(target.Health/target.MaxHealth).Within(.02f));
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=card;card.SendEvent(evt);}
             Assert.That(controller.Selection,Is.EquivalentTo(new[]{target}));
-            Assert.That(controller.Fleet,Is.Empty);
+            Assert.That(controller.Selection.OfType<Ship>(),Is.Empty);
             yield return null;
             Assert.That(root.Q<Image>("HUD unit portrait"),Is.Not.Null,"Isolating a card restores full unit details.");
         }
@@ -310,8 +310,7 @@ namespace RiskAI.Tests
             Assert.That(health.resolvedStyle.width,Is.GreaterThan(30));
             Assert.That(health.resolvedStyle.width,Is.EqualTo(health.parent.resolvedStyle.width).Within(.1f));
             using(var evt=NavigationSubmitEvent.GetPooled()){evt.target=card;card.SendEvent(evt);}
-            Assert.That(controller.Fleet,Is.EquivalentTo(new[]{ship}));
-            Assert.That(controller.Selection,Is.Empty);
+            Assert.That(controller.Selection,Is.EquivalentTo(new CombatTarget[]{ship}));
         }
 
         [UnityTest]
@@ -356,7 +355,7 @@ namespace RiskAI.Tests
             // Establish inspection without making this retained-HUD regression
             // depend on a particular camera or world picking fixture.
             typeof(RtsController).GetProperty(nameof(RtsController.InspectedTarget)).SetValue(controller,enemy);
-            typeof(RtsController).GetMethod("SelectUnits",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance)
+            typeof(RtsController).GetMethod("SelectActors",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance)
                 .Invoke(controller,new object[]{troops,true});
             Assert.That(controller.InspectedTarget,Is.Null);
             yield return null;yield return null;
@@ -375,7 +374,7 @@ namespace RiskAI.Tests
             yield return null;yield return null;
             var root=hud.GetComponent<UIDocument>().rootVisualElement;
             Assert.That(root.Query<Button>(className:"riskai-selection-card").ToList().Count,Is.EqualTo(34),"Scrolling must retain every selected actor.");
-            var select=typeof(RtsController).GetMethod("SelectUnits",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
+            var select=typeof(RtsController).GetMethod("SelectActors",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
             var first=new[]{troops[0],troops[33]};var second=new[]{troops[1],troops[2]};
             Assert.That(first[0].EntityId*31+first[1].EntityId,Is.EqualTo(second[0].EntityId*31+second[1].EntityId),"Fixture establishes the old hash collision using real allocated ids.");
             select.Invoke(controller,new object[]{first,false});yield return null;
@@ -389,7 +388,7 @@ namespace RiskAI.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            Time.timeScale=previousTimeScale;UiViewport.ResetHudHeights();GameText.Set(GameLanguage.English);BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
+            Time.timeScale=previousTimeScale;UiViewport.ResetHudHeights();ProbeHooks.SetLanguage(GameLanguage.English);BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
             BattleSession.ModeForNewMatch=previousMode;BattleSession.PlayerCountForNewMatch=previousPlayers;BattleSession.SeedForNewMatch=previousSeed;
             SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);
         }
@@ -413,7 +412,7 @@ namespace RiskAI.Tests
             previousCountdown=BattleSession.CountdownForNewMatch;
             BattleSession.MapForNewMatch=ScenarioMap.Classic;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.Fixed;
             BattleSession.ModeForNewMatch=BattleSession.VictoryMode.Conquest;BattleSession.PlayerCountForNewMatch=2;BattleSession.SeedForNewMatch=19031;
-            BattleSession.CountdownForNewMatch=true;GameText.Set(GameLanguage.English);
+            BattleSession.CountdownForNewMatch=true;ProbeHooks.SetLanguage(GameLanguage.English);
             scene=SceneManager.CreateScene("Battle HUD countdown onboarding");SceneManager.SetActiveScene(scene);
             new GameObject("Battle HUD countdown bootstrap").AddComponent<RiskBootstrap>();yield return null;
             BattleSession.Current.AiEnabled=false;Object.FindFirstObjectByType<RtsController>().enabled=false;
@@ -437,7 +436,7 @@ namespace RiskAI.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            UiViewport.ResetHudHeights();GameText.Set(GameLanguage.English);BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
+            UiViewport.ResetHudHeights();ProbeHooks.SetLanguage(GameLanguage.English);BattleSession.MapForNewMatch=previousMap;BattleSession.LayoutForNewMatch=previousLayout;
             BattleSession.ModeForNewMatch=previousMode;BattleSession.PlayerCountForNewMatch=previousPlayers;BattleSession.SeedForNewMatch=previousSeed;
             BattleSession.CountdownForNewMatch=previousCountdown;
             SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);

@@ -77,7 +77,7 @@ namespace RiskAI
             glow = Resources.Load<Material>("TrainingGlow");
             var feedback = session.Feedback;
             feedback.Damaged += OnDamaged;
-            feedback.SoldierDied += OnDied;
+            feedback.UnitDied += OnDied;
             feedback.SoldierSpawned += OnSpawned;
             feedback.Impacted += OnImpact;
             feedback.Captured += OnCaptured;
@@ -88,7 +88,7 @@ namespace RiskAI
             if (!session || session.Feedback == null) return;
             var feedback = session.Feedback;
             feedback.Damaged -= OnDamaged;
-            feedback.SoldierDied -= OnDied;
+            feedback.UnitDied -= OnDied;
             feedback.SoldierSpawned -= OnSpawned;
             feedback.Impacted -= OnImpact;
             feedback.Captured -= OnCaptured;
@@ -173,8 +173,9 @@ namespace RiskAI
             view.FlashUntil = -1;
         }
 
-        void OnDied(Soldier unit)
+        void OnDied(CombatTarget actor)
         {
+            var unit = actor as Soldier;
             if (!Active || !unit) return;
             if (views.TryGetValue(unit, out var view) && view.FlashUntil >= 0) { EndFlash(view); flashing.Remove(view); }
             bool animated = unit.GetComponent<SoldierAnimator>();

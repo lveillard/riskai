@@ -154,14 +154,17 @@ namespace RiskAI
             foreach (var target in session.Targets)
             {
                 if (target is DefenseTower) continue; // Permanent buildings have no destructible health bar.
-                bool selected = target is Soldier soldier && soldier.Selected || target is Ship ship && ship.Selected;
-                bool persistentShipHealth=target is Ship;
-                if (!target.IsAlive || !target.isActiveAndEnabled || (!persistentShipHealth && !controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth && !canopyOccludedUnits.Contains(target.EntityId))) continue;
-                float healthHeight=target is Soldier person?UnitCatalog.Get(person.Kind).VisualHeight+.15f:4.8f;
-                var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * healthHeight) / Scale;
+                bool selected = target.Selected;
+                // One size and persistence rule: hull-scale types (visual height at least
+                // LargeBarHeight, from units.json) draw large bars and keep them up.
+                const float LargeBarHeight = 4.5f;
+                float barHeight = target.Type.VisualHeight;
+                bool large = barHeight >= LargeBarHeight;
+                if (!target.IsAlive || !target.isActiveAndEnabled || (!large && !controller.ShowHealthBars && !selected && target != controller.Hovered && target.Health >= target.MaxHealth && !canopyOccludedUnits.Contains(target.EntityId))) continue;
+                var p = cam.WorldToScreenPoint(target.transform.position + Vector3.up * barHeight) / Scale;
                 float y = height - p.y; if(p.z<=0||y<TopPixels/Scale+16||y>bottom-8||UnderHudPanel(p.x,y))continue;
-                float size = target is Ship ? 56 : 28;
-                RtsSkin.WorldHealthBar(new Rect(p.x-size/2,y,size,target is Ship?9:7),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
+                float size = large ? 56f : 28f;
+                RtsSkin.WorldHealthBar(new Rect(p.x-size/2,y,size,large?9f:7f),target.Health/target.MaxHealth,VisualFactory.TeamColor(target.Team));
             }
         }
         // Relief plus the country borders of the shared territory field (the same source as

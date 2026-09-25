@@ -107,6 +107,7 @@ namespace RiskAI
             if (!session) { Debug.Log("RuntimeDiagnostics 30s session=unavailable"); return; }
             var commands = session.Commands;
             var commandTelemetry = commands != null ? commands.ConsumeTelemetry() : default;
+            var moveTelemetry = HumanMoveProbe.Consume();
             var worldTelemetry = session.World != null ? session.World.ConsumeTelemetry() : default;
             var seaTelemetry = SeaNavigation.ConsumeTelemetry();
             long heapNow = GC.GetTotalMemory(false);
@@ -128,7 +129,6 @@ namespace RiskAI
             double ticks = worldTelemetry.TickCount > 0 ? worldTelemetry.TickCount : 1;
             double humanApplyAverage = commandTelemetry.HumanApplied > 0 ? commandTelemetry.HumanSubmitToApplyMilliseconds / commandTelemetry.HumanApplied : 0;
             double aiApplyAverage = commandTelemetry.AiApplied > 0 ? commandTelemetry.AiSubmitToApplyMilliseconds / commandTelemetry.AiApplied : 0;
-            double firstMoveAverage = commandTelemetry.HumanFirstMoveCount > 0 ? commandTelemetry.HumanFirstMoveMilliseconds / commandTelemetry.HumanFirstMoveCount : 0;
             float pendingAgeAverage = pathPending > 0 ? pendingAgeTotal * 1000f / pathPending : 0;
 
             LatestAverageMs=averageMilliseconds;LatestMaximumMs=maxFrameSeconds*1000f;
@@ -159,13 +159,11 @@ namespace RiskAI
                 $"commandRejectHuman={commandTelemetry.HumanRejected} commandRejectAi={commandTelemetry.AiRejected} commandQueueMax={commandTelemetry.MaxQueueDepth} " +
                 $"submitApplyHumanActiveAvgMs={humanApplyAverage:F2} submitApplyHumanActiveMaxMs={commandTelemetry.HumanSubmitToApplyMaxMilliseconds:F2} " +
                 $"submitApplyAiActiveAvgMs={aiApplyAverage:F2} submitApplyAiActiveMaxMs={commandTelemetry.AiSubmitToApplyMaxMilliseconds:F2} commandObservedPauseMs={commandTelemetry.ObservedPauseMilliseconds:F1} " +
-                $"firstMoveHumanEligible={commandTelemetry.HumanFirstMoveEligible} firstMoveHumanCancelled={commandTelemetry.HumanFirstMoveCancelled} " +
-                $"firstMoveHumanCount={commandTelemetry.HumanFirstMoveCount} firstMoveHumanActiveAvgMs={firstMoveAverage:F2} firstMoveHumanActiveMaxMs={commandTelemetry.HumanFirstMoveMaxMilliseconds:F2} " +
-                $"humanMoveOutstanding={commandTelemetry.HumanMoveOutstanding} " +
-                $"routeReadyHumanObservedCount={commandTelemetry.HumanRouteReadyCount} applyRouteReadyHumanActiveAvgMs={(commandTelemetry.HumanRouteReadyCount > 0 ? commandTelemetry.HumanApplyToRouteMilliseconds / commandTelemetry.HumanRouteReadyCount : 0):F2} applyRouteReadyHumanActiveMaxMs={commandTelemetry.HumanApplyToRouteMaxMilliseconds:F2} " +
-                $"speedHumanObservedCount={commandTelemetry.HumanSpeedCount} submitSpeedHumanActiveAvgMs={(commandTelemetry.HumanSpeedCount > 0 ? commandTelemetry.HumanSubmitToSpeedMilliseconds / commandTelemetry.HumanSpeedCount : 0):F2} submitSpeedHumanActiveMaxMs={commandTelemetry.HumanSubmitToSpeedMaxMilliseconds:F2} " +
-                $"routeReadySpeedHumanPairedCount={commandTelemetry.HumanRouteToSpeedCount} routeReadySpeedHumanActiveAvgMs={(commandTelemetry.HumanRouteToSpeedCount > 0 ? commandTelemetry.HumanRouteToSpeedMilliseconds / commandTelemetry.HumanRouteToSpeedCount : 0):F2} routeReadySpeedHumanActiveMaxMs={commandTelemetry.HumanRouteToSpeedMaxMilliseconds:F2} " +
-                $"speedDirectedHumanPairedCount={commandTelemetry.HumanSpeedToDirectedCount} speedDirectedHumanActiveAvgMs={(commandTelemetry.HumanSpeedToDirectedCount > 0 ? commandTelemetry.HumanSpeedToDirectedMilliseconds / commandTelemetry.HumanSpeedToDirectedCount : 0):F2} speedDirectedHumanActiveMaxMs={commandTelemetry.HumanSpeedToDirectedMaxMilliseconds:F2} " +
+                $"humanMoveOutstanding={moveTelemetry.Outstanding} " +
+                $"routeReadyHumanObservedCount={moveTelemetry.RouteReadyCount} applyRouteReadyHumanActiveAvgMs={(moveTelemetry.RouteReadyCount > 0 ? moveTelemetry.ApplyToRouteMilliseconds / moveTelemetry.RouteReadyCount : 0):F2} applyRouteReadyHumanActiveMaxMs={moveTelemetry.ApplyToRouteMaxMilliseconds:F2} " +
+                $"speedHumanObservedCount={moveTelemetry.SpeedCount} submitSpeedHumanActiveAvgMs={(moveTelemetry.SpeedCount > 0 ? moveTelemetry.SubmitToSpeedMilliseconds / moveTelemetry.SpeedCount : 0):F2} submitSpeedHumanActiveMaxMs={moveTelemetry.SubmitToSpeedMaxMilliseconds:F2} " +
+                $"routeReadySpeedHumanPairedCount={moveTelemetry.RouteToSpeedCount} routeReadySpeedHumanActiveAvgMs={(moveTelemetry.RouteToSpeedCount > 0 ? moveTelemetry.RouteToSpeedMilliseconds / moveTelemetry.RouteToSpeedCount : 0):F2} routeReadySpeedHumanActiveMaxMs={moveTelemetry.RouteToSpeedMaxMilliseconds:F2} " +
+                $"speedDirectedHumanPairedCount={moveTelemetry.SpeedToDirectedCount} speedDirectedHumanActiveAvgMs={(moveTelemetry.SpeedToDirectedCount > 0 ? moveTelemetry.SpeedToDirectedMilliseconds / moveTelemetry.SpeedToDirectedCount : 0):F2} speedDirectedHumanActiveMaxMs={moveTelemetry.SpeedToDirectedMaxMilliseconds:F2} " +
                 $"pathPending={pathPending} pathPendingAvgAgeMs={pendingAgeAverage:F1} pathPendingMaxAgeMs={pendingAgeMax * 1000f:F1} navIterationsPerFrame={UnityEngine.AI.NavMesh.pathfindingIterationsPerFrame} unityAllocatedB={LatestUnityAllocatedBytes}");
             Debug.Log(LatestReport);
             managedHeapBytes = heapNow;
@@ -179,6 +177,7 @@ namespace RiskAI
         public void BeginProbeMeasurement()
         {
             session.Commands.ConsumeTelemetry();
+            HumanMoveProbe.Consume();
             session.World.ConsumeTelemetry();
             SeaNavigation.ConsumeTelemetry();
             ResetWindow(Time.unscaledTime);

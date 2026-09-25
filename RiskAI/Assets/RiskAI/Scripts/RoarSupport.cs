@@ -43,9 +43,9 @@ namespace RiskAI
             Vector3 origin=self.transform.position;float area=roar.Area;
             session.Spatial.Query(origin,area,nearby);
             bool fighting=self.CurrentTarget,needed=!self.IsRoaring;
-            foreach(var entity in nearby)
+            foreach(var ally in nearby)
             {
-                if(!(entity is Soldier ally)||ally.Team!=self.Team||!ally.IsAlive||!ally.isActiveAndEnabled)continue;
+                if(!RoarTarget(ally,true))continue;
                 Vector3 offset=ally.transform.position-origin;offset.y=0;if(offset.sqrMagnitude>area*area)continue;
                 if(ally.CurrentTarget)fighting=true;
                 if(!ally.IsRoaring)needed=true;
@@ -53,9 +53,9 @@ namespace RiskAI
             }
             if(!fighting||!needed||!mana.TrySpend(roar.ManaCost))return false;
             float until=session.BattleTime+roar.Duration;
-            foreach(var entity in nearby)
+            foreach(var ally in nearby)
             {
-                if(!(entity is Soldier ally)||ally.Team!=self.Team||!ally.IsAlive)continue;
+                if(!RoarTarget(ally,false))continue;
                 Vector3 offset=ally.transform.position-origin;offset.y=0;
                 if(offset.sqrMagnitude<=area*area)ally.ApplyRoar(until,roar.DamageBonus);
             }
@@ -64,5 +64,9 @@ namespace RiskAI
             if(session.Combat.PresentationEnabled)VisualFactory.Impact(self.AimPoint+Vector3.up*.6f,new Color(1f,.46f,.16f),.9f);
             return true;
         }
+
+        bool RoarTarget(CombatTarget ally, bool requireActive) =>
+            ally && ally.Team == self.Team && ally.IsAlive && (!requireActive || ally.isActiveAndEnabled) &&
+            UnitRules.Allows(roar.Mask, UnitRules.TargetClass(ally.Type), UnitRelation.Ally);
     }
 }

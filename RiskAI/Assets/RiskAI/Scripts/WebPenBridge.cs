@@ -17,7 +17,7 @@ namespace RiskAI
         const int StateKind=0,CancelKind=1;
         const int TipButton=1,BarrelButton=2;
         readonly float[] sample=new float[SampleLength];
-        PenSampleSource testSource;
+        PenSampleSource sampleSource;
         Pen pen;
         Vector2 previousPosition;
         bool hasPreviousPosition;
@@ -28,9 +28,8 @@ namespace RiskAI
         static extern int RiskAI_ReadPenSample([Out, MarshalAs(UnmanagedType.LPArray, SizeConst=SampleLength)] float[] destination);
 #endif
 
-        public Pen VirtualPenForTests => pen;
-        public void SetSampleSourceForTests(PenSampleSource source) => testSource=source;
-        public bool ProcessSampleForTests() => ProcessSample();
+        internal Pen VirtualPen => pen;
+        internal void SetSampleSource(PenSampleSource source) => sampleSource=source;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void CreateForWebPlayer()
@@ -55,7 +54,7 @@ namespace RiskAI
             processedFrame=Time.frameCount;ProcessSample();
         }
 
-        bool ProcessSample()
+        internal bool ProcessSample()
         {
             if(!ReadSample(sample))return false;
             // A malformed browser row while a tip is held must not leave the existing virtual device pressed.
@@ -81,7 +80,7 @@ namespace RiskAI
 
         bool ReadSample(float[] destination)
         {
-            if(testSource!=null)return testSource(destination);
+            if(sampleSource!=null)return sampleSource(destination);
 #if UNITY_WEBGL && !UNITY_EDITOR
             return RiskAI_ReadPenSample(destination)!=0;
 #else

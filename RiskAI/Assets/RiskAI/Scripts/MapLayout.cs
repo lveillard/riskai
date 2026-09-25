@@ -58,9 +58,11 @@ namespace RiskAI
         }
         public readonly struct Country
         {
-            public readonly string Name; public readonly int Region, PerTurn; public readonly UnitKind Reinforcement; public readonly Vector3 CampPoint;
-            public Country(string name, int region, UnitKind unit, int perTurn, Vector3 campPoint = default(Vector3))
-            { Name = name; Region = region; Reinforcement = unit; PerTurn = perTurn; CampPoint = campPoint; }
+            public readonly string Name; public readonly int Region, PerTurn; public readonly Vector3 CampPoint;
+            /// <summary>Country reinforcement is the one startingGarrison in units.json.</summary>
+            public UnitKind Reinforcement => UnitCatalog.StartingGarrison;
+            public Country(string name, int region, int perTurn, Vector3 campPoint = default(Vector3))
+            { Name = name; Region = region; PerTurn = perTurn; CampPoint = campPoint; }
         }
         public static Country[] Countries { get; private set; }
         public static Vector2[][] Cliffs { get; private set; }
@@ -87,12 +89,12 @@ namespace RiskAI
         // del Alba (north-east, with the P0 capital) and Escarpa de Poniente (south-west).
         // The plateau country leads the array because its shore hosts the linked mainland ports.
         static readonly Country[] ClassicCountries = {
-            new Country("Meseta de los Pinos",0,UnitKind.Archer,1), new Country("Marca del Alba",1,UnitKind.Archer,1),
-            new Country("Escarpa de Poniente",2,UnitKind.Archer,1), new Country("Cuenca del Fresno",3,UnitKind.Archer,1),
-            new Country("Puertas de Oriente",4,UnitKind.Archer,1), new Country("Sierra Carmesí",5,UnitKind.Archer,1),
-            new Country("Dehesa de Poniente",6,UnitKind.Archer,1), new Country("Campos del Secano",7,UnitKind.Archer,1),
-            new Country("Lomas de Azafrán",8,UnitKind.Archer,1), new Country("Costa de Sal",9,UnitKind.Archer,1),
-            new Country("Estrecho del Norte",10,UnitKind.Archer,1)
+            new Country("Meseta de los Pinos",0,1), new Country("Marca del Alba",1,1),
+            new Country("Escarpa de Poniente",2,1), new Country("Cuenca del Fresno",3,1),
+            new Country("Puertas de Oriente",4,1), new Country("Sierra Carmesí",5,1),
+            new Country("Dehesa de Poniente",6,1), new Country("Campos del Secano",7,1),
+            new Country("Lomas de Azafrán",8,1), new Country("Costa de Sal",9,1),
+            new Country("Estrecho del Norte",10,1)
         };
         // Each authored pad is a deliberately clear, level site: away from ponds,
         // the river and cliff edges, with larger country groups where the land opens up.
@@ -111,12 +113,12 @@ namespace RiskAI
             new[]{new Vector2(29,7),new Vector2(34,-4),new Vector2(48,-7),new Vector2(61,2),new Vector2(59,20),new Vector2(51,32),new Vector2(36,28),new Vector2(27,17)}
         };
         static readonly Country[] ExpandedCountries = {
-            new Country("Marca Occidental",0,UnitKind.Archer,2), new Country("Bosques de Poniente",1,UnitKind.Archer,2),
-            new Country("Cuenca del Río",2,UnitKind.Archer,2), new Country("Costa Occidental",3,UnitKind.Archer,2),
-            new Country("Bahía del Noroeste",4,UnitKind.Archer,2), new Country("Ribera Alta",5,UnitKind.Archer,2),
-            new Country("Altos Centrales",6,UnitKind.Archer,2), new Country("Frontera Oriental",7,UnitKind.Archer,2),
-            new Country("Llanuras de Levante",8,UnitKind.Archer,2), new Country("Puertas del Estuario",9,UnitKind.Archer,2),
-            new Country("Llano Central",10,UnitKind.Archer,2)
+            new Country("Marca Occidental",0,2), new Country("Bosques de Poniente",1,2),
+            new Country("Cuenca del Río",2,2), new Country("Costa Occidental",3,2),
+            new Country("Bahía del Noroeste",4,2), new Country("Ribera Alta",5,2),
+            new Country("Altos Centrales",6,2), new Country("Frontera Oriental",7,2),
+            new Country("Llanuras de Levante",8,2), new Country("Puertas del Estuario",9,2),
+            new Country("Llano Central",10,2)
         };
 
         static MapLayout() { Configure(false); }
@@ -130,7 +132,7 @@ namespace RiskAI
                 Imported=ImportedMapData.Load(scenario);HalfWidth=Imported.HalfWidth;HalfDepth=Imported.HalfDepth;
                 Islands=System.Array.Empty<Vector4>();Cliffs=System.Array.Empty<Vector2[]>();Pads=new Vector2[Imported.cities.Length];
                 Countries=new Country[Imported.countries.Length];Towns=new City[Imported.cities.Length];
-                for(int i=0;i<Countries.Length;i++){var c=Imported.countries[i];Countries[i]=new Country(c.name,i,UnitKind.Archer,0,Point(c.x,c.z));}
+                for(int i=0;i<Countries.Length;i++){var c=Imported.countries[i];Countries[i]=new Country(c.name,i,0,Point(c.x,c.z));}
                 for(int i=0;i<Towns.Length;i++){Towns[i]=new City(Imported.cities[i]);Pads[i]=new Vector2(Towns[i].Position.x/Spacing,Towns[i].Position.z/Spacing);}
                 Countries=ApplySharedReinforcementFormula(Countries,Towns);
                 TerrainHydrology.Configure(false);UploadShaderGlobals();return;
@@ -152,7 +154,7 @@ namespace RiskAI
             for(int i=0;i<source.Length;i++)
             {
                 var country=source[i];
-                result[i]=new Country(country.Name,country.Region,country.Reinforcement,
+                result[i]=new Country(country.Name,country.Region,
                     BattleRules.CountryReinforcementPointsPerRound(counts[i]),country.CampPoint);
             }
             return result;

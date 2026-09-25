@@ -59,22 +59,21 @@ namespace RiskAI
             return true;
         }
 
-        Soldier FindMostInjuredAlly()
+        CombatTarget FindMostInjuredAlly()
         {
-            Soldier best = null;
+            CombatTarget best = null;
             float greatestDeficit = 0;
             Vector3 origin = self.transform.position;
 
             session.Spatial.Query(origin,heal.Range,nearby);
-            foreach (var entity in nearby)
+            foreach (var candidate in nearby)
             {
-                var candidate=entity as Soldier;
                 if (!candidate || candidate.Team != self.Team || !candidate.IsAlive || !candidate.isActiveAndEnabled)
                     continue;
+                if (!UnitRules.Allows(heal.Mask, UnitRules.TargetClass(candidate.Type), UnitRelation.Ally)) continue;
                 // Ahea targets organic units only; h00M/h01A are mechanical.
                 if (heal.OrganicOnly && candidate.Type.Mechanical) continue;
-                if (!candidate.Agent || !candidate.Agent.enabled || !candidate.Agent.isOnNavMesh)
-                    continue;
+                if (!candidate.OnLandMotor) continue;
 
                 float deficit = candidate.MaxHealth - candidate.Health;
                 if (deficit <= 0) continue;
@@ -95,7 +94,7 @@ namespace RiskAI
             return best;
         }
 
-        bool HasLineOfSight(Soldier target)
+        bool HasLineOfSight(CombatTarget target)
         {
             Vector3 from = self.AimPoint;
             Vector3 to = target.AimPoint;
