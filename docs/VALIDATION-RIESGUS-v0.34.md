@@ -93,3 +93,12 @@ verificados y verificación pública `success=true`. El arranque público en 390
 La partida en Europa con 16 IA aplica 171 órdenes y rechaza 0, a 20,8 ms por fotograma, sin fotogramas de más de 100 ms
 y sin errores de consola. Pruebas: EditMode 325/325, PlayMode 320/320 en 4 tandas (la tanda 3 repetida tres veces),
 pase de huecos 9/9 y npm 14/14. El test de la oleada pasa 10/10 cuando se ejecuta solo.
+
+## v0.34.3
+
+Publicado como `20260925T140609Z-v0343-5508055` (merge de la PR #16, `5508055`). Recibo `activated=true`, 10 archivos
+verificados y verificación pública `success=true`. El arranque público en 390×844 funciona y no da errores.
+La partida en Europa con 16 IA aplica 166 órdenes y rechaza 0, sin fotogramas de más de 100 ms ni errores de consola.
+El fotograma medio es de 34–37 ms. Una prueba A/B local en la misma máquina da 34,85 ms con v0.34.2 y 34,89 ms con v0.34.3,
+así que la diferencia con los 20,8 ms anteriores viene del estado del equipo y no de esta versión.
+Pruebas: EditMode 325/325, PlayMode 320/320 en 4 tandas (dos pasadas completas) y npm 14/14.
