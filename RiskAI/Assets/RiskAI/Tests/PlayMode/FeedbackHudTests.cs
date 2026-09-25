@@ -55,7 +55,7 @@ namespace RiskAI.Tests
             Assert.That(hud.Chat.Submit(0,"  a por ellos "),Is.True);
             yield return null;yield return null;
             Assert.That(battle.Messages.Count,Is.EqualTo(before));
-            Assert.That(battle.Feedback.Log[0].Text,Is.EqualTo("Tú → Todos: a por ellos"));
+            Assert.That(battle.Feedback.Log[0].Text,Is.EqualTo(GameText.Localize("Tú")+" → "+GameText.Localize("Todos")+": a por ellos"));
             Assert.That(battle.Feedback.Log[0].Kind,Is.EqualTo(MessageKind.Chat));
             Assert.That(Overlay().Q<Label>("HUD message 1").text,Is.EqualTo("¡Te atacan!"));
         }
@@ -65,7 +65,7 @@ namespace RiskAI.Tests
         {
             Assert.That(hud.Chat.Submit(0,"cuidado",1),Is.True);
             yield return null;
-            Assert.That(battle.Feedback.Log[0].Text,Is.EqualTo("Tú → IA 1 · Azul: cuidado"));
+            Assert.That(battle.Feedback.Log[0].Text,Is.EqualTo(GameText.Localize("Tú")+" → "+VisualFactory.TeamName(1)+": cuidado"));
             int count=battle.Feedback.Log.Count;
             hud.Chat.Transport.Send(new ChatMessage(1,2,"secreto"));
             yield return null;

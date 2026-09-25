@@ -250,7 +250,7 @@ namespace RiskAI
             {
                 int alive=0;var ships=world.Ships;
                 for(int i=0;i<ships.Count;i++){var ship=ships[i];if(ship&&ship.IsAlive&&ship.Team==team)alive++;}
-                if(alive+world.PendingShips(team)>=FleetCapacity)return "Límite naval de "+FleetCapacity+" barcos alcanzado.";
+                if(alive+world.PendingShips(team)>=FleetCapacity)return GameText.Format("Límite naval de {0} barcos alcanzado.",FleetCapacity);
             }
             else if(world.Session.RecruitmentReservations(team)>=BattleRules.PopulationLimit)return "Límite de soldados alcanzado.";
             if(!world.Session.Economy.Spend(team,type.Cost))return type.SeaMotor?"Oro insuficiente para comprar este barco.":"Oro insuficiente para reclutar este Marine.";
@@ -320,7 +320,7 @@ namespace RiskAI
         }
         void Captured()
         {
-            RefundQueue();Defense.ChangeOwner();lastOwner=Owner;world.Session.Message(DisplayName+" conquistado por "+VisualFactory.TeamName(Owner)+".",MessageKind.Info);
+            RefundQueue();Defense.ChangeOwner();lastOwner=Owner;world.Session.Message(GameText.Format("{0} conquistado por {1}.",DisplayName,VisualFactory.TeamName(Owner)),MessageKind.Info);
         }
         void RefundQueue(){foreach(var item in queue)world.Session.Economy.Refund(item.Team,UnitCatalog.Get(item.Kind).Cost);queue.Clear();}
         void RefreshTrainingView()

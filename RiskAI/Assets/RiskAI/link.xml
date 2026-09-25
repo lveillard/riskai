@@ -15,4 +15,8 @@
   <!-- Newtonsoft sets DTO fields by reflection. IL2CPP stripping must keep the serializer and the whole contract assembly. -->
   <assembly fullname="Newtonsoft.Json" preserve="all" />
   <assembly fullname="RiskAI.Core" preserve="all" />
+  <!-- text.json lines are read into GameText.TextEntry by the same serializer. -->
+  <assembly fullname="RiskAI.Runtime">
+    <type fullname="RiskAI.GameText/TextEntry" preserve="all" />
+  </assembly>
 </linker>

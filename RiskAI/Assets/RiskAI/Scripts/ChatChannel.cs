@@ -82,7 +82,7 @@ namespace RiskAI
 
         /// <summary>"Tú", "Todos" or the player's name ("IA 3 · Violeta").</summary>
         public static string RecipientName(int recipient) =>
-            recipient == ChatMessage.Everyone ? "Todos" : recipient == 0 ? "Tú" : VisualFactory.TeamName(recipient);
+            recipient == ChatMessage.Everyone ? GameText.Localize("Todos") : recipient == 0 ? GameText.Localize("Tú") : VisualFactory.TeamName(recipient);
 
         /// <summary>"Tú → Todos: hola", "Tú → IA 2 · Azul: hola", "IA 3 · Violeta → Tú: hola".</summary>
         public static string Format(ChatMessage message) =>
@@ -129,9 +129,7 @@ namespace RiskAI
 
         static System.Collections.Generic.IEnumerable<string> Aliases(int player)
         {
-            string name = VisualFactory.TeamName(player);
-            int split = name.LastIndexOf(" · ", StringComparison.Ordinal);
-            string colour = split >= 0 ? name.Substring(split + 3) : name;
+            string colour = VisualFactory.ColourName(player);
             yield return colour;
             string english = GameText.EnglishOf(colour);
             if (english != colour) yield return english;

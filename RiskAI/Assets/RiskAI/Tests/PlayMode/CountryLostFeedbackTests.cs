@@ -107,11 +107,11 @@ namespace RiskAI.Tests
             Assert.That(CaptureCue.For(capture, country, out var cue), Is.True);
             Assert.That(cue.Sound, Is.EqualTo(SfxId.CountryLost));
             var toast = Toast();
-            Assert.That(toast.text, Does.StartWith("¡Has perdido " + country + "!"), "The broken-country toast is the one on screen.");
-            Assert.That(toast.text, Does.Contain("País roto"));
+            Assert.That(toast.text, Does.StartWith(GameText.Format("¡Has perdido {0}!", country)), "The broken-country toast is the one on screen.");
+            Assert.That(toast.text, Does.Contain(GameText.Format("País roto: sin oro ni refuerzos de {0}", country)));
             Assert.That(toast.parent.resolvedStyle.display, Is.EqualTo(DisplayStyle.Flex));
             Assert.That(battle.Feedback.Log.VisibleCount(Time.unscaledTime, 8) > 0 &&
-                Enumerable.Range(0, battle.Feedback.Log.Count).Any(i => battle.Feedback.Log[i].Text.StartsWith("¡Has perdido " + country)), Is.True);
+                Enumerable.Range(0, battle.Feedback.Log.Count).Any(i => battle.Feedback.Log[i].Text.StartsWith(GameText.Format("¡Has perdido {0}!", country))), Is.True);
         }
 
         [UnityTest]
@@ -144,7 +144,7 @@ namespace RiskAI.Tests
             Warp(otherGuard, other.ClaimZone.Center); other.ClaimZone.SetDefender(otherGuard);
             otherGuard.TakeDamage(10000, 1);
             yield return UntilOwnerChanges(other, 0);
-            Assert.That(Toast().text, Does.StartWith("Has perdido " + other.DisplayName), "Fixture: a routine loss toast is on screen.");
+            Assert.That(Toast().text, Does.StartWith(GameText.Format("Has perdido {0}", other.DisplayName)), "Fixture: a routine loss toast is on screen.");
             Zone(target).Defender.TakeDamage(10000, 1);
             yield return UntilOwnerChanges(target, 0);
             AssertBrokenCountryAnnounced(target);

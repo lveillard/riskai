@@ -109,8 +109,8 @@ namespace RiskAI
         {
             AddSection(panel, "PARTIDA");
             AddInfo(panel, "Conquista el 60 % de las ciudades. Completa países para recibir refuerzos de sus hogueras.");
-            AddInfo(panel, "Semilla " + session.Seed + " · " + session.PlayerCount + " jugadores · " + session.DifficultyName);
-            LiveInfo(panel, () => RuntimeDiagnostics.LatestReport == null ? "Recogiendo muestra de rendimiento…" : "Rendimiento: " + RuntimeDiagnostics.LatestAverageMs.ToString("F1") + " ms medio · " + RuntimeDiagnostics.LatestMaximumMs.ToString("F1") + " ms máximo · " + RuntimeDiagnostics.LatestUnits + " unidades · " + (RuntimeDiagnostics.LatestUnityAllocatedBytes / 1048576f).ToString("F0") + " MB Unity.");
+            AddInfo(panel, GameText.Format("Semilla {0} · {1} jugadores · {2}", session.Seed, session.PlayerCount, session.DifficultyName));
+            LiveInfo(panel, () => RuntimeDiagnostics.LatestReport == null ? "Recogiendo muestra de rendimiento…" : GameText.Format("Rendimiento: {0} ms medio · {1} ms máximo · {2} unidades · {3} MB Unity.", RuntimeDiagnostics.LatestAverageMs.ToString("F1"), RuntimeDiagnostics.LatestMaximumMs.ToString("F1"), RuntimeDiagnostics.LatestUnits, (RuntimeDiagnostics.LatestUnityAllocatedBytes / 1048576f).ToString("F0")));
             var row = SettingsButtons(panel);
             row.Add(RtsUiStyle.Button("CLASIFICACIÓN", ShowPlayers, "HUD menu ranking"));
             row.Add(RtsUiStyle.Button("DESGLOSE DEL ORO", ShowIncome, "HUD menu income"));

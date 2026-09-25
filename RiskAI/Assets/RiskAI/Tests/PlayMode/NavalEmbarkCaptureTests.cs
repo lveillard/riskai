@@ -161,7 +161,7 @@ namespace RiskAI.Tests
             process.Invoke(controller,null);
             Assert.That(pending.GetValue(controller),Is.Null,"A stalled boarding intent must stop retrying forever.");
             Assert.That(ship.CargoCount,Is.Zero);
-            Assert.That(battle.Messages[0],Does.StartWith("Embarque detenido:"));
+            Assert.That(battle.Messages[0],Does.StartWith(GameText.Localize("Embarque detenido: {0}").Split('{')[0]));
         }
 
         [UnityTest]

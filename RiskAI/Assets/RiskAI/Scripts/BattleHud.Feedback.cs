@@ -46,15 +46,15 @@ namespace RiskAI
             if (capture.Owner == 0)
             {
                 cue = capture.CountryCompleted && country != null
-                    ? new CaptureCue(SfxId.CountryCompleted, "¡País completado: " + country + "!", "Oro y refuerzos de " + country + " cada ronda", false, true)
-                    : new CaptureCue(SfxId.CityCaptured, "Has conquistado " + capture.Name, null, false, false);
+                    ? new CaptureCue(SfxId.CountryCompleted, GameText.Format("¡País completado: {0}!", country), GameText.Format("Oro y refuerzos de {0} cada ronda", country), false, true)
+                    : new CaptureCue(SfxId.CityCaptured, GameText.Format("Has conquistado {0}", capture.Name), null, false, false);
                 return true;
             }
             if (capture.Previous == 0)
             {
                 cue = capture.CountryLost && country != null
-                    ? new CaptureCue(SfxId.CountryLost, "¡Has perdido " + country + "!", "País roto: sin oro ni refuerzos de " + country, true, true)
-                    : new CaptureCue(SfxId.CityLost, "Has perdido " + capture.Name, null, true, false);
+                    ? new CaptureCue(SfxId.CountryLost, GameText.Format("¡Has perdido {0}!", country), GameText.Format("País roto: sin oro ni refuerzos de {0}", country), true, true)
+                    : new CaptureCue(SfxId.CityLost, GameText.Format("Has perdido {0}", capture.Name), null, true, false);
                 return true;
             }
             cue = default; return false;
@@ -489,7 +489,7 @@ namespace RiskAI
             var viewport = cam ? cam.WorldToViewportPoint(position) : Vector3.zero;
             if (viewport.z > 0 && viewport.x > .12f && viewport.x < .88f && viewport.y > .15f && viewport.y < .85f && !StrategicMapView.Active) return;
             string place = NearestPlaceName(position);
-            session.Feedback.Post(place != null ? "¡Te atacan en " + place + "!" : "¡Te atacan!", MessageKind.Attack, 0, position);
+            session.Feedback.Post(place != null ? GameText.Format("¡Te atacan en {0}!", place) : GameText.Localize("¡Te atacan!"), MessageKind.Attack, 0, position);
             Sfx.Ui(SfxId.UnderAttack);
         }
 
@@ -599,7 +599,7 @@ namespace RiskAI
             return split >= 0 ? name.Substring(split + 3) : name;
         }
 
-        string ChatPlaceholder() => GameText.Localize("Para " + ShortRecipient(chatRecipient) + " · Escribe un mensaje…");
+        string ChatPlaceholder() => GameText.Format("Para {0} · Escribe un mensaje…", ShortRecipient(chatRecipient));
 
         void SetChatRecipient(int recipient)
         {
@@ -611,7 +611,7 @@ namespace RiskAI
         void UpdateRecipientChip()
         {
             if (recipientLabel == null) return;
-            recipientLabel.text = GameText.Localize("Para: " + ShortRecipient(chatRecipient));
+            recipientLabel.text = GameText.Format("Para: {0}", ShortRecipient(chatRecipient));
             var colour = chatRecipient == ChatMessage.Everyone ? RtsUiStyle.Muted : VisualFactory.TeamColor(chatRecipient);
             recipientSwatch.style.backgroundColor = colour;
             recipientLabel.style.color = chatRecipient == ChatMessage.Everyone ? RtsUiStyle.Text : Readable(colour);

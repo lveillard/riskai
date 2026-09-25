@@ -51,23 +51,23 @@ namespace RiskAI
                 DetailLine(details, () =>
                 {
                     var group = hud.Countries[country];
-                    return "País · " + MapLayout.Countries[country].Name + " · " + group.Owned + " / " + group.CityCount + " ciudades" + (group.Owner == state.Owner && PlayerRules.IsPlayer(state.Owner) ? " · completo" : "");
+                    return GameText.Format(group.Owner == state.Owner && PlayerRules.IsPlayer(state.Owner) ? "País · {0} · {1} / {2} ciudades · completo" : "País · {0} · {1} / {2} ciudades", MapLayout.Countries[country].Name, group.Owned, group.CityCount);
                 });
             DetailLine(details, () =>
             {
                 var defender = town ? town.Defender : harbor ? harbor.Defender : null;
                 return defender && defender.IsAlive
-                    ? "Guarnición · " + UnitCatalog.Get(defender.Kind).Name + " · " + Mathf.CeilToInt(defender.Health) + " / " + Mathf.CeilToInt(defender.MaxHealth) + " vida"
+                    ? GameText.Format("Guarnición · {0} · {1} / {2} vida", UnitCatalog.Get(defender.Kind).Name, Mathf.CeilToInt(defender.Health), Mathf.CeilToInt(defender.MaxHealth))
                     : "Sin guarnición · un enemigo en el círculo la conquista";
             });
             var defense = town ? town.Defense : harbor ? harbor.Defense : null;
             if (defense)
                 DetailLine(details, () => defense.UnderConstruction ? "Torre en construcción" : defense.IsAlive
-                    ? "Torre · " + Mathf.CeilToInt(defense.Health) + " / " + Mathf.CeilToInt(defense.MaxHealth) + " vida" + (defense.Guardian && defense.Guardian.IsAlive ? "" : " · sin guarnición no dispara")
+                    ? GameText.Format(defense.Guardian && defense.Guardian.IsAlive ? "Torre · {0} / {1} vida" : "Torre · {0} / {1} vida · sin guarnición no dispara", Mathf.CeilToInt(defense.Health), Mathf.CeilToInt(defense.MaxHealth))
                     : "Torre destruida");
             if (harbor)
             {
-                DetailLine(details, () => harbor.HasNavalDefender ? "Barco guardia · " + harbor.NavalDefender.DisplayName : "Sin barco guardia");
+                DetailLine(details, () => harbor.HasNavalDefender ? GameText.Format("Barco guardia · {0}", harbor.NavalDefender.DisplayName) : "Sin barco guardia");
                 if (!harbor.CanLaunch && !string.IsNullOrEmpty(harbor.LaunchBlockReason)) DetailLine(details, () => harbor.LaunchBlockReason);
             }
             if (state.Owner == 0)
@@ -101,7 +101,7 @@ namespace RiskAI
                 int index = i;
                 var button = RtsUiStyle.Button("", () => cancel(index), "HUD selection queue item " + i);
                 SquareCell(button, size);
-                button.tooltip = GameText.Localize(name(i) + " · cancelar encargo (devuelve el oro)");
+                button.tooltip = GameText.Format("{0} · cancelar encargo (devuelve el oro)", name(i));
                 button.Add(PortraitFrame(portrait(i), size - 8));
                 if (i == 0)
                 {
@@ -200,7 +200,7 @@ namespace RiskAI
         Button PageCell(ProductionBuilding card, int page, int pages, bool showKey, float size)
         {
             var button = RtsUiStyle.Button("", () => { controller.NextProductionPage(card); RebuildContext(); }, "HUD production page");
-            button.tooltip = GameText.Localize("Más opciones · página " + (page + 1) + " / " + pages);
+            button.tooltip = GameText.Format("Más opciones · página {0} / {1}", page + 1, pages);
             SquareCell(button, size); button.style.justifyContent = Justify.Center; button.style.alignItems = Align.Center;
             var label = RtsUiStyle.Label((page + 1) + "/" + pages, null, 12); label.pickingMode = PickingMode.Ignore; label.style.color = RtsUiStyle.Gold;
             button.Add(new RtsIcon(RtsGlyph.ChevronDown, 18)); button.Add(label);

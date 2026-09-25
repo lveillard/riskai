@@ -133,14 +133,14 @@ namespace RiskAI
                 bool valid = SameLiveActor();
                 button.SetEnabled(valid);
                 health.style.width = Length.Percent(valid && actor.MaxHealth > 0 ? Mathf.Clamp01(actor.Health / actor.MaxHealth) * 100 : 0);
-                button.tooltip = GameText.Localize(valid ? name + " · " + Mathf.CeilToInt(actor.Health) + " / " + actor.MaxHealth + " vida" : "Unidad retirada");
+                button.tooltip = valid ? GameText.Format("{0} · {1} / {2} vida", name, Mathf.CeilToInt(actor.Health), actor.MaxHealth) : GameText.Localize("Unidad retirada");
             };
             liveContext.Add(refresh); refresh();
         }
 
         void BuildCargoRoster(VisualElement root,Ship transport)
         {
-            var label=RtsUiStyle.Label("A BORDO · "+transport.CargoCount+" / "+transport.CargoCapacity+" · pulsa para desembarcar",null,11);
+            var label=RtsUiStyle.Label(GameText.Format("A BORDO · {0} / {1} · pulsa para desembarcar",transport.CargoCount,transport.CargoCapacity),null,11);
             label.style.color=RtsUiStyle.Bronze;label.style.whiteSpace=WhiteSpace.Normal;root.Add(label);
             var cargo=new VisualElement { name="HUD transport cargo" };cargo.style.flexDirection=FlexDirection.Row;cargo.style.flexWrap=Wrap.Wrap;
             foreach(var passenger in transport.Cargo)
@@ -148,7 +148,7 @@ namespace RiskAI
                 var soldier=passenger;
                 if(!soldier)continue;
                 var button=RtsUiStyle.Button("",()=>controller.UnloadCargo(transport,soldier),"Unload cargo "+soldier.EntityId);
-                button.tooltip=GameText.Localize(UnitCatalog.Get(soldier.Kind).Name+" · desembarcar esta unidad");
+                button.tooltip=GameText.Format("{0} · desembarcar esta unidad",UnitCatalog.Get(soldier.Kind).Name);
                 button.style.width=button.style.minWidth=UiViewport.IsCompact?44:52;
                 button.style.height=button.style.minHeight=UiViewport.IsCompact?48:56;
                 button.style.paddingLeft=button.style.paddingRight=4;button.style.paddingTop=button.style.paddingBottom=4;

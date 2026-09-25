@@ -57,7 +57,8 @@ namespace RiskAI
 
         [Serializable] sealed class CensusCity { public bool port; }
         [Serializable] sealed class Census { public CensusCity[] cities; public Country[] countries; }
-        static readonly string[] censusDescriptions=new string[4];
+        // Cities, countries and ports per scenario, read once; worded in the current language on each call.
+        static readonly int[][] censusCounts=new int[4][];
         static readonly Census[] censuses=new Census[4];
         static Census ReadCensus(ScenarioMap scenario)
         {
@@ -69,11 +70,14 @@ namespace RiskAI
         public static string ScenarioDetail(ScenarioMap scenario)
         {
             int index=(int)scenario;
-            if(censusDescriptions[index]!=null)return censusDescriptions[index];
+            if(censusCounts[index]!=null)return Describe(censusCounts[index]);
             var census=ReadCensus(scenario);
             int ports=0;foreach(var city in census.cities)if(city.port)ports++;
-            return censusDescriptions[index]=census.cities.Length+" ciudades · "+census.countries.Length+" grupos · "+ports+" puertos";
+            censusCounts[index]=new[]{census.cities.Length,census.countries.Length,ports};
+            return Describe(censusCounts[index]);
         }
+
+        static string Describe(int[] census) => GameText.Format("{0} ciudades · {1} grupos · {2} puertos",census[0],census[1],census[2]);
 
         static TextAsset LoadSource(ScenarioMap scenario)
         {

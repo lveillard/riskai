@@ -8,9 +8,20 @@ namespace RiskAI
     public sealed partial class BattleHud
     {
         // Compact bars stay on one line: numbers only, the long form lives in the tooltip.
-        string GoldText => DisplayedGold+" ORO"+(UiViewport.IsCompact?" +":" · +")+hud.Income;
+        string GoldText => GameText.Format(UiViewport.IsCompact?"{0} ORO +{1}":"{0} ORO · +{1}",DisplayedGold,hud.Income);
         string PopulationText => UiViewport.IsCompact ? hud.RecruitmentReservations+"/"+BattleRules.PopulationLimit
-            : hud.PlayerUnits[0]+" unidades · "+hud.RecruitmentReservations+"/"+BattleRules.PopulationLimit+" reclutadas";
+            : GameText.Format("{0} unidades · {1}/{2} reclutadas",hud.PlayerUnits[0],hud.RecruitmentReservations,BattleRules.PopulationLimit);
+
+        /// <summary>"R3 · Income in 58 s" on desktop; "58 s" on compact bars. The timer counts down to the next income.</summary>
+        public static string IncomeLabel(int round,float elapsedInRound,bool compact,float roundSeconds=BattleRules.RoundSeconds)
+        {
+            int seconds=IncomeCountdown.SecondsRemaining(elapsedInRound,roundSeconds);
+            return compact?GameText.Format("{0} s",seconds):GameText.Format("R{0} · Ingreso en {1} s",round,seconds);
+        }
+
+        /// <summary>Long form for the tooltip / long-press.</summary>
+        public static string IncomeDetail(int round,float elapsedInRound,int income,float roundSeconds=BattleRules.RoundSeconds) =>
+            GameText.Format("Ronda {0} · próximo ingreso +{1} oro en {2} s",round,income,IncomeCountdown.SecondsRemaining(elapsedInRound,roundSeconds));
 
         static Button ResourceButton(System.Action action,string name)
         {
@@ -36,10 +47,10 @@ namespace RiskAI
         void AddIncomeDisplay(VisualElement parent)
         {
             var row=ResourceButton(ShowIncome,"HUD income countdown");RtsUiStyle.Row(row);
-            row.tooltip=GameText.Localize(IncomeCountdown.Detail(session.Economy.Round,session.Economy.ElapsedInRound,hud.Income));
+            row.tooltip=IncomeDetail(session.Economy.Round,session.Economy.ElapsedInRound,hud.Income);
             if(UiViewport.IsCompact)row.style.flexGrow=0;
             incomeRing=new RtsIncomeRing();incomeRing.Progress=IncomeCountdown.Progress(session.Economy.ElapsedInRound);row.Add(incomeRing);
-            roundLabel=HeaderLabel(IncomeCountdown.Label(session.Economy.Round,session.Economy.ElapsedInRound,UiViewport.IsCompact));
+            roundLabel=HeaderLabel(IncomeLabel(session.Economy.Round,session.Economy.ElapsedInRound,UiViewport.IsCompact));
             roundLabel.name="HUD income countdown label";roundLabel.pickingMode=PickingMode.Ignore;row.Add(roundLabel);
             incomeButton=row;parent.Add(row);
         }
@@ -59,9 +70,9 @@ namespace RiskAI
             int basic=0,total=0;
             System.Action read=()=>total=session.Economy.IncomeBreakdown(0,breakdown,out basic);
             read();liveContext.Add(read);
-            LiveInfo(root,()=>"Disponible: "+session.Economy.Gold[0]+" oro");
-            LiveInfo(root,()=>"Próxima ronda: +"+total+" oro en "+Mathf.CeilToInt(BattleRules.RoundSeconds-session.Economy.ElapsedInRound)+" s");
-            LiveInfo(root,()=>"Ingreso básico: +"+basic);
+            LiveInfo(root,()=>GameText.Format("Disponible: {0} oro",session.Economy.Gold[0]));
+            LiveInfo(root,()=>GameText.Format("Próxima ronda: +{0} oro en {1} s",total,Mathf.CeilToInt(BattleRules.RoundSeconds-session.Economy.ElapsedInRound)));
+            LiveInfo(root,()=>GameText.Format("Ingreso básico: +{0}",basic));
             AddInfo(root,"Cada ciudad de un país completo aporta oro. Las ciudades de países incompletos no añaden ingresos.");
             for(int i=0;i<MapLayout.Countries.Length;i++)
             {
@@ -71,7 +82,7 @@ namespace RiskAI
                 {
                     var state=hud.Countries[country];
                     breakdown.TryGetValue(country,out int amount);
-                    label.text=GameText.Localize(MapLayout.Countries[country].Name+" · "+state.Owned+"/"+state.CityCount+" ciudades · +"+amount);
+                    label.text=GameText.Format("{0} · {1}/{2} ciudades · +{3}",MapLayout.Countries[country].Name,state.Owned,state.CityCount,amount);
                     label.style.display=state.Owned>0?DisplayStyle.Flex:DisplayStyle.None;
                     label.style.color=amount>0?RtsUiStyle.Gold:RtsUiStyle.Muted;
                 }
@@ -83,8 +94,8 @@ namespace RiskAI
         void BuildPopulation(VisualElement root)
         {
             AddTitle(root,"UNIDADES");
-            LiveInfo(root,()=>"Total: "+hud.PlayerUnits[0]+" unidades");
-            LiveInfo(root,()=>"Reclutamiento: "+hud.RecruitmentReservations+" / "+BattleRules.PopulationLimit+" plazas, incluidos los encargos pendientes.");
+            LiveInfo(root,()=>GameText.Format("Total: {0} unidades",hud.PlayerUnits[0]));
+            LiveInfo(root,()=>GameText.Format("Reclutamiento: {0} / {1} plazas, incluidos los encargos pendientes.",hud.RecruitmentReservations,BattleRules.PopulationLimit));
             AddInfo(root,"El total incluye soldados, defensores de ciudades y barcos. Los defensores y barcos no consumen plazas de reclutamiento.");
         }
 
