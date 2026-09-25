@@ -12,8 +12,8 @@ namespace RiskAI.Tests
         {
             ProbeHooks.SetLanguage(GameLanguage.English);
             Assert.That(GameText.Localize("DESGLOSE DEL ORO"),Is.EqualTo("GOLD BREAKDOWN"));
-            Assert.That(GameText.Localize("Las Marcas · 33 ciudades"),Is.EqualTo("The Marches · 33 cities"));
-            Assert.That(GameText.Localize("Próxima ronda: +4 oro en 51 s"),Is.EqualTo("Next round: +4 gold in 51 s"));
+            Assert.That(GameText.Format("{0} · {1}/{2} ciudades · +{3}","Las Marcas",3,3,4),Is.EqualTo("The Marches · 3/3 cities · +4"));
+            Assert.That(GameText.Format("Próxima ronda: +{0} oro en {1} s",4,51),Is.EqualTo("Next round: +4 gold in 51 s"));
             ProbeHooks.SetLanguage(GameLanguage.Spanish);
             Assert.That(GameText.Localize("DESGLOSE DEL ORO"),Is.EqualTo("DESGLOSE DEL ORO"));
             Assert.That(GameText.SwitchLabel,Is.EqualTo("EN"));

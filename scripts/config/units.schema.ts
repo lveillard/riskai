@@ -241,6 +241,7 @@ export const Presentation = Named('UnitPresentation', 'Model, portrait, attack c
   attackClip: Type.Union([Type.String(), Type.Null()], { description: 'Attack clip; null for procedural attacks.' }),
   contact: Type.Number({ minimum: 0, maximum: 1, description: 'Normalised clip time of the hit.' }),
   silhouette: UnitSilhouette,
+  deathSound: Type.String({ minLength: 1, description: 'Clip id in Resources/Audio/clips.json played when this unit dies.' }),
 }, strict));
 
 export const Unit = Named('UnitConfig', 'One unit type.', Type.Object({

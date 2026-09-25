@@ -251,7 +251,7 @@ namespace RiskAI
                 int player = order[rank]; var row = rankingRows[rank];
                 bool eliminated = session.IsPlayerEliminated(player);
                 var colour = VisualFactory.TeamColor(player);
-                row.Name.text = GameText.Localize((rank + 1) + ". " + VisualFactory.TeamName(player) + (eliminated ? " · ELIMINADO" : ""));
+                row.Name.text = GameText.Format(eliminated ? "{0}. {1} · ELIMINADO" : "{0}. {1}", rank + 1, VisualFactory.TeamName(player));
                 row.Name.style.color = eliminated ? RtsUiStyle.Muted : player == 0 ? RtsUiStyle.Gold : Readable(colour);
                 row.Name.style.unityFontStyleAndWeight = player == 0 ? FontStyle.Bold : FontStyle.Normal;
                 if (row.Chip != null) row.Chip.style.backgroundColor = colour;

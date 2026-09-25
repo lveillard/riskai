@@ -1,120 +1,124 @@
 {
-  "loader": "Resources.Load<AudioClip>(\"Audio/<file name without extension>\"); mp3, ogg or wav all work. A clip with variants is loaded as <id>_1..<id>_4 (or plain <id> when there is a single file). Missing files are skipped silently.",
+  "loader": "Sfx.cs reads this file. Each clip id is the snake_case name of an SfxId, both ways. Every listed file is loaded as Resources.Load<AudioClip>(\"Audio/<file name without extension>\") and one is picked at random per play; a listed file that is missing is an error.",
   "folder": "RiskAI/Assets/RiskAI/Resources/Audio",
   "style": "Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short.",
   "clips": [
     {
       "id": "hit_sword",
-      "variants": 3,
       "duration_seconds": 0.5,
       "spatial": "3D",
       "volume": 0.8,
       "trigger": "Melee hit by swordsmen and foot soldiers",
       "files": [
         {
-          "file": "hit_sword_1.mp3",
+          "file": "hit_sword_1.wav",
           "prompt": "Steel sword striking chainmail and a wooden shield, single sharp metallic clang with a dull thud. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "hit_sword_2.mp3",
+          "file": "hit_sword_2.wav",
           "prompt": "Short sword slash hitting leather armor, quick swoosh ending in a meaty impact. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "hit_sword_3.mp3",
+          "file": "hit_sword_3.wav",
           "prompt": "Iron blade clashing against a steel helmet, bright ring with a short scrape. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 3,
+      "priority": 1
     },
     {
       "id": "hit_lance",
-      "variants": 2,
       "duration_seconds": 0.6,
       "spatial": "3D",
       "volume": 0.85,
       "trigger": "Melee hit by mounted knights and marine cavalry",
       "files": [
         {
-          "file": "hit_lance_1.mp3",
+          "file": "hit_lance_1.wav",
           "prompt": "Heavy cavalry lance punching into a wooden shield, deep crack and splinters. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "hit_lance_2.mp3",
+          "file": "hit_lance_2.wav",
           "prompt": "Mounted knight lance hitting plate armor, heavy metallic thump with a horse snort. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 2,
+      "priority": 1
     },
     {
       "id": "shot_crossbow",
-      "variants": 3,
       "duration_seconds": 0.5,
       "spatial": "3D",
       "volume": 0.6,
       "trigger": "Crossbowman, healer and tower bolt release",
       "files": [
         {
-          "file": "shot_crossbow_1.mp3",
+          "file": "shot_crossbow_1.wav",
           "prompt": "Crossbow firing, tight string twang with a wooden thunk of the stock. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "shot_crossbow_2.mp3",
+          "file": "shot_crossbow_2.wav",
           "prompt": "Crossbow bolt release, sharp snap of the string and a short whoosh. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "shot_crossbow_3.mp3",
+          "file": "shot_crossbow_3.wav",
           "prompt": "Heavy arbalest shot, deep twang and mechanical click. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 3,
+      "priority": 1
     },
     {
       "id": "shot_rifle",
-      "variants": 2,
       "duration_seconds": 0.6,
       "spatial": "3D",
       "volume": 0.65,
       "trigger": "Harbor pistolier (flintlock) shot",
       "files": [
         {
-          "file": "shot_rifle_1.mp3",
+          "file": "shot_rifle_1.wav",
           "prompt": "Old flintlock pistol shot, flint click then a dry black-powder pop. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "shot_rifle_2.mp3",
+          "file": "shot_rifle_2.wav",
           "prompt": "Short musket shot, crisp powder crack with a tiny puff, outdoors. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 2,
+      "priority": 1
     },
     {
       "id": "hit_arrow",
-      "variants": 2,
       "duration_seconds": 0.5,
       "spatial": "3D",
       "volume": 0.45,
       "trigger": "Bolt/shot landing on a unit",
       "files": [
         {
-          "file": "hit_arrow_1.mp3",
+          "file": "hit_arrow_1.wav",
           "prompt": "Crossbow bolt thudding into a wooden shield, short dull thunk. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "hit_arrow_2.mp3",
+          "file": "hit_arrow_2.wav",
           "prompt": "Arrow hitting leather armor, quick soft impact with a light rattle. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 2,
+      "priority": 0
     },
     {
       "id": "magic_bolt",
-      "variants": 4,
       "duration_seconds": 0.7,
       "spatial": "3D",
       "volume": 0.6,
       "trigger": "Mage casting a magic missile",
       "files": [
         {
-          "file": "magic_bolt_1.mp3",
+          "file": "magic_bolt_1.wav",
           "prompt": "Wizard casting an arcane bolt, shimmering magical whoosh rising in pitch. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "magic_bolt_2.mp3",
+          "file": "magic_bolt_2.wav",
           "prompt": "Blue magic missile launched, crackling energy zap with a sparkling tail. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
@@ -124,301 +128,360 @@
         {
           "file": "magic_bolt_4.wav",
           "prompt": "Arcane spell cast, rising crystalline chime swirl ending in a soft magical pop."
+        },
+        {
+          "file": "magic_bolt_5.wav",
+          "prompt": "Muted coconut-shell 'tok' with a quick downward pitch slide."
         }
-      ]
+      ],
+      "budget": 2,
+      "priority": 1
     },
     {
       "id": "magic_impact",
-      "variants": 2,
       "duration_seconds": 0.6,
       "spatial": "3D",
       "volume": 0.6,
       "trigger": "Magic missile exploding on target",
       "files": [
         {
-          "file": "magic_impact_1.mp3",
+          "file": "magic_impact_1.wav",
           "prompt": "Arcane energy burst on impact, glassy crystalline pop with a soft electric crackle. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "magic_impact_2.mp3",
+          "file": "magic_impact_2.wav",
           "prompt": "Magic orb exploding, bright shimmering thump with sparkles. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 2,
+      "priority": 1
     },
     {
       "id": "mortar_fire",
-      "variants": 2,
       "duration_seconds": 1.0,
       "spatial": "3D",
       "volume": 0.8,
       "trigger": "Mortar launching a shell",
       "files": [
         {
-          "file": "mortar_fire_1.mp3",
+          "file": "mortar_fire_1.wav",
           "prompt": "Medieval mortar firing, deep hollow boom with a whistle of the shell leaving. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "mortar_fire_2.mp3",
+          "file": "mortar_fire_2.wav",
           "prompt": "Siege mortar launch, heavy thump of black powder and metallic ring of the barrel. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 2,
+      "priority": 2
     },
     {
       "id": "explosion",
-      "variants": 3,
       "duration_seconds": 1.5,
       "spatial": "3D",
       "volume": 0.9,
       "trigger": "Mortar shell landing (siege impact)",
       "files": [
         {
-          "file": "explosion_1.mp3",
+          "file": "explosion_1.wav",
           "prompt": "Cannonball explosion on dirt, heavy boom with debris and earth raining down. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "explosion_2.mp3",
+          "file": "explosion_2.wav",
           "prompt": "Black powder shell exploding, sharp blast and crumbling stones. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "explosion_3.mp3",
+          "file": "explosion_3.wav",
           "prompt": "Siege shell impact, deep explosion with wooden debris scattering. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 2,
+      "priority": 3
     },
     {
       "id": "ship_cannon",
-      "variants": 2,
       "duration_seconds": 1.2,
       "spatial": "3D",
       "volume": 0.85,
       "trigger": "Frigate cannon fire",
       "files": [
         {
-          "file": "ship_cannon_1.mp3",
+          "file": "ship_cannon_1.wav",
           "prompt": "Wooden warship cannon firing over water, big booming shot with a creak of the hull. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "ship_cannon_2.mp3",
+          "file": "ship_cannon_2.wav",
           "prompt": "Naval cannon broadside single shot, heavy boom and splash in the distance. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
+        }
+      ],
+      "budget": 2,
+      "priority": 2
+    },
+    {
+      "id": "death",
+      "duration_seconds": 0.5,
+      "spatial": "3D",
+      "volume": 0.55,
+      "trigger": "A land unit dies (units.json presentation.deathSound)",
+      "files": [
+        {
+          "file": "death.wav",
+          "prompt": "Gentle wooden 'tonk' with a springy downward pitch tail; short, subtle cartoon RTS death."
+        }
+      ],
+      "budget": 2,
+      "priority": 1
+    },
+    {
+      "id": "sink",
+      "duration_seconds": 1.3,
+      "spatial": "3D",
+      "volume": 0.6,
+      "budget": 2,
+      "priority": 2,
+      "trigger": "A ship sinks (units.json presentation.deathSound)",
+      "files": [
+        {
+          "file": "sink.wav",
+          "prompt": "Small wooden boat sinking: short crack, splash, gurgling bubbles."
         }
       ]
     },
     {
-      "id": "death",
-      "variants": 0,
-      "duration_seconds": 0.8,
-      "spatial": "3D",
-      "volume": 0.55,
-      "trigger": "A soldier dies (silenced in v0.33: no files until better deaths are made)",
-      "files": []
-    },
-    {
       "id": "order_move",
-      "variants": 2,
       "duration_seconds": 0.5,
       "spatial": "2D",
       "volume": 0.45,
       "trigger": "Move order acknowledged",
       "files": [
         {
-          "file": "order_move_1.mp3",
+          "file": "order_move_1.wav",
           "prompt": "Soft leather boots marching two steps and a short metal jingle, confirmation click. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "order_move_2.mp3",
+          "file": "order_move_2.wav",
           "prompt": "Quick banner flap and a light armor jingle, short confirmation. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 4
     },
     {
       "id": "order_attack",
-      "variants": 2,
       "duration_seconds": 0.5,
       "spatial": "2D",
       "volume": 0.5,
       "trigger": "Attack order acknowledged",
       "files": [
         {
-          "file": "order_attack_1.mp3",
+          "file": "order_attack_1.wav",
           "prompt": "Sword drawn from a scabbard, short metallic shing. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         },
         {
-          "file": "order_attack_2.mp3",
+          "file": "order_attack_2.wav",
           "prompt": "War drum single hit with a quick blade ring, aggressive confirmation. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 4
     },
     {
       "id": "ui_click",
-      "variants": 1,
       "duration_seconds": 0.5,
       "spatial": "2D",
       "volume": 0.35,
       "trigger": "Any HUD button press",
       "files": [
         {
-          "file": "ui_click.mp3",
+          "file": "ui_click.wav",
           "prompt": "Tiny wooden button click on a parchment interface, very short and soft. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
+        }
+      ],
+      "budget": 1,
+      "priority": 4
+    },
+    {
+      "id": "select_harbor",
+      "duration_seconds": 0.5,
+      "spatial": "2D",
+      "volume": 0.35,
+      "budget": 1,
+      "priority": 4,
+      "trigger": "You select one of your harbours (cities use ui_click)",
+      "files": [
+        {
+          "file": "select_harbor.wav",
+          "prompt": "Quick wooden 'clonk' with a gentle descending rubbery tail."
         }
       ]
     },
     {
       "id": "purchase",
-      "variants": 1,
       "duration_seconds": 0.6,
       "spatial": "2D",
       "volume": 0.55,
       "trigger": "Recruit/ship purchase accepted",
       "files": [
         {
-          "file": "purchase.mp3",
+          "file": "purchase.wav",
           "prompt": "A few gold coins dropped into a leather pouch, short satisfying jingle. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 4
     },
     {
       "id": "no_gold",
-      "variants": 1,
       "duration_seconds": 0.5,
       "spatial": "2D",
       "volume": 0.55,
       "trigger": "Purchase rejected for lack of gold",
       "files": [
         {
-          "file": "no_gold.mp3",
+          "file": "no_gold.wav",
           "prompt": "Empty coin purse shaken, dull thud of a closed wooden chest, short negative feedback. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 4
     },
     {
       "id": "unit_trained",
-      "variants": 1,
       "duration_seconds": 0.8,
       "spatial": "2D",
       "volume": 0.5,
       "trigger": "One of your units finished training",
       "files": [
         {
-          "file": "unit_trained.mp3",
+          "file": "unit_trained.wav",
           "prompt": "Soldier stepping out ready, armor clank and a short brass horn blip. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 3
     },
     {
       "id": "city_captured",
-      "variants": 1,
       "duration_seconds": 1.5,
       "spatial": "2D",
       "volume": 0.7,
       "trigger": "You captured a city or harbor",
       "files": [
         {
-          "file": "city_captured.mp3",
+          "file": "city_captured.wav",
           "prompt": "Castle banner raised, cloth flap and a short triumphant war horn call. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 5
     },
     {
       "id": "city_lost",
-      "variants": 1,
       "duration_seconds": 1.5,
       "spatial": "2D",
       "volume": 0.7,
       "trigger": "You lost a city or harbor",
       "files": [
         {
-          "file": "city_lost.mp3",
+          "file": "city_lost.wav",
           "prompt": "Low mournful war horn with a heavy wooden gate slamming shut. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 5
     },
     {
       "id": "country_completed",
-      "variants": 1,
       "duration_seconds": 2.5,
       "spatial": "2D",
       "volume": 0.8,
       "trigger": "You completed a whole country",
       "files": [
         {
-          "file": "country_completed.mp3",
+          "file": "country_completed.wav",
           "prompt": "Two war horns calling together, distant crowd cheer and a bell ring, triumphant. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 6
     },
     {
       "id": "income",
-      "variants": 1,
       "duration_seconds": 0.8,
       "spatial": "2D",
       "volume": 0.45,
       "trigger": "Round income received",
       "files": [
         {
-          "file": "income.mp3",
-          "prompt": "Handful of gold coins pouring onto a wooden table, bright short cascade. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
+          "file": "income.wav",
+          "prompt": "Small wooden spoon knock with a soft falling spring tail, followed by the original coin chime."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 3
     },
     {
       "id": "under_attack",
-      "variants": 1,
       "duration_seconds": 1.2,
       "spatial": "2D",
       "volume": 0.75,
       "trigger": "Your units or cities are under attack",
       "files": [
         {
-          "file": "under_attack.mp3",
+          "file": "under_attack.wav",
           "prompt": "Urgent alarm bell ringing three quick strikes in a castle tower. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 5
     },
     {
       "id": "victory",
-      "variants": 1,
       "duration_seconds": 3.0,
       "spatial": "2D",
       "volume": 0.85,
       "trigger": "Match won",
       "files": [
         {
-          "file": "victory.mp3",
+          "file": "victory.wav",
           "prompt": "Victorious army cheering, war horns blowing and banners flapping, triumphant ending. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 7
     },
     {
       "id": "defeat",
-      "variants": 1,
       "duration_seconds": 3.0,
       "spatial": "2D",
       "volume": 0.85,
       "trigger": "Match lost / you were eliminated",
       "files": [
         {
-          "file": "defeat.mp3",
+          "file": "defeat.wav",
           "prompt": "Defeated army retreating, low sorrowful horn, distant wind and a dropped sword. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 7
     },
     {
       "id": "chat",
-      "variants": 1,
       "duration_seconds": 0.5,
       "spatial": "2D",
       "volume": 0.4,
       "trigger": "Chat message posted",
       "files": [
         {
-          "file": "chat.mp3",
+          "file": "chat.wav",
           "prompt": "Quill scratching parchment briefly, short soft notification. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 3
     },
     {
       "id": "country_lost",
-      "variants": 1,
       "duration_seconds": 2.0,
       "spatial": "2D",
       "volume": 0.8,
@@ -428,7 +491,9 @@
           "file": "country_lost.wav",
           "prompt": "Deep war horn falling in pitch, a heavy war drum and a crumbling stone wall, grave and ominous. Medieval fantasy RTS game sound effect, dry and close, no reverb tail, no music, no speech or words, clean start, short."
         }
-      ]
+      ],
+      "budget": 1,
+      "priority": 6
     }
   ]
 }

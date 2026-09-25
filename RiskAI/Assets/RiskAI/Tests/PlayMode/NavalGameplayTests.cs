@@ -12,13 +12,12 @@ namespace RiskAI.Tests
 {
  public sealed class NavalGameplayTests
  {
-  Scene scene,previous;BattleSession battle;NavalWorld naval;int previousSeed;
-  // A fixed seed keeps harbor ownership and berths identical between runs.
+  Scene scene,previous;BattleSession battle;NavalWorld naval;BattleTestScenario.PinnedMatch pinned;
+  // The authored two-player practice start keeps harbor ownership and berths identical between runs.
   const int FixtureSeed=7031;
   [UnitySetUp] public IEnumerator SetUp()
   {
-   BattleSession.ModeForNewMatch=BattleSession.VictoryMode.Conquest;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.Fixed;
-   previousSeed=BattleSession.SeedForNewMatch;BattleSession.SeedForNewMatch=FixtureSeed;
+   pinned=BattleTestScenario.PinnedMatch.Pin(ScenarioMap.Classic,FixtureSeed,BattleSession.StartLayout.Fixed,2);
    previous=SceneManager.GetActiveScene();scene=SceneManager.CreateScene("Naval gameplay");SceneManager.SetActiveScene(scene);
    new GameObject("Naval test bootstrap").AddComponent<RiskBootstrap>();battle=BattleSession.Current;battle.AiEnabled=false;
    Object.FindFirstObjectByType<RtsController>().enabled=false;naval=NavalWorld.Current;yield return null;
@@ -300,6 +299,6 @@ namespace RiskAI.Tests
    Assert.That(SeaNavigation.TryBuildPath(naval.Harbors[0].Berth,battle.Towns[0].transform.position,out _),Is.False);
    yield return null;
   }
-  [UnityTearDown] public IEnumerator TearDown(){Time.timeScale=1;BattleSession.SeedForNewMatch=previousSeed;BattleSession.LayoutForNewMatch=BattleSession.StartLayout.RandomCities;SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);}
+  [UnityTearDown] public IEnumerator TearDown(){Time.timeScale=1;pinned.Restore();SceneManager.SetActiveScene(previous);yield return SceneManager.UnloadSceneAsync(scene);}
  }
 }

@@ -107,8 +107,8 @@ namespace RiskAI
             }
             int player = announcedPlayer >= 0 ? announcedPlayer : session.IsPlayerEliminated(0) ? 0 : -1;
             if (player < 0) return;
-            string message = player == 0 ? "DERROTA · Has sido eliminado. La partida continúa."
-                : VisualFactory.TeamName(player) + " ha sido eliminado.";
+            string message = player == 0 ? GameText.Localize("DERROTA · Has sido eliminado. La partida continúa.")
+                : GameText.Format("{0} ha sido eliminado.", VisualFactory.TeamName(player));
             float noticeWidth = Mathf.Min(460, UiViewport.LogicalWidth - 24);
             var rect = new Rect(UiViewport.SafeRect.center.x / Scale - noticeWidth * .5f, TopPixels / Scale + 12, noticeWidth, 54);
             RtsSkin.Fill(rect, new Color(.035f, .04f, .03f, .95f));
@@ -148,7 +148,7 @@ namespace RiskAI
                 if (town.State.Capture > 0 && town.State.Capture < 1 && town.State.Capturing >= 0 && plateTop-30 > TopPixels/Scale)
                 {
                     RtsSkin.Bar(new Rect(p.x - 65, plateTop - 10, 130, 7), town.State.Capture, VisualFactory.TeamColor(town.State.Capturing));
-                    Label(p.x-65,plateTop-30,170,"CONVERSIÓN "+Mathf.RoundToInt(town.State.Capture*100)+"%",RtsSkin.Tiny);
+                    Label(p.x-65,plateTop-30,170,GameText.Format("CONVERSIÓN {0}%",Mathf.RoundToInt(town.State.Capture*100)),RtsSkin.Tiny);
                 }
             }
             foreach (var target in session.Targets)

@@ -238,11 +238,11 @@ namespace RiskAI
             flag.sharedMaterial = VisualFactory.Mat(VisualFactory.TeamMaterialColor(State.Owner)); Defense.ChangeOwner();
             foreach(var roof in GetComponentsInChildren<Renderer>())if(roof.name=="Faction roof"&&!roof.GetComponentInParent<DefenseTower>())roof.sharedMaterial=WorldArt.RoofMaterial(State.Owner);
             bool countryLost = previousOwner >= 0 && BattleFeedback.CountryWasComplete(session, State.Country, previousOwner, this);
-            session.Message((State.Owner < 0 ? "Queda neutral " : State.Owner == 0 ? "Has conquistado " : VisualFactory.TeamName(State.Owner) + " ha conquistado ") + DisplayName,
+            session.Message(State.Owner < 0 ? GameText.Format("Queda neutral {0}", DisplayName) : State.Owner == 0 ? GameText.Format("Has conquistado {0}", DisplayName) : GameText.Format("{0} ha conquistado {1}", VisualFactory.TeamName(State.Owner), DisplayName),
                 previousOwner == 0 && State.Owner != 0 ? MessageKind.Loss : MessageKind.Capture, State.Owner, ClaimPoint);
             bool completed = State.Owner >= 0 && State.Country >= 0 && session.Economy.CountryOwner(State.Country) == State.Owner;
             if (completed)
-                session.Message((State.Owner==0?"País completado: ":VisualFactory.TeamName(State.Owner)+" completa ") + MapLayout.Countries[State.Country].Name + ". Refuerzos activos.", MessageKind.Country, State.Owner, ClaimPoint);
+                session.Message(State.Owner==0 ? GameText.Format("País completado: {0}. Refuerzos activos.", MapLayout.Countries[State.Country].Name) : GameText.Format("{0} completa {1}. Refuerzos activos.", VisualFactory.TeamName(State.Owner), MapLayout.Countries[State.Country].Name), MessageKind.Country, State.Owner, ClaimPoint);
             session.Feedback.RaiseCaptured(new CaptureEvent(ClaimPoint, previousOwner, State.Owner, DisplayName, flag ? flag.transform : null, IsPort, State.Country, completed, countryLost));
         }
         void Update()
@@ -268,7 +268,7 @@ namespace RiskAI
                 if (projectRemaining <= 0)
                 {
                     State.Level = 2; VisualFactory.TownUpgrade(transform);
-                    session.Message(DisplayName + ": " + ProjectName + " completada.", MessageKind.Info);
+                    session.Message(GameText.Format("{0}: {1} completada.", DisplayName, ProjectName), MessageKind.Info);
                     project = BuildingProject.None;
                 }
             }

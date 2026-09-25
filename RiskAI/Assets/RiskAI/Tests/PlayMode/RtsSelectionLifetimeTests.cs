@@ -354,7 +354,7 @@ namespace RiskAI.Tests
             Assert.That(replacement.IsIdle,Is.True,"The replacement must never receive the old landing or recovery order.");
             Assert.That(battle.Commands.AppliedCount,Is.EqualTo(applied));
             Assert.That(battle.Commands.RejectedCount,Is.EqualTo(rejected));
-            Assert.That(battle.Messages.Any(message=>message.StartsWith("Embarque terminado")),Is.True,
+            Assert.That(battle.Messages.Any(message=>message.StartsWith(GameText.Localize("Embarque terminado: {0} / {1}.").Split('{')[0])),Is.True,
                 "The queue must resolve through the identity check, not stall on a replaced boarder.");
 
             yield return null;

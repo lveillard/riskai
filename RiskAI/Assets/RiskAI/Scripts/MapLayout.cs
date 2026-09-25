@@ -19,8 +19,8 @@ namespace RiskAI
         public static string MapName => IsImported ? (Scenario == ScenarioMap.Europe ? "Europe" : "New World") : IsExpanded ? "Cuatro Riberas" : "Las Marcas";
         public static string ScenarioDetail(ScenarioMap scenario)
         {
-            if (scenario == ScenarioMap.Classic) return ClassicPads.Length + " ciudades · " + ClassicCountries.Length + " grupos";
-            if (scenario == ScenarioMap.Riverlands) return ExpandedPads.Length + " ciudades · " + ExpandedCountries.Length + " grupos";
+            if (scenario == ScenarioMap.Classic) return GameText.Format("{0} ciudades · {1} grupos", ClassicPads.Length, ClassicCountries.Length);
+            if (scenario == ScenarioMap.Riverlands) return GameText.Format("{0} ciudades · {1} grupos", ExpandedPads.Length, ExpandedCountries.Length);
             return ImportedMapData.ScenarioDetail(scenario);
         }
         public static int MaximumPlayersForScenario(ScenarioMap scenario)

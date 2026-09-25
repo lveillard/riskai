@@ -123,11 +123,11 @@ namespace RiskAI.Tests
             Assert.That(received, Is.EqualTo("¡a por ellos!"));
             Assert.That(from, Is.EqualTo(0));
             Assert.That(to, Is.EqualTo(ChatMessage.Everyone));
-            Assert.That(ChatChannel.Format(new ChatMessage(0, ChatMessage.Everyone, received)), Is.EqualTo("Tú → Todos: ¡a por ellos!"));
+            Assert.That(ChatChannel.Format(new ChatMessage(0, ChatMessage.Everyone, received)), Is.EqualTo(GameText.Localize("Tú") + " → " + GameText.Localize("Todos") + ": ¡a por ellos!"), "Names are worded in the current language; the message text is the player's own.");
             Assert.That(channel.Submit(0, "hola", 2), Is.True);
             Assert.That(to, Is.EqualTo(2));
-            Assert.That(ChatChannel.Format(new ChatMessage(0, 2, "hola")), Is.EqualTo("Tú → IA 2 · Turquesa: hola"));
-            Assert.That(ChatChannel.Format(new ChatMessage(3, 0, "hola")), Is.EqualTo("IA 3 · Violeta → Tú: hola"));
+            Assert.That(ChatChannel.Format(new ChatMessage(0, 2, "hola")), Is.EqualTo(GameText.Localize("Tú") + " → " + VisualFactory.TeamName(2) + ": hola"));
+            Assert.That(ChatChannel.Format(new ChatMessage(3, 0, "hola")), Is.EqualTo(VisualFactory.TeamName(3) + " → " + GameText.Localize("Tú") + ": hola"));
         }
 
         static CaptureEvent Capture(int previous, int owner, bool completed = false, bool lost = false) =>
@@ -135,6 +135,14 @@ namespace RiskAI.Tests
 
         [Test]
         public void LosingACompleteCountryIsItsOwnLouderEvent()
+        {
+            // Cues are worded when they are raised, in the current language.
+            ProbeHooks.SetLanguage(GameLanguage.Spanish);
+            try { CheckLouderCountryLoss(); }
+            finally { ProbeHooks.SetLanguage(GameLanguage.English); }
+        }
+
+        static void CheckLouderCountryLoss()
         {
             Assert.That(CaptureCue.For(Capture(0, 2, lost: true), "España", out var broken), Is.True);
             Assert.That(broken.Sound, Is.EqualTo(SfxId.CountryLost), "A broken country must not reuse city_lost.");
@@ -177,12 +185,16 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void CountryLostSoundIsAppendedWithoutMovingOtherClips()
+        public void EverySoundAndUnitDeathHasItsClipsJsonFiles()
         {
-            Assert.That((int)SfxId.Chat, Is.EqualTo(24));
-            Assert.That((int)SfxId.CountryLost, Is.EqualTo(25));
-            var json = System.IO.File.ReadAllText("Assets/RiskAI/Resources/Audio/clips.json");
-            Assert.That(json, Does.Contain("\"id\": \"country_lost\""));
+            foreach (SfxId sound in System.Enum.GetValues(typeof(SfxId)))
+            {
+                Assert.That(Sfx.FromClipId(Sfx.ClipId(sound)), Is.EqualTo(sound));
+                Assert.That(Sfx.LoadedVariants(sound), Is.GreaterThan(0), sound.ToString());
+            }
+            Assert.That(Sfx.ClipId(SfxId.CountryLost), Is.EqualTo("country_lost"));
+            for (int i = 0; i < RiskAI.Core.UnitCatalog.Count; i++)
+                Assert.DoesNotThrow(() => Sfx.FromClipId(RiskAI.Core.UnitCatalog.At(i).DeathSound));
         }
 
         [Test]
@@ -191,9 +203,9 @@ namespace RiskAI.Tests
             ProbeHooks.SetLanguage(GameLanguage.English);
             try
             {
-                Assert.That(GameText.Localize("¡Has perdido Las Marcas!"), Is.EqualTo("You lost The Marches!"));
-                Assert.That(GameText.Localize("País roto: sin oro ni refuerzos de Las Marcas"), Is.EqualTo("Country broken: no gold or reinforcements from The Marches"));
-                Assert.That(GameText.Localize("Has perdido Encinar Bajo"), Is.EqualTo("You lost Lower Oakwood"));
+                Assert.That(GameText.Format("¡Has perdido {0}!", "Las Marcas"), Is.EqualTo("You lost The Marches!"));
+                Assert.That(GameText.Format("País roto: sin oro ni refuerzos de {0}", "Las Marcas"), Is.EqualTo("Country broken: no gold or reinforcements from The Marches"));
+                Assert.That(GameText.Format("Has perdido {0}", "Encinar Bajo"), Is.EqualTo("You lost Lower Oakwood"));
             }
             finally { ProbeHooks.SetLanguage(GameLanguage.English); }
         }

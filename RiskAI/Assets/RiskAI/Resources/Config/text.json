@@ -1,0 +1,2246 @@
+[
+ {
+  "es": "RIESGUS",
+  "en": "RIESGUS"
+ },
+ {
+  "es": "DOMINIOS",
+  "en": "DOMINIONS"
+ },
+ {
+  "es": "CONQUISTA",
+  "en": "CONQUEST"
+ },
+ {
+  "es": "PAUSADO",
+  "en": "PAUSED"
+ },
+ {
+  "es": "PAUSA",
+  "en": "PAUSE"
+ },
+ {
+  "es": "Pausa",
+  "en": "Pause"
+ },
+ {
+  "es": "CONTINUAR",
+  "en": "RESUME"
+ },
+ {
+  "es": "Continuar",
+  "en": "Resume"
+ },
+ {
+  "es": "VOLVER",
+  "en": "BACK"
+ },
+ {
+  "es": "Menú",
+  "en": "Menu"
+ },
+ {
+  "es": "Mapa",
+  "en": "Map"
+ },
+ {
+  "es": "Ranking",
+  "en": "Ranking"
+ },
+ {
+  "es": "Partida",
+  "en": "Match"
+ },
+ {
+  "es": "Controles",
+  "en": "Controls"
+ },
+ {
+  "es": "Sonido",
+  "en": "Sound"
+ },
+ {
+  "es": "Cámara",
+  "en": "Camera"
+ },
+ {
+  "es": "Idioma",
+  "en": "Language"
+ },
+ {
+  "es": "PARTIDA",
+  "en": "MATCH"
+ },
+ {
+  "es": "SONIDO",
+  "en": "SOUND"
+ },
+ {
+  "es": "CÁMARA",
+  "en": "CAMERA"
+ },
+ {
+  "es": "CONTROLES",
+  "en": "CONTROLS"
+ },
+ {
+  "es": "IDIOMA",
+  "en": "LANGUAGE"
+ },
+ {
+  "es": "Volumen general",
+  "en": "Master volume"
+ },
+ {
+  "es": "Efectos",
+  "en": "Effects"
+ },
+ {
+  "es": "Música",
+  "en": "Music"
+ },
+ {
+  "es": "Minimapa",
+  "en": "Minimap"
+ },
+ {
+  "es": "Activado",
+  "en": "On"
+ },
+ {
+  "es": "Desactivado",
+  "en": "Off"
+ },
+ {
+  "es": "Todos",
+  "en": "All"
+ },
+ {
+  "es": "Cola",
+  "en": "Queue"
+ },
+ {
+  "es": "Astillero",
+  "en": "Shipyard"
+ },
+ {
+  "es": "Ciudades",
+  "en": "Cities"
+ },
+ {
+  "es": "VICTORIA",
+  "en": "VICTORY"
+ },
+ {
+  "es": "DERROTA",
+  "en": "DEFEAT"
+ },
+ {
+  "es": "COMENZAR LA CONQUISTA",
+  "en": "START CONQUEST"
+ },
+ {
+  "es": "PREPARANDO LA CONQUISTA",
+  "en": "PREPARING CONQUEST"
+ },
+ {
+  "es": "ELEGIDO",
+  "en": "SELECTED"
+ },
+ {
+  "es": "NUEVA SEMILLA",
+  "en": "NEW SEED"
+ },
+ {
+  "es": "SEMILLA",
+  "en": "SEED"
+ },
+ {
+  "es": "REPARTO INICIAL",
+  "en": "STARTING LAYOUT"
+ },
+ {
+  "es": "DIFICULTAD DE IA",
+  "en": "AI DIFFICULTY"
+ },
+ {
+  "es": "RELIEVE IMPORTADO",
+  "en": "IMPORTED RELIEF"
+ },
+ {
+  "es": "NUEVA PARTIDA",
+  "en": "NEW MATCH"
+ },
+ {
+  "es": "SALA DE GUERRA · CONFIGURA TU CAMPAÑA",
+  "en": "WAR ROOM · CONFIGURE YOUR CAMPAIGN"
+ },
+ {
+  "es": "RIESGUS · DESPLIEGUE",
+  "en": "RIESGUS · DEPLOYMENT"
+ },
+ {
+  "es": "NUEVA PARTIDA · ELEGIR MAPA",
+  "en": "NEW MATCH · CHOOSE MAP"
+ },
+ {
+  "es": "CENTRAR MAPA",
+  "en": "CENTER MAP"
+ },
+ {
+  "es": "RESTABLECER CÁMARA",
+  "en": "RESET CAMERA"
+ },
+ {
+  "es": "OCULTAR MAPA TÁCTICO",
+  "en": "HIDE TACTICAL MAP"
+ },
+ {
+  "es": "MOSTRAR MAPA TÁCTICO",
+  "en": "SHOW TACTICAL MAP"
+ },
+ {
+  "es": "DESGLOSE DEL ORO",
+  "en": "GOLD BREAKDOWN"
+ },
+ {
+  "es": "UNIDADES",
+  "en": "UNITS"
+ },
+ {
+  "es": "CLASIFICACIÓN · CIUDADES",
+  "en": "RANKING · CITIES"
+ },
+ {
+  "es": "ÓRDENES DE HOGUERA",
+  "en": "CAMP ORDERS"
+ },
+ {
+  "es": "BORRAR SALIDA",
+  "en": "CLEAR RALLY"
+ },
+ {
+  "es": "Mover",
+  "en": "Move"
+ },
+ {
+  "es": "Atacar",
+  "en": "Attack"
+ },
+ {
+  "es": "Patrullar",
+  "en": "Patrol"
+ },
+ {
+  "es": "Detener",
+  "en": "Stop"
+ },
+ {
+  "es": "Mantener",
+  "en": "Hold"
+ },
+ {
+  "es": "Centrar",
+  "en": "Focus"
+ },
+ {
+  "es": "Embarcar",
+  "en": "Board"
+ },
+ {
+  "es": "Desembarcar",
+  "en": "Unload"
+ },
+ {
+  "es": "Puerto",
+  "en": "Harbor"
+ },
+ {
+  "es": "maná",
+  "en": "mana"
+ },
+ {
+  "es": "rugido +25%",
+  "en": "roar +25%"
+ },
+ {
+  "es": "· carga ",
+  "en": "· cargo "
+ },
+ {
+  "es": " daño · ",
+  "en": " damage · "
+ },
+ {
+  "es": "Preparado",
+  "en": "Ready"
+ },
+ {
+  "es": "Moviendo",
+  "en": "Moving"
+ },
+ {
+  "es": "En combate",
+  "en": "In combat"
+ },
+ {
+  "es": "Patrullando",
+  "en": "Patrolling"
+ },
+ {
+  "es": "Siguiendo",
+  "en": "Following"
+ },
+ {
+  "es": "Manteniendo posición",
+  "en": "Holding position"
+ },
+ {
+  "es": "En puerto",
+  "en": "In harbor"
+ },
+ {
+  "es": "Navegando",
+  "en": "Sailing"
+ },
+ {
+  "es": "Neutral",
+  "en": "Neutral"
+ },
+ {
+  "es": "Tú",
+  "en": "You"
+ },
+ {
+  "es": "Rojo",
+  "en": "Red"
+ },
+ {
+  "es": "Azul",
+  "en": "Blue"
+ },
+ {
+  "es": "Turquesa",
+  "en": "Teal"
+ },
+ {
+  "es": "Violeta",
+  "en": "Purple"
+ },
+ {
+  "es": "Amarillo",
+  "en": "Yellow"
+ },
+ {
+  "es": "Naranja",
+  "en": "Orange"
+ },
+ {
+  "es": "Verde",
+  "en": "Green"
+ },
+ {
+  "es": "Rosa",
+  "en": "Pink"
+ },
+ {
+  "es": "Gris",
+  "en": "Gray"
+ },
+ {
+  "es": "Azul claro",
+  "en": "Light Blue"
+ },
+ {
+  "es": "Verde oscuro",
+  "en": "Dark Green"
+ },
+ {
+  "es": "Marrón",
+  "en": "Brown"
+ },
+ {
+  "es": "Burdeos",
+  "en": "Burgundy"
+ },
+ {
+  "es": "Azul marino",
+  "en": "Navy"
+ },
+ {
+  "es": "Cian",
+  "en": "Cyan"
+ },
+ {
+  "es": "Magenta",
+  "en": "Magenta"
+ },
+ {
+  "es": "Las Marcas",
+  "en": "The Marches"
+ },
+ {
+  "es": "Cuatro Riberas",
+  "en": "Four Riverlands"
+ },
+ {
+  "es": "LAS MARCAS",
+  "en": "THE MARCHES"
+ },
+ {
+  "es": "CUATRO RIBERAS",
+  "en": "FOUR RIVERLANDS"
+ },
+ {
+  "es": "NEW WORLD · EUROPA Y AMÉRICA",
+  "en": "NEW WORLD · EUROPE AND AMERICA"
+ },
+ {
+  "es": "Elige tu campo de batalla",
+  "en": "Choose a battlefield"
+ },
+ {
+  "es": "Prepara la expedición",
+  "en": "Prepare the expedition"
+ },
+ {
+  "es": "Ciudades al azar",
+  "en": "Random cities"
+ },
+ {
+  "es": "Países iniciales",
+  "en": "Starting countries"
+ },
+ {
+  "es": "Posiciones fijas",
+  "en": "Fixed positions"
+ },
+ {
+  "es": "Relajada · tácticas sencillas",
+  "en": "Relaxed · simple tactics"
+ },
+ {
+  "es": "Estándar · mayor coordinación",
+  "en": "Standard · coordinated tactics"
+ },
+ {
+  "es": "Difícil · oleadas coordinadas",
+  "en": "Hard · coordinated waves"
+ },
+ {
+  "es": "Relajado",
+  "en": "Relaxed"
+ },
+ {
+  "es": "Estándar",
+  "en": "Standard"
+ },
+ {
+  "es": "Difícil",
+  "en": "Hard"
+ },
+ {
+  "es": "Desglose del oro y del próximo ingreso",
+  "en": "Gold breakdown and next income"
+ },
+ {
+  "es": "Efectos de sonido (F7)",
+  "en": "Sound effects (F7)"
+ },
+ {
+  "es": "Música (F8)",
+  "en": "Music (F8)"
+ },
+ {
+  "es": "Clasificación (Tab)",
+  "en": "Ranking (Tab)"
+ },
+ {
+  "es": "Minimapa (F9)",
+  "en": "Minimap (F9)"
+ },
+ {
+  "es": "Chat (Intro)",
+  "en": "Chat (Enter)"
+ },
+ {
+  "es": "Efectos silenciados",
+  "en": "Effects muted"
+ },
+ {
+  "es": "Efectos activados",
+  "en": "Effects on"
+ },
+ {
+  "es": "Unidades totales, incluidos defensores y barcos",
+  "en": "Total units, including defenders and ships"
+ },
+ {
+  "es": "Ingreso por ronda",
+  "en": "Income per round"
+ },
+ {
+  "es": "Países completos",
+  "en": "Completed countries"
+ },
+ {
+  "es": "Ciudades controladas / total · abrir clasificación",
+  "en": "Controlled cities / total · open ranking"
+ },
+ {
+  "es": "CLASIFICACIÓN",
+  "en": "RANKING"
+ },
+ {
+  "es": "Cerrar (Esc)",
+  "en": "Close (Esc)"
+ },
+ {
+  "es": "Volumen de la música",
+  "en": "Music volume"
+ },
+ {
+  "es": "Atajos: F7 efectos · F8 música.",
+  "en": "Shortcuts: F7 effects · F8 music."
+ },
+ {
+  "es": "Velocidad de la cámara",
+  "en": "Camera speed"
+ },
+ {
+  "es": "Paneo en los bordes",
+  "en": "Edge panning"
+ },
+ {
+  "es": "Temblor de cámara",
+  "en": "Camera shake"
+ },
+ {
+  "es": "La elección se guarda para las próximas partidas.",
+  "en": "Your choice is kept for future matches."
+ },
+ {
+  "es": "Destinatario · Tab cambia · Mayús+Intro envía a todos",
+  "en": "Recipient · Tab cycles · Shift+Enter sends to all"
+ },
+ {
+  "es": "No hay ningún jugador con ese nombre o color.",
+  "en": "No player has that name or colour."
+ },
+ {
+  "es": "Efectos de sonido · música · minimapa (también en la barra rápida)",
+  "en": "Sound effects · music · minimap (also in the quick bar)"
+ },
+ {
+  "es": "Chat al destinatario elegido · enviar a todos",
+  "en": "Chat to the chosen recipient · send to all"
+ },
+ {
+  "es": "Cambiar de destinatario · mensaje privado (p. ej. /w azul hola, /azul hola)",
+  "en": "Change recipient · private message (e.g. /w blue hi, /blue hi)"
+ },
+ {
+  "es": "Tab en el chat · /w color",
+  "en": "Tab in chat · /w colour"
+ },
+ {
+  "es": "Intro · Mayús+Intro",
+  "en": "Enter · Shift+Enter"
+ },
+ {
+  "es": "Sin guarnición · un enemigo en el círculo la conquista",
+  "en": "No garrison · an enemy in the circle captures it"
+ },
+ {
+  "es": "Torre en construcción",
+  "en": "Tower under construction"
+ },
+ {
+  "es": "Torre destruida",
+  "en": "Tower destroyed"
+ },
+ {
+  "es": "Sin barco guardia",
+  "en": "No guard ship"
+ },
+ {
+  "es": "Clic derecho en el mapa fija la salida de las nuevas unidades.",
+  "en": "Right-click the map to set where new units rally."
+ },
+ {
+  "es": "Ampliar panel",
+  "en": "Expand panel"
+ },
+ {
+  "es": "Reducir panel",
+  "en": "Collapse panel"
+ },
+ {
+  "es": "Con un edificio seleccionado, su cuadrícula tiene prioridad: Q W E R / A S D F / Z X C V producen y E, A, S, D no dan órdenes de tropa.",
+  "en": "With a building selected its grid takes priority: Q W E R / A S D F / Z X C V produce, and E, A, S, D do not issue unit orders."
+ },
+ {
+  "es": "Con una ciudad o puerto propio seleccionado: produce la unidad de esa casilla de la cuadrícula",
+  "en": "With your city or harbor selected: produce the unit in that grid cell"
+ },
+ {
+  "es": "Si la cuadrícula tiene más de 12 opciones: cambia de página",
+  "en": "When the grid has more than 12 options: switch page"
+ },
+ {
+  "es": "Con tropas: atacar, mover, patrullar, detener, mantener posición",
+  "en": "With units: attack, move, patrol, stop, hold position"
+ },
+ {
+  "es": "Embarcar tropas cercanas · desembarcar la flota",
+  "en": "Board nearby troops · unload the fleet"
+ },
+ {
+  "es": "Seleccionar todo el ejército",
+  "en": "Select the whole army"
+ },
+ {
+  "es": "Seleccionar la flota",
+  "en": "Select the fleet"
+ },
+ {
+  "es": "Recuperar o guardar un grupo; doble pulsación centra la cámara",
+  "en": "Recall or store a group; double-press centers the camera"
+ },
+ {
+  "es": "Centrar en la selección, la flota o la última alerta",
+  "en": "Center on the selection, fleet or latest alert"
+ },
+ {
+  "es": "Menú · ir a tu base · ir a tu puerto",
+  "en": "Menu · go to your base · go to your harbor"
+ },
+ {
+  "es": "Mantener para ver la clasificación",
+  "en": "Hold to show the ranking"
+ },
+ {
+  "es": "Escribir en el chat",
+  "en": "Type in chat"
+ },
+ {
+  "es": "Cancelar la orden o deseleccionar",
+  "en": "Cancel the order or deselect"
+ },
+ {
+  "es": "Mostrar vida y nombres",
+  "en": "Show health and names"
+ },
+ {
+  "es": "Con una tropa ocupada añade la orden: mover, atacar, capturar, seguir, embarcar y desembarcar. Sin Mayús, la orden sustituye la cola. La ruta se ve con Mayús o Encolar; si no, aparece 1,2 s y se desvanece. El conmutador de la barra rápida hace lo mismo.",
+  "en": "With a busy unit, add the order: move, attack, capture, follow, board and unload. Without Shift the order replaces the queue. The route shows while Shift or Queue is on; otherwise it appears for 1.2 s and fades. The quick-bar switch does the same."
+ },
+ {
+  "es": "Mantener junto a las flechas: la cámara se mueve más rápido",
+  "en": "Hold with the arrows: the camera pans faster"
+ },
+ {
+  "es": "Encolar",
+  "en": "Queue"
+ },
+ {
+  "es": "Mover la cámara · restablecer la cámara",
+  "en": "Pan the camera · reset the camera"
+ },
+ {
+  "es": "Flechas · Retroceso",
+  "en": "Arrows · Backspace"
+ },
+ {
+  "es": "Espacio",
+  "en": "Space"
+ },
+ {
+  "es": "Intro",
+  "en": "Enter"
+ },
+ {
+  "es": "¡Te atacan!",
+  "en": "Under attack!"
+ },
+ {
+  "es": "Escribir un mensaje (Intro)",
+  "en": "Write a message (Enter)"
+ },
+ {
+  "es": "Escribe un mensaje…",
+  "en": "Type a message…"
+ },
+ {
+  "es": "Enviar",
+  "en": "Send"
+ },
+ {
+  "es": "Cancelar",
+  "en": "Cancel"
+ },
+ {
+  "es": "SONIDO: SILENCIADO",
+  "en": "SOUND: MUTED"
+ },
+ {
+  "es": "SONIDO: ACTIVO",
+  "en": "SOUND: ON"
+ },
+ {
+  "es": "VOLUMEN",
+  "en": "VOLUME"
+ },
+ {
+  "es": "EFECTOS",
+  "en": "EFFECTS"
+ },
+ {
+  "es": "TEMBLOR DE CÁMARA: ACTIVO",
+  "en": "CAMERA SHAKE: ON"
+ },
+ {
+  "es": "TEMBLOR DE CÁMARA: INACTIVO",
+  "en": "CAMERA SHAKE: OFF"
+ },
+ {
+  "es": "MÚSICA: ACTIVA",
+  "en": "MUSIC: ON"
+ },
+ {
+  "es": "MÚSICA: DESACTIVADA",
+  "en": "MUSIC: OFF"
+ },
+ {
+  "es": "MÚSICA −",
+  "en": "MUSIC −"
+ },
+ {
+  "es": "MÚSICA +",
+  "en": "MUSIC +"
+ },
+ {
+  "es": "Música activada",
+  "en": "Music on"
+ },
+ {
+  "es": "Música desactivada",
+  "en": "Music off"
+ },
+ {
+  "es": "RIESGUS · Traza tu conquista. Reúne tus ejércitos. Defiende cada frontera.",
+  "en": "RIESGUS · Plot your conquest. Rally your armies. Defend every frontier."
+ },
+ {
+  "es": "Conquista territorial en tiempo real.",
+  "en": "Real-time territorial conquest."
+ },
+ {
+  "es": "Los refuerzos esperan en la hoguera hasta fijar una salida.",
+  "en": "Reinforcements wait at the camp until you set a rally point."
+ },
+ {
+  "es": "Salida fijada. Clic derecho cambia el punto de reunión.",
+  "en": "Rally set. Right-click to change it."
+ },
+ {
+  "es": "Clic derecho en terreno fija la salida de los refuerzos del país.",
+  "en": "Right-click terrain to set the country's reinforcement rally."
+ },
+ {
+  "es": "Cada ciudad de un país completo aporta oro. Las ciudades de países incompletos no añaden ingresos.",
+  "en": "Each city in a completed country provides gold. Cities in incomplete countries provide no income."
+ },
+ {
+  "es": "1 · Selecciona una ciudad. Crea unidades e invade.",
+  "en": "1 · Select a city. Recruit units and invade."
+ },
+ {
+  "es": "2 · La guarnición no sale sin un relevo aliado.",
+  "en": "2 · The garrison cannot leave without an allied replacement."
+ },
+ {
+  "es": "3 · Completa países para obtener oro y refuerzos.",
+  "en": "3 · Complete countries to gain gold and reinforcements."
+ },
+ {
+  "es": "+4 oro base por ronda si conservas una ciudad · País completo: +1 por ciudad y refuerzos · Conquista el 60 %.",
+  "en": "+4 base gold each round while you hold a city · Complete country: +1 per city and reinforcements · Conquer 60%."
+ },
+ {
+  "es": "Las bajas enemigas conceden aparte ¼ de su valor de recompensa; las fracciones se acumulan hasta completar una moneda. No forman parte del ingreso por ronda.",
+  "en": "Enemy losses also grant ¼ of their reward value; fractions accumulate into a full coin. This is separate from round income."
+ },
+ {
+  "es": "falta oro",
+  "en": "not enough gold"
+ },
+ {
+  "es": "Escribe una semilla numérica válida.",
+  "en": "Enter a valid numeric seed."
+ },
+ {
+  "es": "No se encontró la escena de batalla.",
+  "en": "The battle scene could not be found."
+ },
+ {
+  "es": "JUGADORES · MÁXIMO",
+  "en": "PLAYERS · MAXIMUM"
+ },
+ {
+  "es": "El puerto no tiene una salida marítima segura.",
+  "en": "This harbor has no safe sea route."
+ },
+ {
+  "es": "La tropa no puede llegar al embarque marcado.",
+  "en": "The unit cannot reach the marked boarding point."
+ },
+ {
+  "es": "Selecciona una tropa móvil aliada.",
+  "en": "Select an allied mobile unit."
+ },
+ {
+  "es": "El puerto no tiene una playa o pasarela al alcance del transporte.",
+  "en": "No beach or pier is within transport range of this harbor."
+ },
+ {
+  "es": "Elige una playa o muelle de desembarco marcado.",
+  "en": "Choose a marked beach or landing pier."
+ },
+ {
+  "es": "El transporte navega al desembarco marcado.",
+  "en": "The transport is sailing to the marked landing."
+ },
+ {
+  "es": "No hay una ruta marítima hasta ese destino.",
+  "en": "There is no sea route to that destination."
+ },
+ {
+  "es": "El casco está bloqueado; se cancela el movimiento.",
+  "en": "The hull is blocked; the move is cancelled."
+ },
+ {
+  "es": "Elige un puerto de desembarco.",
+  "en": "Choose a landing harbor."
+ },
+ {
+  "es": "No hay una ruta marítima segura hasta esa playa.",
+  "en": "There is no safe sea route to that beach."
+ },
+ {
+  "es": "No se puede embarcar con la partida detenida.",
+  "en": "Units cannot board while the match is paused."
+ },
+ {
+  "es": "Esa unidad ya no está dentro del transporte.",
+  "en": "That unit is no longer aboard the transport."
+ },
+ {
+  "es": "El barco guardia necesita un relevo aliado en el puerto.",
+  "en": "The guard ship needs an allied replacement at the harbor."
+ },
+ {
+  "es": "La cola de órdenes está llena.",
+  "en": "The order queue is full."
+ },
+ {
+  "es": "El defensor necesita un relevo aliado dentro del círculo.",
+  "en": "The defender needs an allied replacement inside the circle."
+ },
+ {
+  "es": "La orden ya no es válida para esa unidad o su objetivo.",
+  "en": "That order is no longer valid for the unit or target."
+ },
+ {
+  "es": "La unidad, el relevo o el objetivo cambió antes de aplicar la orden.",
+  "en": "The unit, replacement, or target changed before the order was applied."
+ },
+ {
+  "es": "No se ha podido aplicar la orden.",
+  "en": "The order could not be applied."
+ },
+ {
+  "es": "Tipo de barco inválido.",
+  "en": "Invalid ship type."
+ },
+ {
+  "es": "Bando inválido.",
+  "en": "Invalid player."
+ },
+ {
+  "es": "Reanuda la partida para comprar barcos.",
+  "en": "Resume the match to buy ships."
+ },
+ {
+  "es": "Este puerto no pertenece a tu bando.",
+  "en": "This harbor does not belong to you."
+ },
+ {
+  "es": "La cola naval está llena.",
+  "en": "The naval queue is full."
+ },
+ {
+  "es": "Oro insuficiente para comprar este barco.",
+  "en": "Not enough gold to buy this ship."
+ },
+ {
+  "es": "Este muelle sólo entrena Marines.",
+  "en": "This dock only trains Marines."
+ },
+ {
+  "es": "Reanuda la partida para reclutar.",
+  "en": "Resume the match to recruit."
+ },
+ {
+  "es": "La cola de Marines está llena.",
+  "en": "The Marine queue is full."
+ },
+ {
+  "es": "Límite de soldados alcanzado.",
+  "en": "Soldier limit reached."
+ },
+ {
+  "es": "Este encargo ya no está en la cola.",
+  "en": "That order is no longer queued."
+ },
+ {
+  "es": "Reanuda la partida para cancelar encargos.",
+  "en": "Resume the match to cancel orders."
+ },
+ {
+  "es": "Este puerto no tiene ciudad.",
+  "en": "This harbor has no city."
+ },
+ {
+  "es": "Reanuda la partida para construir.",
+  "en": "Resume the match to build."
+ },
+ {
+  "es": "Este puerto ya tiene una torre.",
+  "en": "This harbor already has a tower."
+ },
+ {
+  "es": "Ya hay una obra en marcha en este puerto.",
+  "en": "Construction is already underway at this harbor."
+ },
+ {
+  "es": "Este puerto sólo recluta Marines.",
+  "en": "This harbor only recruits Marines."
+ },
+ {
+  "es": "Esta ciudad sólo recluta tropas regulares.",
+  "en": "This city only recruits regular troops."
+ },
+ {
+  "es": "Mejora la ciudad a nivel II para reclutar esta unidad.",
+  "en": "Upgrade the city to level II to recruit this unit."
+ },
+ {
+  "es": "La cola está llena. Pulsa un encargo para cancelarlo.",
+  "en": "The queue is full. Select an order to cancel it."
+ },
+ {
+  "es": "Límite de 100 soldados móviles alcanzado.",
+  "en": "Mobile soldier limit of 100 reached."
+ },
+ {
+  "es": "Oro insuficiente. Recibirás ingresos al terminar la ronda.",
+  "en": "Not enough gold. You receive income at the end of the round."
+ },
+ {
+  "es": "Reanuda la partida para dar esta orden.",
+  "en": "Resume the match to issue this order."
+ },
+ {
+  "es": "Selecciona una ciudad de tu bando.",
+  "en": "Select one of your cities."
+ },
+ {
+  "es": "Esta ciudad ya tiene una torre.",
+  "en": "This city already has a tower."
+ },
+ {
+  "es": "Las ciudades conservan su nivel: compra las unidades directamente.",
+  "en": "Cities retain their level; recruit units directly."
+ },
+ {
+  "es": "Ya hay una obra en marcha en esta ciudad.",
+  "en": "Construction is already underway in this city."
+ },
+ {
+  "es": "Cada compra encarga una unidad por edificio compatible. La cantidad y el oro muestran el máximo disponible ahora; las colas no disponibles se omiten.",
+  "en": "Each purchase queues one unit at every compatible selected building."
+ },
+ {
+  "es": "El total incluye soldados, defensores de ciudades y barcos. Los defensores y barcos no consumen plazas de reclutamiento.",
+  "en": "Total includes soldiers, city defenders, and ships. Defenders and ships do not use recruitment slots."
+ },
+ {
+  "es": "Conquista el 60 % de las ciudades. Completa países para recibir refuerzos de sus hogueras.",
+  "en": "Conquer 60% of all cities. Complete countries to receive camp reinforcements."
+ },
+ {
+  "es": "Selección: clic o toque para seleccionar; arrastra un área para seleccionar tropas y edificios.",
+  "en": "Selection: click or tap; drag an area to select units and buildings."
+ },
+ {
+  "es": "Órdenes: clic derecho en PC o una acción seguida de toque en tabletas. B/D embarca y desembarca.",
+  "en": "Orders: right-click on PC, or choose an action then tap. B/U boards and unloads."
+ },
+ {
+  "es": "Cámara: rueda para zoom, arrastre derecho para mover y botón central para girar. En pantalla táctil, dos dedos mueven y amplían; tres dedos giran.",
+  "en": "Camera: wheel to zoom, right-drag to pan, middle-drag to rotate. On touch, use two fingers to pan and zoom, three to rotate."
+ },
+ {
+  "es": "4 de oro y un defensor por puesto. Conquista el 60 % de las ciudades.",
+  "en": "Start with 4 gold and one defender per post. Conquer 60% of all cities."
+ },
+ {
+  "es": "Cargando terreno, ciudades y rutas…",
+  "en": "Loading terrain, cities, and routes…"
+ },
+ {
+  "es": "Añadir cordilleras suaves a Europe y New World",
+  "en": "Add gentle mountain ranges to Europe and New World"
+ },
+ {
+  "es": "Respeta coordenadas y despeja anclajes.",
+  "en": "Preserves source coordinates and clears anchors."
+ },
+ {
+  "es": "Disponible en escenarios importados.",
+  "en": "Available on imported scenarios."
+ },
+ {
+  "es": "Territorio importado a escala con puertos y fronteras reales.",
+  "en": "Source-scale territory with ports and borders."
+ },
+ {
+  "es": "Costa, mesetas y un sur seco para campañas rápidas.",
+  "en": "Coast, plateaus, and a dry south for fast campaigns."
+ },
+ {
+  "es": "Río central, puente y un archipiélago al norte.",
+  "en": "Central river, bridge, and northern archipelago."
+ },
+ {
+  "es": "Europa y América para una conquista de gran escala.",
+  "en": "Europe and America for large-scale conquest."
+ },
+ {
+  "es": "MARCA DEL ALBA",
+  "en": "DAWN MARCH"
+ },
+ {
+  "es": "VALLE DE LOS PINOS",
+  "en": "PINE VALLEY"
+ },
+ {
+  "es": "ESCARPA DE PONIENTE",
+  "en": "WESTERN ESCARPMENT"
+ },
+ {
+  "es": "CUENCA DEL FRESNO",
+  "en": "ASH BASIN"
+ },
+ {
+  "es": "PUERTAS DE ORIENTE",
+  "en": "EASTERN GATES"
+ },
+ {
+  "es": "SIERRA CARMESÍ",
+  "en": "CRIMSON RANGE"
+ },
+ {
+  "es": "DEHESA DE PONIENTE",
+  "en": "WESTERN PASTURE"
+ },
+ {
+  "es": "CAMPOS DEL SECANO",
+  "en": "DRY FIELDS"
+ },
+ {
+  "es": "LOMAS DE AZAFRÁN",
+  "en": "SAFFRON HILLS"
+ },
+ {
+  "es": "COSTA DE SAL",
+  "en": "SALT COAST"
+ },
+ {
+  "es": "ISLAS DEL NORTE",
+  "en": "NORTHERN ISLES"
+ },
+ {
+  "es": "MARCA OCCIDENTAL",
+  "en": "WESTERN MARCH"
+ },
+ {
+  "es": "BOSQUES DE PONIENTE",
+  "en": "WESTERN FORESTS"
+ },
+ {
+  "es": "CUENCA DEL RÍO",
+  "en": "RIVER BASIN"
+ },
+ {
+  "es": "COSTA OCCIDENTAL",
+  "en": "WESTERN COAST"
+ },
+ {
+  "es": "COLINAS OCCIDENTALES",
+  "en": "WESTERN HILLS"
+ },
+ {
+  "es": "RIBERA ALTA",
+  "en": "HIGH RIVERBANK"
+ },
+ {
+  "es": "ALTOS CENTRALES",
+  "en": "CENTRAL HIGHLANDS"
+ },
+ {
+  "es": "FRONTERA ORIENTAL",
+  "en": "EASTERN FRONTIER"
+ },
+ {
+  "es": "LLANURAS DE LEVANTE",
+  "en": "EASTERN PLAINS"
+ },
+ {
+  "es": "PUERTAS DEL ESTUARIO",
+  "en": "ESTUARY GATES"
+ },
+ {
+  "es": "ARCHIPIÉLAGO NORTE",
+  "en": "NORTHERN ARCHIPELAGO"
+ },
+ {
+  "es": "Marca del Alba",
+  "en": "Dawn March"
+ },
+ {
+  "es": "Valle de los Pinos",
+  "en": "Pine Valley"
+ },
+ {
+  "es": "Escarpa de Poniente",
+  "en": "Western Escarpment"
+ },
+ {
+  "es": "Cuenca del Fresno",
+  "en": "Ash Basin"
+ },
+ {
+  "es": "Puertas de Oriente",
+  "en": "Eastern Gates"
+ },
+ {
+  "es": "Sierra Carmesí",
+  "en": "Crimson Range"
+ },
+ {
+  "es": "Dehesa de Poniente",
+  "en": "Western Pasture"
+ },
+ {
+  "es": "Campos del Secano",
+  "en": "Dry Fields"
+ },
+ {
+  "es": "Lomas de Azafrán",
+  "en": "Saffron Hills"
+ },
+ {
+  "es": "Costa de Sal",
+  "en": "Salt Coast"
+ },
+ {
+  "es": "Islas del Norte",
+  "en": "Northern Isles"
+ },
+ {
+  "es": "Marca Occidental",
+  "en": "Western March"
+ },
+ {
+  "es": "Bosques de Poniente",
+  "en": "Western Forests"
+ },
+ {
+  "es": "Cuenca del Río",
+  "en": "River Basin"
+ },
+ {
+  "es": "Costa Occidental",
+  "en": "Western Coast"
+ },
+ {
+  "es": "Colinas Occidentales",
+  "en": "Western Hills"
+ },
+ {
+  "es": "Ribera Alta",
+  "en": "High Riverbank"
+ },
+ {
+  "es": "Altos Centrales",
+  "en": "Central Highlands"
+ },
+ {
+  "es": "Frontera Oriental",
+  "en": "Eastern Frontier"
+ },
+ {
+  "es": "Llanuras de Levante",
+  "en": "Eastern Plains"
+ },
+ {
+  "es": "Puertas del Estuario",
+  "en": "Estuary Gates"
+ },
+ {
+  "es": "Archipiélago Norte",
+  "en": "Northern Archipelago"
+ },
+ {
+  "es": "Bahía de Poniente",
+  "en": "Western Bay"
+ },
+ {
+  "es": "Estrecho del Norte",
+  "en": "Northern Strait"
+ },
+ {
+  "es": "Bahía del Noroeste",
+  "en": "Northwest Bay"
+ },
+ {
+  "es": "Llano Central",
+  "en": "Central Plain"
+ },
+ {
+  "es": "Meseta de los Pinos",
+  "en": "Pine Plateau"
+ },
+ {
+  "es": "Bastión del Alba",
+  "en": "Dawn Bastion"
+ },
+ {
+  "es": "Pinar Alto",
+  "en": "High Pinewood"
+ },
+ {
+  "es": "Cordillera del Alba",
+  "en": "Dawn Range"
+ },
+ {
+  "es": "Molino Viejo",
+  "en": "Old Mill"
+ },
+ {
+  "es": "Valdeluz",
+  "en": "Brightvale"
+ },
+ {
+  "es": "Encinar Central",
+  "en": "Central Oakwood"
+ },
+ {
+  "es": "Cresta de Poniente",
+  "en": "Western Ridge"
+ },
+ {
+  "es": "Dehesa Norte",
+  "en": "Northern Pasture"
+ },
+ {
+  "es": "Puerta de Piedra",
+  "en": "Stone Gate"
+ },
+ {
+  "es": "Valle del Fresno",
+  "en": "Ash Valley"
+ },
+ {
+  "es": "Piedra Vieja",
+  "en": "Old Stone"
+ },
+ {
+  "es": "Marca del Sur",
+  "en": "Southern March"
+ },
+ {
+  "es": "Torre del Roble",
+  "en": "Oak Tower"
+ },
+ {
+  "es": "Vigía del Este",
+  "en": "Eastern Watch"
+ },
+ {
+  "es": "Senda Oriental",
+  "en": "Eastern Path"
+ },
+ {
+  "es": "Torre del Norte",
+  "en": "Northern Tower"
+ },
+ {
+  "es": "Fortaleza Carmesí",
+  "en": "Crimson Fortress"
+ },
+ {
+  "es": "Altos de Ceniza",
+  "en": "Ash Highlands"
+ },
+ {
+  "es": "Guardia Oriental",
+  "en": "Eastern Guard"
+ },
+ {
+  "es": "Encinar Bajo",
+  "en": "Lower Oakwood"
+ },
+ {
+  "es": "Trigal Dorado",
+  "en": "Golden Wheatfields"
+ },
+ {
+  "es": "Azafrán del Norte",
+  "en": "Northern Saffron"
+ },
+ {
+  "es": "Olivar de la Marca",
+  "en": "March Olive Grove"
+ },
+ {
+  "es": "Loma del Sur",
+  "en": "Southern Hill"
+ },
+ {
+  "es": "Costa del Sur",
+  "en": "Southern Coast"
+ },
+ {
+  "es": "Vigía de la Sal",
+  "en": "Salt Watch"
+ },
+ {
+  "es": "Isla de la Bruma",
+  "en": "Mist Isle"
+ },
+ {
+  "es": "Dehesa de la Frontera",
+  "en": "Frontier Pasture"
+ },
+ {
+  "es": "Isla del Viento",
+  "en": "Wind Isle"
+ },
+ {
+  "es": "Torre de la Sal",
+  "en": "Salt Tower"
+ },
+ {
+  "es": "Bastión Occidental",
+  "en": "Western Bastion"
+ },
+ {
+  "es": "Bosque Bajo",
+  "en": "Lower Forest"
+ },
+ {
+  "es": "Paso de Poniente",
+  "en": "Western Pass"
+ },
+ {
+  "es": "Pinar Occidental",
+  "en": "Western Pinewood"
+ },
+ {
+  "es": "Loma del Roble",
+  "en": "Oak Hill"
+ },
+ {
+  "es": "Marjal Occidental",
+  "en": "Western Marsh"
+ },
+ {
+  "es": "Cresta del Bosque",
+  "en": "Forest Ridge"
+ },
+ {
+  "es": "Puerta del Río",
+  "en": "River Gate"
+ },
+ {
+  "es": "Vega del Sur",
+  "en": "Southern Meadow"
+ },
+ {
+  "es": "Molino del Río",
+  "en": "River Mill"
+ },
+ {
+  "es": "Vado Bajo",
+  "en": "Lower Ford"
+ },
+ {
+  "es": "Ribera del Río",
+  "en": "Riverbank"
+ },
+ {
+  "es": "Linde Occidental",
+  "en": "Western Border"
+ },
+ {
+  "es": "Peña del Mar",
+  "en": "Sea Rock"
+ },
+ {
+  "es": "Cresta Occidental",
+  "en": "Western Ridge"
+ },
+ {
+  "es": "Puerto Alto",
+  "en": "High Harbor"
+ },
+ {
+  "es": "Colina del Vado",
+  "en": "Ford Hill"
+ },
+ {
+  "es": "Senda del Norte",
+  "en": "Northern Path"
+ },
+ {
+  "es": "Paso de los Sauces",
+  "en": "Willow Pass"
+ },
+ {
+  "es": "Estuario Verde",
+  "en": "Green Estuary"
+ },
+ {
+  "es": "Bastión Central",
+  "en": "Central Bastion"
+ },
+ {
+  "es": "Altos del Sur",
+  "en": "Southern Highlands"
+ },
+ {
+  "es": "Loma Central",
+  "en": "Central Hill"
+ },
+ {
+  "es": "Cerro de Piedra",
+  "en": "Stone Hill"
+ },
+ {
+  "es": "Puerta Oriental",
+  "en": "Eastern Gate"
+ },
+ {
+  "es": "Cantera Oriental",
+  "en": "Eastern Quarry"
+ },
+ {
+  "es": "Paso de Levante",
+  "en": "Eastern Pass"
+ },
+ {
+  "es": "Mirador del Río",
+  "en": "River Lookout"
+ },
+ {
+  "es": "Fuerte del Este",
+  "en": "Eastern Fort"
+ },
+ {
+  "es": "Paso Central",
+  "en": "Central Pass"
+ },
+ {
+  "es": "Vigía Oriental",
+  "en": "Eastern Watch"
+ },
+ {
+  "es": "Atalaya del Llano",
+  "en": "Plains Watch"
+ },
+ {
+  "es": "Costa de Levante",
+  "en": "Eastern Coast"
+ },
+ {
+  "es": "Cresta Oriental",
+  "en": "Eastern Ridge"
+ },
+ {
+  "es": "Altos del Estuario",
+  "en": "Estuary Highlands"
+ },
+ {
+  "es": "Puerta del Estuario",
+  "en": "Estuary Gate"
+ },
+ {
+  "es": "Isla del Roble",
+  "en": "Oak Isle"
+ },
+ {
+  "es": "Vega del Confín",
+  "en": "Frontier Meadow"
+ },
+ {
+  "es": "Isla del Alba",
+  "en": "Dawn Isle"
+ },
+ {
+  "es": "Vigía de Levante",
+  "en": "Eastern Watch"
+ },
+ {
+  "es": "LA CONQUISTA EMPIEZA EN",
+  "en": "CONQUEST STARTS IN"
+ },
+ {
+  "es": "VISTA ESTRATÉGICA",
+  "en": "STRATEGIC VIEW"
+ },
+ {
+  "es": "acerca el mapa para combatir",
+  "en": "zoom in to fight"
+ },
+ {
+  "es": "rombos: hogueras",
+  "en": "diamonds: camps"
+ },
+ {
+  "es": "◇ hogueras",
+  "en": "◇ camps"
+ },
+ {
+  "es": "Has sido eliminado. La partida continúa.",
+  "en": "You have been eliminated. The match continues."
+ },
+ {
+  "es": "ORO",
+  "en": "GOLD"
+ },
+ {
+  "es": "RONDA",
+  "en": "ROUND"
+ },
+ {
+  "es": "tú y",
+  "en": "you and"
+ },
+ {
+  "es": "IA",
+  "en": "AI"
+ },
+ {
+  "es": "ELIMINADO",
+  "en": "ELIMINATED"
+ },
+ {
+  "es": "UNIDADES SELECCIONADAS",
+  "en": "UNITS SELECTED"
+ },
+ {
+  "es": "TROPAS SELECCIONADAS",
+  "en": "TROOPS SELECTED"
+ },
+ {
+  "es": "EDIFICIOS SELECCIONADOS",
+  "en": "BUILDINGS SELECTED"
+ },
+ {
+  "es": "Ciudad retirada",
+  "en": "City removed"
+ },
+ {
+  "es": "Puerto retirado",
+  "en": "Harbor removed"
+ },
+ {
+  "es": "A BORDO",
+  "en": "ABOARD"
+ },
+ {
+  "es": "pulsa para desembarcar",
+  "en": "click to unload"
+ },
+ {
+  "es": "desembarcar esta unidad",
+  "en": "unload this unit"
+ },
+ {
+  "es": "incluidos los encargos pendientes",
+  "en": "including pending orders"
+ },
+ {
+  "es": "Ocultar mapa",
+  "en": "Hide map"
+ },
+ {
+  "es": "MOSTRAR MAPA",
+  "en": "SHOW MAP"
+ },
+ {
+  "es": "OCULTAR MAPA",
+  "en": "HIDE MAP"
+ },
+ {
+  "es": "PANEO EN BORDES: ACTIVO",
+  "en": "EDGE PAN: ON"
+ },
+ {
+  "es": "PANEO EN BORDES: INACTIVO",
+  "en": "EDGE PAN: OFF"
+ },
+ {
+  "es": "VELOCIDAD CÁMARA",
+  "en": "CAMERA SPEED"
+ },
+ {
+  "es": "Recogiendo muestra de rendimiento…",
+  "en": "Collecting performance sample…"
+ },
+ {
+  "es": "Controla todo el país",
+  "en": "Control the whole country"
+ },
+ {
+  "es": "HOGUERA",
+  "en": "CAMP"
+ },
+ {
+  "es": "Punto de reunión",
+  "en": "Rally point"
+ },
+ {
+  "es": "La partida está detenida.",
+  "en": "The match is paused."
+ },
+ {
+  "es": "Reanuda la partida",
+  "en": "Resume the match"
+ },
+ {
+  "es": "No hay",
+  "en": "There is no"
+ },
+ {
+  "es": "Oro insuficiente",
+  "en": "Not enough gold"
+ },
+ {
+  "es": "conservan su nivel",
+  "en": "retain their level"
+ },
+ {
+  "es": "del Norte",
+  "en": "of the North"
+ },
+ {
+  "es": "del Sur",
+  "en": "of the South"
+ },
+ {
+  "es": "del Este",
+  "en": "of the East"
+ },
+ {
+  "es": "{0} ORO +{1}",
+  "en": "{0} GOLD +{1}"
+ },
+ {
+  "es": "{0} ORO · +{1}",
+  "en": "{0} GOLD · +{1}"
+ },
+ {
+  "es": "{0} unidades · {1}/{2} reclutadas",
+  "en": "{0} units · {1}/{2} recruited"
+ },
+ {
+  "es": "{0} s",
+  "en": "{0} s"
+ },
+ {
+  "es": "R{0} · Ingreso en {1} s",
+  "en": "R{0} · Income in {1} s"
+ },
+ {
+  "es": "Ronda {0} · próximo ingreso +{1} oro en {2} s",
+  "en": "Round {0} · next income +{1} gold in {2} s"
+ },
+ {
+  "es": "Disponible: {0} oro",
+  "en": "Available: {0} gold"
+ },
+ {
+  "es": "Próxima ronda: +{0} oro en {1} s",
+  "en": "Next round: +{0} gold in {1} s"
+ },
+ {
+  "es": "Ingreso básico: +{0}",
+  "en": "Base income: +{0}"
+ },
+ {
+  "es": "{0} · {1}/{2} ciudades · +{3}",
+  "en": "{0} · {1}/{2} cities · +{3}"
+ },
+ {
+  "es": "Total: {0} unidades",
+  "en": "Total: {0} units"
+ },
+ {
+  "es": "Reclutamiento: {0} / {1} plazas, incluidos los encargos pendientes.",
+  "en": "Recruitment: {0} / {1} slots, including pending orders."
+ },
+ {
+  "es": "HOGUERA · {0} / {1} ciudades",
+  "en": "CAMP · {0} / {1} cities"
+ },
+ {
+  "es": "EDIFICIOS SELECCIONADOS · {0}",
+  "en": "BUILDINGS SELECTED · {0}"
+ },
+ {
+  "es": "{0} UNIDADES SELECCIONADAS",
+  "en": "{0} UNITS SELECTED"
+ },
+ {
+  "es": "{0} vida",
+  "en": "{0} health"
+ },
+ {
+  "es": "armadura {0} {1}",
+  "en": "armor {0} {1}"
+ },
+ {
+  "es": "alcance {0}",
+  "en": "range {0}"
+ },
+ {
+  "es": "carga {0}",
+  "en": "cargo {0}"
+ },
+ {
+  "es": "maná {0}",
+  "en": "mana {0}"
+ },
+ {
+  "es": "{0} oro",
+  "en": "{0} gold"
+ },
+ {
+  "es": "Hasta ×{0} · {1} oro",
+  "en": "Up to ×{0} · {1} gold"
+ },
+ {
+  "es": "rugido +{0}%",
+  "en": "roar +{0}%"
+ },
+ {
+  "es": "{0} / {1} vida",
+  "en": "{0} / {1} health"
+ },
+ {
+  "es": "{0} / {1} maná",
+  "en": "{0} / {1} mana"
+ },
+ {
+  "es": "País · {0} · {1} / {2} ciudades",
+  "en": "Country · {0} · {1} / {2} cities"
+ },
+ {
+  "es": "País · {0} · {1} / {2} ciudades · completo",
+  "en": "Country · {0} · {1} / {2} cities · complete"
+ },
+ {
+  "es": "Guarnición · {0} · {1} / {2} vida",
+  "en": "Garrison · {0} · {1} / {2} health"
+ },
+ {
+  "es": "Torre · {0} / {1} vida",
+  "en": "Tower · {0} / {1} health"
+ },
+ {
+  "es": "Torre · {0} / {1} vida · sin guarnición no dispara",
+  "en": "Tower · {0} / {1} health · no garrison, it does not fire"
+ },
+ {
+  "es": "Barco guardia · {0}",
+  "en": "Guard ship · {0}"
+ },
+ {
+  "es": "{0} · cancelar encargo (devuelve el oro)",
+  "en": "{0} · cancel order (refunds gold)"
+ },
+ {
+  "es": "Más opciones · página {0} / {1}",
+  "en": "More options · page {0} / {1}"
+ },
+ {
+  "es": "¡País completado: {0}!",
+  "en": "Country completed: {0}!"
+ },
+ {
+  "es": "Oro y refuerzos de {0} cada ronda",
+  "en": "Gold and reinforcements from {0} every round"
+ },
+ {
+  "es": "Has conquistado {0}",
+  "en": "You captured {0}"
+ },
+ {
+  "es": "¡Has perdido {0}!",
+  "en": "You lost {0}!"
+ },
+ {
+  "es": "País roto: sin oro ni refuerzos de {0}",
+  "en": "Country broken: no gold or reinforcements from {0}"
+ },
+ {
+  "es": "Has perdido {0}",
+  "en": "You lost {0}"
+ },
+ {
+  "es": "¡Te atacan en {0}!",
+  "en": "Under attack at {0}!"
+ },
+ {
+  "es": "Para {0} · Escribe un mensaje…",
+  "en": "To {0} · Type a message…"
+ },
+ {
+  "es": "Para: {0}",
+  "en": "To: {0}"
+ },
+ {
+  "es": "{0}. {1} · ELIMINADO",
+  "en": "{0}. {1} · ELIMINATED"
+ },
+ {
+  "es": "{0} · {1} / {2} vida",
+  "en": "{0} · {1} / {2} health"
+ },
+ {
+  "es": "A BORDO · {0} / {1} · pulsa para desembarcar",
+  "en": "ABOARD · {0} / {1} · click to unload"
+ },
+ {
+  "es": "{0} · desembarcar esta unidad",
+  "en": "{0} · unload this unit"
+ },
+ {
+  "es": "Semilla {0} · {1} jugadores · {2}",
+  "en": "Seed {0} · {1} players · {2}"
+ },
+ {
+  "es": "Rendimiento: {0} ms medio · {1} ms máximo · {2} unidades · {3} MB Unity.",
+  "en": "Performance: {0} ms average · {1} ms maximum · {2} units · {3} MB Unity."
+ },
+ {
+  "es": "DERROTA · Has sido eliminado. La partida continúa.",
+  "en": "DEFEAT · You have been eliminated. The match continues."
+ },
+ {
+  "es": "{0} ha sido eliminado.",
+  "en": "{0} has been eliminated."
+ },
+ {
+  "es": "CONVERSIÓN {0}%",
+  "en": "CAPTURE {0}%"
+ },
+ {
+  "es": "Límite naval de {0} barcos alcanzado.",
+  "en": "Naval limit of {0} ships reached."
+ },
+ {
+  "es": "{0} conquistado por {1}.",
+  "en": "{0} captured by {1}."
+ },
+ {
+  "es": "Ronda {0} · +{1} de oro",
+  "en": "Round {0} · +{1} gold"
+ },
+ {
+  "es": "¡Victoria! Las Marcas son tuyas.",
+  "en": "Victory! The Marches are yours."
+ },
+ {
+  "es": "{0} ha ganado.",
+  "en": "{0} has won."
+ },
+ {
+  "es": "Queda neutral {0}",
+  "en": "Now neutral: {0}"
+ },
+ {
+  "es": "{0} ha conquistado {1}",
+  "en": "{0} captured {1}"
+ },
+ {
+  "es": "País completado: {0}. Refuerzos activos.",
+  "en": "Country completed: {0}. Reinforcements active."
+ },
+ {
+  "es": "{0} completa {1}. Refuerzos activos.",
+  "en": "{0} completed {1}. Reinforcements active."
+ },
+ {
+  "es": "Embarque completado: {0} / {1}.",
+  "en": "Boarding complete: {0} / {1}."
+ },
+ {
+  "es": "Embarque terminado: {0} / {1}.",
+  "en": "Boarding finished: {0} / {1}."
+ },
+ {
+  "es": "Embarque detenido: {0}",
+  "en": "Boarding stopped: {0}"
+ },
+ {
+  "es": "las tropas no pueden avanzar hasta la costa marcada.",
+  "en": "the troops cannot advance to the marked coast."
+ },
+ {
+  "es": "×{0} {1} encargados · {2} oro",
+  "en": "×{0} {1} ordered · {2} gold"
+ },
+ {
+  "es": "{0} sin encargo",
+  "en": "{0} not ordered"
+ },
+ {
+  "es": "{0} · máx. {1} jugadores",
+  "en": "{0} · max. {1} players"
+ },
+ {
+  "es": "{0} · tú y {1} IA",
+  "en": "{0} · you and {1} AI"
+ },
+ {
+  "es": "{0} ciudades · {1} grupos",
+  "en": "{0} cities · {1} groups"
+ },
+ {
+  "es": "{0} ciudades · {1} grupos · {2} puertos",
+  "en": "{0} cities · {1} groups · {2} ports"
+ },
+ {
+  "es": "IA {0}",
+  "en": "AI {0}"
+ },
+ {
+  "es": "Unidad retirada",
+  "en": "Unit removed"
+ },
+ {
+  "es": "Unidad eliminada",
+  "en": "Unit eliminated"
+ },
+ {
+  "es": "Muelle del Oeste",
+  "en": "West Pier"
+ },
+ {
+  "es": "Puerto del Pinar",
+  "en": "Pinewood Harbor"
+ },
+ {
+  "es": "Puerto del Paso",
+  "en": "Pass Harbor"
+ },
+ {
+  "es": "Dársena del Roble",
+  "en": "Oak Dock"
+ },
+ {
+  "es": "Muelle del Este",
+  "en": "East Pier"
+ },
+ {
+  "es": "Frontera del Sur",
+  "en": "Southern Frontier"
+ },
+ {
+  "es": "New World",
+  "en": "New World"
+ },
+ {
+  "es": "Europe",
+  "en": "Europe"
+ },
+ {
+  "es": "Muelle insular 1",
+  "en": "Island Pier 1"
+ },
+ {
+  "es": "Muelle insular 2",
+  "en": "Island Pier 2"
+ },
+ {
+  "es": "Muelle insular 3",
+  "en": "Island Pier 3"
+ },
+ {
+  "es": "Muelle insular 4",
+  "en": "Island Pier 4"
+ },
+ {
+  "es": "Muelle insular 5",
+  "en": "Island Pier 5"
+ },
+ {
+  "es": "Muelle insular 6",
+  "en": "Island Pier 6"
+ },
+ {
+  "es": "Muelle insular 7",
+  "en": "Island Pier 7"
+ },
+ {
+  "es": "Muelle insular 8",
+  "en": "Island Pier 8"
+ },
+ {
+  "es": "La batalla ha terminado.",
+  "en": "The battle is over."
+ },
+ {
+  "es": "Mayús",
+  "en": "Shift"
+ },
+ {
+  "es": "VISTA ESTRATÉGICA · ◇ hogueras",
+  "en": "STRATEGIC VIEW · ◇ camps"
+ },
+ {
+  "es": "VISTA ESTRATÉGICA · rombos: hogueras · acerca el mapa para combatir",
+  "en": "STRATEGIC VIEW · diamonds: camps · zoom in to fight"
+ },
+ {
+  "es": "Escenario de práctica",
+  "en": "Practice scenario"
+ },
+ {
+  "es": "No hay países suficientes para todos: reparto por ciudades.",
+  "en": "Not enough countries for everyone: starting by cities."
+ },
+ {
+  "es": "JUGADORES · MÁXIMO {0}",
+  "en": "PLAYERS · MAXIMUM {0}"
+ },
+ {
+  "es": "No hay una batalla activa.",
+  "en": "There is no active battle."
+ },
+ {
+  "es": "Oro insuficiente para reclutar este Marine.",
+  "en": "Not enough gold to recruit this Marine."
+ },
+ {
+  "es": "El transporte se acerca al muelle de embarque.",
+  "en": "The transport is approaching the boarding pier."
+ },
+ {
+  "es": "Selecciona un transporte.",
+  "en": "Select a transport."
+ },
+ {
+  "es": "Selecciona soldados para embarcar.",
+  "en": "Select soldiers to board."
+ },
+ {
+  "es": "No hay playa o muelle de embarque alcanzable.",
+  "en": "No reachable boarding beach or pier."
+ },
+ {
+  "es": "Elige una ciudad o un puerto.",
+  "en": "Choose a city or a harbor."
+ },
+ {
+  "es": "El edificio ya no existe.",
+  "en": "The building no longer exists."
+ },
+ {
+  "es": "Identificador de edificio inválido.",
+  "en": "Invalid building id."
+ },
+ {
+  "es": "Índice de encargo inválido.",
+  "en": "Invalid order index."
+ },
+ {
+  "es": "Punto de reunión inválido.",
+  "en": "Invalid rally point."
+ },
+ {
+  "es": "El punto de reunión no es transitable.",
+  "en": "The rally point is not walkable."
+ },
+ {
+  "es": "Controla todo el país para gestionar esta hoguera.",
+  "en": "Control the whole country to manage this camp."
+ },
+ {
+  "es": "Selecciona un puerto de tu bando para comprar barcos.",
+  "en": "Select one of your harbors to buy ships."
+ },
+ {
+  "es": "Selecciona un puerto de tu bando para reclutar Marines.",
+  "en": "Select one of your harbors to recruit Marines."
+ },
+ {
+  "es": "Selecciona una ciudad de tu bando para reclutar.",
+  "en": "Select one of your cities to recruit."
+ },
+ {
+  "es": "El defensor puede salir si un aliado ocupa su círculo como relevo.",
+  "en": "The defender can leave if an ally takes its circle as a replacement."
+ },
+ {
+  "es": "Recluta tropas móviles en una ciudad aliada. Los defensores mantienen sus círculos.",
+  "en": "Recruit mobile troops in an allied city. Defenders hold their circles."
+ },
+ {
+  "es": "Selecciona una ciudad tuya para mejorarla.",
+  "en": "Select one of your cities to upgrade it."
+ },
+ {
+  "es": "Selecciona un transporte para embarcar.",
+  "en": "Select a transport to board."
+ },
+ {
+  "es": "Acerca tropas a la costa o selecciónalas y haz clic derecho en el transporte.",
+  "en": "Bring troops to the coast, or select them and right-click the transport."
+ },
+ {
+  "es": "Selecciona un transporte con tropas a bordo.",
+  "en": "Select a transport with troops aboard."
+ },
+ {
+  "es": "Desembarco: haz clic en una playa transitable. El transporte navegará hasta ella.",
+  "en": "Unload: click a walkable beach. The transport will sail to it."
+ },
+ {
+  "es": "No hay tropas disponibles para esa orden.",
+  "en": "No troops are available for that order."
+ },
+ {
+  "es": "Controla todo el país para fijar la salida de sus refuerzos.",
+  "en": "Control the whole country to set its reinforcement rally."
+ },
+ {
+  "es": "Salida de la hoguera actualizada.",
+  "en": "Camp rally updated."
+ },
+ {
+  "es": "Elige un punto de salida transitable.",
+  "en": "Choose a walkable rally point."
+ },
+ {
+  "es": "Punto de reunión actualizado.",
+  "en": "Rally point updated."
+ },
+ {
+  "es": "Transporte lleno o sólo defensores retenidos seleccionados.",
+  "en": "Transport full, or only held defenders are selected."
+ },
+ {
+  "es": "Embarcando: tropas y transporte se reúnen en la costa marcada.",
+  "en": "Boarding: troops and transport meet at the marked coast."
+ },
+ {
+  "es": "Mejora de ciudad",
+  "en": "City upgrade"
+ },
+ {
+  "es": "{0}: {1} completada.",
+  "en": "{0}: {1} completed."
+ },
+ {
+  "es": "Oro insuficiente para esta obra.",
+  "en": "Not enough gold for this construction."
+ },
+ {
+  "es": "Guarnición · mantiene el puerto",
+  "en": "Garrison · holds the harbor"
+ },
+ {
+  "es": "Guarnición · mantiene el edificio",
+  "en": "Garrison · holds the building"
+ },
+ {
+  "es": "Elige mar o tierra cercana a la costa.",
+  "en": "Choose sea, or land near the coast."
+ },
+ {
+  "es": "No hay mar accesible a 8 m de ese objetivo.",
+  "en": "There is no reachable sea within 8 m of that target."
+ },
+ {
+  "es": "El transporte no puede embarcar a ese soldado.",
+  "en": "The transport cannot take that soldier aboard."
+ },
+ {
+  "es": "Acerca el transporte a menos de 10 m del soldado.",
+  "en": "Bring the transport within 10 m of the soldier."
+ },
+ {
+  "es": "No hay sitio transitable para desembarcar en esa playa.",
+  "en": "There is no walkable spot to unload on that beach."
+ },
+ {
+  "es": "Acerca el transporte a una playa marcada.",
+  "en": "Bring the transport to a marked beach."
+ },
+ {
+  "es": "Elige una playa de arena o un muelle transitable.",
+  "en": "Choose a sandy beach or a walkable pier."
+ },
+ {
+  "es": "Sólo se puede embarcar en playas de arena y muelles; las orillas verdes o rocosas no sirven.",
+  "en": "Boarding works only on sandy beaches and piers; grassy or rocky shores do not."
+ },
+ {
+  "es": "Ese borde es demasiado escarpado para desembarcar.",
+  "en": "That edge is too steep to unload."
+ },
+ {
+  "es": "La playa queda demasiado lejos del agua navegable.",
+  "en": "The beach is too far from navigable water."
+ },
+ {
+  "es": "Avanzando y atacando",
+  "en": "Advancing and attacking"
+ },
+ {
+  "es": "No se ha podido calcular la ruta a ese destino.",
+  "en": "No route to that destination could be computed."
+ },
+ {
+  "es": "No hay un camino terrestre hasta ese punto. Elige otro destino o usa un transporte.",
+  "en": "There is no land route to that point. Choose another destination or use a transport."
+ },
+ {
+  "es": "Ese destino no es transitable; usa un transporte para cruzar el agua.",
+  "en": "That destination is not walkable; use a transport to cross the water."
+ },
+ {
+  "es": "La unidad no está sobre terreno transitable.",
+  "en": "The unit is not on walkable ground."
+ },
+ {
+  "es": "Reparto Risk",
+  "en": "Risk deal"
+ }
+]

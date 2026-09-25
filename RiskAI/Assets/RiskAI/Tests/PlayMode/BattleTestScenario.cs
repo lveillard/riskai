@@ -7,6 +7,37 @@ namespace RiskAI.Tests
     /// <summary>Explicit mobile actors for tests. Bootstrap posts stay garrisoned.</summary>
     static class BattleTestScenario
     {
+        /// <summary>
+        /// Every new-match setting a fixture depends on. A fixture pins them in SetUp and restores them
+        /// in TearDown, so it never inherits another fixture's map or the default random seed and layout.
+        /// </summary>
+        public readonly struct PinnedMatch
+        {
+            readonly ScenarioMap map; readonly BattleSession.VictoryMode mode; readonly BattleSession.StartLayout layout;
+            readonly BattleSession.AiDifficulty difficulty; readonly int seed, players;
+
+            PinnedMatch(bool _)
+            {
+                map = BattleSession.MapForNewMatch; mode = BattleSession.ModeForNewMatch; layout = BattleSession.LayoutForNewMatch;
+                difficulty = BattleSession.DifficultyForNewMatch; seed = BattleSession.SeedForNewMatch; players = BattleSession.PlayerCountForNewMatch;
+            }
+
+            public static PinnedMatch Pin(ScenarioMap map, int seed, BattleSession.StartLayout layout = BattleSession.StartLayout.Fixed, int players = PlayerRules.MaxPlayers)
+            {
+                var previous = new PinnedMatch(true);
+                BattleSession.MapForNewMatch = map; BattleSession.ModeForNewMatch = BattleSession.VictoryMode.Conquest;
+                BattleSession.LayoutForNewMatch = layout; BattleSession.DifficultyForNewMatch = BattleSession.AiDifficulty.Relaxed;
+                BattleSession.SeedForNewMatch = seed; BattleSession.PlayerCountForNewMatch = players;
+                return previous;
+            }
+
+            public void Restore()
+            {
+                BattleSession.MapForNewMatch = map; BattleSession.ModeForNewMatch = mode; BattleSession.LayoutForNewMatch = layout;
+                BattleSession.DifficultyForNewMatch = difficulty; BattleSession.SeedForNewMatch = seed; BattleSession.PlayerCountForNewMatch = players;
+            }
+        }
+
         public static Soldier Mobile(BattleSession battle, int team, UnitKind kind, Vector3 position)
         {
             var unit = battle.Spawn(team, kind, position);

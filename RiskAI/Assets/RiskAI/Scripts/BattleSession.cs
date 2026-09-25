@@ -215,10 +215,10 @@ namespace RiskAI
             {
                 if (playerPresence[team] || eliminatedPlayers[team]) continue;
                 eliminatedPlayers[team] = true;
-                Message(VisualFactory.TeamName(team) + " ha sido eliminado.", MessageKind.Info);
+                Message(GameText.Format("{0} ha sido eliminado.", VisualFactory.TeamName(team)), MessageKind.Info);
                 PlayerEliminated?.Invoke(team);
             }
-            if (Economy.Advance(delta) > 0) { Message($"Ronda {Economy.Round} · +{Economy.Income(0)} de oro", MessageKind.Income, 0); Feedback.RaiseIncome(0, Economy.Income(0)); CountryReinforcements(); }
+            if (Economy.Advance(delta) > 0) { Message(GameText.Format("Ronda {0} · +{1} de oro", Economy.Round, Economy.Income(0)), MessageKind.Income, 0); Feedback.RaiseIncome(0, Economy.Income(0)); CountryReinforcements(); }
             Reinforcements.Tick(delta);
             BuildVictorySnapshot();
             for (int team = 0; team < PlayerCount; team++)
@@ -229,7 +229,7 @@ namespace RiskAI
                 if (VictoryProgress[team] >= BattleRules.VictoryHoldSeconds || OtherPlayersEliminated(team))
                 {
                     Winner = team; SuspendMovement(true);
-                    Message(team == 0 ? "¡Victoria! Las Marcas son tuyas." : VisualFactory.TeamName(team) + " ha ganado.", team == 0 ? MessageKind.Victory : MessageKind.Defeat, team);
+                    Message(team == 0 ? GameText.Localize("¡Victoria! Las Marcas son tuyas.") : GameText.Format("{0} ha ganado.", VisualFactory.TeamName(team)), team == 0 ? MessageKind.Victory : MessageKind.Defeat, team);
                     Feedback.RaiseWinner(team);
                     break;
                 }

@@ -395,7 +395,7 @@ namespace RiskAI
             CancelPendingBoarding();
             // Already within source loading radius: no arbitrary dock detour.
             for(int i=available.Count-1;i>=0;i--)if(transport.TryEmbark(available[i]))available.RemoveAt(i);
-            if(available.Count==0){session.Message("Embarque completado: "+transport.CargoCount+" / "+transport.Type.Transport.Capacity+".",MessageKind.Info);return;}
+            if(available.Count==0){session.Message(GameText.Format("Embarque completado: {0} / {1}.",transport.CargoCount,transport.Type.Transport.Capacity),MessageKind.Info);return;}
             if(!naval.TryPlanEmbark(transport,available,out var landing,out var berth,out var error)){session.Message(error,MessageKind.Info);return;}
             pendingBoardingTransport=transport;pendingBoardingLanding=landing;
             var sailed=OrderShip(transport,UnitCommandKind.Move,berth,append:QueueOrders);
@@ -433,12 +433,12 @@ namespace RiskAI
                     soldier.RetryEmbarkApproach();
             }
             if(pendingBoarders.Count==0)
-            {session.Message("Embarque terminado: "+pendingBoardingTransport.CargoCount+" / "+pendingBoardingTransport.Type.Transport.Capacity+".",MessageKind.Info);CancelPendingBoarding();return;}
+            {session.Message(GameText.Format("Embarque terminado: {0} / {1}.",pendingBoardingTransport.CargoCount,pendingBoardingTransport.Type.Transport.Capacity),MessageKind.Info);CancelPendingBoarding();return;}
             if(pendingBoarders.Count!=previousBoarderCount||distance<previousBoardingDistance-.1f)lastBoardingProgress=now;
             previousBoarderCount=pendingBoarders.Count;previousBoardingDistance=distance;
             if(now-lastBoardingProgress>=BoardingStallSeconds)
             {
-                session.Message("Embarque detenido: "+(error??"las tropas no pueden avanzar hasta la costa marcada."),MessageKind.Info);
+                session.Message(GameText.Format("Embarque detenido: {0}",error??"las tropas no pueden avanzar hasta la costa marcada."),MessageKind.Info);
                 CancelPendingBoarding();
             }
         }

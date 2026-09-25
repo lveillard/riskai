@@ -46,15 +46,15 @@ namespace RiskAI
             if (capture.Owner == 0)
             {
                 cue = capture.CountryCompleted && country != null
-                    ? new CaptureCue(SfxId.CountryCompleted, "¡País completado: " + country + "!", "Oro y refuerzos de " + country + " cada ronda", false, true)
-                    : new CaptureCue(SfxId.CityCaptured, "Has conquistado " + capture.Name, null, false, false);
+                    ? new CaptureCue(SfxId.CountryCompleted, GameText.Format("¡País completado: {0}!", country), GameText.Format("Oro y refuerzos de {0} cada ronda", country), false, true)
+                    : new CaptureCue(SfxId.CityCaptured, GameText.Format("Has conquistado {0}", capture.Name), null, false, false);
                 return true;
             }
             if (capture.Previous == 0)
             {
                 cue = capture.CountryLost && country != null
-                    ? new CaptureCue(SfxId.CountryLost, "¡Has perdido " + country + "!", "País roto: sin oro ni refuerzos de " + country, true, true)
-                    : new CaptureCue(SfxId.CityLost, "Has perdido " + capture.Name, null, true, false);
+                    ? new CaptureCue(SfxId.CountryLost, GameText.Format("¡Has perdido {0}!", country), GameText.Format("País roto: sin oro ni refuerzos de {0}", country), true, true)
+                    : new CaptureCue(SfxId.CityLost, GameText.Format("Has perdido {0}", capture.Name), null, true, false);
                 return true;
             }
             cue = default; return false;
@@ -111,6 +111,7 @@ namespace RiskAI
         Label toastLabel, goldFloat;
         Button chatButton, recipientChip, chatSend, chatCancel;
         VisualElement recipientSwatch, recipientList, compactQuickBar;
+        RtsIcon recipientChevron;
         Label recipientLabel;
         int chatRecipient = ChatMessage.Everyone, chatTabFrame = -1;
         TextField chatField;
@@ -212,8 +213,8 @@ namespace RiskAI
             recipientChip.tooltip = GameText.Localize("Destinatario · Tab cambia · Mayús+Intro envía a todos");
             recipientSwatch = new VisualElement { pickingMode = PickingMode.Ignore }; recipientSwatch.style.width = recipientSwatch.style.height = 10; recipientSwatch.style.marginRight = 5;
             recipientLabel = new Label { pickingMode = PickingMode.Ignore }; recipientLabel.style.fontSize = 12; recipientLabel.style.color = RtsUiStyle.Text;
-            var chevron = new RtsIcon(RtsGlyph.ChevronUp, 12); chevron.style.marginLeft = 5;
-            recipientChip.Add(recipientSwatch); recipientChip.Add(recipientLabel); recipientChip.Add(chevron);
+            recipientChevron = new RtsIcon(RtsGlyph.ChevronUp, 12); recipientChevron.style.marginLeft = 5;
+            recipientChip.Add(recipientSwatch); recipientChip.Add(recipientLabel); recipientChip.Add(recipientChevron);
             // The WebGL DOM field would blur on this tap; keep it open and refocus it afterwards.
             recipientChip.RegisterCallback<PointerDownEvent>(_ => { if (webChat) WebChatInput.Hold(); }, TrickleDown.TrickleDown);
             chatBar.Add(recipientChip);
@@ -295,6 +296,8 @@ namespace RiskAI
             float chatHeight = touch ? Mathf.Max(34, UiViewport.MinimumTouchTarget * .8f) + 6 : 32;
             float barHeight = compactQuickBar != null ? Mathf.Max(chatHeight, QuickSize + 2) : chatHeight;
             // The WebGL DOM field sits above the on-screen keyboard; only the recipient chip stays in Unity, near the top.
+            // The recipient list opens away from the chat bar: down under the top web field, up above the bottom bar.
+            recipientChevron.Glyph = webChat ? RtsGlyph.ChevronDown : RtsGlyph.ChevronUp;
             if (webChat) { chatBar.style.top = HeaderHeight + 8; chatBar.style.bottom = StyleKeyword.Auto; chatBar.style.width = StyleKeyword.Auto; }
             else { chatBar.style.top = StyleKeyword.Auto; chatBar.style.bottom = bottom; chatBar.style.width = width; }
             if (recipientList.style.display == DisplayStyle.Flex)
@@ -486,7 +489,7 @@ namespace RiskAI
             var viewport = cam ? cam.WorldToViewportPoint(position) : Vector3.zero;
             if (viewport.z > 0 && viewport.x > .12f && viewport.x < .88f && viewport.y > .15f && viewport.y < .85f && !StrategicMapView.Active) return;
             string place = NearestPlaceName(position);
-            session.Feedback.Post(place != null ? "¡Te atacan en " + place + "!" : "¡Te atacan!", MessageKind.Attack, 0, position);
+            session.Feedback.Post(place != null ? GameText.Format("¡Te atacan en {0}!", place) : GameText.Localize("¡Te atacan!"), MessageKind.Attack, 0, position);
             Sfx.Ui(SfxId.UnderAttack);
         }
 
@@ -596,7 +599,7 @@ namespace RiskAI
             return split >= 0 ? name.Substring(split + 3) : name;
         }
 
-        string ChatPlaceholder() => GameText.Localize("Para " + ShortRecipient(chatRecipient) + " · Escribe un mensaje…");
+        string ChatPlaceholder() => GameText.Format("Para {0} · Escribe un mensaje…", ShortRecipient(chatRecipient));
 
         void SetChatRecipient(int recipient)
         {
@@ -608,7 +611,7 @@ namespace RiskAI
         void UpdateRecipientChip()
         {
             if (recipientLabel == null) return;
-            recipientLabel.text = GameText.Localize("Para: " + ShortRecipient(chatRecipient));
+            recipientLabel.text = GameText.Format("Para: {0}", ShortRecipient(chatRecipient));
             var colour = chatRecipient == ChatMessage.Everyone ? RtsUiStyle.Muted : VisualFactory.TeamColor(chatRecipient);
             recipientSwatch.style.backgroundColor = colour;
             recipientLabel.style.color = chatRecipient == ChatMessage.Everyone ? RtsUiStyle.Text : Readable(colour);

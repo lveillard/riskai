@@ -110,12 +110,12 @@ namespace RiskAI.Tests
             Assert.That(IncomeCountdown.Progress(90f,60f),Is.EqualTo(1));
 
             ProbeHooks.SetLanguage(GameLanguage.Spanish);
-            Assert.That(GameText.Localize(IncomeCountdown.Label(1,2f,false,60f)),Is.EqualTo("R1 · Ingreso en 58 s"));
-            Assert.That(GameText.Localize(IncomeCountdown.Label(1,2f,true,60f)),Is.EqualTo("58 s"));
+            Assert.That(BattleHud.IncomeLabel(1,2f,false,60f),Is.EqualTo("R1 · Ingreso en 58 s"));
+            Assert.That(BattleHud.IncomeLabel(1,2f,true,60f),Is.EqualTo("58 s"));
             ProbeHooks.SetLanguage(GameLanguage.English);
-            Assert.That(GameText.Localize(IncomeCountdown.Label(3,2f,false,60f)),Is.EqualTo("R3 · Income in 58 s"));
-            Assert.That(GameText.Localize(IncomeCountdown.Label(3,2f,false,60f)),Does.Not.Contain("ROUND"),"The countdown is not elapsed round time.");
-            Assert.That(GameText.Localize(IncomeCountdown.Detail(3,2f,7,60f)),Is.EqualTo("Round 3 · next income +7 gold in 58 s"));
+            Assert.That(BattleHud.IncomeLabel(3,2f,false,60f),Is.EqualTo("R3 · Income in 58 s"));
+            Assert.That(BattleHud.IncomeLabel(3,2f,false,60f),Does.Not.Contain("ROUND"),"The countdown is not elapsed round time.");
+            Assert.That(BattleHud.IncomeDetail(3,2f,7,60f),Is.EqualTo("Round 3 · next income +7 gold in 58 s"));
         }
     }
 

@@ -142,7 +142,9 @@ namespace RiskAI
         // indistinguishable from FF0303), and maroon, violet, brown and dark green
         // collapsed toward black. Only raw SetVector/compute uploads need .linear.
         public static Color TeamMaterialColor(int team) => TeamColor(team);
-        public static string TeamName(int team) => !PlayerRules.IsPlayer(team)?"Neutral":(team==0?"Tú":"IA "+team)+" · "+PlayerColorNames[team];
+        public static string TeamName(int team) => !PlayerRules.IsPlayer(team)?GameText.Localize("Neutral"):GameText.Format("{0} · {1}",team==0?GameText.Localize("Tú"):GameText.Format("IA {0}",team),PlayerColorNames[team]);
+        /// <summary>The player colour in its source (Spanish) form: chat aliases match it in both languages.</summary>
+        public static string ColourName(int team) => PlayerColorNames[team];
         public static Material Mat(Color color)
         {
             if (Materials.TryGetValue(color, out var found) && found) return found;

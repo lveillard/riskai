@@ -1,17 +1,19 @@
+using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using RiskAI.Core;
 using UnityEngine;
 
 namespace RiskAI
 {
     /// <summary>
-    /// Sound ids. Files live in Resources/Audio/&lt;id&gt; or &lt;id&gt;_1..&lt;id&gt;_12 (mp3/ogg/wav);
-    /// see docs/AUDIO-PROMPTS.md and Resources/Audio/clips.json.
+    /// Sound ids. Each is the snake_case id of a clip in Resources/Audio/clips.json,
+    /// which lists its files, volume, budget and priority.
     /// </summary>
     public enum SfxId
     {
-        HitSword, HitLance, ShotCrossbow, ShotRifle, HitArrow, MagicBolt, MagicImpact, MortarFire, Explosion, ShipCannon, Death,
-        OrderMove, OrderAttack, UiClick, Purchase, NoGold, UnitTrained, CityCaptured, CityLost, CountryCompleted, Income,
+        HitSword, HitLance, ShotCrossbow, ShotRifle, HitArrow, MagicBolt, MagicImpact, MortarFire, Explosion, ShipCannon, Death, Sink,
+        OrderMove, OrderAttack, UiClick, SelectHarbor, Purchase, NoGold, UnitTrained, CityCaptured, CityLost, CountryCompleted, Income,
         UnderAttack, Victory, Defeat, Chat, CountryLost
     }
 
@@ -54,31 +56,95 @@ namespace RiskAI
     /// </summary>
     public sealed class Sfx : MonoBehaviour
     {
+        // Resources/Audio/clips.json is the single source for every clip: files, volume, budget and priority.
+        // Each SfxId maps to the clip whose id is its snake_case name; both directions must match.
+        sealed class ClipManifest
+        {
+            [JsonProperty("loader", Required = Required.Always)] public string Loader;
+            [JsonProperty("folder", Required = Required.Always)] public string Folder;
+            [JsonProperty("style", Required = Required.Always)] public string Style;
+            [JsonProperty("clips", Required = Required.Always)] public List<ClipEntry> Clips;
+        }
+        sealed class ClipEntry
+        {
+            [JsonProperty("id", Required = Required.Always)] public string Id;
+            [JsonProperty("duration_seconds", Required = Required.Always)] public float DurationSeconds;
+            [JsonProperty("spatial", Required = Required.Always)] public string Spatial;
+            [JsonProperty("volume", Required = Required.Always)] public float Volume;
+            [JsonProperty("trigger", Required = Required.Always)] public string Trigger;
+            [JsonProperty("files", Required = Required.Always)] public List<ClipFile> Files;
+            [JsonProperty("budget", Required = Required.Always)] public int Budget;
+            [JsonProperty("priority", Required = Required.Always)] public int Priority;
+        }
+        sealed class ClipFile
+        {
+            [JsonProperty("file", Required = Required.Always)] public string File;
+            [JsonProperty("prompt", Required = Required.Always)] public string Prompt;
+        }
         readonly struct ClipInfo
         {
-            public readonly SfxId Sound; public readonly string Id; public readonly bool Spatial; public readonly float Volume; public readonly int Budget; public readonly int Priority;
-            public ClipInfo(SfxId sound, string id, bool spatial, float volume, int budget, int priority)
-            { Sound = sound; Id = id; Spatial = spatial; Volume = volume; Budget = budget; Priority = priority; }
+            public readonly string Id; public readonly string[] Files; public readonly float Volume; public readonly int Budget; public readonly int Priority;
+            public ClipInfo(string id, string[] files, float volume, int budget, int priority)
+            { Id = id; Files = files; Volume = volume; Budget = budget; Priority = priority; }
         }
 
-        // The clip id is the key. Playback finds the row by SfxId, never by enum ordinal.
-        static readonly ClipInfo[] Table = {
-            new ClipInfo(SfxId.HitSword, "hit_sword", true, .8f, 3, 1), new ClipInfo(SfxId.HitLance, "hit_lance", true, .85f, 2, 1),
-            new ClipInfo(SfxId.ShotCrossbow, "shot_crossbow", true, .6f, 3, 1), new ClipInfo(SfxId.ShotRifle, "shot_rifle", true, .65f, 2, 1),
-            new ClipInfo(SfxId.HitArrow, "hit_arrow", true, .45f, 2, 0), new ClipInfo(SfxId.MagicBolt, "magic_bolt", true, .6f, 2, 1),
-            new ClipInfo(SfxId.MagicImpact, "magic_impact", true, .6f, 2, 1), new ClipInfo(SfxId.MortarFire, "mortar_fire", true, .8f, 2, 2),
-            new ClipInfo(SfxId.Explosion, "explosion", true, .9f, 2, 3), new ClipInfo(SfxId.ShipCannon, "ship_cannon", true, .85f, 2, 2),
-            new ClipInfo(SfxId.Death, "death", true, .55f, 2, 1),
-            new ClipInfo(SfxId.OrderMove, "order_move", false, .45f, 1, 4), new ClipInfo(SfxId.OrderAttack, "order_attack", false, .5f, 1, 4),
-            new ClipInfo(SfxId.UiClick, "ui_click", false, .35f, 1, 4), new ClipInfo(SfxId.Purchase, "purchase", false, .55f, 1, 4),
-            new ClipInfo(SfxId.NoGold, "no_gold", false, .55f, 1, 4), new ClipInfo(SfxId.UnitTrained, "unit_trained", false, .5f, 1, 3),
-            new ClipInfo(SfxId.CityCaptured, "city_captured", false, .7f, 1, 5), new ClipInfo(SfxId.CityLost, "city_lost", false, .7f, 1, 5),
-            new ClipInfo(SfxId.CountryCompleted, "country_completed", false, .8f, 1, 6), new ClipInfo(SfxId.Income, "income", false, .45f, 1, 3),
-            new ClipInfo(SfxId.UnderAttack, "under_attack", false, .75f, 1, 5), new ClipInfo(SfxId.Victory, "victory", false, .85f, 1, 7),
-            new ClipInfo(SfxId.Defeat, "defeat", false, .85f, 1, 7), new ClipInfo(SfxId.Chat, "chat", false, .4f, 1, 3),
-            new ClipInfo(SfxId.CountryLost, "country_lost", false, .8f, 1, 6)
-        };
-        static readonly Dictionary<SfxId, int> clipIndex = BuildClipIndex();
+        const string ClipResource = "Audio/clips";
+        static readonly int ClipCount = Enum.GetValues(typeof(SfxId)).Length;
+        static ClipInfo[] table;
+        static Dictionary<string, SfxId> byClipId;
+        // Indexed by SfxId after the name match, so enum order never has to follow the file.
+        static ClipInfo[] Table => table ??= LoadTable();
+
+        static ClipInfo[] LoadTable()
+        {
+            var asset = Resources.Load<TextAsset>(ClipResource);
+            if (!asset) throw new InvalidOperationException("Resources/" + ClipResource + ".json is missing.");
+            var manifest = JsonConvert.DeserializeObject<ClipManifest>(asset.text, new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Error });
+            var ids = new Dictionary<string, SfxId>(ClipCount, StringComparer.Ordinal);
+            foreach (SfxId sound in Enum.GetValues(typeof(SfxId))) ids.Add(ClipId(sound), sound);
+            var rows = new ClipInfo[ClipCount];
+            var seen = new bool[ClipCount];
+            foreach (var clip in manifest.Clips)
+            {
+                if (!ids.TryGetValue(clip.Id, out var sound)) throw new InvalidOperationException("clips.json: clip \"" + clip.Id + "\" has no SfxId.");
+                if (seen[(int)sound]) throw new InvalidOperationException("clips.json: duplicate clip \"" + clip.Id + "\".");
+                if (clip.Spatial != "2D" && clip.Spatial != "3D") throw new InvalidOperationException("clips.json: \"" + clip.Id + "\" spatial must be 2D or 3D.");
+                if (clip.Files.Count == 0) throw new InvalidOperationException("clips.json: \"" + clip.Id + "\" lists no files.");
+                var files = new string[clip.Files.Count];
+                for (int i = 0; i < files.Length; i++) files[i] = System.IO.Path.GetFileNameWithoutExtension(clip.Files[i].File);
+                seen[(int)sound] = true;
+                rows[(int)sound] = new ClipInfo(clip.Id, files, clip.Volume, clip.Budget, clip.Priority);
+            }
+            for (int i = 0; i < ClipCount; i++)
+                if (!seen[i]) throw new InvalidOperationException("clips.json: no clip \"" + ClipId((SfxId)i) + "\" for SfxId." + (SfxId)i + ".");
+            byClipId = ids;
+            return rows;
+        }
+
+        /// <summary>The clips.json id of <paramref name="sound"/>: its snake_case name (HitSword is hit_sword).</summary>
+        public static string ClipId(SfxId sound)
+        {
+            string name = sound.ToString();
+            var text = new System.Text.StringBuilder(name.Length + 4);
+            for (int i = 0; i < name.Length; i++)
+            {
+                if (char.IsUpper(name[i]) && i > 0) text.Append('_');
+                text.Append(char.ToLowerInvariant(name[i]));
+            }
+            return text.ToString();
+        }
+
+        /// <summary>The SfxId of a clips.json id, as named by units.json deathSound. Throws for an unknown id.</summary>
+        public static SfxId FromClipId(string id)
+        {
+            _ = Table;
+            if (id != null && byClipId.TryGetValue(id, out var sound)) return sound;
+            throw new InvalidOperationException("clips.json has no clip \"" + id + "\".");
+        }
+
+        /// <summary>Loads every file of <paramref name="sound"/>; throws when clips.json names a file missing from Resources/Audio.</summary>
+        public static int LoadedVariants(SfxId sound) => Clips((int)sound).Length;
+
         // One presentation map from units.json WeaponSound to the clip played on fire and on impact.
         static readonly (WeaponSound Sound, bool Fires, SfxId Fired, SfxId Impact)[] WeaponAudio = {
             (WeaponSound.Blade, false, default, SfxId.HitSword),
@@ -89,12 +155,6 @@ namespace RiskAI
             (WeaponSound.Mortar, true, SfxId.MortarFire, SfxId.Explosion),
             (WeaponSound.Cannon, true, SfxId.ShipCannon, SfxId.HitArrow)
         };
-        static Dictionary<SfxId, int> BuildClipIndex()
-        {
-            var map = new Dictionary<SfxId, int>(Table.Length);
-            for (int i = 0; i < Table.Length; i++) map.Add(Table[i].Sound, i);
-            return map;
-        }
         static bool WeaponClip(WeaponSound sound, out bool fires, out SfxId fired, out SfxId impact)
         {
             for (int i = 0; i < WeaponAudio.Length; i++)
@@ -112,7 +172,7 @@ namespace RiskAI
 
         static bool preferencesLoaded;
         static AudioClip[][] clips;
-        readonly SfxThrottle throttle = new SfxThrottle(Table.Length);
+        readonly SfxThrottle throttle = new SfxThrottle(ClipCount);
         readonly AudioSource[] world = new AudioSource[WorldVoices];
         readonly int[] worldPriority = new int[WorldVoices];
         readonly float[] worldStarted = new float[WorldVoices];
@@ -128,7 +188,7 @@ namespace RiskAI
         float audibleRadius = 60;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { Current = null; clips = null; preferencesLoaded = false; }
+        static void ResetStatics() { Current = null; clips = null; table = null; byClipId = null; preferencesLoaded = false; }
 
         public static Sfx Attach(GameObject host, BattleSession battle, RtsCameraRig cameraRig, Camera camera)
         {
@@ -227,19 +287,17 @@ namespace RiskAI
 
         static AudioClip[] Clips(int index)
         {
-            if (clips == null) clips = new AudioClip[Table.Length][];
+            if (clips == null) clips = new AudioClip[ClipCount][];
             var loaded = clips[index];
             if (loaded != null) return loaded;
-            var list = new List<AudioClip>(4);
-            string id = Table[index].Id;
-            var single = Resources.Load<AudioClip>("Audio/" + id);
-            if (single) list.Add(single);
-            for (int variant = 1; variant <= 12; variant++)
+            var files = Table[index].Files;
+            var list = new AudioClip[files.Length];
+            for (int i = 0; i < files.Length; i++)
             {
-                var clip = Resources.Load<AudioClip>("Audio/" + id + "_" + variant);
-                if (clip) list.Add(clip);
+                list[i] = Resources.Load<AudioClip>("Audio/" + files[i]);
+                if (!list[i]) throw new InvalidOperationException("clips.json names Resources/Audio/" + files[i] + " but the file is missing.");
             }
-            return clips[index] = list.ToArray();
+            return clips[index] = list;
         }
 
         uint Next() { seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5; return seed; }
@@ -248,7 +306,7 @@ namespace RiskAI
         bool Prepare(SfxId id, out AudioClip clip, out ClipInfo info)
         {
             clip = null; info = default;
-            if (!clipIndex.TryGetValue(id, out int index)) return false;
+            int index = (int)id;
             info = Table[index];
             if (Muted || EffectsVolume <= 0) return false;
             var available = Clips(index);
@@ -306,7 +364,8 @@ namespace RiskAI
             At(impact, point, impact == SfxId.HitArrow ? .8f : 1f);
         }
 
-        void OnDied(CombatTarget unit) { if (unit) At(SfxId.Death, unit.transform.position); }
+        // units.json deathSound picks the clip: a sinking hull for ships, a fall for everyone else.
+        void OnDied(CombatTarget unit) { if (unit) At(FromClipId(unit.Type.DeathSound), unit.transform.position); }
 
         int PickWorldVoice(int priority)
         {

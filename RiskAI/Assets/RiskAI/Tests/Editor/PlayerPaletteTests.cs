@@ -19,8 +19,8 @@ namespace RiskAI.Tests
 
             CollectionAssert.AreEqual(expected,Enumerable.Range(0,expected.Length)
                 .Select(team=>ColorUtility.ToHtmlStringRGB(VisualFactory.TeamColor(team))).ToArray());
-            StringAssert.Contains("Rojo",VisualFactory.TeamName(0));
-            StringAssert.Contains("Azul",VisualFactory.TeamName(1));
+            Assert.That(VisualFactory.ColourName(0),Is.EqualTo("Rojo"));
+            Assert.That(VisualFactory.ColourName(1),Is.EqualTo("Azul"));
         }
 
         [Test]

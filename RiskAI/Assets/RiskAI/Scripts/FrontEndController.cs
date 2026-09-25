@@ -263,7 +263,7 @@ namespace RiskAI
             var seal=new RtsHeraldicSeal((int)map,accent);seal.style.width=UiViewport.IsCompact?54:50;seal.style.height=UiViewport.IsCompact?66:58;seal.style.marginRight=12;
             var words=new VisualElement();words.style.minWidth=0;words.style.flexShrink=1;
             var titleLabel = RtsUiStyle.Title(title, null, 15);
-            var detail = RtsUiStyle.Label(MapLayout.ScenarioDetail(map) + " · máx. " + MapLayout.MaximumPlayersForScenario(map) + " jugadores", null, 13); detail.style.color = RtsUiStyle.Bronze; detail.style.whiteSpace = WhiteSpace.Normal;
+            var detail = RtsUiStyle.Label(GameText.Format("{0} · máx. {1} jugadores", MapLayout.ScenarioDetail(map), MapLayout.MaximumPlayersForScenario(map)), null, 13); detail.style.color = RtsUiStyle.Bronze; detail.style.whiteSpace = WhiteSpace.Normal;
             var body = RtsUiStyle.Label(description, null, 12); body.style.color = RtsUiStyle.Muted; body.style.whiteSpace = WhiteSpace.Normal;
             words.Add(titleLabel);words.Add(detail);words.Add(body);
             if(chosen){var selected=RtsUiStyle.Label("ELEGIDO",null,10);selected.style.color=RtsUiStyle.Gold;selected.style.marginTop=5;words.Add(selected);}
@@ -300,9 +300,9 @@ namespace RiskAI
 
         void AddPlayers(VisualElement parent)
         {
-            var row = NewFieldRow(parent, "JUGADORES · MÁXIMO " + MapLayout.MaximumPlayersForScenario(selectedMap));
+            var row = NewFieldRow(parent, GameText.Format("JUGADORES · MÁXIMO {0}", MapLayout.MaximumPlayersForScenario(selectedMap)));
             row.Add(RtsUiStyle.Button("−", () => AdjustPlayers(-1)));
-            var count = RtsUiStyle.Label(selectedPlayers + " · tú y " + (selectedPlayers - 1) + " IA", null, 15); count.style.minWidth = 154; row.Add(count);
+            var count = RtsUiStyle.Label(GameText.Format("{0} · tú y {1} IA", selectedPlayers, selectedPlayers - 1), null, 15); count.style.minWidth = 154; row.Add(count);
             row.Add(RtsUiStyle.Button("+", () => AdjustPlayers(1)));
         }
 

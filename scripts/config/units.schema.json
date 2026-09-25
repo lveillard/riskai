@@ -1163,7 +1163,8 @@
         "portraitCamera",
         "attackClip",
         "contact",
-        "silhouette"
+        "silhouette",
+        "deathSound"
       ],
       "properties": {
         "model": {
@@ -1210,6 +1211,11 @@
         },
         "silhouette": {
           "$ref": "#/$defs/UnitSilhouette"
+        },
+        "deathSound": {
+          "minLength": 1,
+          "description": "Clip id in Resources/Audio/clips.json played when this unit dies.",
+          "type": "string"
         }
       },
       "description": "Model, portrait, attack clip and proxy shape."

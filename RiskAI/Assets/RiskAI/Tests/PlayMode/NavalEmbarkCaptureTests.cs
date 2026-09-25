@@ -15,9 +15,15 @@ namespace RiskAI.Tests
         BattleSession battle;
         NavalWorld naval;
 
+        // These tests start from the player's own harbour: the authored two-player practice start gives
+        // player 0 the same harbour and berth on every run (a random deal may give it none).
+        const int FixtureSeed = 7031;
+        BattleTestScenario.PinnedMatch pinned;
+
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            pinned = BattleTestScenario.PinnedMatch.Pin(ScenarioMap.Classic, FixtureSeed, BattleSession.StartLayout.Fixed, 2);
             previous = SceneManager.GetActiveScene(); scene = SceneManager.CreateScene("Naval embark and capture"); SceneManager.SetActiveScene(scene);
             new GameObject("Naval embark bootstrap").AddComponent<RiskBootstrap>();
             battle = BattleSession.Current; battle.AiEnabled = false; naval = NavalWorld.Current;
@@ -161,7 +167,7 @@ namespace RiskAI.Tests
             process.Invoke(controller,null);
             Assert.That(pending.GetValue(controller),Is.Null,"A stalled boarding intent must stop retrying forever.");
             Assert.That(ship.CargoCount,Is.Zero);
-            Assert.That(battle.Messages[0],Does.StartWith("Embarque detenido:"));
+            Assert.That(battle.Messages[0],Does.StartWith(GameText.Localize("Embarque detenido: {0}").Split('{')[0]));
         }
 
         [UnityTest]
@@ -795,6 +801,7 @@ namespace RiskAI.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
+            pinned.Restore();
             SceneManager.SetActiveScene(previous);
             if (scene.IsValid() && scene.isLoaded) yield return SceneManager.UnloadSceneAsync(scene);
         }

@@ -103,9 +103,9 @@ namespace RiskAI
             {
                 // Live economy values keep the dial smooth between HUD snapshots.
                 int round = session.Economy.Round; float elapsed = session.Economy.ElapsedInRound;
-                roundLabel.text = GameText.Localize(IncomeCountdown.Label(round, elapsed, UiViewport.IsCompact));
+                roundLabel.text = IncomeLabel(round, elapsed, UiViewport.IsCompact);
                 if (incomeRing != null) incomeRing.Progress = IncomeCountdown.Progress(elapsed);
-                if (incomeButton != null) incomeButton.tooltip = GameText.Localize(IncomeCountdown.Detail(round, elapsed, hud.Income));
+                if (incomeButton != null) incomeButton.tooltip = IncomeDetail(round, elapsed, hud.Income);
             }
             if (pauseButton != null) { pauseButton.text = GameText.Localize(session.Paused ? "Continuar" : "Pausa");pauseButton.SetEnabled(!session.IsStarting); }
             if (modalPauseButton != null) { modalPauseButton.text = GameText.Localize(session.Paused ? "CONTINUAR" : "PAUSA");modalPauseButton.SetEnabled(!session.IsStarting); }
@@ -340,6 +340,10 @@ namespace RiskAI
                 context.style.minHeight=0;wideContext.style.minHeight=0;
                 columns.Add(context); columns.Add(wideContext); footer.Add(columns);
             }
+            // Like the WC3 command panel, the footer never shows a scrollbar: a few pixels of padding
+            // overflow drew an empty track beside it. Longer content still scrolls by wheel or drag.
+            ((ScrollView)context).verticalScrollerVisibility=ScrollerVisibility.Hidden;
+            if(wideContext!=null)((ScrollView)wideContext).verticalScrollerVisibility=ScrollerVisibility.Hidden;
 
             if (wideFooter) BuildWideContext(context, wideContext); else BuildContext(context);
             if (UiViewport.IsPortrait && MinimapVisible) context.style.visibility=Visibility.Hidden;
@@ -436,19 +440,19 @@ namespace RiskAI
                 root.Add(clearRally);
                 System.Action refreshRally = () => clearRally.style.display = camp.HasRally ? DisplayStyle.Flex : DisplayStyle.None;
                 liveContext.Add(refreshRally); refreshRally();
-                var group = hud.Countries[camp.Country]; LiveInfo(root, () => "HOGUERA · " + group.Owned + " / " + group.CityCount + " ciudades");
+                var group = hud.Countries[camp.Country]; LiveInfo(root, () => GameText.Format("HOGUERA · {0} / {1} ciudades", group.Owned, group.CityCount));
                 foreach (var town in group.Cities)
                     if (town)
                     {
                         var button = RtsUiStyle.Button("", () => { controller.SelectTown(town); controller.Focus(town.transform.position); });
-                        System.Action refreshTown = () => button.text = GameText.Localize(town ? town.DisplayName + " · " + VisualFactory.TeamName(town.State.Owner) : "Ciudad retirada");
+                        System.Action refreshTown = () => button.text = town ? GameText.Format("{0} · {1}", town.DisplayName, VisualFactory.TeamName(town.State.Owner)) : GameText.Localize("Ciudad retirada");
                         root.Add(button); liveContext.Add(refreshTown); refreshTown();
                     }
                 return;
             }
             if (controller.SelectedTowns.Count + controller.SelectedHarbors.Count > 1)
             {
-                AddTitle(root, "EDIFICIOS SELECCIONADOS · " + (controller.SelectedTowns.Count + controller.SelectedHarbors.Count));
+                AddTitle(root, GameText.Format("EDIFICIOS SELECCIONADOS · {0}", controller.SelectedTowns.Count + controller.SelectedHarbors.Count));
                 for (int i = 0; i < controller.SelectedTowns.Count; i++) AddInfo(root, controller.SelectedTowns[i].DisplayName);
                 for (int i = 0; i < controller.SelectedHarbors.Count; i++) AddInfo(root, controller.SelectedHarbors[i].DisplayName);
                 return;
@@ -456,17 +460,17 @@ namespace RiskAI
             if (controller.SelectedTown && !controller.SelectedHarbor)
             {
                 var town = controller.SelectedTown;
-                BuildingInfo(root,()=>town?town.DisplayName+" · "+VisualFactory.TeamName(town.State.Owner):"Ciudad retirada"); return;
+                BuildingInfo(root,()=>town?GameText.Format("{0} · {1}",town.DisplayName,VisualFactory.TeamName(town.State.Owner)):"Ciudad retirada"); return;
             }
             if (controller.SelectedHarbor)
             {
                 var harbor = controller.SelectedHarbor;
-                BuildingInfo(root,()=>harbor?harbor.DisplayName+" · "+VisualFactory.TeamName(harbor.Owner):"Puerto retirado"); return;
+                BuildingInfo(root,()=>harbor?GameText.Format("{0} · {1}",harbor.DisplayName,VisualFactory.TeamName(harbor.Owner)):"Puerto retirado"); return;
             }
             if (controller.Selection.Count > 0)
             {
                 int count = controller.Selection.Count;
-                AddTitle(root, count == 1 ? controller.Selection[0].Type.Name.ToUpperInvariant() : count + " UNIDADES SELECCIONADAS");
+                AddTitle(root, count == 1 ? GameText.Localize(controller.Selection[0].Type.Name).ToUpperInvariant() : GameText.Format("{0} UNIDADES SELECCIONADAS", count));
                 BuildSelectionRoster(root);
                 foreach(var actor in controller.Selection)if(actor is Ship ship&&ship.Type.CanTransport&&ship.CargoCount>0)BuildCargoRoster(root,ship);
                 if(controller.Selection.Count==1&&controller.Selection[0] is Soldier only)LiveInfo(root,()=>SoldierStats(only));
@@ -518,10 +522,10 @@ namespace RiskAI
 
         static string UnitTooltip(in UnitType profile)
         {
-            string text=(string.IsNullOrEmpty(profile.Role)?profile.Name:profile.Role)+" · "+profile.MaxHealth+" vida · armadura "+profile.Armor+" "+profile.ArmorType;
-            if(profile.CanAttack)text+=" · "+profile.Weapon.DamageText+" "+profile.AttackType+" · alcance "+profile.Weapon.Range;
-            if(profile.CanTransport)text+=" · carga "+profile.Transport.Capacity;
-            if(profile.Mana.Enabled)text+=" · maná "+profile.Mana.Maximum;
+            string text=GameText.Localize(string.IsNullOrEmpty(profile.Role)?profile.Name:profile.Role)+" · "+GameText.Format("{0} vida",profile.MaxHealth)+" · "+GameText.Format("armadura {0} {1}",profile.Armor,profile.ArmorType);
+            if(profile.CanAttack)text+=" · "+profile.Weapon.DamageText+" "+profile.AttackType+" · "+GameText.Format("alcance {0}",profile.Weapon.Range);
+            if(profile.CanTransport)text+=" · "+GameText.Format("carga {0}",profile.Transport.Capacity);
+            if(profile.Mana.Enabled)text+=" · "+GameText.Format("maná {0}",profile.Mana.Maximum);
             return text;
         }
 
@@ -539,9 +543,9 @@ namespace RiskAI
         static string PurchaseCost(ProductionBatchPreview preview,int unitCost,string hotkey)
         {
             string cost=preview.IsGrouped
-                ? (preview.PlannedCount==preview.CandidateCount?preview.PlannedCost+" oro":"Hasta ×"+preview.PlannedCount+" · "+preview.PlannedCost+" oro")
-                : unitCost+" oro";
-            if(preview.UnfundedCount>0)cost+=" · falta oro";
+                ? (preview.PlannedCount==preview.CandidateCount?GameText.Format("{0} oro",preview.PlannedCost):GameText.Format("Hasta ×{0} · {1} oro",preview.PlannedCount,preview.PlannedCost))
+                : GameText.Format("{0} oro",unitCost);
+            if(preview.UnfundedCount>0)cost+=" · "+GameText.Localize("falta oro");
             return string.IsNullOrEmpty(hotkey)?cost:cost+" · "+hotkey;
         }
 
@@ -577,8 +581,8 @@ namespace RiskAI
             if(!unit||!unit.IsAlive)return "Unidad eliminada";
             var profile=UnitCatalog.Get(unit.Kind);
             var mana=unit.Mana;
-            string roar=unit.IsRoaring?" · rugido +"+Mathf.RoundToInt(profile.Roar.DamageBonus*100f)+"%":"";
-            return UnitCatalog.Get(unit.Kind).Name+" · "+Mathf.CeilToInt(unit.Health)+" / "+profile.MaxHealth+" vida"+(mana!=null&&mana.Enabled?" · "+Mathf.FloorToInt(mana.Current)+" / "+mana.Maximum+" maná":"")+" · "+UnitCatalog.Get(unit.Kind).Weapon.DamageText+" "+profile.AttackType+" · alcance "+profile.Weapon.Range+" · armadura "+profile.Armor+" "+profile.ArmorType+roar;
+            string roar=unit.IsRoaring?" · "+GameText.Format("rugido +{0}%",Mathf.RoundToInt(profile.Roar.DamageBonus*100f)):"";
+            return GameText.Localize(profile.Name)+" · "+GameText.Format("{0} / {1} vida",Mathf.CeilToInt(unit.Health),profile.MaxHealth)+(mana!=null&&mana.Enabled?" · "+GameText.Format("{0} / {1} maná",Mathf.FloorToInt(mana.Current),mana.Maximum):"")+" · "+profile.Weapon.DamageText+" "+profile.AttackType+" · "+GameText.Format("alcance {0}",profile.Weapon.Range)+" · "+GameText.Format("armadura {0} {1}",profile.Armor,profile.ArmorType)+roar;
         }
     }
 }

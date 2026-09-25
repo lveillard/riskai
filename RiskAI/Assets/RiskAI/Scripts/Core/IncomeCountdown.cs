@@ -15,16 +15,5 @@ namespace RiskAI.Core
         /// <summary>0 right after an income payment, 1 when the next one is due.</summary>
         public static float Progress(float elapsedInRound,float roundSeconds=BattleRules.RoundSeconds) =>
             roundSeconds<=0?1:Math.Min(1,Math.Max(0,elapsedInRound/roundSeconds));
-
-        /// <summary>"R3 · Ingreso en 58 s" on desktop; "58 s" on compact bars.</summary>
-        public static string Label(int round,float elapsedInRound,bool compact,float roundSeconds=BattleRules.RoundSeconds)
-        {
-            int seconds=SecondsRemaining(elapsedInRound,roundSeconds);
-            return compact?seconds+" s":"R"+round+" · Ingreso en "+seconds+" s";
-        }
-
-        /// <summary>Long form for the tooltip / long-press.</summary>
-        public static string Detail(int round,float elapsedInRound,int income,float roundSeconds=BattleRules.RoundSeconds) =>
-            "Ronda "+round+" · próximo ingreso +"+income+" oro en "+SecondsRemaining(elapsedInRound,roundSeconds)+" s";
     }
 }

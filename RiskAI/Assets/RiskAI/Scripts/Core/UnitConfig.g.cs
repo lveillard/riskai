@@ -678,6 +678,9 @@ namespace RiskAI.Core
         /// <summary>Proxy shape for the strategic stand-in. Formation order uses the dense catalog index, never the kind ordinal.</summary>
         [UnitConfigField(Required = true)]
         public UnitSilhouette Silhouette;
+        /// <summary>Clip id in Resources/Audio/clips.json played when this unit dies.</summary>
+        [UnitConfigField(Required = true)]
+        public string DeathSound;
     }
 
     /// <summary>v0.33 portrait camera numbers. The renderer reads these fields; it does not switch on a framing name. The view offset is the land or sea constant in PortraitFraming. A hull camera is a sea unit.</summary>

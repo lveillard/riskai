@@ -29,8 +29,8 @@ namespace RiskAI
         public string Feedback(string product)
         {
             if(AcceptedCount<=0)return FirstFailure;
-            string text="×"+AcceptedCount+" "+product+" encargados · "+SpentGold+" oro";
-            return RejectedCount>0?text+" · "+RejectedCount+" sin encargo":text;
+            string text=GameText.Format("×{0} {1} encargados · {2} oro",AcceptedCount,product,SpentGold);
+            return RejectedCount>0?text+" · "+GameText.Format("{0} sin encargo",RejectedCount):text;
         }
     }
 
@@ -93,6 +93,8 @@ namespace RiskAI
             foreach (var town in townList) AddTown(town);
             foreach (var harbor in harborList) AddHarbor(harbor);
             UpdatePrimaryBuilding();
+            if (harborList.Count > 0) Sfx.Ui(SfxId.SelectHarbor);
+            else if (townList.Count > 0) Sfx.Ui(SfxId.UiClick);
         }
 
         public void ClearSelectedBuildings()
