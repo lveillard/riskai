@@ -32,6 +32,8 @@ La v0.34.1 da una sola regla de clic para toda la selección, sin distinguir tie
 
 La v0.34.2 unifica lo que quedaba duplicado entre unidades de tierra y mar: una cola de producción por edificio, una sola selección, una sola métrica de poder de la IA y la presentación (audio, muerte, barras de vida, tooltips) leída del tipo de unidad; las capacidades restantes (guarnición inicial, transporte de expediciones, alcance del rugido y de la curación) pasan a `units.json`. Los iconos del HUD son un único sistema de siluetas rellenas, y en móvil la tira compacta centra los iconos de acción en su casilla.
 
+La v0.34.3 junta todos los textos de la interfaz en `Resources/Config/text.json`, con la misma línea en español e inglés. Las frases compuestas son plantillas y sólo se traducen líneas exactas, así que ya no salen mensajes mezclados. Los nombres de muelles también se traducen. El audio sale sólo de `Resources/Audio/clips.json`, y cada unidad elige en `units.json` su sonido de muerte: una caída en tierra y un hundimiento en los barcos. Hay sonidos nuevos para seleccionar un muelle, para el inicio de ronda y un quinto proyectil de mago. El chat del móvil apunta hacia donde se abre la lista, y el pie de escritorio ya no muestra una barra de desplazamiento vacía.
+
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 
 ## Historial de la base v0.22

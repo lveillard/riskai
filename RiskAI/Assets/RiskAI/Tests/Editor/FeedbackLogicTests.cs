@@ -185,12 +185,16 @@ namespace RiskAI.Tests
         }
 
         [Test]
-        public void CountryLostSoundIsAppendedWithoutMovingOtherClips()
+        public void EverySoundAndUnitDeathHasItsClipsJsonFiles()
         {
-            Assert.That((int)SfxId.Chat, Is.EqualTo(24));
-            Assert.That((int)SfxId.CountryLost, Is.EqualTo(25));
-            var json = System.IO.File.ReadAllText("Assets/RiskAI/Resources/Audio/clips.json");
-            Assert.That(json, Does.Contain("\"id\": \"country_lost\""));
+            foreach (SfxId sound in System.Enum.GetValues(typeof(SfxId)))
+            {
+                Assert.That(Sfx.FromClipId(Sfx.ClipId(sound)), Is.EqualTo(sound));
+                Assert.That(Sfx.LoadedVariants(sound), Is.GreaterThan(0), sound.ToString());
+            }
+            Assert.That(Sfx.ClipId(SfxId.CountryLost), Is.EqualTo("country_lost"));
+            for (int i = 0; i < RiskAI.Core.UnitCatalog.Count; i++)
+                Assert.DoesNotThrow(() => Sfx.FromClipId(RiskAI.Core.UnitCatalog.At(i).DeathSound));
         }
 
         [Test]

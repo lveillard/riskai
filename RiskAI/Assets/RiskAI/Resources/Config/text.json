@@ -2238,5 +2238,9 @@
  {
   "es": "La unidad no está sobre terreno transitable.",
   "en": "The unit is not on walkable ground."
+ },
+ {
+  "es": "Reparto Risk",
+  "en": "Risk deal"
  }
 ]

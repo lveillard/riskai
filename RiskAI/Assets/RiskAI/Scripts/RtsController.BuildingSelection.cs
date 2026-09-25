@@ -93,6 +93,8 @@ namespace RiskAI
             foreach (var town in townList) AddTown(town);
             foreach (var harbor in harborList) AddHarbor(harbor);
             UpdatePrimaryBuilding();
+            if (harborList.Count > 0) Sfx.Ui(SfxId.SelectHarbor);
+            else if (townList.Count > 0) Sfx.Ui(SfxId.UiClick);
         }
 
         public void ClearSelectedBuildings()
