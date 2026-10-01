@@ -7,85 +7,37 @@
 
   var MaxQueue = 64;
   var CompatibilityMouseMilliseconds = 500;
-  var WheelSampleMilliseconds = 160;
-  var ScrollGestureMilliseconds = 250;
-
-  // WheelEvent has no device type. Recognize common discrete mouse notches;
-  // other pixel input pans. Once a pan starts, acceleration cannot turn it into
-  // zoom until the gesture (including its momentum) has stopped.
-  function isWheelNotch(x, y, mode) {
-    if (mode === 1 || mode === 2) return true;
-    var magnitude = Math.abs(y);
-    return x === 0 && magnitude > 0 && (magnitude % 100 === 0 || magnitude % 120 === 0);
-  }
-
-  // Preserve browser wheel units and per-event granularity until C# consumes
-  // them once per frame. InputSystem accumulates scroll events inside the frame,
-  // after which a touchpad stream can no longer be distinguished from wheel ticks.
+  // Raw browser transport only. All scroll/pinch policy lives in CameraScrollInterpreter.
   function attachWheel(canvas, options) {
     if (!canvas || typeof canvas.addEventListener !== "function")
       throw new TypeError("RiskAIPen.attachWheel requires a canvas EventTarget");
     options = options || {};
-    var clock = options.now || function() {
-      return typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
-    };
-    var maximumAge = Number(options.maximumAgeMilliseconds);
-    if (!isFinite(maximumAge) || maximumAge <= 0) maximumAge = WheelSampleMilliseconds;
-    var ownerDocument = canvas.ownerDocument || null;
-    var ownerWindow = ownerDocument && ownerDocument.defaultView ? ownerDocument.defaultView :
-      (typeof window !== "undefined" ? window : null);
-    // Pinch pixels, wheel pixels/lines/pages, normalized screen drag X/Y,
-    // normalized pointer X/Y (Unity coordinates: origin at bottom left).
-    var deltas = [0, 0, 0, 0, 0, 0, 0, 0];
-    var lastEventAt = -Infinity;
-    var lastScrollAt = -Infinity;
-    var panning = false;
-    var gestureScale = 0;
-    var touchContacts = 0;
-    var disposed = false;
+    var clock = options.now || function() { return performance.now(); };
+    var ownerDocument = canvas.ownerDocument;
+    var ownerWindow = ownerDocument && ownerDocument.defaultView;
+    var queue = [], disposed = false, gestureScale = 0, touchContacts = 0;
+    var nonPassive = { passive: false }, touchOptions = { passive: true, capture: true };
 
-    function clearSample() {
-      deltas.fill(0);
-      lastEventAt = -Infinity;
+    function number(value) { value = Number(value);return isFinite(value) ? value : 0; }
+    function enqueue(event, x, y, unit, control) {
+      var rect = canvas.getBoundingClientRect();
+      var width = Math.max(1, rect.width), height = Math.max(1, rect.height);
+      if (queue.length >= 256) queue.shift();
+      queue.push([x, y, unit, control ? 1 : 0,
+        (number(event.clientX) - rect.left) / width, 1 - (number(event.clientY) - rect.top) / height,
+        1 / width, 1 / height, clock()]);
     }
     function reset() {
-      clearSample();lastScrollAt = -Infinity;panning = false;gestureScale = 0;touchContacts = 0;
-    }
-    function number(value) { value = Number(value);return isFinite(value) ? value : 0; }
-    function locate(event, current) {
-      if (current - lastEventAt > maximumAge) clearSample();
-      var rect = canvas.getBoundingClientRect();
-      var x = (number(event.clientX) - rect.left) / Math.max(1, rect.width);
-      var y = 1 - (number(event.clientY) - rect.top) / Math.max(1, rect.height);
-      // Do not merge input over a panel with a later sample over the world.
-      if (x !== deltas[6] || y !== deltas[7]) clearSample();
-      deltas[6] = x;deltas[7] = y;lastEventAt = current;
-      return rect;
+      queue.length = 0;gestureScale = 0;touchContacts = 0;
+      // Cancellation must also clear the shared interpreter's ongoing gesture.
+      if (!disposed) queue.push([0, 0, 5, 0, 0, 0, 1, 1, clock()]);
     }
     function onWheel(event) {
       if (disposed) return;
-      var mode = Number(event.deltaMode);
-      var x = number(event.deltaX), y = number(event.deltaY);
-      var current = clock();
-      var rect = locate(event, current);
-      if (event.ctrlKey) {
-        // Chromium/Firefox emit pinch as ctrl+wheel. Safari may also emit
-        // gesturechange; while that gesture is active it is the sole zoom source.
-        if (!gestureScale) deltas[0] += y * (mode === 1 ? 16 : mode === 2 ? rect.height : 1);
-      } else if (x || y) {
-        if (current - lastScrollAt > ScrollGestureMilliseconds) panning = false;
-        panning = panning || !isWheelNotch(x, y, mode);
-        lastScrollAt = current;
-        if (panning) {
-          var units = mode === 1 ? 16 : mode === 2 ? rect.height : 1;
-          deltas[4] -= x * units / Math.max(1, rect.width);
-          deltas[5] += y * units / Math.max(1, rect.height);
-        } else if (mode === 1) deltas[2] += y;
-        else if (mode === 2) deltas[3] += y;
-        else deltas[1] += y;
-      }
-      // Keep the gesture inside the canvas, including ctrl+wheel trackpad pinch,
-      // but deliberately leave propagation intact for Unity UI Toolkit scrolling.
+      var mode = number(event.deltaMode);
+      if (!(event.ctrlKey && gestureScale))
+        enqueue(event, number(event.deltaX), number(event.deltaY), mode, event.ctrlKey);
+      // Unity UI Toolkit still receives the original wheel event.
       if (event.preventDefault) event.preventDefault();
     }
     function onGestureStart(event) {
@@ -97,8 +49,8 @@
       if (disposed || !gestureScale) return;
       var scale = number(event.scale);
       if (scale > 0) {
-        locate(event, clock());deltas[0] -= Math.log(scale / gestureScale) * 100;
-        gestureScale = scale;
+        // Safari reports absolute scale; transport its incremental ratio.
+        enqueue(event, 0, scale / gestureScale, 4, true);gestureScale = scale;
       }
       if (event.preventDefault) event.preventDefault();
     }
@@ -108,20 +60,18 @@
       if (event.preventDefault) event.preventDefault();
     }
     function onTouchContact(event) {
-      // Safari emits GestureEvents for both trackpads and direct touch. Unity
-      // already owns screen contacts, so never enqueue a second pinch for them.
-      touchContacts = event.touches ? event.touches.length : 0;
-      if (touchContacts) { clearSample();gestureScale = 0; }
+      var count = event.touches ? event.touches.length : 0;
+      // Screen contacts are already handled by Unity's direct-touch adapter.
+      if (count) reset();
+      touchContacts = count;
     }
     function onVisibilityChange() {
-      if (ownerDocument && ownerDocument.visibilityState === "hidden") reset();
+      if (ownerDocument.visibilityState === "hidden") reset();
     }
-    var optionsNonPassive = { passive: false };
-    canvas.addEventListener("wheel", onWheel, optionsNonPassive);
-    canvas.addEventListener("gesturestart", onGestureStart, optionsNonPassive);
-    canvas.addEventListener("gesturechange", onGestureChange, optionsNonPassive);
-    canvas.addEventListener("gestureend", onGestureEnd, optionsNonPassive);
-    var touchOptions = { passive: true, capture: true };
+    canvas.addEventListener("wheel", onWheel, nonPassive);
+    canvas.addEventListener("gesturestart", onGestureStart, nonPassive);
+    canvas.addEventListener("gesturechange", onGestureChange, nonPassive);
+    canvas.addEventListener("gestureend", onGestureEnd, nonPassive);
     canvas.addEventListener("touchstart", onTouchContact, touchOptions);
     canvas.addEventListener("pointerleave", reset);
     if (ownerWindow) {
@@ -133,23 +83,19 @@
       ownerDocument.addEventListener("touchend", onTouchContact, touchOptions);
       ownerDocument.addEventListener("touchcancel", onTouchContact, touchOptions);
     }
-
     return {
       readSample: function() {
-        if (clock() - lastEventAt > maximumAge) clearSample();
-        if (lastEventAt === -Infinity) return null;
-        var sample = deltas.slice();
-        clearSample();
-        return sample;
+        if (!queue.length) return null;
+        var sample = queue.shift();sample[8] = Math.max(0, clock() - sample[8]);return sample;
       },
       reset: reset,
       dispose: function() {
         if (disposed) return;
         disposed = true;
-        canvas.removeEventListener("wheel", onWheel, optionsNonPassive);
-        canvas.removeEventListener("gesturestart", onGestureStart, optionsNonPassive);
-        canvas.removeEventListener("gesturechange", onGestureChange, optionsNonPassive);
-        canvas.removeEventListener("gestureend", onGestureEnd, optionsNonPassive);
+        canvas.removeEventListener("wheel", onWheel, nonPassive);
+        canvas.removeEventListener("gesturestart", onGestureStart, nonPassive);
+        canvas.removeEventListener("gesturechange", onGestureChange, nonPassive);
+        canvas.removeEventListener("gestureend", onGestureEnd, nonPassive);
         canvas.removeEventListener("touchstart", onTouchContact, touchOptions);
         canvas.removeEventListener("pointerleave", reset);
         if (ownerWindow) {

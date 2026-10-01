@@ -4,37 +4,16 @@ using UnityEngine.InputSystem;
 
 namespace RiskAI
 {
-    public readonly struct CameraScrollInput
-    {
-        public readonly float ZoomSteps;
-        public readonly Vector2 PanDelta,Position;
-        public CameraScrollInput(float zoomSteps,Vector2 panDelta,Vector2 position)
-        { ZoomSteps=zoomSteps;PanDelta=panDelta;Position=position; }
-    }
-
     /// <summary>Device capabilities affect presentation and input, never map rules or the simulation clock.</summary>
     public static class PlatformPresentation
     {
-        const int WheelSampleLength=8;
-        static readonly float[] wheelSample=new float[WheelSampleLength];
 #if UNITY_WEBGL && !UNITY_EDITOR
         [DllImport("__Internal")] static extern float RiskAI_CanvasDensity();
         [DllImport("__Internal")] static extern int RiskAI_TouchCapable();
         [DllImport("__Internal")] static extern int RiskAI_PrefersSpanish();
         [DllImport("__Internal")] static extern float RiskAI_SafeInset(int edge);
-        [DllImport("__Internal")]
-        static extern int RiskAI_ReadWheelDeltas([Out,MarshalAs(UnmanagedType.LPArray,SizeConst=WheelSampleLength)] float[] destination);
 #endif
 
-        /// <summary>Consumes one frame of wheel input, preserving raw DOM units in WebGL.</summary>
-        public static CameraScrollInput ConsumeCameraScroll(float inputSystemFallback,Vector2 mousePosition)
-        {
-#if UNITY_WEBGL && !UNITY_EDITOR
-            if(RiskAI_ReadWheelDeltas(wheelSample)!=0)
-                return RtsCameraPolicy.BrowserCameraScroll(wheelSample,new Vector2(Screen.width,Screen.height));
-#endif
-            return new CameraScrollInput(inputSystemFallback,Vector2.zero,mousePosition);
-        }
         /// <summary>Browser (navigator.languages) or OS language is Spanish (es-*).</summary>
         public static bool PrefersSpanish
         {

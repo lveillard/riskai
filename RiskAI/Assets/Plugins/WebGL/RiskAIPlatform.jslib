@@ -26,11 +26,8 @@ mergeInto(LibraryManager.library, {
     var bridge = window.riskaiWheel;
     if (!bridge) return 0;
     var sample = bridge.readSample();
-    if (!sample) {
-      for (var empty = 0; empty < 8; empty++) HEAPF32[(destination >> 2) + empty] = 0;
-      return 1;
-    }
-    for (var i = 0; i < 8; i++) HEAPF32[(destination >> 2) + i] = sample[i];
+    if (!sample) return 0;
+    for (var i = 0; i < 9; i++) HEAPF32[(destination >> 2) + i] = sample[i];
     return 1;
   }
 });

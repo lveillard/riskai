@@ -109,15 +109,25 @@ namespace RiskAI.Tests
             yield return null;
         }
 
-        [UnityTest] public IEnumerator FractionalWheelBurstHasTheSameUnitsAsOneNotchAndReversesCleanly()
+        [UnityTest] public IEnumerator NativeTouchpadBurstPansWithoutZoomBeforeUnityAccumulatesIt()
         {
             var point=UiViewport.WorldRect.center;
             controller.CameraRig.ResetView();
             float initial=controller.CameraRig.TargetZoom;
-            for(int eventIndex=0;eventIndex<10;eventIndex++)Pump(point,scroll:.1f);
-            Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(initial*RtsCameraPolicy.WheelZoomMultiplier(1)).Within(.001f));
-            for(int eventIndex=0;eventIndex<10;eventIndex++)Pump(point,scroll:-.1f);
-            Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(initial).Within(.001f));
+            var before=controller.CameraRig.FocusPoint;
+            for(int eventIndex=0;eventIndex<10;eventIndex++)
+                InputSystem.QueueStateEvent(mouse,new MouseState {position=point,scroll=Vector2.one*.1f});
+            InputSystem.Update();controller.SendMessage("Update");
+            Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(initial),"Ten fine events must not become a wheel-notch zoom.");
+            Assert.That(Vector3.Distance(before,controller.CameraRig.FocusPoint),Is.GreaterThan(.1f));
+            before=controller.CameraRig.FocusPoint;
+            // Ctrl is delivered before the wheel within the same Input System update.
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.LeftCtrl));
+            InputSystem.QueueStateEvent(mouse,new MouseState {position=point,scroll=Vector2.up*.1f});
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState());
+            InputSystem.Update();controller.SendMessage("Update");
+            Assert.That(controller.CameraRig.TargetZoom,Is.LessThan(initial),"Native ctrl+wheel pinch must zoom even if Ctrl is released in the same frame.");
+            Assert.That(controller.CameraRig.FocusPoint,Is.EqualTo(before));
             yield return null;
         }
 

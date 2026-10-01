@@ -105,12 +105,12 @@ The unit command row (Move, Attack, Patrol, Stop, Hold, Focus) uses the same squ
 
 ## Camera gestures
 
-- **Touchpad in the browser:** slide two fingers vertically, horizontally or diagonally to move the map. The direction follows the operating system's scroll setting. Pinch to zoom around the cursor. Chromium/Firefox ctrl+wheel and Safari gesture events use the same camera zoom action.
+- **Touchpad:** slide two fingers vertically, horizontally or diagonally to move the map. The direction follows the operating system's scroll setting. Pinch to zoom around the cursor. WebGL and native players share the same gesture interpreter and camera actions.
 - **Mouse:** the wheel zooms around the cursor, right-drag moves the map, and middle-drag rotates it.
 - **Touchscreen:** two-finger dragging and pinching share the same camera movement and zoom actions as the touchpad; three fingers rotate.
 - **Panels:** scrolling over the HUD scrolls its content, without moving or zooming the map. Camera gestures remain available while the match is paused.
 
-Browsers do not identify the hardware behind a wheel event. The Web player recognizes line/page wheel events and common 100/120-pixel mouse notches; other pixel events pan. A pan keeps its meaning through acceleration and momentum. Unusual smooth mouse wheels or touchpads that emulate discrete notches can therefore be ambiguous. The native Windows player retains Unity's mouse-wheel handling; this browser gesture adapter does not detect native touchpads.
+Wheel events do not reliably identify the originating hardware. The shared interpreter recognizes discrete mouse notches after converting the platform's units; fine scroll events pan, retaining that meaning through acceleration and momentum. Pinch uses Ctrl+wheel from the browser or native driver, or Safari's scale events. Unusual smooth mouse wheels or touchpads that emulate discrete notches can therefore be ambiguous on either platform.
 
 ## Touch (phones and tablets)
 

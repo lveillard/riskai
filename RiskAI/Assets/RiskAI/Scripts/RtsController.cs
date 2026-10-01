@@ -21,6 +21,7 @@ namespace RiskAI
         public bool OrderCursor => AttackCursor || MoveCursor || PatrolCursor || UnloadCursor;
         public bool ShowHealthBars => !ChatInput.IsTyping && Keyboard.current!=null && (Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed);
         public bool HelpVisible;
+        CameraScrollSource cameraScroll;
         public bool ScoreboardVisible => !HelpVisible && !ChatInput.IsTyping && Keyboard.current!=null && Keyboard.current.tabKey.isPressed;
         public bool EdgePan=true;
         public bool Dragging { get; private set; }
@@ -246,7 +247,7 @@ namespace RiskAI
             gameplayFocus=hasFocus;
             if(!hasFocus)
             {
-                cursorCaptureRequested=false;ReleaseCursor();
+                cursorCaptureRequested=false;ReleaseCursor();cameraScroll?.Reset();
             }
             if(hasFocus)return;
             CameraDragging=false;Dragging=false;pressedWorld=false;previousMouse=Pointer;
@@ -479,10 +480,10 @@ namespace RiskAI
         }
         void Update()
         {
-            // Consume the browser bridge before every focus/modal/HUD early return.
+            // Consume scroll input before every focus/modal/HUD early return.
             // A menu scroll or stale pre-load touchpad burst must never move the map later.
             var mouse=Mouse.current;
-            var scroll=PlatformPresentation.ConsumeCameraScroll(mouse==null?0:mouse.scroll.ReadValue().y,mouse==null?Vector2.zero:mouse.position.ReadValue());
+            var scroll=cameraScroll?cameraScroll.Consume():default;
             if(session&&!session.Paused&&session.Winner<0)ProcessPendingBoarding();
             AnimateOrderMarker();
             // Ownership is released before any focus/modal early return: a dead
@@ -649,7 +650,7 @@ namespace RiskAI
         }
         bool InSelection(Soldier unit,Rect rect) { var p=cam.WorldToScreenPoint(unit.transform.position+Vector3.up);return p.z>0&&rect.Contains(new Vector2(p.x,Screen.height-p.y)); }
         bool InSelection(Ship ship,Rect rect) { var p=cam.WorldToScreenPoint(ship.transform.position+Vector3.up*2.4f);return p.z>0&&rect.Contains(new Vector2(p.x,Screen.height-p.y)); }
-        void OnEnable() { gameplayFocus=true; if(!GetComponent<OrderRoutes>())gameObject.AddComponent<OrderRoutes>(); }
+        void OnEnable() { gameplayFocus=true;cameraScroll=GetComponent<CameraScrollSource>();if(!cameraScroll)cameraScroll=gameObject.AddComponent<CameraScrollSource>();if(!GetComponent<OrderRoutes>())gameObject.AddComponent<OrderRoutes>(); }
         void OnDisable() { ReleaseCursor(); }
         void OnDestroy() { ReleaseCursor();inputRouter?.Dispose();RtsCursor.SetAttack(false); }
         bool OnScreen(Soldier unit) { var p=cam.WorldToViewportPoint(unit.transform.position);return p.z>0&&p.x>=0&&p.x<=1&&p.y>=.2f&&p.y<=.92f; }

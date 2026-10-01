@@ -149,7 +149,7 @@ namespace RiskAI
             AddSection(panel, "CONTROLES");
             AddInfo(panel, "Selección: clic o toque para seleccionar; arrastra un área para seleccionar tropas y edificios.");
             AddInfo(panel, "Órdenes: clic derecho en PC o una acción seguida de toque en tabletas. B/D embarca y desembarca.");
-            AddInfo(panel, "Cámara: rueda para zoom, arrastre derecho para mover y botón central para girar. En navegador, desliza dos dedos en el touchpad para mover el mapa y pellizca para ampliar. En pantalla táctil, dos dedos mueven y amplían; tres dedos giran.");
+            AddInfo(panel, "Cámara: rueda para zoom, arrastre derecho para mover y botón central para girar. Desliza dos dedos en el touchpad para mover el mapa y pellizca para ampliar. En pantalla táctil, dos dedos mueven y amplían; tres dedos giran.");
             BuildControlsTable(panel);
         }
 

@@ -63,6 +63,20 @@ los primeros 20 tests fallidos y las rutas del XML y del log. El código de sali
 `RISKAI_UNITY_CLI` cambia la ruta de la CLI de Unity Hub y `RISKAI_UNITY_EDITOR` la del editor
 que usa `quick_compile.py` (carpeta `Editor`, su `Data` o `Unity.exe`).
 
+## Entrada de cámara compartida
+
+WebGL y Windows compilan la misma cámara y el mismo `CameraScrollInterpreter` en C#.
+`CameraScrollSource` recoge cada evento antes de que Unity los acumule; el puente JavaScript
+solo transporta deltas, unidades, posición, modificadores y tiempo. La clasificación de
+rueda/desplazamiento/pellizco, sensibilidad, acumulación y caducidad viven en el intérprete,
+sin una segunda implementación por plataforma. El touchpad y la pantalla táctil terminan
+en las mismas acciones `RtsCameraRig.Drag` y `ZoomAt`.
+
+`CameraScrollTests` comprueba secuencias equivalentes de ambos transportes, y
+`MouseCameraInputTests` comprueba la entrada nativa antes de su acumulación. Para WebGL,
+`scripts/check_web_zoom.py --output Captures/gestures` mide el zoom y la posición reales
+de la cámara mediante `RuntimeDiagnostics`; `--dpr 2` comprueba pantallas de alta densidad.
+
 ## Logs y resultados
 
 - Logs del editor y del reproductor: `RiskAI/Logs/` (ignorados por git).

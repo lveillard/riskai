@@ -1,9 +1,9 @@
 """Exercise Riesgus WebGL touchpad pan, pinch and mouse wheel routing.
 
 The probe wraps riskaiWheel.readSample transparently: C# still consumes every
-sample, while the browser records the eight-channel values it returned.
-Camera ratios in result.json are derived from the public policy constants; the
-screenshots are the integration evidence and are not reported as TargetZoom.
+sample, while the browser records the nine raw transport fields. Camera focus
+and target zoom are measured through the existing RuntimeDiagnostics probe.
+The script does not duplicate the shared C# scroll interpreter.
 """
 import argparse
 import json
@@ -18,23 +18,6 @@ sys.path.insert(0, str(ROOT / '.tools/web-python'))
 from playwright.sync_api import sync_playwright
 
 
-WHEEL_EXPONENT = .24
-MAX_STEPS = 4
-
-
-def derived(sample):
-    pinch, coarse, lines, pages, pan_x, pan_y = (sum(row[index] for row in sample) for index in range(6))
-    steps = -(pinch * .01 / WHEEL_EXPONENT + coarse / 100 + lines / 3 + pages)
-    steps = max(-MAX_STEPS, min(MAX_STEPS, steps))
-    return {
-        'sum': [pinch, coarse, lines, pages],
-        'panNormalized': [pan_x, pan_y],
-        'steps': steps,
-        'targetZoomMultiplierDerived': math.exp(-steps * WHEEL_EXPONENT),
-        'targetZoomMeasured': False,
-    }
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--url', default='http://127.0.0.1:8086')
@@ -45,10 +28,11 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     report = {'url': args.url, 'viewport': [args.width, args.height], 'dpr': args.dpr,
-              'errors': [], 'cases': {}, 'captures': [], 'targetZoomMeasured': False}
+              'errors': [], 'cases': {}, 'captures': [], 'targetZoomMeasured': True}
     ready = []
     diagnostics = []
     wheel_injection_scale = 1
+    case_start = None
     started = time.monotonic()
 
     with sync_playwright() as pw, (args.output / 'console.log').open('w', encoding='utf-8') as log:
@@ -82,11 +66,17 @@ def main():
                 page.wait_for_timeout(50)
             return diagnostics[-1]
 
+        def camera_state():
+            state = snapshot()
+            return {key: float(state[key]) for key in ('cameraZoom', 'cameraX', 'cameraZ')}
+
         def reset_camera():
+            nonlocal case_start
             send('ResetView')
             page.wait_for_timeout(750)
             page.mouse.move(args.width * .5, args.height * .42)
             page.evaluate('window.__riskaiWheelReads.length=0')
+            case_start = camera_state()
 
         def dispatch(deltas, mode=0, ctrl=False, point=None):
             x, y = point or (args.width * .5, args.height * .42)
@@ -121,10 +111,16 @@ def main():
                 innerHeight: window.innerHeight
             })""")
 
+        def record_case(name, reads):
+            after = camera_state()
+            report['cases'][name] = {
+                'reads': reads, 'cameraBefore': case_start, 'cameraAfter': after,
+                'zoomRatio': after['cameraZoom'] / case_start['cameraZoom'],
+                'focusDistance': math.hypot(after['cameraX'] - case_start['cameraX'], after['cameraZ'] - case_start['cameraZ']),
+            }
+
         def finish_case(name):
-            reads = page.evaluate('window.__riskaiWheelReads.splice(0)')
-            report['cases'][name] = derived(reads)
-            report['cases'][name]['reads'] = reads
+            record_case(name, page.evaluate('window.__riskaiWheelReads.splice(0)'))
             capture(name + '-after')
 
         page.on('console', console)
@@ -207,9 +203,7 @@ def main():
             page.mouse.move(*world_point)
             page.wait_for_timeout(300)
             reads = page.evaluate('window.__riskaiWheelReads.splice(0)')
-            report['cases']['hud-then-map-no-replay'] = derived(reads)
-            report['cases']['hud-then-map-no-replay']['reads'] = reads
-            report['cases']['hud-then-map-no-replay']['application'] = 'not measured; compare paused world in hud-before.png and hud-return-map.png'
+            record_case('hud-then-map-no-replay', reads)
             capture('hud-return-map')
 
             reset_camera();capture('hud-touchpad-before')
@@ -217,28 +211,21 @@ def main():
             page.mouse.move(*world_point)
             page.wait_for_timeout(300)
             reads = page.evaluate('window.__riskaiWheelReads.splice(0)')
-            report['cases']['hud-touchpad-then-map-no-replay'] = derived(reads)
-            report['cases']['hud-touchpad-then-map-no-replay']['reads'] = reads
-            report['cases']['hud-touchpad-then-map-no-replay']['application'] = 'not measured; compare paused world in hud-touchpad-before.png and hud-touchpad-return-map.png'
+            record_case('hud-touchpad-then-map-no-replay', reads)
             capture('hud-touchpad-return-map')
 
-            for name, pixels in [('fine-burst-200px', 200), ('trusted-fine-burst-50px', 50),
-                                 ('fine-burst-reverse-200px', -200), ('accelerated-pan-130px', 130)]:
+            for name in ('fine-burst-200px', 'trusted-fine-burst-50px', 'fine-burst-reverse-200px',
+                         'horizontal-50px', 'diagonal-50px', 'accelerated-pan-130px'):
                 case = report['cases'][name]
-                assert case['sum'] == [0, 0, 0, 0], f'{name} must pan without zoom'
-                assert abs(case['panNormalized'][1] - pixels / args.height) < 1e-6
-            horizontal = report['cases']['horizontal-50px']
-            assert horizontal['sum'] == [0, 0, 0, 0] and horizontal['panNormalized'][1] == 0
-            assert abs(horizontal['panNormalized'][0] + 50 / args.width) < 1e-6
-            diagonal = report['cases']['diagonal-50px']
-            assert diagonal['sum'] == [0, 0, 0, 0]
-            assert abs(diagonal['panNormalized'][0] + 50 / args.width) < 1e-6
-            assert abs(diagonal['panNormalized'][1] - 50 / args.height) < 1e-6
-            assert report['cases']['wheel-100px']['sum'] == [0, 100, 0, 0]
-            assert abs(report['cases']['wheel-100px']['steps'] + 1) < 1e-6
-            assert report['cases']['wheel-120px']['sum'] == [0, 120, 0, 0]
-            assert report['cases']['ctrl-trusted-fine-50px']['sum'] == [50, 0, 0, 0]
-            assert report['cases']['ctrl-trusted-fine-50px']['panNormalized'] == [0, 0]
+                assert abs(case['zoomRatio'] - 1) < .0001, f'{name} unexpectedly zoomed: {case}'
+                assert case['focusDistance'] > .05, f'{name} did not move the camera'
+            for name, expected in [('wheel-100px', math.exp(.24)), ('wheel-120px', math.exp(.288)),
+                                   ('ctrl-trusted-fine-50px', math.exp(.5))]:
+                case = report['cases'][name]
+                assert abs(case['zoomRatio'] - expected) < .001, f'{name}: {case}'
+            for name in ('hud-then-map-no-replay', 'hud-touchpad-then-map-no-replay'):
+                case = report['cases'][name]
+                assert abs(case['zoomRatio'] - 1) < .0001 and case['focusDistance'] < .02, f'{name}: {case}'
             paused_after = snapshot()
             assert paused_after['paused'] == 'True'
             assert paused_after['simTicks'] == paused_before['simTicks'], 'Camera gestures advanced the paused simulation'

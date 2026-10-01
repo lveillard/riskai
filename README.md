@@ -96,7 +96,7 @@ La selección múltiple muestra las colas de cada edificio y permite cancelar en
 | Seleccionar / añadir | Clic izquierdo o caja / Shift |
 | Mover, atacar o seguir | Clic derecho y soltar |
 | Mover cámara / girar | Arrastrar con botón derecho; flechas o bordes / arrastrar con botón central |
-| Touchpad (Web) | Deslizar dos dedos mueve el mapa; pellizcar amplía alrededor del cursor |
+| Touchpad | Deslizar dos dedos mueve el mapa; pellizcar amplía alrededor del cursor |
 | Zoom / centrar selección | Rueda / Espacio |
 | Avanzar atacando / patrulla | A + clic / P + clic |
 | Detener / mantener | S / H |
