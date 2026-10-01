@@ -471,12 +471,18 @@ namespace RiskAI
             return true;
         }
         static bool InsideScreen(Vector2 point) => point.x>=0&&point.x<=Screen.width&&point.y>=0&&point.y<=Screen.height;
+        void ApplyCameraScroll(CameraScrollInput scroll)
+        {
+            if(!InsideScreen(scroll.Position)||OverHud(scroll.Position))return;
+            if(scroll.PanDelta.sqrMagnitude>0)CameraRig.Drag(scroll.Position,scroll.Position+scroll.PanDelta);
+            CameraRig.ZoomAt(scroll.ZoomSteps,scroll.Position);
+        }
         void Update()
         {
             // Consume the browser bridge before every focus/modal/HUD early return.
-            // A menu scroll or stale pre-load touchpad burst must never zoom later.
+            // A menu scroll or stale pre-load touchpad burst must never move the map later.
             var mouse=Mouse.current;
-            float wheelSteps=PlatformPresentation.ConsumeWheelSteps(mouse==null?0:mouse.scroll.ReadValue().y);
+            var scroll=PlatformPresentation.ConsumeCameraScroll(mouse==null?0:mouse.scroll.ReadValue().y,mouse==null?Vector2.zero:mouse.position.ReadValue());
             if(session&&!session.Paused&&session.Winner<0)ProcessPendingBoarding();
             AnimateOrderMarker();
             // Ownership is released before any focus/modal early return: a dead
@@ -590,7 +596,7 @@ namespace RiskAI
             {
                 pan=pan.normalized;panMultiplier=FastPan?1.7f:1;
             }
-            else if(TryEdgePan(point,out var edgeDirection)){pan=edgeDirection.normalized;panMultiplier=1;}
+            else if(scroll.PanDelta==Vector2.zero&&TryEdgePan(point,out var edgeDirection)){pan=edgeDirection.normalized;panMultiplier=1;}
             bool secondaryClick=false;
             if(mouse.rightButton.wasPressedThisFrame&&insideScreen&&!OverHud(point))
             { secondaryGesture.Begin(point.x,point.y); previousMouse=point; }
@@ -625,7 +631,7 @@ namespace RiskAI
             if(!CameraDragging)
             {
                 if(pan.sqrMagnitude>.001f)CameraRig.Pan(pan,Time.unscaledDeltaTime*panMultiplier);
-                if(!mouse.middleButton.isPressed&&insideScreen&&!OverHud(point))CameraRig.ZoomAt(wheelSteps,point);
+                if(!mouse.middleButton.isPressed)ApplyCameraScroll(scroll);
                 previousMouse=point;
             }
             if(mouse.leftButton.wasPressedThisFrame&&!OverHud(point))

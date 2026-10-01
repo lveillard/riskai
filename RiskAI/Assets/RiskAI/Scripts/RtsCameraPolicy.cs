@@ -9,22 +9,29 @@ namespace RiskAI
         public const float WheelZoomExponent=.24f;
         public const float MaximumWheelStepsPerFrame=4f;
         public const float WebPixelUnitsPerStep=100f;
-        public const float WebTouchpadPixelUnitsPerStep=400f;
+        public const float WebPinchZoomExponent=.01f;
         public const float WebLineUnitsPerStep=3f;
 
         /// <summary>
-        /// Converts accumulated browser deltas to wheel-notch units. Pixel-mode
-        /// fine pixel events use one quarter sensitivity while 100/120 px mouse
-        /// wheels stay close to one ordinary notch. DOM positive Y means zoom out.
+        /// Converts pinch and discrete wheel deltas to the shared zoom action.
+        /// DOM positive Y means zoom out; ordinary touchpad scrolling only pans.
         /// </summary>
-        public static float NormalizeWebWheelDeltas(float touchpadPixels,float wheelPixels,float lines,float pages)
+        public static float NormalizeWebWheelDeltas(float pinchPixels,float wheelPixels,float lines,float pages)
         {
-            if(float.IsNaN(touchpadPixels)||float.IsInfinity(touchpadPixels))touchpadPixels=0;
+            if(float.IsNaN(pinchPixels)||float.IsInfinity(pinchPixels))pinchPixels=0;
             if(float.IsNaN(wheelPixels)||float.IsInfinity(wheelPixels))wheelPixels=0;
             if(float.IsNaN(lines)||float.IsInfinity(lines))lines=0;
             if(float.IsNaN(pages)||float.IsInfinity(pages))pages=0;
-            float steps=-(touchpadPixels/WebTouchpadPixelUnitsPerStep+wheelPixels/WebPixelUnitsPerStep+lines/WebLineUnitsPerStep+pages);
+            float steps=-(pinchPixels*WebPinchZoomExponent/WheelZoomExponent+wheelPixels/WebPixelUnitsPerStep+lines/WebLineUnitsPerStep+pages);
             return Mathf.Clamp(steps,-MaximumWheelStepsPerFrame,MaximumWheelStepsPerFrame);
+        }
+
+        public static CameraScrollInput BrowserCameraScroll(float[] sample,Vector2 viewport)
+        {
+            float steps=NormalizeWebWheelDeltas(sample[0],sample[1],sample[2],sample[3]);
+            var drag=Vector2.Scale(new Vector2(sample[4],sample[5]),viewport);
+            var position=Vector2.Scale(new Vector2(sample[6],sample[7]),viewport);
+            return new CameraScrollInput(steps,drag,position);
         }
 
         public static float WheelZoomMultiplier(float steps) =>

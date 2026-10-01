@@ -54,6 +54,7 @@ def main():
     }
     errors = []
     ready = []
+    diagnostics = []
     playwright = None
     browser = None
     page = None
@@ -74,6 +75,8 @@ def main():
                 log.flush()
                 if "RISKAI_STARTUP phase=ready" in value:
                     ready.append(value)
+                if "RuntimeDiagnostics 30s" in value:
+                    diagnostics.append(value)
                 # A missing resource such as a favicon is harmless.
                 harmless_404 = "Failed to load resource" in value and "404" in value
                 if message.type == "error" and not harmless_404:
@@ -125,7 +128,21 @@ def main():
 
             if ready:
                 if args.camera:
+                    # A cold WebGL first frame can delay the deployment countdown.
+                    # TogglePause is ignored until it ends; ask the existing probe.
+                    deadline = time.monotonic() + 90
+                    while True:
+                        diagnostics.clear()
+                        page.evaluate("window.riskaiInstance.SendMessage('RiskAI · Bootstrap', 'EndProbeMeasurement')")
+                        page.wait_for_timeout(500)
+                        if diagnostics and "paused=False" in diagnostics[-1]:
+                            break
+                        assert time.monotonic() < deadline, "Deployment countdown did not finish"
                     capture_camera_evidence(page, cdp, output, report, include_touch=args.camera_touch)
+                    diagnostics.clear()
+                    page.evaluate("window.riskaiInstance.SendMessage('RiskAI · Bootstrap', 'EndProbeMeasurement')")
+                    page.wait_for_timeout(500)
+                    assert diagnostics and "paused=True" in diagnostics[-1], "Camera captures must keep the battle paused"
                 if args.ui_wheel:
                     capture_ui_wheel_evidence(page, output, report)
                 cdp.send(
@@ -235,15 +252,25 @@ def capture_camera_evidence(page, cdp, output, report, include_touch=False):
 
 def capture_ui_wheel_evidence(page, output, report):
     """Real browser events; captures need visual review, not just file existence."""
-    page.set_viewport_size({"width": 1600, "height": 420})
+    # Use a short viewport so the ranking overflows. The board is on the right;
+    # the old (800, 210) probe scrolled the battlefield instead of the ranking.
+    page.set_viewport_size({"width": 1600, "height": 360})
     page.wait_for_timeout(700)
     page.keyboard.down("Tab")
     page.wait_for_timeout(500)
-    page.mouse.move(800, 210)
+    page.mouse.move(1420, 120)
     for name, wheel in (("ranking-before.png", 0), ("ranking-down.png", 480), ("ranking-up.png", -480)):
         if wheel:
             page.mouse.wheel(0, wheel)
             page.wait_for_timeout(500)
+        path=output/name
+        page.screenshot(path=str(path))
+        report["uiWheelCaptures"].append(str(path))
+    for delta, name in ((12, "ranking-touchpad-down.png"), (-12, "ranking-touchpad-up.png")):
+        for _ in range(12):
+            page.mouse.wheel(0, delta)
+            page.wait_for_timeout(16)
+        page.wait_for_timeout(500)
         path=output/name
         page.screenshot(path=str(path))
         report["uiWheelCaptures"].append(str(path))

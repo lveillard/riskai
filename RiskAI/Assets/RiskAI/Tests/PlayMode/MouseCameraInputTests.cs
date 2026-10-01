@@ -137,6 +137,33 @@ namespace RiskAI.Tests
             yield return null;
         }
 
+        [UnityTest] public IEnumerator BrowserPanSharesTouchDragAndHudOwnsItsScrollWhilePaused()
+        {
+            var point=UiViewport.WorldRect.center;
+            var rig=controller.CameraRig;
+            battle.TogglePause();Pump(point);
+            long commands=battle.Commands.AppliedCount;
+            float zoom=rig.TargetZoom;
+            var start=rig.FocusPoint;
+            var delta=new Vector2(-25,18);
+            rig.Drag(point,point+delta);
+            var expected=rig.FocusPoint;
+            rig.SetHome(start);
+            controller.SendMessage("ApplyCameraScroll",new CameraScrollInput(0,delta,point));
+            Assert.That(Vector3.Distance(rig.FocusPoint,expected),Is.LessThan(.001f),"Touchpad and direct touch share ground-space dragging.");
+            Assert.That(Vector3.Distance(start,rig.FocusPoint),Is.GreaterThan(.1f));
+            Assert.That(rig.TargetZoom,Is.EqualTo(zoom),"Two-finger scrolling cannot change scale.");
+            var before=rig.FocusPoint;
+            controller.SendMessage("ApplyCameraScroll",new CameraScrollInput(1,delta,Vector2.zero));
+            Assert.That(rig.FocusPoint,Is.EqualTo(before),"HUD scroll cannot pan even when the mouse is now over the world.");
+            Assert.That(rig.TargetZoom,Is.EqualTo(zoom));
+            controller.SendMessage("ApplyCameraScroll",new CameraScrollInput(1,Vector2.zero,point));
+            Assert.That(rig.TargetZoom,Is.LessThan(zoom),"Pinch zoom remains available while paused.");
+            Assert.That(battle.Commands.PendingCount,Is.Zero);
+            Assert.That(battle.Commands.AppliedCount,Is.EqualTo(commands));
+            yield return null;
+        }
+
         void Pump(Vector2 point,ushort buttons=0,float scroll=0)
         {
             InputSystem.QueueStateEvent(mouse,new MouseState { position=point,buttons=buttons,scroll=Vector2.up*scroll });

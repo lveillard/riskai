@@ -47,20 +47,29 @@ namespace RiskAI.Tests
         [TestCase(0,0,3,0,-1)]
         [TestCase(0,0,0,-1,1)]
         [TestCase(0,0,0,1,-1)]
-        public void BrowserPixelLineAndPageUnitsKeepDirection(float touchpadPixels,float wheelPixels,float lines,float pages,float expected)
+        public void BrowserPixelLineAndPageUnitsKeepDirection(float pinchPixels,float wheelPixels,float lines,float pages,float expected)
         {
-            Assert.That(RtsCameraPolicy.NormalizeWebWheelDeltas(touchpadPixels,wheelPixels,lines,pages),Is.EqualTo(expected).Within(.00001f));
+            Assert.That(RtsCameraPolicy.NormalizeWebWheelDeltas(pinchPixels,wheelPixels,lines,pages),Is.EqualTo(expected).Within(.00001f));
         }
 
-        [Test] public void SmallTouchpadBurstIsProportionalToItsPixelDistanceNotItsEventCount()
+        [Test] public void PinchBurstIsProportionalToDistanceAndReversesExactly()
         {
             float pixels=0;
             for(int eventIndex=0;eventIndex<40;eventIndex++)pixels-=.5f;
             float steps=RtsCameraPolicy.NormalizeWebWheelDeltas(pixels,0,0,0);
-            Assert.That(steps,Is.EqualTo(.05f).Within(.00001f));
-            float oldExponent=Mathf.Abs(-pixels/RtsCameraPolicy.WebPixelUnitsPerStep*RtsCameraPolicy.WheelZoomExponent);
-            float newExponent=Mathf.Abs(Mathf.Log(RtsCameraPolicy.WheelZoomMultiplier(steps)));
-            Assert.That(oldExponent/newExponent,Is.EqualTo(4).Within(.0001f),"Fine continuous input must be four times less aggressive than the old pixel response.");
+            Assert.That(RtsCameraPolicy.WheelZoomMultiplier(steps),Is.EqualTo(Mathf.Exp(-.2f)).Within(.00001f));
+            float inverse=RtsCameraPolicy.NormalizeWebWheelDeltas(-pixels,0,0,0);
+            Assert.That(RtsCameraPolicy.WheelZoomMultiplier(steps)*RtsCameraPolicy.WheelZoomMultiplier(inverse),Is.EqualTo(1).Within(.00001f));
+        }
+
+        [TestCase(800,600)]
+        [TestCase(1600,1200)]
+        public void BrowserPanScalesToRenderResolutionWithoutZoom(float width,float height)
+        {
+            var input=RtsCameraPolicy.BrowserCameraScroll(new[]{0f,0,0,0,-.1f,.05f,.5f,.6f},new Vector2(width,height));
+            Assert.That(input.ZoomSteps,Is.Zero);
+            Assert.That(input.PanDelta,Is.EqualTo(new Vector2(-width*.1f,height*.05f)));
+            Assert.That(input.Position,Is.EqualTo(new Vector2(width*.5f,height*.6f)));
         }
 
         [Test] public void EqualWheelUnitsAreFrameIndependentAndReverseExactly()

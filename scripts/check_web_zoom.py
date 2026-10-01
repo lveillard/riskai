@@ -1,7 +1,7 @@
-"""Exercise Riesgus WebGL wheel normalization without runtime instrumentation.
+"""Exercise Riesgus WebGL touchpad pan, pinch and mouse wheel routing.
 
 The probe wraps riskaiWheel.readSample transparently: C# still consumes every
-sample, while the browser records the exact four-channel values it returned.
+sample, while the browser records the eight-channel values it returned.
 Camera ratios in result.json are derived from the public policy constants; the
 screenshots are the integration evidence and are not reported as TargetZoom.
 """
@@ -9,6 +9,7 @@ import argparse
 import json
 import math
 from pathlib import Path
+import re
 import sys
 import time
 
@@ -22,16 +23,14 @@ MAX_STEPS = 4
 
 
 def derived(sample):
-    fine, coarse, lines, pages = (sum(row[index] for row in sample) for index in range(4))
-    steps = -(fine / 400 + coarse / 100 + lines / 3 + pages)
+    pinch, coarse, lines, pages, pan_x, pan_y = (sum(row[index] for row in sample) for index in range(6))
+    steps = -(pinch * .01 / WHEEL_EXPONENT + coarse / 100 + lines / 3 + pages)
     steps = max(-MAX_STEPS, min(MAX_STEPS, steps))
-    old_steps = -((fine + coarse) / 100 + lines / 3 + pages)
-    old_steps = max(-MAX_STEPS, min(MAX_STEPS, old_steps))
     return {
-        'sum': [fine, coarse, lines, pages],
+        'sum': [pinch, coarse, lines, pages],
+        'panNormalized': [pan_x, pan_y],
         'steps': steps,
         'targetZoomMultiplierDerived': math.exp(-steps * WHEEL_EXPONENT),
-        'oldTargetZoomMultiplierDerived': math.exp(-old_steps * WHEEL_EXPONENT),
         'targetZoomMeasured': False,
     }
 
@@ -48,6 +47,8 @@ def main():
     report = {'url': args.url, 'viewport': [args.width, args.height], 'dpr': args.dpr,
               'errors': [], 'cases': {}, 'captures': [], 'targetZoomMeasured': False}
     ready = []
+    diagnostics = []
+    wheel_injection_scale = 1
     started = time.monotonic()
 
     with sync_playwright() as pw, (args.output / 'console.log').open('w', encoding='utf-8') as log:
@@ -60,6 +61,8 @@ def main():
             log.flush()
             if 'RISKAI_STARTUP phase=ready' in message.text:
                 ready.append(time.monotonic())
+            if 'RuntimeDiagnostics 30s' in message.text:
+                diagnostics.append(dict(re.findall(r'(\w+)=([^\s]+)', message.text)))
             if message.type == 'error' and '404' not in message.text:
                 report['errors'].append(message.text)
 
@@ -69,6 +72,15 @@ def main():
 
         def send(method):
             page.evaluate("method => window.riskaiInstance.SendMessage('RiskAI · Bootstrap', method)", method)
+
+        def snapshot():
+            count = len(diagnostics)
+            send('EndProbeMeasurement')
+            deadline = time.monotonic() + 10
+            while len(diagnostics) == count:
+                assert time.monotonic() < deadline, 'Runtime did not report its pause state'
+                page.wait_for_timeout(50)
+            return diagnostics[-1]
 
         def reset_camera():
             send('ResetView')
@@ -87,14 +99,14 @@ def main():
             }""", [deltas, mode, ctrl, x, y])
             page.wait_for_timeout(750)
 
-        def dispatch_trusted(deltas, ctrl=False, point=None):
+        def dispatch_trusted(deltas, ctrl=False, point=None, delta_x=0):
             x, y = point or (args.width * .5, args.height * .42)
             page.mouse.move(x, y)
             if ctrl:
                 page.keyboard.down('Control')
             try:
                 for delta_y in deltas:
-                    page.mouse.wheel(0, delta_y)
+                    page.mouse.wheel(delta_x * wheel_injection_scale, delta_y * wheel_injection_scale)
                     page.wait_for_timeout(16)
             finally:
                 if ctrl:
@@ -126,12 +138,36 @@ def main():
             while not ready:
                 assert time.monotonic() < deadline, 'Match did not start'
                 page.wait_for_timeout(50)
-            remaining = 6.5 - (time.monotonic() - ready[0])
-            if remaining > 0:
-                page.wait_for_timeout(remaining * 1000)
+            # Cold shader uploads delay the first rendered countdown frame.
+            # Wait for actual simulation instead of assuming ready + 6.5 s.
+            deadline = time.monotonic() + 90
+            while True:
+                state = snapshot()
+                if state.get('paused') == 'False' and int(state.get('simTicks', 0)) > 0:
+                    break
+                assert time.monotonic() < deadline, 'Deployment countdown did not finish'
+                page.wait_for_timeout(500)
             send('TogglePause')
             page.wait_for_timeout(250)
+            paused_before = snapshot()
+            assert paused_before['paused'] == 'True', 'Camera probe must start paused'
             page.wait_for_function('window.riskaiWheel && typeof window.riskaiWheel.readSample === "function"')
+            # CDP wheel deltas are DIP; emulated DPR can change their DOM pixel
+            # value. Calibrate the driver so each case sends its named CSS delta.
+            page.evaluate("""() => {
+                window.__probeWheelDelta = null;
+                document.getElementById('game').addEventListener('wheel', event => {
+                    window.__probeWheelDelta = event.deltaY;
+                }, {once: true});
+            }""")
+            page.mouse.move(args.width * .5, args.height * .42)
+            page.mouse.wheel(0, 100)
+            page.wait_for_function('window.__probeWheelDelta !== null')
+            delivered_delta = page.evaluate('window.__probeWheelDelta')
+            assert delivered_delta > 0, 'CDP did not deliver the wheel calibration event'
+            wheel_injection_scale = 100 / delivered_delta
+            report['trustedWheelInjectionScale'] = wheel_injection_scale
+            page.wait_for_timeout(750)
             page.evaluate("""() => {
                 window.__riskaiWheelReads=[];
                 const bridge=window.riskaiWheel;
@@ -151,6 +187,10 @@ def main():
             reset_camera();dispatch_trusted([100]);finish_case('wheel-100px')
             reset_camera();dispatch_trusted([120]);finish_case('wheel-120px')
             reset_camera();dispatch([-5] * 40);finish_case('fine-burst-reverse-200px')
+
+            reset_camera();dispatch_trusted([0] * 10, delta_x=5);finish_case('horizontal-50px')
+            reset_camera();dispatch_trusted([5] * 10, delta_x=5);finish_case('diagonal-50px')
+            reset_camera();dispatch_trusted([5, 120, 5]);finish_case('accelerated-pan-130px')
 
             reset_camera()
             viewport_before = browser_viewport()
@@ -172,15 +212,37 @@ def main():
             report['cases']['hud-then-map-no-replay']['application'] = 'not measured; compare paused world in hud-before.png and hud-return-map.png'
             capture('hud-return-map')
 
-            assert report['cases']['fine-burst-200px']['sum'] == [200, 0, 0, 0]
-            assert abs(report['cases']['fine-burst-200px']['steps'] + .5) < 1e-6
-            assert report['cases']['trusted-fine-burst-50px']['sum'] == [50, 0, 0, 0]
-            assert abs(report['cases']['trusted-fine-burst-50px']['steps'] + .125) < 1e-6
+            reset_camera();capture('hud-touchpad-before')
+            dispatch_trusted([5] * 10, point=hud_point, delta_x=5)
+            page.mouse.move(*world_point)
+            page.wait_for_timeout(300)
+            reads = page.evaluate('window.__riskaiWheelReads.splice(0)')
+            report['cases']['hud-touchpad-then-map-no-replay'] = derived(reads)
+            report['cases']['hud-touchpad-then-map-no-replay']['reads'] = reads
+            report['cases']['hud-touchpad-then-map-no-replay']['application'] = 'not measured; compare paused world in hud-touchpad-before.png and hud-touchpad-return-map.png'
+            capture('hud-touchpad-return-map')
+
+            for name, pixels in [('fine-burst-200px', 200), ('trusted-fine-burst-50px', 50),
+                                 ('fine-burst-reverse-200px', -200), ('accelerated-pan-130px', 130)]:
+                case = report['cases'][name]
+                assert case['sum'] == [0, 0, 0, 0], f'{name} must pan without zoom'
+                assert abs(case['panNormalized'][1] - pixels / args.height) < 1e-6
+            horizontal = report['cases']['horizontal-50px']
+            assert horizontal['sum'] == [0, 0, 0, 0] and horizontal['panNormalized'][1] == 0
+            assert abs(horizontal['panNormalized'][0] + 50 / args.width) < 1e-6
+            diagonal = report['cases']['diagonal-50px']
+            assert diagonal['sum'] == [0, 0, 0, 0]
+            assert abs(diagonal['panNormalized'][0] + 50 / args.width) < 1e-6
+            assert abs(diagonal['panNormalized'][1] - 50 / args.height) < 1e-6
             assert report['cases']['wheel-100px']['sum'] == [0, 100, 0, 0]
             assert abs(report['cases']['wheel-100px']['steps'] + 1) < 1e-6
             assert report['cases']['wheel-120px']['sum'] == [0, 120, 0, 0]
-            assert abs(report['cases']['fine-burst-reverse-200px']['steps'] - .5) < 1e-6
             assert report['cases']['ctrl-trusted-fine-50px']['sum'] == [50, 0, 0, 0]
+            assert report['cases']['ctrl-trusted-fine-50px']['panNormalized'] == [0, 0]
+            paused_after = snapshot()
+            assert paused_after['paused'] == 'True'
+            assert paused_after['simTicks'] == paused_before['simTicks'], 'Camera gestures advanced the paused simulation'
+            report['pausedSimulationTicks'] = int(paused_after['simTicks'])
             report['success'] = not report['errors']
         except Exception as error:
             report.update(success=False, failure=str(error))

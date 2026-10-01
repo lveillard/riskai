@@ -224,29 +224,34 @@ function rows(bridge) {
 (function wheelPreservesRawModesAndUnityPropagation() {
   let time = 10;
   const element = canvas(), bridge = RiskAIPen.attachWheel(element, { now: () => time });
-  const pixels = element.dispatch("wheel", { deltaY: -12.5, deltaMode: 0 });
+  const pixels = element.dispatch("wheel", { deltaY: -12.5, deltaMode: 0, ctrlKey: true });
   element.dispatch("wheel", { deltaY: -100, deltaMode: 0 });
   element.dispatch("wheel", { deltaY: 3, deltaMode: 1 });
   element.dispatch("wheel", { deltaY: -1, deltaMode: 2 });
   assert(pixels.defaultPrevented, "browser page zoom/scroll is prevented");
   assert(!pixels.stopped, "wheel propagation remains available to Unity UI Toolkit");
-  assert.deepStrictEqual(bridge.readSample(), [-12.5, -100, 3, -1]);
+  assert.deepStrictEqual(bridge.readSample(), [-12.5, -100, 3, -1, 0, 0, .5, .5]);
   assert.strictEqual(bridge.readSample(), null, "each frame consumes the sample exactly once");
   bridge.dispose();
 })();
 
-(function wheelPixelHeuristicIsSmoothAndPreservesNotches() {
-  function steps(delta) {
-    const [fine, coarse] = RiskAIPen.splitWheelPixelDelta(delta);
-    return fine / 400 + coarse / 100;
-  }
-  assert.strictEqual(steps(100), 1);
-  assert.strictEqual(steps(120), 1.2);
-  assert.strictEqual(steps(20), .05, "fine pixel input has one quarter of the old response");
-  assert(Math.abs(steps(40.01) - steps(39.99)) < .001,
-    "crossing the fine transition cannot introduce a zoom jump");
-  assert(Math.abs(steps(80.01) - steps(79.99)) < .001,
-    "crossing the wheel transition cannot introduce a zoom jump");
+(function touchpadPansBothAxesAndAcceleratedMomentumCannotZoom() {
+  let time = 0;
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element, { now: () => time });
+  element.dispatch("wheel", { deltaX: 20, deltaY: 10, deltaMode: 0 });
+  assert.deepStrictEqual(bridge.readSample(), [0, 0, 0, 0, -.1, .1, .5, .5]);
+  time = 16;
+  element.dispatch("wheel", { deltaY: 120, deltaMode: 0 });
+  assert.deepStrictEqual(bridge.readSample(), [0, 0, 0, 0, 0, 1.2, .5, .5],
+    "consuming a frame must not forget the ongoing pan gesture");
+  time = 32;
+  element.dispatch("wheel", { deltaX: -10, deltaY: -5, deltaMode: 0 });
+  assert.deepStrictEqual(bridge.readSample(), [0, 0, 0, 0, .05, -.05, .5, .5]);
+  time = 400;
+  element.dispatch("wheel", { deltaY: 120, deltaMode: 0 });
+  assert.deepStrictEqual(bridge.readSample(), [0, 120, 0, 0, 0, 0, .5, .5],
+    "a later physical mouse notch still zooms");
+  bridge.dispose();
 })();
 
 (function wheelBurstAccumulatesDistanceNotEventCountAndKeepsReversal() {
@@ -256,10 +261,14 @@ function rows(bridge) {
     time += 1;
     element.dispatch("wheel", { deltaY: -.5, deltaMode: 0 });
   }
-  assert.deepStrictEqual(bridge.readSample(), [-20, 0, 0, 0]);
+  const burst = bridge.readSample();
+  assert.deepStrictEqual(burst.slice(0, 5), [0, 0, 0, 0, 0]);
+  assert(Math.abs(burst[5] + .2) < 1e-10, "pan distance accumulates across a burst");
   element.dispatch("wheel", { deltaY: 7, deltaMode: 0 });
   element.dispatch("wheel", { deltaY: -3, deltaMode: 0 });
-  assert.deepStrictEqual(bridge.readSample(), [4, 0, 0, 0], "same-frame reversal is a signed net delta");
+  const reversal = bridge.readSample();
+  assert(Math.abs(reversal[5] - .04) < 1e-10, "same-frame reversal is a signed net delta");
+  assert.deepStrictEqual(reversal.slice(0, 4), [0, 0, 0, 0]);
   bridge.dispose();
 })();
 
@@ -291,4 +300,93 @@ function rows(bridge) {
   assert.strictEqual(bridge.readSample(), null);
 })();
 
-console.log("browser pen/wheel bridge tests: 17 passed");
+(function pinchNeverPansAndKeepsUnityUiPropagation() {
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element);
+  const event = element.dispatch("wheel", { deltaX: 10, deltaY: -20, deltaMode: 0, ctrlKey: true });
+  assert(event.defaultPrevented && !event.stopped);
+  assert.deepStrictEqual(bridge.readSample(), [-20, 0, 0, 0, 0, 0, .5, .5]);
+  element.dispatch("wheel", { deltaY: 20, deltaMode: 0, ctrlKey: true });
+  assert.deepStrictEqual(bridge.readSample(), [20, 0, 0, 0, 0, 0, .5, .5]);
+  bridge.dispose();
+})();
+
+(function horizontalScrollAndLargeDiagonalStartPanWithoutZoom() {
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element);
+  element.dispatch("wheel", { deltaX: 100, deltaY: 120, deltaMode: 0 });
+  assert.deepStrictEqual(bridge.readSample(), [0, 0, 0, 0, -.5, 1.2, .5, .5]);
+  element.dispatch("wheel", { deltaX: 40, deltaY: 0, deltaMode: 0 });
+  assert.deepStrictEqual(bridge.readSample(), [0, 0, 0, 0, -.2, 0, .5, .5]);
+  bridge.dispose();
+})();
+
+(function sampleRemembersEventPositionAndDoesNotMergeHudIntoWorld() {
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element);
+  element.dispatch("wheel", { deltaY: 40, deltaMode: 0, clientY: 115 });
+  element.dispatch("pointermove", { pointerType: "mouse", clientY: 70 });
+  assert(Math.abs(bridge.readSample()[7] - .05) < 1e-10, "use the scroll origin, not the later cursor");
+  element.dispatch("wheel", { deltaY: 40, deltaMode: 0, clientY: 115 });
+  element.dispatch("wheel", { deltaY: 5, deltaMode: 0, clientY: 70 });
+  assert.deepStrictEqual(bridge.readSample(), [0, 0, 0, 0, 0, .05, .5, .5]);
+  bridge.dispose();
+})();
+
+(function safariPinchUsesIncrementalScaleAndDoesNotDoubleApplyWheel() {
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element);
+  assert(element.dispatch("gesturestart", { scale: 1 }).defaultPrevented);
+  element.dispatch("gesturechange", { scale: 1.25 });
+  element.dispatch("wheel", { deltaY: -10, deltaMode: 0, ctrlKey: true });
+  let sample = bridge.readSample();
+  assert(Math.abs(Math.exp(-sample[0] / 100) - 1.25) < 1e-10);
+  assert.deepStrictEqual(sample.slice(1, 6), [0, 0, 0, 0, 0]);
+  element.dispatch("gesturechange", { scale: 1.5 });
+  sample = bridge.readSample();
+  assert(Math.abs(Math.exp(-sample[0] / 100) - 1.2) < 1e-10);
+  element.dispatch("gestureend");
+  element.dispatch("wheel", { deltaY: 5, deltaMode: 0, ctrlKey: true });
+  assert.strictEqual(bridge.readSample()[0], 5);
+  bridge.dispose();
+  assert(!element.dispatch("gesturestart", { scale: 1 }).defaultPrevented);
+})();
+
+(function invalidDeltasCannotPoisonTheCamera() {
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element);
+  element.dispatch("wheel", { deltaX: Infinity, deltaY: NaN, deltaMode: 0 });
+  assert.deepStrictEqual(bridge.readSample(), [0, 0, 0, 0, 0, 0, .5, .5]);
+  bridge.dispose();
+})();
+
+(function jslibTransfersAllEightChannelsAndEmptyReadCannotReplayUnityWheel() {
+  const fs = require("fs"), vm = require("vm");
+  const heap = new Float32Array(12);
+  let library;
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element);
+  vm.runInNewContext(fs.readFileSync(require.resolve("../RiskAI/Assets/Plugins/WebGL/RiskAIPlatform.jslib"), "utf8"), {
+    LibraryManager: { library: {} }, mergeInto: (_, value) => { library = value; },
+    window: { riskaiWheel: bridge }, HEAPF32: heap
+  });
+  element.dispatch("wheel", { deltaX: 50, deltaY: 25, deltaMode: 0 });
+  assert.strictEqual(library.RiskAI_ReadWheelDeltas(8), 1);
+  assert.deepStrictEqual(Array.from(heap.slice(2, 10)), [0, 0, 0, 0, -.25, .25, .5, .5]);
+  assert.strictEqual(library.RiskAI_ReadWheelDeltas(8), 1, "an empty bridge is still authoritative over Unity scroll");
+  assert.deepStrictEqual(Array.from(heap.slice(2, 10)), Array(8).fill(0));
+  bridge.dispose();
+})();
+
+(function safariScreenTouchesRemainOwnedByUnityWithoutTrailingPinch() {
+  const element = canvas(), bridge = RiskAIPen.attachWheel(element);
+  const first = element.dispatch("touchstart", { touches: [{}] });
+  assert(!first.defaultPrevented && !first.stopped);
+  const start = element.dispatch("gesturestart", { scale: 1 });
+  element.dispatch("touchstart", { touches: [{}, {}] });
+  element.dispatch("gesturechange", { scale: 1.5 });
+  element.dispatch("gestureend");
+  element.ownerDocument.dispatch("touchend", { touches: [] });
+  assert(!start.defaultPrevented && !start.stopped);
+  assert.strictEqual(bridge.readSample(), null, "screen pinch cannot be replayed after the last touch lifts");
+  element.dispatch("gesturestart", { scale: 1 });
+  element.dispatch("gesturechange", { scale: 1.5 });
+  assert(bridge.readSample()[0] < 0, "a later trackpad pinch on the same tablet still works");
+  bridge.dispose();
+})();
+
+console.log("browser pen/wheel bridge tests: 24 passed");
