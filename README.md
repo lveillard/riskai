@@ -1,9 +1,12 @@
-# Riesgus · v0.34.4
+# Riesgus · v0.34.5
 
-Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.34.4
-(`20260925T175329Z-v0344-fa721b5`). La verificación pública coincide en 10/10 hashes
-([validación v0.34](docs/VALIDATION-RIESGUS-v0.34.md)): EditMode 325/325, PlayMode 320/320 y npm 14/14; comprobado en
-Web de escritorio y en móvil emulado, sin probar en hardware móvil físico.
+Juega en **[riesgus.com](https://riesgus.com)**, publicado como Riesgus v0.34.5
+(`20261005T143709Z-v0345-4e153e5`). Windows y WebGL comparten los gestos de touchpad:
+dos dedos desplazan el mapa y el pellizco amplía. El cambio pasó 61 pruebas Unity,
+22 casos de navegador y otros 11 sobre producción; el arranque móvil emulado funciona.
+Los 8 archivos públicos sin transformación coinciden con sus hashes; los 2 HTML solo añaden
+la analítica preexistente de Cloudflare ([validación v0.34](docs/VALIDATION-RIESGUS-v0.34.md)).
+Sigue pendiente la prueba con touchpad y móvil físicos.
 [Validación v0.30](docs/VALIDATION-RIESGUS-v0.30.md) · [Mediciones de rendimiento](docs/audits/PERFORMANCE-PARETO-v0.28.md).
 
 Prototipo RTS local de conquista por ciudades, inspirado en mapas Risk de Warcraft III. Unity 6.3 LTS (6000.3.23f1), URP y arte propio/CC0. Abre **Play-Riesgus.cmd** para jugar la compilación local. Al clonar el repositorio, genera primero el ejecutable con `scripts/Unity.ps1 -Action Build`.
@@ -35,6 +38,8 @@ La v0.34.2 unifica lo que quedaba duplicado entre unidades de tierra y mar: una 
 La v0.34.3 junta todos los textos de la interfaz en `Resources/Config/text.json`, con la misma línea en español e inglés. Las frases compuestas son plantillas y sólo se traducen líneas exactas, así que ya no salen mensajes mezclados. Los nombres de muelles también se traducen. El audio sale sólo de `Resources/Audio/clips.json`, y cada unidad elige en `units.json` su sonido de muerte: una caída en tierra y un hundimiento en los barcos. Hay sonidos nuevos para seleccionar un muelle, para el inicio de ronda y un quinto proyectil de mago. El chat del móvil apunta hacia donde se abre la lista, y el pie de escritorio ya no muestra una barra de desplazamiento vacía.
 
 La v0.34.4 pule la sensación de juego. El despliegue inicial dura 6 s, 2 s por línea, y la música se reparte en orden aleatorio. Las tropas salen por la puerta de la ciudad o del muelle, y cada unidad que cae deja escapar un alma que sube al cielo, como en The Settlers. Las líneas de órdenes se dibujan pegadas al suelo, o por encima si la ruta va más alta, y ataque y movimiento comparten un único trazado del que sólo cambia el color. Lo que dispara cada arma sale de `units.json`: los barcos tiran bolas de cañón, que ahora coinciden con su sonido. Sus alcances ya eran los del mapa original (1000 y 1500 → 20 y 30 m). Los cinco barcos siguen a sus modelos de WC3 (Fragata humana, Juggernaught orco, Acorazado humano, Transporte humano y Transporte orco), y al crearse ya no se amontonan. En móvil y tableta hay un joystick de cámara abajo a la derecha y un modo mano: con un dedo se mueve el mapa, y con doble toque y arrastre se selecciona un área. Los botones de acción centran el icono y su texto, y los bosques ya no separan las ciudades de un mismo país.
+
+La v0.34.5 unifica la interpretación del touchpad en C# para Windows y WebGL. Deslizar dos dedos mueve el mapa en ambos ejes; pellizcar amplía alrededor del cursor. El touchpad y la pantalla táctil comparten las acciones de cámara. La rueda conserva el zoom y los paneles conservan su scroll, también durante la pausa.
 
 La configuración vive en una escena inicial separada: permite elegir los cuatro mapas, 2–16 jugadores, reparto, semilla y dificultad sin crear terreno, NavMesh ni una sesión. Al pulsar **Iniciar** carga Las Marcas y aplica la configuración elegida. Las capturas y pruebas automatizadas omiten esa pantalla.
 

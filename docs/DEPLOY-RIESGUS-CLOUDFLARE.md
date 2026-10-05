@@ -1,10 +1,17 @@
 # Despliegue Web de Riesgus en Cloudflare
 
-Estado actual: [Riesgus v0.30.0](VALIDATION-RIESGUS-v0.30.md) está publicado (`20260923T150510Z-v030-050e773`).
+Estado actual: [Riesgus v0.34.5](VALIDATION-RIESGUS-v0.34.md#v0345) está publicado (`20261005T143709Z-v0345-4e153e5`).
 Las nuevas builds se actualizan en el origen Azure y se verifican con
 `scripts/verify_web_release.py`; no necesitan volver a desplegar el Worker ni
 crear tokens Cloudflare. Los datos de v0.25/v0.26 siguientes documentan la
 migración inicial y su decisión de arquitectura.
+
+Las releases comparten los assets versionados mediante enlaces físicos para evitar
+copiar todo el histórico en cada despliegue. Esos archivos son inmutables: una actualización
+debe escribir un archivo temporal y renombrarlo, como hace `deploy_azure_vm.py`.
+`scripts/test_deploy_azure_vm.py` comprueba en Linux que el rollback conserva sus bytes.
+Cloudflare añade actualmente su analítica a los HTML; la verificación exacta debe conservar
+esa diferencia y comprobar que el origen coincide y que no hay otras transformaciones.
 
 La migración conserva el origen HTTPS de Azure y pone delante un Worker
 streaming. El build WebGL inspeccionado es `Builds/Web-v0.25`: el fichero

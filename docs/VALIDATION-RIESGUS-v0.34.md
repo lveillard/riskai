@@ -110,3 +110,39 @@ verificados y verificación pública `success=true`. El arranque público en 390
 joystick de cámara y el botón de mano. La partida en Europa con 16 IA aplica 171 órdenes y rechaza 0, a 20,75 ms por
 fotograma, sin fotogramas de más de 100 ms ni errores de consola.
 Pruebas: EditMode 325/325, PlayMode 320/320 en 4 tandas (la tanda 4 repetida tras corregir la separación de barcos) y npm 14/14.
+
+## v0.34.5
+
+Publicado en https://riesgus.com como `20261005T143709Z-v0345-4e153e5`, desde `4e153e5`,
+tras mergear la PR #20 (`aca1f59`). El touchpad y la rueda usan un único intérprete C#
+en Windows y WebGL, y comparten las acciones de cámara con la pantalla táctil.
+
+- Compilaciones Windows y WebGL v0.34.5 correctas.
+- Pruebas del cambio: EditMode 34/34, PlayMode 27/27, transporte JavaScript 20/20,
+  configuración npm 14/14 y 22 casos WebGL a densidades 1 y 2.
+- Build v0.34.5: 11/11 casos de gestos en local y 11/11 desde producción, midiendo
+  zoom y posición reales. El HUD no mueve la cámara y la simulación permanece pausada.
+- Arranque público en 390×844 correcto, sin errores. La primera carga tardó 194,4 s
+  durante las descargas concurrentes de verificación; no es una medición de rendimiento móvil físico.
+- Herramientas Python: 29/29. El ensayo Linux del despliegue usa directorios temporales
+  y comprueba reutilización de archivos, conservación del rollback y rechazo de archivos
+  corruptos o de una activación con estado anterior desactualizado.
+
+El recibo da `activated=true` y 10 archivos verificados en el servidor. La verificación
+pública estricta coincide en los 8 archivos sin transformación. Los 2 HTML coinciden
+en el origen y, en Cloudflare, difieren únicamente por el mismo script de analítica
+que ya se añade al HTML de v0.34.4. Se conservan tanto el informe estricto con esas dos
+diferencias como la comprobación de la transformación en
+`.deploy/20261005T143709Z-v0345-4e153e5/{receipt,public-verification,public-transforms-verification}.json`.
+El paquete y el manifiesto están en la [release v0.34.5](https://github.com/lveillard/riskai/releases/tag/v0.34.5).
+
+La publicación se ejecutó mediante Azure Run Command usando el mismo código remoto de
+`deploy_azure_vm.py`. Los assets inmutables se comparten mediante enlaces físicos entre
+releases; cada archivo nuevo se escribe aparte y se renombra, por lo que no se modifica
+la copia anterior. El ensayo reproducible está en `scripts/test_deploy_azure_vm.py`
+(requiere Linux). La release `20260925T175329Z-v0344-fa721b5` y sus URLs siguen disponibles
+para rollback. El acceso SSH temporal se retiró y se conservó la regla del operador.
+
+Evidencia de navegador: `Captures/release-v0345-{local-gestures,public-gestures,public-mobile}`.
+Queda pendiente probar touchpad y dispositivos móviles físicos. La clasificación de
+rueda/touchpad sigue siendo heurística, y Safari se cubre mediante eventos sintéticos.
