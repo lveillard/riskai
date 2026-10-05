@@ -75,8 +75,10 @@ assert not os.path.lexists(next_link), 'Temporary symlink already exists'
 archive = pathlib.Path(c['archive'])
 with archive.open('rb') as f:
     assert hashlib.file_digest(f, 'sha256').hexdigest() == c['archive_sha256'], 'Upload hash mismatch'
-# Keep previous URLs available for clients with an older index or cached loader.
-subprocess.run(['cp', '-a', str(previous), str(target)], check=True)
+# Versioned assets are immutable. Share their inodes instead of duplicating
+# every historical bundle for each release; replacements below use os.replace.
+# This also keeps old URLs and rollback releases available without extra copies.
+subprocess.run(['cp', '-al', str(previous), str(target)], check=True)
 with tarfile.open(archive) as bundle:
     members = bundle.getmembers()
     assert len(members) == len(c['manifest']), 'Unexpected archive members'
