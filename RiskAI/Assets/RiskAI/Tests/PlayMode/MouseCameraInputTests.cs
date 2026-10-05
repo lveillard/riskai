@@ -109,15 +109,25 @@ namespace RiskAI.Tests
             yield return null;
         }
 
-        [UnityTest] public IEnumerator FractionalWheelBurstHasTheSameUnitsAsOneNotchAndReversesCleanly()
+        [UnityTest] public IEnumerator NativeTouchpadBurstPansWithoutZoomBeforeUnityAccumulatesIt()
         {
             var point=UiViewport.WorldRect.center;
             controller.CameraRig.ResetView();
             float initial=controller.CameraRig.TargetZoom;
-            for(int eventIndex=0;eventIndex<10;eventIndex++)Pump(point,scroll:.1f);
-            Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(initial*RtsCameraPolicy.WheelZoomMultiplier(1)).Within(.001f));
-            for(int eventIndex=0;eventIndex<10;eventIndex++)Pump(point,scroll:-.1f);
-            Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(initial).Within(.001f));
+            var before=controller.CameraRig.FocusPoint;
+            for(int eventIndex=0;eventIndex<10;eventIndex++)
+                InputSystem.QueueStateEvent(mouse,new MouseState {position=point,scroll=Vector2.one*.1f});
+            InputSystem.Update();controller.SendMessage("Update");
+            Assert.That(controller.CameraRig.TargetZoom,Is.EqualTo(initial),"Ten fine events must not become a wheel-notch zoom.");
+            Assert.That(Vector3.Distance(before,controller.CameraRig.FocusPoint),Is.GreaterThan(.1f));
+            before=controller.CameraRig.FocusPoint;
+            // Ctrl is delivered before the wheel within the same Input System update.
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.LeftCtrl));
+            InputSystem.QueueStateEvent(mouse,new MouseState {position=point,scroll=Vector2.up*.1f});
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState());
+            InputSystem.Update();controller.SendMessage("Update");
+            Assert.That(controller.CameraRig.TargetZoom,Is.LessThan(initial),"Native ctrl+wheel pinch must zoom even if Ctrl is released in the same frame.");
+            Assert.That(controller.CameraRig.FocusPoint,Is.EqualTo(before));
             yield return null;
         }
 
@@ -134,6 +144,33 @@ namespace RiskAI.Tests
             Assert.That(Vector3.Distance(before,controller.CameraRig.FocusPoint),Is.GreaterThan(.1f));
             controller.HelpVisible=true;Pump(point+Vector2.left*80,2);
             Assert.That(controller.CameraDragging,Is.False,"Opening the menu still cancels camera gestures.");
+            yield return null;
+        }
+
+        [UnityTest] public IEnumerator BrowserPanSharesTouchDragAndHudOwnsItsScrollWhilePaused()
+        {
+            var point=UiViewport.WorldRect.center;
+            var rig=controller.CameraRig;
+            battle.TogglePause();Pump(point);
+            long commands=battle.Commands.AppliedCount;
+            float zoom=rig.TargetZoom;
+            var start=rig.FocusPoint;
+            var delta=new Vector2(-25,18);
+            rig.Drag(point,point+delta);
+            var expected=rig.FocusPoint;
+            rig.SetHome(start);
+            controller.SendMessage("ApplyCameraScroll",new CameraScrollInput(0,delta,point));
+            Assert.That(Vector3.Distance(rig.FocusPoint,expected),Is.LessThan(.001f),"Touchpad and direct touch share ground-space dragging.");
+            Assert.That(Vector3.Distance(start,rig.FocusPoint),Is.GreaterThan(.1f));
+            Assert.That(rig.TargetZoom,Is.EqualTo(zoom),"Two-finger scrolling cannot change scale.");
+            var before=rig.FocusPoint;
+            controller.SendMessage("ApplyCameraScroll",new CameraScrollInput(1,delta,Vector2.zero));
+            Assert.That(rig.FocusPoint,Is.EqualTo(before),"HUD scroll cannot pan even when the mouse is now over the world.");
+            Assert.That(rig.TargetZoom,Is.EqualTo(zoom));
+            controller.SendMessage("ApplyCameraScroll",new CameraScrollInput(1,Vector2.zero,point));
+            Assert.That(rig.TargetZoom,Is.LessThan(zoom),"Pinch zoom remains available while paused.");
+            Assert.That(battle.Commands.PendingCount,Is.Zero);
+            Assert.That(battle.Commands.AppliedCount,Is.EqualTo(commands));
             yield return null;
         }
 

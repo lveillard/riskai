@@ -133,8 +133,10 @@ namespace RiskAI
 
             LatestAverageMs=averageMilliseconds;LatestMaximumMs=maxFrameSeconds*1000f;
             LatestUnits=session.Units.Count;LatestUnityAllocatedBytes=UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            var rig=GetComponent<RtsController>()?.CameraRig;
+            string cameraState=rig?FormattableString.Invariant($"cameraZoom={rig.TargetZoom:F5} cameraX={rig.FocusPoint.x:F5} cameraZ={rig.FocusPoint.z:F5} "):"";
             LatestReport=(
-                $"RuntimeDiagnostics 30s avgMs={averageMilliseconds:F2} maxMs={maxFrameSeconds * 1000f:F2} " +
+                $"RuntimeDiagnostics 30s {cameraState}avgMs={averageMilliseconds:F2} maxMs={maxFrameSeconds * 1000f:F2} " +
                 $"managedHeapDeltaB={heapNow - managedHeapBytes} gcGen0={GC.CollectionCount(0) - generation0Collections} " +
                 $"units={session.Units.Count} simTime={session.BattleTime:F1} simTicks={session.Clock.TickCount} " +
                 $"commandsPending={(commands != null ? commands.PendingCount : 0)} commandsApplied={appliedNow - appliedCommands} commandsRejected={rejectedNow - rejectedCommands} " +

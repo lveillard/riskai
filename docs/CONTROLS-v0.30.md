@@ -103,6 +103,15 @@ The unit command row (Move, Attack, Patrol, Stop, Hold, Focus) uses the same squ
 - Settings persist: Sfx and Music keep their own preferences. Camera speed, edge panning and the desktop minimap choice are saved in PlayerPrefs (`riskai.camera.speed`, `riskai.camera.edgepan`, `riskai.hud.minimap`).
 - While the menu is open, it draws above the message log and toasts, and receives pointer events first.
 
+## Camera gestures
+
+- **Touchpad:** slide two fingers vertically, horizontally or diagonally to move the map. The direction follows the operating system's scroll setting. Pinch to zoom around the cursor. WebGL and native players share the same gesture interpreter and camera actions.
+- **Mouse:** the wheel zooms around the cursor, right-drag moves the map, and middle-drag rotates it.
+- **Touchscreen:** two-finger dragging and pinching share the same camera movement and zoom actions as the touchpad; three fingers rotate.
+- **Panels:** scrolling over the HUD scrolls its content, without moving or zooming the map. Camera gestures remain available while the match is paused.
+
+Wheel events do not reliably identify the originating hardware. The shared interpreter recognizes discrete mouse notches after converting the platform's units; fine scroll events pan, retaining that meaning through acceleration and momentum. Pinch uses Ctrl+wheel from the browser or native driver, or Safari's scale events. Unusual smooth mouse wheels or touchpads that emulate discrete notches can therefore be ambiguous on either platform.
+
 ## Touch (phones and tablets)
 
 - The command card uses the same grid with larger cells (at least 44 px) and no hotkey letters.
